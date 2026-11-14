@@ -164,7 +164,7 @@ export function VotingView({
         </div>
       )}
 
-      <section className="bg-gradient-to-br from-amber-50/75 via-white to-emerald-50/55 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Verified Member 2/3 Ballots Center
@@ -239,7 +239,7 @@ export function VotingView({
                   return (
                     <article
                       key={proj.id}
-                      className="bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -274,7 +274,7 @@ export function VotingView({
                           </div>
                           <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-emerald-600 to-amber-500 transition-all duration-300"
+                              className="h-full bg-emerald-600 transition-all duration-300"
                               style={{ width: `${progressPct}%` }}
                             />
                           </div>
@@ -370,7 +370,7 @@ export function VotingView({
                   return (
                     <article
                       key={loan.id}
-                      className="bg-gradient-to-br from-amber-50/75 via-white to-emerald-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -407,7 +407,7 @@ export function VotingView({
                           </div>
                           <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-emerald-600 to-amber-500 transition-all duration-300"
+                              className="h-full bg-emerald-600 transition-all duration-300"
                               style={{ width: `${progressPct}%` }}
                             />
                           </div>
@@ -550,7 +550,7 @@ export function VotingView({
                               type="button"
                               disabled={busyId === loan.id}
                               onClick={() => handleDisburse(loan.id)}
-                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-amber-600 hover:from-emerald-700 hover:to-amber-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               {busyId === loan.id
                                 ? 'Signing Disbursement…'

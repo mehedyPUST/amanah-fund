@@ -176,7 +176,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   return (
     <div className="space-y-6">
       {/* Membership Status & Identity Summary */}
-      <section className="bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/40 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -325,7 +325,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         </section>
 
         {/* Editable Contact Information Form */}
-        <section className="xl:col-span-7 bg-gradient-to-br from-white via-white to-emerald-50/35 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Update Contact Information

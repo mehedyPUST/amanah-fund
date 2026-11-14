@@ -278,8 +278,8 @@ export function DashboardShell() {
           }}
           className={`group w-full px-3.5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer whitespace-nowrap ${
             active
-              ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-amber-50/60 dark:from-emerald-950/60 dark:via-emerald-950/35 dark:to-amber-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/50 shadow-xs'
-              : 'border border-transparent text-slate-600 dark:text-slate-400 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/70 dark:hover:from-slate-800/70 dark:hover:to-slate-800/40 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
+              ? 'bg-emerald-50/95 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs'
+              : 'border border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
           }`}
         >
           <span className="flex items-center gap-3 min-w-0">
@@ -310,9 +310,9 @@ export function DashboardShell() {
     */
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
       {/* GRID 1: Members Dashboard (height == Grid 2 height [64px], width == Grid 3 width [260px]) */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-gradient-to-r from-white via-white to-emerald-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-700 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -450,7 +450,7 @@ export function DashboardShell() {
               transition={{ duration: 0.18 }}
               className="relative w-64 max-w-full bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 z-10"
             >
-              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white to-emerald-50/40 dark:from-slate-900 dark:to-emerald-950/20">
+              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <span className="font-display font-bold text-base text-slate-900 dark:text-white">
                   Amanah Treasury
                 </span>
@@ -518,8 +518,8 @@ export function DashboardShell() {
                       transition={{ duration: 0.18 }}
                       className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${
                         isApproved
-                          ? 'bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/40 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/20 border-emerald-200 dark:border-emerald-900/60'
-                          : 'bg-gradient-to-r from-red-50/90 via-white to-red-50/40 dark:from-red-950/35 dark:via-slate-900 dark:to-red-950/20 border-red-200 dark:border-red-900/60'
+                          ? 'bg-emerald-50/85 dark:bg-emerald-950/35 border-emerald-200 dark:border-emerald-900/60'
+                          : 'bg-red-50/85 dark:bg-red-950/35 border-red-200 dark:border-red-900/60'
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
@@ -638,7 +638,7 @@ export function DashboardShell() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/35 dark:via-slate-900 dark:to-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
+                className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-amber-600/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">

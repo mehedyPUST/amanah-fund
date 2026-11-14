@@ -307,7 +307,7 @@ export function AdminAuditLog({
       {/* KPI Summary Strip */}
       {!compactHeader && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Audit Events</span>
               <ScrollText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -331,10 +331,10 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-emerald-50/75 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>User Approvals & Accounts</span>
-              <UserCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+              <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {loading && logs.length === 0 ? '—' : metrics.userEvents}
@@ -344,7 +344,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-amber-50/75 via-white to-white dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Loan Status Changes</span>
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -357,7 +357,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-50/70 via-white to-white dark:from-red-950/20 dark:via-slate-900 dark:to-slate-900 border border-red-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-800/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Rejected & Revoked</span>
               <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" />

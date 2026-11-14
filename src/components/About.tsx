@@ -9,45 +9,45 @@ const PILLARS = [
     title: 'Admin-Verified Membership',
     description:
       'Every applicant submits verified identity details (NID, photo, reference member, and addresses) into a pending queue. Only accounts vetted and activated by an Administrator can sign in.',
-    gradient:
-      'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/35 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
-    iconClass: 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 text-emerald-700 dark:text-emerald-400',
+    cardStyle:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
+    iconClass: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
   },
   {
     Icon: Users,
     title: 'Granular Role-Based Access Control',
     description:
       'Strict separation of duties across Administrator (KYC approval, policy, annual loan cap), Treasury Manager (Bank/MFS reconciliation, disbursement), and Member (deposits, ballots, repayments).',
-    gradient:
-      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/40 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
-    iconClass: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/10 text-emerald-700 dark:text-emerald-400',
+    cardStyle:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+    iconClass: 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
   },
   {
     Icon: Lock,
     title: 'AES-256-GCM & SHA-256 Audit Chain',
     description:
       'Personal KYC fields, Bank/MFS transaction IDs, and disbursement contexts are encrypted at rest with AES-256-GCM and linked in a sequential SHA-256 hash chain.',
-    gradient:
-      'bg-gradient-to-br from-amber-50/90 via-white to-amber-50/35 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    iconClass: 'bg-gradient-to-br from-amber-500/20 to-amber-600/5 text-amber-700 dark:text-amber-400',
+    cardStyle:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
+    iconClass: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
   },
   {
     Icon: Vote,
     title: '2/3 Supermajority Consensus',
     description:
       'Both Qard Hasan lending requests and post-maturity Halal investment placements require affirmative votes from at least two-thirds of active members.',
-    gradient:
-      'bg-gradient-to-br from-amber-50/80 via-white to-emerald-50/40 dark:from-amber-950/30 dark:via-slate-900 dark:to-emerald-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    iconClass: 'bg-gradient-to-br from-amber-500/20 to-emerald-500/10 text-amber-700 dark:text-amber-400',
+    cardStyle:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
+    iconClass: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200/70 dark:ring-amber-800/50',
   },
   {
     Icon: KeyRound,
     title: 'Automated Treasury & Workspace Sync',
     description:
       'Live central balance accounting tracks every contribution, loan approval deduction, and repayment return, with automated Google Sheets blueprint sync and Gmail notifications.',
-    gradient:
-      'bg-gradient-to-br from-amber-50/80 via-white to-emerald-50/45 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    iconClass: 'bg-gradient-to-br from-amber-500/20 to-emerald-500/15 text-amber-700 dark:text-amber-400',
+    cardStyle:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+    iconClass: 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
   },
 ];
 
@@ -76,7 +76,7 @@ export function About() {
             return (
               <div
                 key={pillar.title}
-                className={`border rounded-xl p-6 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${pillar.gradient}`}
+                className={`border rounded-xl p-6 space-y-3 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${pillar.cardStyle}`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center ${pillar.iconClass}`}
@@ -94,7 +94,7 @@ export function About() {
           })}
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/60 dark:from-emerald-950/35 dark:via-slate-900 dark:to-amber-950/25 border border-emerald-200/80 dark:border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
+        <div className="bg-gradient-to-br from-emerald-50/75 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Ready to inspect the governance charter or apply for membership?

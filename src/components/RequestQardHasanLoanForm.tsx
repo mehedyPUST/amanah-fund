@@ -156,7 +156,7 @@ export function RequestQardHasanLoanForm({
   return (
     <section
       aria-label="Request Qard Hasan Loan Form"
-      className="bg-gradient-to-br from-amber-50/65 via-white to-emerald-50/35 dark:from-amber-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-2 text-xs">

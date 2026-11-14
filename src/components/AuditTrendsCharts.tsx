@@ -204,7 +204,7 @@ export function AuditTrendsCharts({
   }, [chartData]);
 
   return (
-    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-amber-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -316,13 +316,13 @@ export function AuditTrendsCharts({
                     />
                     <XAxis
                       dataKey="monthLabel"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: '#94a3b8' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatAxisCompact}
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: '#94a3b8' }}
                       axisLine={false}
                       tickLine={false}
                       width={44}
@@ -381,13 +381,13 @@ export function AuditTrendsCharts({
                     />
                     <XAxis
                       dataKey="monthLabel"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: '#94a3b8' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatAxisCompact}
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: '#94a3b8' }}
                       axisLine={false}
                       tickLine={false}
                       width={44}
@@ -412,9 +412,9 @@ export function AuditTrendsCharts({
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
                       name="Cumulative Loan Volume"
-                      stroke="#475569"
+                      stroke="#0d9488"
                       strokeWidth={2}
-                      dot={{ r: 3, fill: '#475569' }}
+                      dot={{ r: 3, fill: '#0d9488' }}
                       activeDot={{ r: 5 }}
                     />
                   </ComposedChart>

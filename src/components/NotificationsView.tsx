@@ -152,7 +152,7 @@ export function NotificationsView({
   return (
     <div className="space-y-6">
       {/* Header & Reminder / Gmail Actions */}
-      <section className="bg-gradient-to-br from-amber-50/65 via-white to-emerald-50/35 dark:from-amber-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

@@ -242,7 +242,7 @@ export function TreasuryGrowthChart({
   }, [fullSeries, centralBalance]);
 
   return (
-    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/40 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       {/* Header & Interactive Chart Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -400,12 +400,12 @@ export function TreasuryGrowthChart({
             >
               <defs>
                 <linearGradient id="treasuryGrowthAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#059669" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="#059669" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.24} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="contribPoolAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#d97706" stopOpacity={0.22} />
-                  <stop offset="95%" stopColor="#d97706" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
 
@@ -416,13 +416,13 @@ export function TreasuryGrowthChart({
               />
               <XAxis
                 dataKey="monthLabel"
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: '#94a3b8' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={formatAxisCompact}
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: '#94a3b8' }}
                 axisLine={false}
                 tickLine={false}
                 width={46}
@@ -444,9 +444,9 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Contributions"
-                    stroke="#b45309"
+                    stroke="#0d9488"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#b45309' }}
+                    dot={{ r: 3, fill: '#0d9488' }}
                     activeDot={{ r: 5 }}
                   />
                   <Bar
@@ -478,7 +478,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="myContributions"
                     name="Your Approved Monthly"
-                    fill="#34d399"
+                    fill="#0d9488"
                     radius={[4, 4, 0, 0]}
                     barSize={16}
                   />
@@ -506,7 +506,7 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Pool Equity"
-                    stroke="#d97706"
+                    stroke="#0d9488"
                     strokeWidth={2}
                     fill="url(#contribPoolAreaGrad)"
                   />
@@ -520,7 +520,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="repaid"
                     name="Repayments Returned"
-                    fill="#64748b"
+                    fill="#14b8a6"
                     radius={[4, 4, 0, 0]}
                     barSize={14}
                   />

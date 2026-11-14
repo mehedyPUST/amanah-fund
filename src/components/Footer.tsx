@@ -8,12 +8,12 @@ export function Footer() {
   const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
-    <footer className="bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-950 dark:to-slate-950 border-t border-slate-200 dark:border-slate-800">
+    <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-amber-600 text-white flex items-center justify-center shadow-xs">
+              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 ring-1 ring-emerald-500/20 text-white flex items-center justify-center shadow-xs">
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">

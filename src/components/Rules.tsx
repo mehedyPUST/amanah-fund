@@ -14,7 +14,7 @@ const RULES = [
       'Administrators inspect applicant KYC details and uploaded documents before activation.',
     ],
     cardClass:
-      'bg-gradient-to-br from-emerald-50/85 via-white to-emerald-50/30 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/10 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
     codeClass: 'text-emerald-700 dark:text-emerald-400',
     iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
@@ -28,9 +28,9 @@ const RULES = [
       'Accepting a contribution sends a confirmation email to the member and adds the exact amount to the Central Fund Balance.',
     ],
     cardClass:
-      'bg-gradient-to-br from-amber-50/85 via-white to-amber-50/30 dark:from-amber-950/25 dark:via-slate-900 dark:to-amber-950/10 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    codeClass: 'text-amber-700 dark:text-amber-400',
-    iconClass: 'text-amber-600 dark:text-amber-400',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+    codeClass: 'text-teal-700 dark:text-teal-400',
+    iconClass: 'text-teal-600 dark:text-teal-400',
   },
   {
     code: '03',
@@ -43,7 +43,7 @@ const RULES = [
       'Verified monthly loan repayment installments restore (+) funds back to the Central Fund Balance.',
     ],
     cardClass:
-      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/35 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
     codeClass: 'text-emerald-700 dark:text-emerald-400',
     iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
@@ -58,9 +58,9 @@ const RULES = [
       'Pre-Maturity Window: Qard Hasan lending operates until the fund’s pre-specified maturity date.',
     ],
     cardClass:
-      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/30 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/10 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
-    codeClass: 'text-emerald-700 dark:text-emerald-400',
-    iconClass: 'text-emerald-600 dark:text-emerald-400',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+    codeClass: 'text-teal-700 dark:text-teal-400',
+    iconClass: 'text-teal-600 dark:text-teal-400',
   },
   {
     code: '05',
@@ -72,8 +72,8 @@ const RULES = [
       'Each ballot records an immutable SHA-256 signature hash and updates live via Server-Sent Events.',
     ],
     cardClass:
-      'bg-gradient-to-br from-amber-50/85 via-white to-emerald-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    codeClass: 'text-amber-700 dark:text-amber-400',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
+    codeClass: 'text-amber-600 dark:text-amber-400',
     iconClass: 'text-amber-600 dark:text-amber-400',
   },
   {
@@ -86,8 +86,8 @@ const RULES = [
       'Every investment placement must pass Shariah review and a 2/3 member "Yes / No" vote.',
     ],
     cardClass:
-      'bg-gradient-to-br from-amber-50/85 via-white to-emerald-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
-    codeClass: 'text-amber-700 dark:text-amber-400',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
+    codeClass: 'text-amber-600 dark:text-amber-400',
     iconClass: 'text-amber-600 dark:text-amber-400',
   },
 ];

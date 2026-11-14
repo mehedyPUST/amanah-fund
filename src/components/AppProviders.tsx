@@ -56,12 +56,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = window.localStorage.getItem('amanah_theme');
-    if (saved === 'dark') {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const prefersDark =
+      saved === 'dark' ||
+      (!saved && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+    setDarkMode(prefersDark);
+    document.documentElement.classList.toggle('dark', prefersDark);
   }, []);
 
   const toggleDarkMode = useCallback(() => {

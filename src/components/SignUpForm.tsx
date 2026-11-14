@@ -170,7 +170,7 @@ export function SignUpForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="max-w-3xl w-full mx-auto bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/45 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
+        className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
           <div className="space-y-1.5">
@@ -535,7 +535,7 @@ export function SignUpForm() {
                         <button
                           type="button"
                           onClick={() => setAgreementPhotoUrl('')}
-                          className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 hover:underline cursor-pointer"
+                          className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline cursor-pointer"
                         >
                           Remove
                         </button>
