@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Shield,
   Sun,
+  UserCheck,
   Vote,
   X,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { LoansView } from './LoansView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { type NavTab, OverviewView } from './OverviewView.tsx';
+import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import type {
@@ -47,6 +49,7 @@ const NAV_ITEMS: Array<{
   label: string;
   Icon: typeof BarChart3;
   staffOnly?: boolean;
+  adminOnly?: boolean;
 }> = [
   { id: 'overview', label: 'Overview', Icon: BarChart3 },
   { id: 'contributions', label: 'Contributions', Icon: CreditCard },
@@ -55,6 +58,7 @@ const NAV_ITEMS: Array<{
   { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
   { id: 'halal', label: 'Halal Investment', Icon: Briefcase },
   { id: 'notifications', label: 'Notifications', Icon: Bell },
+  { id: 'registrations', label: 'Pending Registrations', Icon: UserCheck, adminOnly: true },
   { id: 'admin', label: 'Admin & Reports', Icon: Shield, staffOnly: true },
 ];
 
@@ -194,7 +198,9 @@ export function DashboardShell() {
   }
 
   const visibleNav = NAV_ITEMS.filter(
-    (item) => !item.staffOnly || user.role === 'admin' || user.role === 'manager'
+    (item) =>
+      (!item.staffOnly || user.role === 'admin' || user.role === 'manager') &&
+      (!item.adminOnly || user.role === 'admin')
   );
   const activeNavMeta = visibleNav.find((n) => n.id === activeTab) || visibleNav[0];
 
@@ -217,7 +223,7 @@ export function DashboardShell() {
     if (tabId === 'notifications') {
       return overview.treasury.unreadNotificationsCount;
     }
-    if (tabId === 'admin' && user.role === 'admin') {
+    if (tabId === 'registrations' && user.role === 'admin') {
       return overview.treasury.pendingMembersCount;
     }
     return 0;
@@ -608,6 +614,9 @@ export function DashboardShell() {
                   onDisconnectGoogle={handleDisconnectGoogle}
                   onRefresh={handleRefreshWithAutoSync}
                 />
+              )}
+              {activeTab === 'registrations' && (
+                <PendingRegistrationsView user={user} onRefresh={handleRefreshWithAutoSync} />
               )}
               {activeTab === 'admin' && (
                 <AdminReportsView

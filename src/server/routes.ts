@@ -1508,6 +1508,24 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
 // ---------------------------------------------------------------------------
 
 apiRouter.get(
+  '/admin/registrations/pending',
+  requireAuth,
+  requireRole(['admin']),
+  async (_req: AuthenticatedRequest, res) => {
+    try {
+      const state = await loadVaultState();
+      const registrations = buildMemberSummaries(state, true)
+        .filter((m) => m.status === 'pending_approval')
+        .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
+      res.json({ registrations });
+    } catch (err) {
+      console.error('Pending registrations load error:', err);
+      res.status(500).json({ error: 'Failed to load pending user registrations.' });
+    }
+  }
+);
+
+apiRouter.get(
   '/admin/members',
   requireAuth,
   requireRole(['admin', 'manager']),

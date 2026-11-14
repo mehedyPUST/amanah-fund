@@ -6,7 +6,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { Contribution, DashboardOverview, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
-import { CashflowChart } from './CashflowChart.tsx';
+import { TreasuryGrowthChart } from './TreasuryGrowthChart.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 
 export type NavTab =
@@ -17,6 +17,7 @@ export type NavTab =
   | 'halal'
   | 'transactions'
   | 'notifications'
+  | 'registrations'
   | 'admin';
 
 interface OverviewViewProps {
@@ -158,12 +159,12 @@ export function OverviewView({
               {treasury.pendingMembersCount === 1 ? '' : 's'} Pending Approval
             </div>
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              Pending applicants cannot sign in until verified and activated in Admin & Reports.
+              Pending applicants cannot sign in until verified and activated in Pending Registrations.
             </p>
           </div>
           <button
             type="button"
-            onClick={() => onNavigate('admin')}
+            onClick={() => onNavigate('registrations')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
           >
             Review Pending Signups →
@@ -277,24 +278,20 @@ export function OverviewView({
         </div>
       </section>
 
-      {/* Cashflow Visualization & Personal Standing */}
+      {/* Treasury Growth & Monthly Contribution Visualization + Personal Standing */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Monthly Cooperative Cashflow
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Approved member contributions compared against Qard Hasan disbursements and repayments
-              </p>
-            </div>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-              {overview.storageEngine === 'mongodb_atlas' ? 'MongoDB Atlas' : 'Encrypted Vault'}
-            </span>
-          </div>
-          <CashflowChart data={monthlySeries} currency={ccy} />
-        </section>
+        <div className="xl:col-span-8 min-w-0">
+          <TreasuryGrowthChart
+            contributions={contributions}
+            loans={loans}
+            monthlySeries={monthlySeries}
+            currency={ccy}
+            currentUserId={user.id}
+            centralBalance={treasury.centralBalance}
+            loading={loading}
+            onSubmitContribution={() => onNavigate('contributions')}
+          />
+        </div>
 
         <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
           <div className="space-y-4">

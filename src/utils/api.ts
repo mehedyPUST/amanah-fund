@@ -194,6 +194,8 @@ export const api = {
       body: JSON.stringify({ decision, comment }),
     }),
 
+  getPendingRegistrations: () =>
+    apiRequest<{ registrations: MemberSummary[] }>('/api/admin/registrations/pending'),
   getMembers: () => apiRequest<{ members: MemberSummary[] }>('/api/admin/members'),
   updateMember: (id: string, payload: { role?: UserRole; status?: UserStatus }) =>
     apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
