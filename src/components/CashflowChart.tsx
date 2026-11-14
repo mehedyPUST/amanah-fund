@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import type { FundConfig, MonthlyCashflowPoint } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';

@@ -1,9 +1,7 @@
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import type { PublicPage } from './PublicNavbar.tsx';
+'use client';
 
-interface PublicRulesViewProps {
-  onNavigate: (page: PublicPage) => void;
-}
+import Link from 'next/link';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const RULES = [
   {
@@ -70,7 +68,7 @@ const RULES = [
   },
 ];
 
-export function PublicRulesView({ onNavigate }: PublicRulesViewProps) {
+export function PublicRulesView() {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
@@ -126,14 +124,13 @@ export function PublicRulesView({ onNavigate }: PublicRulesViewProps) {
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Questions about eligibility or contribution channels? Sign in or apply for review.
           </p>
-          <button
-            type="button"
-            onClick={() => onNavigate('login')}
-            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+          <Link
+            href="/login"
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
           >
             <span>Proceed to Member Portal</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+          </Link>
         </div>
       </section>
     </div>

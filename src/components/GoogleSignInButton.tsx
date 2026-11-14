@@ -1,3 +1,5 @@
+'use client';
+
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 
 interface GoogleSignInButtonProps {

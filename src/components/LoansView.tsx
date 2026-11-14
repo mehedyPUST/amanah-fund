@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type FormEvent } from 'react';
 import { Check, CheckCircle2, Lock, ShieldCheck, X, XCircle } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';

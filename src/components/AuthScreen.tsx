@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type FormEvent } from 'react';
 import { CheckCircle2, Lock, Shield, UserCheck } from 'lucide-react';
 import { motion } from 'motion/react';

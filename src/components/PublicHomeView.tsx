@@ -1,15 +1,9 @@
+'use client';
+
+import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Lock, ShieldCheck, Sheet, Vote } from 'lucide-react';
 import { motion } from 'motion/react';
-import heroArchitectureImg from '../assets/images/coop_hero_architecture_1794662148031.jpg';
-import halalInvestmentImg from '../assets/images/coop_halal_investment_1794662148589.jpg';
-import type { PublicUser } from '../types/coop.ts';
-import type { PublicPage } from './PublicNavbar.tsx';
-
-interface PublicHomeViewProps {
-  user: PublicUser | null;
-  onNavigate: (page: PublicPage) => void;
-  onOpenDashboard: () => void;
-}
+import { useCoopSession } from './AppProviders.tsx';
 
 const HIGHLIGHTS = [
   {
@@ -38,7 +32,9 @@ const HIGHLIGHTS = [
   },
 ];
 
-export function PublicHomeView({ user, onNavigate, onOpenDashboard }: PublicHomeViewProps) {
+export function PublicHomeView() {
+  const { user } = useCoopSession();
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Split Architectural Hero */}
@@ -66,22 +62,20 @@ export function PublicHomeView({ user, onNavigate, onOpenDashboard }: PublicHome
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => (user ? onOpenDashboard() : onNavigate('login'))}
-                className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors inline-flex items-center gap-2 cursor-pointer"
+              <Link
+                href={user ? '/dashboard' : '/login'}
+                className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
               >
                 <span>{user ? 'Enter Members Dashboard' : 'Member Sign In / Apply'}</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </button>
+              </Link>
 
-              <button
-                type="button"
-                onClick={() => onNavigate('rules')}
-                className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors cursor-pointer"
+              <Link
+                href="/rules"
+                className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors"
               >
                 Read Cooperative Rules
-              </button>
+              </Link>
             </div>
 
             {/* Clean Architectural Metrics Row */}
@@ -121,7 +115,7 @@ export function PublicHomeView({ user, onNavigate, onOpenDashboard }: PublicHome
           >
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800 aspect-video shadow-sm">
               <img
-                src={heroArchitectureImg}
+                src="/images/coop_hero_architecture_1794662148031.jpg"
                 alt="Minimalist architectural glass atrium representing transparent Amanah Co-op governance"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
@@ -173,7 +167,7 @@ export function PublicHomeView({ user, onNavigate, onOpenDashboard }: PublicHome
           <div className="lg:col-span-5">
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800 aspect-[4/3] shadow-sm">
               <img
-                src={halalInvestmentImg}
+                src="/images/coop_halal_investment_1794662148589.jpg"
                 alt="Solar-powered agricultural cold storage facility representing Shariah-compliant cooperative investments"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
@@ -228,21 +222,19 @@ export function PublicHomeView({ user, onNavigate, onOpenDashboard }: PublicHome
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate('about')}
-                className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              <Link
+                href="/about"
+                className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Explore Security & RBAC
-              </button>
-              <button
-                type="button"
-                onClick={() => (user ? onOpenDashboard() : onNavigate('login'))}
-                className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+              </Link>
+              <Link
+                href={user ? '/dashboard' : '/login'}
+                className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
               >
                 <span>{user ? 'Open Members Dashboard' : 'Sign In to Member Portal'}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>

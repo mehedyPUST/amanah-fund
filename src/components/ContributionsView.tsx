@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type FormEvent } from 'react';
 import { Check, Lock, Search, Shield, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';

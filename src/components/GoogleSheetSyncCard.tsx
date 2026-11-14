@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { ExternalLink, RefreshCw, Sheet, ShieldAlert } from 'lucide-react';
 import type { FundConfig } from '../types/coop.ts';

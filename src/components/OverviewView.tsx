@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowRight, Calendar, CheckCircle2, Lock, Settings, ShieldCheck, Vote } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';

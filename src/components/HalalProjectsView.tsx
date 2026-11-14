@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type FormEvent } from 'react';
 import { Calendar, Check, ChevronDown, ChevronUp, Plus, ShieldCheck, Vote, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';

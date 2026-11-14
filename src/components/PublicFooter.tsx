@@ -1,14 +1,12 @@
+'use client';
+
+import Link from 'next/link';
 import { Shield } from 'lucide-react';
-import type { PublicUser } from '../types/coop.ts';
-import type { PublicPage } from './PublicNavbar.tsx';
+import { useCoopSession } from './AppProviders.tsx';
 
-interface PublicFooterProps {
-  user: PublicUser | null;
-  onNavigate: (page: PublicPage) => void;
-  onOpenDashboard: () => void;
-}
+export function PublicFooter() {
+  const { user } = useCoopSession();
 
-export function PublicFooter({ user, onNavigate, onOpenDashboard }: PublicFooterProps) {
   return (
     <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -34,31 +32,19 @@ export function PublicFooter({ user, onNavigate, onOpenDashboard }: PublicFooter
             </h3>
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
               <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('home')}
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                >
+                <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400">
                   Overview & Home
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('about')}
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                >
+                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400">
                   About & Architecture
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('rules')}
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                >
+                <Link href="/rules" className="hover:text-emerald-700 dark:hover:text-emerald-400">
                   Cooperative Bylaws & Rules
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -83,18 +69,19 @@ export function PublicFooter({ user, onNavigate, onOpenDashboard }: PublicFooter
               Submit monthly Bank or MFS contributions, vote on Qard Hasan applications, and track
               repayment schedules.
             </p>
-            <button
-              type="button"
-              onClick={() => (user ? onOpenDashboard() : onNavigate('login'))}
-              className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:opacity-90 transition-opacity cursor-pointer"
+            <Link
+              href={user ? '/dashboard' : '/login'}
+              className="inline-block px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:opacity-90 transition-opacity"
             >
               {user ? 'Go to Members Dashboard' : 'Sign In or Apply'}
-            </button>
+            </Link>
           </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>© {new Date().getFullYear()} Amanah Co-op Fund Management. 0% Interest · Shariah-Governed.</span>
+          <span>
+            © {new Date().getFullYear()} Amanah Co-op Fund Management. 0% Interest · Shariah-Governed.
+          </span>
           <span className="font-mono">HttpOnly JWT · End-to-End Encrypted Ledger</span>
         </div>
       </div>

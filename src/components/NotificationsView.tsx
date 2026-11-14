@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, Check, Mail, Send, ShieldAlert } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';

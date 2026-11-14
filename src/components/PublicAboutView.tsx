@@ -1,9 +1,7 @@
-import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
-import type { PublicPage } from './PublicNavbar.tsx';
+'use client';
 
-interface PublicAboutViewProps {
-  onNavigate: (page: PublicPage) => void;
-}
+import Link from 'next/link';
+import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
 
 const PILLARS = [
   {
@@ -38,7 +36,7 @@ const PILLARS = [
   },
 ];
 
-export function PublicAboutView({ onNavigate }: PublicAboutViewProps) {
+export function PublicAboutView() {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
@@ -90,21 +88,19 @@ export function PublicAboutView({ onNavigate }: PublicAboutViewProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => onNavigate('rules')}
-              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+            <Link
+              href="/rules"
+              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               Read Cooperative Rules
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('login')}
-              className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
             >
               <span>Sign In / Apply</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
+            </Link>
           </div>
         </div>
       </section>

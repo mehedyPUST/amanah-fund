@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Check, ShieldCheck, Vote, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
