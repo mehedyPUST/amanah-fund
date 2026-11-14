@@ -17,6 +17,7 @@ import {
   Menu,
   Moon,
   RefreshCw,
+  ScrollText,
   Shield,
   Sun,
   User,
@@ -29,6 +30,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
+import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminReportsView } from './AdminReportsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
@@ -68,6 +70,7 @@ const NAV_ITEMS: Array<{
   { id: 'notifications', label: 'Notifications', Icon: Bell },
   { id: 'profile', label: 'Member Profile', Icon: User },
   { id: 'registrations', label: 'Pending Registrations', Icon: UserCheck, adminOnly: true },
+  { id: 'audit', label: 'Admin Audit Log', Icon: ScrollText, adminOnly: true },
   { id: 'admin', label: 'Admin & Reports', Icon: Shield, staffOnly: true },
 ];
 
@@ -781,6 +784,7 @@ export function DashboardShell() {
               {activeTab === 'registrations' && (
                 <PendingRegistrationsView user={user} onRefresh={handleRefreshWithAutoSync} />
               )}
+              {activeTab === 'audit' && <AdminAuditLog user={user} />}
               {activeTab === 'admin' && (
                 <AdminReportsView
                   config={overview?.config || null}

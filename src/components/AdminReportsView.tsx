@@ -7,8 +7,6 @@ import {
   Eye,
   FileSpreadsheet,
   HandCoins,
-  Search,
-  ShieldCheck,
   UserPlus,
   X,
   XCircle,
@@ -26,8 +24,9 @@ import type {
   UserStatus,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
+import { formatDateTime, formatMoney } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
@@ -64,8 +63,6 @@ export function AdminReportsView({
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [chainValid, setChainValid] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [logSearch, setLogSearch] = useState('');
-  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
   const [adminSection, setAdminSection] = useState<'all' | 'users' | 'analytics' | 'policy'>('all');
 
@@ -216,17 +213,6 @@ export function AdminReportsView({
 
   const pendingMembers = members.filter((m) => m.status === 'pending_approval');
   const pendingReviewLoans = loans.filter((l) => l.status === 'pending_vote');
-
-  const filteredLogs = logs.filter((l) => {
-    if (!logSearch.trim()) return true;
-    const q = logSearch.toLowerCase();
-    return (
-      l.actorName.toLowerCase().includes(q) ||
-      l.action.toLowerCase().includes(q) ||
-      l.summary.toLowerCase().includes(q) ||
-      l.resourceId.toLowerCase().includes(q)
-    );
-  });
 
   return (
     <div className="space-y-6">
@@ -654,103 +640,14 @@ export function AdminReportsView({
 
       {/* Tamper-Evident Encrypted Audit Trail */}
       {(adminSection === 'all' || adminSection === 'policy') && (
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Automated Audit Log & Hash Chain
-              </h3>
-              <span
-                className={`inline-flex items-center gap-1 text-xs font-medium ${
-                  chainValid
-                    ? 'text-emerald-700 dark:text-emerald-400'
-                    : 'text-rose-700 dark:text-rose-400'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{chainValid ? 'SHA-256 Chain Verified' : 'Chain Integrity Alert'}</span>
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Immutable activity trail with AES-256-GCM encrypted metadata envelopes
-            </p>
-          </div>
-
-          <div className="relative">
-            <Search
-              className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={logSearch}
-              onChange={(e) => setLogSearch(e.target.value)}
-              placeholder="Filter actor or action…"
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <Skeleton height={180} />
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
-            {filteredLogs.slice(0, 25).map((entry) => {
-              const isOpen = expandedLogId === entry.id;
-              return (
-                <div key={entry.id} className="p-3.5 space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="space-y-0.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                          {entry.action}
-                        </span>
-                        <span aria-hidden="true" className="text-slate-400">
-                          ·
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-300">
-                          {entry.actorName} ({entry.actorRole})
-                        </span>
-                        <span aria-hidden="true" className="text-slate-400">
-                          ·
-                        </span>
-                        <span className="font-mono text-slate-500">
-                          {formatDateTime(entry.timestamp)}
-                        </span>
-                      </div>
-                      <p className="text-slate-600 dark:text-slate-400">{entry.summary}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setExpandedLogId(isOpen ? null : entry.id)}
-                      className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer shrink-0"
-                    >
-                      {isOpen ? 'Hide Envelope' : 'Inspect Hash'}
-                    </button>
-                  </div>
-
-                  {isOpen && (
-                    <div className="p-3 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-600 dark:text-slate-400 space-y-1 break-all">
-                      <div>Entry Hash: {entry.entryHash}</div>
-                      <div>Prev Hash: {shortHash(entry.prevHash)}</div>
-                      <div>
-                        Encrypted Payload: {entry.encryptedPayload.ciphertext.slice(0, 64)}…
-                      </div>
-                      {entry.decryptedPayload && (
-                        <div className="text-emerald-700 dark:text-emerald-400">
-                          Decrypted Payload: {JSON.stringify(entry.decryptedPayload)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+        <AdminAuditLog
+          user={user}
+          initialLogs={logs}
+          initialChainValid={chainValid}
+          externalLoading={loading}
+          onRefreshExternal={loadAdminData}
+          compactHeader
+        />
       )}
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}

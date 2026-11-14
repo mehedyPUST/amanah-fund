@@ -1062,6 +1062,30 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         },
       });
 
+      if (loan.status === 'approved_pending_disbursement' || loan.status === 'rejected') {
+        appendAuditLog(draft, {
+          actor: viewer,
+          action:
+            loan.status === 'approved_pending_disbursement'
+              ? 'LOAN_QUORUM_APPROVED'
+              : 'LOAN_QUORUM_REJECTED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary:
+            loan.status === 'approved_pending_disbursement'
+              ? `Qard Hasan loan ${loan.id} (${loan.borrowerName}) reached 2/3 approval quorum and moved to approved_pending_disbursement`
+              : `Qard Hasan loan ${loan.id} (${loan.borrowerName}) failed 2/3 approval quorum and moved to rejected`,
+          payload: {
+            loanId: loan.id,
+            previousStatus: 'pending_vote',
+            resultingStatus: loan.status,
+            approveCount,
+            rejectCount,
+            requiredApprovals: loan.requiredApprovals,
+          },
+        });
+      }
+
       return draft;
     });
 
@@ -1488,6 +1512,22 @@ apiRouter.patch(
             loanStatus: loan.status,
           },
         });
+
+        if (approve && loan.status === 'repaid') {
+          appendAuditLog(draft, {
+            actor: viewer,
+            action: 'LOAN_REPAID_COMPLETED',
+            resourceType: 'loan',
+            resourceId: loan.id,
+            summary: `Qard Hasan loan ${loan.id} (${loan.borrowerName}) fully repaid and closed`,
+            payload: {
+              loanId: loan.id,
+              previousStatus: 'active',
+              resultingStatus: 'repaid',
+              totalRepaid: loan.totalRepaid,
+            },
+          });
+        }
 
         return draft;
       });
@@ -1949,6 +1989,7 @@ apiRouter.patch(
         }
 
         const prevStatus = user.status;
+        const prevRole = user.role;
         if (role && ['admin', 'manager', 'member'].includes(role)) {
           user.role = role;
         }
@@ -2007,13 +2048,27 @@ apiRouter.patch(
           });
         }
 
+        const memberAuditAction = approvedNow
+          ? 'MEMBER_SIGNUP_APPROVED'
+          : prevStatus !== 'suspended' && user.status === 'suspended'
+            ? 'MEMBER_SUSPENDED'
+            : prevStatus === 'suspended' && user.status === 'active'
+              ? 'MEMBER_REACTIVATED'
+              : 'MEMBER_RBAC_UPDATED';
+
         appendAuditLog(draft, {
           actor: viewer,
-          action: approvedNow ? 'MEMBER_SIGNUP_APPROVED' : 'MEMBER_RBAC_UPDATED',
-          resourceType: 'config',
+          action: memberAuditAction,
+          resourceType: 'auth',
           resourceId: user.id,
           summary: `${viewer.name} updated ${user.name} (${user.memberCode}) -> role: ${user.role}, status: ${user.status}`,
-          payload: { targetUserId: user.id, role: user.role, status: user.status },
+          payload: {
+            targetUserId: user.id,
+            previousRole: prevRole,
+            role: user.role,
+            previousStatus: prevStatus,
+            status: user.status,
+          },
         });
 
         return draft;

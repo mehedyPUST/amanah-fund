@@ -20,6 +20,7 @@ export type NavTab =
   | 'notifications'
   | 'profile'
   | 'registrations'
+  | 'audit'
   | 'admin';
 
 interface OverviewViewProps {
