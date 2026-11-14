@@ -173,6 +173,10 @@ export interface LoanRequest {
   remainingBalance: number;
   requestedAt: string;
   approvedAt?: string;
+  adminDecision?: 'approved' | 'rejected';
+  adminReviewedAt?: string;
+  adminReviewedBy?: string;
+  adminReviewNote?: string;
   disbursedAt?: string;
   completedAt?: string;
   entryHash: string;
@@ -214,6 +218,7 @@ export type NotificationType =
   | 'contribution_accepted'
   | 'loan_vote_requested'
   | 'loan_approved_confirmation'
+  | 'loan_rejected_notice'
   | 'loan_repayment_notice'
   | 'monthly_contribution_reminder';
 

@@ -7,12 +7,14 @@ import {
   ChevronUp,
   CreditCard,
   Download,
+  FileDown,
   HandCoins,
   History,
   Search,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import { downloadContributionAndLoanPdfStatement } from '../utils/pdfStatement.ts';
 import {
   formatBillingMonth,
   formatDateTime,
@@ -304,6 +306,16 @@ export function TransactionHistory({
     URL.revokeObjectURL(url);
   }
 
+  function handleDownloadPdf() {
+    downloadContributionAndLoanPdfStatement({
+      user,
+      config,
+      contributions,
+      loans,
+      scope: effectiveScope,
+    });
+  }
+
   return (
     <section
       aria-label="Member Transaction History"
@@ -362,6 +374,17 @@ export function TransactionHistory({
             >
               <Download className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               <span>Export CSV</span>
+            </button>
+          )}
+
+          {!loading && (
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+            >
+              <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Download PDF Statement</span>
             </button>
           )}
 

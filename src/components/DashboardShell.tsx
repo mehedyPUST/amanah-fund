@@ -8,6 +8,7 @@ import {
   BarChart3,
   Bell,
   Briefcase,
+  CheckCircle2,
   CreditCard,
   Globe,
   HandCoins,
@@ -21,6 +22,7 @@ import {
   UserCheck,
   Vote,
   X,
+  XCircle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
@@ -37,11 +39,12 @@ import { VotingView } from './VotingView.tsx';
 import type {
   Contribution,
   DashboardOverview,
+  EmailNotification,
   HalalProject,
   LoanRequest,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney } from '../utils/format.ts';
+import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 
 const NAV_ITEMS: Array<{
@@ -83,6 +86,7 @@ export function DashboardShell() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [halalProjects, setHalalProjects] = useState<HalalProject[]>([]);
+  const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
@@ -97,16 +101,18 @@ export function DashboardShell() {
   const refreshWorkspace = useCallback(async (silent = false) => {
     if (!silent) setDataLoading(true);
     try {
-      const [ovRes, cRes, lRes, hRes] = await Promise.all([
+      const [ovRes, cRes, lRes, hRes, nRes] = await Promise.all([
         api.getDashboard(),
         api.getContributions(),
         api.getLoans(),
         api.getHalalProjects(),
+        api.getNotifications(),
       ]);
       setOverview(ovRes);
       setContributions(cRes.contributions);
       setLoans(lRes.loans);
       setHalalProjects(hRes.projects);
+      setNotifications(nRes.notifications);
     } catch (err) {
       console.error('Workspace sync error:', err);
     } finally {
@@ -157,6 +163,7 @@ export function DashboardShell() {
     es.addEventListener('investment:voted', handleSync);
     es.addEventListener('investment:created', handleSync);
     es.addEventListener('loan:created', handleLoanCreated);
+    es.addEventListener('loan:reviewed', handleSync);
     es.addEventListener('loan:voted', handleSync);
     es.addEventListener('config:updated', handleSync);
     es.addEventListener('notification:created', handleSync);
@@ -181,6 +188,23 @@ export function DashboardShell() {
   async function handleRefreshWithAutoSync() {
     await refreshWorkspace(true);
     await triggerAutoSheetSyncIfEnabled(overview);
+  }
+
+  async function handleDismissLoanDecisionAlert(notificationId: string) {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, readByRecipient: true } : n))
+    );
+    try {
+      await api.markNotificationRead(notificationId);
+      await refreshWorkspace(true);
+    } catch {
+      // ignore transient error
+    }
+  }
+
+  async function handleOpenLoanFromDecisionAlert(notificationId: string) {
+    setActiveTab('loans');
+    await handleDismissLoanDecisionAlert(notificationId);
   }
 
   if (authChecking || !user) {
@@ -448,6 +472,126 @@ export function DashboardShell() {
       {/* GRID 4: Dashboard Contents (width == Grid 2 width [1fr], NO FOOTER) */}
       <main className="lg:col-start-2 lg:row-start-2 min-w-0 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
+          {/* Member Alert: Qard Hasan Loan Approved or Rejected by Admin */}
+          {(() => {
+            const loanDecisionAlerts = notifications.filter(
+              (n) =>
+                !n.readByRecipient &&
+                (n.type === 'loan_approved_confirmation' || n.type === 'loan_rejected_notice') &&
+                (n.recipientUserId === user.id ||
+                  n.recipientEmail.toLowerCase() === user.email.toLowerCase())
+            );
+            if (loanDecisionAlerts.length === 0) return null;
+
+            return (
+              <div className="space-y-3" aria-live="polite">
+                {loanDecisionAlerts.map((alert) => {
+                  const isApproved = alert.type === 'loan_approved_confirmation';
+                  return (
+                    <motion.section
+                      key={alert.id}
+                      role="alert"
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+                        isApproved
+                          ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
+                          : 'bg-rose-50/90 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                            isApproved
+                              ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-rose-600/15 text-rose-700 dark:text-rose-400'
+                          }`}
+                        >
+                          {isApproved ? (
+                            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                          ) : (
+                            <XCircle className="w-4 h-4" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="space-y-1 min-w-0">
+                          <div
+                            className={`flex flex-wrap items-center gap-2 text-xs font-semibold ${
+                              isApproved
+                                ? 'text-emerald-900 dark:text-emerald-200'
+                                : 'text-rose-900 dark:text-rose-200'
+                            }`}
+                          >
+                            <span>
+                              {isApproved
+                                ? 'Qard Hasan Loan Approved'
+                                : 'Qard Hasan Loan Request Declined'}
+                            </span>
+                            <span aria-hidden="true" className="opacity-50">
+                              ·
+                            </span>
+                            <span className="font-mono font-normal">
+                              {formatDateTime(alert.createdAt)}
+                            </span>
+                          </div>
+                          <p
+                            className={`text-xs font-medium ${
+                              isApproved
+                                ? 'text-emerald-900 dark:text-emerald-100'
+                                : 'text-rose-900 dark:text-rose-100'
+                            }`}
+                          >
+                            {alert.subject}
+                          </p>
+                          <p
+                            className={`text-xs leading-relaxed ${
+                              isApproved
+                                ? 'text-emerald-800 dark:text-emerald-300'
+                                : 'text-rose-800 dark:text-rose-300'
+                            }`}
+                          >
+                            {alert.body}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => void handleOpenLoanFromDecisionAlert(alert.id)}
+                          className={`px-3.5 py-2 rounded-lg text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                            isApproved
+                              ? 'bg-emerald-600 hover:bg-emerald-700'
+                              : 'bg-rose-600 hover:bg-rose-700'
+                          }`}
+                        >
+                          <span>View Loan Status</span>
+                          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('notifications')}
+                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors whitespace-nowrap cursor-pointer"
+                        >
+                          Inbox
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDismissLoanDecisionAlert(alert.id)}
+                          aria-label="Mark notification read and dismiss"
+                          title="Mark read and dismiss"
+                          className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.section>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {(() => {
             const unvotedLoanProposals = loans.filter(
               (l) =>

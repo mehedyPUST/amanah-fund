@@ -866,6 +866,18 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         }
       } else if (rejectCount > loan.totalEligibleVoters - loan.requiredApprovals) {
         loan.status = 'rejected';
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: 'loan_rejected_notice',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject: `Qard Hasan Request Declined (Member Vote): ${loan.id}`,
+            body: `Assalamu Alaikum ${borrower.name}, your Qard Hasan request (${loan.id}) for ${loan.amount} ${draft.fundConfig.currency} did not reach the required 2/3 member approval quorum and has been declined.`,
+            relatedId: loan.id,
+          });
+        }
       }
 
       updatedLoan = loan;
@@ -933,6 +945,7 @@ apiRouter.patch(
 
       const viewer = req.authUser!;
       let updatedLoan: LoanRequest | null = null;
+      let reviewedBorrowerId = '';
 
       await updateVaultState((draft) => {
         const loan = draft.loans.find((l) => l.id === id);
@@ -943,6 +956,12 @@ apiRouter.patch(
         }
 
         const reviewedAt = new Date().toISOString();
+        loan.adminDecision = decision === 'approve' ? 'approved' : 'rejected';
+        loan.adminReviewedAt = reviewedAt;
+        loan.adminReviewedBy = viewer.name;
+        loan.adminReviewNote = reviewNote || undefined;
+        reviewedBorrowerId = loan.borrowerId;
+
         if (decision === 'approve') {
           const overview = buildDashboardOverview(draft, viewer);
           if (loan.amount > overview.treasury.availableLiquidity) {
@@ -959,7 +978,7 @@ apiRouter.patch(
         const borrower = draft.users.find((u) => u.id === loan.borrowerId);
         if (borrower) {
           queueEmailNotification(draft, {
-            type: 'loan_approved_confirmation',
+            type: decision === 'approve' ? 'loan_approved_confirmation' : 'loan_rejected_notice',
             recipientEmail: borrower.email,
             recipientName: borrower.name,
             recipientUserId: borrower.id,
@@ -997,8 +1016,18 @@ apiRouter.patch(
         return;
       }
 
+      const notifType =
+        decision === 'approve' ? 'loan_approved_confirmation' : 'loan_rejected_notice';
+      broadcastRealtimeEvent('loan:reviewed', {
+        loanId: id,
+        borrowerId: reviewedBorrowerId,
+        decision,
+      });
       broadcastRealtimeEvent('loan:voted', { loanId: id });
-      broadcastRealtimeEvent('notification:created', { type: 'loan_approved_confirmation' });
+      broadcastRealtimeEvent('notification:created', {
+        type: notifType,
+        recipientUserId: reviewedBorrowerId,
+      });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
