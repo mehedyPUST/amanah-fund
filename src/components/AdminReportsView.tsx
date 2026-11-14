@@ -6,6 +6,7 @@ import {
   Download,
   Eye,
   FileSpreadsheet,
+  HandCoins,
   Search,
   ShieldCheck,
   UserPlus,
@@ -187,7 +188,33 @@ export function AdminReportsView({
     window.location.assign(`/api/reports/export?type=${type}`);
   }
 
+  const [loanReviewBusyId, setLoanReviewBusyId] = useState<string | null>(null);
+
+  async function handleAdminLoanReview(loanId: string, decision: 'approve' | 'reject') {
+    setLoanReviewBusyId(loanId);
+    setFeedback(null);
+    try {
+      await api.adminReviewLoan(loanId, decision);
+      setFeedback({
+        type: 'success',
+        text:
+          decision === 'approve'
+            ? `Qard Hasan loan ${loanId} approved for treasury disbursement.`
+            : `Qard Hasan loan ${loanId} declined during administrative review.`,
+      });
+      await Promise.all([onRefresh(), loadAdminData()]);
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to review loan request.',
+      });
+    } finally {
+      setLoanReviewBusyId(null);
+    }
+  }
+
   const pendingMembers = members.filter((m) => m.status === 'pending_approval');
+  const pendingReviewLoans = loans.filter((l) => l.status === 'pending_vote');
 
   const filteredLogs = logs.filter((l) => {
     if (!logSearch.trim()) return true;
@@ -311,6 +338,95 @@ export function AdminReportsView({
           )}
         </section>
       )}
+
+      {/* Administrative Qard Hasan Loan Review Queue */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <HandCoins className="w-4 h-4" aria-hidden="true" />
+              <span>Administrative Qard Hasan Review</span>
+            </div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+              Pending Loan Requests ({pendingReviewLoans.length})
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Review requested principal, purpose, repayment schedule, and encrypted payout account
+            </p>
+          </div>
+        </div>
+
+        {pendingReviewLoans.length === 0 ? (
+          <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
+            No pending Qard Hasan loan requests awaiting administrative review.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+            {pendingReviewLoans.map((loan) => {
+              const approvals = loan.votes.filter((v) => v.decision === 'approve').length;
+              return (
+                <div
+                  key={loan.id}
+                  className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                        {loan.id}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span>
+                        {loan.borrowerName} ({loan.borrowerCode})
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-mono">
+                        Votes {approvals}/{loan.requiredApprovals}
+                      </span>
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">
+                      {formatMoney(loan.amount, ccy)} · {loan.installmentMonths} monthly installments
+                      ({formatMoney(loan.monthlyInstallment, ccy)}/mo)
+                    </div>
+                    <p className="text-xs text-slate-700 dark:text-slate-300">{loan.purpose}</p>
+                    {loan.decryptedSensitiveNotes && (
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                        Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
+                        {loan.decryptedSensitiveNotes.provider} ·{' '}
+                        {loan.decryptedSensitiveNotes.disbursementAccount}
+                        {loan.decryptedSensitiveNotes.emergencyContext &&
+                        loan.decryptedSensitiveNotes.emergencyContext !== loan.purpose
+                          ? ` · Notes: ${loan.decryptedSensitiveNotes.emergencyContext}`
+                          : ''}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      disabled={loanReviewBusyId === loan.id}
+                      onClick={() => void handleAdminLoanReview(loan.id, 'reject')}
+                      className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Decline</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loanReviewBusyId === loan.id}
+                      onClick={() => void handleAdminLoanReview(loan.id, 'approve')}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Approve for Disbursement</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* Recharts Audit Visualization: Contribution Trends & Loan Volume */}
       <AuditTrendsCharts

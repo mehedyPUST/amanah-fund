@@ -634,6 +634,14 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
     }
 
     const state = await loadVaultState();
+    const dbUser = state.users.find((u) => u.id === viewer.id);
+    if (!dbUser || dbUser.status !== 'active') {
+      res.status(403).json({
+        error: 'Only verified active members can submit a Qard Hasan loan request.',
+      });
+      return;
+    }
+
     const eligibility = evaluateLoanEligibility(state, viewer.id);
     if (!eligibility.eligible) {
       res.status(400).json({
@@ -658,12 +666,6 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
     }
 
     const overview = buildDashboardOverview(state, viewer);
-    if (amount > overview.treasury.availableLiquidity) {
-      res.status(400).json({
-        error: `Requested amount exceeds available liquid treasury balance (${overview.treasury.availableLiquidity}).`,
-      });
-      return;
-    }
 
     const { activeVoters, requiredApprovals } = computeRequiredApprovals(state);
     const id = `loan-${new Date().getFullYear()}-${String(state.loans.length + 1).padStart(3, '0')}`;
@@ -725,8 +727,25 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
     await updateVaultState((draft) => {
       draft.loans.unshift(newLoan);
 
+      const notifiedIds = new Set<string>();
+      const adminsAndManagers = draft.users.filter(
+        (u) => u.status === 'active' && (u.role === 'admin' || u.role === 'manager')
+      );
+      adminsAndManagers.forEach((staff) => {
+        notifiedIds.add(staff.id);
+        queueEmailNotification(draft, {
+          type: 'loan_vote_requested',
+          recipientEmail: staff.email,
+          recipientName: staff.name,
+          recipientUserId: staff.id,
+          subject: `Qard Hasan Loan Review Needed: ${viewer.name} (${id})`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${draft.fundConfig.currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+          relatedId: id,
+        });
+      });
+
       const eligibleVoters = draft.users.filter(
-        (u) => u.status === 'active' && u.id !== viewer.id
+        (u) => u.status === 'active' && u.id !== viewer.id && !notifiedIds.has(u.id)
       );
       eligibleVoters.forEach((member) => {
         queueEmailNotification(draft, {
@@ -745,13 +764,14 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         action: 'LOAN_REQUEST_CREATED',
         resourceType: 'loan',
         resourceId: id,
-        summary: `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) for 2/3 member vote`,
+        summary: `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) for administrative review & 2/3 vote`,
         payload: {
           loanId: id,
           amount,
           installmentMonths,
           requiredApprovals,
           totalEligibleVoters: activeVoters,
+          availableLiquidityAtSubmission: overview.treasury.availableLiquidity,
         },
       });
       return draft;
@@ -890,6 +910,112 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
     res.status(500).json({ error: 'Failed to record vote.' });
   }
 });
+
+apiRouter.patch(
+  '/loans/:id/admin-review',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const decision =
+        req.body?.decision === 'approve'
+          ? 'approve'
+          : req.body?.decision === 'reject'
+            ? 'reject'
+            : null;
+      const reviewNote = String(req.body?.reviewNote || '').trim();
+
+      if (!decision) {
+        res.status(400).json({ error: 'Decision must be "approve" or "reject".' });
+        return;
+      }
+
+      const viewer = req.authUser!;
+      let updatedLoan: LoanRequest | null = null;
+
+      await updateVaultState((draft) => {
+        const loan = draft.loans.find((l) => l.id === id);
+        if (!loan) return draft;
+
+        if (loan.status !== 'pending_vote') {
+          throw new Error('ALREADY_REVIEWED');
+        }
+
+        const reviewedAt = new Date().toISOString();
+        if (decision === 'approve') {
+          const overview = buildDashboardOverview(draft, viewer);
+          if (loan.amount > overview.treasury.availableLiquidity) {
+            throw new Error('INSUFFICIENT_LIQUIDITY');
+          }
+          loan.status = 'approved_pending_disbursement';
+          loan.approvedAt = reviewedAt;
+        } else {
+          loan.status = 'rejected';
+        }
+
+        updatedLoan = loan;
+
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: 'loan_approved_confirmation',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject:
+              decision === 'approve'
+                ? `Qard Hasan Approved by Administration: ${loan.id}`
+                : `Qard Hasan Request Declined: ${loan.id}`,
+            body:
+              decision === 'approve'
+                ? `Assalamu Alaikum ${borrower.name}, your Qard Hasan request (${loan.id}) for ${loan.amount} ${draft.fundConfig.currency} has been approved during administrative review by ${viewer.name} and queued for treasury disbursement.${reviewNote ? ` Note: ${reviewNote}` : ''}`
+                : `Assalamu Alaikum ${borrower.name}, your Qard Hasan request (${loan.id}) for ${loan.amount} ${draft.fundConfig.currency} was declined during administrative review by ${viewer.name}.${reviewNote ? ` Reason: ${reviewNote}` : ''}`,
+            relatedId: loan.id,
+          });
+        }
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: decision === 'approve' ? 'LOAN_ADMIN_APPROVED' : 'LOAN_ADMIN_REJECTED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary: `${viewer.name} ${decision === 'approve' ? 'approved' : 'declined'} ${loan.borrowerName}'s Qard Hasan request (${loan.id}) in administrative review`,
+          payload: {
+            loanId: loan.id,
+            decision,
+            reviewNote: reviewNote || undefined,
+            resultingStatus: loan.status,
+          },
+        });
+
+        return draft;
+      });
+
+      if (!updatedLoan) {
+        res.status(404).json({ error: 'Loan request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('loan:voted', { loanId: id });
+      broadcastRealtimeEvent('notification:created', { type: 'loan_approved_confirmation' });
+      res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
+        res.status(409).json({ error: 'This loan request is no longer pending review.' });
+        return;
+      }
+      if (err instanceof Error && err.message === 'INSUFFICIENT_LIQUIDITY') {
+        res.status(400).json({
+          error: 'Insufficient available central treasury liquidity to approve this loan for disbursement.',
+        });
+        return;
+      }
+      console.error('Admin loan review error:', err);
+      res.status(500).json({ error: 'Failed to process administrative loan review.' });
+    }
+  }
+);
 
 apiRouter.post(
   '/loans/:id/disburse',

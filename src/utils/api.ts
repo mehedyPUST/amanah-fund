@@ -134,6 +134,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ decision, comment }),
     }),
+  adminReviewLoan: (id: string, decision: 'approve' | 'reject', reviewNote?: string) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/admin-review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reviewNote }),
+    }),
   disburseLoan: (id: string) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/disburse`, {
       method: 'POST',

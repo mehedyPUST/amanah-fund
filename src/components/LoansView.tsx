@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Check, CheckCircle2, Lock, ShieldCheck, X, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, ShieldCheck, X, XCircle } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 import { StatusText } from './StatusText.tsx';
 
 interface LoansViewProps {
@@ -30,15 +31,6 @@ export function LoansView({
   const ccy = config?.currency || 'BDT';
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
-  const [amount, setAmount] = useState('20000');
-  const [installmentMonths, setInstallmentMonths] = useState('5');
-  const [purpose, setPurpose] = useState('');
-  const [emergencyContext, setEmergencyContext] = useState('');
-  const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
-  const [provider, setProvider] = useState('bKash');
-  const [disbursementAccount, setDisbursementAccount] = useState('');
-
-  const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
@@ -56,42 +48,6 @@ export function LoansView({
   const [repayAccount, setRepayAccount] = useState('');
   const [repayRef, setRepayRef] = useState('');
   const [repayBusy, setRepayBusy] = useState(false);
-
-  const parsedAmount = Number(amount) || 0;
-  const parsedMonths = Math.max(1, Number(installmentMonths) || 1);
-  const monthlyPreview = Math.round((parsedAmount / parsedMonths) * 100) / 100;
-
-  async function handleLoanSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFeedback(null);
-    setSubmitting(true);
-    try {
-      await api.requestLoan({
-        amount: parsedAmount,
-        installmentMonths: parsedMonths,
-        purpose,
-        emergencyContext,
-        channel,
-        provider,
-        disbursementAccount,
-      });
-      setPurpose('');
-      setEmergencyContext('');
-      setDisbursementAccount('');
-      setFeedback({
-        type: 'success',
-        text: 'Qard Hasan request passed eligibility verification and is now open for 2/3 member voting.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Loan request failed.',
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   async function handleSubmitRepayment(e: FormEvent) {
     e.preventDefault();
@@ -426,158 +382,18 @@ export function LoansView({
       </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Request Qard Hasan Loan Form */}
-        <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Request Qard Hasan Loan
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              0% interest · Available liquidity:{' '}
-              <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
-                {formatMoney(availableLiquidity, ccy)}
-              </span>
-            </p>
-          </div>
-
-          <form onSubmit={handleLoanSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Principal ({ccy})
-                </label>
-                <input
-                  type="number"
-                  min={100}
-                  max={Math.min(config?.maxLoanAmount || 100000, availableLiquidity || 100000)}
-                  required
-                  disabled={!eligibility?.eligible}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Installments (Mo)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={config?.maxInstallmentMonths || 12}
-                  required
-                  disabled={!eligibility?.eligible}
-                  value={installmentMonths}
-                  onChange={(e) => setInstallmentMonths(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400">
-                Scheduled Monthly Installment (0% Interest)
-              </span>
-              <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                {formatMoney(monthlyPreview, ccy)} / mo
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Purpose Summary (Visible to Member Voters)
-              </label>
-              <input
-                type="text"
-                required
-                disabled={!eligibility?.eligible}
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="e.g. Medical expense or tuition bridge"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Payout Channel
-                </label>
-                <select
-                  disabled={!eligibility?.eligible}
-                  value={channel}
-                  onChange={(e) => {
-                    const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
-                    setChannel(ch);
-                    setProvider(ch === 'mfs' ? 'bKash' : 'Islami Bank Bangladesh');
-                  }}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-                >
-                  <option value="mfs">MFS</option>
-                  <option value="bank">Bank</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Provider
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={!eligibility?.eligible}
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Payout Account / Wallet Number (Encrypted)
-              </label>
-              <input
-                type="text"
-                required
-                disabled={!eligibility?.eligible}
-                value={disbursementAccount}
-                onChange={(e) => setDisbursementAccount(e.target.value)}
-                placeholder="017XX-XXXXXX or Bank Acct"
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Confidential Context (Encrypted for Treasury)
-              </label>
-              <textarea
-                rows={2}
-                disabled={!eligibility?.eligible}
-                value={emergencyContext}
-                onChange={(e) => setEmergencyContext(e.target.value)}
-                placeholder="Optional supporting context encrypted at rest"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!eligibility?.eligible || submitting}
-              className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-            >
-              <Lock className="w-4 h-4" aria-hidden="true" />
-              <span>
-                {!eligibility?.eligible
-                  ? 'Eligibility Requirements Not Met'
-                  : submitting
-                    ? 'Submitting Proposal…'
-                    : 'Submit for 2/3 Member Vote'}
-              </span>
-            </button>
-          </form>
-        </section>
+        <div className="xl:col-span-4">
+          <RequestQardHasanLoanForm
+            user={user}
+            eligibility={eligibility}
+            config={config}
+            availableLiquidity={availableLiquidity}
+            onSubmitted={async (loan) => {
+              setSelectedLoanId(loan.id);
+              await onRefresh();
+            }}
+          />
+        </div>
 
         {/* Repayment Schedule & Loan Portfolio */}
         <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
