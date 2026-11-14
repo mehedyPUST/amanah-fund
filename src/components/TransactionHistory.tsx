@@ -30,6 +30,7 @@ export type TransactionTabTarget =
   | 'loans'
   | 'voting'
   | 'halal'
+  | 'members'
   | 'notifications'
   | 'transactions'
   | 'profile'

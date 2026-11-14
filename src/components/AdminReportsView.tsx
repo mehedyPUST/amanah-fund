@@ -28,9 +28,9 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
-import { StatusText } from './StatusText.tsx';
 
 interface AdminReportsViewProps {
   config: FundConfig | null;
@@ -67,6 +67,7 @@ export function AdminReportsView({
   const [logSearch, setLogSearch] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
+  const [adminSection, setAdminSection] = useState<'all' | 'users' | 'analytics' | 'policy'>('all');
 
   // Admin policy form state
   const [maxLoansPerYear, setMaxLoansPerYear] = useState(String(config?.maxLoansPerYear ?? 3));
@@ -229,6 +230,36 @@ export function AdminReportsView({
 
   return (
     <div className="space-y-6">
+      {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3">
+        <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+          Admin Panel Workspace
+        </div>
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          {(
+            [
+              { id: 'all', label: 'All Sections' },
+              { id: 'users', label: `Manage Users (${members.length})` },
+              { id: 'analytics', label: 'Loans & Analytics' },
+              { id: 'policy', label: 'Policy & Audit Logs' },
+            ] as const
+          ).map((sec) => (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setAdminSection(sec.id)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                adminSection === sec.id
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {sec.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {feedback && (
         <div
           role="status"
@@ -243,7 +274,7 @@ export function AdminReportsView({
       )}
 
       {/* New User Signup Approval Queue (Admin) */}
-      {isAdmin && (
+      {isAdmin && (adminSection === 'all' || adminSection === 'users') && (
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -340,6 +371,7 @@ export function AdminReportsView({
       )}
 
       {/* Administrative Qard Hasan Loan Review Queue */}
+      {(adminSection === 'all' || adminSection === 'analytics') && (
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -427,67 +459,72 @@ export function AdminReportsView({
           </div>
         )}
       </section>
+      )}
 
       {/* Recharts Audit Visualization: Contribution Trends & Loan Volume */}
-      <AuditTrendsCharts
-        contributions={contributions}
-        loans={loans}
-        monthlySeries={monthlySeries}
-        currency={ccy}
-        loading={loading && monthlySeries.length === 0}
-      />
+      {(adminSection === 'all' || adminSection === 'analytics') && (
+        <>
+          <AuditTrendsCharts
+            contributions={contributions}
+            loans={loans}
+            monthlySeries={monthlySeries}
+            currency={ccy}
+            loading={loading && monthlySeries.length === 0}
+          />
 
-      {/* Google Sheets Blueprint Auto-Sync */}
-      <GoogleSheetSyncCard
-        config={config}
-        workspace={workspace}
-        connectingGoogle={connectingGoogle}
-        onConnectGoogle={onConnectGoogle}
-        onDisconnectGoogle={onDisconnectGoogle}
-        onSynced={async () => {
-          await Promise.all([onRefresh(), loadAdminData()]);
-        }}
-      />
+          {/* Google Sheets Blueprint Auto-Sync */}
+          <GoogleSheetSyncCard
+            config={config}
+            workspace={workspace}
+            connectingGoogle={connectingGoogle}
+            onConnectGoogle={onConnectGoogle}
+            onDisconnectGoogle={onDisconnectGoogle}
+            onSynced={async () => {
+              await Promise.all([onRefresh(), loadAdminData()]);
+            }}
+          />
 
-      {/* Automated Reporting Tools */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Automated Regulatory & Compliance Reports
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Export cryptographically hashed CSV ledgers for external Shariah audit and member
-              general meetings
-            </p>
-          </div>
-          <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
-        </div>
+          {/* Automated Reporting Tools */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Automated Regulatory & Compliance Reports
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Export cryptographically hashed CSV ledgers for external Shariah audit and member
+                  general meetings
+                </p>
+              </div>
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {(
-            [
-              { id: 'contributions', label: 'Contributions Ledger CSV' },
-              { id: 'loans', label: 'Qard Hasan Portfolio CSV' },
-              { id: 'members', label: 'Member Standing CSV' },
-              { id: 'audit', label: 'Encrypted Audit Trail CSV' },
-            ] as const
-          ).map((rep) => (
-            <button
-              key={rep.id}
-              type="button"
-              onClick={() => downloadCsvReport(rep.id)}
-              className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
-            >
-              <span>{rep.label}</span>
-              <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            </button>
-          ))}
-        </div>
-      </section>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {(
+                [
+                  { id: 'contributions', label: 'Contributions Ledger CSV' },
+                  { id: 'loans', label: 'Qard Hasan Portfolio CSV' },
+                  { id: 'members', label: 'Member Standing CSV' },
+                  { id: 'audit', label: 'Encrypted Audit Trail CSV' },
+                ] as const
+              ).map((rep) => (
+                <button
+                  key={rep.id}
+                  type="button"
+                  onClick={() => downloadCsvReport(rep.id)}
+                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                >
+                  <span>{rep.label}</span>
+                  <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Admin Governance & Policy Controls */}
-      {isAdmin && (
+      {isAdmin && (adminSection === 'all' || adminSection === 'policy') && (
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -599,117 +636,24 @@ export function AdminReportsView({
         </section>
       )}
 
-      {/* Member Directory & Granular RBAC */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Member Directory & Role-Based Access Control
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Track member contribution totals, annual Qard Hasan quota usage, and RBAC assignments
-          </p>
-        </div>
-
-        {loading ? (
-          <Skeleton height={160} />
-        ) : (
-          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                  <th className="py-2.5 px-4">Member</th>
-                  <th className="py-2.5 px-4">Role</th>
-                  <th className="py-2.5 px-4 text-right">Total Contributed</th>
-                  <th className="py-2.5 px-4 text-right">Loans This Year</th>
-                  <th className="py-2.5 px-4 text-right">Active Balance</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  {isAdmin && <th className="py-2.5 px-4 text-right">RBAC Action</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {members.map((m) => (
-                  <tr key={m.id}>
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-slate-900 dark:text-white text-sm">
-                        {m.name}
-                      </div>
-                      <div className="font-mono text-slate-500">
-                        {m.memberCode} · {m.email}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {isAdmin ? (
-                        <select
-                          value={m.role}
-                          onChange={(e) =>
-                            handleMemberChange(m.id, { role: e.target.value as UserRole })
-                          }
-                          className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 capitalize"
-                        >
-                          <option value="member">member</option>
-                          <option value="manager">manager</option>
-                          <option value="admin">admin</option>
-                        </select>
-                      ) : (
-                        <span className="capitalize font-medium">{m.role}</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums font-medium">
-                      {formatMoney(m.totalContributed, ccy)}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums">
-                      {m.loansThisYear} / {config?.maxLoansPerYear || 3}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums">
-                      {formatMoney(m.activeLoanBalance, ccy)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusText status={m.status} />
-                    </td>
-                    {isAdmin && (
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center justify-end gap-2">
-                          {m.registrationDetails && (
-                            <button
-                              type="button"
-                              onClick={() => setInspectingMember(m)}
-                              className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Eye className="w-3 h-3" aria-hidden="true" />
-                              <span>Details</span>
-                            </button>
-                          )}
-                          {m.id !== user.id ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleMemberChange(m.id, {
-                                  status: m.status === 'active' ? 'suspended' : 'active',
-                                })
-                              }
-                              className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                            >
-                              {m.status === 'active'
-                                ? 'Suspend'
-                                : m.status === 'pending_approval'
-                                  ? 'Approve'
-                                  : 'Activate'}
-                            </button>
-                          ) : (
-                            <span className="text-slate-400">Current Admin</span>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      {/* Admin User Management Option (Create, Edit, Role, Status, Delete, KYC) */}
+      {(adminSection === 'all' || adminSection === 'users') && (
+        <AdminUserManagementPanel
+          members={members}
+          currentUser={user}
+          config={config}
+          loading={loading}
+          onMembersUpdated={setMembers}
+          onInspectMember={setInspectingMember}
+          onRefreshAll={async () => {
+            await Promise.all([onRefresh(), loadAdminData()]);
+          }}
+          onFeedback={setFeedback}
+        />
+      )}
 
       {/* Tamper-Evident Encrypted Audit Trail */}
+      {(adminSection === 'all' || adminSection === 'policy') && (
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -807,6 +751,7 @@ export function AdminReportsView({
           </div>
         )}
       </section>
+      )}
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}
       {inspectingMember && (

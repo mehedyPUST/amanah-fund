@@ -208,15 +208,55 @@ export const api = {
       body: JSON.stringify({ decision, comment }),
     }),
 
+  getActiveMembers: () =>
+    apiRequest<{ members: import('../types/coop.ts').ActiveMemberDirectoryItem[] }>(
+      '/api/members/active'
+    ),
   getPendingRegistrations: () =>
     apiRequest<{ registrations: MemberSummary[] }>('/api/admin/registrations/pending'),
   getMembers: () => apiRequest<{ members: MemberSummary[] }>('/api/admin/members'),
-  updateMember: (id: string, payload: { role?: UserRole; status?: UserStatus }) =>
+  createMember: (payload: {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    status: UserStatus;
+    mobile?: string;
+    occupation?: string;
+    companyOrganization?: string;
+    presentAddress?: string;
+    permanentAddress?: string;
+    nid?: string;
+    dateOfBirth?: string;
+  }) =>
+    apiRequest<{ members: MemberSummary[] }>('/api/admin/members', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateMember: (
+    id: string,
+    payload: {
+      role?: UserRole;
+      status?: UserStatus;
+      name?: string;
+      email?: string;
+      password?: string;
+      mobile?: string;
+      occupation?: string;
+      companyOrganization?: string;
+      presentAddress?: string;
+      permanentAddress?: string;
+    }
+  ) =>
     apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
   declinePendingMember: (id: string) =>
+    apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
+      method: 'DELETE',
+    }),
+  deleteMember: (id: string) =>
     apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
       method: 'DELETE',
     }),

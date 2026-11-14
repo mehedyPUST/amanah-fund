@@ -21,12 +21,14 @@ import {
   Sun,
   User,
   UserCheck,
+  Users,
   Vote,
   X,
   XCircle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminReportsView } from './AdminReportsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
@@ -62,6 +64,7 @@ const NAV_ITEMS: Array<{
   { id: 'transactions', label: 'Transaction History', Icon: History },
   { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
   { id: 'halal', label: 'Halal Investment', Icon: Briefcase },
+  { id: 'members', label: 'Active Members', Icon: Users },
   { id: 'notifications', label: 'Notifications', Icon: Bell },
   { id: 'profile', label: 'Member Profile', Icon: User },
   { id: 'registrations', label: 'Pending Registrations', Icon: UserCheck, adminOnly: true },
@@ -758,6 +761,9 @@ export function DashboardShell() {
                   loading={dataLoading && halalProjects.length === 0}
                   onRefresh={handleRefreshWithAutoSync}
                 />
+              )}
+              {activeTab === 'members' && (
+                <ActiveMembersView user={user} config={overview?.config || null} />
               )}
               {activeTab === 'notifications' && (
                 <NotificationsView

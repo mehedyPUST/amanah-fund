@@ -15,6 +15,7 @@ export type NavTab =
   | 'loans'
   | 'voting'
   | 'halal'
+  | 'members'
   | 'transactions'
   | 'notifications'
   | 'profile'

@@ -42,6 +42,24 @@ export interface MemberSummary extends PublicUser {
   hasActiveLoan: boolean;
 }
 
+export interface ActiveMemberDirectoryItem {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  memberCode: string;
+  status: UserStatus;
+  joinedAt: string;
+  photoUrl?: string;
+  mobile: string;
+  occupation?: string;
+  companyOrganization?: string;
+  presentAddress?: string;
+  totalContributed: number;
+  approvedContributionsCount: number;
+  monthlyTarget: number;
+}
+
 export interface FundConfig {
   id: string;
   fundName: string;

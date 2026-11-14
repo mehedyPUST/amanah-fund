@@ -1700,6 +1700,38 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
 // 6. Admin Governance, RBAC, Fund Settings, Audit Logs & Automated Reports
 // ---------------------------------------------------------------------------
 
+apiRouter.get('/members/active', requireAuth, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const summaries = buildMemberSummaries(state, true);
+    const activeMembers = summaries
+      .filter((m) => m.status === 'active')
+      .map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        memberCode: m.memberCode,
+        status: m.status,
+        joinedAt: m.joinedAt,
+        photoUrl: m.registrationDetails?.photoUrl || m.photoUrl,
+        mobile: m.registrationDetails?.mobile || m.phoneMasked || 'Not provided',
+        occupation: m.registrationDetails?.occupation || undefined,
+        companyOrganization: m.registrationDetails?.companyOrganization || undefined,
+        presentAddress: m.registrationDetails?.presentAddress || undefined,
+        totalContributed: m.totalContributed,
+        approvedContributionsCount: m.approvedContributionsCount,
+        monthlyTarget: state.fundConfig.monthlyContributionAmount,
+      }))
+      .sort((a, b) => a.memberCode.localeCompare(b.memberCode));
+
+    res.json({ members: activeMembers });
+  } catch (err) {
+    console.error('Active members directory error:', err);
+    res.status(500).json({ error: 'Failed to load active members directory.' });
+  }
+});
+
 apiRouter.get(
   '/admin/registrations/pending',
   requireAuth,
@@ -1734,6 +1766,119 @@ apiRouter.get(
   }
 );
 
+apiRouter.post(
+  '/admin/members',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const name = String(req.body?.name || '').trim();
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const password = String(req.body?.password || '');
+      const role = (['admin', 'manager', 'member'].includes(String(req.body?.role))
+        ? req.body.role
+        : 'member') as UserRole;
+      const status = (['active', 'pending_approval', 'suspended'].includes(String(req.body?.status))
+        ? req.body.status
+        : 'active') as 'pending_approval' | 'active' | 'suspended';
+
+      const mobile = String(req.body?.mobile || '').trim();
+      const occupation = String(req.body?.occupation || '').trim();
+      const companyOrganization = String(req.body?.companyOrganization || '').trim();
+      const presentAddress = String(req.body?.presentAddress || '').trim();
+      const permanentAddress = String(req.body?.permanentAddress || '').trim();
+      const nid = String(req.body?.nid || '').trim();
+      const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
+
+      if (!name || name.length < 2) {
+        res.status(400).json({ error: 'Full name is required (at least 2 characters).' });
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.status(400).json({ error: 'A valid email address is required.' });
+        return;
+      }
+      if (password.length < 6) {
+        res.status(400).json({ error: 'Password must be at least 6 characters.' });
+        return;
+      }
+
+      const state = await loadVaultState();
+      if (state.users.some((u) => u.email.toLowerCase() === email)) {
+        res.status(409).json({ error: 'A user with this email already exists.' });
+        return;
+      }
+
+      const existingNumbers = state.users
+        .map((u) => Number(u.memberCode.replace(/\D/g, '')))
+        .filter((n) => Number.isFinite(n));
+      const nextNum = (existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0) + 1;
+      const memberCode = `AC-${String(nextNum).padStart(3, '0')}`;
+
+      const hasDetails = Boolean(
+        mobile || occupation || companyOrganization || presentAddress || permanentAddress || nid || dateOfBirth
+      );
+      const regDetails: UserRegistrationDetails | undefined = hasDetails
+        ? {
+            dateOfBirth: dateOfBirth || '',
+            referenceMemberName: viewer.name,
+            mobile: mobile || '',
+            occupation: occupation || '',
+            companyOrganization: companyOrganization || '',
+            nid: nid || '',
+            presentAddress: presentAddress || '',
+            permanentAddress: permanentAddress || '',
+            photoUrl: '',
+          }
+        : undefined;
+
+      const newUser: StoredUser = {
+        id: `usr-${role === 'admin' ? 'adm' : role === 'manager' ? 'mgr' : 'mem'}-${Date.now()}`,
+        name,
+        email,
+        passwordHash: bcrypt.hashSync(password, 10),
+        role,
+        memberCode,
+        status,
+        joinedAt: new Date().toISOString(),
+        phoneMasked: mobile ? maskReference(mobile) : undefined,
+        encryptedRegistrationDetails: regDetails ? encryptSensitiveObject(regDetails) : undefined,
+      };
+
+      const nextState = await updateVaultState((draft) => {
+        draft.users.push(newUser);
+        if (status === 'active') {
+          queueEmailNotification(draft, {
+            type: 'signup_approved',
+            recipientEmail: newUser.email,
+            recipientName: newUser.name,
+            recipientUserId: newUser.id,
+            subject: `Welcome to ${draft.fundConfig.fundName} — Account Provisioned`,
+            body: `Assalamu Alaikum ${newUser.name}, administrator ${viewer.name} created your cooperative account (${newUser.memberCode}) with role "${role}". You can sign in immediately.`,
+            relatedId: newUser.id,
+          });
+        }
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'MEMBER_CREATED_BY_ADMIN',
+          resourceType: 'auth',
+          resourceId: newUser.id,
+          summary: `${viewer.name} created user ${newUser.name} (${newUser.memberCode}, role: ${role}, status: ${status})`,
+          payload: { targetUserId: newUser.id, email: newUser.email, role, status },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('members:updated', { userId: newUser.id });
+      res.status(201).json({ members: buildMemberSummaries(nextState, true) });
+    } catch (err) {
+      console.error('Admin create member error:', err);
+      res.status(500).json({ error: 'Failed to create user account.' });
+    }
+  }
+);
+
 apiRouter.patch(
   '/admin/members/:id',
   requireAuth,
@@ -1743,10 +1888,43 @@ apiRouter.patch(
       const { id } = req.params;
       const role = req.body?.role as UserRole | undefined;
       const status = req.body?.status as 'pending_approval' | 'active' | 'suspended' | undefined;
+      const name = req.body?.name !== undefined ? String(req.body.name).trim() : undefined;
+      const email =
+        req.body?.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
+      const newPassword =
+        req.body?.password !== undefined ? String(req.body.password) : undefined;
+      const mobile = req.body?.mobile !== undefined ? String(req.body.mobile).trim() : undefined;
+      const occupation =
+        req.body?.occupation !== undefined ? String(req.body.occupation).trim() : undefined;
+      const companyOrganization =
+        req.body?.companyOrganization !== undefined
+          ? String(req.body.companyOrganization).trim()
+          : undefined;
+      const presentAddress =
+        req.body?.presentAddress !== undefined
+          ? String(req.body.presentAddress).trim()
+          : undefined;
+      const permanentAddress =
+        req.body?.permanentAddress !== undefined
+          ? String(req.body.permanentAddress).trim()
+          : undefined;
       const viewer = req.authUser!;
 
       if (id === viewer.id && status && status !== 'active') {
         res.status(400).json({ error: 'Administrators cannot suspend or lock their own account.' });
+        return;
+      }
+
+      if (name !== undefined && name.length < 2) {
+        res.status(400).json({ error: 'Full name must be at least 2 characters.' });
+        return;
+      }
+      if (email !== undefined && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+        res.status(400).json({ error: 'Please provide a valid email address.' });
+        return;
+      }
+      if (newPassword !== undefined && newPassword.length > 0 && newPassword.length < 6) {
+        res.status(400).json({ error: 'New password must be at least 6 characters.' });
         return;
       }
 
@@ -1757,12 +1935,63 @@ apiRouter.patch(
         if (!user) return draft;
         found = true;
 
+        if (email && email !== user.email.toLowerCase()) {
+          if (draft.users.some((u) => u.id !== id && u.email.toLowerCase() === email)) {
+            throw new Error('EMAIL_IN_USE');
+          }
+          user.email = email;
+        }
+        if (name) {
+          user.name = name;
+        }
+        if (newPassword && newPassword.length >= 6) {
+          user.passwordHash = bcrypt.hashSync(newPassword, 10);
+        }
+
         const prevStatus = user.status;
         if (role && ['admin', 'manager', 'member'].includes(role)) {
           user.role = role;
         }
         if (status && ['pending_approval', 'active', 'suspended'].includes(status)) {
           user.status = status;
+        }
+
+        if (
+          mobile !== undefined ||
+          occupation !== undefined ||
+          companyOrganization !== undefined ||
+          presentAddress !== undefined ||
+          permanentAddress !== undefined
+        ) {
+          let details: UserRegistrationDetails = {
+            dateOfBirth: '',
+            referenceMemberName: viewer.name,
+            mobile: '',
+            occupation: '',
+            companyOrganization: '',
+            nid: '',
+            presentAddress: '',
+            permanentAddress: '',
+            photoUrl: user.photoUrl || '',
+          };
+          if (user.encryptedRegistrationDetails) {
+            try {
+              details = decryptSensitiveObject<UserRegistrationDetails>(
+                user.encryptedRegistrationDetails
+              );
+            } catch {
+              // ignore corrupted envelope
+            }
+          }
+          if (mobile !== undefined) {
+            details.mobile = mobile;
+            user.phoneMasked = mobile ? maskReference(mobile) : undefined;
+          }
+          if (occupation !== undefined) details.occupation = occupation;
+          if (companyOrganization !== undefined) details.companyOrganization = companyOrganization;
+          if (presentAddress !== undefined) details.presentAddress = presentAddress;
+          if (permanentAddress !== undefined) details.permanentAddress = permanentAddress;
+          user.encryptedRegistrationDetails = encryptSensitiveObject(details);
         }
 
         if (prevStatus === 'pending_approval' && user.status === 'active') {
@@ -1802,6 +2031,10 @@ apiRouter.patch(
       const nextState = await loadVaultState();
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
+        res.status(409).json({ error: 'Another user account already uses that email address.' });
+        return;
+      }
       console.error('Update member error:', err);
       res.status(500).json({ error: 'Failed to update member.' });
     }
@@ -1816,29 +2049,45 @@ apiRouter.delete(
     try {
       const { id } = req.params;
       const viewer = req.authUser!;
+      if (id === viewer.id) {
+        res.status(400).json({ error: 'Administrators cannot delete their own active account.' });
+        return;
+      }
+
       let removedName = '';
+      let wasPending = false;
       await updateVaultState((draft) => {
         const idx = draft.users.findIndex((u) => u.id === id);
         if (idx === -1) return draft;
         const target = draft.users[idx];
-        if (target.status !== 'pending_approval') {
-          throw new Error('ONLY_PENDING_DELETABLE');
+
+        const hasActiveLoan = draft.loans.some(
+          (l) =>
+            l.borrowerId === target.id &&
+            (l.status === 'active' || l.status === 'approved_pending_disbursement')
+        );
+        if (hasActiveLoan) {
+          throw new Error('USER_HAS_ACTIVE_LOAN');
         }
+
+        wasPending = target.status === 'pending_approval';
         removedName = `${target.name} (${target.memberCode})`;
         draft.users.splice(idx, 1);
         appendAuditLog(draft, {
           actor: viewer,
-          action: 'MEMBER_SIGNUP_REJECTED',
+          action: wasPending ? 'MEMBER_SIGNUP_REJECTED' : 'MEMBER_REMOVED_BY_ADMIN',
           resourceType: 'auth',
           resourceId: id,
-          summary: `${viewer.name} declined pending registration for ${removedName}`,
+          summary: wasPending
+            ? `${viewer.name} declined pending registration for ${removedName}`
+            : `${viewer.name} removed user account ${removedName}`,
           payload: { targetUserId: id, email: target.email },
         });
         return draft;
       });
 
       if (!removedName) {
-        res.status(404).json({ error: 'Pending registration not found.' });
+        res.status(404).json({ error: 'User account not found.' });
         return;
       }
 
@@ -1846,12 +2095,14 @@ apiRouter.delete(
       const nextState = await loadVaultState();
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
-      if (err instanceof Error && err.message === 'ONLY_PENDING_DELETABLE') {
-        res.status(400).json({ error: 'Only pending registrations can be declined and removed.' });
+      if (err instanceof Error && err.message === 'USER_HAS_ACTIVE_LOAN') {
+        res.status(400).json({
+          error: 'Cannot delete a user who has an active or disbursement-approved Qard Hasan loan. Suspend the account instead.',
+        });
         return;
       }
-      console.error('Delete pending member error:', err);
-      res.status(500).json({ error: 'Failed to decline pending registration.' });
+      console.error('Delete member error:', err);
+      res.status(500).json({ error: 'Failed to remove user account.' });
     }
   }
 );
