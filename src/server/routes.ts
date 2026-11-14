@@ -967,23 +967,39 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
 apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
+    const rawDecision = String(req.body?.decision || '').toLowerCase();
     const decision =
-      req.body?.decision === 'approve'
+      rawDecision === 'approve' || rawDecision === 'upvote'
         ? 'approve'
-        : req.body?.decision === 'reject'
+        : rawDecision === 'reject' || rawDecision === 'downvote'
           ? 'reject'
           : null;
     const comment = String(req.body?.comment || '').trim();
 
     if (!decision) {
-      res.status(400).json({ error: 'Vote decision must be "approve" or "reject".' });
+      res.status(400).json({
+        error: 'Vote decision must be "upvote", "downvote", "approve", or "reject".',
+      });
       return;
     }
 
     const viewer = req.authUser!;
+    if (viewer.status !== 'active') {
+      res.status(403).json({
+        error: 'Only verified active cooperative members can vote on Qard Hasan loan requests.',
+      });
+      return;
+    }
+
     let updatedLoan: LoanRequest | null = null;
+    let quorumDecision: 'approve' | 'reject' | null = null;
 
     await updateVaultState((draft) => {
+      const voterRecord = draft.users.find((u) => u.id === viewer.id);
+      if (!voterRecord || voterRecord.status !== 'active') {
+        throw new Error('UNVERIFIED_MEMBER');
+      }
+
       const loan = draft.loans.find((l) => l.id === id);
       if (!loan) return draft;
 
@@ -1016,6 +1032,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
       if (approveCount >= loan.requiredApprovals) {
         loan.status = 'approved_pending_disbursement';
         loan.approvedAt = castAt;
+        quorumDecision = 'approve';
         const borrower = draft.users.find((u) => u.id === loan.borrowerId);
         if (borrower) {
           queueEmailNotification(draft, {
@@ -1030,6 +1047,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         }
       } else if (rejectCount > loan.totalEligibleVoters - loan.requiredApprovals) {
         loan.status = 'rejected';
+        quorumDecision = 'reject';
         const borrower = draft.users.find((u) => u.id === loan.borrowerId);
         if (borrower) {
           queueEmailNotification(draft, {
@@ -1051,7 +1069,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         action: 'LOAN_VOTE_CAST',
         resourceType: 'vote',
         resourceId: loan.id,
-        summary: `${viewer.name} voted ${decision.toUpperCase()} on ${loan.borrowerName}'s loan (${approveCount}/${loan.requiredApprovals} approvals)`,
+        summary: `${viewer.name} cast ${decision === 'approve' ? 'UPVOTE (Approve)' : 'DOWNVOTE (Reject)'} on ${loan.borrowerName}'s loan (${approveCount}/${loan.requiredApprovals} approvals)`,
         payload: {
           loanId: loan.id,
           decision,
@@ -1095,9 +1113,25 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
     }
 
     broadcastRealtimeEvent('loan:voted', { loanId: id });
-    broadcastRealtimeEvent('notification:created', { type: 'loan_approved_confirmation' });
+    if (quorumDecision) {
+      broadcastRealtimeEvent('loan:reviewed', {
+        loanId: id,
+        borrowerId: (updatedLoan as LoanRequest).borrowerId,
+        decision: quorumDecision,
+      });
+      broadcastRealtimeEvent('notification:created', {
+        type: quorumDecision === 'approve' ? 'loan_approved_confirmation' : 'loan_rejected_notice',
+        recipientUserId: (updatedLoan as LoanRequest).borrowerId,
+      });
+    }
     res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
   } catch (err) {
+    if (err instanceof Error && err.message === 'UNVERIFIED_MEMBER') {
+      res.status(403).json({
+        error: 'Only verified active cooperative members can vote on Qard Hasan loan requests.',
+      });
+      return;
+    }
     if (err instanceof Error && err.message === 'VOTING_CLOSED') {
       res.status(409).json({ error: 'Voting has already closed for this loan request.' });
       return;

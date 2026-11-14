@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ShieldCheck, Vote, X } from 'lucide-react';
+import {
+  Check,
+  ShieldAlert,
+  ShieldCheck,
+  ThumbsDown,
+  ThumbsUp,
+  Vote,
+  X,
+} from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { FundConfig, HalalProject, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -27,22 +35,37 @@ export function VotingView({
 }: VotingViewProps) {
   const ccy = config?.currency || 'BDT';
   const isStaff = user.role === 'admin' || user.role === 'manager';
+  const isVerifiedMember = user.status === 'active';
 
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'investments' | 'loans'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'loans' | 'investments'>('all');
   const [comments, setComments] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
 
-  async function handleLoanVote(loanId: string, decision: 'approve' | 'reject') {
+  async function handleLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
+    if (!isVerifiedMember) {
+      setFeedback({
+        type: 'error',
+        text: 'Only verified active cooperative members can vote on Qard Hasan loan requests.',
+      });
+      return;
+    }
     setBusyId(loanId);
     setFeedback(null);
     try {
-      await api.voteLoan(loanId, decision, comments[loanId]);
+      const res = await api.voteLoan(loanId, decision, comments[loanId]);
+      const updated = res.loan;
+      const upvotes = updated.votes.filter((v) => v.decision === 'approve').length;
       setFeedback({
         type: 'success',
-        text: `Your cryptographic ${decision.toUpperCase()} vote has been recorded on ${loanId}.`,
+        text:
+          updated.status === 'approved_pending_disbursement'
+            ? `Your UPVOTE was recorded on ${loanId}. 2/3 majority reached (${upvotes}/${updated.requiredApprovals}) — queued for disbursement!`
+            : updated.status === 'rejected'
+              ? `Your DOWNVOTE was recorded on ${loanId}. Request can no longer reach 2/3 quorum and has been declined.`
+              : `Your cryptographic ${decision.toUpperCase()} has been recorded on ${loanId}.`,
       });
       await onRefresh();
     } catch (err) {
@@ -128,15 +151,29 @@ export function VotingView({
         </div>
       )}
 
+      {!isVerifiedMember && (
+        <div
+          role="alert"
+          className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2"
+        >
+          <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>
+            Voting is restricted to verified active members. Your account status is currently{' '}
+            <strong className="uppercase">{user.status.replace(/_/g, ' ')}</strong>.
+          </span>
+        </div>
+      )}
+
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Real-Time 2/3 Member Voting Center
+            Verified Member 2/3 Voting Center
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Cast Yes / No votes on proposed fund investment placements and approve Qard Hasan loan
-            requests. Approval requires at least {config?.voteThresholdNumerator || 2}/
-            {config?.voteThresholdDenominator || 3} (66.7%) member agreement.
+            Verified members review pending Qard Hasan loan requests and cast an Upvote or Downvote
+            (plus Yes / No on investment placements). Approval requires a{' '}
+            {config?.voteThresholdNumerator || 2}/{config?.voteThresholdDenominator || 3} (66.7%)
+            supermajority of active members.
           </p>
         </div>
 
@@ -144,8 +181,8 @@ export function VotingView({
           {(
             [
               { id: 'all', label: 'All Ballots' },
+              { id: 'loans', label: `Qard Hasan Loans (${pendingOrApprovedLoans.length})` },
               { id: 'investments', label: `Investments (${openProjects.length})` },
-              { id: 'loans', label: `Loans (${pendingOrApprovedLoans.length})` },
             ] as const
           ).map((tab) => (
             <button
@@ -304,9 +341,9 @@ export function VotingView({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Qard Hasan Loan Proposals & Disbursements
+                  Pending Qard Hasan Loan Requests (Upvote / Downvote · 2/3 Majority)
                 </h3>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
                   {pendingOrApprovedLoans.length} active
                 </span>
               </div>
@@ -320,9 +357,13 @@ export function VotingView({
                 pendingOrApprovedLoans.map((loan) => {
                   const approveCount = loan.votes.filter((v) => v.decision === 'approve').length;
                   const rejectCount = loan.votes.filter((v) => v.decision === 'reject').length;
+                  const remainingNeeded = Math.max(0, loan.requiredApprovals - approveCount);
                   const progressPct = Math.min(
                     100,
                     Math.round((approveCount / loan.requiredApprovals) * 100)
+                  );
+                  const voterPct = Math.round(
+                    (approveCount / Math.max(1, loan.totalEligibleVoters)) * 100
                   );
                   const myVote = loan.votes.find((v) => v.voterId === user.id);
 
@@ -355,27 +396,94 @@ export function VotingView({
                           </div>
                         </div>
 
-                        <div className="lg:w-72 shrink-0 space-y-2">
+                        <div className="lg:w-80 shrink-0 space-y-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-medium text-slate-700 dark:text-slate-300">
-                              2/3 Quorum Progress
+                              2/3 Quorum Progress ({voterPct}%)
                             </span>
                             <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                              {approveCount} / {loan.requiredApprovals} approvals
+                              {approveCount} / {loan.requiredApprovals} upvotes
                             </span>
                           </div>
-                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-emerald-600 transition-all"
+                              className="h-full bg-emerald-600 transition-all duration-300"
                               style={{ width: `${progressPct}%` }}
                             />
                           </div>
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                            <span>{loan.totalEligibleVoters} active members</span>
-                            <span>{rejectCount} reject</span>
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums">
+                            <span className="text-emerald-700 dark:text-emerald-400">
+                              Upvotes: {approveCount}
+                            </span>
+                            <span className="text-rose-700 dark:text-rose-400">
+                              Downvotes: {rejectCount}
+                            </span>
+                            <span className="text-slate-500 dark:text-slate-400">
+                              {remainingNeeded > 0
+                                ? `${remainingNeeded} more needed (${loan.totalEligibleVoters} active)`
+                                : `Quorum met (${loan.totalEligibleVoters} active)`}
+                            </span>
                           </div>
                         </div>
                       </div>
+
+                      {loan.votes.length > 0 && (
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            Verified Member Ballots ({loan.votes.length})
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {loan.votes.map((v) => {
+                              const isUp = v.decision === 'approve';
+                              return (
+                                <div
+                                  key={`${loan.id}-${v.voterId}`}
+                                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-2 text-xs"
+                                >
+                                  <div className="min-w-0 space-y-0.5">
+                                    <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-white">
+                                      {isUp ? (
+                                        <ThumbsUp
+                                          className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+                                          aria-hidden="true"
+                                        />
+                                      ) : (
+                                        <ThumbsDown
+                                          className="w-3.5 h-3.5 text-rose-600 shrink-0"
+                                          aria-hidden="true"
+                                        />
+                                      )}
+                                      <span className="truncate">{v.voterName}</span>
+                                      <span className="text-[11px] text-slate-500 capitalize">
+                                        ({v.voterRole})
+                                      </span>
+                                    </div>
+                                    {v.comment && (
+                                      <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                                        &ldquo;{v.comment}&rdquo;
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <div
+                                      className={`font-semibold text-[11px] ${
+                                        isUp
+                                          ? 'text-emerald-700 dark:text-emerald-400'
+                                          : 'text-rose-700 dark:text-rose-400'
+                                      }`}
+                                    >
+                                      {isUp ? 'Upvoted' : 'Downvoted'}
+                                    </div>
+                                    <div className="font-mono text-[10px] text-slate-400">
+                                      {shortHash(v.signatureHash)}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {loan.status === 'pending_vote' && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -383,7 +491,10 @@ export function VotingView({
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                               <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                               <span>
-                                You voted <strong className="uppercase">{myVote.decision}</strong>{' '}
+                                You cast an{' '}
+                                <strong className="uppercase">
+                                  {myVote.decision === 'approve' ? 'Upvote' : 'Downvote'}
+                                </strong>{' '}
                                 on {formatDateTime(myVote.castAt)} (Sig:{' '}
                                 {shortHash(myVote.signatureHash)})
                               </span>
@@ -392,31 +503,32 @@ export function VotingView({
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                               <input
                                 type="text"
+                                disabled={!isVerifiedMember}
                                 value={comments[loan.id] || ''}
                                 onChange={(e) =>
                                   setComments((prev) => ({ ...prev, [loan.id]: e.target.value }))
                                 }
                                 placeholder="Optional ballot rationale (recorded in audit log)…"
-                                className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
                               />
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
-                                  disabled={busyId === loan.id}
-                                  onClick={() => handleLoanVote(loan.id, 'approve')}
+                                  disabled={!isVerifiedMember || busyId === loan.id}
+                                  onClick={() => handleLoanVote(loan.id, 'upvote')}
                                   className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
-                                  <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Vote Approve</span>
+                                  <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>Upvote</span>
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={busyId === loan.id}
-                                  onClick={() => handleLoanVote(loan.id, 'reject')}
+                                  disabled={!isVerifiedMember || busyId === loan.id}
+                                  onClick={() => handleLoanVote(loan.id, 'downvote')}
                                   className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
-                                  <X className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Vote Reject</span>
+                                  <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>Downvote</span>
                                 </button>
                               </div>
                             </div>

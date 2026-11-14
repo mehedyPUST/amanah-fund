@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
+  Award,
   BarChart3,
   Bell,
   Briefcase,
@@ -33,6 +34,7 @@ import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminReportsView } from './AdminReportsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { ContributionTiers } from './ContributionTiers.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { LoansView } from './LoansView.tsx';
@@ -62,6 +64,7 @@ const NAV_ITEMS: Array<{
 }> = [
   { id: 'overview', label: 'Overview', Icon: BarChart3 },
   { id: 'contributions', label: 'Contributions', Icon: CreditCard },
+  { id: 'tiers', label: 'Contribution Tiers', Icon: Award },
   { id: 'loans', label: 'Qard Hasan Loans', Icon: HandCoins },
   { id: 'transactions', label: 'Transaction History', Icon: History },
   { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
@@ -723,6 +726,14 @@ export function DashboardShell() {
                   user={user}
                   loading={dataLoading && contributions.length === 0}
                   onRefresh={handleRefreshWithAutoSync}
+                />
+              )}
+              {activeTab === 'tiers' && (
+                <ContributionTiers
+                  user={user}
+                  contributions={contributions}
+                  config={overview?.config || null}
+                  onNavigate={setActiveTab}
                 />
               )}
               {activeTab === 'loans' && (

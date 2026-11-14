@@ -12,6 +12,7 @@ import { TransactionHistory } from './TransactionHistory.tsx';
 export type NavTab =
   | 'overview'
   | 'contributions'
+  | 'tiers'
   | 'loans'
   | 'voting'
   | 'halal'

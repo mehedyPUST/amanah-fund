@@ -143,7 +143,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  voteLoan: (id: string, decision: 'approve' | 'reject', comment?: string) =>
+  voteLoan: (
+    id: string,
+    decision: 'approve' | 'reject' | 'upvote' | 'downvote',
+    comment?: string
+  ) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/vote`, {
       method: 'POST',
       body: JSON.stringify({ decision, comment }),

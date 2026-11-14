@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Check, CheckCircle2, ShieldCheck, X, XCircle } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  ShieldCheck,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+  XCircle,
+} from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -107,6 +115,28 @@ export function LoansView({
       });
     } finally {
       setRepayBusy(false);
+    }
+  }
+
+  const [voteBusyId, setVoteBusyId] = useState<string | null>(null);
+
+  async function handleQuickLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
+    setVoteBusyId(loanId);
+    setFeedback(null);
+    try {
+      await api.voteLoan(loanId, decision);
+      setFeedback({
+        type: 'success',
+        text: `Your ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} was recorded for ${loanId} (2/3 majority tally updated).`,
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to cast loan vote.',
+      });
+    } finally {
+      setVoteBusyId(null);
     }
   }
 
@@ -522,6 +552,79 @@ export function LoansView({
                       </span>
                     )}
                   </div>
+
+                  {activeSelectedLoan.status === 'pending_vote' && (() => {
+                    const upvotes = activeSelectedLoan.votes.filter(
+                      (v) => v.decision === 'approve'
+                    ).length;
+                    const downvotes = activeSelectedLoan.votes.filter(
+                      (v) => v.decision === 'reject'
+                    ).length;
+                    const myVote = activeSelectedLoan.votes.find((v) => v.voterId === user.id);
+                    const pct = Math.min(
+                      100,
+                      Math.round((upvotes / activeSelectedLoan.requiredApprovals) * 100)
+                    );
+                    return (
+                      <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              2/3 Member Vote
+                            </span>
+                            <span aria-hidden="true" className="text-slate-400">
+                              ·
+                            </span>
+                            <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                              {upvotes}/{activeSelectedLoan.requiredApprovals} Upvotes
+                            </span>
+                            <span aria-hidden="true" className="text-slate-400">
+                              ·
+                            </span>
+                            <span className="font-mono tabular-nums text-rose-700 dark:text-rose-400">
+                              {downvotes} Downvotes
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-600 transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {user.status === 'active' && !myVote && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              disabled={voteBusyId === activeSelectedLoan.id}
+                              onClick={() => void handleQuickLoanVote(activeSelectedLoan.id, 'upvote')}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>Upvote</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={voteBusyId === activeSelectedLoan.id}
+                              onClick={() =>
+                                void handleQuickLoanVote(activeSelectedLoan.id, 'downvote')
+                              }
+                              className="px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>Downvote</span>
+                            </button>
+                          </div>
+                        )}
+                        {myVote && (
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 shrink-0">
+                            You {myVote.decision === 'approve' ? 'Upvoted' : 'Downvoted'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {payingInstallment && payingInstallment.loanId === activeSelectedLoan.id && (
                     <form
