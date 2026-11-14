@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  ArrowRight,
   BarChart3,
   Bell,
   Briefcase,
@@ -36,6 +37,7 @@ import type {
   LoanRequest,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 
 const NAV_ITEMS: Array<{
@@ -75,6 +77,8 @@ export function DashboardShell() {
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [halalProjects, setHalalProjects] = useState<HalalProject[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
+  const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const autoSyncBusyRef = useRef(false);
 
   useEffect(() => {
@@ -131,8 +135,21 @@ export function DashboardShell() {
     const handleSync = () => {
       void refreshWorkspace(true);
     };
+    const handleLoanCreated = (evt: MessageEvent) => {
+      try {
+        const data = JSON.parse(evt.data) as { loanId?: string; borrowerId?: string };
+        if (data.loanId && data.borrowerId !== user.id) {
+          setLiveLoanPulseId(data.loanId);
+          setDismissedLoanAlertIds((prev) => prev.filter((id) => id !== data.loanId));
+        }
+      } catch {
+        // ignore malformed payload
+      }
+      void refreshWorkspace(true);
+    };
     es.addEventListener('investment:voted', handleSync);
     es.addEventListener('investment:created', handleSync);
+    es.addEventListener('loan:created', handleLoanCreated);
     es.addEventListener('loan:voted', handleSync);
     es.addEventListener('config:updated', handleSync);
     es.addEventListener('notification:created', handleSync);
@@ -421,7 +438,96 @@ export function DashboardShell() {
 
       {/* GRID 4: Dashboard Contents (width == Grid 2 width [1fr], NO FOOTER) */}
       <main className="lg:col-start-2 lg:row-start-2 min-w-0 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {(() => {
+            const unvotedLoanProposals = loans.filter(
+              (l) =>
+                l.status === 'pending_vote' &&
+                !l.votes.some((v) => v.voterId === user.id) &&
+                !dismissedLoanAlertIds.includes(l.id)
+            );
+            if (activeTab === 'voting' || unvotedLoanProposals.length === 0) {
+              return null;
+            }
+            const featuredLoan =
+              unvotedLoanProposals.find((l) => l.id === liveLoanPulseId) || unvotedLoanProposals[0];
+            const approvalsCount = featuredLoan.votes.filter(
+              (v) => v.decision === 'approve'
+            ).length;
+            const ccy = overview?.config.currency || 'BDT';
+
+            return (
+              <motion.section
+                role="status"
+                aria-live="polite"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                className="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-amber-600/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Vote className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                      <span>
+                        {unvotedLoanProposals.length === 1
+                          ? 'New Qard Hasan Loan Proposal Requires Your 2/3 Majority Vote'
+                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Require Your 2/3 Majority Vote`}
+                      </span>
+                      <span aria-hidden="true" className="text-amber-400 dark:text-amber-700">
+                        ·
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {approvalsCount}/{featuredLoan.requiredApprovals} approvals
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                      <strong className="font-semibold">{featuredLoan.borrowerName}</strong> (
+                      <span className="font-mono">{featuredLoan.id}</span>) requested{' '}
+                      <strong className="font-mono tabular-nums">
+                        {formatMoney(featuredLoan.amount, ccy)}
+                      </strong>{' '}
+                      across {featuredLoan.installmentMonths} monthly installments — &ldquo;
+                      {featuredLoan.purpose}&rdquo;. Active member ballots are needed to reach the
+                      2/3 quorum ({featuredLoan.requiredApprovals} of{' '}
+                      {featuredLoan.totalEligibleVoters} members).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('voting');
+                      setLiveLoanPulseId(null);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                  >
+                    <span>Cast 2/3 Vote</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDismissedLoanAlertIds((prev) => [
+                        ...prev,
+                        ...unvotedLoanProposals.map((l) => l.id),
+                      ])
+                    }
+                    aria-label="Dismiss loan vote alert"
+                    title="Dismiss alert for now"
+                    className="p-2 rounded-lg border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.section>
+            );
+          })()}
+
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

@@ -197,6 +197,7 @@ export type NotificationType =
   | 'signup_approved'
   | 'contribution_placed_manager'
   | 'contribution_accepted'
+  | 'loan_vote_requested'
   | 'loan_approved_confirmation'
   | 'loan_repayment_notice'
   | 'monthly_contribution_reminder';

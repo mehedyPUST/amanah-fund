@@ -23,6 +23,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   signup_approved: 'Account Approved',
   contribution_placed_manager: 'Contribution Placed (Manager)',
   contribution_accepted: 'Contribution Accepted',
+  loan_vote_requested: '2/3 Loan Vote Required',
   loan_approved_confirmation: 'Loan Accepted Confirmation',
   loan_repayment_notice: 'Loan Repayment Notice',
   monthly_contribution_reminder: 'Monthly Contribution Reminder',

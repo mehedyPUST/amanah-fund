@@ -617,6 +617,22 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
 
     await updateVaultState((draft) => {
       draft.loans.unshift(newLoan);
+
+      const eligibleVoters = draft.users.filter(
+        (u) => u.status === 'active' && u.id !== viewer.id
+      );
+      eligibleVoters.forEach((member) => {
+        queueEmailNotification(draft, {
+          type: 'loan_vote_requested',
+          recipientEmail: member.email,
+          recipientName: member.name,
+          recipientUserId: member.id,
+          subject: `2/3 Majority Vote Needed: ${viewer.name} (${id})`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${draft.fundConfig.currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
+          relatedId: id,
+        });
+      });
+
       appendAuditLog(draft, {
         actor: viewer,
         action: 'LOAN_REQUEST_CREATED',
@@ -632,6 +648,22 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         },
       });
       return draft;
+    });
+
+    broadcastRealtimeEvent('loan:created', {
+      loanId: id,
+      borrowerId: viewer.id,
+      borrowerName: viewer.name,
+      borrowerCode: viewer.memberCode,
+      amount,
+      currency: state.fundConfig.currency,
+      requiredApprovals,
+      totalEligibleVoters: activeVoters,
+      purpose,
+    });
+    broadcastRealtimeEvent('notification:created', {
+      type: 'loan_vote_requested',
+      loanId: id,
     });
 
     res.status(201).json({ loan: hydrateLoanForViewer(newLoan, viewer) });
