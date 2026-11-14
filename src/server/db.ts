@@ -118,7 +118,98 @@ function createSeedState(): VaultState {
   };
 }
 
+const LEGACY_FAKE_USER_IDS = new Set([
+  'usr-mgr-1',
+  'usr-mem-1',
+  'usr-mem-2',
+  'usr-mem-3',
+  'usr-mem-4',
+  'usr-pending-1',
+]);
+
+const LEGACY_FAKE_USER_EMAILS = new Set([
+  'nadia@amanahcoop.org',
+  'imran@amanahcoop.org',
+  'fatima@amanahcoop.org',
+  'yusuf@amanahcoop.org',
+  'ayesha@amanahcoop.org',
+  'bilal@amanahcoop.org',
+]);
+
+const LEGACY_FAKE_LOAN_IDS = new Set(['loan-2026-001', 'loan-2026-002', 'loan-2026-003']);
+const LEGACY_FAKE_PROJECT_IDS = new Set(['halal-proj-1', 'halal-proj-2', 'halal-proj-3']);
+const LEGACY_FAKE_NOTIF_IDS = new Set(['notif-001', 'notif-002', 'notif-003', 'notif-004']);
+const LEGACY_FAKE_AUDIT_IDS = new Set(['audit-002', 'audit-003']);
+
+function purgeLegacyFakeSeedData(state: VaultState): { state: VaultState; changed: boolean } {
+  let changed = false;
+
+  const filteredUsers = (state.users || []).filter((u) => {
+    const isFake =
+      LEGACY_FAKE_USER_IDS.has(u.id) || LEGACY_FAKE_USER_EMAILS.has(u.email.toLowerCase());
+    if (isFake) changed = true;
+    return !isFake;
+  });
+
+  state.users = filteredUsers.map((u) => {
+    if (u.id === 'usr-admin-1' && u.name === 'Tariq Al-Mansoor') {
+      changed = true;
+      return { ...u, name: 'Amanah Administrator' };
+    }
+    return u;
+  });
+
+  if (state.fundConfig?.updatedBy === 'Tariq Al-Mansoor') {
+    state.fundConfig.updatedBy = 'Amanah Administrator';
+    changed = true;
+  }
+
+  const beforeContribs = (state.contributions || []).length;
+  state.contributions = (state.contributions || []).filter(
+    (c) =>
+      !LEGACY_FAKE_USER_IDS.has(c.userId) &&
+      !/^contrib-2026-\d{2}-usr-/.test(c.id)
+  );
+  if (state.contributions.length !== beforeContribs) changed = true;
+
+  const beforeLoans = (state.loans || []).length;
+  state.loans = (state.loans || []).filter(
+    (l) => !LEGACY_FAKE_LOAN_IDS.has(l.id) && !LEGACY_FAKE_USER_IDS.has(l.borrowerId)
+  );
+  if (state.loans.length !== beforeLoans) changed = true;
+
+  const beforeProjects = (state.halalProjects || []).length;
+  state.halalProjects = (state.halalProjects || []).filter(
+    (p) => !LEGACY_FAKE_PROJECT_IDS.has(p.id)
+  );
+  if (state.halalProjects.length !== beforeProjects) changed = true;
+
+  const beforeNotifs = (state.emailNotifications || []).length;
+  state.emailNotifications = (state.emailNotifications || []).filter(
+    (n) =>
+      !LEGACY_FAKE_NOTIF_IDS.has(n.id) &&
+      !LEGACY_FAKE_USER_EMAILS.has((n.recipientEmail || '').toLowerCase()) &&
+      !(n.recipientUserId && LEGACY_FAKE_USER_IDS.has(n.recipientUserId))
+  );
+  if (state.emailNotifications.length !== beforeNotifs) changed = true;
+
+  const beforeAudits = (state.auditLogs || []).length;
+  state.auditLogs = (state.auditLogs || [])
+    .filter((a) => !LEGACY_FAKE_AUDIT_IDS.has(a.id) && !LEGACY_FAKE_USER_IDS.has(a.actorId))
+    .map((a) => {
+      if (a.id === 'audit-001' && a.actorName === 'Tariq Al-Mansoor') {
+        changed = true;
+        return { ...a, actorName: 'Amanah Administrator' };
+      }
+      return a;
+    });
+  if (state.auditLogs.length !== beforeAudits) changed = true;
+
+  return { state, changed };
+}
+
 function normalizeVaultState(state: VaultState): VaultState {
+  purgeLegacyFakeSeedData(state);
   state.emailNotifications = Array.isArray(state.emailNotifications)
     ? state.emailNotifications
     : [];
@@ -170,7 +261,12 @@ function readLocalVault(): VaultState {
     return seed;
   }
   const raw = fs.readFileSync(VAULT_FILE, 'utf8');
-  memoryState = normalizeVaultState(JSON.parse(raw) as VaultState);
+  const parsed = JSON.parse(raw) as VaultState;
+  const { changed } = purgeLegacyFakeSeedData(parsed);
+  memoryState = normalizeVaultState(parsed);
+  if (changed) {
+    fs.writeFileSync(VAULT_FILE, JSON.stringify(memoryState, null, 2), 'utf8');
+  }
   return memoryState;
 }
 
@@ -201,6 +297,51 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         if (seed.auditLogs.length) {
           await mongoDb.collection('auditLogs').insertMany(seed.auditLogs);
         }
+      } else {
+        await Promise.all([
+          mongoDb.collection('users').deleteMany({
+            $or: [
+              { id: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
+              { email: { $in: Array.from(LEGACY_FAKE_USER_EMAILS) } },
+            ],
+          }),
+          mongoDb.collection('users').updateOne(
+            { id: 'usr-admin-1', name: 'Tariq Al-Mansoor' },
+            { $set: { name: 'Amanah Administrator' } }
+          ),
+          mongoDb.collection('fundConfig').updateOne(
+            { id: 'default-config', updatedBy: 'Tariq Al-Mansoor' },
+            { $set: { updatedBy: 'Amanah Administrator' } }
+          ),
+          mongoDb.collection('contributions').deleteMany({
+            $or: [
+              { userId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
+              { id: { $regex: '^contrib-2026-\\d{2}-usr-' } },
+            ],
+          }),
+          mongoDb.collection('loans').deleteMany({
+            $or: [
+              { id: { $in: Array.from(LEGACY_FAKE_LOAN_IDS) } },
+              { borrowerId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
+            ],
+          }),
+          mongoDb.collection('halalProjects').deleteMany({
+            id: { $in: Array.from(LEGACY_FAKE_PROJECT_IDS) },
+          }),
+          mongoDb.collection('emailNotifications').deleteMany({
+            $or: [
+              { id: { $in: Array.from(LEGACY_FAKE_NOTIF_IDS) } },
+              { recipientEmail: { $in: Array.from(LEGACY_FAKE_USER_EMAILS) } },
+              { recipientUserId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
+            ],
+          }),
+          mongoDb.collection('auditLogs').deleteMany({
+            $or: [
+              { id: { $in: Array.from(LEGACY_FAKE_AUDIT_IDS) } },
+              { actorId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
+            ],
+          }),
+        ]);
       }
       initialized = true;
       return storageEngine;
