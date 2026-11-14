@@ -152,15 +152,15 @@ function getAuditVisualMeta(action: string) {
   if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED') {
     return {
       label: 'Security & Access',
-      tone: 'text-violet-700 dark:text-violet-400',
-      iconBg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/60',
+      tone: 'text-slate-700 dark:text-slate-300',
+      iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
       Icon: KeyRound,
     };
   }
   return {
     label: 'System & Policy',
-    tone: 'text-violet-700 dark:text-violet-400',
-    iconBg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/60',
+    tone: 'text-amber-700 dark:text-amber-400',
+    iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
     Icon: Lock,
   };
 }
@@ -307,10 +307,10 @@ export function AdminAuditLog({
       {/* KPI Summary Strip */}
       {!compactHeader && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-violet-50/75 via-white to-white dark:from-violet-950/25 dark:via-slate-900 dark:to-slate-900 border border-violet-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Audit Events</span>
-              <ScrollText className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+              <ScrollText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {loading && logs.length === 0 ? '—' : metrics.total}

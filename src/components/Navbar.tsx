@@ -41,7 +41,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-8">
         {/* Zone 1: Brand Wordmark */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-600 to-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-700 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
@@ -66,7 +66,7 @@ export function Navbar() {
                 <span>{link.label}</span>
                 {active && (
                   <span
-                    className="absolute inset-x-3 -bottom-[1px] h-0.5 bg-gradient-to-r from-emerald-600 via-amber-500 to-violet-600 rounded-full"
+                    className="absolute inset-x-3 -bottom-[1px] h-0.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-amber-500 rounded-full"
                     aria-hidden="true"
                   />
                 )}

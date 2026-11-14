@@ -252,7 +252,7 @@ export function AdminUserManagementPanel({
   }
 
   return (
-    <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/35 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-amber-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">

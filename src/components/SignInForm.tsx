@@ -44,7 +44,7 @@ export function SignInForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="max-w-md w-full mx-auto bg-gradient-to-br from-emerald-50/70 via-white to-violet-50/60 dark:from-emerald-950/30 dark:via-slate-900 dark:to-violet-950/25 border border-emerald-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
+        className="max-w-md w-full mx-auto bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/50 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/20 border border-emerald-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
       >
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">

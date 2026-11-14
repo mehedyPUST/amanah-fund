@@ -19,8 +19,8 @@ const PILLARS = [
     description:
       'Strict separation of duties across Administrator (KYC approval, policy, annual loan cap), Treasury Manager (Bank/MFS reconciliation, disbursement), and Member (deposits, ballots, repayments).',
     gradient:
-      'bg-gradient-to-br from-violet-50/90 via-white to-violet-50/35 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
-    iconClass: 'bg-gradient-to-br from-violet-500/20 to-violet-600/5 text-violet-700 dark:text-violet-400',
+      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/40 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+    iconClass: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/10 text-emerald-700 dark:text-emerald-400',
   },
   {
     Icon: Lock,
@@ -46,8 +46,8 @@ const PILLARS = [
     description:
       'Live central balance accounting tracks every contribution, loan approval deduction, and repayment return, with automated Google Sheets blueprint sync and Gmail notifications.',
     gradient:
-      'bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/40 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/15 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
-    iconClass: 'bg-gradient-to-br from-violet-500/20 to-emerald-500/10 text-violet-700 dark:text-violet-400',
+      'bg-gradient-to-br from-amber-50/80 via-white to-emerald-50/45 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
+    iconClass: 'bg-gradient-to-br from-amber-500/20 to-emerald-500/15 text-amber-700 dark:text-amber-400',
   },
 ];
 
@@ -94,7 +94,7 @@ export function About() {
           })}
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50/80 via-amber-50/35 to-violet-50/75 dark:from-emerald-950/35 dark:via-slate-900 dark:to-violet-950/30 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
+        <div className="bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/60 dark:from-emerald-950/35 dark:via-slate-900 dark:to-amber-950/25 border border-emerald-200/80 dark:border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Ready to inspect the governance charter or apply for membership?

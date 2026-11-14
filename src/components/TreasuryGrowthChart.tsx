@@ -242,7 +242,7 @@ export function TreasuryGrowthChart({
   }, [fullSeries, centralBalance]);
 
   return (
-    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-violet-50/45 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/40 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       {/* Header & Interactive Chart Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -404,8 +404,8 @@ export function TreasuryGrowthChart({
                   <stop offset="95%" stopColor="#059669" stopOpacity={0.02} />
                 </linearGradient>
                 <linearGradient id="contribPoolAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.24} />
-                  <stop offset="95%" stopColor="#7c3aed" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#d97706" stopOpacity={0.22} />
+                  <stop offset="95%" stopColor="#d97706" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
 
@@ -444,9 +444,9 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Contributions"
-                    stroke="#7c3aed"
+                    stroke="#b45309"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#7c3aed' }}
+                    dot={{ r: 3, fill: '#b45309' }}
                     activeDot={{ r: 5 }}
                   />
                   <Bar
@@ -478,7 +478,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="myContributions"
                     name="Your Approved Monthly"
-                    fill="#7c3aed"
+                    fill="#34d399"
                     radius={[4, 4, 0, 0]}
                     barSize={16}
                   />
@@ -506,7 +506,7 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Pool Equity"
-                    stroke="#7c3aed"
+                    stroke="#d97706"
                     strokeWidth={2}
                     fill="url(#contribPoolAreaGrad)"
                   />

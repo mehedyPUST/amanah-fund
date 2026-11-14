@@ -26,9 +26,9 @@ const HIGHLIGHTS = [
     detail:
       'Applicant KYC records, Bank/MFS transaction IDs, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
     cardGradient:
-      'bg-gradient-to-br from-violet-50/90 via-white to-violet-50/40 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/35 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
     iconBg:
-      'bg-gradient-to-br from-violet-500/20 to-violet-600/5 text-violet-700 dark:text-violet-400',
+      'bg-gradient-to-br from-emerald-500/20 to-amber-500/10 text-emerald-700 dark:text-emerald-400',
   },
   {
     Icon: Sheet,
@@ -46,9 +46,9 @@ const HIGHLIGHTS = [
     detail:
       'Applicants submit verified identification, references, and portrait uploads for administrator review before gaining access to cooperative funds.',
     cardGradient:
-      'bg-gradient-to-br from-emerald-50/70 via-white to-violet-50/60 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/25 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'bg-gradient-to-br from-amber-50/75 via-white to-emerald-50/55 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 border-amber-200/80 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/80',
     iconBg:
-      'bg-gradient-to-br from-emerald-500/20 to-violet-500/15 text-emerald-700 dark:text-emerald-400',
+      'bg-gradient-to-br from-amber-500/20 to-emerald-500/15 text-amber-700 dark:text-amber-400',
   },
 ];
 
@@ -128,8 +128,8 @@ export function Hero() {
                   Approval Quorum
                 </div>
               </div>
-              <div className="p-3.5 rounded-xl border border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/90 via-white to-violet-50/30 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-violet-700 dark:text-violet-400">
+              <div className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-amber-50/70 via-white to-emerald-50/40 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                   3 / yr
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
@@ -145,7 +145,7 @@ export function Hero() {
             transition={{ duration: 0.3 }}
             className="lg:col-span-6"
           >
-            <div className="p-2 rounded-2xl border border-emerald-200/70 dark:border-slate-800 bg-gradient-to-br from-emerald-500/15 via-amber-500/10 to-violet-500/15 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="p-2 rounded-2xl border border-emerald-200/70 dark:border-slate-800 bg-gradient-to-br from-emerald-500/15 via-amber-500/12 to-emerald-600/10 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 aspect-[16/10]">
                 <img
                   src={HERO_IMAGE_URL}
@@ -201,7 +201,7 @@ export function Hero() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-5">
-            <div className="p-2 rounded-2xl border border-violet-200/70 dark:border-slate-800 bg-gradient-to-br from-violet-500/15 via-amber-500/10 to-emerald-500/15 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="p-2 rounded-2xl border border-amber-200/70 dark:border-slate-800 bg-gradient-to-br from-amber-500/15 via-emerald-500/10 to-amber-600/10 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 aspect-[4/3]">
                 <img
                   src={INVESTMENT_IMAGE_URL}
@@ -215,7 +215,7 @@ export function Hero() {
 
           <div className="lg:col-span-7 space-y-6">
             <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-400">
+              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                 Two-Stage Capital Lifecycle
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -241,9 +241,9 @@ export function Hero() {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-gradient-to-br from-violet-50/90 via-white to-amber-50/35 dark:from-violet-950/35 dark:via-slate-900 dark:to-amber-950/15 border border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/35 dark:from-amber-950/30 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CheckCircle2
-                  className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5"
+                  className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
                   aria-hidden="true"
                 />
                 <div className="space-y-1">

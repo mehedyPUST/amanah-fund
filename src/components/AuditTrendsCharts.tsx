@@ -204,7 +204,7 @@ export function AuditTrendsCharts({
   }, [chartData]);
 
   return (
-    <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/35 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <section className="bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-amber-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -412,9 +412,9 @@ export function AuditTrendsCharts({
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
                       name="Cumulative Loan Volume"
-                      stroke="#7c3aed"
+                      stroke="#475569"
                       strokeWidth={2}
-                      dot={{ r: 3, fill: '#7c3aed' }}
+                      dot={{ r: 3, fill: '#475569' }}
                       activeDot={{ r: 5 }}
                     />
                   </ComposedChart>

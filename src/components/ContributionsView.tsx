@@ -159,7 +159,7 @@ export function ContributionsView({
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Submit Contribution Form */}
-        <section className="xl:col-span-4 bg-gradient-to-br from-emerald-50/75 via-white to-violet-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-4 bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Submit Capital Deposit

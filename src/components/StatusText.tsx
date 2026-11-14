@@ -57,7 +57,7 @@ const STATUS_MAP: Record<
   },
   approved_pending_disbursement: {
     label: 'Ready for Disbursement',
-    colorClass: 'text-violet-700 dark:text-violet-400',
+    colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: ShieldCheck,
   },
   pending_verification: {

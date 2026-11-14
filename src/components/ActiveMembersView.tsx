@@ -150,7 +150,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
   return (
     <div className="space-y-6">
       {/* Header & Summary Strip */}
-      <section className="bg-gradient-to-br from-emerald-50/70 via-white to-violet-50/45 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/40 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

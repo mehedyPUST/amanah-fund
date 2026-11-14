@@ -321,7 +321,7 @@ export function TransactionHistory({
   return (
     <section
       aria-label="Member Transaction History"
-      className="bg-gradient-to-br from-white via-white to-violet-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-gradient-to-br from-white via-white to-emerald-50/35 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       {/* Header Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -647,7 +647,7 @@ function FragmentRow({
             {row.category === 'contribution' ? (
               <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
             ) : (
-              <HandCoins className="w-3.5 h-3.5 text-violet-600 shrink-0" aria-hidden="true" />
+              <HandCoins className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
             )}
             <span>{row.title}</span>
           </div>

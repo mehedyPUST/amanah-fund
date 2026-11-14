@@ -13,7 +13,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-violet-600 text-white flex items-center justify-center shadow-xs">
+              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-amber-600 text-white flex items-center justify-center shadow-xs">
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
@@ -128,7 +128,7 @@ export function Footer() {
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-violet-600" aria-hidden="true" />
+                  <Moon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" aria-hidden="true" />
                   <span>Dark</span>
                 </>
               )}

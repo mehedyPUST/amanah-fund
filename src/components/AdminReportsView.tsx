@@ -217,7 +217,7 @@ export function AdminReportsView({
   return (
     <div className="space-y-6">
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-violet-50/60 via-white to-emerald-50/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-emerald-50/60 via-white to-amber-50/40 dark:from-emerald-950/20 dark:via-slate-900 dark:to-amber-950/15 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-xs">
         <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
           Admin Panel Workspace
         </div>
@@ -358,7 +358,7 @@ export function AdminReportsView({
 
       {/* Administrative Qard Hasan Loan Review Queue */}
       {(adminSection === 'all' || adminSection === 'analytics') && (
-      <section className="bg-gradient-to-br from-emerald-50/45 via-white to-violet-50/30 dark:from-emerald-950/15 dark:via-slate-900 dark:to-violet-950/10 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="bg-gradient-to-br from-emerald-50/45 via-white to-amber-50/30 dark:from-emerald-950/15 dark:via-slate-900 dark:to-amber-950/10 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -498,7 +498,7 @@ export function AdminReportsView({
                   key={rep.id}
                   type="button"
                   onClick={() => downloadCsvReport(rep.id)}
-                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-50/50 via-white to-violet-50/40 dark:from-emerald-950/15 dark:via-slate-900 dark:to-violet-950/15 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-50/50 via-white to-amber-50/40 dark:from-emerald-950/15 dark:via-slate-900 dark:to-amber-950/15 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
                 >
                   <span>{rep.label}</span>
                   <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
@@ -511,7 +511,7 @@ export function AdminReportsView({
 
       {/* Admin Governance & Policy Controls */}
       {isAdmin && (adminSection === 'all' || adminSection === 'policy') && (
-        <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
+        <section className="bg-gradient-to-br from-amber-50/45 via-white to-emerald-50/40 dark:from-amber-950/15 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Fund Policy & Annual Loan Quota

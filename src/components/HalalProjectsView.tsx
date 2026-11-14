@@ -119,10 +119,10 @@ export function HalalProjectsView({
       )}
 
       {/* Maturity Transition Summary */}
-      <section className="bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/55 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/20 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-gradient-to-br from-emerald-50/80 via-white to-amber-50/55 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/20 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-violet-700 dark:text-violet-400">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <Calendar className="w-4 h-4" aria-hidden="true" />
               <span>
                 Pre-Specified Maturity Date: {formatShortDate(overview?.config.maturityDate)}
@@ -143,9 +143,9 @@ export function HalalProjectsView({
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="p-3.5 rounded-lg bg-gradient-to-br from-violet-50/80 to-white dark:from-violet-950/30 dark:to-slate-950 border border-violet-200/70 dark:border-violet-900/50">
+            <div className="p-3.5 rounded-lg bg-gradient-to-br from-amber-50/80 to-white dark:from-amber-950/30 dark:to-slate-950 border border-amber-200/70 dark:border-amber-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Pipeline Target</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-300">
+              <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-300">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -205,7 +205,7 @@ export function HalalProjectsView({
                 return (
                   <article
                     key={proj.id}
-                    className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-violet-50/55 via-white to-emerald-50/25 dark:from-violet-950/20 dark:via-slate-950/70 dark:to-emerald-950/15 border border-violet-200/70 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
+                    className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-emerald-50/55 via-white to-amber-50/30 dark:from-emerald-950/20 dark:via-slate-950/70 dark:to-amber-950/15 border border-emerald-200/70 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="space-y-1.5">
@@ -249,7 +249,7 @@ export function HalalProjectsView({
                           <div
                             className={`h-full transition-all duration-300 ${
                               proj.votingStatus === 'approved'
-                                ? 'bg-gradient-to-r from-emerald-600 to-violet-600'
+                                ? 'bg-gradient-to-r from-emerald-600 to-emerald-500'
                                 : proj.votingStatus === 'rejected'
                                   ? 'bg-red-600'
                                   : 'bg-gradient-to-r from-amber-500 to-amber-400'
@@ -398,7 +398,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 bg-gradient-to-br from-violet-50/75 via-white to-emerald-50/35 dark:from-violet-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-4 bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement
@@ -515,7 +515,7 @@ export function HalalProjectsView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-violet-600 to-emerald-600 hover:from-violet-700 hover:to-emerald-700 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Proposal…' : 'Open for 2/3 Member Vote'}</span>

@@ -98,7 +98,7 @@ export function GoogleSheetSyncCard({
   }
 
   return (
-    <section className="bg-gradient-to-br from-emerald-50/60 via-white to-violet-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <section className="bg-gradient-to-br from-emerald-50/60 via-white to-amber-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

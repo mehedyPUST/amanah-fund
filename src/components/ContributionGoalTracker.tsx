@@ -231,7 +231,7 @@ export function ContributionGoalTracker({
   return (
     <section
       aria-labelledby="contribution-goal-tracker-heading"
-      className="bg-gradient-to-br from-emerald-50/65 via-white to-violet-50/50 dark:from-emerald-950/30 dark:via-slate-900 dark:to-violet-950/20 border border-emerald-200/70 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/45 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/20 border border-emerald-200/70 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       {/* Top Header & Year / Goal Controls */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
@@ -452,7 +452,7 @@ export function ContributionGoalTracker({
           className="relative w-full h-3.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex"
         >
           <div
-            className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-violet-600 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 transition-all duration-300"
             style={{ width: `${trackerData.approvedPct}%` }}
           />
           {trackerData.pendingPct > 0 && (
@@ -582,7 +582,7 @@ export function ContributionGoalTracker({
                   aria-hidden="true"
                 >
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-600 to-violet-600 transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-500 transition-all duration-300"
                     style={{ width: `${approvedMonthPct}%` }}
                   />
                   {pendingMonthPct > 0 && (
@@ -610,7 +610,7 @@ export function ContributionGoalTracker({
                   onClick={() => onSubmitContribution(month.billingMonth)}
                   className={`text-left py-2.5 px-3 rounded-lg border transition-all duration-200 space-y-1.5 cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
                     isCurrentMonth
-                      ? 'bg-gradient-to-br from-emerald-50/80 to-violet-50/40 dark:from-emerald-950/35 dark:to-violet-950/20 border-emerald-200/80 dark:border-emerald-800/60'
+                      ? 'bg-gradient-to-br from-emerald-50/80 to-amber-50/40 dark:from-emerald-950/35 dark:to-amber-950/20 border-emerald-200/80 dark:border-emerald-800/60'
                       : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60'
                   }`}
                 >
@@ -624,7 +624,7 @@ export function ContributionGoalTracker({
                 key={month.billingMonth}
                 className={`py-2.5 px-3 rounded-lg border space-y-1.5 ${
                   isCurrentMonth
-                    ? 'bg-gradient-to-br from-emerald-50/80 to-violet-50/40 dark:from-emerald-950/35 dark:to-violet-950/20 border-emerald-200/80 dark:border-emerald-800/60'
+                    ? 'bg-gradient-to-br from-emerald-50/80 to-amber-50/40 dark:from-emerald-950/35 dark:to-amber-950/20 border-emerald-200/80 dark:border-emerald-800/60'
                     : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800'
                 }`}
               >

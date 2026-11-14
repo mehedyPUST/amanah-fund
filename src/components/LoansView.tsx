@@ -179,7 +179,7 @@ export function LoansView({
     } else if (myActiveOrPendingLoan.status === 'approved_pending_disbursement') {
       loanProgressPct = 100;
       loanProgressCaption = '2/3 Quorum Approved · Ready for treasury multi-sig disbursement';
-      loanBarColorClass = 'bg-gradient-to-r from-violet-600 to-emerald-600';
+      loanBarColorClass = 'bg-gradient-to-r from-emerald-600 to-amber-500';
     } else if (myActiveOrPendingLoan.status === 'active') {
       const paidInstallments = myActiveOrPendingLoan.installments.filter(
         (i) => i.status === 'paid'
@@ -214,7 +214,7 @@ export function LoansView({
       {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status with Visual Progress Bars */}
       <section
         aria-label="Member Loan Quota and Active Request Summary"
-        className="bg-gradient-to-br from-amber-50/70 via-white to-violet-50/55 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+        className="bg-gradient-to-br from-amber-50/70 via-white to-emerald-50/50 dark:from-amber-950/25 dark:via-slate-900 dark:to-emerald-950/20 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
       >
         {!eligibility && loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -253,7 +253,7 @@ export function LoansView({
                       ? 'bg-red-600'
                       : remainingYearlyQuota === 1
                         ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                        : 'bg-gradient-to-r from-emerald-600 to-violet-600'
+                        : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
                   }`}
                   style={{ width: `${quotaRemainingPct}%` }}
                 />
@@ -386,7 +386,7 @@ export function LoansView({
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg border border-violet-200/70 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/75 via-white to-violet-50/25 dark:from-violet-950/25 dark:via-slate-950 dark:to-violet-950/10 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+            <div className="p-3.5 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/75 via-white to-amber-50/30 dark:from-emerald-950/25 dark:via-slate-950 dark:to-amber-950/10 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">3. Fund Lifecycle Window</span>
                 <span
@@ -587,7 +587,7 @@ export function LoansView({
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-emerald-600 to-violet-600 transition-all"
+                              className="h-full bg-gradient-to-r from-emerald-600 to-amber-500 transition-all"
                               style={{ width: `${pct}%` }}
                             />
                           </div>

@@ -80,6 +80,31 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      const target = event.target;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLInputElement &&
+        active.type === 'number' &&
+        (target === active || (target instanceof Node && active.contains(target)))
+      ) {
+        active.blur();
+      } else if (
+        target instanceof HTMLInputElement &&
+        target.type === 'number' &&
+        document.activeElement === target
+      ) {
+        target.blur();
+      }
+    };
+
+    document.addEventListener('wheel', handleWheel, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('wheel', handleWheel, { capture: true });
+    };
+  }, []);
+
   const refreshUser = useCallback(async (): Promise<PublicUser | null> => {
     try {
       const res = await api.getMe();

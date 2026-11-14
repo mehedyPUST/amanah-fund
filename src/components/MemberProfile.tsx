@@ -176,7 +176,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   return (
     <div className="space-y-6">
       {/* Membership Status & Identity Summary */}
-      <section className="bg-gradient-to-br from-violet-50/70 via-white to-emerald-50/40 dark:from-violet-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/40 dark:from-emerald-950/25 dark:via-slate-900 dark:to-amber-950/15 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -221,7 +221,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <button
             type="button"
             onClick={() => void loadProfile()}
-            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-violet-300 dark:hover:border-violet-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh Profile</span>

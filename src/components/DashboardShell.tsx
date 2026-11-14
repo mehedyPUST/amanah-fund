@@ -278,7 +278,7 @@ export function DashboardShell() {
           }}
           className={`group w-full px-3.5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer whitespace-nowrap ${
             active
-              ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-violet-50/70 dark:from-emerald-950/60 dark:via-emerald-950/35 dark:to-violet-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/50 shadow-xs'
+              ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-amber-50/60 dark:from-emerald-950/60 dark:via-emerald-950/35 dark:to-amber-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/50 shadow-xs'
               : 'border border-transparent text-slate-600 dark:text-slate-400 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/70 dark:hover:from-slate-800/70 dark:hover:to-slate-800/40 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
           }`}
         >
@@ -312,7 +312,7 @@ export function DashboardShell() {
       {/* GRID 1: Members Dashboard (height == Grid 2 height [64px], width == Grid 3 width [260px]) */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-gradient-to-r from-white via-white to-emerald-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-600 to-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-700 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -386,7 +386,7 @@ export function DashboardShell() {
             onClick={toggleDarkMode}
             title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-800 transition-all duration-200 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
