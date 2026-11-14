@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Check, Lock, Search, Shield, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
+import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { StatusText } from './StatusText.tsx';
 
 interface ContributionsViewProps {
@@ -13,6 +14,7 @@ interface ContributionsViewProps {
   config: FundConfig | null;
   user: PublicUser;
   loading: boolean;
+  initialBillingMonth?: string | null;
   onRefresh: () => Promise<void>;
 }
 
@@ -30,13 +32,19 @@ export function ContributionsView({
   config,
   user,
   loading,
+  initialBillingMonth,
   onRefresh,
 }: ContributionsViewProps) {
   const ccy = config?.currency || 'BDT';
   const isReviewer = user.role === 'admin' || user.role === 'manager';
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [billingMonth, setBillingMonth] = useState(currentMonth);
+  const [billingMonth, setBillingMonth] = useState(initialBillingMonth || currentMonth);
+  useEffect(() => {
+    if (initialBillingMonth) {
+      setBillingMonth(initialBillingMonth);
+    }
+  }, [initialBillingMonth]);
   const [amount, setAmount] = useState(String(config?.monthlyContributionAmount || 5000));
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
   const [providerName, setProviderName] = useState('bKash');
@@ -124,6 +132,18 @@ export function ContributionsView({
 
   return (
     <div className="space-y-6">
+      <ContributionGoalTracker
+        user={user}
+        contributions={contributions}
+        config={config}
+        loading={loading}
+        onSubmitContribution={(month) => {
+          if (month) {
+            setBillingMonth(month);
+          }
+        }}
+      />
+
       {feedback && (
         <div
           role="status"

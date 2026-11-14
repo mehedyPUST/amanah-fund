@@ -92,6 +92,7 @@ export function DashboardShell() {
   } = useCoopSession();
 
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -716,6 +717,10 @@ export function DashboardShell() {
                   user={user}
                   loading={dataLoading && !overview}
                   onNavigate={setActiveTab}
+                  onSubmitContributionMonth={(month) => {
+                    setPreselectedBillingMonth(month || null);
+                    setActiveTab('contributions');
+                  }}
                   onRefresh={handleRefreshWithAutoSync}
                 />
               )}
@@ -725,6 +730,7 @@ export function DashboardShell() {
                   config={overview?.config || null}
                   user={user}
                   loading={dataLoading && contributions.length === 0}
+                  initialBillingMonth={preselectedBillingMonth}
                   onRefresh={handleRefreshWithAutoSync}
                 />
               )}

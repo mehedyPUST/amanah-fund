@@ -8,6 +8,7 @@ import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { TreasuryGrowthChart } from './TreasuryGrowthChart.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
+import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 
 export type NavTab =
   | 'overview'
@@ -31,6 +32,7 @@ interface OverviewViewProps {
   user: PublicUser;
   loading: boolean;
   onNavigate: (tab: NavTab) => void;
+  onSubmitContributionMonth?: (billingMonth?: string) => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -41,6 +43,7 @@ export function OverviewView({
   user,
   loading,
   onNavigate,
+  onSubmitContributionMonth,
   onRefresh,
 }: OverviewViewProps) {
   const [quotaInput, setQuotaInput] = useState(
@@ -370,6 +373,21 @@ export function OverviewView({
           </button>
         </section>
       </div>
+
+      {/* Member Yearly Savings Goal & Monthly Progress Tracker */}
+      <ContributionGoalTracker
+        user={user}
+        contributions={contributions}
+        config={config}
+        loading={loading}
+        onSubmitContribution={(month) => {
+          if (onSubmitContributionMonth) {
+            onSubmitContributionMonth(month);
+          } else {
+            onNavigate('contributions');
+          }
+        }}
+      />
 
       {/* Live Governance & Approval Queues */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
