@@ -602,6 +602,9 @@ export default function App() {
                       <AdminReportsView
                         config={overview?.config || null}
                         user={user}
+                        contributions={contributions}
+                        loans={loans}
+                        monthlySeries={overview?.monthlySeries || []}
                         workspace={workspace}
                         connectingGoogle={connectingGoogle}
                         onConnectGoogle={handleConnectGoogle}

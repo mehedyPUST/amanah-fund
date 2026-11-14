@@ -3,8 +3,11 @@ import { CheckCircle2, Download, FileSpreadsheet, Search, ShieldCheck, UserPlus,
 import Skeleton from 'react-loading-skeleton';
 import type {
   AuditLogEntry,
+  Contribution,
   FundConfig,
+  LoanRequest,
   MemberSummary,
+  MonthlyCashflowPoint,
   PublicUser,
   UserRole,
   UserStatus,
@@ -12,12 +15,16 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { StatusText } from './StatusText.tsx';
 
 interface AdminReportsViewProps {
   config: FundConfig | null;
   user: PublicUser;
+  contributions: Contribution[];
+  loans: LoanRequest[];
+  monthlySeries: MonthlyCashflowPoint[];
   workspace: WorkspaceSessionInfo;
   connectingGoogle: boolean;
   onConnectGoogle: () => Promise<void>;
@@ -28,6 +35,9 @@ interface AdminReportsViewProps {
 export function AdminReportsView({
   config,
   user,
+  contributions,
+  loans,
+  monthlySeries,
   workspace,
   connectingGoogle,
   onConnectGoogle,
@@ -253,6 +263,15 @@ export function AdminReportsView({
           )}
         </section>
       )}
+
+      {/* Recharts Audit Visualization: Contribution Trends & Loan Volume */}
+      <AuditTrendsCharts
+        contributions={contributions}
+        loans={loans}
+        monthlySeries={monthlySeries}
+        currency={ccy}
+        loading={loading && monthlySeries.length === 0}
+      />
 
       {/* Google Sheets Blueprint Auto-Sync */}
       <GoogleSheetSyncCard

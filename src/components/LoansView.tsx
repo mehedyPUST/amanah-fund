@@ -156,6 +156,58 @@ export function LoansView({
   const activeSelectedLoan =
     visibleLoans.find((l) => l.id === selectedLoanId) || visibleLoans[0] || null;
 
+  // Top summary card computations: remaining yearly quota + active loan request status
+  const currentYear = new Date().getFullYear();
+  const maxLoansPerYear = eligibility?.maxLoansPerYear ?? config?.maxLoansPerYear ?? 3;
+  const usedLoansThisYear = eligibility?.loansUsedThisYear ?? 0;
+  const remainingYearlyQuota = Math.max(0, maxLoansPerYear - usedLoansThisYear);
+  const quotaRemainingPct =
+    maxLoansPerYear > 0
+      ? Math.min(100, Math.round((remainingYearlyQuota / maxLoansPerYear) * 100))
+      : 0;
+
+  const myActiveOrPendingLoan =
+    loans.find(
+      (l) =>
+        l.borrowerId === user.id &&
+        ['pending_vote', 'approved_pending_disbursement', 'active'].includes(l.status)
+    ) || null;
+
+  let loanProgressPct = 0;
+  let loanProgressCaption = 'No active or pending Qard Hasan loan request on your account.';
+  let loanBarColorClass = 'bg-slate-400 dark:bg-slate-600';
+
+  if (myActiveOrPendingLoan) {
+    if (myActiveOrPendingLoan.status === 'pending_vote') {
+      const approveCount = myActiveOrPendingLoan.votes.filter(
+        (v) => v.decision === 'approve'
+      ).length;
+      loanProgressPct = Math.min(
+        100,
+        Math.round((approveCount / Math.max(1, myActiveOrPendingLoan.requiredApprovals)) * 100)
+      );
+      loanProgressCaption = `2/3 Ballot Progress: ${approveCount} of ${myActiveOrPendingLoan.requiredApprovals} required approvals (${loanProgressPct}%)`;
+      loanBarColorClass = 'bg-amber-500';
+    } else if (myActiveOrPendingLoan.status === 'approved_pending_disbursement') {
+      loanProgressPct = 100;
+      loanProgressCaption = '2/3 Quorum Approved · Ready for treasury multi-sig disbursement';
+      loanBarColorClass = 'bg-sky-600';
+    } else if (myActiveOrPendingLoan.status === 'active') {
+      const paidInstallments = myActiveOrPendingLoan.installments.filter(
+        (i) => i.status === 'paid'
+      ).length;
+      loanProgressPct =
+        myActiveOrPendingLoan.amount > 0
+          ? Math.min(
+              100,
+              Math.round((myActiveOrPendingLoan.totalRepaid / myActiveOrPendingLoan.amount) * 100)
+            )
+          : 0;
+      loanProgressCaption = `Repaid ${formatMoney(myActiveOrPendingLoan.totalRepaid, ccy)} of ${formatMoney(myActiveOrPendingLoan.amount, ccy)} (${paidInstallments}/${myActiveOrPendingLoan.installments.length} installments · ${loanProgressPct}%)`;
+      loanBarColorClass = 'bg-emerald-600';
+    }
+  }
+
   return (
     <div className="space-y-6">
       {feedback && (
@@ -170,6 +222,112 @@ export function LoansView({
           {feedback.text}
         </div>
       )}
+
+      {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status with Visual Progress Bars */}
+      <section
+        aria-label="Member Loan Quota and Active Request Summary"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6"
+      >
+        {!eligibility && loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton height={76} />
+            <Skeleton height={76} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x md:divide-slate-100 dark:md:divide-slate-800">
+            {/* Left: Remaining Yearly Quota */}
+            <div className="space-y-2.5 md:pr-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Remaining Yearly Loan Quota ({currentYear})
+                  </div>
+                  <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                    {remainingYearlyQuota} of {maxLoansPerYear} remaining
+                  </div>
+                </div>
+                <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  {usedLoansThisYear} used
+                </span>
+              </div>
+
+              <div
+                role="progressbar"
+                aria-label="Remaining yearly loan quota"
+                aria-valuenow={remainingYearlyQuota}
+                aria-valuemin={0}
+                aria-valuemax={maxLoansPerYear}
+                className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    remainingYearlyQuota === 0
+                      ? 'bg-rose-600'
+                      : remainingYearlyQuota === 1
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-600'
+                  }`}
+                  style={{ width: `${quotaRemainingPct}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  {remainingYearlyQuota > 0
+                    ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
+                    : `Annual limit of ${maxLoansPerYear} loans reached`}
+                </span>
+                <span className="font-mono tabular-nums">{quotaRemainingPct}% left</span>
+              </div>
+            </div>
+
+            {/* Right: Active Loan Request Status */}
+            <div className="space-y-2.5 md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Active Loan Request Status
+                  </div>
+                  <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white truncate">
+                    {myActiveOrPendingLoan
+                      ? `${myActiveOrPendingLoan.id} · ${formatMoney(myActiveOrPendingLoan.amount, ccy)}`
+                      : 'No Active Request'}
+                  </div>
+                </div>
+                {myActiveOrPendingLoan ? (
+                  <StatusText status={myActiveOrPendingLoan.status} />
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span>Clear Standing</span>
+                  </span>
+                )}
+              </div>
+
+              <div
+                role="progressbar"
+                aria-label="Active loan request progress"
+                aria-valuenow={loanProgressPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${loanBarColorClass}`}
+                  style={{ width: `${loanProgressPct}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span className="truncate">{loanProgressCaption}</span>
+                {myActiveOrPendingLoan && (
+                  <span className="font-mono tabular-nums shrink-0">{loanProgressPct}%</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Eligibility Engine Summary */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
