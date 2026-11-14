@@ -8,19 +8,19 @@ const PILLARS = [
     Icon: ShieldCheck,
     title: 'Admin-Verified Membership',
     description:
-      'Every new registration enters a pending approval queue. Only accounts vetted and activated by a cooperative administrator can sign in, vote, or submit transactions.',
+      'Every applicant submits verified identity details (NID, photo, reference member, and addresses) into a pending queue. Only accounts vetted and activated by an Administrator can sign in.',
   },
   {
     Icon: Users,
     title: 'Granular Role-Based Access Control',
     description:
-      'Strict separation of duties across Administrator (policy, RBAC, annual loan cap), Treasury Manager (Bank/MFS verification, loan disbursement), and Member (deposits, ballots, repayments).',
+      'Strict separation of duties across Administrator (KYC approval, policy, annual loan cap), Treasury Manager (Bank/MFS reconciliation, disbursement), and Member (deposits, ballots, repayments).',
   },
   {
     Icon: Lock,
     title: 'AES-256-GCM & SHA-256 Audit Chain',
     description:
-      'Sensitive account numbers, Bank/MFS transaction IDs, and disbursement contexts are encrypted at rest with AES-256-GCM and linked in a sequential SHA-256 hash chain.',
+      'Personal KYC fields, Bank/MFS transaction IDs, and disbursement contexts are encrypted at rest with AES-256-GCM and linked in a sequential SHA-256 hash chain.',
   },
   {
     Icon: Vote,
@@ -36,7 +36,7 @@ const PILLARS = [
   },
 ];
 
-export function PublicAboutView() {
+export function About() {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
@@ -80,7 +80,7 @@ export function PublicAboutView() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Ready to inspect the cooperative bylaws or access your account?
+              Ready to inspect the cooperative bylaws or apply for membership?
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Review all eligibility criteria, repayment rules, and central balance accounting before
@@ -95,10 +95,10 @@ export function PublicAboutView() {
               Read Cooperative Rules
             </Link>
             <Link
-              href="/login"
+              href="/signup"
               className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
             >
-              <span>Sign In / Apply</span>
+              <span>Apply for Membership</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>

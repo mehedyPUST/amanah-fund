@@ -42,6 +42,22 @@ export interface SheetTabBlueprint {
   rows: (string | number)[][];
 }
 
+export interface RegisterMemberPayload {
+  name: string;
+  email: string;
+  password: string;
+  dateOfBirth: string;
+  referenceMemberName: string;
+  mobile: string;
+  occupation: string;
+  companyOrganization: string;
+  nid: string;
+  presentAddress: string;
+  permanentAddress: string;
+  photoUrl: string;
+  agreementPhotoUrl?: string;
+}
+
 export const api = {
   getMe: () => apiRequest<{ user: PublicUser }>('/api/auth/me'),
   login: (email: string, password: string) =>
@@ -49,12 +65,24 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  demoLogin: (email: string) =>
-    apiRequest<{ user: PublicUser }>('/api/auth/demo-login', {
+  getReferenceMembers: () =>
+    apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),
+  uploadImage: async (file: File, label?: string): Promise<{ url: string; provider: string }> => {
+    const imageBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected image file.'));
+      reader.readAsDataURL(file);
+    });
+    return apiRequest<{ url: string; provider: string }>('/api/upload/imgbb', {
       method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
-  register: (payload: { name: string; email: string; password: string; phone?: string }) =>
+      body: JSON.stringify({
+        imageBase64,
+        name: label || file.name,
+      }),
+    });
+  },
+  register: (payload: RegisterMemberPayload) =>
     apiRequest<{ pendingApproval?: boolean; message?: string; user: PublicUser }>(
       '/api/auth/register',
       {

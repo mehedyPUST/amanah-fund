@@ -8,6 +8,19 @@ export interface EncryptedEnvelope {
   keyVersion: string;
 }
 
+export interface UserRegistrationDetails {
+  dateOfBirth: string;
+  referenceMemberName: string;
+  mobile: string;
+  occupation: string;
+  companyOrganization: string;
+  nid: string;
+  presentAddress: string;
+  permanentAddress: string;
+  photoUrl: string;
+  agreementPhotoUrl?: string;
+}
+
 export interface PublicUser {
   id: string;
   name: string;
@@ -17,6 +30,8 @@ export interface PublicUser {
   status: UserStatus;
   joinedAt: string;
   phoneMasked?: string;
+  photoUrl?: string;
+  registrationDetails?: UserRegistrationDetails;
 }
 
 export interface MemberSummary extends PublicUser {

@@ -8,10 +8,10 @@ const RULES = [
     code: '01',
     title: 'Administrator-Approved Membership Onboarding',
     summary:
-      'Every new member registration is held in pending status until verified and approved by a cooperative Administrator. Unapproved or suspended accounts cannot sign in, view encrypted ledgers, or cast ballots.',
+      'Every new member registration requires verified identity details (NID, existing member reference, date of birth, mobile, occupation, addresses, and photograph) and remains pending until approved by an Administrator.',
     points: [
       'Applications trigger an automated notification to active Administrators.',
-      'Upon approval, the member receives an account activation confirmation email.',
+      'Administrators inspect applicant KYC details and uploaded documents before activation.',
     ],
   },
   {
@@ -68,7 +68,7 @@ const RULES = [
   },
 ];
 
-export function PublicRulesView() {
+export function Rules() {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
@@ -122,15 +122,23 @@ export function PublicRulesView() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Questions about eligibility or contribution channels? Sign in or apply for review.
+            Already an approved member or ready to apply?
           </p>
-          <Link
-            href="/login"
-            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
-          >
-            <span>Proceed to Member Portal</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/login"
+              className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Member Sign In
+            </Link>
+            <Link
+              href="/signup"
+              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              <span>Apply for Membership</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </section>
     </div>

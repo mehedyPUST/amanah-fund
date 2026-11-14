@@ -192,7 +192,7 @@ export function VotingView({
                 openProjects.map((proj) => {
                   const yesVotes = proj.votes.filter((v) => v.decision === 'yes').length;
                   const noVotes = proj.votes.filter((v) => v.decision === 'no').length;
-                  const totalEligible = proj.totalEligibleVoters || 6;
+                  const totalEligible = proj.totalEligibleVoters || 1;
                   const reqApprovals =
                     proj.requiredApprovals || Math.ceil((totalEligible * 2) / 3);
                   const progressPct = Math.min(100, Math.round((yesVotes / reqApprovals) * 100));

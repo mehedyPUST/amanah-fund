@@ -1,0 +1,588 @@
+'use client';
+
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileCheck2,
+  ImagePlus,
+  Loader2,
+  ShieldCheck,
+  UserPlus,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { api } from '../utils/api.ts';
+import { useCoopSession } from './AppProviders.tsx';
+
+export function SignUpForm() {
+  const router = useRouter();
+  const { user, authChecking } = useCoopSession();
+
+  const [referenceOptions, setReferenceOptions] = useState<
+    Array<{ name: string; memberCode: string }>
+  >([]);
+
+  // Required & optional signup fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [referenceMemberName, setReferenceMemberName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [companyOrganization, setCompanyOrganization] = useState('');
+  const [nid, setNid] = useState('');
+  const [presentAddress, setPresentAddress] = useState('');
+  const [permanentAddress, setPermanentAddress] = useState('');
+  const [sameAsPresent, setSameAsPresent] = useState(false);
+
+  // ImgBB uploaded photo & agreement paper URLs
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
+  const [agreementUploading, setAgreementUploading] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authChecking && user) {
+      router.replace('/dashboard');
+    }
+  }, [authChecking, user, router]);
+
+  useEffect(() => {
+    let active = true;
+    api
+      .getReferenceMembers()
+      .then((res) => {
+        if (active) setReferenceOptions(res.members || []);
+      })
+      .catch(() => {
+        // optional autocomplete list
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sameAsPresent) {
+      setPermanentAddress(presentAddress);
+    }
+  }, [sameAsPresent, presentAddress]);
+
+  async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>, target: 'photo' | 'agreement') {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, or WEBP).');
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      setError('Selected image must be smaller than 6 MB.');
+      return;
+    }
+
+    setError(null);
+    if (target === 'photo') setPhotoUploading(true);
+    else setAgreementUploading(true);
+
+    try {
+      const label = `${target}-${Date.now()}`;
+      const res = await api.uploadImage(file, label);
+      if (target === 'photo') {
+        setPhotoUrl(res.url);
+      } else {
+        setAgreementPhotoUrl(res.url);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Image upload failed.');
+    } finally {
+      if (target === 'photo') setPhotoUploading(false);
+      else setAgreementUploading(false);
+    }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    if (!photoUrl) {
+      setError('Please upload your profile photo before submitting the application.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await api.register({
+        name,
+        email,
+        password,
+        dateOfBirth,
+        referenceMemberName,
+        mobile,
+        occupation,
+        companyOrganization,
+        nid,
+        presentAddress,
+        permanentAddress,
+        photoUrl,
+        agreementPhotoUrl: agreementPhotoUrl || undefined,
+      });
+
+      setSuccessMessage(
+        res.message ||
+          'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.'
+      );
+      setName('');
+      setEmail('');
+      setPassword('');
+      setDateOfBirth('');
+      setReferenceMemberName('');
+      setMobile('');
+      setOccupation('');
+      setCompanyOrganization('');
+      setNid('');
+      setPresentAddress('');
+      setPermanentAddress('');
+      setSameAsPresent(false);
+      setPhotoUrl('');
+      setAgreementPhotoUrl('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit registration.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xs space-y-8"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+              <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Membership Application
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Complete all fields accurately. An administrator will review your profile, reference,
+              and documents before activating sign-in access.
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline whitespace-nowrap shrink-0"
+          >
+            Already approved? Sign In →
+          </Link>
+        </div>
+
+        {successMessage ? (
+          <div className="p-6 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 space-y-4">
+            <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold">Application Submitted for Review</h2>
+                <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                  {successMessage}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
+              >
+                <span>Go to Sign In</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSuccessMessage(null)}
+                className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer"
+              >
+                Submit Another Application
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-7">
+            {error && (
+              <div
+                role="alert"
+                className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Section 1: Identity & Credentials */}
+            <div className="space-y-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Personal & Account Information
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Full legal name"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="member@example.com"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Password (min 6 chars) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a secure password"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Date of Birth <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Mobile Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="017XX-XXXXXX"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    National ID (NID) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={nid}
+                    onChange={(e) => setNid(e.target.value)}
+                    placeholder="Enter NID number"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Reference & Employment */}
+            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Reference & Employment
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Reference (Existing Member Name) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    list="coop-existing-members"
+                    value={referenceMemberName}
+                    onChange={(e) => setReferenceMemberName(e.target.value)}
+                    placeholder="e.g. Amanah Administrator"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                  <datalist id="coop-existing-members">
+                    {referenceOptions.map((m) => (
+                      <option key={m.memberCode} value={m.name}>
+                        {m.name} ({m.memberCode})
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Occupation <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={occupation}
+                    onChange={(e) => setOccupation(e.target.value)}
+                    placeholder="e.g. Software Engineer"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Company / Organization <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyOrganization}
+                    onChange={(e) => setCompanyOrganization(e.target.value)}
+                    placeholder="Organization name"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Addresses */}
+            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Residential Addresses
+                </h2>
+                <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sameAsPresent}
+                    onChange={(e) => setSameAsPresent(e.target.checked)}
+                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                  />
+                  <span>Permanent address same as present</span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Present Address <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={presentAddress}
+                    onChange={(e) => setPresentAddress(e.target.value)}
+                    placeholder="House, Road, Area, City"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Permanent Address <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    disabled={sameAsPresent}
+                    value={permanentAddress}
+                    onChange={(e) => setPermanentAddress(e.target.value)}
+                    placeholder="Village / Ward, Post Office, District"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: ImgBB API Photo & Agreement Uploads */}
+            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Identity Photo & Agreement Paper (ImgBB Upload)
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Images are uploaded securely via our ImgBB API gateway and visible to the
+                  Administrator during verification.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Member Photo (Required) */}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      Member Photo <span className="text-rose-500">*</span>
+                    </span>
+                    {photoUrl && (
+                      <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                        <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Uploaded</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {photoUrl ? (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={photoUrl}
+                        alt="Uploaded member portrait"
+                        referrerPolicy="no-referrer"
+                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                      />
+                      <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                        <span>{photoUploading ? 'Uploading…' : 'Replace Photo'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={photoUploading}
+                          onChange={(e) => void handlePhotoUpload(e, 'photo')}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                      {photoUploading ? (
+                        <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                      ) : (
+                        <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                      )}
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {photoUploading ? 'Uploading to ImgBB…' : 'Choose Member Photo'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={photoUploading}
+                        onChange={(e) => void handlePhotoUpload(e, 'photo')}
+                        className="sr-only"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Agreement Paper Photo (Optional) */}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      Agreement Paper Photo{' '}
+                      <span className="text-slate-400 font-normal">(Optional)</span>
+                    </span>
+                    {agreementPhotoUrl && (
+                      <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                        <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Uploaded</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {agreementPhotoUrl ? (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={agreementPhotoUrl}
+                        alt="Uploaded agreement paper"
+                        referrerPolicy="no-referrer"
+                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                          <span>{agreementUploading ? 'Uploading…' : 'Replace Image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={agreementUploading}
+                            onChange={(e) => void handlePhotoUpload(e, 'agreement')}
+                            className="sr-only"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setAgreementPhotoUrl('')}
+                          className="text-left text-xs text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                      {agreementUploading ? (
+                        <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                      ) : (
+                        <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                      )}
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {agreementUploading
+                          ? 'Uploading to ImgBB…'
+                          : 'Upload Signed Agreement (Optional)'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={agreementUploading}
+                        onChange={(e) => void handlePhotoUpload(e, 'agreement')}
+                        className="sr-only"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Your submission is encrypted with AES-256-GCM and locked pending Administrator
+                approval.
+              </p>
+              <button
+                type="submit"
+                disabled={submitting || photoUploading || agreementUploading}
+                className="px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <UserPlus className="w-4 h-4" aria-hidden="true" />
+                <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </motion.div>
+    </div>
+  );
+}

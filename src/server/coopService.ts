@@ -12,6 +12,7 @@ import type {
   NotificationType,
   PublicUser,
   RepaymentReceiptDetails,
+  UserRegistrationDetails,
 } from '../types/coop.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
 import { getStorageEngine, type VaultState } from './db.ts';
@@ -340,7 +341,10 @@ export function hydrateLoanForViewer(loan: LoanRequest, viewer: PublicUser): Loa
   };
 }
 
-export function buildMemberSummaries(state: VaultState): MemberSummary[] {
+export function buildMemberSummaries(
+  state: VaultState,
+  includeRegistrationDetails = false
+): MemberSummary[] {
   const currentYear = new Date().getFullYear();
   return state.users.map((u) => {
     const approvedContribs = state.contributions.filter(
@@ -358,6 +362,17 @@ export function buildMemberSummaries(state: VaultState): MemberSummary[] {
       ['pending_vote', 'approved_pending_disbursement', 'active'].includes(l.status)
     );
 
+    let registrationDetails: UserRegistrationDetails | undefined;
+    if (includeRegistrationDetails && u.encryptedRegistrationDetails) {
+      try {
+        registrationDetails = decryptSensitiveObject<UserRegistrationDetails>(
+          u.encryptedRegistrationDetails
+        );
+      } catch {
+        registrationDetails = undefined;
+      }
+    }
+
     return {
       id: u.id,
       name: u.name,
@@ -367,6 +382,8 @@ export function buildMemberSummaries(state: VaultState): MemberSummary[] {
       status: u.status,
       joinedAt: u.joinedAt,
       phoneMasked: u.phoneMasked,
+      photoUrl: u.photoUrl,
+      registrationDetails,
       totalContributed,
       approvedContributionsCount: approvedContribs.length,
       loansThisYear,

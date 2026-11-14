@@ -19,7 +19,7 @@ async function startServer() {
   app.set('trust proxy', 1);
 
   // Mount Express API routes (JSON + Cookies + SSE) before Next.js request handler
-  app.use('/api', express.json({ limit: '1mb' }), cookieParser(), apiRouter);
+  app.use('/api', express.json({ limit: '12mb' }), cookieParser(), apiRouter);
 
   // Delegate all Next.js App Router pages, assets, and RSC requests to Next.js
   app.all('*', (req, res) => {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PublicAboutView } from '../../components/PublicAboutView.tsx';
+import { About } from '../../components/About.tsx';
 import { PublicShell } from '../../components/PublicShell.tsx';
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <PublicShell>
-      <PublicAboutView />
+      <About />
     </PublicShell>
   );
 }

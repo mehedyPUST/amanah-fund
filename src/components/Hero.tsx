@@ -5,6 +5,10 @@ import { ArrowRight, CheckCircle2, Lock, ShieldCheck, Sheet, Vote } from 'lucide
 import { motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
 
+const HERO_IMAGE_URL =
+  'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
+const INVESTMENT_IMAGE_URL = 'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
+
 const HIGHLIGHTS = [
   {
     Icon: Vote,
@@ -16,30 +20,30 @@ const HIGHLIGHTS = [
     Icon: Lock,
     title: 'End-to-End Encrypted Ledger',
     detail:
-      'Bank/MFS transaction IDs, payout accounts, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
+      'Applicant KYC records, Bank/MFS transaction IDs, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
   },
   {
     Icon: Sheet,
     title: 'Live Google Sheets & Gmail Sync',
     detail:
-      'Automatically mirror a 7-tab treasury blueprint to Google Sheets and dispatch Gmail alerts for contributions, approvals, and repayments.',
+      'Mirror a 7-tab treasury blueprint to Google Sheets and dispatch Gmail alerts for contributions, approvals, and scheduled repayments.',
   },
   {
     Icon: ShieldCheck,
-    title: 'Admin-Gated Onboarding',
+    title: 'Admin-Verified Onboarding',
     detail:
-      'New registrations enter a pending verification queue. Only administrator-approved members can sign in and access cooperative funds.',
+      'Applicants submit verified identification, references, and portrait uploads for administrator review before gaining access to cooperative funds.',
   },
 ];
 
-export function PublicHomeView() {
+export function Hero() {
   const { user } = useCoopSession();
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Split Architectural Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -50,7 +54,7 @@ export function PublicHomeView() {
               Interest-Free Qard Hasan · Post-Maturity Halal Capital
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
               Cooperative Treasury Governed by Transparency and 2/3 Consensus
             </h1>
 
@@ -63,18 +67,27 @@ export function PublicHomeView() {
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
-                href={user ? '/dashboard' : '/login'}
+                href={user ? '/dashboard' : '/signup'}
                 className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
               >
-                <span>{user ? 'Enter Members Dashboard' : 'Member Sign In / Apply'}</span>
+                <span>{user ? 'Enter Members Dashboard' : 'Apply for Membership'}</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
 
+              {!user && (
+                <Link
+                  href="/login"
+                  className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors"
+                >
+                  Member Sign In
+                </Link>
+              )}
+
               <Link
                 href="/rules"
-                className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors"
+                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
-                Read Cooperative Rules
+                Read Rules
               </Link>
             </div>
 
@@ -113,10 +126,10 @@ export function PublicHomeView() {
             transition={{ duration: 0.3 }}
             className="lg:col-span-6"
           >
-            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800 aspect-video shadow-sm">
+            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 aspect-[16/10] shadow-sm">
               <img
-                src="/images/coop_hero_architecture_1794662148031.jpg"
-                alt="Minimalist architectural glass atrium representing transparent Amanah Co-op governance"
+                src={HERO_IMAGE_URL}
+                alt="Qard Hasan cooperative banking alternative visualization for Amanah Co-op"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
@@ -165,10 +178,10 @@ export function PublicHomeView() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-5">
-            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800 aspect-[4/3] shadow-sm">
+            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-950/10 to-slate-200 dark:from-slate-900 dark:to-slate-800 aspect-[4/3] shadow-sm">
               <img
-                src="/images/coop_halal_investment_1794662148589.jpg"
-                alt="Solar-powered agricultural cold storage facility representing Shariah-compliant cooperative investments"
+                src={INVESTMENT_IMAGE_URL}
+                alt="Shariah-compliant Halal cooperative investment sectors after fund maturity"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
@@ -229,10 +242,10 @@ export function PublicHomeView() {
                 Explore Security & RBAC
               </Link>
               <Link
-                href={user ? '/dashboard' : '/login'}
+                href={user ? '/dashboard' : '/signup'}
                 className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
               >
-                <span>{user ? 'Open Members Dashboard' : 'Sign In to Member Portal'}</span>
+                <span>{user ? 'Open Members Dashboard' : 'Submit Membership Application'}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>

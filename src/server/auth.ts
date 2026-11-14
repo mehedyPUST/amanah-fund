@@ -23,6 +23,7 @@ export function sanitizeUser(user: StoredUser): PublicUser {
     status: user.status,
     joinedAt: user.joinedAt,
     phoneMasked: user.phoneMasked,
+    photoUrl: user.photoUrl,
   };
 }
 

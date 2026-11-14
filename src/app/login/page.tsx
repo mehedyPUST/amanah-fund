@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
-import { LoginPageClient } from '../../components/LoginPageClient.tsx';
 import { PublicShell } from '../../components/PublicShell.tsx';
+import { SignInForm } from '../../components/SignInForm.tsx';
 
 export const metadata: Metadata = {
-  title: 'Member Sign In & Onboarding — Amanah Co-op Treasury',
+  title: 'Member Sign In — Amanah Co-op Treasury',
 };
 
 export default function LoginPage() {
   return (
     <PublicShell>
-      <LoginPageClient />
+      <SignInForm />
     </PublicShell>
   );
 }

@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import type {
@@ -6,6 +8,7 @@ import type {
   HalalProject,
   InstallmentItem,
   LoanRequest,
+  UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
 import {
@@ -115,47 +118,108 @@ apiRouter.post('/auth/login', async (req, res) => {
   }
 });
 
-apiRouter.post('/auth/demo-login', async (req, res) => {
+const UPLOADS_DIR = path.resolve(process.cwd(), 'data', 'uploads');
+
+apiRouter.get('/uploads/:filename', (req, res) => {
+  const safeName = path.basename(String(req.params.filename || ''));
+  if (!safeName || !/^[a-zA-Z0-9._-]+$/.test(safeName)) {
+    res.status(400).json({ error: 'Invalid file name.' });
+    return;
+  }
+  const filePath = path.join(UPLOADS_DIR, safeName);
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Image not found.' });
+    return;
+  }
+  res.sendFile(filePath);
+});
+
+apiRouter.post('/upload/imgbb', async (req, res) => {
   try {
-    const email = String(req.body?.email || '').trim().toLowerCase();
-    const state = await loadVaultState();
-    const user = state.users.find((u) => u.email.toLowerCase() === email);
-    if (!user) {
-      res.status(404).json({ error: 'Demo profile not found.' });
-      return;
-    }
-    if (user.status === 'pending_approval') {
-      res.status(403).json({
-        error:
-          'This member account is still pending administrator approval and cannot sign in yet.',
-      });
-      return;
-    }
-    if (user.status !== 'active') {
-      res.status(403).json({ error: 'Account is suspended. Contact an administrator.' });
+    const rawData = String(req.body?.imageBase64 || '').trim();
+    const rawName = String(req.body?.name || 'member-upload').replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    if (!rawData) {
+      res.status(400).json({ error: 'Image payload is required.' });
       return;
     }
 
-    const sanitized = sanitizeUser(user);
-    const token = signAuthToken(user);
-    setAuthCookie(req, res, token);
+    let mimeType = 'image/jpeg';
+    let base64Payload = rawData;
+    const dataUrlMatch = rawData.match(/^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,(.+)$/i);
+    if (dataUrlMatch) {
+      mimeType = dataUrlMatch[1].toLowerCase();
+      base64Payload = dataUrlMatch[2];
+    }
 
-    await updateVaultState((draft) => {
-      appendAuditLog(draft, {
-        actor: sanitized,
-        action: 'AUTH_DEMO_SWITCH',
-        resourceType: 'auth',
-        resourceId: sanitized.id,
-        summary: `Authenticated session established as ${sanitized.name} (${sanitized.role})`,
-        payload: { email: sanitized.email, role: sanitized.role },
+    const buffer = Buffer.from(base64Payload, 'base64');
+    if (buffer.length === 0 || buffer.length > 8 * 1024 * 1024) {
+      res.status(400).json({ error: 'Image must be a valid image under 8 MB.' });
+      return;
+    }
+
+    const apiKey = process.env.IMGBB_API_KEY?.trim();
+    if (apiKey) {
+      const formBody = new URLSearchParams();
+      formBody.set('key', apiKey);
+      formBody.set('image', base64Payload);
+      formBody.set('name', rawName);
+
+      const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formBody.toString(),
       });
-      return draft;
+
+      const imgbbJson = (await imgbbRes.json()) as {
+        success?: boolean;
+        data?: { url?: string; display_url?: string };
+        error?: { message?: string };
+      };
+
+      if (!imgbbRes.ok || !imgbbJson.success || !imgbbJson.data) {
+        res.status(502).json({
+          error: imgbbJson.error?.message || 'ImgBB upload failed. Check IMGBB_API_KEY configuration.',
+        });
+        return;
+      }
+
+      res.json({
+        url: imgbbJson.data.display_url || imgbbJson.data.url,
+        provider: 'imgbb',
+      });
+      return;
+    }
+
+    // Graceful server-side storage fallback when IMGBB_API_KEY is not configured in environment
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+    const ext =
+      mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffer);
+
+    res.json({
+      url: `/api/uploads/${filename}`,
+      provider: 'local_vault',
     });
-
-    res.json({ user: sanitized });
   } catch (err) {
-    console.error('Demo login error:', err);
-    res.status(500).json({ error: 'Could not establish demo session.' });
+    console.error('Image upload error:', err);
+    res.status(500).json({ error: 'Failed to process image upload.' });
+  }
+});
+
+apiRouter.get('/auth/references', async (_req, res) => {
+  try {
+    const state = await loadVaultState();
+    const activeMembers = state.users
+      .filter((u) => u.status === 'active')
+      .map((u) => ({ name: u.name, memberCode: u.memberCode }));
+    res.json({ members: activeMembers });
+  } catch (err) {
+    console.error('Reference list error:', err);
+    res.status(500).json({ error: 'Failed to load reference members.' });
   }
 });
 
@@ -164,12 +228,35 @@ apiRouter.post('/auth/register', async (req, res) => {
     const name = String(req.body?.name || '').trim();
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
-    const phone = String(req.body?.phone || '').trim();
+    const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
+    const referenceMemberName = String(req.body?.referenceMemberName || '').trim();
+    const mobile = String(req.body?.mobile || '').trim();
+    const occupation = String(req.body?.occupation || '').trim();
+    const companyOrganization = String(req.body?.companyOrganization || '').trim();
+    const nid = String(req.body?.nid || '').trim();
+    const presentAddress = String(req.body?.presentAddress || '').trim();
+    const permanentAddress = String(req.body?.permanentAddress || '').trim();
+    const photoUrl = String(req.body?.photoUrl || '').trim();
+    const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
-    if (!name || !email || password.length < 6) {
-      res
-        .status(400)
-        .json({ error: 'Name, valid email, and password (minimum 6 characters) are required.' });
+    if (
+      !name ||
+      !email ||
+      password.length < 6 ||
+      !dateOfBirth ||
+      !referenceMemberName ||
+      !mobile ||
+      !occupation ||
+      !companyOrganization ||
+      !nid ||
+      !presentAddress ||
+      !permanentAddress ||
+      !photoUrl
+    ) {
+      res.status(400).json({
+        error:
+          'All required registration fields (including photo, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
+      });
       return;
     }
 
@@ -178,6 +265,19 @@ apiRouter.post('/auth/register', async (req, res) => {
       res.status(409).json({ error: 'An account with this email already exists.' });
       return;
     }
+
+    const registrationDetails: UserRegistrationDetails = {
+      dateOfBirth,
+      referenceMemberName,
+      mobile,
+      occupation,
+      companyOrganization,
+      nid,
+      presentAddress,
+      permanentAddress,
+      photoUrl,
+      agreementPhotoUrl: agreementPhotoUrl || undefined,
+    };
 
     const nextNumber = state.users.length + 1;
     const newUser: StoredUser = {
@@ -189,7 +289,9 @@ apiRouter.post('/auth/register', async (req, res) => {
       memberCode: `AC-${String(nextNumber).padStart(3, '0')}`,
       status: 'pending_approval',
       joinedAt: new Date().toISOString(),
-      phoneMasked: phone ? maskReference(phone) : '••••0000',
+      phoneMasked: maskReference(mobile),
+      photoUrl,
+      encryptedRegistrationDetails: encryptSensitiveObject(registrationDetails),
     };
 
     const sanitized = sanitizeUser(newUser);
@@ -204,7 +306,7 @@ apiRouter.post('/auth/register', async (req, res) => {
           recipientName: admin.name,
           recipientUserId: admin.id,
           subject: `New Member Signup Pending Approval: ${name} (${newUser.memberCode})`,
-          body: `${name} (${email}) has submitted a cooperative membership application (${newUser.memberCode}). Please review and approve their account in Admin & Reports before they can sign in.`,
+          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}) submitted a cooperative membership application (${newUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
           relatedId: newUser.id,
         });
       });
@@ -215,7 +317,12 @@ apiRouter.post('/auth/register', async (req, res) => {
         resourceType: 'auth',
         resourceId: newUser.id,
         summary: `New registration from ${name} (${newUser.memberCode}) queued for administrator approval`,
-        payload: { email: newUser.email, memberCode: newUser.memberCode, status: 'pending_approval' },
+        payload: {
+          email: newUser.email,
+          memberCode: newUser.memberCode,
+          referenceMemberName,
+          status: 'pending_approval',
+        },
       });
       return draft;
     });
@@ -227,7 +334,7 @@ apiRouter.post('/auth/register', async (req, res) => {
       pendingApproval: true,
       user: sanitized,
       message:
-        'Registration submitted. An administrator must approve your account before you can sign in.',
+        'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -1278,10 +1385,11 @@ apiRouter.get(
   '/admin/members',
   requireAuth,
   requireRole(['admin', 'manager']),
-  async (_req, res) => {
+  async (req: AuthenticatedRequest, res) => {
     try {
       const state = await loadVaultState();
-      res.json({ members: buildMemberSummaries(state) });
+      const includeDetails = req.authUser?.role === 'admin';
+      res.json({ members: buildMemberSummaries(state, includeDetails) });
     } catch (err) {
       console.error('Members error:', err);
       res.status(500).json({ error: 'Failed to load members.' });
@@ -1355,7 +1463,7 @@ apiRouter.patch(
         broadcastRealtimeEvent('notification:created', { type: 'signup_approved' });
       }
       const nextState = await loadVaultState();
-      res.json({ members: buildMemberSummaries(nextState) });
+      res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       console.error('Update member error:', err);
       res.status(500).json({ error: 'Failed to update member.' });
@@ -1399,7 +1507,7 @@ apiRouter.delete(
 
       broadcastRealtimeEvent('members:updated', { userId: id });
       const nextState = await loadVaultState();
-      res.json({ members: buildMemberSummaries(nextState) });
+      res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'ONLY_PENDING_DELETABLE') {
         res.status(400).json({ error: 'Only pending registrations can be declined and removed.' });
