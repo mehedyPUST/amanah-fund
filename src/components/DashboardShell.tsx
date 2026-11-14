@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Shield,
   Sun,
+  User,
   UserCheck,
   Vote,
   X,
@@ -31,6 +32,7 @@ import { useCoopSession } from './AppProviders.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { LoansView } from './LoansView.tsx';
+import { MemberProfile } from './MemberProfile.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { type NavTab, OverviewView } from './OverviewView.tsx';
 import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
@@ -61,6 +63,7 @@ const NAV_ITEMS: Array<{
   { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
   { id: 'halal', label: 'Halal Investment', Icon: Briefcase },
   { id: 'notifications', label: 'Notifications', Icon: Bell },
+  { id: 'profile', label: 'Member Profile', Icon: User },
   { id: 'registrations', label: 'Pending Registrations', Icon: UserCheck, adminOnly: true },
   { id: 'admin', label: 'Admin & Reports', Icon: Shield, staffOnly: true },
 ];
@@ -393,14 +396,21 @@ export function DashboardShell() {
         </nav>
 
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-          <div className="min-w-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
             <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
               {user.name}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
-              {user.role} · <span className="font-mono">{user.memberCode}</span>
+              {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+              <span className="text-emerald-700 dark:text-emerald-400">
+                {user.status === 'active' ? 'Verified' : 'Pending'}
+              </span>
             </div>
-          </div>
+          </button>
           <button
             type="button"
             onClick={() => void handleSignOut()}
@@ -758,6 +768,9 @@ export function DashboardShell() {
                   onDisconnectGoogle={handleDisconnectGoogle}
                   onRefresh={handleRefreshWithAutoSync}
                 />
+              )}
+              {activeTab === 'profile' && (
+                <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
               )}
               {activeTab === 'registrations' && (
                 <PendingRegistrationsView user={user} onRefresh={handleRefreshWithAutoSync} />

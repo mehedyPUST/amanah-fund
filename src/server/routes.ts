@@ -351,6 +351,170 @@ apiRouter.get('/auth/me', requireAuth, (req: AuthenticatedRequest, res) => {
   res.json({ user: req.authUser });
 });
 
+apiRouter.get('/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const storedUser = state.users.find((u) => u.id === req.authUser!.id);
+    if (!storedUser) {
+      res.status(404).json({ error: 'Member profile not found.' });
+      return;
+    }
+
+    let registrationDetails: UserRegistrationDetails | undefined;
+    if (storedUser.encryptedRegistrationDetails) {
+      try {
+        registrationDetails = decryptSensitiveObject<UserRegistrationDetails>(
+          storedUser.encryptedRegistrationDetails
+        );
+      } catch {
+        registrationDetails = undefined;
+      }
+    }
+
+    res.json({
+      user: {
+        ...sanitizeUser(storedUser),
+        registrationDetails,
+      },
+    });
+  } catch (err) {
+    console.error('Profile load error:', err);
+    res.status(500).json({ error: 'Failed to load member profile.' });
+  }
+});
+
+apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const name = req.body?.name !== undefined ? String(req.body.name).trim() : undefined;
+    const email =
+      req.body?.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
+    const mobile = String(req.body?.mobile || '').trim();
+    const presentAddress = String(req.body?.presentAddress || '').trim();
+    const permanentAddress = String(req.body?.permanentAddress || '').trim();
+    const occupation =
+      req.body?.occupation !== undefined ? String(req.body.occupation).trim() : undefined;
+    const companyOrganization =
+      req.body?.companyOrganization !== undefined
+        ? String(req.body.companyOrganization).trim()
+        : undefined;
+
+    if (!mobile || !presentAddress || !permanentAddress) {
+      res.status(400).json({
+        error: 'Mobile number, present address, and permanent address are required.',
+      });
+      return;
+    }
+
+    if (name !== undefined && name.length < 2) {
+      res.status(400).json({ error: 'Full name must be at least 2 characters.' });
+      return;
+    }
+
+    if (email !== undefined && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+      res.status(400).json({ error: 'Please provide a valid email address.' });
+      return;
+    }
+
+    let updatedPublicUser: ReturnType<typeof sanitizeUser> & {
+      registrationDetails?: UserRegistrationDetails;
+    } | null = null;
+
+    await updateVaultState((draft) => {
+      const target = draft.users.find((u) => u.id === viewer.id);
+      if (!target) return draft;
+
+      if (email && email !== target.email.toLowerCase()) {
+        const duplicate = draft.users.some(
+          (u) => u.id !== target.id && u.email.toLowerCase() === email
+        );
+        if (duplicate) {
+          throw new Error('EMAIL_IN_USE');
+        }
+        target.email = email;
+      }
+
+      if (name) {
+        target.name = name;
+      }
+
+      target.phoneMasked = maskReference(mobile);
+
+      let existingDetails: UserRegistrationDetails = {
+        dateOfBirth: '',
+        referenceMemberName: 'Amanah Administrator',
+        mobile,
+        occupation: occupation || '',
+        companyOrganization: companyOrganization || '',
+        nid: '',
+        presentAddress,
+        permanentAddress,
+        photoUrl: target.photoUrl || '',
+      };
+
+      if (target.encryptedRegistrationDetails) {
+        try {
+          existingDetails = decryptSensitiveObject<UserRegistrationDetails>(
+            target.encryptedRegistrationDetails
+          );
+        } catch {
+          // fallback to baseline object if decryption fails
+        }
+      }
+
+      const nextDetails: UserRegistrationDetails = {
+        ...existingDetails,
+        mobile,
+        presentAddress,
+        permanentAddress,
+        occupation: occupation !== undefined ? occupation : existingDetails.occupation,
+        companyOrganization:
+          companyOrganization !== undefined
+            ? companyOrganization
+            : existingDetails.companyOrganization,
+      };
+
+      target.encryptedRegistrationDetails = encryptSensitiveObject(nextDetails);
+
+      const sanitized = sanitizeUser(target);
+      updatedPublicUser = {
+        ...sanitized,
+        registrationDetails: nextDetails,
+      };
+
+      appendAuditLog(draft, {
+        actor: sanitized,
+        action: 'MEMBER_PROFILE_UPDATED',
+        resourceType: 'auth',
+        resourceId: target.id,
+        summary: `${target.name} (${target.memberCode}) updated encrypted contact & profile information`,
+        payload: {
+          userId: target.id,
+          email: target.email,
+          phoneMasked: target.phoneMasked,
+        },
+      });
+
+      return draft;
+    });
+
+    if (!updatedPublicUser) {
+      res.status(404).json({ error: 'Member profile not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('members:updated', { userId: viewer.id });
+    res.json({ user: updatedPublicUser });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
+      res.status(409).json({ error: 'Another member account already uses that email address.' });
+      return;
+    }
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'Failed to update member profile.' });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // 2. Real-time Dashboard Overview
 // ---------------------------------------------------------------------------

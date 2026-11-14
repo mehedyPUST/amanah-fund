@@ -32,6 +32,7 @@ export type TransactionTabTarget =
   | 'halal'
   | 'notifications'
   | 'transactions'
+  | 'profile'
   | 'admin';
 
 interface TransactionHistoryProps {

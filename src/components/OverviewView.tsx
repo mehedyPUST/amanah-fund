@@ -17,6 +17,7 @@ export type NavTab =
   | 'halal'
   | 'transactions'
   | 'notifications'
+  | 'profile'
   | 'registrations'
   | 'admin';
 

@@ -60,6 +60,20 @@ export interface RegisterMemberPayload {
 
 export const api = {
   getMe: () => apiRequest<{ user: PublicUser }>('/api/auth/me'),
+  getProfile: () => apiRequest<{ user: PublicUser }>('/api/profile'),
+  updateProfile: (payload: {
+    name?: string;
+    email?: string;
+    mobile: string;
+    presentAddress: string;
+    permanentAddress: string;
+    occupation?: string;
+    companyOrganization?: string;
+  }) =>
+    apiRequest<{ user: PublicUser }>('/api/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
   login: (email: string, password: string) =>
     apiRequest<{ user: PublicUser }>('/api/auth/login', {
       method: 'POST',
