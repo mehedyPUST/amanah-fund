@@ -8,12 +8,12 @@ export function Footer() {
   const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
-    <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+    <footer className="bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-950 dark:to-slate-950 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-violet-600 text-white flex items-center justify-center shadow-xs">
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
@@ -28,26 +28,38 @@ export function Footer() {
 
           <div className="space-y-2.5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-white">
-              Navigation
+              Executive Links
             </h3>
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
               <li>
-                <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400">
-                  Home
+                <Link
+                  href="/"
+                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
+                  Overview
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400">
-                  About & Architecture
+                <Link
+                  href="/about"
+                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
+                  Security & Architecture
                 </Link>
               </li>
               <li>
-                <Link href="/rules" className="hover:text-emerald-700 dark:hover:text-emerald-400">
-                  Cooperative Rules
+                <Link
+                  href="/rules"
+                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
+                  Governance Charter
                 </Link>
               </li>
               <li>
-                <Link href="/signup" className="hover:text-emerald-700 dark:hover:text-emerald-400">
+                <Link
+                  href="/signup"
+                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
                   Membership Application
                 </Link>
               </li>
@@ -77,16 +89,16 @@ export function Footer() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={user ? '/dashboard' : '/login'}
-                className="inline-block px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:opacity-90 transition-opacity"
+                className="inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
               >
-                {user ? 'Members Dashboard' : 'Member Sign In'}
+                {user ? 'Member Portal' : 'Member Sign In'}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
+                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200"
                 >
-                  Apply
+                  Apply Now
                 </Link>
               )}
             </div>
@@ -107,16 +119,16 @@ export function Footer() {
               onClick={toggleDarkMode}
               title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
               aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 cursor-pointer"
             >
               {darkMode ? (
                 <>
-                  <Sun className="w-3.5 h-3.5" aria-hidden="true" />
+                  <Sun className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
                   <span>Light</span>
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5" aria-hidden="true" />
+                  <Moon className="w-3.5 h-3.5 text-violet-600" aria-hidden="true" />
                   <span>Dark</span>
                 </>
               )}

@@ -13,6 +13,10 @@ const RULES = [
       'Applications trigger an automated notification to active Administrators.',
       'Administrators inspect applicant KYC details and uploaded documents before activation.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-emerald-50/85 via-white to-emerald-50/30 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/10 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+    codeClass: 'text-emerald-700 dark:text-emerald-400',
+    iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
   {
     code: '02',
@@ -23,6 +27,10 @@ const RULES = [
       'Submitting a request automatically notifies Treasury Managers for reconciliation.',
       'Accepting a contribution sends a confirmation email to the member and adds the exact amount to the Central Fund Balance.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-amber-50/85 via-white to-amber-50/30 dark:from-amber-950/25 dark:via-slate-900 dark:to-amber-950/10 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
+    codeClass: 'text-amber-700 dark:text-amber-400',
+    iconClass: 'text-amber-600 dark:text-amber-400',
   },
   {
     code: '03',
@@ -34,6 +42,10 @@ const RULES = [
       'Loans reaching 2/3 member approval immediately deduct (−) the principal from the Central Fund Balance.',
       'Verified monthly loan repayment installments restore (+) funds back to the Central Fund Balance.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-violet-50/85 via-white to-violet-50/30 dark:from-violet-950/30 dark:via-slate-900 dark:to-violet-950/10 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+    codeClass: 'text-violet-700 dark:text-violet-400',
+    iconClass: 'text-violet-600 dark:text-violet-400',
   },
   {
     code: '04',
@@ -45,6 +57,10 @@ const RULES = [
       'Annual Quota: Default limit is 3 loans per member per calendar year, dynamically configurable by the Administrator.',
       'Pre-Maturity Window: Qard Hasan lending operates until the fund’s pre-specified maturity date.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/30 dark:from-emerald-950/30 dark:via-slate-900 dark:to-amber-950/10 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+    codeClass: 'text-emerald-700 dark:text-emerald-400',
+    iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
   {
     code: '05',
@@ -55,6 +71,10 @@ const RULES = [
       'Quorum requires affirmative votes from at least two-thirds (⌈2/3 × active members⌉) of eligible members.',
       'Each ballot records an immutable SHA-256 signature hash and updates live via Server-Sent Events.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-amber-50/85 via-white to-violet-50/30 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
+    codeClass: 'text-amber-700 dark:text-amber-400',
+    iconClass: 'text-amber-600 dark:text-amber-400',
   },
   {
     code: '06',
@@ -65,6 +85,10 @@ const RULES = [
       'Permitted Islamic structures: Mudarabah (profit-sharing), Musharakah (joint venture), and Murabahah (cost-plus trade).',
       'Every investment placement must pass Shariah review and a 2/3 member "Yes / No" vote.',
     ],
+    cardClass:
+      'bg-gradient-to-br from-violet-50/85 via-white to-emerald-50/30 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/15 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+    codeClass: 'text-violet-700 dark:text-violet-400',
+    iconClass: 'text-violet-600 dark:text-violet-400',
   },
 ];
 
@@ -73,7 +97,7 @@ export function Rules() {
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
         <div className="space-y-3">
-          <div className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
             Cooperative Governance & Bylaws
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -89,10 +113,10 @@ export function Rules() {
           {RULES.map((rule) => (
             <article
               key={rule.code}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-3"
+              className={`border rounded-xl p-6 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${rule.cardClass}`}
             >
               <div className="flex items-baseline gap-3">
-                <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                <span className={`font-mono text-sm font-bold ${rule.codeClass}`}>
                   RULE {rule.code}
                 </span>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -109,7 +133,7 @@ export function Rules() {
                     className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300"
                   >
                     <CheckCircle2
-                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                      className={`w-4 h-4 shrink-0 mt-0.5 ${rule.iconClass}`}
                       aria-hidden="true"
                     />
                     <span>{pt}</span>
@@ -127,16 +151,19 @@ export function Rules() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/login"
-              className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200"
             >
               Member Sign In
             </Link>
             <Link
               href="/signup"
-              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
+              className="group px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
             >
               <span>Apply for Membership</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <ArrowRight
+                className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
             </Link>
           </div>
         </div>

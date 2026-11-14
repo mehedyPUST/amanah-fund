@@ -127,7 +127,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     return (
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Access Required
@@ -145,7 +145,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
   return (
     <div className="space-y-6">
       {/* Header & Controls */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+      <section className="bg-gradient-to-br from-amber-50/75 via-white to-violet-50/40 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -201,7 +201,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             className={`p-3.5 rounded-lg border text-xs font-medium ${
               feedback.type === 'success'
                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
             }`}
           >
             {feedback.text}
@@ -276,7 +276,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             return (
               <article
                 key={applicant.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
               >
                 {/* Applicant Header & Primary Approve / Reject Actions */}
                 <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
@@ -337,7 +337,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy}
                       onClick={() => void handleReject(applicant)}
-                      className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+                      className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -349,7 +349,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy}
                       onClick={() => void handleApprove(applicant)}
-                      className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>

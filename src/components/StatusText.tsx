@@ -57,7 +57,7 @@ const STATUS_MAP: Record<
   },
   approved_pending_disbursement: {
     label: 'Ready for Disbursement',
-    colorClass: 'text-sky-700 dark:text-sky-400',
+    colorClass: 'text-violet-700 dark:text-violet-400',
     Icon: ShieldCheck,
   },
   pending_verification: {
@@ -77,17 +77,17 @@ const STATUS_MAP: Record<
   },
   rejected: {
     label: 'Rejected',
-    colorClass: 'text-rose-700 dark:text-rose-400',
+    colorClass: 'text-red-700 dark:text-red-400',
     Icon: XCircle,
   },
   suspended: {
     label: 'Suspended',
-    colorClass: 'text-rose-700 dark:text-rose-400',
+    colorClass: 'text-red-700 dark:text-red-400',
     Icon: AlertCircle,
   },
   overdue: {
     label: 'Overdue',
-    colorClass: 'text-rose-700 dark:text-rose-400',
+    colorClass: 'text-red-700 dark:text-red-400',
     Icon: AlertCircle,
   },
 };

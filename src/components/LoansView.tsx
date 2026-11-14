@@ -179,7 +179,7 @@ export function LoansView({
     } else if (myActiveOrPendingLoan.status === 'approved_pending_disbursement') {
       loanProgressPct = 100;
       loanProgressCaption = '2/3 Quorum Approved · Ready for treasury multi-sig disbursement';
-      loanBarColorClass = 'bg-sky-600';
+      loanBarColorClass = 'bg-gradient-to-r from-violet-600 to-emerald-600';
     } else if (myActiveOrPendingLoan.status === 'active') {
       const paidInstallments = myActiveOrPendingLoan.installments.filter(
         (i) => i.status === 'paid'
@@ -192,7 +192,7 @@ export function LoansView({
             )
           : 0;
       loanProgressCaption = `Repaid ${formatMoney(myActiveOrPendingLoan.totalRepaid, ccy)} of ${formatMoney(myActiveOrPendingLoan.amount, ccy)} (${paidInstallments}/${myActiveOrPendingLoan.installments.length} installments · ${loanProgressPct}%)`;
-      loanBarColorClass = 'bg-emerald-600';
+      loanBarColorClass = 'bg-gradient-to-r from-emerald-600 to-emerald-500';
     }
   }
 
@@ -204,7 +204,7 @@ export function LoansView({
           className={`p-3.5 rounded-lg border text-xs font-medium ${
             feedback.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {feedback.text}
@@ -214,7 +214,7 @@ export function LoansView({
       {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status with Visual Progress Bars */}
       <section
         aria-label="Member Loan Quota and Active Request Summary"
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6"
+        className="bg-gradient-to-br from-amber-50/70 via-white to-violet-50/55 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
       >
         {!eligibility && loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -250,10 +250,10 @@ export function LoansView({
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
                     remainingYearlyQuota === 0
-                      ? 'bg-rose-600'
+                      ? 'bg-red-600'
                       : remainingYearlyQuota === 1
-                        ? 'bg-amber-500'
-                        : 'bg-emerald-600'
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                        : 'bg-gradient-to-r from-emerald-600 to-violet-600'
                   }`}
                   style={{ width: `${quotaRemainingPct}%` }}
                 />
@@ -337,7 +337,7 @@ export function LoansView({
                   <span>Eligible to Request Loan</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 text-rose-700 dark:text-rose-400">
+                <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
                   <XCircle className="w-4 h-4" aria-hidden="true" />
                   <span>Currently Ineligible</span>
                 </span>
@@ -348,14 +348,14 @@ export function LoansView({
 
         {eligibility ? (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950">
+            <div className="p-3.5 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/75 via-white to-emerald-50/25 dark:from-emerald-950/25 dark:via-slate-950 dark:to-emerald-950/10 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">1. Active Loan Check</span>
                 <span
                   className={
                     eligibility.noActiveLoan
                       ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-rose-700 dark:text-rose-400'
+                      : 'font-medium text-red-700 dark:text-red-400'
                   }
                 >
                   {eligibility.noActiveLoan ? 'Passed' : 'Blocked'}
@@ -368,14 +368,14 @@ export function LoansView({
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950">
+            <div className="p-3.5 rounded-lg border border-amber-200/70 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/75 via-white to-amber-50/25 dark:from-amber-950/25 dark:via-slate-950 dark:to-amber-950/10 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">2. Annual Quota Check</span>
                 <span
                   className={
                     eligibility.quotaAvailable
                       ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-rose-700 dark:text-rose-400'
+                      : 'font-medium text-red-700 dark:text-red-400'
                   }
                 >
                   {eligibility.quotaAvailable ? 'Available' : 'Exhausted'}
@@ -386,7 +386,7 @@ export function LoansView({
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950">
+            <div className="p-3.5 rounded-lg border border-violet-200/70 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/75 via-white to-violet-50/25 dark:from-violet-950/25 dark:via-slate-950 dark:to-violet-950/10 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">3. Fund Lifecycle Window</span>
                 <span
@@ -581,13 +581,13 @@ export function LoansView({
                             <span aria-hidden="true" className="text-slate-400">
                               ·
                             </span>
-                            <span className="font-mono tabular-nums text-rose-700 dark:text-rose-400">
+                            <span className="font-mono tabular-nums text-red-700 dark:text-red-400">
                               {downvotes} Downvotes
                             </span>
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-emerald-600 transition-all"
+                              className="h-full bg-gradient-to-r from-emerald-600 to-violet-600 transition-all"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -599,7 +599,7 @@ export function LoansView({
                               type="button"
                               disabled={voteBusyId === activeSelectedLoan.id}
                               onClick={() => void handleQuickLoanVote(activeSelectedLoan.id, 'upvote')}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Upvote</span>
@@ -610,7 +610,7 @@ export function LoansView({
                               onClick={() =>
                                 void handleQuickLoanVote(activeSelectedLoan.id, 'downvote')
                               }
-                              className="px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Downvote</span>
@@ -780,7 +780,7 @@ export function LoansView({
                                           'reject'
                                         )
                                       }
-                                      className="p-1 rounded border border-rose-300 text-rose-600 hover:bg-rose-50 cursor-pointer"
+                                      className="p-1 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 cursor-pointer"
                                       title="Reject payment"
                                     >
                                       <X className="w-3.5 h-3.5" />

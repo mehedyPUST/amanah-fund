@@ -156,7 +156,7 @@ export function RequestQardHasanLoanForm({
   return (
     <section
       aria-label="Request Qard Hasan Loan Form"
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5"
+      className="bg-gradient-to-br from-amber-50/65 via-white to-emerald-50/35 dark:from-amber-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-2 text-xs">
@@ -186,7 +186,7 @@ export function RequestQardHasanLoanForm({
       {error && (
         <div
           role="alert"
-          className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2"
+          className="p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-start gap-2"
         >
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
           <span>{error}</span>
@@ -457,7 +457,7 @@ export function RequestQardHasanLoanForm({
         <button
           type="submit"
           disabled={!canSubmit || submitting}
-          className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+          className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
         >
           <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>

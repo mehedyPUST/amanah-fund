@@ -204,7 +204,7 @@ export function AuditTrendsCharts({
   }, [chartData]);
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+    <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/35 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -254,7 +254,7 @@ export function AuditTrendsCharts({
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Cumulative Qard Hasan Loan Volume
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(totals.totalLoanVol, currency)}
           </div>
         </div>
@@ -404,7 +404,7 @@ export function AuditTrendsCharts({
                     <Bar
                       dataKey="monthlyRepaid"
                       name="Monthly Repaid"
-                      fill="#0284c7"
+                      fill="#10b981"
                       radius={[4, 4, 0, 0]}
                       barSize={18}
                     />
@@ -412,9 +412,9 @@ export function AuditTrendsCharts({
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
                       name="Cumulative Loan Volume"
-                      stroke="#475569"
+                      stroke="#7c3aed"
                       strokeWidth={2}
-                      dot={{ r: 3, fill: '#475569' }}
+                      dot={{ r: 3, fill: '#7c3aed' }}
                       activeDot={{ r: 5 }}
                     />
                   </ComposedChart>

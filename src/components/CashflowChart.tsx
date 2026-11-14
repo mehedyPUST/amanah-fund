@@ -41,7 +41,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
             <span>Qard Hasan Disbursed</span>
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-xs bg-slate-700 dark:bg-slate-300" aria-hidden="true" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-violet-600 dark:bg-violet-400" aria-hidden="true" />
             <span>Installments Repaid</span>
           </span>
         </div>
@@ -143,7 +143,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   width={barW}
                   height={Math.max(point.repaid > 0 ? 3 : 0, h3)}
                   rx={2}
-                  className="fill-slate-700 dark:fill-slate-300 transition-opacity"
+                  className="fill-violet-600 dark:fill-violet-400 transition-opacity"
                 />
                 <text
                   x={centerX}

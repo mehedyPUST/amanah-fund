@@ -170,7 +170,7 @@ export function SignUpForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xs space-y-8"
+        className="max-w-3xl w-full mx-auto bg-gradient-to-br from-emerald-50/50 via-white to-violet-50/45 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
           <div className="space-y-1.5">
@@ -227,7 +227,7 @@ export function SignUpForm() {
             {error && (
               <div
                 role="alert"
-                className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+                className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300"
               >
                 {error}
               </div>
@@ -241,7 +241,7 @@ export function SignUpForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Full Name <span className="text-rose-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -255,7 +255,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Email Address <span className="text-rose-500">*</span>
+                    Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -269,7 +269,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Password (min 6 chars) <span className="text-rose-500">*</span>
+                    Password (min 6 chars) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="password"
@@ -284,7 +284,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Date of Birth <span className="text-rose-500">*</span>
+                    Date of Birth <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -297,7 +297,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Mobile Number <span className="text-rose-500">*</span>
+                    Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -311,7 +311,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    National ID (NID) <span className="text-rose-500">*</span>
+                    National ID (NID) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -333,7 +333,7 @@ export function SignUpForm() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Reference (Existing Member Name) <span className="text-rose-500">*</span>
+                    Reference (Existing Member Name) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -355,7 +355,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Occupation <span className="text-rose-500">*</span>
+                    Occupation <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -369,7 +369,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Company / Organization <span className="text-rose-500">*</span>
+                    Company / Organization <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -402,7 +402,7 @@ export function SignUpForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Present Address <span className="text-rose-500">*</span>
+                    Present Address <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
@@ -416,7 +416,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Permanent Address <span className="text-rose-500">*</span>
+                    Permanent Address <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
@@ -448,7 +448,7 @@ export function SignUpForm() {
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Member Photo <span className="text-rose-500">*</span>
+                      Member Photo <span className="text-red-500">*</span>
                     </span>
                     {photoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
@@ -535,7 +535,7 @@ export function SignUpForm() {
                         <button
                           type="button"
                           onClick={() => setAgreementPhotoUrl('')}
-                          className="text-left text-xs text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                          className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 hover:underline cursor-pointer"
                         >
                           Remove
                         </button>
@@ -574,7 +574,7 @@ export function SignUpForm() {
               <button
                 type="submit"
                 disabled={submitting || photoUploading || agreementUploading}
-                className="px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>

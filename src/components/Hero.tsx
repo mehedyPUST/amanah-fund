@@ -15,24 +15,40 @@ const HIGHLIGHTS = [
     title: '2/3 Democratic Member Voting',
     detail:
       'Every Qard Hasan loan request and Halal investment placement requires a verified 2/3 supermajority ballot with SHA-256 voter signatures.',
+    cardGradient:
+      'bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/15 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80',
+    iconBg:
+      'bg-gradient-to-br from-amber-500/20 to-amber-600/5 text-amber-700 dark:text-amber-400',
   },
   {
     Icon: Lock,
     title: 'End-to-End Encrypted Ledger',
     detail:
       'Applicant KYC records, Bank/MFS transaction IDs, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
+    cardGradient:
+      'bg-gradient-to-br from-violet-50/90 via-white to-violet-50/40 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+    iconBg:
+      'bg-gradient-to-br from-violet-500/20 to-violet-600/5 text-violet-700 dark:text-violet-400',
   },
   {
     Icon: Sheet,
     title: 'Live Google Sheets & Gmail Sync',
     detail:
       'Mirror a 7-tab treasury blueprint to Google Sheets and dispatch Gmail alerts for contributions, approvals, and scheduled repayments.',
+    cardGradient:
+      'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/15 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+    iconBg:
+      'bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 text-emerald-700 dark:text-emerald-400',
   },
   {
     Icon: ShieldCheck,
     title: 'Admin-Verified Onboarding',
     detail:
       'Applicants submit verified identification, references, and portrait uploads for administrator review before gaining access to cooperative funds.',
+    cardGradient:
+      'bg-gradient-to-br from-emerald-50/70 via-white to-violet-50/60 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/25 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+    iconBg:
+      'bg-gradient-to-br from-emerald-500/20 to-violet-500/15 text-emerald-700 dark:text-emerald-400',
   },
 ];
 
@@ -50,7 +66,7 @@ export function Hero() {
             transition={{ duration: 0.25 }}
             className="lg:col-span-6 space-y-6"
           >
-            <div className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Interest-Free Qard Hasan · Post-Maturity Halal Capital
             </div>
 
@@ -68,16 +84,19 @@ export function Hero() {
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+                className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2"
               >
-                <span>{user ? 'Enter Members Dashboard' : 'Apply for Membership'}</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                <span>{user ? 'Enter Member Portal' : 'Apply for Membership'}</span>
+                <ArrowRight
+                  className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
               </Link>
 
               {!user && (
                 <Link
                   href="/login"
-                  className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors"
+                  className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200"
                 >
                   Member Sign In
                 </Link>
@@ -87,33 +106,33 @@ export function Hero() {
                 href="/rules"
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
-                Read Rules
+                Governance Charter
               </Link>
             </div>
 
-            {/* Clean Architectural Metrics Row */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
-              <div>
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+            {/* Gradient Architectural Metrics Row */}
+            <div className="grid grid-cols-3 gap-3 pt-4">
+              <div className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/30 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                   0%
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Interest (Qard Hasan)
                 </div>
               </div>
-              <div>
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+              <div className="p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/90 via-white to-amber-50/30 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-amber-700 dark:text-amber-400">
                   2/3
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Approval Quorum
                 </div>
               </div>
-              <div>
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+              <div className="p-3.5 rounded-xl border border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/90 via-white to-violet-50/30 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-violet-700 dark:text-violet-400">
                   3 / yr
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Configurable Loan Cap
                 </div>
               </div>
@@ -126,13 +145,15 @@ export function Hero() {
             transition={{ duration: 0.3 }}
             className="lg:col-span-6"
           >
-            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 aspect-[16/10] shadow-sm">
-              <img
-                src={HERO_IMAGE_URL}
-                alt="Qard Hasan cooperative banking alternative visualization for Amanah Co-op"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
+            <div className="p-2 rounded-2xl border border-emerald-200/70 dark:border-slate-800 bg-gradient-to-br from-emerald-500/15 via-amber-500/10 to-violet-500/15 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 aspect-[16/10]">
+                <img
+                  src={HERO_IMAGE_URL}
+                  alt="Qard Hasan cooperative banking alternative visualization for Amanah Co-op"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </motion.div>
         </div>
@@ -142,7 +163,7 @@ export function Hero() {
       <section className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 space-y-10">
           <div className="max-w-2xl space-y-2">
-            <div className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Platform Architecture
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -156,9 +177,11 @@ export function Hero() {
               return (
                 <div
                   key={item.title}
-                  className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3"
+                  className={`p-5 rounded-xl border space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${item.cardGradient}`}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.iconBg}`}
+                  >
                     <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -178,19 +201,21 @@ export function Hero() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-5">
-            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-950/10 to-slate-200 dark:from-slate-900 dark:to-slate-800 aspect-[4/3] shadow-sm">
-              <img
-                src={INVESTMENT_IMAGE_URL}
-                alt="Shariah-compliant Halal cooperative investment sectors after fund maturity"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
+            <div className="p-2 rounded-2xl border border-violet-200/70 dark:border-slate-800 bg-gradient-to-br from-violet-500/15 via-amber-500/10 to-emerald-500/15 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 aspect-[4/3]">
+                <img
+                  src={INVESTMENT_IMAGE_URL}
+                  alt="Shariah-compliant Halal cooperative investment sectors after fund maturity"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
 
           <div className="lg:col-span-7 space-y-6">
             <div className="space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+              <div className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-400">
                 Two-Stage Capital Lifecycle
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -199,7 +224,7 @@ export function Hero() {
             </div>
 
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/35 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/15 border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CheckCircle2
                   className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
                   aria-hidden="true"
@@ -216,9 +241,9 @@ export function Hero() {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-violet-50/90 via-white to-amber-50/35 dark:from-violet-950/35 dark:via-slate-900 dark:to-amber-950/15 border border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CheckCircle2
-                  className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                  className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5"
                   aria-hidden="true"
                 />
                 <div className="space-y-1">
@@ -237,16 +262,19 @@ export function Hero() {
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href="/about"
-                className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 transition-all duration-200"
               >
-                Explore Security & RBAC
+                Security & Architecture
               </Link>
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
+                className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
               >
-                <span>{user ? 'Open Members Dashboard' : 'Submit Membership Application'}</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{user ? 'Open Member Portal' : 'Submit Membership Application'}</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           </div>

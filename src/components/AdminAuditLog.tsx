@@ -94,8 +94,8 @@ function getAuditVisualMeta(action: string) {
   ) {
     return {
       label: 'Application Rejected / Access Revoked',
-      tone: 'text-rose-700 dark:text-rose-400',
-      iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
+      tone: 'text-red-700 dark:text-red-400',
+      iconBg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60',
       Icon: UserX,
     };
   }
@@ -107,8 +107,8 @@ function getAuditVisualMeta(action: string) {
   ) {
     return {
       label: 'Rejected Request',
-      tone: 'text-rose-700 dark:text-rose-400',
-      iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
+      tone: 'text-red-700 dark:text-red-400',
+      iconBg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60',
       Icon: XCircle,
     };
   }
@@ -152,15 +152,15 @@ function getAuditVisualMeta(action: string) {
   if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED') {
     return {
       label: 'Security & Access',
-      tone: 'text-slate-700 dark:text-slate-300',
-      iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+      tone: 'text-violet-700 dark:text-violet-400',
+      iconBg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/60',
       Icon: KeyRound,
     };
   }
   return {
     label: 'System & Policy',
-    tone: 'text-slate-700 dark:text-slate-300',
-    iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    tone: 'text-violet-700 dark:text-violet-400',
+    iconBg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/60',
     Icon: Lock,
   };
 }
@@ -285,7 +285,7 @@ export function AdminAuditLog({
   if (!canViewAuditLogs) {
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-3">
-        <div className="w-11 h-11 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 flex items-center justify-center mx-auto">
+        <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -307,10 +307,10 @@ export function AdminAuditLog({
       {/* KPI Summary Strip */}
       {!compactHeader && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+          <div className="bg-gradient-to-br from-violet-50/75 via-white to-white dark:from-violet-950/25 dark:via-slate-900 dark:to-slate-900 border border-violet-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Audit Events</span>
-              <ScrollText className="w-4 h-4 text-slate-400" aria-hidden="true" />
+              <ScrollText className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {loading && logs.length === 0 ? '—' : metrics.total}
@@ -319,7 +319,7 @@ export function AdminAuditLog({
               className={`text-xs font-medium inline-flex items-center gap-1 ${
                 chainValid
                   ? 'text-emerald-700 dark:text-emerald-400'
-                  : 'text-rose-700 dark:text-rose-400'
+                  : 'text-red-700 dark:text-red-400'
               }`}
             >
               {chainValid ? (
@@ -331,7 +331,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+          <div className="bg-gradient-to-br from-emerald-50/75 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>User Approvals & Accounts</span>
               <UserCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
@@ -344,10 +344,10 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+          <div className="bg-gradient-to-br from-amber-50/75 via-white to-white dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Loan Status Changes</span>
-              <HandCoins className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+              <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {loading && logs.length === 0 ? '—' : metrics.loanStatusEvents}
@@ -357,12 +357,12 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+          <div className="bg-gradient-to-br from-red-50/70 via-white to-white dark:from-red-950/20 dark:via-slate-900 dark:to-slate-900 border border-red-200/75 dark:border-slate-800 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Rejected & Revoked</span>
-              <XCircle className="w-4 h-4 text-rose-600" aria-hidden="true" />
+              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" />
             </div>
-            <div className="text-2xl font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
+            <div className="text-2xl font-bold font-mono tabular-nums text-red-700 dark:text-red-400">
               {loading && logs.length === 0 ? '—' : metrics.rejectedEvents}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -373,7 +373,7 @@ export function AdminAuditLog({
       )}
 
       {/* Main Security Audit Log Panel */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -384,7 +384,7 @@ export function AdminAuditLog({
                 className={`inline-flex items-center gap-1 text-xs font-medium ${
                   chainValid
                     ? 'text-emerald-700 dark:text-emerald-400'
-                    : 'text-rose-700 dark:text-rose-400'
+                    : 'text-red-700 dark:text-red-400'
                 }`}
               >
                 {chainValid ? (
@@ -414,7 +414,7 @@ export function AdminAuditLog({
             <button
               type="button"
               onClick={() => window.location.assign('/api/reports/export?type=audit')}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Export Audit CSV</span>
@@ -425,7 +425,7 @@ export function AdminAuditLog({
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
+            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
           >
             {error}
           </div>

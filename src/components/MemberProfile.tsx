@@ -147,8 +147,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             shortLabel: 'Suspended',
             description: 'This membership account is currently suspended. Contact an administrator.',
             Icon: AlertCircle,
-            toneClass: 'text-rose-700 dark:text-rose-400',
-            boxClass: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60',
+            toneClass: 'text-red-700 dark:text-red-400',
+            boxClass: 'bg-red-50/80 dark:bg-red-950/30 border-red-200 dark:border-red-900/60',
           };
 
   const StatusIcon = statusMeta.Icon;
@@ -176,7 +176,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   return (
     <div className="space-y-6">
       {/* Membership Status & Identity Summary */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+      <section className="bg-gradient-to-br from-violet-50/70 via-white to-emerald-50/40 dark:from-violet-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -221,7 +221,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <button
             type="button"
             onClick={() => void loadProfile()}
-            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start md:self-center cursor-pointer"
+            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-violet-300 dark:hover:border-violet-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh Profile</span>
@@ -245,7 +245,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       {/* Main Split: Registration KYC Details (Read-Only) + Editable Contact Info */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Read-Only Registration Details */}
-        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Registration Credentials
@@ -325,7 +325,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         </section>
 
         {/* Editable Contact Information Form */}
-        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+        <section className="xl:col-span-7 bg-gradient-to-br from-white via-white to-emerald-50/35 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Update Contact Information
@@ -342,7 +342,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               className={`p-3.5 rounded-lg border text-xs font-medium ${
                 feedback.type === 'success'
                   ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
               }`}
             >
               {feedback.text}
@@ -489,7 +489,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
               >
                 <Save className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{saving ? 'Saving Profile…' : 'Save Contact Information'}</span>

@@ -321,14 +321,14 @@ export function TransactionHistory({
   return (
     <section
       aria-label="Member Transaction History"
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5"
+      className="bg-gradient-to-br from-white via-white to-violet-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       {/* Header Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <History className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Personal Treasury Ledger</span>
+            <span>General Treasury Ledger</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Transaction History · Contributions & Active Loan Repayments
@@ -372,7 +372,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
               <Download className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               <span>Export CSV</span>
@@ -383,7 +383,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleDownloadPdf}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Download PDF Statement</span>
@@ -394,10 +394,10 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={() => onNavigate('transactions')}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
-              <span>Full Transaction History</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Full General Ledger</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -647,7 +647,7 @@ function FragmentRow({
             {row.category === 'contribution' ? (
               <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
             ) : (
-              <HandCoins className="w-3.5 h-3.5 text-sky-600 shrink-0" aria-hidden="true" />
+              <HandCoins className="w-3.5 h-3.5 text-violet-600 shrink-0" aria-hidden="true" />
             )}
             <span>{row.title}</span>
           </div>
@@ -673,7 +673,7 @@ function FragmentRow({
           <div
             className={`font-mono font-semibold tabular-nums ${
               row.status === 'rejected' || row.status === 'overdue'
-                ? 'text-rose-700 dark:text-rose-400'
+                ? 'text-red-700 dark:text-red-400'
                 : row.status === 'scheduled'
                   ? 'text-slate-600 dark:text-slate-300'
                   : 'text-emerald-700 dark:text-emerald-400'

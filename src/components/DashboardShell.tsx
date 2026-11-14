@@ -60,18 +60,18 @@ const NAV_ITEMS: Array<{
   staffOnly?: boolean;
   adminOnly?: boolean;
 }> = [
-  { id: 'overview', label: 'Treasury Overview', Icon: BarChart3 },
-  { id: 'contributions', label: 'Monthly Contributions', Icon: CreditCard },
-  { id: 'loans', label: 'Qard Hasan Lending', Icon: HandCoins },
-  { id: 'transactions', label: 'Financial Ledger', Icon: History },
-  { id: 'voting', label: 'Governance Ballots', Icon: Vote },
-  { id: 'halal', label: 'Halal Investments', Icon: Briefcase },
-  { id: 'members', label: 'Member Directory', Icon: Users },
-  { id: 'notifications', label: 'Notices & Alerts', Icon: Bell },
-  { id: 'profile', label: 'Account Profile', Icon: User },
-  { id: 'registrations', label: 'Membership Approvals', Icon: UserCheck, adminOnly: true },
-  { id: 'audit', label: 'Compliance Audit Log', Icon: ScrollText, adminOnly: true },
-  { id: 'admin', label: 'Governance & Reports', Icon: Shield, staffOnly: true },
+  { id: 'overview', label: 'Executive Summary', Icon: BarChart3 },
+  { id: 'contributions', label: 'Capital Deposits', Icon: CreditCard },
+  { id: 'loans', label: 'Qard Hasan', Icon: HandCoins },
+  { id: 'transactions', label: 'General Ledger', Icon: History },
+  { id: 'voting', label: 'Member Ballots', Icon: Vote },
+  { id: 'halal', label: 'Halal Ventures', Icon: Briefcase },
+  { id: 'members', label: 'Member Registry', Icon: Users },
+  { id: 'notifications', label: 'Dispatch & Alerts', Icon: Bell },
+  { id: 'profile', label: 'Profile & KYC', Icon: User },
+  { id: 'registrations', label: 'Onboarding Queue', Icon: UserCheck, adminOnly: true },
+  { id: 'audit', label: 'Audit Trail', Icon: ScrollText, adminOnly: true },
+  { id: 'admin', label: 'Administration', Icon: Shield, staffOnly: true },
 ];
 
 export function DashboardShell() {
@@ -276,14 +276,19 @@ export function DashboardShell() {
             setActiveTab(item.id);
             if (isMobile) setMobileNavOpen(false);
           }}
-          className={`w-full px-3.5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between gap-3 transition-colors cursor-pointer whitespace-nowrap ${
+          className={`group w-full px-3.5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer whitespace-nowrap ${
             active
-              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-violet-50/70 dark:from-emerald-950/60 dark:via-emerald-950/35 dark:to-violet-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/50 shadow-xs'
+              : 'border border-transparent text-slate-600 dark:text-slate-400 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/70 dark:hover:from-slate-800/70 dark:hover:to-slate-800/40 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
           }`}
         >
           <span className="flex items-center gap-3 min-w-0">
-            <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <Icon
+              className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                active ? 'text-emerald-600 dark:text-emerald-400' : 'group-hover:scale-105'
+              }`}
+              aria-hidden="true"
+            />
             <span className="truncate">{item.label}</span>
           </span>
           {count > 0 && (
@@ -305,30 +310,30 @@ export function DashboardShell() {
     */
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
       {/* GRID 1: Members Dashboard (height == Grid 2 height [64px], width == Grid 3 width [260px]) */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-gradient-to-r from-white via-white to-emerald-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
-            <Shield className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-600 to-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              Members Dashboard
+              Amanah Treasury
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-              Amanah Co-op
+              Member Portal
             </div>
           </div>
         </div>
       </div>
 
       {/* GRID 2: Dashboard Nav (height == Grid 1 height [64px], width == Grid 4 width [1fr]) */}
-      <header className="lg:col-start-2 lg:row-start-1 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-0 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-0 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Open navigation"
-            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -336,7 +341,7 @@ export function DashboardShell() {
             <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Treasury</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
-              {activeNavMeta?.label || 'Treasury Overview'}
+              {activeNavMeta?.label || 'Executive Summary'}
             </h1>
           </div>
         </div>
@@ -345,7 +350,7 @@ export function DashboardShell() {
           <Link
             href="/"
             title="View Public Website"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 whitespace-nowrap"
           >
             <Globe className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Public Site</span>
@@ -354,9 +359,9 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={() => setActiveTab('notifications')}
-            title="Email & Treasury Notifications"
-            aria-label="Email & Treasury Notifications"
-            className="relative p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Dispatch & Treasury Notifications"
+            aria-label="Dispatch & Treasury Notifications"
+            className="relative p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
           >
             <Bell className="w-4 h-4" />
             {(overview?.treasury.unreadNotificationsCount || 0) > 0 && (
@@ -371,7 +376,7 @@ export function DashboardShell() {
             onClick={() => void refreshWorkspace(false)}
             title="Refresh live balances"
             aria-label="Refresh live balances"
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -381,7 +386,7 @@ export function DashboardShell() {
             onClick={toggleDarkMode}
             title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-800 transition-all duration-200 cursor-pointer"
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
@@ -389,7 +394,7 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={() => setActiveTab('loans')}
-            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
           >
             Request Qard Hasan
           </button>
@@ -421,7 +426,7 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={() => void handleSignOut()}
-            className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Sign Out</span>
@@ -445,9 +450,9 @@ export function DashboardShell() {
               transition={{ duration: 0.18 }}
               className="relative w-64 max-w-full bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 z-10"
             >
-              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white to-emerald-50/40 dark:from-slate-900 dark:to-emerald-950/20">
                 <span className="font-display font-bold text-base text-slate-900 dark:text-white">
-                  Members Dashboard
+                  Amanah Treasury
                 </span>
                 <button
                   type="button"
@@ -467,7 +472,7 @@ export function DashboardShell() {
                 <Link
                   href="/"
                   onClick={() => setMobileNavOpen(false)}
-                  className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium flex items-center justify-center gap-2"
+                  className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                 >
                   <Globe className="w-3.5 h-3.5" />
                   <span>Public Website</span>
@@ -475,7 +480,7 @@ export function DashboardShell() {
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
-                  className="w-full py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -511,10 +516,10 @@ export function DashboardShell() {
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18 }}
-                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${
                         isApproved
-                          ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
-                          : 'bg-rose-50/90 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
+                          ? 'bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/40 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/20 border-emerald-200 dark:border-emerald-900/60'
+                          : 'bg-gradient-to-r from-red-50/90 via-white to-red-50/40 dark:from-red-950/35 dark:via-slate-900 dark:to-red-950/20 border-red-200 dark:border-red-900/60'
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
@@ -522,7 +527,7 @@ export function DashboardShell() {
                           className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                             isApproved
                               ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-rose-600/15 text-rose-700 dark:text-rose-400'
+                              : 'bg-red-600/15 text-red-700 dark:text-red-400'
                           }`}
                         >
                           {isApproved ? (
@@ -536,7 +541,7 @@ export function DashboardShell() {
                             className={`flex flex-wrap items-center gap-2 text-xs font-semibold ${
                               isApproved
                                 ? 'text-emerald-900 dark:text-emerald-200'
-                                : 'text-rose-900 dark:text-rose-200'
+                                : 'text-red-900 dark:text-red-200'
                             }`}
                           >
                             <span>
@@ -555,7 +560,7 @@ export function DashboardShell() {
                             className={`text-xs font-medium ${
                               isApproved
                                 ? 'text-emerald-900 dark:text-emerald-100'
-                                : 'text-rose-900 dark:text-rose-100'
+                                : 'text-red-900 dark:text-red-100'
                             }`}
                           >
                             {alert.subject}
@@ -564,7 +569,7 @@ export function DashboardShell() {
                             className={`text-xs leading-relaxed ${
                               isApproved
                                 ? 'text-emerald-800 dark:text-emerald-300'
-                                : 'text-rose-800 dark:text-rose-300'
+                                : 'text-red-800 dark:text-red-300'
                             }`}
                           >
                             {alert.body}
@@ -576,10 +581,10 @@ export function DashboardShell() {
                         <button
                           type="button"
                           onClick={() => void handleOpenLoanFromDecisionAlert(alert.id)}
-                          className={`px-3.5 py-2 rounded-lg text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                          className={`px-3.5 py-2 rounded-lg text-white text-xs font-medium transition-all duration-200 hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                             isApproved
                               ? 'bg-emerald-600 hover:bg-emerald-700'
-                              : 'bg-rose-600 hover:bg-rose-700'
+                              : 'bg-red-600 hover:bg-red-700'
                           }`}
                         >
                           <span>View Loan Status</span>
@@ -633,7 +638,7 @@ export function DashboardShell() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                className="bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/35 dark:via-slate-900 dark:to-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-amber-600/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -674,10 +679,10 @@ export function DashboardShell() {
                       setActiveTab('voting');
                       setLiveLoanPulseId(null);
                     }}
-                    className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                    className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
                     <span>Cast 2/3 Vote</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"

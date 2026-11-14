@@ -109,11 +109,11 @@ export function OverviewView({
   return (
     <div className="space-y-6">
       {/* Phase & Pre-Specified Maturity Date Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+      <section className="bg-gradient-to-br from-emerald-50/80 via-amber-50/35 to-violet-50/75 dark:from-emerald-950/35 dark:via-slate-900 dark:to-violet-950/25 border border-emerald-200/70 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-1.5 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                 {phase === 'qard_hasan'
                   ? 'Phase 1 · Active Qard Hasan Lending'
                   : 'Phase 2 · Post-Maturity Halal Investment'}
@@ -123,7 +123,7 @@ export function OverviewView({
                 Target Maturity: {formatShortDate(config.maturityDate)}
               </span>
               <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums">
+              <span className="font-mono tabular-nums text-violet-700 dark:text-violet-300 font-medium">
                 {daysUntilMaturity} days remaining
               </span>
             </div>
@@ -139,18 +139,18 @@ export function OverviewView({
             <button
               type="button"
               onClick={() => onNavigate('halal')}
-              className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-medium rounded-lg border border-violet-200/80 dark:border-violet-800/70 bg-white/80 dark:bg-slate-900/70 text-violet-800 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:border-violet-300 transition-all duration-200 whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
             >
               <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Halal Roadmap</span>
+              <span>Halal Ventures</span>
             </button>
             <button
               type="button"
               onClick={() => onNavigate('contributions')}
-              className="px-4 py-2 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+              className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
             >
-              <span>Submit Monthly Contribution</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Submit Capital Deposit</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -158,32 +158,32 @@ export function OverviewView({
 
       {/* Pending Member Signup Approvals Notice for Admins */}
       {isAdmin && treasury.pendingMembersCount > 0 && (
-        <section className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <section className="bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/35 dark:via-slate-900 dark:to-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="space-y-0.5">
             <div className="text-xs font-semibold text-amber-800 dark:text-amber-300">
               {treasury.pendingMembersCount} New Member Application
               {treasury.pendingMembersCount === 1 ? '' : 's'} Pending Approval
             </div>
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              Pending applicants cannot sign in until verified and activated in Pending Registrations.
+              Pending applicants cannot sign in until verified and activated in Onboarding Queue.
             </p>
           </div>
           <button
             type="button"
             onClick={() => onNavigate('registrations')}
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer shrink-0"
           >
-            Review Pending Signups →
+            Review Onboarding Queue →
           </button>
         </section>
       )}
 
       {/* Admin Quick Control: Maximum Loans Per Member Per Year */}
       {isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+        <section className="bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/30 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-violet-700 dark:text-violet-400">
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Administrator Quota Control</span>
               </div>
@@ -211,12 +211,12 @@ export function OverviewView({
                 required
                 value={quotaInput}
                 onChange={(e) => setQuotaInput(e.target.value)}
-                className="w-24 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-24 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-600/30"
               />
               <button
                 type="submit"
                 disabled={savingQuota}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium transition-colors whitespace-nowrap cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-emerald-600 hover:from-violet-700 hover:to-emerald-700 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer"
               >
                 {savingQuota ? 'Saving…' : 'Update Annual Limit'}
               </button>
@@ -232,20 +232,20 @@ export function OverviewView({
 
       {/* 4-Column Central Fund Balance Accounting KPI Strip */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/35 dark:from-emerald-950/35 dark:via-slate-900 dark:to-emerald-950/15 border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
             Central Fund Balance
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(treasury.centralBalance, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <div className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 tabular-nums">
             + Contributions − Approved Loans + Repayments
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-gradient-to-br from-emerald-50/75 via-white to-violet-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-emerald-200/70 dark:border-emerald-900/40 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
             Approved Contributions (+)
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -257,26 +257,26 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/35 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/15 border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="text-xs font-medium text-amber-800 dark:text-amber-300">
             Approved Loans Deducted (−)
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.approvedLoansDeducted, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <div className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 tabular-nums">
             Active outstanding {formatMoney(treasury.activeLoansOutstanding, ccy)}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-gradient-to-br from-violet-50/90 via-white to-violet-50/35 dark:from-violet-950/35 dark:via-slate-900 dark:to-violet-950/15 border border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="text-xs font-medium text-violet-800 dark:text-violet-300">
             Repayments Returned (+)
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.totalRepaid, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <div className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 tabular-nums">
             {treasury.approvedLoansDeducted > 0
               ? `${Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100)}% restored to central fund`
               : '100% revolving principal'}
@@ -299,21 +299,21 @@ export function OverviewView({
           />
         </div>
 
-        <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
+        <section className="xl:col-span-4 bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/40 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/20 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="space-y-4">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Your Member Standing
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {user.name} · {user.memberCode}
+                {user.name} · <span className="font-mono">{user.memberCode}</span>
               </p>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+            <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Your Approved Deposits</span>
-                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                   {formatMoney(personal.totalContributed, ccy)}
                 </span>
               </div>
@@ -325,7 +325,7 @@ export function OverviewView({
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Annual Loan Quota</span>
-                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                <span className="font-mono font-semibold tabular-nums text-violet-700 dark:text-violet-300">
                   {personal.eligibility.loansUsedThisYear} / {personal.eligibility.maxLoansPerYear}{' '}
                   used
                 </span>
@@ -365,10 +365,10 @@ export function OverviewView({
           <button
             type="button"
             onClick={() => onNavigate('loans')}
-            className="w-full py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
+            className="group w-full py-2.5 px-4 rounded-lg border border-violet-200 dark:border-violet-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-violet-50 dark:hover:bg-violet-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
           >
             <span>Open Qard Hasan & Repayments</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
           </button>
         </section>
       </div>
@@ -389,7 +389,7 @@ export function OverviewView({
       />
 
       {/* Live Governance & Approval Queues */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Active Governance & Approval Queues
@@ -403,16 +403,16 @@ export function OverviewView({
           <button
             type="button"
             onClick={() => onNavigate('voting')}
-            className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 transition-colors cursor-pointer"
+            className="group text-left p-4 rounded-lg bg-gradient-to-br from-amber-50/85 via-white to-amber-50/35 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/15 border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 font-medium">
               <span>Open 2/3 Ballots</span>
-              <Vote className="w-4 h-4 text-amber-600" aria-hidden="true" />
+              <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.pendingVotesCount}
             </div>
-            <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+            <div className="mt-1 text-xs text-amber-700 dark:text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
               Cast member vote →
             </div>
           </button>
@@ -420,16 +420,16 @@ export function OverviewView({
           <button
             type="button"
             onClick={() => onNavigate('contributions')}
-            className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 transition-colors cursor-pointer"
+            className="group text-left p-4 rounded-lg bg-gradient-to-br from-emerald-50/85 via-white to-emerald-50/35 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/15 border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Pending Contributions</span>
-              <ShieldCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+            <div className="flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+              <span>Pending Deposits</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.pendingContributionsCount}
             </div>
-            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
               {isStaff ? 'Review Bank/MFS queue →' : 'View submission status →'}
             </div>
           </button>
@@ -437,16 +437,16 @@ export function OverviewView({
           <button
             type="button"
             onClick={() => onNavigate('voting')}
-            className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 transition-colors cursor-pointer"
+            className="group text-left p-4 rounded-lg bg-gradient-to-br from-violet-50/85 via-white to-violet-50/35 dark:from-violet-950/30 dark:via-slate-900 dark:to-violet-950/15 border border-violet-200/80 dark:border-violet-900/50 hover:border-violet-400 dark:hover:border-violet-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-violet-800 dark:text-violet-300 font-medium">
               <span>Awaiting Disbursement</span>
-              <ShieldCheck className="w-4 h-4 text-sky-600" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.pendingDisbursementsCount}
             </div>
-            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            <div className="mt-1 text-xs text-violet-700 dark:text-violet-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
               Multi-sig treasury release →
             </div>
           </button>
@@ -454,16 +454,16 @@ export function OverviewView({
           <button
             type="button"
             onClick={() => onNavigate('loans')}
-            className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 transition-colors cursor-pointer"
+            className="group text-left p-4 rounded-lg bg-gradient-to-br from-emerald-50/75 via-white to-violet-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
           >
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
               <span>Pending Repayments</span>
-              <CheckCircle2 className="w-4 h-4 text-slate-600 dark:text-slate-400" aria-hidden="true" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.pendingRepaymentsCount}
             </div>
-            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
               Inspect installment receipts →
             </div>
           </button>

@@ -252,7 +252,7 @@ export function AdminUserManagementPanel({
   }
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+    <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/35 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -273,7 +273,7 @@ export function AdminUserManagementPanel({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add New User</span>
@@ -303,7 +303,7 @@ export function AdminUserManagementPanel({
         </div>
         <div>
           <div className="text-slate-500 dark:text-slate-400">Suspended</div>
-          <div className="mt-1 text-base font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
+          <div className="mt-1 text-base font-bold font-mono tabular-nums text-red-700 dark:text-red-400">
             {stats.suspended}
           </div>
         </div>
@@ -399,7 +399,7 @@ export function AdminUserManagementPanel({
                 const isConfirmingDelete = confirmDeleteId === m.id;
 
                 return (
-                  <tr key={m.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                  <tr key={m.id} className="hover:bg-emerald-50/30 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="py-3 px-4">
                       <div className="font-medium text-slate-900 dark:text-white text-sm">
                         {m.name}
@@ -491,7 +491,11 @@ export function AdminUserManagementPanel({
                                       : `Suspended ${m.name} (${m.memberCode}).`
                                   );
                                 }}
-                                className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+                                className={`px-2.5 py-1 rounded border font-medium cursor-pointer disabled:opacity-50 transition-all duration-200 ${
+                                  m.status === 'active'
+                                    ? 'border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white'
+                                    : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                                }`}
                               >
                                 {m.status === 'active'
                                   ? 'Suspend'
@@ -506,14 +510,14 @@ export function AdminUserManagementPanel({
                                     type="button"
                                     disabled={isBusy}
                                     onClick={() => void handleDeleteUser(m)}
-                                    className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer disabled:opacity-50"
+                                    className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
                                   >
                                     Confirm
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setConfirmDeleteId(null)}
-                                    className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+                                    className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                                   >
                                     Cancel
                                   </button>
@@ -525,7 +529,7 @@ export function AdminUserManagementPanel({
                                   onClick={() => setConfirmDeleteId(m.id)}
                                   title="Delete user account"
                                   aria-label={`Delete ${m.name}`}
-                                  className="p-1.5 rounded border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer disabled:opacity-50"
+                                  className="p-1.5 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                                 </button>
@@ -713,7 +717,7 @@ export function AdminUserManagementPanel({
                 <button
                   type="submit"
                   disabled={createSaving}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{createSaving ? 'Creating User…' : 'Create User'}</span>
@@ -905,7 +909,7 @@ export function AdminUserManagementPanel({
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{editSaving ? 'Saving Changes…' : 'Save User Changes'}</span>

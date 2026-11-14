@@ -111,7 +111,7 @@ export function HalalProjectsView({
           className={`p-3.5 rounded-lg border text-xs font-medium ${
             feedback.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {feedback.text}
@@ -119,17 +119,17 @@ export function HalalProjectsView({
       )}
 
       {/* Maturity Transition Summary */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+      <section className="bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/55 dark:from-violet-950/30 dark:via-slate-900 dark:to-emerald-950/20 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-violet-700 dark:text-violet-400">
               <Calendar className="w-4 h-4" aria-hidden="true" />
               <span>
                 Pre-Specified Maturity Date: {formatShortDate(overview?.config.maturityDate)}
               </span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Halal Investment Placements & 2/3 Member Voting
+              Halal Ventures & 2/3 Member Voting
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {overview?.config.halalInvestmentThesis}
@@ -137,15 +137,15 @@ export function HalalProjectsView({
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            <div className="p-3.5 rounded-lg bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-950/30 dark:to-slate-950 border border-emerald-200/70 dark:border-emerald-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Current Pool</div>
               <div className="mt-1 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            <div className="p-3.5 rounded-lg bg-gradient-to-br from-violet-50/80 to-white dark:from-violet-950/30 dark:to-slate-950 border border-violet-200/70 dark:border-violet-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Pipeline Target</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+              <div className="mt-1 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-300">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -157,7 +157,7 @@ export function HalalProjectsView({
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
-          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4`}
+          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -205,7 +205,7 @@ export function HalalProjectsView({
                 return (
                   <article
                     key={proj.id}
-                    className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4"
+                    className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-violet-50/55 via-white to-emerald-50/25 dark:from-violet-950/20 dark:via-slate-950/70 dark:to-emerald-950/15 border border-violet-200/70 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="space-y-1.5">
@@ -249,10 +249,10 @@ export function HalalProjectsView({
                           <div
                             className={`h-full transition-all duration-300 ${
                               proj.votingStatus === 'approved'
-                                ? 'bg-emerald-600'
+                                ? 'bg-gradient-to-r from-emerald-600 to-violet-600'
                                 : proj.votingStatus === 'rejected'
-                                  ? 'bg-rose-600'
-                                  : 'bg-amber-500'
+                                  ? 'bg-red-600'
+                                  : 'bg-gradient-to-r from-amber-500 to-amber-400'
                             }`}
                             style={{ width: `${progressPct}%` }}
                           />
@@ -275,7 +275,7 @@ export function HalalProjectsView({
                             className={`w-4 h-4 ${
                               proj.votingStatus === 'approved'
                                 ? 'text-emerald-600'
-                                : 'text-rose-600'
+                                : 'text-red-600'
                             }`}
                             aria-hidden="true"
                           />
@@ -283,7 +283,7 @@ export function HalalProjectsView({
                             className={
                               proj.votingStatus === 'approved'
                                 ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-rose-700 dark:text-rose-400'
+                                : 'text-red-700 dark:text-red-400'
                             }
                           >
                             {proj.votingStatus === 'approved'
@@ -318,7 +318,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id}
                               onClick={() => handlePlacementVote(proj.id, 'yes')}
-                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote Yes</span>
@@ -327,7 +327,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id}
                               onClick={() => handlePlacementVote(proj.id, 'no')}
-                              className="px-3.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote No</span>
@@ -380,7 +380,7 @@ export function HalalProjectsView({
                                 className={`font-semibold uppercase text-[11px] shrink-0 ${
                                   v.decision === 'yes'
                                     ? 'text-emerald-700 dark:text-emerald-400'
-                                    : 'text-rose-700 dark:text-rose-400'
+                                    : 'text-red-700 dark:text-red-400'
                                 }`}
                               >
                                 {v.decision}
@@ -398,7 +398,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+          <section className="xl:col-span-4 bg-gradient-to-br from-violet-50/75 via-white to-emerald-50/35 dark:from-violet-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/80 dark:border-violet-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement
@@ -515,7 +515,7 @@ export function HalalProjectsView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-violet-600 to-emerald-600 hover:from-violet-700 hover:to-emerald-700 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Proposal…' : 'Open for 2/3 Member Vote'}</span>

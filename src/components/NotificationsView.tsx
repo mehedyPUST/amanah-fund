@@ -152,7 +152,7 @@ export function NotificationsView({
   return (
     <div className="space-y-6">
       {/* Header & Reminder / Gmail Actions */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+      <section className="bg-gradient-to-br from-amber-50/65 via-white to-emerald-50/35 dark:from-amber-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-amber-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -184,7 +184,7 @@ export function NotificationsView({
             className={`p-3 rounded-lg border text-xs font-medium ${
               feedback.type === 'success'
                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
             }`}
           >
             {feedback.text}
@@ -209,7 +209,7 @@ export function NotificationsView({
                 onClick={() => setFilterType(tab.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
                   filterType === tab.id
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -224,7 +224,7 @@ export function NotificationsView({
                 type="button"
                 disabled={generatingReminders}
                 onClick={() => void handleGenerateReminders()}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-amber-50/50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 disabled:opacity-50 transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Bell className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
                 <span>
@@ -241,7 +241,7 @@ export function NotificationsView({
                   setPendingSendIds(undefined);
                   setConfirmGmailOpen(true);
                 }}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Send Queued via Gmail ({Math.min(queuedItems.length, 15)})</span>
@@ -252,7 +252,7 @@ export function NotificationsView({
       </section>
 
       {/* Notification List */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-5">
             <Skeleton height={160} />
@@ -265,7 +265,7 @@ export function NotificationsView({
           visibleNotifications.map((item) => (
             <div
               key={item.id}
-              className={`p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
+              className={`p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 ${
                 !item.readByRecipient ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''
               }`}
             >
@@ -321,7 +321,7 @@ export function NotificationsView({
                       setPendingSendIds([item.id]);
                       setConfirmGmailOpen(true);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Send className="w-3 h-3" aria-hidden="true" />
                     <span>Send Gmail</span>
@@ -383,7 +383,7 @@ export function NotificationsView({
                 type="button"
                 disabled={sendingGmail}
                 onClick={() => void handleConfirmGmailSend()}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer"
               >
                 {sendingGmail ? 'Sending via Gmail…' : 'Confirm & Send Emails'}
               </button>

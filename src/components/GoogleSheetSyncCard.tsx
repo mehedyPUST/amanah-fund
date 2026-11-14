@@ -98,7 +98,7 @@ export function GoogleSheetSyncCard({
   }
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+    <section className="bg-gradient-to-br from-emerald-50/60 via-white to-violet-50/35 dark:from-emerald-950/20 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -129,7 +129,7 @@ export function GoogleSheetSyncCard({
           className={`p-3 rounded-lg border text-xs font-medium ${
             message.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {message.text}
@@ -234,7 +234,7 @@ export function GoogleSheetSyncCard({
               setCreateNewSheet(!config?.googleSheetId);
               setConfirmOpen(true);
             }}
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
             <span>{config?.googleSheetId ? 'Sync Blueprint Now' : 'Create & Sync Google Sheet'}</span>
@@ -293,7 +293,7 @@ export function GoogleSheetSyncCard({
                 type="button"
                 disabled={syncing}
                 onClick={() => void executeSync()}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer"
               >
                 {syncing ? 'Synchronizing…' : 'Confirm & Sync to Google Sheets'}
               </button>

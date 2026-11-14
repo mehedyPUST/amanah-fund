@@ -217,7 +217,7 @@ export function AdminReportsView({
   return (
     <div className="space-y-6">
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-violet-50/60 via-white to-emerald-50/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-xs">
         <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
           Admin Panel Workspace
         </div>
@@ -252,7 +252,7 @@ export function AdminReportsView({
           className={`p-3.5 rounded-lg border text-xs font-medium ${
             feedback.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {feedback.text}
@@ -261,7 +261,7 @@ export function AdminReportsView({
 
       {/* New User Signup Approval Queue (Admin) */}
       {isAdmin && (adminSection === 'all' || adminSection === 'users') && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+        <section className="bg-gradient-to-br from-amber-50/60 via-white to-white dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -334,7 +334,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => void handleDeclinePending(pm.id)}
-                        className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Decline</span>
@@ -342,7 +342,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => void handleMemberChange(pm.id, { status: 'active' })}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Approve Signup</span>
@@ -358,7 +358,7 @@ export function AdminReportsView({
 
       {/* Administrative Qard Hasan Loan Review Queue */}
       {(adminSection === 'all' || adminSection === 'analytics') && (
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+      <section className="bg-gradient-to-br from-emerald-50/45 via-white to-violet-50/30 dark:from-emerald-950/15 dark:via-slate-900 dark:to-violet-950/10 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -424,7 +424,7 @@ export function AdminReportsView({
                       type="button"
                       disabled={loanReviewBusyId === loan.id}
                       onClick={() => void handleAdminLoanReview(loan.id, 'reject')}
-                      className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Decline</span>
@@ -433,7 +433,7 @@ export function AdminReportsView({
                       type="button"
                       disabled={loanReviewBusyId === loan.id}
                       onClick={() => void handleAdminLoanReview(loan.id, 'approve')}
-                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Approve for Disbursement</span>
@@ -498,7 +498,7 @@ export function AdminReportsView({
                   key={rep.id}
                   type="button"
                   onClick={() => downloadCsvReport(rep.id)}
-                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-emerald-50/50 via-white to-violet-50/40 dark:from-emerald-950/15 dark:via-slate-900 dark:to-violet-950/15 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
                 >
                   <span>{rep.label}</span>
                   <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
@@ -511,7 +511,7 @@ export function AdminReportsView({
 
       {/* Admin Governance & Policy Controls */}
       {isAdmin && (adminSection === 'all' || adminSection === 'policy') && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+        <section className="bg-gradient-to-br from-violet-50/50 via-white to-emerald-50/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-emerald-950/15 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Fund Policy & Annual Loan Quota
@@ -613,7 +613,7 @@ export function AdminReportsView({
               <button
                 type="submit"
                 disabled={savingPolicy}
-                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50"
               >
                 {savingPolicy ? 'Saving Policy…' : 'Save Cooperative Policy'}
               </button>
@@ -814,7 +814,7 @@ export function AdminReportsView({
                   <button
                     type="button"
                     onClick={() => void handleDeclinePending(inspectingMember.id)}
-                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Decline Application</span>
@@ -824,7 +824,7 @@ export function AdminReportsView({
                     onClick={() =>
                       void handleMemberChange(inspectingMember.id, { status: 'active' })
                     }
-                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Approve Signup</span>

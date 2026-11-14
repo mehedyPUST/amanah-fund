@@ -231,7 +231,7 @@ export function ContributionGoalTracker({
   return (
     <section
       aria-labelledby="contribution-goal-tracker-heading"
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5"
+      className="bg-gradient-to-br from-emerald-50/65 via-white to-violet-50/50 dark:from-emerald-950/30 dark:via-slate-900 dark:to-violet-950/20 border border-emerald-200/70 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       {/* Top Header & Year / Goal Controls */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
@@ -298,7 +298,7 @@ export function ContributionGoalTracker({
               setGoalInput(String(yearlyGoal));
               setGoalError(null);
             }}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{editingGoal ? 'Close Editor' : 'Edit Yearly Goal'}</span>
@@ -308,10 +308,10 @@ export function ContributionGoalTracker({
             <button
               type="button"
               onClick={() => onSubmitContribution(currentBillingMonth)}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+              className="group px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>Deposit Month</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -341,7 +341,7 @@ export function ContributionGoalTracker({
               className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
             />
             {goalError && (
-              <p className="text-xs text-rose-600 dark:text-rose-400">{goalError}</p>
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{goalError}</p>
             )}
           </div>
 
@@ -452,12 +452,12 @@ export function ContributionGoalTracker({
           className="relative w-full h-3.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex"
         >
           <div
-            className="h-full bg-emerald-600 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-violet-600 transition-all duration-300"
             style={{ width: `${trackerData.approvedPct}%` }}
           />
           {trackerData.pendingPct > 0 && (
             <div
-              className="h-full bg-amber-500/80 dark:bg-amber-400/75 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
               style={{ width: `${trackerData.pendingPct}%` }}
             />
           )}
@@ -582,12 +582,12 @@ export function ContributionGoalTracker({
                   aria-hidden="true"
                 >
                   <div
-                    className="h-full bg-emerald-600 transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-emerald-600 to-violet-600 transition-all duration-300"
                     style={{ width: `${approvedMonthPct}%` }}
                   />
                   {pendingMonthPct > 0 && (
                     <div
-                      className="h-full bg-amber-500/80 dark:bg-amber-400/75 transition-all duration-300"
+                      className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
                       style={{ width: `${pendingMonthPct}%` }}
                     />
                   )}
@@ -608,8 +608,10 @@ export function ContributionGoalTracker({
                   key={month.billingMonth}
                   type="button"
                   onClick={() => onSubmitContribution(month.billingMonth)}
-                  className={`text-left py-2 px-2.5 -mx-2.5 rounded-lg transition-colors space-y-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
-                    isCurrentMonth ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''
+                  className={`text-left py-2.5 px-3 rounded-lg border transition-all duration-200 space-y-1.5 cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
+                    isCurrentMonth
+                      ? 'bg-gradient-to-br from-emerald-50/80 to-violet-50/40 dark:from-emerald-950/35 dark:to-violet-950/20 border-emerald-200/80 dark:border-emerald-800/60'
+                      : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60'
                   }`}
                 >
                   {content}
@@ -620,8 +622,10 @@ export function ContributionGoalTracker({
             return (
               <div
                 key={month.billingMonth}
-                className={`py-2 px-2.5 -mx-2.5 rounded-lg space-y-1.5 ${
-                  isCurrentMonth ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''
+                className={`py-2.5 px-3 rounded-lg border space-y-1.5 ${
+                  isCurrentMonth
+                    ? 'bg-gradient-to-br from-emerald-50/80 to-violet-50/40 dark:from-emerald-950/35 dark:to-violet-950/20 border-emerald-200/80 dark:border-emerald-800/60'
+                    : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800'
                 }`}
               >
                 {content}

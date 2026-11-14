@@ -150,7 +150,7 @@ export function ContributionsView({
           className={`p-3.5 rounded-lg border text-xs font-medium ${
             feedback.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {feedback.text}
@@ -159,10 +159,10 @@ export function ContributionsView({
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Submit Contribution Form */}
-        <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+        <section className="xl:col-span-4 bg-gradient-to-br from-emerald-50/75 via-white to-violet-50/35 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Submit Monthly Contribution
+              Submit Capital Deposit
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Pay via Bank or MFS and submit your TrxID for Manager approval. Account numbers and
@@ -297,7 +297,7 @@ export function ContributionsView({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
             >
               <Lock className="w-4 h-4" aria-hidden="true" />
               <span>{submitting ? 'Encrypting & Submitting…' : 'Submit for Manager Approval'}</span>
@@ -306,7 +306,7 @@ export function ContributionsView({
         </section>
 
         {/* Encrypted Ledger & Manager Approval Queue */}
-        <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+        <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -432,7 +432,7 @@ export function ContributionsView({
                                     title="Approve contribution"
                                     disabled={reviewingId === item.id}
                                     onClick={() => handleReview(item.id, 'approved')}
-                                    className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-50"
+                                    className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
                                   >
                                     <Check className="w-3.5 h-3.5" />
                                   </button>
@@ -441,7 +441,7 @@ export function ContributionsView({
                                     title="Reject contribution"
                                     disabled={reviewingId === item.id}
                                     onClick={() => handleReview(item.id, 'rejected')}
-                                    className="p-1.5 rounded-md border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer disabled:opacity-50"
+                                    className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
@@ -450,7 +450,7 @@ export function ContributionsView({
                               <button
                                 type="button"
                                 onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                                className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded border border-slate-200 dark:border-slate-700 cursor-pointer whitespace-nowrap"
+                                className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                               >
                                 {isExpanded ? 'Hide' : 'Crypto'}
                               </button>

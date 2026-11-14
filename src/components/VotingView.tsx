@@ -144,7 +144,7 @@ export function VotingView({
           className={`p-3.5 rounded-lg border text-xs font-medium ${
             feedback.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
           }`}
         >
           {feedback.text}
@@ -164,10 +164,10 @@ export function VotingView({
         </div>
       )}
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <section className="bg-gradient-to-br from-amber-50/75 via-white to-violet-50/60 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/20 border border-amber-200/75 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Verified Member 2/3 Voting Center
+            Verified Member 2/3 Ballots Center
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Verified members review pending Qard Hasan loan requests and cast an Upvote or Downvote
@@ -239,7 +239,7 @@ export function VotingView({
                   return (
                     <article
                       key={proj.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4"
+                      className="bg-gradient-to-br from-violet-50/75 via-white to-emerald-50/35 dark:from-violet-950/25 dark:via-slate-900 dark:to-emerald-950/15 border border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -274,7 +274,7 @@ export function VotingView({
                           </div>
                           <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-emerald-600 transition-all duration-300"
+                              className="h-full bg-gradient-to-r from-violet-600 to-emerald-600 transition-all duration-300"
                               style={{ width: `${progressPct}%` }}
                             />
                           </div>
@@ -311,7 +311,7 @@ export function VotingView({
                                 type="button"
                                 disabled={busyId === proj.id}
                                 onClick={() => handleProjectVote(proj.id, 'yes')}
-                                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                               >
                                 <Check className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>Vote Yes</span>
@@ -320,7 +320,7 @@ export function VotingView({
                                 type="button"
                                 disabled={busyId === proj.id}
                                 onClick={() => handleProjectVote(proj.id, 'no')}
-                                className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                               >
                                 <X className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>Vote No</span>
@@ -370,7 +370,7 @@ export function VotingView({
                   return (
                     <article
                       key={loan.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5"
+                      className="bg-gradient-to-br from-amber-50/75 via-white to-violet-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -407,7 +407,7 @@ export function VotingView({
                           </div>
                           <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-emerald-600 transition-all duration-300"
+                              className="h-full bg-gradient-to-r from-emerald-600 to-amber-500 transition-all duration-300"
                               style={{ width: `${progressPct}%` }}
                             />
                           </div>
@@ -415,7 +415,7 @@ export function VotingView({
                             <span className="text-emerald-700 dark:text-emerald-400">
                               Upvotes: {approveCount}
                             </span>
-                            <span className="text-rose-700 dark:text-rose-400">
+                            <span className="text-red-700 dark:text-red-400">
                               Downvotes: {rejectCount}
                             </span>
                             <span className="text-slate-500 dark:text-slate-400">
@@ -449,7 +449,7 @@ export function VotingView({
                                         />
                                       ) : (
                                         <ThumbsDown
-                                          className="w-3.5 h-3.5 text-rose-600 shrink-0"
+                                          className="w-3.5 h-3.5 text-red-600 shrink-0"
                                           aria-hidden="true"
                                         />
                                       )}
@@ -469,7 +469,7 @@ export function VotingView({
                                       className={`font-semibold text-[11px] ${
                                         isUp
                                           ? 'text-emerald-700 dark:text-emerald-400'
-                                          : 'text-rose-700 dark:text-rose-400'
+                                          : 'text-red-700 dark:text-red-400'
                                       }`}
                                     >
                                       {isUp ? 'Upvoted' : 'Downvoted'}
@@ -516,7 +516,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!isVerifiedMember || busyId === loan.id}
                                   onClick={() => handleLoanVote(loan.id, 'upvote')}
-                                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>Upvote</span>
@@ -525,7 +525,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!isVerifiedMember || busyId === loan.id}
                                   onClick={() => handleLoanVote(loan.id, 'downvote')}
-                                  className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>Downvote</span>
@@ -538,7 +538,7 @@ export function VotingView({
 
                       {loan.status === 'approved_pending_disbursement' && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="text-xs text-sky-700 dark:text-sky-400 font-medium inline-flex items-center gap-1.5">
+                          <div className="text-xs text-violet-700 dark:text-violet-400 font-medium inline-flex items-center gap-1.5">
                             <ShieldCheck className="w-4 h-4" aria-hidden="true" />
                             <span>
                               2/3 member quorum achieved ({approveCount}/{loan.totalEligibleVoters}
@@ -550,7 +550,7 @@ export function VotingView({
                               type="button"
                               disabled={busyId === loan.id}
                               onClick={() => handleDisburse(loan.id)}
-                              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-emerald-600 hover:from-violet-700 hover:to-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               {busyId === loan.id
                                 ? 'Signing Disbursement…'

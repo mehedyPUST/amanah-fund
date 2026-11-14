@@ -150,7 +150,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
   return (
     <div className="space-y-6">
       {/* Header & Summary Strip */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+      <section className="bg-gradient-to-br from-emerald-50/70 via-white to-violet-50/45 dark:from-emerald-950/25 dark:via-slate-900 dark:to-violet-950/15 border border-emerald-200/70 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -189,7 +189,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
               type="button"
               onClick={() => void loadDirectory()}
               disabled={loading}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
@@ -271,7 +271,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
+            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
           >
             {error}
           </div>
@@ -308,7 +308,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
           )}
         </section>
       ) : (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
@@ -325,7 +325,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
                   return (
                     <tr
                       key={m.id}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-emerald-50/30 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       <td className="py-3.5 px-4 align-top">
                         <div className="flex items-start gap-3">
