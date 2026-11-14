@@ -1,0 +1,141 @@
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import type { PublicPage } from './PublicNavbar.tsx';
+
+interface PublicRulesViewProps {
+  onNavigate: (page: PublicPage) => void;
+}
+
+const RULES = [
+  {
+    code: '01',
+    title: 'Administrator-Approved Membership Onboarding',
+    summary:
+      'Every new member registration is held in pending status until verified and approved by a cooperative Administrator. Unapproved or suspended accounts cannot sign in, view encrypted ledgers, or cast ballots.',
+    points: [
+      'Applications trigger an automated notification to active Administrators.',
+      'Upon approval, the member receives an account activation confirmation email.',
+    ],
+  },
+  {
+    code: '02',
+    title: 'Monthly Bank & MFS Contributions',
+    summary:
+      'Members deposit their scheduled monthly contribution via approved Bank transfer or Mobile Financial Services (bKash, Nagad, Rocket) and submit the encrypted TrxID in the portal.',
+    points: [
+      'Submitting a request automatically notifies Treasury Managers for reconciliation.',
+      'Accepting a contribution sends a confirmation email to the member and adds the exact amount to the Central Fund Balance.',
+    ],
+  },
+  {
+    code: '03',
+    title: 'Central Fund Balance Accounting',
+    summary:
+      'All treasury movements follow transparent double-check arithmetic visible on the overview ledger.',
+    points: [
+      'Approved Monthly Contributions increase (+) the Central Fund Balance.',
+      'Loans reaching 2/3 member approval immediately deduct (−) the principal from the Central Fund Balance.',
+      'Verified monthly loan repayment installments restore (+) funds back to the Central Fund Balance.',
+    ],
+  },
+  {
+    code: '04',
+    title: 'Qard Hasan Eligibility & Annual Quota',
+    summary:
+      'Loans are strictly 0% interest (Qard Hasan) and repaid in scheduled monthly installments. Automated eligibility checks run before any loan ballot is created.',
+    points: [
+      'No Active Loan: A member with an active or pending Qard Hasan loan cannot apply for another until repaid.',
+      'Annual Quota: Default limit is 3 loans per member per calendar year, dynamically configurable by the Administrator.',
+      'Pre-Maturity Window: Qard Hasan lending operates until the fund’s pre-specified maturity date.',
+    ],
+  },
+  {
+    code: '05',
+    title: '2/3 Supermajority Member Voting',
+    summary:
+      'Both Qard Hasan loan requests and Halal investment placements are decided democratically by active members inside the app.',
+    points: [
+      'Quorum requires affirmative votes from at least two-thirds (⌈2/3 × active members⌉) of eligible members.',
+      'Each ballot records an immutable SHA-256 signature hash and updates live via Server-Sent Events.',
+    ],
+  },
+  {
+    code: '06',
+    title: 'Post-Maturity Halal Investment Transition',
+    summary:
+      'Once the fund reaches its pre-specified maturity date, the pooled capital transitions from Qard Hasan relief lending to Shariah-vetted real-economy investments.',
+    points: [
+      'Permitted Islamic structures: Mudarabah (profit-sharing), Musharakah (joint venture), and Murabahah (cost-plus trade).',
+      'Every investment placement must pass Shariah review and a 2/3 member "Yes / No" vote.',
+    ],
+  },
+];
+
+export function PublicRulesView({ onNavigate }: PublicRulesViewProps) {
+  return (
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
+        <div className="space-y-3">
+          <div className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            Cooperative Governance & Bylaws
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Operating Rules & Shariah Charter
+          </h1>
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+            These rules are enforced programmatically in the Amanah Co-op backend, encrypted audit
+            trail, and 2/3 member voting engine.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {RULES.map((rule) => (
+            <article
+              key={rule.code}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-3"
+            >
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                  RULE {rule.code}
+                </span>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {rule.title}
+                </h2>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {rule.summary}
+              </p>
+              <ul className="space-y-1.5 pt-1">
+                {rule.points.map((pt) => (
+                  <li
+                    key={pt}
+                    className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    <CheckCircle2
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <span>{pt}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Questions about eligibility or contribution channels? Sign in or apply for review.
+          </p>
+          <button
+            type="button"
+            onClick={() => onNavigate('login')}
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Proceed to Member Portal</span>
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
