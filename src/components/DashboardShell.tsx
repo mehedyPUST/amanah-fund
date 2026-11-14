@@ -11,6 +11,7 @@ import {
   CreditCard,
   Globe,
   HandCoins,
+  History,
   LogOut,
   Menu,
   Moon,
@@ -29,6 +30,7 @@ import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { LoansView } from './LoansView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { type NavTab, OverviewView } from './OverviewView.tsx';
+import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import type {
   Contribution,
@@ -49,6 +51,7 @@ const NAV_ITEMS: Array<{
   { id: 'overview', label: 'Overview', Icon: BarChart3 },
   { id: 'contributions', label: 'Contributions', Icon: CreditCard },
   { id: 'loans', label: 'Qard Hasan Loans', Icon: HandCoins },
+  { id: 'transactions', label: 'Transaction History', Icon: History },
   { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
   { id: 'halal', label: 'Halal Investment', Icon: Briefcase },
   { id: 'notifications', label: 'Notifications', Icon: Bell },
@@ -539,6 +542,8 @@ export function DashboardShell() {
               {activeTab === 'overview' && (
                 <OverviewView
                   overview={overview}
+                  contributions={contributions}
+                  loans={loans}
                   user={user}
                   loading={dataLoading && !overview}
                   onNavigate={setActiveTab}
@@ -563,6 +568,16 @@ export function DashboardShell() {
                   user={user}
                   loading={dataLoading && loans.length === 0}
                   onRefresh={handleRefreshWithAutoSync}
+                />
+              )}
+              {activeTab === 'transactions' && (
+                <TransactionHistory
+                  contributions={contributions}
+                  loans={loans}
+                  config={overview?.config || null}
+                  user={user}
+                  loading={dataLoading && contributions.length === 0 && loans.length === 0}
+                  onNavigate={setActiveTab}
                 />
               )}
               {activeTab === 'voting' && (

@@ -3,10 +3,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowRight, Calendar, CheckCircle2, Lock, Settings, ShieldCheck, Vote } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { DashboardOverview, PublicUser } from '../types/coop.ts';
+import type { Contribution, DashboardOverview, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { CashflowChart } from './CashflowChart.tsx';
+import { TransactionHistory } from './TransactionHistory.tsx';
 
 export type NavTab =
   | 'overview'
@@ -14,18 +15,29 @@ export type NavTab =
   | 'loans'
   | 'voting'
   | 'halal'
+  | 'transactions'
   | 'notifications'
   | 'admin';
 
 interface OverviewViewProps {
   overview: DashboardOverview | null;
+  contributions: Contribution[];
+  loans: LoanRequest[];
   user: PublicUser;
   loading: boolean;
   onNavigate: (tab: NavTab) => void;
   onRefresh: () => Promise<void>;
 }
 
-export function OverviewView({ overview, user, loading, onNavigate, onRefresh }: OverviewViewProps) {
+export function OverviewView({
+  overview,
+  contributions,
+  loans,
+  user,
+  loading,
+  onNavigate,
+  onRefresh,
+}: OverviewViewProps) {
   const [quotaInput, setQuotaInput] = useState(
     String(overview?.config.maxLoansPerYear ?? 3)
   );
@@ -439,6 +451,17 @@ export function OverviewView({ overview, user, loading, onNavigate, onRefresh }:
           </button>
         </div>
       </section>
+
+      {/* Member Transaction History Preview */}
+      <TransactionHistory
+        contributions={contributions}
+        loans={loans}
+        config={config}
+        user={user}
+        loading={loading}
+        compact
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }
