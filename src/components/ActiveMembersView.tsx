@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Award,
   CheckCircle2,
   Mail,
   MapPin,
@@ -13,64 +12,13 @@ import {
   Users,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { ActiveMemberDirectoryItem, FundConfig, PublicUser } from '../types/coop.ts';
+import type { ActiveMemberDirectoryItem, FundConfig, PublicUser, UserRole } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 
 interface ActiveMembersViewProps {
   user: PublicUser | null;
   config: FundConfig | null;
-}
-
-type ContributionTierId = 'anchor' | 'gold' | 'silver' | 'standard' | 'onboarding';
-
-interface TierMeta {
-  id: ContributionTierId;
-  label: string;
-  minLabel: string;
-  toneClass: string;
-}
-
-function getContributionTier(totalContributed: number, monthlyTarget: number): TierMeta {
-  const base = Math.max(1000, monthlyTarget || 5000);
-  if (totalContributed >= base * 12) {
-    return {
-      id: 'anchor',
-      label: 'Anchor Tier',
-      minLabel: '12+ months equivalent',
-      toneClass: 'text-emerald-700 dark:text-emerald-400',
-    };
-  }
-  if (totalContributed >= base * 6) {
-    return {
-      id: 'gold',
-      label: 'Gold Tier',
-      minLabel: '6+ months equivalent',
-      toneClass: 'text-amber-700 dark:text-amber-400',
-    };
-  }
-  if (totalContributed >= base * 2) {
-    return {
-      id: 'silver',
-      label: 'Silver Tier',
-      minLabel: '2+ months equivalent',
-      toneClass: 'text-sky-700 dark:text-sky-400',
-    };
-  }
-  if (totalContributed > 0) {
-    return {
-      id: 'standard',
-      label: 'Standard Tier',
-      minLabel: 'Active contributor',
-      toneClass: 'text-slate-700 dark:text-slate-300',
-    };
-  }
-  return {
-    id: 'onboarding',
-    label: 'Onboarding Tier',
-    minLabel: 'Verified, awaiting first deposit',
-    toneClass: 'text-slate-500 dark:text-slate-400',
-  };
 }
 
 function getMembershipDuration(joinedAtIso: string): { label: string; monthsTotal: number } {
@@ -110,7 +58,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [tierFilter, setTierFilter] = useState<'all' | ContributionTierId>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
   const [brokenPhotos, setBrokenPhotos] = useState<Record<string, boolean>>({});
 
   const loadDirectory = useCallback(async () => {
@@ -138,20 +86,17 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
 
   const enriched = useMemo(() => {
     return members.map((m) => {
-      const tier = getContributionTier(
-        m.totalContributed,
-        m.monthlyTarget || config?.monthlyContributionAmount || 5000
-      );
       const duration = getMembershipDuration(m.joinedAt);
-      return { ...m, tier, duration };
+      return { ...m, duration };
     });
-  }, [members, config?.monthlyContributionAmount]);
+  }, [members]);
 
   const stats = useMemo(() => {
     const totalPool = enriched.reduce((sum, m) => sum + m.totalContributed, 0);
-    const highTierCount = enriched.filter(
-      (m) => m.tier.id === 'anchor' || m.tier.id === 'gold'
-    ).length;
+    const totalApprovedDeposits = enriched.reduce(
+      (sum, m) => sum + m.approvedContributionsCount,
+      0
+    );
     const avgMonths =
       enriched.length > 0
         ? Math.round(
@@ -161,7 +106,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
     return {
       totalActive: enriched.length,
       totalPool,
-      highTierCount,
+      totalApprovedDeposits,
       avgMonths,
     };
   }, [enriched]);
@@ -169,7 +114,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
   const filteredMembers = useMemo(() => {
     const q = search.trim().toLowerCase();
     return enriched.filter((m) => {
-      if (tierFilter !== 'all' && m.tier.id !== tierFilter) return false;
+      if (roleFilter !== 'all' && m.role !== roleFilter) return false;
       if (!q) return true;
       return (
         m.name.toLowerCase().includes(q) ||
@@ -181,7 +126,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
         (m.presentAddress || '').toLowerCase().includes(q)
       );
     });
-  }, [enriched, search, tierFilter]);
+  }, [enriched, search, roleFilter]);
 
   if (!user) {
     return (
@@ -220,7 +165,7 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Verified cooperative members with contact details, membership tenure, and contribution
-              tiers
+              totals
             </p>
           </div>
 
@@ -278,12 +223,12 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Anchor & Gold Tiers</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Approved Deposits</div>
             <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {stats.highTierCount}
+              {stats.totalApprovedDeposits}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              6+ monthly cycles contributed
+              Verified monthly settlements
             </div>
           </div>
 
@@ -298,24 +243,22 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
           </div>
         </div>
 
-        {/* Contribution Tier Filter Tabs */}
+        {/* Role Filter Tabs */}
         <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">
           {(
             [
-              { id: 'all', label: 'All Tiers' },
-              { id: 'anchor', label: 'Anchor' },
-              { id: 'gold', label: 'Gold' },
-              { id: 'silver', label: 'Silver' },
-              { id: 'standard', label: 'Standard' },
-              { id: 'onboarding', label: 'Onboarding' },
+              { id: 'all', label: 'All Roles' },
+              { id: 'admin', label: 'Administrators' },
+              { id: 'manager', label: 'Managers' },
+              { id: 'member', label: 'Members' },
             ] as const
           ).map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setTierFilter(tab.id)}
+              onClick={() => setRoleFilter(tab.id)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                tierFilter === tab.id
+                roleFilter === tab.id
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
@@ -348,15 +291,15 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
             No Active Members Match Your Filter
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Adjust the search term or select &ldquo;All Tiers&rdquo; to inspect the full verified
+            Adjust the search term or select &ldquo;All Roles&rdquo; to inspect the full verified
             directory.
           </p>
-          {(search || tierFilter !== 'all') && (
+          {(search || roleFilter !== 'all') && (
             <button
               type="button"
               onClick={() => {
                 setSearch('');
-                setTierFilter('all');
+                setRoleFilter('all');
               }}
               className="mt-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
             >
@@ -373,7 +316,6 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
                   <th className="py-3 px-4 font-medium">Verified Member</th>
                   <th className="py-3 px-4 font-medium">Contact Details</th>
                   <th className="py-3 px-4 font-medium">Membership Duration</th>
-                  <th className="py-3 px-4 font-medium">Contribution Tier</th>
                   <th className="py-3 px-4 font-medium text-right">Total Contributed</th>
                 </tr>
               </thead>
@@ -458,18 +400,6 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                           Since {formatShortDate(m.joinedAt)}
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-4 align-top whitespace-nowrap">
-                        <div
-                          className={`font-semibold inline-flex items-center gap-1.5 ${m.tier.toneClass}`}
-                        >
-                          <Award className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                          <span>{m.tier.label}</span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          {m.tier.minLabel}
                         </div>
                       </td>
 

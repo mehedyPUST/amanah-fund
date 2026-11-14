@@ -27,7 +27,6 @@ import { StatusText } from './StatusText.tsx';
 export type TransactionTabTarget =
   | 'overview'
   | 'contributions'
-  | 'tiers'
   | 'loans'
   | 'voting'
   | 'halal'

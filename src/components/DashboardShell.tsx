@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
-  Award,
   BarChart3,
   Bell,
   Briefcase,
@@ -34,7 +33,6 @@ import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminReportsView } from './AdminReportsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
-import { ContributionTiers } from './ContributionTiers.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { LoansView } from './LoansView.tsx';
@@ -62,19 +60,18 @@ const NAV_ITEMS: Array<{
   staffOnly?: boolean;
   adminOnly?: boolean;
 }> = [
-  { id: 'overview', label: 'Overview', Icon: BarChart3 },
-  { id: 'contributions', label: 'Contributions', Icon: CreditCard },
-  { id: 'tiers', label: 'Contribution Tiers', Icon: Award },
-  { id: 'loans', label: 'Qard Hasan Loans', Icon: HandCoins },
-  { id: 'transactions', label: 'Transaction History', Icon: History },
-  { id: 'voting', label: '2/3 Member Voting', Icon: Vote },
-  { id: 'halal', label: 'Halal Investment', Icon: Briefcase },
-  { id: 'members', label: 'Active Members', Icon: Users },
-  { id: 'notifications', label: 'Notifications', Icon: Bell },
-  { id: 'profile', label: 'Member Profile', Icon: User },
-  { id: 'registrations', label: 'Pending Registrations', Icon: UserCheck, adminOnly: true },
-  { id: 'audit', label: 'Admin Audit Log', Icon: ScrollText, adminOnly: true },
-  { id: 'admin', label: 'Admin & Reports', Icon: Shield, staffOnly: true },
+  { id: 'overview', label: 'Treasury Overview', Icon: BarChart3 },
+  { id: 'contributions', label: 'Monthly Contributions', Icon: CreditCard },
+  { id: 'loans', label: 'Qard Hasan Lending', Icon: HandCoins },
+  { id: 'transactions', label: 'Financial Ledger', Icon: History },
+  { id: 'voting', label: 'Governance Ballots', Icon: Vote },
+  { id: 'halal', label: 'Halal Investments', Icon: Briefcase },
+  { id: 'members', label: 'Member Directory', Icon: Users },
+  { id: 'notifications', label: 'Notices & Alerts', Icon: Bell },
+  { id: 'profile', label: 'Account Profile', Icon: User },
+  { id: 'registrations', label: 'Membership Approvals', Icon: UserCheck, adminOnly: true },
+  { id: 'audit', label: 'Compliance Audit Log', Icon: ScrollText, adminOnly: true },
+  { id: 'admin', label: 'Governance & Reports', Icon: Shield, staffOnly: true },
 ];
 
 export function DashboardShell() {
@@ -339,7 +336,7 @@ export function DashboardShell() {
             <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Treasury</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
-              {activeNavMeta?.label || 'Overview'}
+              {activeNavMeta?.label || 'Treasury Overview'}
             </h1>
           </div>
         </div>
@@ -732,14 +729,6 @@ export function DashboardShell() {
                   loading={dataLoading && contributions.length === 0}
                   initialBillingMonth={preselectedBillingMonth}
                   onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'tiers' && (
-                <ContributionTiers
-                  user={user}
-                  contributions={contributions}
-                  config={overview?.config || null}
-                  onNavigate={setActiveTab}
                 />
               )}
               {activeTab === 'loans' && (

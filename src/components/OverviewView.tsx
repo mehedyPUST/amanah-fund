@@ -13,7 +13,6 @@ import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 export type NavTab =
   | 'overview'
   | 'contributions'
-  | 'tiers'
   | 'loans'
   | 'voting'
   | 'halal'
