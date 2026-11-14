@@ -2,21 +2,39 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ArrowRight, Menu, Shield, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowRight, LogOut, Menu, Shield, X } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
 
-const NAV_LINKS = [
+const PUBLIC_NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/rules', label: 'Rules' },
-  { href: '/signup', label: 'Sign Up' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user } = useCoopSession();
+  const router = useRouter();
+  const { user, authChecking, logout } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const isAuthenticated = !authChecking && Boolean(user);
+
+  const navLinks = isAuthenticated
+    ? [...PUBLIC_NAV_LINKS, { href: '/dashboard', label: 'Dashboard' }]
+    : PUBLIC_NAV_LINKS;
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await logout();
+      setMobileOpen(false);
+      router.push('/');
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 h-16 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80">
@@ -33,7 +51,7 @@ export function Navbar() {
 
         {/* Zone 2: Navigation Links */}
         <nav className="hidden md:flex items-center gap-7" aria-label="Primary navigation">
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -57,15 +75,28 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Zone 3: Single Primary Action */}
+        {/* Zone 3: Auth-Aware Primary Action */}
         <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href={user ? '/dashboard' : '/login'}
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
-          >
-            <span>{user ? 'Members Dashboard' : 'Sign In'}</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </Link>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-colors whitespace-nowrap cursor-pointer disabled:opacity-60"
+            >
+              <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+            </button>
+          ) : (
+            <Link
+              href="/signup"
+              title="Join (Sign Up)"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+            >
+              <span>Join</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
+          )}
 
           <button
             type="button"
@@ -81,7 +112,7 @@ export function Navbar() {
       {/* Mobile Menu Drawer */}
       {mobileOpen && (
         <div className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-4 space-y-2 shadow-lg">
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -98,13 +129,26 @@ export function Navbar() {
               </Link>
             );
           })}
-          <Link
-            href={user ? '/dashboard' : '/login'}
-            onClick={() => setMobileOpen(false)}
-            className="block w-full text-center py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-          >
-            {user ? 'Open Members Dashboard' : 'Member Sign In'}
-          </Link>
+
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              className="w-full py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+            >
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+            </button>
+          ) : (
+            <Link
+              href="/signup"
+              onClick={() => setMobileOpen(false)}
+              className="block w-full text-center py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
+            >
+              Join
+            </Link>
+          )}
         </div>
       )}
     </header>
