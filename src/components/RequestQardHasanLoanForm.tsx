@@ -103,7 +103,6 @@ export function RequestQardHasanLoanForm({
   }, [eligibilityProp, user.role, user.status, eligibilityRetryKey]);
 
   const isVerifiedMember = user.status === 'active';
-  const canSubmit = isVerifiedMember && Boolean(eligibility?.eligible);
 
   const [amount, setAmount] = useState(String(Math.min(20000, maxLoanAmount)));
   const [installmentMonths, setInstallmentMonths] = useState(
@@ -178,6 +177,12 @@ export function RequestQardHasanLoanForm({
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FormFeedback | null>(null);
+
+  /** Only lock inputs for unverified accounts or while an API call is in flight.
+   *  Eligibility must NOT freeze the form — users need to fill fields while the
+   *  check runs, and the server is the source of truth on submit. */
+  const fieldsLocked = !isVerifiedMember || submitting;
+  const canAttemptSubmit = isVerifiedMember && !submitting;
 
   const rawAmount = Number(amount);
   const parsedAmount = Number.isFinite(rawAmount)
@@ -255,11 +260,26 @@ export function RequestQardHasanLoanForm({
       );
       return;
     }
-    if (!eligibility?.eligible) {
+
+    // Prefer live eligibility; if still loading/missing, ask the server (source of truth).
+    let eligibilityGate = eligibility;
+    if (!eligibilityGate) {
+      try {
+        const res = await api.getEligibility();
+        eligibilityGate = res.eligibility;
+        setLocalEligibility(res.eligibility);
+      } catch (err) {
+        showError(
+          'Eligibility Check Failed',
+          err instanceof Error ? err.message : 'Unable to verify cooperative loan eligibility.'
+        );
+        return;
+      }
+    }
+    if (!eligibilityGate.eligible) {
       showError(
         'Eligibility Requirements Not Met',
-        eligibility?.reasons?.[0] ||
-          eligibilityError ||
+        eligibilityGate.reasons?.[0] ||
           'You do not currently meet the cooperative loan eligibility criteria.'
       );
       return;
@@ -271,10 +291,11 @@ export function RequestQardHasanLoanForm({
       );
       return;
     }
+    const months = Math.trunc(Number(installmentMonths));
     if (
-      !Number.isInteger(rawMonths) ||
-      rawMonths < 1 ||
-      rawMonths > maxInstallmentMonths
+      !Number.isFinite(months) ||
+      months < 1 ||
+      months > maxInstallmentMonths
     ) {
       showError(
         'Invalid Repayment Duration',
@@ -323,11 +344,11 @@ export function RequestQardHasanLoanForm({
 
     const payload: LoanSubmitPayload = {
       amount: parsedAmount,
-      installmentMonths: Math.trunc(rawMonths),
+      installmentMonths: months,
       purpose: purpose.trim(),
       emergencyContext: emergencyContext.trim() || undefined,
       channel,
-      provider: provider.trim(),
+      provider: provider.trim() || (channel === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]),
       disbursementAccount: disbursementAccount.trim(),
       guarantorIds: needsGuarantors ? [...validSelectedGuarantorIds] : undefined,
     };
@@ -488,7 +509,7 @@ export function RequestQardHasanLoanForm({
                 <button
                   key={preset}
                   type="button"
-                  disabled={!canSubmit}
+                  disabled={fieldsLocked}
                   onClick={() => {
                     amountEditedRef.current = true;
                     setAmount(String(preset));
@@ -511,7 +532,7 @@ export function RequestQardHasanLoanForm({
             max={maxLoanAmount}
             step="any"
             required
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             value={amount}
             onChange={(e) => {
               amountEditedRef.current = true;
@@ -538,7 +559,7 @@ export function RequestQardHasanLoanForm({
             id={`qard-loan-purpose-${variant}`}
             type="text"
             required
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
             placeholder="e.g. Family medical expense, tuition fee, urgent repair"
@@ -559,7 +580,7 @@ export function RequestQardHasanLoanForm({
                 <button
                   key={m}
                   type="button"
-                  disabled={!canSubmit}
+                  disabled={fieldsLocked}
                   onClick={() => {
                     monthsEditedRef.current = true;
                     setInstallmentMonths(String(m));
@@ -583,7 +604,7 @@ export function RequestQardHasanLoanForm({
             max={maxInstallmentMonths}
             step={1}
             required
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             value={installmentMonths}
             onChange={(e) => {
               monthsEditedRef.current = true;
@@ -669,7 +690,7 @@ export function RequestQardHasanLoanForm({
             </label>
             <select
               id={`qard-loan-channel-${variant}`}
-              disabled={!canSubmit}
+              disabled={fieldsLocked}
               value={channel}
               onChange={(e) => {
                 const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
@@ -694,7 +715,7 @@ export function RequestQardHasanLoanForm({
               options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
               value={provider}
               onChange={setProvider}
-              disabled={!canSubmit}
+              disabled={fieldsLocked}
               placeholder={
                 channel === 'mfs'
                   ? 'Search MFS wallet…'
@@ -715,7 +736,7 @@ export function RequestQardHasanLoanForm({
             id={`qard-loan-account-${variant}`}
             type="text"
             required
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             value={disbursementAccount}
             onChange={(e) => setDisbursementAccount(e.target.value)}
             placeholder={channel === 'mfs' ? '017XX-XXXXXX' : 'Bank Account Number'}
@@ -733,7 +754,7 @@ export function RequestQardHasanLoanForm({
           <textarea
             id={`qard-loan-context-${variant}`}
             rows={2}
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             value={emergencyContext}
             onChange={(e) => setEmergencyContext(e.target.value)}
             placeholder="Optional supporting context for administrative review (encrypted at rest)"
@@ -789,7 +810,7 @@ export function RequestQardHasanLoanForm({
                       <span className="flex items-center gap-2 min-w-0">
                         <input
                           type="checkbox"
-                          disabled={!canSubmit}
+                          disabled={fieldsLocked}
                           checked={checked}
                           onChange={() =>
                             setSelectedGuarantorIds((prev) =>
@@ -824,7 +845,7 @@ export function RequestQardHasanLoanForm({
         >
           <input
             type="checkbox"
-            disabled={!canSubmit}
+            disabled={fieldsLocked}
             checked={agreedToTerms}
             onChange={(e) => {
               setAgreedToTerms(e.target.checked);
@@ -849,22 +870,18 @@ export function RequestQardHasanLoanForm({
           )}
           <button
             type="submit"
-            disabled={!canSubmit || submitting}
+            disabled={!canAttemptSubmit}
             className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>
               {!isVerifiedMember
                 ? 'Member Account Verification Required'
-                : eligibilityChecking && !eligibility
-                  ? 'Checking Eligibility…'
-                  : eligibilityError && !eligibility
-                    ? 'Eligibility Check Failed'
-                    : !eligibility?.eligible
-                      ? 'Eligibility Requirements Not Met'
-                      : submitting
-                        ? 'Encrypting & Submitting…'
-                        : 'Submit Qard Hasan Request'}
+                : submitting
+                  ? 'Encrypting & Submitting…'
+                  : eligibilityChecking && !eligibility
+                    ? 'Checking Eligibility…'
+                    : 'Submit Qard Hasan Request'}
             </span>
           </button>
         </div>
