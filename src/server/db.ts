@@ -123,38 +123,10 @@ function createEmptyVaultState(): VaultState {
   };
 }
 
-const DEMO_SEED_EMAILS = new Set([
-  'admin@amanahcoop.org',
-  'nadia@amanahcoop.org',
-  'imran@amanahcoop.org',
-  'fatima@amanahcoop.org',
-  'yusuf@amanahcoop.org',
-  'ayesha@amanahcoop.org',
-  'bilal@amanahcoop.org',
-]);
-const DEMO_SEED_USER_IDS = new Set([
-  'usr-admin-1',
-  'usr-mgr-1',
-  'usr-mem-1',
-  'usr-mem-2',
-  'usr-mem-3',
-  'usr-mem-4',
-  'usr-pending-1',
-]);
-
-/** Strip legacy demo seed accounts + orphan records. Production data is kept. */
+/** Drop records whose owner user no longer exists (structure hygiene only). */
 function purgeOrphanRecords(state: VaultState): { state: VaultState; changed: boolean } {
   let changed = false;
-
-  const beforeUsers = (state.users || []).length;
-  state.users = (state.users || []).filter(
-    (u) =>
-      !DEMO_SEED_USER_IDS.has(u.id) &&
-      !DEMO_SEED_EMAILS.has((u.email || '').toLowerCase())
-  );
-  if (state.users.length !== beforeUsers) changed = true;
-
-  const realUserIds = new Set(state.users.map((u) => u.id));
+  const realUserIds = new Set((state.users || []).map((u) => u.id));
 
   const beforeContribs = (state.contributions || []).length;
   state.contributions = (state.contributions || []).filter((c) => realUserIds.has(c.userId));
@@ -169,10 +141,6 @@ function purgeOrphanRecords(state: VaultState): { state: VaultState; changed: bo
     (n) => !n.recipientUserId || realUserIds.has(n.recipientUserId)
   );
   if (state.emailNotifications.length !== beforeNotifs) changed = true;
-
-  const beforeAudits = (state.auditLogs || []).length;
-  state.auditLogs = (state.auditLogs || []).filter((a) => !DEMO_SEED_USER_IDS.has(a.actorId));
-  if (state.auditLogs.length !== beforeAudits) changed = true;
 
   return { state, changed };
 }

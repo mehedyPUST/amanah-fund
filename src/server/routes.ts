@@ -5052,20 +5052,17 @@ apiRouter.get(
           decryptedPayload = undefined;
         }
 
-        const expectedHash =
-          entry.id === 'audit-001' && decryptedPayload
-            ? computeSha256Hash({ index: 1, ...decryptedPayload })
-            : decryptedPayload
-              ? computeSha256Hash({
-                  id: entry.id,
-                  timestamp: entry.timestamp,
-                  actorId: entry.actorId,
-                  action: entry.action,
-                  resourceId: entry.resourceId,
-                  prevHash: entry.prevHash,
-                  payload: decryptedPayload,
-                })
-              : null;
+        const expectedHash = decryptedPayload
+          ? computeSha256Hash({
+              id: entry.id,
+              timestamp: entry.timestamp,
+              actorId: entry.actorId,
+              action: entry.action,
+              resourceId: entry.resourceId,
+              prevHash: entry.prevHash,
+              payload: decryptedPayload,
+            })
+          : null;
 
         const hashVerified = Boolean(expectedHash && expectedHash === entry.entryHash);
         const chainLinkVerified =
