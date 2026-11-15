@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
 
-const PUBLIC_NAV_LINKS = [
-  { href: '/', label: 'Overview' },
-  { href: '/about', label: 'Architecture' },
-  { href: '/rules', label: 'Governance Charter' },
+type HomeSectionId = 'overview' | 'architecture' | 'governance-charter';
+
+interface PublicNavItem {
+  id?: HomeSectionId;
+  href: string;
+  altPath?: string;
+  label: string;
+}
+
+const PUBLIC_NAV_LINKS: PublicNavItem[] = [
+  { id: 'overview', href: '/#overview', label: 'Overview' },
+  { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
+  {
+    id: 'governance-charter',
+    href: '/#governance-charter',
+    altPath: '/rules',
+    label: 'Governance Charter',
+  },
 ];
 
 export function Navbar() {
@@ -18,12 +32,104 @@ export function Navbar() {
   const { user, authChecking, logout, darkMode, toggleDarkMode } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [activeHomeSection, setActiveHomeSection] = useState<HomeSectionId>('overview');
+  const manualScrollLockUntilRef = useRef(0);
 
   const isAuthenticated = !authChecking && Boolean(user);
 
-  const navLinks = isAuthenticated
+  const navLinks: PublicNavItem[] = isAuthenticated
     ? [...PUBLIC_NAV_LINKS, { href: '/dashboard', label: 'Member Portal' }]
     : PUBLIC_NAV_LINKS;
+
+  const scrollToHomeSection = useCallback((sectionId: HomeSectionId, closeDrawer = false) => {
+    setActiveHomeSection(sectionId);
+    manualScrollLockUntilRef.current = Date.now() + 750;
+    if (closeDrawer) {
+      setMobileOpen(false);
+    }
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.history.replaceState(null, '', `#${sectionId}`);
+    }
+  }, []);
+
+  // Scroll to hash target when arriving on '/' with a section hash
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const hash = window.location.hash.replace('#', '') as HomeSectionId;
+    if (hash === 'overview' || hash === 'architecture' || hash === 'governance-charter') {
+      const timer = window.setTimeout(() => {
+        scrollToHomeSection(hash, false);
+      }, 60);
+      return () => window.clearTimeout(timer);
+    }
+  }, [pathname, scrollToHomeSection]);
+
+  // Scrollspy on the one-page Home page
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const sectionIds: HomeSectionId[] = ['overview', 'architecture', 'governance-charter'];
+    let rafId = 0;
+
+    const updateActiveOnScroll = () => {
+      if (Date.now() < manualScrollLockUntilRef.current) return;
+
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
+      if (atBottom) {
+        setActiveHomeSection('governance-charter');
+        return;
+      }
+
+      const thresholdY = 128;
+      let currentId: HomeSectionId = 'overview';
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= thresholdY) {
+          currentId = id;
+        }
+      }
+      setActiveHomeSection(currentId);
+    };
+
+    const onScroll = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(updateActiveOnScroll);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateActiveOnScroll();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [pathname]);
+
+  function isLinkActive(link: PublicNavItem): boolean {
+    if (pathname === '/') {
+      return link.id === activeHomeSection;
+    }
+    if (link.altPath && pathname === link.altPath) {
+      return true;
+    }
+    return pathname === link.href;
+  }
+
+  function handleNavClick(
+    e: MouseEvent<HTMLAnchorElement>,
+    link: PublicNavItem,
+    isMobile = false
+  ) {
+    if (link.id && pathname === '/') {
+      e.preventDefault();
+      scrollToHomeSection(link.id, isMobile);
+    } else if (isMobile) {
+      setMobileOpen(false);
+    }
+  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -40,7 +146,16 @@ export function Navbar() {
     <header className="sticky top-0 z-40 h-16 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80">
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
         {/* Zone 1: Brand Wordmark */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link
+          href="/#overview"
+          onClick={(e) => {
+            if (pathname === '/') {
+              e.preventDefault();
+              scrollToHomeSection('overview', true);
+            }
+          }}
+          className="flex items-center gap-2.5 shrink-0 group"
+        >
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
@@ -52,11 +167,12 @@ export function Navbar() {
         {/* Zone 2: Navigation Links */}
         <nav className="hidden md:flex items-center gap-1.5" aria-label="Primary navigation">
           {navLinks.map((link) => {
-            const active = pathname === link.href;
+            const active = isLinkActive(link);
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={(e) => handleNavClick(e, link, false)}
                 className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                   active
                     ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/50'
@@ -144,12 +260,12 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-4 space-y-2 shadow-lg">
           {navLinks.map((link) => {
-            const active = pathname === link.href;
+            const active = isLinkActive(link);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMobileOpen(false)}
+                onClick={(e) => handleNavClick(e, link, true)}
                 className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active
                     ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'

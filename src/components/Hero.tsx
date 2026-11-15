@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Lock, ShieldCheck, Sheet, Vote } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
@@ -49,7 +50,15 @@ const HIGHLIGHTS = [
 ];
 
 export function Hero() {
+  const pathname = usePathname();
   const { user } = useCoopSession();
+
+  function handleSectionLink(e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) {
+    if (pathname === '/') {
+      e.preventDefault();
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -99,7 +108,8 @@ export function Hero() {
               )}
 
               <Link
-                href="/rules"
+                href="/#governance-charter"
+                onClick={(e) => handleSectionLink(e, 'governance-charter')}
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
                 Governance Charter
@@ -257,10 +267,11 @@ export function Hero() {
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
-                href="/about"
+                href="/#architecture"
+                onClick={(e) => handleSectionLink(e, 'architecture')}
                 className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 transition-all duration-200"
               >
-                Security & Architecture
+                Security &amp; Architecture
               </Link>
               <Link
                 href={user ? '/dashboard' : '/signup'}

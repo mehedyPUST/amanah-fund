@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
 
 const PILLARS = [
@@ -51,17 +52,20 @@ const PILLARS = [
   },
 ];
 
-export function About() {
+export function About({ embedded = false }: { embedded?: boolean }) {
+  const pathname = usePathname();
+  const HeadingTag = embedded ? 'h2' : 'h1';
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
         <div className="max-w-3xl space-y-4">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            Security & Architecture
+            Security &amp; Architecture
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
+          <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
             Transparent mutual support before maturity. Real-economy Halal growth after maturity.
-          </h1>
+          </HeadingTag>
           <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
             Amanah was designed so a trusted community can pool monthly savings without
             interest, extend interest-free Qard Hasan relief to fellow members through democratic 2/3
@@ -106,7 +110,15 @@ export function About() {
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link
-              href="/rules"
+              href="/#governance-charter"
+              onClick={(e) => {
+                if (pathname === '/') {
+                  e.preventDefault();
+                  document
+                    .getElementById('governance-charter')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
               className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 transition-all duration-200"
             >
               Governance Charter

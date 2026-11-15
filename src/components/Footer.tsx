@@ -1,11 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Moon, Shield, Sun } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
 
 export function Footer() {
+  const pathname = usePathname();
   const { user, darkMode, toggleDarkMode } = useCoopSession();
+
+  function scrollIfHome(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    if (pathname === '/') {
+      e.preventDefault();
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
@@ -33,7 +42,8 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
               <li>
                 <Link
-                  href="/"
+                  href="/#overview"
+                  onClick={(e) => scrollIfHome(e, 'overview')}
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
                   Overview
@@ -41,15 +51,17 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/about"
+                  href="/#architecture"
+                  onClick={(e) => scrollIfHome(e, 'architecture')}
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
-                  Security & Architecture
+                  Security &amp; Architecture
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/rules"
+                  href="/#governance-charter"
+                  onClick={(e) => scrollIfHome(e, 'governance-charter')}
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
                   Governance Charter

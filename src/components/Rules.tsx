@@ -92,17 +92,19 @@ const RULES = [
   },
 ];
 
-export function Rules() {
+export function Rules({ embedded = false }: { embedded?: boolean }) {
+  const HeadingTag = embedded ? 'h2' : 'h1';
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
         <div className="space-y-3">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            Cooperative Governance & Bylaws
+            Cooperative Governance &amp; Bylaws
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Operating Rules & Shariah Charter
-          </h1>
+          <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Operating Rules &amp; Shariah Charter
+          </HeadingTag>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
             These rules are enforced programmatically in the Amanah backend, encrypted audit
             trail, and 2/3 member voting engine.

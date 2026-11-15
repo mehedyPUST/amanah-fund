@@ -106,7 +106,6 @@ export function DashboardShell() {
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const autoSyncBusyRef = useRef(false);
-  const manualScrollLockUntilRef = useRef(0);
 
   useEffect(() => {
     if (!authChecking && !user) {
@@ -208,67 +207,57 @@ export function DashboardShell() {
     return isStaff ? [...PRIMARY_NAV_ITEMS, ...ADMIN_NAV_ITEMS] : PRIMARY_NAV_ITEMS;
   }, [isStaff]);
 
-  const scrollToSection = useCallback(
-    (sectionId: DashboardSectionId, closeMobile = true) => {
-      setActiveSection(sectionId);
-      manualScrollLockUntilRef.current = Date.now() + 750;
+  const navigateToPage = useCallback(
+    (
+      sectionId: DashboardSectionId,
+      closeMobile = true,
+      pushHistory = true,
+      preserveBillingMonth = false
+    ) => {
+      const targetId = visibleNav.some((item) => item.id === sectionId)
+        ? sectionId
+        : 'fund-overview';
+
+      setActiveSection(targetId);
+      if (!preserveBillingMonth && targetId !== 'monthly-contribution') {
+        setPreselectedBillingMonth(null);
+      }
       if (closeMobile) {
         setMobileNavOpen(false);
       }
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (pushHistory && typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('page') !== targetId) {
+          url.searchParams.set('page', targetId);
+          window.history.pushState({ page: targetId }, '', url);
+        }
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    []
+    [visibleNav]
   );
 
-  // Scrollspy: update activeSection smoothly as the member scrolls through the one-page dashboard
   useEffect(() => {
-    if (!user) return;
-    const sectionIds = visibleNav.map((item) => item.id);
-    let rafId = 0;
-
-    const updateActiveOnScroll = () => {
-      if (Date.now() < manualScrollLockUntilRef.current) return;
-
-      const atBottom =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 48;
-      if (atBottom && sectionIds.length > 0) {
-        const lastId = sectionIds[sectionIds.length - 1];
-        if (document.getElementById(lastId)) {
-          setActiveSection(lastId);
-          return;
-        }
+    if (typeof window === 'undefined') return;
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('page') as DashboardSectionId | null;
+      const valid =
+        requested && visibleNav.some((item) => item.id === requested)
+          ? requested
+          : 'fund-overview';
+      setActiveSection(valid);
+      if (valid !== 'monthly-contribution') {
+        setPreselectedBillingMonth(null);
       }
-
-      const thresholdY = 128; // just below 64px sticky header + breathing margin
-      let currentId: DashboardSectionId = sectionIds[0] || 'fund-overview';
-      for (const id of sectionIds) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const top = el.getBoundingClientRect().top;
-        if (top <= thresholdY) {
-          currentId = id;
-        }
-      }
-      setActiveSection(currentId);
     };
 
-    const handleScroll = () => {
-      if (rafId) window.cancelAnimationFrame(rafId);
-      rafId = window.requestAnimationFrame(updateActiveOnScroll);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    updateActiveOnScroll();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, [user, visibleNav]);
+    syncFromUrl();
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
+  }, [visibleNav]);
 
   async function handleSignOut() {
     await logout();
@@ -293,7 +282,7 @@ export function DashboardShell() {
   }
 
   async function handleOpenLoanFromDecisionAlert(notificationId: string) {
-    scrollToSection('quard-hasan');
+    navigateToPage('quard-hasan');
     await handleDismissLoanDecisionAlert(notificationId);
   }
 
@@ -343,8 +332,8 @@ export function DashboardShell() {
       <button
         key={item.id}
         type="button"
-        onClick={() => scrollToSection(item.id, isMobile)}
-        aria-current={active ? 'location' : undefined}
+        onClick={() => navigateToPage(item.id, isMobile)}
+        aria-current={active ? 'page' : undefined}
         className={`group w-full px-3 py-2 text-sm flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${
           active
             ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
@@ -405,7 +394,7 @@ export function DashboardShell() {
        Grid 1 (Top-Left, 260px x 64px): Amanah Brand Header
        Grid 2 (Top-Right, 1fr x 64px): Dashboard Nav
        Grid 3 (Bottom-Left, 260px x 1fr): Dashboard Sidebar
-       Grid 4 (Bottom-Right, 1fr x 1fr): Single-Page Scrollable Dashboard Contents
+       Grid 4 (Bottom-Right, 1fr x 1fr): Multi-Page Dashboard Contents
     */
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
       {/* GRID 1 */}
@@ -461,10 +450,10 @@ export function DashboardShell() {
             contributions={contributions}
             loans={loans}
             notifications={notifications}
-            onNavigate={(section) => scrollToSection(section, false)}
+            onNavigate={(section) => navigateToPage(section, false)}
             onOpenContributionMonth={(month) => {
               setPreselectedBillingMonth(month);
-              scrollToSection('monthly-contribution', false);
+              navigateToPage('monthly-contribution', false, true, true);
             }}
             onMarkRead={handleDismissLoanDecisionAlert}
           />
@@ -508,7 +497,7 @@ export function DashboardShell() {
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
           <button
             type="button"
-            onClick={() => scrollToSection('my-profile', false)}
+            onClick={() => navigateToPage('my-profile', false)}
             className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
           >
             <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
@@ -589,9 +578,9 @@ export function DashboardShell() {
         )}
       </AnimatePresence>
 
-      {/* GRID 4: Single-Page Scrollable Sections */}
+      {/* GRID 4: Multi-Page Dashboard Content */}
       <main className="lg:col-start-2 lg:row-start-2 min-w-0 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-12">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
@@ -690,7 +679,7 @@ export function DashboardShell() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => scrollToSection('notification', false)}
+                          onClick={() => navigateToPage('notification', false)}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors whitespace-nowrap cursor-pointer"
                         >
                           Inbox
@@ -774,7 +763,7 @@ export function DashboardShell() {
                   <button
                     type="button"
                     onClick={() => {
-                      scrollToSection('ballot', false);
+                      navigateToPage('ballot', false);
                       setLiveLoanPulseId(null);
                     }}
                     className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
@@ -804,175 +793,161 @@ export function DashboardShell() {
             );
           })()}
 
-          {/* 1. Fund Overview */}
-          <section id="fund-overview" className="scroll-mt-20 space-y-4">
-            <SectionEyebrow label="Fund Overview" />
-            <OverviewView
-              overview={overview}
-              contributions={contributions}
-              loans={loans}
-              user={user}
-              loading={dataLoading && !overview}
-              onNavigate={(sec) => scrollToSection(sec, false)}
-              onOpenLoanModal={() => setLoanModalOpen(true)}
-              onRefresh={handleRefreshWithAutoSync}
-            />
-          </section>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.16 }}
+            >
+              {activeSection === 'fund-overview' && (
+                <section id="fund-overview" className="space-y-4">
+                  <SectionEyebrow label="Fund Overview" />
+                  <OverviewView
+                    overview={overview}
+                    contributions={contributions}
+                    loans={loans}
+                    user={user}
+                    loading={dataLoading && !overview}
+                    onNavigate={(sec) => navigateToPage(sec, false)}
+                    onOpenLoanModal={() => setLoanModalOpen(true)}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-          {/* 2. Monthly Contribution */}
-          <section
-            id="monthly-contribution"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Monthly Contribution" />
-            <ContributionsView
-              contributions={contributions}
-              config={overview?.config || null}
-              user={user}
-              loading={dataLoading && contributions.length === 0}
-              initialBillingMonth={preselectedBillingMonth}
-              onRefresh={handleRefreshWithAutoSync}
-            />
-          </section>
+              {activeSection === 'monthly-contribution' && (
+                <section id="monthly-contribution" className="space-y-4">
+                  <SectionEyebrow label="Monthly Contribution" />
+                  <ContributionsView
+                    contributions={contributions}
+                    config={overview?.config || null}
+                    user={user}
+                    loading={dataLoading && contributions.length === 0}
+                    initialBillingMonth={preselectedBillingMonth}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-          {/* 3. Quard Hasan */}
-          <section
-            id="quard-hasan"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Quard Hasan" />
-            <LoansView
-              loans={loans}
-              eligibility={overview?.personal.eligibility || null}
-              config={overview?.config || null}
-              availableLiquidity={overview?.treasury.availableLiquidity || 0}
-              user={user}
-              loading={dataLoading && loans.length === 0}
-              onOpenLoanModal={() => setLoanModalOpen(true)}
-              onRefresh={handleRefreshWithAutoSync}
-            />
-          </section>
+              {activeSection === 'quard-hasan' && (
+                <section id="quard-hasan" className="space-y-4">
+                  <SectionEyebrow label="Quard Hasan" />
+                  <LoansView
+                    loans={loans}
+                    eligibility={overview?.personal.eligibility || null}
+                    config={overview?.config || null}
+                    availableLiquidity={overview?.treasury.availableLiquidity || 0}
+                    user={user}
+                    loading={dataLoading && loans.length === 0}
+                    onOpenLoanModal={() => setLoanModalOpen(true)}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-          {/* 4. My Profile */}
-          <section
-            id="my-profile"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="My Profile" />
-            <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
-          </section>
+              {activeSection === 'my-profile' && (
+                <section id="my-profile" className="space-y-4">
+                  <SectionEyebrow label="My Profile" />
+                  <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
+                </section>
+              )}
 
-          {/* 5. Notification */}
-          <section
-            id="notification"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Notification" />
-            <NotificationsView
-              user={user}
-              workspace={workspace}
-              connectingGoogle={connectingGoogle}
-              onConnectGoogle={handleConnectGoogle}
-              onDisconnectGoogle={handleDisconnectGoogle}
-              onRefresh={handleRefreshWithAutoSync}
-            />
-          </section>
+              {activeSection === 'notification' && (
+                <section id="notification" className="space-y-4">
+                  <SectionEyebrow label="Notification" />
+                  <NotificationsView
+                    user={user}
+                    workspace={workspace}
+                    connectingGoogle={connectingGoogle}
+                    onConnectGoogle={handleConnectGoogle}
+                    onDisconnectGoogle={handleDisconnectGoogle}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-          {/* 6. Statistics */}
-          <section
-            id="statistics"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Statistics" />
-            <StatisticsView
-              overview={overview}
-              contributions={contributions}
-              loans={loans}
-              user={user}
-              loading={dataLoading && !overview}
-              onNavigate={(sec) => scrollToSection(sec, false)}
-            />
-          </section>
+              {activeSection === 'statistics' && (
+                <section id="statistics" className="space-y-4">
+                  <SectionEyebrow label="Statistics" />
+                  <StatisticsView
+                    overview={overview}
+                    contributions={contributions}
+                    loans={loans}
+                    user={user}
+                    loading={dataLoading && !overview}
+                    onNavigate={(sec) => navigateToPage(sec, false)}
+                  />
+                </section>
+              )}
 
-          {/* 7. Ballot (Loan Requests & Anonymized 2/3 Voting) */}
-          <section
-            id="ballot"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Ballot" />
-            <VotingView
-              loans={loans}
-              projects={halalProjects}
-              config={overview?.config || null}
-              user={user}
-              loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
-              onRefresh={handleRefreshWithAutoSync}
-            />
-          </section>
+              {activeSection === 'ballot' && (
+                <section id="ballot" className="space-y-4">
+                  <SectionEyebrow label="Ballot" />
+                  <VotingView
+                    loans={loans}
+                    projects={halalProjects}
+                    config={overview?.config || null}
+                    user={user}
+                    loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-          {/* 8. Transaction History */}
-          <section
-            id="transaction-history"
-            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-          >
-            <SectionEyebrow label="Transaction History" />
-            <TransactionHistory
-              contributions={contributions}
-              loans={loans}
-              config={overview?.config || null}
-              user={user}
-              loading={dataLoading && contributions.length === 0 && loans.length === 0}
-              onNavigate={(sec) => scrollToSection(sec, false)}
-            />
-          </section>
+              {activeSection === 'transaction-history' && (
+                <section id="transaction-history" className="space-y-4">
+                  <SectionEyebrow label="Transaction History" />
+                  <TransactionHistory
+                    contributions={contributions}
+                    loans={loans}
+                    config={overview?.config || null}
+                    user={user}
+                    loading={dataLoading && contributions.length === 0 && loans.length === 0}
+                    onNavigate={(sec) => navigateToPage(sec, false)}
+                  />
+                </section>
+              )}
 
-          {/* Admin Sections */}
-          {isStaff && (
-            <>
-              {/* 9. Site Activity */}
-              <section
-                id="site-activity"
-                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-              >
-                <SectionEyebrow label="Admin · Site Activity" />
-                <AdminAuditLog user={user} />
-              </section>
+              {isStaff && activeSection === 'site-activity' && (
+                <section id="site-activity" className="space-y-4">
+                  <SectionEyebrow label="Admin · Site Activity" />
+                  <AdminAuditLog user={user} />
+                </section>
+              )}
 
-              {/* 10. Member Registry */}
-              <section
-                id="member-registry"
-                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
-              >
-                <SectionEyebrow label="Admin · Member Registry" />
-                <MemberRegistrySection
-                  user={user}
-                  config={overview?.config || null}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              </section>
+              {isStaff && activeSection === 'member-registry' && (
+                <section id="member-registry" className="space-y-4">
+                  <SectionEyebrow label="Admin · Member Registry" />
+                  <MemberRegistrySection
+                    user={user}
+                    config={overview?.config || null}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
 
-              {/* 11. Site Settings */}
-              <section
-                id="site-settings"
-                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4 pb-8"
-              >
-                <SectionEyebrow label="Admin · Site Settings" />
-                <AdminSiteSettingsView
-                  overview={overview}
-                  config={overview?.config || null}
-                  user={user}
-                  loans={loans}
-                  projects={halalProjects}
-                  loading={dataLoading && halalProjects.length === 0}
-                  workspace={workspace}
-                  connectingGoogle={connectingGoogle}
-                  onConnectGoogle={handleConnectGoogle}
-                  onDisconnectGoogle={handleDisconnectGoogle}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              </section>
-            </>
-          )}
+              {isStaff && activeSection === 'site-settings' && (
+                <section id="site-settings" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Admin · Site Settings" />
+                  <AdminSiteSettingsView
+                    overview={overview}
+                    config={overview?.config || null}
+                    user={user}
+                    loans={loans}
+                    projects={halalProjects}
+                    loading={dataLoading && halalProjects.length === 0}
+                    workspace={workspace}
+                    connectingGoogle={connectingGoogle}
+                    onConnectGoogle={handleConnectGoogle}
+                    onDisconnectGoogle={handleDisconnectGoogle}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
