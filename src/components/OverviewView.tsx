@@ -31,6 +31,7 @@ interface OverviewViewProps {
   user: PublicUser;
   loading: boolean;
   onNavigate: (section: DashboardSectionId) => void;
+  onOpenLoanModal?: () => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -41,6 +42,7 @@ export function OverviewView({
   user,
   loading,
   onNavigate,
+  onOpenLoanModal,
   onRefresh,
 }: OverviewViewProps) {
   const [quotaInput, setQuotaInput] = useState(
@@ -348,17 +350,29 @@ export function OverviewView({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onNavigate('quard-hasan')}
-            className="group w-full py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-          >
-            <span>Open Quard Hasan &amp; Repayments</span>
-            <ArrowRight
-              className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {onOpenLoanModal && (
+              <button
+                type="button"
+                onClick={onOpenLoanModal}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Request Qard Hasan</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onNavigate('quard-hasan')}
+              className="group flex-1 py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>{onOpenLoanModal ? 'Schedule & History' : 'Open Quard Hasan & Repayments'}</span>
+              <ArrowRight
+                className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
         </section>
 
         <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">

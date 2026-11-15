@@ -149,6 +149,11 @@ apiRouter.post('/auth/login', async (req, res) => {
       return draft;
     });
 
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'AUTH_LOGIN',
+      resourceType: 'auth',
+      resourceId: sanitized.id,
+    });
     res.json({ user: sanitized });
   } catch (err) {
     console.error('Login error:', err);
@@ -231,6 +236,11 @@ apiRouter.post('/auth/google', async (req, res) => {
         return draft;
       });
 
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'AUTH_LOGIN',
+        resourceType: 'auth',
+        resourceId: existingUser.id,
+      });
       const sanitized = sanitizeUser(updatedUser);
       const token = signAuthToken(updatedUser);
       setAuthCookie(req, res, token);
@@ -513,6 +523,11 @@ apiRouter.post('/auth/register', async (req, res) => {
 
     broadcastRealtimeEvent('members:updated', { userId: createdUser.id });
     broadcastRealtimeEvent('notification:created', { type: 'signup_pending_admin' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'MEMBER_SIGNUP_REQUESTED',
+      resourceType: 'auth',
+      resourceId: createdUser.id,
+    });
 
     res.status(201).json({
       pendingApproval: true,
@@ -693,6 +708,11 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
     }
 
     broadcastRealtimeEvent('members:updated', { userId: viewer.id });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'MEMBER_PROFILE_UPDATED',
+      resourceType: 'auth',
+      resourceId: viewer.id,
+    });
     res.json({ user: updatedPublicUser });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -832,7 +852,17 @@ apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, 
       return draft;
     });
 
+    broadcastRealtimeEvent('contribution:submitted', {
+      contributionId: newContribution.id,
+      billingMonth: newContribution.billingMonth,
+      amount: newContribution.amount,
+    });
     broadcastRealtimeEvent('notification:created', { type: 'contribution_placed_manager' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'CONTRIBUTION_SUBMITTED',
+      resourceType: 'contribution',
+      resourceId: newContribution.id,
+    });
 
     res.status(201).json({
       contribution: hydrateContributionForViewer(newContribution, viewer),
@@ -920,7 +950,16 @@ apiRouter.patch(
         return;
       }
 
+      broadcastRealtimeEvent('contribution:reviewed', {
+        contributionId: (updated as Contribution).id,
+        decision,
+      });
       broadcastRealtimeEvent('notification:created', { type: 'contribution_accepted' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: decision === 'approved' ? 'CONTRIBUTION_APPROVED' : 'CONTRIBUTION_REJECTED',
+        resourceType: 'contribution',
+        resourceId: (updated as Contribution).id,
+      });
       res.json({ contribution: hydrateContributionForViewer(updated, viewer) });
     } catch (err) {
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
@@ -1133,6 +1172,11 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       type: 'loan_vote_requested',
       loanId: createdLoan.id,
     });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'LOAN_REQUEST_CREATED',
+      resourceType: 'loan',
+      resourceId: createdLoan.id,
+    });
 
     res.status(201).json({ loan: hydrateLoanForViewer(createdLoan, viewer) });
   } catch (err) {
@@ -1327,6 +1371,11 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         recipientUserId: (updatedLoan as LoanRequest).borrowerId,
       });
     }
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'LOAN_VOTE_CAST',
+      resourceType: 'vote',
+      resourceId: id,
+    });
     res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
   } catch (err) {
     if (err instanceof Error && err.message === 'UNVERIFIED_MEMBER') {
@@ -1453,6 +1502,11 @@ apiRouter.patch(
         type: notifType,
         recipientUserId: reviewedBorrowerId,
       });
+      broadcastRealtimeEvent('audit:updated', {
+        action: decision === 'approve' ? 'LOAN_ADMIN_APPROVED' : 'LOAN_ADMIN_REJECTED',
+        resourceType: 'loan',
+        resourceId: id,
+      });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
@@ -1560,6 +1614,11 @@ apiRouter.post(
       broadcastRealtimeEvent('notification:created', {
         type: 'loan_approved_confirmation',
         recipientUserId: (updatedLoan as LoanRequest).borrowerId,
+      });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'LOAN_DISBURSED',
+        resourceType: 'loan',
+        resourceId: id,
       });
 
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
@@ -1676,7 +1735,16 @@ apiRouter.post(
         return;
       }
 
+      broadcastRealtimeEvent('repayment:submitted', {
+        loanId: id,
+        installmentNumber: num,
+      });
       broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'REPAYMENT_SUBMITTED',
+        resourceType: 'repayment',
+        resourceId: `${id}#${num}`,
+      });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
       if (err instanceof Error && err.message === 'FORBIDDEN') {
@@ -1814,7 +1882,17 @@ apiRouter.patch(
         return;
       }
 
+      broadcastRealtimeEvent('repayment:verified', {
+        loanId: id,
+        installmentNumber: num,
+        approved: approve,
+      });
       broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: approve ? 'REPAYMENT_VERIFIED' : 'REPAYMENT_REJECTED',
+        resourceType: 'repayment',
+        resourceId: `${id}#${num}`,
+      });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
       if (err instanceof Error && err.message === 'INSTALLMENT_NOT_FOUND') {
@@ -1913,6 +1991,11 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('investment:created', { projectId: project.id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'HALAL_PROJECT_CREATED',
+        resourceType: 'investment',
+        resourceId: project.id,
+      });
       res.status(201).json({ project: hydrateHalalProjectForViewer(project, viewer) });
     } catch (err) {
       console.error('Create Halal project error:', err);
@@ -2005,6 +2088,11 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
     }
 
     broadcastRealtimeEvent('investment:voted', { projectId: id });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'INVESTMENT_VOTE_CAST',
+      resourceType: 'vote',
+      resourceId: id,
+    });
     res.json({ project: hydrateHalalProjectForViewer(updatedProject, viewer) });
   } catch (err) {
     if (err instanceof Error && err.message === 'PLACEMENT_VOTING_CLOSED') {
@@ -2190,6 +2278,11 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('members:updated', { userId: newUser.id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'MEMBER_CREATED_BY_ADMIN',
+        resourceType: 'auth',
+        resourceId: newUser.id,
+      });
       res.status(201).json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -2366,6 +2459,11 @@ apiRouter.patch(
       if (approvedNow) {
         broadcastRealtimeEvent('notification:created', { type: 'signup_approved' });
       }
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'MEMBER_RBAC_UPDATED',
+        resourceType: 'auth',
+        resourceId: id,
+      });
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -2429,6 +2527,11 @@ apiRouter.delete(
       }
 
       broadcastRealtimeEvent('members:updated', { userId: id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: wasPending ? 'MEMBER_SIGNUP_REJECTED' : 'MEMBER_REMOVED_BY_ADMIN',
+        resourceType: 'auth',
+        resourceId: id,
+      });
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'USER_HAS_ACTIVE_LOAN') {
@@ -2564,6 +2667,11 @@ apiRouter.patch(
 
       broadcastRealtimeEvent('config:updated', {
         maxLoansPerYear: nextState.fundConfig.maxLoansPerYear,
+      });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'FUND_POLICY_UPDATED',
+        resourceType: 'config',
+        resourceId: nextState.fundConfig.id,
       });
       res.json({ config: nextState.fundConfig });
     } catch (err) {
@@ -2705,6 +2813,11 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('notification:created', { type: 'monthly_contribution_reminder' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'REMINDER_BATCH_GENERATED',
+        resourceType: 'notification',
+        resourceId: billingMonth,
+      });
       res.json({
         createdCount,
         notifications: nextState.emailNotifications,
@@ -2910,6 +3023,11 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('sheet:synced', { spreadsheetId, lastSheetSyncAt });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'GOOGLE_SHEET_SYNCED',
+        resourceType: 'workspace_sync',
+        resourceId: spreadsheetId,
+      });
       res.json({
         spreadsheetId,
         spreadsheetUrl,
@@ -3018,6 +3136,11 @@ apiRouter.post(
 
       if (sentIds.length > 0) {
         broadcastRealtimeEvent('notification:created', { dispatched: sentIds.length });
+        broadcastRealtimeEvent('audit:updated', {
+          action: 'GMAIL_NOTIFICATIONS_DISPATCHED',
+          resourceType: 'notification',
+          resourceId: `${sentIds.length}-emails`,
+        });
       }
 
       res.json({
@@ -3218,6 +3341,12 @@ apiRouter.get(
           payload: { reportType: type, filename },
         });
         return draft;
+      });
+
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'REPORT_EXPORTED',
+        resourceType: 'report',
+        resourceId: type,
       });
 
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

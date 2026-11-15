@@ -1,19 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  CreditCard,
   Download,
-  FileText,
   HandCoins,
   KeyRound,
-  Lock,
+  Pause,
+  Play,
   RefreshCw,
   ScrollText,
   Search,
+  Settings,
   ShieldAlert,
   ShieldCheck,
   UserCheck,
@@ -27,10 +30,11 @@ import { formatDateTime, shortHash } from '../utils/format.ts';
 
 type AuditCategoryFilter =
   | 'all'
-  | 'user_access'
-  | 'rejections'
   | 'loan_changes'
-  | 'treasury_policy';
+  | 'contributions'
+  | 'system_settings'
+  | 'user_access'
+  | 'rejections';
 
 interface AdminAuditLogProps {
   user: PublicUser;
@@ -51,6 +55,7 @@ const USER_APPROVAL_ACTIONS = new Set([
   'MEMBER_REMOVED_BY_ADMIN',
   'MEMBER_RBAC_UPDATED',
   'MEMBER_PROFILE_UPDATED',
+  'AUTH_LOGIN',
 ]);
 
 const REJECTION_ACTIONS = new Set([
@@ -72,6 +77,25 @@ const LOAN_STATUS_ACTIONS = new Set([
   'LOAN_DISBURSED',
   'LOAN_REPAID_COMPLETED',
   'LOAN_VOTE_CAST',
+  'HALAL_PROJECT_CREATED',
+  'INVESTMENT_VOTE_CAST',
+]);
+
+const CONTRIBUTION_PAYMENT_ACTIONS = new Set([
+  'CONTRIBUTION_SUBMITTED',
+  'CONTRIBUTION_APPROVED',
+  'CONTRIBUTION_REJECTED',
+  'REPAYMENT_SUBMITTED',
+  'REPAYMENT_VERIFIED',
+  'REPAYMENT_REJECTED',
+]);
+
+const SYSTEM_SETTINGS_ACTIONS = new Set([
+  'FUND_POLICY_UPDATED',
+  'GOOGLE_SHEET_SYNCED',
+  'GMAIL_NOTIFICATIONS_DISPATCHED',
+  'REMINDER_BATCH_GENERATED',
+  'REPORT_EXPORTED',
 ]);
 
 function getAuditVisualMeta(action: string) {
@@ -81,7 +105,7 @@ function getAuditVisualMeta(action: string) {
     action === 'MEMBER_CREATED_BY_ADMIN'
   ) {
     return {
-      label: 'User Approval & Access',
+      label: 'Member Approved & Active',
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: UserCheck,
@@ -93,7 +117,7 @@ function getAuditVisualMeta(action: string) {
     action === 'MEMBER_SUSPENDED'
   ) {
     return {
-      label: 'Application Rejected / Access Revoked',
+      label: 'Member Declined / Access Revoked',
       tone: 'text-red-700 dark:text-red-400',
       iconBg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60',
       Icon: UserX,
@@ -112,6 +136,14 @@ function getAuditVisualMeta(action: string) {
       Icon: XCircle,
     };
   }
+  if (action === 'LOAN_REQUEST_CREATED') {
+    return {
+      label: 'New Loan Request',
+      tone: 'text-amber-700 dark:text-amber-400',
+      iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
+      Icon: HandCoins,
+    };
+  }
   if (
     action === 'LOAN_ADMIN_APPROVED' ||
     action === 'LOAN_QUORUM_APPROVED' ||
@@ -119,49 +151,65 @@ function getAuditVisualMeta(action: string) {
     action === 'LOAN_REPAID_COMPLETED'
   ) {
     return {
-      label: 'Loan Status Change',
+      label: 'Loan Status Update',
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: HandCoins,
     };
   }
-  if (action === 'LOAN_REQUEST_CREATED' || action === 'LOAN_VOTE_CAST') {
+  if (action === 'LOAN_VOTE_CAST' || action === 'INVESTMENT_VOTE_CAST' || action === 'HALAL_PROJECT_CREATED') {
     return {
-      label: 'Loan Governance Event',
+      label: 'Anonymized Ballot Event',
       tone: 'text-amber-700 dark:text-amber-400',
       iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: HandCoins,
     };
   }
+  if (action === 'CONTRIBUTION_SUBMITTED' || action === 'REPAYMENT_SUBMITTED') {
+    return {
+      label: 'Payment Submitted',
+      tone: 'text-amber-700 dark:text-amber-400',
+      iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
+      Icon: CreditCard,
+    };
+  }
   if (action === 'CONTRIBUTION_APPROVED' || action === 'REPAYMENT_VERIFIED') {
     return {
-      label: 'Verified Ledger Entry',
+      label: 'Contribution / Payment Verified',
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: CheckCircle2,
     };
   }
-  if (action === 'MEMBER_SIGNUP_REQUESTED' || action === 'CONTRIBUTION_SUBMITTED') {
+  if (action === 'FUND_POLICY_UPDATED') {
     return {
-      label: 'Pending Verification',
-      tone: 'text-amber-700 dark:text-amber-400',
-      iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
-      Icon: FileText,
+      label: 'System Settings Update',
+      tone: 'text-teal-700 dark:text-teal-400',
+      iconBg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
+      Icon: Settings,
     };
   }
-  if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED') {
+  if (action === 'MEMBER_SIGNUP_REQUESTED') {
     return {
-      label: 'Security & Access',
+      label: 'New Member Application',
+      tone: 'text-amber-700 dark:text-amber-400',
+      iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
+      Icon: UserCheck,
+    };
+  }
+  if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED' || action === 'MEMBER_PROFILE_UPDATED') {
+    return {
+      label: 'Security & Member Access',
       tone: 'text-slate-700 dark:text-slate-300',
       iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
       Icon: KeyRound,
     };
   }
   return {
-    label: 'System & Policy',
-    tone: 'text-amber-700 dark:text-amber-400',
-    iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
-    Icon: Lock,
+    label: 'System & Ledger Sync',
+    tone: 'text-teal-700 dark:text-teal-400',
+    iconBg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
+    Icon: Settings,
   };
 }
 
@@ -180,6 +228,17 @@ export function AdminAuditLog({
   const [loading, setLoading] = useState<boolean>(initialLogs ? Boolean(externalLoading) : true);
   const [error, setError] = useState<string | null>(null);
 
+  const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'reconnecting'>('connecting');
+  const [streamPaused, setStreamPaused] = useState(false);
+  const [queuedLiveEvents, setQueuedLiveEvents] = useState(0);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [newEntryIds, setNewEntryIds] = useState<string[]>([]);
+
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const hasLoadedOnceRef = useRef(false);
+  const streamPausedRef = useRef(false);
+  const syncTimerRef = useRef<number | null>(null);
+
   const [categoryFilter, setCategoryFilter] = useState<AuditCategoryFilter>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,8 +246,14 @@ export function AdminAuditLog({
   const [visibleLimit, setVisibleLimit] = useState(25);
 
   useEffect(() => {
+    streamPausedRef.current = streamPaused;
+  }, [streamPaused]);
+
+  useEffect(() => {
     if (initialLogs !== undefined) {
       setLogs(initialLogs);
+      initialLogs.forEach((l) => knownIdsRef.current.add(l.id));
+      hasLoadedOnceRef.current = true;
     }
   }, [initialLogs]);
 
@@ -204,42 +269,138 @@ export function AdminAuditLog({
     }
   }, [externalLoading]);
 
-  const loadAuditLogs = useCallback(async () => {
-    if (!canViewAuditLogs) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      if (onRefreshExternal) {
-        await onRefreshExternal();
-      } else {
-        const res = await api.getAuditLogs();
-        setLogs(res.logs);
-        setChainValid(res.chainValid);
+  const fetchAuditLogs = useCallback(
+    async (silent = false) => {
+      if (!canViewAuditLogs) {
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load security audit trail.');
-    } finally {
-      setLoading(false);
-    }
-  }, [canViewAuditLogs, onRefreshExternal]);
+      if (!silent) {
+        setLoading(true);
+      }
+      setError(null);
+      try {
+        if (onRefreshExternal && !silent) {
+          await onRefreshExternal();
+        } else {
+          const res = await api.getAuditLogs();
+          const arrivedIds: string[] = [];
+          if (hasLoadedOnceRef.current) {
+            for (const entry of res.logs) {
+              if (!knownIdsRef.current.has(entry.id)) {
+                arrivedIds.push(entry.id);
+              }
+            }
+          }
+          res.logs.forEach((entry) => knownIdsRef.current.add(entry.id));
+          hasLoadedOnceRef.current = true;
 
+          setLogs(res.logs);
+          setChainValid(res.chainValid);
+          setLastSyncedAt(new Date().toISOString());
+          setQueuedLiveEvents(0);
+
+          if (arrivedIds.length > 0) {
+            setNewEntryIds((prev) => Array.from(new Set([...arrivedIds, ...prev])).slice(0, 20));
+          }
+        }
+      } catch (err) {
+        if (!silent) {
+          setError(err instanceof Error ? err.message : 'Failed to load site activity feed.');
+        }
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [canViewAuditLogs, onRefreshExternal]
+  );
+
+  // Fade out live highlight tags after 15s
+  useEffect(() => {
+    if (newEntryIds.length === 0) return;
+    const timer = window.setTimeout(() => {
+      setNewEntryIds([]);
+    }, 15000);
+    return () => window.clearTimeout(timer);
+  }, [newEntryIds]);
+
+  // Initial load
   useEffect(() => {
     if (initialLogs === undefined) {
-      void loadAuditLogs();
+      void fetchAuditLogs(false);
     }
-  }, [initialLogs, loadAuditLogs]);
+  }, [initialLogs, fetchAuditLogs]);
+
+  // Direct real-time SSE feed for critical site activity
+  useEffect(() => {
+    if (!canViewAuditLogs) return;
+
+    const es = new EventSource('/api/events', { withCredentials: true });
+    const scheduleSilentSync = () => {
+      if (streamPausedRef.current) {
+        setQueuedLiveEvents((n) => n + 1);
+        return;
+      }
+      if (syncTimerRef.current) {
+        window.clearTimeout(syncTimerRef.current);
+      }
+      syncTimerRef.current = window.setTimeout(() => {
+        void fetchAuditLogs(true);
+      }, 160);
+    };
+
+    es.addEventListener('connected', () => {
+      setStreamStatus('live');
+    });
+    es.onopen = () => {
+      setStreamStatus('live');
+    };
+    es.onerror = () => {
+      setStreamStatus('reconnecting');
+    };
+
+    const liveEvents = [
+      'audit:updated',
+      'loan:created',
+      'loan:reviewed',
+      'loan:voted',
+      'contribution:submitted',
+      'contribution:reviewed',
+      'repayment:submitted',
+      'repayment:verified',
+      'config:updated',
+      'members:updated',
+      'investment:created',
+      'investment:voted',
+      'notification:created',
+      'sheet:synced',
+    ];
+    liveEvents.forEach((evtName) => {
+      es.addEventListener(evtName, scheduleSilentSync);
+    });
+
+    return () => {
+      if (syncTimerRef.current) {
+        window.clearTimeout(syncTimerRef.current);
+      }
+      es.close();
+    };
+  }, [canViewAuditLogs, fetchAuditLogs]);
 
   const metrics = useMemo(() => {
-    const userEvents = logs.filter((l) => USER_APPROVAL_ACTIONS.has(l.action)).length;
     const loanStatusEvents = logs.filter((l) => LOAN_STATUS_ACTIONS.has(l.action)).length;
+    const contributionEvents = logs.filter((l) => CONTRIBUTION_PAYMENT_ACTIONS.has(l.action)).length;
+    const systemSettingsEvents = logs.filter((l) => SYSTEM_SETTINGS_ACTIONS.has(l.action)).length;
+    const userEvents = logs.filter((l) => USER_APPROVAL_ACTIONS.has(l.action)).length;
     const rejectedEvents = logs.filter((l) => REJECTION_ACTIONS.has(l.action)).length;
     return {
       total: logs.length,
-      userEvents,
       loanStatusEvents,
+      contributionEvents,
+      systemSettingsEvents,
+      userEvents,
       rejectedEvents,
     };
   }, [logs]);
@@ -247,21 +408,19 @@ export function AdminAuditLog({
   const filteredLogs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return logs.filter((entry) => {
+      if (categoryFilter === 'loan_changes' && !LOAN_STATUS_ACTIONS.has(entry.action)) {
+        return false;
+      }
+      if (categoryFilter === 'contributions' && !CONTRIBUTION_PAYMENT_ACTIONS.has(entry.action)) {
+        return false;
+      }
+      if (categoryFilter === 'system_settings' && !SYSTEM_SETTINGS_ACTIONS.has(entry.action)) {
+        return false;
+      }
       if (categoryFilter === 'user_access' && !USER_APPROVAL_ACTIONS.has(entry.action)) {
         return false;
       }
       if (categoryFilter === 'rejections' && !REJECTION_ACTIONS.has(entry.action)) {
-        return false;
-      }
-      if (categoryFilter === 'loan_changes' && !LOAN_STATUS_ACTIONS.has(entry.action)) {
-        return false;
-      }
-      if (
-        categoryFilter === 'treasury_policy' &&
-        (USER_APPROVAL_ACTIONS.has(entry.action) ||
-          LOAN_STATUS_ACTIONS.has(entry.action) ||
-          REJECTION_ACTIONS.has(entry.action))
-      ) {
         return false;
       }
 
@@ -294,7 +453,7 @@ export function AdminAuditLog({
           Administrator Access Required
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Security audit trails and cryptographic hash-chain inspection are restricted to
+          Real-time site activity and cryptographic hash-chain inspection are restricted to
           cooperative administrators.
         </p>
       </div>
@@ -311,7 +470,7 @@ export function AdminAuditLog({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Total Audit Events</span>
+              <span>Total Site Events</span>
               <ScrollText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -333,55 +492,94 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>User Approvals & Accounts</span>
-              <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-            </div>
-            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {loading && logs.length === 0 ? '—' : metrics.userEvents}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              Signups, approvals, suspensions & RBAC
-            </div>
-          </div>
-
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Loan Status Changes</span>
+              <span>Loan Requests &amp; Votes</span>
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {loading && logs.length === 0 ? '—' : metrics.loanStatusEvents}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Reviews, 2/3 votes, disbursements & repayments
+              Applications, 2/3 ballots, reviews &amp; payouts
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-800/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Rejected & Revoked</span>
-              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" />
+              <span>Contributions &amp; Repayments</span>
+              <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
-            <div className="text-2xl font-bold font-mono tabular-nums text-red-700 dark:text-red-400">
-              {loading && logs.length === 0 ? '—' : metrics.rejectedEvents}
+            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              {loading && logs.length === 0 ? '—' : metrics.contributionEvents}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Declined registrations, loans & receipts
+              Monthly Bank/MFS deposits &amp; installments
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+              <span>Settings &amp; Member Registry</span>
+              <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              {loading && logs.length === 0
+                ? '—'
+                : metrics.systemSettingsEvents + metrics.userEvents}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {metrics.systemSettingsEvents} policy/sync · {metrics.userEvents} member events
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Security Audit Log Panel */}
+      {/* Real-Time Site Activity Feed Panel */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Admin Security Audit Log & Hash Chain
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>Real-Time Site Activity Feed</span>
               </h2>
+
+              <span
+                aria-live="polite"
+                className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+                  streamPaused
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : streamStatus === 'live'
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    streamPaused
+                      ? 'bg-amber-500'
+                      : streamStatus === 'live'
+                        ? 'bg-emerald-500 animate-pulse'
+                        : 'bg-slate-400'
+                  }`}
+                  aria-hidden="true"
+                />
+                <span>
+                  {streamPaused
+                    ? 'Stream Paused'
+                    : streamStatus === 'live'
+                      ? 'Live Stream Active'
+                      : streamStatus === 'reconnecting'
+                        ? 'Reconnecting…'
+                        : 'Connecting…'}
+                </span>
+              </span>
+
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                ·
+              </span>
+
               <span
                 className={`inline-flex items-center gap-1 text-xs font-medium ${
                   chainValid
@@ -394,25 +592,61 @@ export function AdminAuditLog({
                 ) : (
                   <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                 )}
-                <span>{chainValid ? 'SHA-256 Chain Verified' : 'Chain Integrity Alert'}</span>
+                <span>{chainValid ? 'SHA-256 Verified' : 'Chain Alert'}</span>
               </span>
             </div>
+
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Tamper-evident chronological ledger tracking user approvals, rejected applications,
-              loan status transitions, and policy changes with AES-256-GCM metadata envelopes.
+              Live cryptographic stream of new loan requests, contribution payments, system settings
+              updates, and member registry changes.
+              {lastSyncedAt && (
+                <span className="ml-1.5 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                  Last synced {formatDateTime(lastSyncedAt)}
+                </span>
+              )}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => void loadAuditLogs()}
+              onClick={() => {
+                if (streamPaused) {
+                  setStreamPaused(false);
+                  void fetchAuditLogs(true);
+                } else {
+                  setStreamPaused(true);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                streamPaused
+                  ? 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
+                  : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              {streamPaused ? (
+                <>
+                  <Play className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Resume Live</span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Pause Feed</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void fetchAuditLogs(false)}
               disabled={loading}
               className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
+
             <button
               type="button"
               onClick={() => window.location.assign('/api/reports/export?type=audit')}
@@ -424,6 +658,25 @@ export function AdminAuditLog({
           </div>
         </div>
 
+        {streamPaused && queuedLiveEvents > 0 && (
+          <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
+            <span>
+              {queuedLiveEvents} new activity event{queuedLiveEvents === 1 ? '' : 's'} received
+              while paused.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setStreamPaused(false);
+                void fetchAuditLogs(true);
+              }}
+              className="px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-medium cursor-pointer shrink-0"
+            >
+              Sync Now
+            </button>
+          </div>
+        )}
+
         {error && (
           <div
             role="alert"
@@ -433,16 +686,17 @@ export function AdminAuditLog({
           </div>
         )}
 
-        {/* Filter Bar: Category Tabs + Actor Role + Search */}
+        {/* Filter Bar: Critical Site Activity Categories + Actor Role + Search */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pt-1">
           <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
             {(
               [
-                { id: 'all', label: `All Events (${metrics.total})` },
-                { id: 'user_access', label: `User Approvals (${metrics.userEvents})` },
+                { id: 'all', label: `All Activity (${metrics.total})` },
+                { id: 'loan_changes', label: `Loans & Ballots (${metrics.loanStatusEvents})` },
+                { id: 'contributions', label: `Contributions & Payments (${metrics.contributionEvents})` },
+                { id: 'system_settings', label: `System Settings (${metrics.systemSettingsEvents})` },
+                { id: 'user_access', label: `Member Registry (${metrics.userEvents})` },
                 { id: 'rejections', label: `Rejections (${metrics.rejectedEvents})` },
-                { id: 'loan_changes', label: `Loan Status (${metrics.loanStatusEvents})` },
-                { id: 'treasury_policy', label: 'Treasury & Policy' },
               ] as const
             ).map((tab) => (
               <button
@@ -498,13 +752,13 @@ export function AdminAuditLog({
           </div>
         </div>
 
-        {/* Audit Event Stream */}
+        {/* Live Site Activity Stream */}
         {loading && logs.length === 0 ? (
           <Skeleton height={220} />
         ) : filteredLogs.length === 0 ? (
           <div className="p-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 text-center space-y-1.5">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              No matching audit records found
+              No matching site activity records found
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Adjust your category filter, role filter, or search query to inspect other events.
@@ -514,13 +768,18 @@ export function AdminAuditLog({
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             {displayedLogs.map((entry) => {
               const isOpen = expandedLogId === entry.id;
+              const isJustArrived = newEntryIds.includes(entry.id);
               const visual = getAuditVisualMeta(entry.action);
               const Icon = visual.Icon;
 
               return (
                 <div
                   key={entry.id}
-                  className="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50/60 dark:hover:bg-slate-900/70 transition-colors space-y-3"
+                  className={`p-4 transition-colors space-y-3 ${
+                    isJustArrived
+                      ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-l-2 border-l-emerald-500'
+                      : 'bg-white dark:bg-slate-900 hover:bg-slate-50/60 dark:hover:bg-slate-900/70'
+                  }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
@@ -532,6 +791,11 @@ export function AdminAuditLog({
 
                       <div className="space-y-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                          {isJustArrived && (
+                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                              LIVE
+                            </span>
+                          )}
                           <span className={`font-semibold ${visual.tone}`}>{visual.label}</span>
                           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                             ·
@@ -636,7 +900,7 @@ export function AdminAuditLog({
         {filteredLogs.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-mono tabular-nums">
-              Showing {displayedLogs.length} of {filteredLogs.length} matching audit entries
+              Showing {displayedLogs.length} of {filteredLogs.length} matching activity entries
             </span>
 
             {hasMoreLogs && (

@@ -25,6 +25,8 @@ interface RequestQardHasanLoanFormProps {
   eligibility: EligibilityCheck | null;
   config: FundConfig | null;
   availableLiquidity: number;
+  variant?: 'card' | 'modal';
+  onClose?: () => void;
   onSubmitted: (loan: LoanRequest) => Promise<void> | void;
 }
 
@@ -33,6 +35,8 @@ export function RequestQardHasanLoanForm({
   eligibility,
   config,
   availableLiquidity,
+  variant = 'card',
+  onClose,
   onSubmitted,
 }: RequestQardHasanLoanFormProps) {
   const ccy = config?.currency || 'BDT';
@@ -51,6 +55,7 @@ export function RequestQardHasanLoanForm({
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
   const [provider, setProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [disbursementAccount, setDisbursementAccount] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showSchedulePreview, setShowSchedulePreview] = useState(false);
 
   const amountEditedRef = useRef(false);
@@ -95,6 +100,9 @@ export function RequestQardHasanLoanForm({
 
   const monthlyInstallmentPreview =
     schedulePreview.length > 0 ? schedulePreview[0].amount : 0;
+  const firstDueDate = schedulePreview[0]?.dueDate;
+  const finalDueDate =
+    schedulePreview.length > 0 ? schedulePreview[schedulePreview.length - 1].dueDate : undefined;
 
   const presetAmounts = useMemo(() => {
     const candidates = [10000, 25000, 50000, maxLoanAmount];
@@ -136,6 +144,10 @@ export function RequestQardHasanLoanForm({
       setError('Please complete the loan purpose and payout account details.');
       return;
     }
+    if (!agreedToTerms) {
+      setError('Please confirm the 0% interest Qard Hasan terms and repayment commitment.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -152,6 +164,7 @@ export function RequestQardHasanLoanForm({
       setPurpose('');
       setEmergencyContext('');
       setDisbursementAccount('');
+      setAgreedToTerms(false);
       setShowSchedulePreview(false);
       await onSubmitted(res.loan);
     } catch (err) {
@@ -161,35 +174,39 @@ export function RequestQardHasanLoanForm({
     }
   }
 
+  const wrapperClass =
+    variant === 'modal'
+      ? 'space-y-4'
+      : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200';
+
   return (
-    <section
-      aria-label="Request Qard Hasan Loan Form"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
-    >
-      <div className="space-y-1">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>
-              {isVerifiedMember
-                ? `Verified Member · ${user.memberCode}`
-                : 'Account Pending Verification'}
+    <section aria-label="Request Qard Hasan Loan Form" className={wrapperClass}>
+      {variant === 'card' && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                {isVerifiedMember
+                  ? `Verified Member · ${user.memberCode}`
+                  : 'Account Pending Verification'}
+              </span>
             </span>
-          </span>
-          <span className="font-mono text-slate-500 dark:text-slate-400">0% Interest</span>
+            <span className="font-mono text-slate-500 dark:text-slate-400">0% Interest</span>
+          </div>
+
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            Request Qard Hasan Loan
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Max cap {formatMoney(maxLoanAmount, ccy)} · Liquid pool{' '}
+            <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
+              {formatMoney(availableLiquidity, ccy)}
+            </span>
+          </p>
         </div>
-
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-          Request Qard Hasan Loan
-        </h3>
-
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Max cap {formatMoney(maxLoanAmount, ccy)} · Liquid pool{' '}
-          <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
-            {formatMoney(availableLiquidity, ccy)}
-          </span>
-        </p>
-      </div>
+      )}
 
       {error && (
         <div
@@ -204,17 +221,28 @@ export function RequestQardHasanLoanForm({
       {createdLoan && (
         <div
           role="status"
-          className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-1"
+          className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-2"
         >
           <div className="font-semibold flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            <span>Saved to Database for Administrative Review ({createdLoan.id})</span>
+            <span>Submitted for Review &amp; 2/3 Anonymized Ballot ({createdLoan.id})</span>
           </div>
           <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">
             Requested {formatMoney(createdLoan.amount, ccy)} across {createdLoan.installmentMonths}{' '}
             monthly installments of {formatMoney(createdLoan.monthlyInstallment, ccy)}.
             Administrators and active voters have been notified.
           </p>
+          {onClose && (
+            <div className="pt-1 flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -223,7 +251,7 @@ export function RequestQardHasanLoanForm({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <label
-              htmlFor="qard-loan-amount"
+              htmlFor={`qard-loan-amount-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
               Requested Amount ({ccy})
@@ -250,7 +278,7 @@ export function RequestQardHasanLoanForm({
             </div>
           </div>
           <input
-            id="qard-loan-amount"
+            id={`qard-loan-amount-${variant}`}
             type="number"
             min={100}
             max={maxLoanAmount}
@@ -274,13 +302,13 @@ export function RequestQardHasanLoanForm({
         {/* Purpose */}
         <div>
           <label
-            htmlFor="qard-loan-purpose"
+            htmlFor={`qard-loan-purpose-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Loan Purpose (Visible for Review & Voting)
+            Loan Purpose (Visible for Review &amp; Anonymized Voting)
           </label>
           <input
-            id="qard-loan-purpose"
+            id={`qard-loan-purpose-${variant}`}
             type="text"
             required
             disabled={!canSubmit}
@@ -291,14 +319,14 @@ export function RequestQardHasanLoanForm({
           />
         </div>
 
-        {/* Repayment Plan */}
-        <div className="space-y-2.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+        {/* Preferred Repayment Timeline */}
+        <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between gap-2">
             <label
-              htmlFor="qard-loan-months"
+              htmlFor={`qard-loan-months-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Repayment Plan (Months)
+              Preferred Repayment Timeline (Months)
             </label>
             <div className="flex items-center gap-1">
               {durationPresets.map((m) => (
@@ -323,7 +351,7 @@ export function RequestQardHasanLoanForm({
           </div>
 
           <input
-            id="qard-loan-months"
+            id={`qard-loan-months-${variant}`}
             type="number"
             min={1}
             max={maxInstallmentMonths}
@@ -350,6 +378,14 @@ export function RequestQardHasanLoanForm({
                 {formatMoney(parsedAmount, ccy)}
               </span>
             </div>
+            {firstDueDate && finalDueDate && (
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Projected Timeline</span>
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                  {formatShortDate(firstDueDate)} → {formatShortDate(finalDueDate)}
+                </span>
+              </div>
+            )}
 
             {schedulePreview.length > 0 && (
               <button
@@ -394,13 +430,13 @@ export function RequestQardHasanLoanForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label
-              htmlFor="qard-loan-channel"
+              htmlFor={`qard-loan-channel-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
               Payout Channel
             </label>
             <select
-              id="qard-loan-channel"
+              id={`qard-loan-channel-${variant}`}
               disabled={!canSubmit}
               value={channel}
               onChange={(e) => {
@@ -416,13 +452,13 @@ export function RequestQardHasanLoanForm({
           </div>
           <div>
             <label
-              htmlFor="qard-loan-provider"
+              htmlFor={`qard-loan-provider-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
               Provider
             </label>
             <select
-              id="qard-loan-provider"
+              id={`qard-loan-provider-${variant}`}
               disabled={!canSubmit}
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -439,13 +475,13 @@ export function RequestQardHasanLoanForm({
 
         <div>
           <label
-            htmlFor="qard-loan-account"
+            htmlFor={`qard-loan-account-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Payout Account / Wallet Number (Encrypted)
+            Payout Account / Wallet Number (AES-256-GCM Encrypted)
           </label>
           <input
-            id="qard-loan-account"
+            id={`qard-loan-account-${variant}`}
             type="text"
             required
             disabled={!canSubmit}
@@ -458,13 +494,13 @@ export function RequestQardHasanLoanForm({
 
         <div>
           <label
-            htmlFor="qard-loan-context"
+            htmlFor={`qard-loan-context-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Confidential Review Notes (Encrypted for Admin & Treasury)
+            Confidential Review Notes (Encrypted for Admin &amp; Treasury)
           </label>
           <textarea
-            id="qard-loan-context"
+            id={`qard-loan-context-${variant}`}
             rows={2}
             disabled={!canSubmit}
             value={emergencyContext}
@@ -474,22 +510,46 @@ export function RequestQardHasanLoanForm({
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={!canSubmit || submitting}
-          className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-        >
-          <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>
-            {!isVerifiedMember
-              ? 'Member Account Verification Required'
-              : !eligibility?.eligible
-                ? 'Eligibility Requirements Not Met'
-                : submitting
-                  ? 'Saving Request…'
-                  : 'Submit for Administrative Review'}
+        <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 cursor-pointer">
+          <input
+            type="checkbox"
+            disabled={!canSubmit}
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
+          />
+          <span className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
+            I confirm this is a <strong className="text-slate-800 dark:text-slate-200">0% interest Qard Hasan</strong> request, verify that my encrypted payout details are accurate, and commit to completing the {parsedMonths}-month repayment timeline upon 2/3 member approval.
           </span>
-        </button>
+        </label>
+
+        <div className="flex items-center gap-2.5">
+          {variant === 'modal' && onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={!canSubmit || submitting || !agreedToTerms}
+            className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>
+              {!isVerifiedMember
+                ? 'Member Account Verification Required'
+                : !eligibility?.eligible
+                  ? 'Eligibility Requirements Not Met'
+                  : submitting
+                    ? 'Encrypting & Submitting…'
+                    : 'Submit Secure Qard Hasan Request'}
+            </span>
+          </button>
+        </div>
       </form>
     </section>
   );

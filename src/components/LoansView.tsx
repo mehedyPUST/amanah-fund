@@ -29,6 +29,7 @@ interface LoansViewProps {
   availableLiquidity: number;
   user: PublicUser;
   loading: boolean;
+  onOpenLoanModal?: () => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -39,6 +40,7 @@ export function LoansView({
   availableLiquidity,
   user,
   loading,
+  onOpenLoanModal,
   onRefresh,
 }: LoansViewProps) {
   const ccy = config?.currency || 'BDT';
@@ -334,21 +336,32 @@ export function LoansView({
               2/3 member vote.
             </p>
           </div>
-          {eligibility && (
-            <div className="flex items-center gap-2 text-xs font-semibold">
-              {eligibility.eligible ? (
-                <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                  <span>Eligible to Request Loan</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
-                  <XCircle className="w-4 h-4" aria-hidden="true" />
-                  <span>Currently Ineligible</span>
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            {eligibility && (
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                {eligibility.eligible ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                    <span>Eligible to Request Loan</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
+                    <XCircle className="w-4 h-4" aria-hidden="true" />
+                    <span>Currently Ineligible</span>
+                  </span>
+                )}
+              </div>
+            )}
+            {onOpenLoanModal && (
+              <button
+                type="button"
+                onClick={onOpenLoanModal}
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
+              >
+                Open Request Modal
+              </button>
+            )}
+          </div>
         </div>
 
         {eligibility ? (

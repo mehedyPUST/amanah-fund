@@ -38,6 +38,7 @@ import { MemberProfile } from './MemberProfile.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
+import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
@@ -101,6 +102,7 @@ export function DashboardShell() {
   const [halalProjects, setHalalProjects] = useState<HalalProject[]>([]);
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [loanModalOpen, setLoanModalOpen] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const autoSyncBusyRef = useRef(false);
@@ -181,6 +183,10 @@ export function DashboardShell() {
     es.addEventListener('loan:created', handleLoanCreated);
     es.addEventListener('loan:reviewed', handleSync);
     es.addEventListener('loan:voted', handleSync);
+    es.addEventListener('contribution:submitted', handleSync);
+    es.addEventListener('contribution:reviewed', handleSync);
+    es.addEventListener('repayment:submitted', handleSync);
+    es.addEventListener('repayment:verified', handleSync);
     es.addEventListener('config:updated', handleSync);
     es.addEventListener('notification:created', handleSync);
     es.addEventListener('members:updated', handleSync);
@@ -485,7 +491,7 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => scrollToSection('quard-hasan', false)}
+            onClick={() => setLoanModalOpen(true)}
             className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
           >
             Request Qard Hasan
@@ -808,6 +814,7 @@ export function DashboardShell() {
               user={user}
               loading={dataLoading && !overview}
               onNavigate={(sec) => scrollToSection(sec, false)}
+              onOpenLoanModal={() => setLoanModalOpen(true)}
               onRefresh={handleRefreshWithAutoSync}
             />
           </section>
@@ -841,6 +848,7 @@ export function DashboardShell() {
               availableLiquidity={overview?.treasury.availableLiquidity || 0}
               user={user}
               loading={dataLoading && loans.length === 0}
+              onOpenLoanModal={() => setLoanModalOpen(true)}
               onRefresh={handleRefreshWithAutoSync}
             />
           </section>
@@ -967,6 +975,18 @@ export function DashboardShell() {
           )}
         </div>
       </main>
+
+      <RequestQardHasanModal
+        open={loanModalOpen}
+        onClose={() => setLoanModalOpen(false)}
+        user={user}
+        eligibility={overview?.personal.eligibility || null}
+        config={overview?.config || null}
+        availableLiquidity={overview?.treasury.availableLiquidity || 0}
+        onSubmitted={async () => {
+          await handleRefreshWithAutoSync();
+        }}
+      />
     </div>
   );
 }
