@@ -23,6 +23,7 @@ import {
 import type {
   Contribution,
   CoopMeeting,
+  DashboardOverview,
   DecisionPoll,
   FundConfig,
   HalalProject,
@@ -33,6 +34,8 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
+import { MemberAuditLogWidget } from './MemberAuditLogWidget.tsx';
 import { StatusText } from './StatusText.tsx';
 
 type ManagerDeskTab =
@@ -67,6 +70,8 @@ type DeskModalState =
 interface ManagerDeskViewProps {
   user: PublicUser;
   config: FundConfig | null;
+  treasury?: DashboardOverview['treasury'] | null;
+  loading?: boolean;
   availableLiquidity: number;
   contributions: Contribution[];
   loans: LoanRequest[];
@@ -82,6 +87,8 @@ interface ManagerDeskViewProps {
 export function ManagerDeskView({
   user,
   config,
+  treasury = null,
+  loading = false,
   availableLiquidity,
   contributions,
   loans,
@@ -1534,6 +1541,21 @@ export function ManagerDeskView({
           </section>
         </div>
       )}
+
+      {/* Manager Oversight: Monthly Collection Progress vs Goals + Member Audit Log */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        <div className="xl:col-span-7 flex flex-col [&>section]:flex-1">
+          <ManagerCollectionGoalChart
+            contributions={contributions}
+            config={config}
+            treasury={treasury}
+            loading={loading}
+          />
+        </div>
+        <div className="xl:col-span-5 flex flex-col [&>section]:flex-1">
+          <MemberAuditLogWidget onViewMemberProfile={onViewMemberProfile} />
+        </div>
+      </div>
 
       <ActionModal
         open={Boolean(modal)}

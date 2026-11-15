@@ -1188,6 +1188,8 @@ export function DashboardShell() {
                   <ManagerDeskView
                     user={user}
                     config={overview?.config || null}
+                    treasury={overview?.treasury || null}
+                    loading={dataLoading && !overview}
                     availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     contributions={contributions}
                     loans={loans}
