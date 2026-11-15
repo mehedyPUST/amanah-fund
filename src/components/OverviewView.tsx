@@ -7,7 +7,7 @@ import type { Contribution, DashboardOverview, LoanRequest, PublicUser } from '.
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { TreasuryGrowthChart } from './TreasuryGrowthChart.tsx';
-import { TransactionHistory } from './TransactionHistory.tsx';
+import { RecentTransactions } from './RecentTransactions.tsx';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 
 export type NavTab =
@@ -470,14 +470,13 @@ export function OverviewView({
         </div>
       </section>
 
-      {/* Member Transaction History Preview */}
-      <TransactionHistory
+      {/* User's Latest Monthly Contributions & Loan Payments */}
+      <RecentTransactions
         contributions={contributions}
         loans={loans}
         config={config}
         user={user}
         loading={loading}
-        compact
         onNavigate={onNavigate}
       />
     </div>
