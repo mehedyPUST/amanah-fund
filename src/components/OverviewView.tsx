@@ -7,6 +7,7 @@ import type { Contribution, DashboardOverview, LoanRequest, PublicUser } from '.
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { TreasuryGrowthChart } from './TreasuryGrowthChart.tsx';
+import { MonthlyFinancialSnapshot } from './MonthlyFinancialSnapshot.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 
@@ -283,6 +284,15 @@ export function OverviewView({
           </div>
         </div>
       </section>
+
+      {/* Current Month Financial Snapshot: Total Contributions vs Total Withdrawn Loans */}
+      <MonthlyFinancialSnapshot
+        contributions={contributions}
+        loans={loans}
+        config={config}
+        loading={loading}
+        onNavigate={onNavigate}
+      />
 
       {/* Treasury Growth & Monthly Contribution Visualization + Personal Standing */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">

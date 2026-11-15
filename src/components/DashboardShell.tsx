@@ -35,6 +35,7 @@ import { AdminReportsView } from './AdminReportsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
+import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
@@ -362,20 +363,19 @@ export function DashboardShell() {
             <span>Public Site</span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('notifications')}
-            title="Dispatch & Treasury Notifications"
-            aria-label="Dispatch & Treasury Notifications"
-            className="relative p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
-          >
-            <Bell className="w-4 h-4" />
-            {(overview?.treasury.unreadNotificationsCount || 0) > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-semibold flex items-center justify-center">
-                {overview?.treasury.unreadNotificationsCount}
-              </span>
-            )}
-          </button>
+          <HeaderNotificationBell
+            user={user}
+            overview={overview}
+            contributions={contributions}
+            loans={loans}
+            notifications={notifications}
+            onNavigate={setActiveTab}
+            onOpenContributionMonth={(month) => {
+              setPreselectedBillingMonth(month);
+              setActiveTab('contributions');
+            }}
+            onMarkRead={handleDismissLoanDecisionAlert}
+          />
 
           <button
             type="button"
