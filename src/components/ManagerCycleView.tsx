@@ -16,6 +16,7 @@ import type { FundConfig, ManagerCycleSchedule, ManagerCycleSlot, PublicUser } f
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { ManagerRotationTimeline } from './ManagerRotationTimeline.tsx';
 
 interface ManagerCycleViewProps {
   user: PublicUser;
@@ -439,13 +440,23 @@ export function ManagerCycleView({
             </section>
           )}
 
+          {/* Visual Rotation Timeline (Historical, Current & Future Members + Expected Tenure Dates) */}
+          <ManagerRotationTimeline
+            schedule={schedule}
+            currentUserId={user.id}
+            isAdmin={isAdmin}
+            modalBusy={modalBusy}
+            onViewMemberProfile={onViewMemberProfile}
+            onToggleManagerRole={confirmAssignManager}
+          />
+
           {/* Full Cyclic Rotation Table */}
           <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Full Cyclic Rotation Roster ({schedule.slots.length} Upcoming &amp; Active Terms)
+                  Full Cyclic Rotation Roster ({schedule.slots.length} Historical, Active &amp; Future Terms)
                 </h3>
               </div>
               <span className="text-xs font-mono text-slate-500 dark:text-slate-400">

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import {
   AlertTriangle,
+  CalendarClock,
   CalendarPlus,
   Check,
   CheckCircle2,
@@ -74,6 +75,7 @@ interface ManagerDeskViewProps {
   meetings: CoopMeeting[];
   profileChangeRequests: ProfileChangeRequest[];
   onViewMemberProfile?: (memberId: string) => void;
+  onOpenManagerCycle?: () => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -88,6 +90,7 @@ export function ManagerDeskView({
   meetings,
   profileChangeRequests,
   onViewMemberProfile,
+  onOpenManagerCycle,
   onRefresh,
 }: ManagerDeskViewProps) {
   const ccy = config?.currency || 'BDT';
@@ -595,8 +598,20 @@ export function ManagerDeskView({
               Fund balance changes when you approve contributions/installments or confirm Qard Hasan disbursements. Every action opens a verification confirmation modal.
             </p>
           </div>
-          <div className="text-xs font-mono shrink-0 px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-            Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onOpenManagerCycle && (
+              <button
+                type="button"
+                onClick={onOpenManagerCycle}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+              >
+                <CalendarClock className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                <span>Rotation Timeline</span>
+              </button>
+            )}
+            <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+              Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
+            </div>
           </div>
         </div>
 

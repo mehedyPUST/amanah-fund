@@ -3,6 +3,7 @@ import {
   appendAuditLog,
   applyOverdueChecksToState,
   buildDashboardOverview,
+  buildManagerCycleSchedule,
   buildMemberPublicProfile,
   computeRequiredApprovals,
   evaluateLoanEligibility,
@@ -690,5 +691,58 @@ describe('Member public profile builder', () => {
     expect(buildMemberPublicProfile(state, 'u-pending', viewerFatima)).toBeNull();
   });
 });
+
+describe('Manager rotation cycle timeline schedule', () => {
+  it('generates historical, current, and future rotation slots with accurate tenure dates', () => {
+    const state = makeBaseState();
+    state.fundConfig.managerCycleMonths = 3;
+    state.fundConfig.managerCycleStartDate = '2026-01-01';
+    state.users.push({
+      id: 'u-4',
+      name: 'Tariq Mahmud',
+      email: 'tariq@amanahcoop.org',
+      passwordHash: 'hash5',
+      role: 'manager',
+      memberCode: 'AC-005',
+      status: 'active',
+      joinedAt: '2026-01-15T00:00:00.000Z',
+    });
+
+    // Reference date 2026-11-15 falls inside Cycle #4 (2026-10-01 to 2026-12-31)
+    const schedule = buildManagerCycleSchedule(state, new Date('2026-11-15T12:00:00.000Z'));
+
+    expect(schedule.cycleMonths).toBe(3);
+    expect(schedule.eligibleMembersCount).toBe(3); // excludes admin (u-1) & pending (u-pending)
+    expect(schedule.currentCycleNumber).toBe(4);
+    expect(schedule.currentSlot).toMatchObject({
+      cycleNumber: 4,
+      memberId: 'u-2', // round-robin index 3 % 3 = 0 => first eligible member u-2
+      startDate: '2026-10-01',
+      endDate: '2026-12-31',
+      status: 'current',
+    });
+    expect(schedule.nextSlot).toMatchObject({
+      cycleNumber: 5,
+      memberId: 'u-3',
+      startDate: '2027-01-01',
+      endDate: '2027-03-31',
+      status: 'upcoming',
+    });
+
+    const completed = schedule.slots.filter((s) => s.status === 'completed');
+    const current = schedule.slots.filter((s) => s.status === 'current');
+    const upcoming = schedule.slots.filter((s) => s.status === 'upcoming');
+
+    expect(completed.map((s) => s.cycleNumber)).toEqual([1, 2, 3]);
+    expect(completed[0]).toMatchObject({
+      startDate: '2026-01-01',
+      endDate: '2026-03-31',
+      memberId: 'u-2',
+    });
+    expect(current).toHaveLength(1);
+    expect(upcoming.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 
 

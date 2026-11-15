@@ -1196,6 +1196,7 @@ export function DashboardShell() {
                     meetings={meetings}
                     profileChangeRequests={profileChangeRequests}
                     onViewMemberProfile={handleViewMemberProfile}
+                    onOpenManagerCycle={() => navigateToPage('manager-cycle', false)}
                     onRefresh={handleRefreshWithAutoSync}
                   />
                 </section>

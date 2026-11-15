@@ -1440,9 +1440,13 @@ export function buildManagerCycleSchedule(
     currentIdx = candidate;
   }
 
-  const upcomingTargetCount = Math.max(eligibleMembers.length * 2, currentIdx + eligibleMembers.length + 2);
+  const historicalLookback = Math.min(12, Math.max(4, eligibleMembers.length));
+  const upcomingTargetCount = Math.max(
+    eligibleMembers.length * 2,
+    (currentIdx >= 0 ? currentIdx : 0) + Math.max(eligibleMembers.length + 2, 6)
+  );
   const totalSlots = Math.min(60, Math.max(eligibleMembers.length, upcomingTargetCount));
-  const windowStart = Math.max(0, currentIdx - Math.min(eligibleMembers.length, 4));
+  const windowStart = Math.max(0, currentIdx - historicalLookback);
 
   const slots: ManagerCycleSlot[] = [];
   for (let i = windowStart; i < totalSlots; i += 1) {

@@ -18,12 +18,14 @@ export function formatMoney(amount: number, currency: FundConfig['currency'] = '
 
 export function formatShortDate(iso?: string): string {
   if (!iso) return '—';
-  const d = new Date(iso);
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso.trim());
+  const d = new Date(isDateOnly ? `${iso.trim()}T00:00:00Z` : iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    ...(isDateOnly ? { timeZone: 'UTC' } : {}),
   });
 }
 
