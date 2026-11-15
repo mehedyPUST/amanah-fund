@@ -48,11 +48,13 @@ import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
+import { ActionModal } from './ActionModal.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
 import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
+import { api } from '../utils/api.ts';
 import type {
   Contribution,
   CoopMeeting,
@@ -190,6 +192,11 @@ export function DashboardShell() {
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [loanModalOpen, setLoanModalOpen] = useState(false);
+  const [loanGateNotice, setLoanGateNotice] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+  const [loanGateChecking, setLoanGateChecking] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
@@ -376,6 +383,56 @@ export function DashboardShell() {
     },
     [visibleNav]
   );
+
+  /** Gate the loan application modal on eligibility BEFORE open.
+   *  Once open, the form submits without re-checking eligibility client-side. */
+  const openLoanRequestModal = useCallback(async () => {
+    if (!user || user.role === 'admin') {
+      setLoanGateNotice({
+        title: 'Administrators Cannot Borrow',
+        description:
+          'Administrator accounts govern site settings, member roles, and audits only — they do not request Qard Hasan financing.',
+      });
+      return;
+    }
+    if (user.status !== 'active') {
+      setLoanGateNotice({
+        title: 'Verification Required',
+        description:
+          'Only administrator-verified active members can open a Qard Hasan loan application.',
+      });
+      return;
+    }
+
+    setLoanGateChecking(true);
+    try {
+      let eligibility = overview?.personal.eligibility ?? null;
+      if (!eligibility) {
+        const res = await api.getEligibility();
+        eligibility = res.eligibility;
+      }
+      if (!eligibility.eligible) {
+        setLoanGateNotice({
+          title: 'Eligibility Requirements Not Met',
+          description:
+            eligibility.reasons?.[0] ||
+            'You do not currently meet the cooperative loan eligibility criteria.',
+        });
+        return;
+      }
+      setLoanModalOpen(true);
+    } catch (err) {
+      setLoanGateNotice({
+        title: 'Eligibility Check Failed',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Unable to verify loan eligibility. Please try again.',
+      });
+    } finally {
+      setLoanGateChecking(false);
+    }
+  }, [user, overview]);
 
   const openManagerDeskTab = useCallback(
     (tab: ManagerDeskTab) => {
@@ -691,10 +748,11 @@ export function DashboardShell() {
           {!isAdmin && (
             <button
               type="button"
-              onClick={() => setLoanModalOpen(true)}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
+              disabled={loanGateChecking}
+              onClick={() => void openLoanRequestModal()}
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-wait"
             >
-              Request Qard Hasan
+              {loanGateChecking ? 'Checking Eligibility…' : 'Request Qard Hasan'}
             </button>
           )}
         </div>
@@ -1019,7 +1077,7 @@ export function DashboardShell() {
                     loading={dataLoading && !overview}
                     onNavigate={(sec) => navigateToPage(sec, false)}
                     onOpenManagerDeskTab={openManagerDeskTab}
-                    onOpenLoanModal={() => setLoanModalOpen(true)}
+                    onOpenLoanModal={() => void openLoanRequestModal()}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -1051,7 +1109,7 @@ export function DashboardShell() {
                     availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     user={user}
                     loading={dataLoading && loans.length === 0}
-                    onOpenLoanModal={() => setLoanModalOpen(true)}
+                    onOpenLoanModal={() => void openLoanRequestModal()}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -1067,7 +1125,7 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && !overview}
                     onNavigate={(sec) => navigateToPage(sec, false)}
-                    onOpenLoanModal={() => setLoanModalOpen(true)}
+                    onOpenLoanModal={() => void openLoanRequestModal()}
                   />
                 </section>
               )}
@@ -1275,6 +1333,18 @@ export function DashboardShell() {
           </AnimatePresence>
         </div>
       </main>
+
+      {!isAdmin && (
+        <ActionModal
+          open={Boolean(loanGateNotice)}
+          mode="notice"
+          tone="amber"
+          title={loanGateNotice?.title || ''}
+          description={loanGateNotice?.description || ''}
+          confirmLabel="Understood"
+          onClose={() => setLoanGateNotice(null)}
+        />
+      )}
 
       {!isAdmin && (
         <RequestQardHasanModal

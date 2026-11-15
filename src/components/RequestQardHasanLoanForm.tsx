@@ -260,30 +260,8 @@ export function RequestQardHasanLoanForm({
       );
       return;
     }
-
-    // Prefer live eligibility; if still loading/missing, ask the server (source of truth).
-    let eligibilityGate = eligibility;
-    if (!eligibilityGate) {
-      try {
-        const res = await api.getEligibility();
-        eligibilityGate = res.eligibility;
-        setLocalEligibility(res.eligibility);
-      } catch (err) {
-        showError(
-          'Eligibility Check Failed',
-          err instanceof Error ? err.message : 'Unable to verify cooperative loan eligibility.'
-        );
-        return;
-      }
-    }
-    if (!eligibilityGate.eligible) {
-      showError(
-        'Eligibility Requirements Not Met',
-        eligibilityGate.reasons?.[0] ||
-          'You do not currently meet the cooperative loan eligibility criteria.'
-      );
-      return;
-    }
+    // Eligibility is gated when the application modal opens — do not re-block here.
+    // Server still enforces eligibility on POST /api/loans.
     if (!Number.isFinite(rawAmount) || parsedAmount < 100 || parsedAmount > maxLoanAmount) {
       showError(
         'Invalid Requested Amount',
