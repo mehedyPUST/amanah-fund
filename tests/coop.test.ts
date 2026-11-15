@@ -168,6 +168,9 @@ function makeBaseState(): VaultState {
     auditLogs: [],
     communityPosts: [],
     privateMessages: [],
+    decisionPolls: [],
+    meetings: [],
+    profileChangeRequests: [],
   };
 }
 
@@ -323,12 +326,95 @@ describe('Cooperative accounting, 2/3 quorum & vote anonymization', () => {
       status: 'active',
       joinedAt: '2026-01-01T00:00:00.000Z',
     };
-    const hydrated = hydrateLoanForViewer(loan, viewerAdmin);
-    expect(hydrated.votes[0].isSelf).toBe(true);
-    expect(hydrated.votes[0].voterId).toBe('u-1');
-    expect(hydrated.votes[1].isSelf).toBe(false);
-    expect(hydrated.votes[1].voterId).not.toBe('u-2');
-    expect(hydrated.votes[1].voterName).toContain('Anonymous Member');
+    const viewerBilal: PublicUser = {
+      id: 'u-2',
+      name: 'Bilal Hasan',
+      email: 'bilal@amanahcoop.org',
+      role: 'member',
+      memberCode: 'AC-002',
+      status: 'active',
+      joinedAt: '2026-01-05T00:00:00.000Z',
+    };
+    const viewerFatima: PublicUser = {
+      id: 'u-3',
+      name: 'Fatima Zahra',
+      email: 'fatima@amanahcoop.org',
+      role: 'member',
+      memberCode: 'AC-003',
+      status: 'active',
+      joinedAt: '2026-01-10T00:00:00.000Z',
+    };
+
+    // Unrevealed ongoing vote: Admin gets full adminVoteLedger + tallies
+    const hydratedAdmin = hydrateLoanForViewer(loan, viewerAdmin);
+    expect(hydratedAdmin.adminVoteLedger).toHaveLength(2);
+    expect(hydratedAdmin.approveCount).toBe(2);
+    expect(hydratedAdmin.totalVotesCast).toBe(2);
+
+    // Unrevealed ongoing vote: Regular member only sees own ballot + totalVotesCast, NOT live tallies or others' votes
+    const hydratedMember = hydrateLoanForViewer(loan, viewerBilal);
+    expect(hydratedMember.adminVoteLedger).toBeUndefined();
+    expect(hydratedMember.approveCount).toBeUndefined();
+    expect(hydratedMember.rejectCount).toBeUndefined();
+    expect(hydratedMember.totalVotesCast).toBe(2);
+    expect(hydratedMember.votes).toHaveLength(1);
+    expect(hydratedMember.votes[0].isSelf).toBe(true);
+    expect(hydratedMember.votes[0].voterId).toBe('u-2');
+
+    const hydratedNonVoter = hydrateLoanForViewer(loan, viewerFatima);
+    expect(hydratedNonVoter.votes).toHaveLength(0);
+    expect(hydratedNonVoter.approveCount).toBeUndefined();
+  });
+
+  it('excludes un-disbursed loans from fund balance and excludes Admin from contribution/loan rules', () => {
+    const state = makeBaseState();
+    state.loans.push({
+      id: 'loan-pending-disb',
+      borrowerId: 'u-2',
+      borrowerName: 'Bilal Hasan',
+      borrowerCode: 'AC-002',
+      amount: 4000,
+      installmentMonths: 2,
+      monthlyInstallment: 2000,
+      purpose: 'Pending disbursement test',
+      encryptedSensitiveNotes: encryptSensitiveObject({
+        emergencyContext: 'Test',
+        disbursementAccount: '01700005678',
+        channel: 'mfs',
+        provider: 'bKash',
+      }),
+      status: 'approved_pending_disbursement',
+      eligibilitySnapshot: evaluateLoanEligibility(state, 'u-2'),
+      votes: [],
+      requiredApprovals: 2,
+      totalEligibleVoters: 2,
+      installments: [],
+      totalRepaid: 0,
+      remainingBalance: 4000,
+      requestedAt: '2026-02-01T00:00:00.000Z',
+      entryHash: 'hash-lpd',
+    });
+
+    const viewerBilal: PublicUser = {
+      id: 'u-2',
+      name: 'Bilal Hasan',
+      email: 'bilal@amanahcoop.org',
+      role: 'member',
+      memberCode: 'AC-002',
+      status: 'active',
+      joinedAt: '2026-01-05T00:00:00.000Z',
+    };
+    const overview = buildDashboardOverview(state, viewerBilal);
+    // Un-disbursed approved_pending_disbursement loan must NOT deduct from centralBalance
+    expect(overview.treasury.centralBalance).toBe(15000);
+    expect(overview.treasury.currentBalance).toBe(15000);
+    // Admin u-1 is excluded from contributingMembersCount (only u-2 and u-3 contribute)
+    expect(overview.treasury.contributingMembersCount).toBe(2);
+    expect(overview.treasury.thisMonthClearanceTotalMembers).toBe(2);
+    expect(overview.treasury.thisMonthContributionTarget).toBe(10000);
+    // Admin is ineligible to borrow Qard Hasan
+    const adminElig = evaluateLoanEligibility(state, 'u-1');
+    expect(adminElig.eligible).toBe(false);
   });
 });
 

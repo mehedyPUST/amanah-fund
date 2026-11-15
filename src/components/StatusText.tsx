@@ -55,6 +55,11 @@ const STATUS_MAP: Record<
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
+  pending_manager_review: {
+    label: 'Awaiting Manager Review',
+    colorClass: 'text-amber-700 dark:text-amber-400',
+    Icon: Clock,
+  },
   pending_vote: {
     label: '2/3 Member Voting',
     colorClass: 'text-amber-700 dark:text-amber-400',
@@ -69,6 +74,26 @@ const STATUS_MAP: Record<
     label: 'Pending Verification',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
+  },
+  open: {
+    label: 'Poll Ongoing',
+    colorClass: 'text-amber-700 dark:text-amber-400',
+    Icon: Vote,
+  },
+  closed: {
+    label: 'Poll Closed',
+    colorClass: 'text-slate-600 dark:text-slate-400',
+    Icon: CheckCircle2,
+  },
+  completed: {
+    label: 'Completed',
+    colorClass: 'text-emerald-700 dark:text-emerald-400',
+    Icon: CheckCircle2,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    colorClass: 'text-red-700 dark:text-red-400',
+    Icon: XCircle,
   },
   scheduled: {
     label: 'Scheduled',

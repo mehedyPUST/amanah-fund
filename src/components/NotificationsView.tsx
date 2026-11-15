@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Check, Mail, Send, ShieldAlert, Volume2 } from 'lucide-react';
+import { Bell, Calendar, Check, Mail, Send, ShieldAlert, Volume2 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type {
+  CoopMeeting,
   EmailNotification,
   NotificationPreferences,
   NotificationType,
@@ -18,6 +19,7 @@ import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 interface NotificationsViewProps {
   user: PublicUser;
   workspace: WorkspaceSessionInfo;
+  meetings?: CoopMeeting[];
   connectingGoogle: boolean;
   onConnectGoogle: () => Promise<void>;
   onDisconnectGoogle: () => Promise<void>;
@@ -29,16 +31,52 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   signup_approved: 'Account Approved',
   contribution_placed_manager: 'Contribution Placed (Manager)',
   contribution_accepted: 'Contribution Accepted',
-  loan_vote_requested: '2/3 Loan Vote Required',
+  contribution_rejected: 'Contribution Correction Needed',
+  loan_vote_requested: 'Qard Hasan Vote Open',
   loan_guarantor_requested: 'Guarantor Co-Sign Request',
-  loan_approved_confirmation: 'Loan Request Approved',
-  loan_rejected_notice: 'Loan Request Declined',
-  loan_repayment_notice: 'Loan Repayment Notice',
+  loan_approved_confirmation: 'Qard Hasan Approved',
+  loan_rejected_notice: 'Qard Hasan Declined',
+  loan_repayment_notice: 'Qard Hasan Installment Notice',
+  loan_repayment_rejected: 'Installment Correction Needed',
   monthly_contribution_reminder: 'Monthly Contribution Reminder',
   profit_distribution_notice: 'Halal Profit Distribution',
+  meeting_scheduled: 'Cooperative Meeting Notice',
+  decision_vote_requested: 'Decision Poll Open',
+  profile_update_requested: 'Profile Update Request',
+  profile_update_reviewed: 'Profile Update Decision',
+  community_post_created: 'Community Post Published',
   community_moderation: 'Community Moderation',
   community_mention: 'Community Mention',
 };
+
+type CategoryFilter = 'all' | 'contributions' | 'loans' | 'meetings' | 'voting' | 'community_profile';
+
+function getNotificationCategory(type: NotificationType): Exclude<CategoryFilter, 'all'> {
+  if (
+    type === 'contribution_placed_manager' ||
+    type === 'contribution_accepted' ||
+    type === 'contribution_rejected' ||
+    type === 'monthly_contribution_reminder'
+  ) {
+    return 'contributions';
+  }
+  if (type === 'loan_vote_requested' || type === 'decision_vote_requested') {
+    return 'voting';
+  }
+  if (type === 'meeting_scheduled') {
+    return 'meetings';
+  }
+  if (
+    type === 'loan_guarantor_requested' ||
+    type === 'loan_approved_confirmation' ||
+    type === 'loan_rejected_notice' ||
+    type === 'loan_repayment_notice' ||
+    type === 'loan_repayment_rejected'
+  ) {
+    return 'loans';
+  }
+  return 'community_profile';
+}
 
 const DEFAULT_PREFS: NotificationPreferences = {
   inAppAlerts: true,
@@ -51,6 +89,7 @@ const DEFAULT_PREFS: NotificationPreferences = {
 export function NotificationsView({
   user,
   workspace,
+  meetings = [],
   connectingGoogle,
   onConnectGoogle,
   onDisconnectGoogle,
@@ -61,6 +100,7 @@ export function NotificationsView({
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'queued' | 'sent'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [generatingReminders, setGeneratingReminders] = useState(false);
   const [sendingGmail, setSendingGmail] = useState(false);
   const [confirmGmailOpen, setConfirmGmailOpen] = useState(false);
@@ -192,13 +232,41 @@ export function NotificationsView({
     : queuedItems.slice(0, 15);
 
   const visibleNotifications = notifications.filter((n) => {
-    if (filterType === 'queued') return n.deliveryStatus === 'queued';
-    if (filterType === 'sent') return n.deliveryStatus === 'sent_via_gmail';
+    if (filterType === 'queued' && n.deliveryStatus !== 'queued') return false;
+    if (filterType === 'sent' && n.deliveryStatus !== 'sent_via_gmail') return false;
+    if (categoryFilter !== 'all' && getNotificationCategory(n.type) !== categoryFilter) {
+      return false;
+    }
     return true;
   });
 
+  const upcomingMeetings = meetings.filter((m) => m.status === 'scheduled');
+
   return (
     <div className="space-y-6">
+      {upcomingMeetings.length > 0 && (
+        <section className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>Upcoming Cooperative Meetings Scheduled by Manager ({upcomingMeetings.length})</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {upcomingMeetings.map((m) => (
+              <div
+                key={m.id}
+                className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1 text-xs"
+              >
+                <div className="font-semibold text-slate-900 dark:text-white">{m.title}</div>
+                <div className="font-mono text-emerald-700 dark:text-emerald-400">
+                  {formatDateTime(m.scheduledFor)} · {m.locationOrLink}
+                </div>
+                {m.agenda && <p className="text-slate-600 dark:text-slate-400">{m.agenda}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Header & Reminder / Gmail Actions */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -296,6 +364,32 @@ export function NotificationsView({
               </button>
             </div>
           )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+          {(
+            [
+              { id: 'all', label: 'All Topics' },
+              { id: 'contributions', label: 'Contributions' },
+              { id: 'loans', label: 'Qard Hasan' },
+              { id: 'voting', label: 'Voting & Polls' },
+              { id: 'meetings', label: 'Meeting Notices' },
+              { id: 'community_profile', label: 'Members & Community' },
+            ] as const
+          ).map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategoryFilter(cat.id)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                categoryFilter === cat.id
+                  ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
       </section>
 

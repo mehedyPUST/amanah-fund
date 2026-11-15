@@ -49,13 +49,14 @@ export function LoansView({
   onRefresh,
 }: LoansViewProps) {
   const ccy = config?.currency || 'BDT';
+  const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
 
-  const [scope, setScope] = useState<'mine' | 'all'>('mine');
+  const [scope, setScope] = useState<'mine' | 'all'>(isAdmin ? 'all' : 'mine');
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 
   // Installment payment form state
@@ -63,6 +64,11 @@ export function LoansView({
     loanId: string;
     installmentNumber: number;
   } | null>(null);
+  const [rejectingInstallment, setRejectingInstallment] = useState<{
+    loanId: string;
+    installmentNumber: number;
+  } | null>(null);
+  const [installmentRejectNote, setInstallmentRejectNote] = useState('');
   const [repayChannel, setRepayChannel] = useState<'bank' | 'mfs'>('mfs');
   const [repayProvider, setRepayProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [repayAccount, setRepayAccount] = useState('');
@@ -224,18 +230,33 @@ export function LoansView({
   async function handleVerifyInstallment(
     loanId: string,
     installmentNumber: number,
-    decision: 'approve' | 'reject'
+    decision: 'approve' | 'reject',
+    note?: string
   ) {
+    if (decision === 'reject' && !note?.trim()) {
+      setFeedback({
+        type: 'error',
+        text: 'Please provide a correction note explaining why this installment proof is denied.',
+      });
+      return;
+    }
     setRepayBusy(true);
     setFeedback(null);
     try {
-      await api.verifyInstallmentRepayment(loanId, installmentNumber, decision);
+      await api.verifyInstallmentRepayment(
+        loanId,
+        installmentNumber,
+        decision,
+        note?.trim() || undefined
+      );
+      setRejectingInstallment(null);
+      setInstallmentRejectNote('');
       setFeedback({
         type: 'success',
         text:
           decision === 'approve'
             ? `Installment #${installmentNumber} verified and credited to principal balance.`
-            : `Installment #${installmentNumber} submission rejected.`,
+            : `Installment #${installmentNumber} denied with correction note sent to borrower.`,
       });
       await onRefresh();
     } catch (err) {
@@ -257,7 +278,7 @@ export function LoansView({
       await api.voteLoan(loanId, decision);
       setFeedback({
         type: 'success',
-        text: `Your ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} was recorded for ${loanId} (2/3 majority tally updated).`,
+        text: `Your secret ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} ballot was recorded for ${loanId}.`,
       });
       await onRefresh();
     } catch (err) {
@@ -294,9 +315,13 @@ export function LoansView({
     loans.find(
       (l) =>
         l.borrowerId === user.id &&
-        ['pending_guarantor', 'pending_vote', 'approved_pending_disbursement', 'active'].includes(
-          l.status
-        )
+        [
+          'pending_guarantor',
+          'pending_manager_review',
+          'pending_vote',
+          'approved_pending_disbursement',
+          'active',
+        ].includes(l.status)
     ) || null;
 
   let loanProgressPct = 0;
@@ -304,19 +329,37 @@ export function LoansView({
   let loanBarColorClass = 'bg-slate-400 dark:bg-slate-600';
 
   if (myActiveOrPendingLoan) {
-    if (myActiveOrPendingLoan.status === 'pending_vote') {
-      const approveCount = myActiveOrPendingLoan.votes.filter(
-        (v) => v.decision === 'approve'
-      ).length;
-      loanProgressPct = Math.min(
-        100,
-        Math.round((approveCount / Math.max(1, myActiveOrPendingLoan.requiredApprovals)) * 100)
-      );
-      loanProgressCaption = `2/3 Ballot Progress: ${approveCount} of ${myActiveOrPendingLoan.requiredApprovals} required approvals (${loanProgressPct}%)`;
+    if (myActiveOrPendingLoan.status === 'pending_guarantor') {
+      loanProgressPct = 15;
+      loanProgressCaption = 'Awaiting co-signing guarantor acceptance before Manager review.';
+      loanBarColorClass = 'bg-amber-500';
+    } else if (myActiveOrPendingLoan.status === 'pending_manager_review') {
+      loanProgressPct = 30;
+      loanProgressCaption = 'Awaiting Manager review to open the secret 2/3 member ballot.';
+      loanBarColorClass = 'bg-amber-500';
+    } else if (myActiveOrPendingLoan.status === 'pending_vote') {
+      const revealed = Boolean(myActiveOrPendingLoan.voteResultRevealed);
+      const approveCount =
+        myActiveOrPendingLoan.approveCount ??
+        myActiveOrPendingLoan.votes.filter((v) => v.decision === 'approve').length;
+      if (revealed || isAdmin) {
+        loanProgressPct = Math.min(
+          100,
+          Math.round((approveCount / Math.max(1, myActiveOrPendingLoan.requiredApprovals)) * 100)
+        );
+        loanProgressCaption = `2/3 Ballot Result: ${approveCount} of ${myActiveOrPendingLoan.requiredApprovals} required approvals (${loanProgressPct}%)`;
+      } else {
+        const cast = myActiveOrPendingLoan.totalVotesCast ?? myActiveOrPendingLoan.votes.length;
+        loanProgressPct = Math.min(
+          95,
+          Math.round((cast / Math.max(1, myActiveOrPendingLoan.totalEligibleVoters)) * 100)
+        );
+        loanProgressCaption = `Poll Ongoing · ${cast} member ballot(s) cast secretly (results hidden until revealed)`;
+      }
       loanBarColorClass = 'bg-amber-500';
     } else if (myActiveOrPendingLoan.status === 'approved_pending_disbursement') {
       loanProgressPct = 100;
-      loanProgressCaption = '2/3 Quorum Approved · Ready for treasury multi-sig disbursement';
+      loanProgressCaption = '2/3 Quorum Approved · Awaiting Manager disbursement confirmation';
       loanBarColorClass = 'bg-teal-600 dark:bg-teal-500';
     } else if (myActiveOrPendingLoan.status === 'active') {
       const paidInstallments = myActiveOrPendingLoan.installments.filter(
@@ -398,287 +441,298 @@ export function LoansView({
         </div>
       )}
 
-      {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status with Visual Progress Bars */}
-      <section
-        aria-label="Member Loan Quota and Active Request Summary"
-        className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
-      >
-        {!eligibility && loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Skeleton height={76} />
-            <Skeleton height={76} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x md:divide-slate-100 dark:md:divide-slate-800">
-            {/* Left: Remaining Yearly Quota */}
-            <div className="space-y-2.5 md:pr-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <div>
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Remaining Yearly Loan Quota ({currentYear})
+      {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status (Members & Managers only) */}
+      {!isAdmin && (
+        <section
+          aria-label="Member Loan Quota and Active Request Summary"
+          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+        >
+          {!eligibility && loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton height={76} />
+              <Skeleton height={76} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x md:divide-slate-100 dark:md:divide-slate-800">
+              {/* Left: Remaining Yearly Quota */}
+              <div className="space-y-2.5 md:pr-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Remaining Yearly Loan Quota ({currentYear})
+                    </div>
+                    <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                      {remainingYearlyQuota} of {maxLoansPerYear} remaining
+                    </div>
                   </div>
-                  <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-                    {remainingYearlyQuota} of {maxLoansPerYear} remaining
-                  </div>
+                  <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    {usedLoansThisYear} used
+                  </span>
                 </div>
-                <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                  {usedLoansThisYear} used
-                </span>
-              </div>
 
-              <div
-                role="progressbar"
-                aria-label="Remaining yearly loan quota"
-                aria-valuenow={remainingYearlyQuota}
-                aria-valuemin={0}
-                aria-valuemax={maxLoansPerYear}
-                className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
-              >
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    remainingYearlyQuota === 0
-                      ? 'bg-red-600'
-                      : remainingYearlyQuota === 1
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                        : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
-                  }`}
-                  style={{ width: `${quotaRemainingPct}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>
-                  {remainingYearlyQuota > 0
-                    ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
-                    : `Annual limit of ${maxLoansPerYear} loans reached`}
-                </span>
-                <span className="font-mono tabular-nums">{quotaRemainingPct}% left</span>
-              </div>
-            </div>
-
-            {/* Right: Active Loan Request Status */}
-            <div className="space-y-2.5 md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Active Loan Request Status
-                  </div>
-                  <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white truncate">
-                    {myActiveOrPendingLoan
-                      ? `${myActiveOrPendingLoan.id} · ${formatMoney(myActiveOrPendingLoan.amount, ccy)}`
-                      : 'No Active Request'}
-                  </div>
+                  role="progressbar"
+                  aria-label="Remaining yearly loan quota"
+                  aria-valuenow={remainingYearlyQuota}
+                  aria-valuemin={0}
+                  aria-valuemax={maxLoansPerYear}
+                  className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+                >
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      remainingYearlyQuota === 0
+                        ? 'bg-red-600'
+                        : remainingYearlyQuota === 1
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                          : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
+                    }`}
+                    style={{ width: `${quotaRemainingPct}%` }}
+                  />
                 </div>
-                {myActiveOrPendingLoan ? (
-                  <StatusText status={myActiveOrPendingLoan.status} />
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    <span>Clear Standing</span>
+
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>
+                    {remainingYearlyQuota > 0
+                      ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
+                      : `Annual limit of ${maxLoansPerYear} loans reached`}
                   </span>
-                )}
+                  <span className="font-mono tabular-nums">{quotaRemainingPct}% left</span>
+                </div>
               </div>
 
-              <div
-                role="progressbar"
-                aria-label="Active loan request progress"
-                aria-valuenow={loanProgressPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
-              >
+              {/* Right: Active Loan Request Status */}
+              <div className="space-y-2.5 md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Application &amp; Loan Status
+                    </div>
+                    <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white truncate">
+                      {myActiveOrPendingLoan
+                        ? `${myActiveOrPendingLoan.id} · ${formatMoney(myActiveOrPendingLoan.amount, ccy)}`
+                        : 'No Active Request'}
+                    </div>
+                  </div>
+                  {myActiveOrPendingLoan ? (
+                    <StatusText status={myActiveOrPendingLoan.status} />
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      <span>Clear Standing</span>
+                    </span>
+                  )}
+                </div>
+
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${loanBarColorClass}`}
-                  style={{ width: `${loanProgressPct}%` }}
-                />
-              </div>
+                  role="progressbar"
+                  aria-label="Active loan request progress"
+                  aria-valuenow={loanProgressPct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+                >
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${loanBarColorClass}`}
+                    style={{ width: `${loanProgressPct}%` }}
+                  />
+                </div>
 
-              <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span className="truncate">{loanProgressCaption}</span>
-                {myActiveOrPendingLoan && (
-                  <span className="font-mono tabular-nums shrink-0">{loanProgressPct}%</span>
-                )}
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="truncate">{loanProgressCaption}</span>
+                  {myActiveOrPendingLoan && (
+                    <span className="font-mono tabular-nums shrink-0">{loanProgressPct}%</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      )}
 
-      {/* Eligibility Engine Summary */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Automated Qard Hasan Eligibility Verification
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Zero-interest mutual loans require zero active loans, available annual quota, and a
-              2/3 member vote.
-            </p>
+      {/* Eligibility Engine Summary (Members & Managers only) */}
+      {!isAdmin && (
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                Automated Qard Hasan Eligibility Verification
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Zero-interest mutual loans require zero active loans, available annual quota, Manager vote initiation, and a 2/3 member ballot.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {eligibility && (
+                <div className="flex items-center gap-2 text-xs font-semibold">
+                  {eligibility.eligible ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                      <span>Eligible to Request Loan</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
+                      <XCircle className="w-4 h-4" aria-hidden="true" />
+                      <span>Currently Not Eligible</span>
+                    </span>
+                  )}
+                </div>
+              )}
+              {onOpenLoanModal && (
+                <button
+                  type="button"
+                  onClick={onOpenLoanModal}
+                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
+                >
+                  Open Request Modal
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {eligibility && (
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                {eligibility.eligible ? (
-                  <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                    <span>Eligible to Request Loan</span>
+
+          {eligibility ? (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">1. Active Loan Check</span>
+                  <span
+                    className={
+                      eligibility.noActiveLoan
+                        ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                        : 'font-medium text-red-700 dark:text-red-400'
+                    }
+                  >
+                    {eligibility.noActiveLoan ? 'Passed' : 'Blocked'}
                   </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
-                    <XCircle className="w-4 h-4" aria-hidden="true" />
-                    <span>Currently Ineligible</span>
+                </div>
+                <div className="mt-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  {eligibility.noActiveLoan
+                    ? 'No active or pending loan on your account.'
+                    : `Active/pending loan: ${eligibility.activeLoanId}`}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">2. Annual Quota Check</span>
+                  <span
+                    className={
+                      eligibility.quotaAvailable
+                        ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                        : 'font-medium text-red-700 dark:text-red-400'
+                    }
+                  >
+                    {eligibility.quotaAvailable ? 'Available' : 'Exhausted'}
                   </span>
-                )}
+                </div>
+                <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                  {eligibility.loansUsedThisYear} of {eligibility.maxLoansPerYear} loans used this year
+                </div>
               </div>
-            )}
-            {onOpenLoanModal && (
-              <button
-                type="button"
-                onClick={onOpenLoanModal}
-                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
-              >
-                Open Request Modal
-              </button>
-            )}
-          </div>
-        </div>
 
-        {eligibility ? (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">1. Active Loan Check</span>
-                <span
-                  className={
-                    eligibility.noActiveLoan
-                      ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-red-700 dark:text-red-400'
-                  }
-                >
-                  {eligibility.noActiveLoan ? 'Passed' : 'Blocked'}
-                </span>
+              <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-300 dark:hover:border-teal-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">3. Fund Lifecycle Window</span>
+                  <span
+                    className={
+                      eligibility.beforeMaturityDate
+                        ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                        : 'font-medium text-amber-700 dark:text-amber-400'
+                    }
+                  >
+                    {eligibility.beforeMaturityDate ? 'Qard Hasan Active' : 'Post-Maturity'}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-xs font-mono text-slate-700 dark:text-slate-300">
+                  Maturity: {formatShortDate(config?.maturityDate)}
+                </div>
               </div>
-              <div className="mt-1.5 text-xs text-slate-700 dark:text-slate-300">
-                {eligibility.noActiveLoan
-                  ? 'No active or pending loan on your account.'
-                  : `Active/pending loan: ${eligibility.activeLoanId}`}
+
+              <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">4. Repayment Standing</span>
+                  <span
+                    className={
+                      eligibility.noOverdueInstallments
+                        ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                        : 'font-medium text-red-700 dark:text-red-400'
+                    }
+                  >
+                    {eligibility.noOverdueInstallments ? 'Clear' : 'Overdue'}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                  {eligibility.noOverdueInstallments
+                    ? '0 overdue installments'
+                    : `${eligibility.overdueCount || 1} overdue installment(s)`}
+                </div>
               </div>
             </div>
-
-            <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">2. Annual Quota Check</span>
-                <span
-                  className={
-                    eligibility.quotaAvailable
-                      ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-red-700 dark:text-red-400'
-                  }
-                >
-                  {eligibility.quotaAvailable ? 'Available' : 'Exhausted'}
-                </span>
-              </div>
-              <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                {eligibility.loansUsedThisYear} of {eligibility.maxLoansPerYear} loans used this year
-              </div>
+          ) : (
+            <div className="mt-4">
+              <Skeleton height={68} />
             </div>
-
-            <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-300 dark:hover:border-teal-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">3. Fund Lifecycle Window</span>
-                <span
-                  className={
-                    eligibility.beforeMaturityDate
-                      ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-amber-700 dark:text-amber-400'
-                  }
-                >
-                  {eligibility.beforeMaturityDate ? 'Qard Hasan Active' : 'Post-Maturity'}
-                </span>
-              </div>
-              <div className="mt-1.5 text-xs font-mono text-slate-700 dark:text-slate-300">
-                Maturity: {formatShortDate(config?.maturityDate)}
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">4. Repayment Standing</span>
-                <span
-                  className={
-                    eligibility.noOverdueInstallments
-                      ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                      : 'font-medium text-red-700 dark:text-red-400'
-                  }
-                >
-                  {eligibility.noOverdueInstallments ? 'Clear' : 'Overdue'}
-                </span>
-              </div>
-              <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                {eligibility.noOverdueInstallments
-                  ? '0 overdue installments'
-                  : `${eligibility.overdueCount || 1} overdue installment(s)`}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4">
-            <Skeleton height={68} />
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <div className="xl:col-span-4">
-          <RequestQardHasanLoanForm
-            user={user}
-            eligibility={eligibility}
-            config={config}
-            availableLiquidity={availableLiquidity}
-            onSubmitted={async (loan) => {
-              setSelectedLoanId(loan.id);
-              await onRefresh();
-            }}
-          />
-        </div>
+        {!isAdmin && (
+          <div className="xl:col-span-4">
+            <RequestQardHasanLoanForm
+              user={user}
+              eligibility={eligibility}
+              config={config}
+              availableLiquidity={availableLiquidity}
+              onSubmitted={async (loan) => {
+                setSelectedLoanId(loan.id);
+                await onRefresh();
+              }}
+            />
+          </div>
+        )}
 
         {/* Repayment Schedule & Loan Portfolio */}
-        <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+        <section
+          className={`${
+            isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
+          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Loan Portfolio & Repayment Schedules
+                Loan Portfolio &amp; Repayment Schedules
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Track scheduled monthly installments, remaining balances, and payment verifications
               </p>
             </div>
 
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setScope('mine')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  scope === 'mine'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                My Loans
-              </button>
-              <button
-                type="button"
-                onClick={() => setScope('all')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  scope === 'all'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                All Cooperative Loans
-              </button>
-            </div>
+            {!isAdmin && (
+              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setScope('mine')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                    scope === 'mine'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  My Loans
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScope('all')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                    scope === 'all'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  All Cooperative Loans
+                </button>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -772,38 +826,48 @@ export function LoansView({
                   </div>
 
                   {activeSelectedLoan.status === 'pending_vote' && (() => {
-                    const upvotes = activeSelectedLoan.votes.filter(
-                      (v) => v.decision === 'approve'
-                    ).length;
-                    const downvotes = activeSelectedLoan.votes.filter(
-                      (v) => v.decision === 'reject'
-                    ).length;
+                    const revealed = Boolean(activeSelectedLoan.voteResultRevealed);
+                    const upvotes =
+                      activeSelectedLoan.approveCount ??
+                      activeSelectedLoan.votes.filter((v) => v.decision === 'approve').length;
+                    const downvotes =
+                      activeSelectedLoan.rejectCount ??
+                      activeSelectedLoan.votes.filter((v) => v.decision === 'reject').length;
                     const myVote = activeSelectedLoan.votes.find(
                       (v) => v.isSelf || v.voterId === user.id
                     );
-                    const pct = Math.min(
-                      100,
-                      Math.round((upvotes / activeSelectedLoan.requiredApprovals) * 100)
-                    );
+                    const cast = activeSelectedLoan.totalVotesCast ?? activeSelectedLoan.votes.length;
+                    const pct = revealed || isAdmin
+                      ? Math.min(100, Math.round((upvotes / activeSelectedLoan.requiredApprovals) * 100))
+                      : Math.min(95, Math.round((cast / Math.max(1, activeSelectedLoan.totalEligibleVoters)) * 100));
+
                     return (
                       <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="font-semibold text-slate-900 dark:text-white">
-                              2/3 Member Vote
+                              {revealed || isAdmin ? '2/3 Member Vote' : 'Poll Ongoing (Secret Ballot)'}
                             </span>
                             <span aria-hidden="true" className="text-slate-400">
                               ·
                             </span>
-                            <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                              {upvotes}/{activeSelectedLoan.requiredApprovals} Upvotes
-                            </span>
-                            <span aria-hidden="true" className="text-slate-400">
-                              ·
-                            </span>
-                            <span className="font-mono tabular-nums text-red-700 dark:text-red-400">
-                              {downvotes} Downvotes
-                            </span>
+                            {revealed || isAdmin ? (
+                              <>
+                                <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                                  {upvotes}/{activeSelectedLoan.requiredApprovals} Upvotes
+                                </span>
+                                <span aria-hidden="true" className="text-slate-400">
+                                  ·
+                                </span>
+                                <span className="font-mono tabular-nums text-red-700 dark:text-red-400">
+                                  {downvotes} Downvotes
+                                </span>
+                              </>
+                            ) : (
+                              <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400">
+                                {cast} of {activeSelectedLoan.totalEligibleVoters} ballots cast
+                              </span>
+                            )}
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                             <div
@@ -813,7 +877,7 @@ export function LoansView({
                           </div>
                         </div>
 
-                        {user.status === 'active' && !myVote && (
+                        {!isAdmin && user.status === 'active' && !myVote && (
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
@@ -1078,6 +1142,52 @@ export function LoansView({
                     </form>
                   )}
 
+                  {rejectingInstallment && rejectingInstallment.loanId === activeSelectedLoan.id && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void handleVerifyInstallment(
+                          rejectingInstallment.loanId,
+                          rejectingInstallment.installmentNumber,
+                          'reject',
+                          installmentRejectNote
+                        );
+                      }}
+                      className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/25 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
+                    >
+                      <span className="text-xs font-semibold text-red-800 dark:text-red-300 shrink-0">
+                        Deny Installment #{rejectingInstallment.installmentNumber}:
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        value={installmentRejectNote}
+                        onChange={(e) => setInstallmentRejectNote(e.target.value)}
+                        placeholder="Required correction message for borrower (e.g. TrxID mismatch)…"
+                        className="flex-1 px-3 py-1.5 text-xs rounded-md border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-950"
+                      />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="submit"
+                          disabled={repayBusy}
+                          className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                        >
+                          Confirm Deny
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRejectingInstallment(null);
+                            setInstallmentRejectNote('');
+                          }}
+                          className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
                   <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
@@ -1093,9 +1203,10 @@ export function LoansView({
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {activeSelectedLoan.installments.map((inst) => {
                           const canPay =
+                            !isAdmin &&
                             activeSelectedLoan.status === 'active' &&
                             (inst.status === 'scheduled' || inst.status === 'overdue') &&
-                            (activeSelectedLoan.borrowerId === user.id || isStaff);
+                            (activeSelectedLoan.borrowerId === user.id || user.role === 'manager');
                           const canVerify =
                             isStaff && inst.status === 'pending_verification';
 
@@ -1132,6 +1243,11 @@ export function LoansView({
                                 ) : (
                                   '—'
                                 )}
+                                {inst.rejectionNote && (
+                                  <div className="mt-1 text-[11px] text-red-700 dark:text-red-400">
+                                    Correction note: {inst.rejectionNote}
+                                  </div>
+                                )}
                               </td>
                               <td className="py-2.5 px-3">
                                 <StatusText status={inst.status} />
@@ -1157,7 +1273,7 @@ export function LoansView({
                                       type="button"
                                       disabled={repayBusy}
                                       onClick={() =>
-                                        handleVerifyInstallment(
+                                        void handleVerifyInstallment(
                                           activeSelectedLoan.id,
                                           inst.installmentNumber,
                                           'approve'
@@ -1171,15 +1287,15 @@ export function LoansView({
                                     <button
                                       type="button"
                                       disabled={repayBusy}
-                                      onClick={() =>
-                                        handleVerifyInstallment(
-                                          activeSelectedLoan.id,
-                                          inst.installmentNumber,
-                                          'reject'
-                                        )
-                                      }
+                                      onClick={() => {
+                                        setRejectingInstallment({
+                                          loanId: activeSelectedLoan.id,
+                                          installmentNumber: inst.installmentNumber,
+                                        });
+                                        setInstallmentRejectNote('');
+                                      }}
                                       className="p-1 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 cursor-pointer"
-                                      title="Reject payment"
+                                      title="Deny payment with correction note"
                                     >
                                       <X className="w-3.5 h-3.5" />
                                     </button>

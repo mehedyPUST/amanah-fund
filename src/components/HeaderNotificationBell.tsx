@@ -94,10 +94,86 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'approved_loan',
-          title: 'Loan Approved',
+          title: 'Qard Hasan Approved',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'quard-hasan',
+          targetTab: user.role === 'admin' ? 'ballot' : 'quard-hasan',
+        });
+      } else if (n.type === 'contribution_accepted' || n.type === 'contribution_rejected') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'contribution_reminder',
+          title:
+            n.type === 'contribution_accepted'
+              ? 'Contribution Approved'
+              : 'Contribution Correction Needed',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: user.role === 'admin' ? 'notification' : 'monthly-contribution',
+        });
+      } else if (n.type === 'loan_repayment_rejected' || n.type === 'loan_repayment_notice') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'approved_loan',
+          title:
+            n.type === 'loan_repayment_rejected'
+              ? 'Installment Correction Needed'
+              : 'Qard Hasan Installment Update',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: user.role === 'admin' ? 'notification' : 'quard-hasan',
+        });
+      } else if (n.type === 'meeting_scheduled') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'general',
+          title: 'Meeting Scheduled',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'notification',
+        });
+      } else if (n.type === 'loan_vote_requested' || n.type === 'decision_vote_requested') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'general',
+          title: 'Opinion Ballot Open',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'ballot',
+        });
+      } else if (n.type === 'community_post_created' || n.type === 'community_mention') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'general',
+          title: 'Community Update',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'community',
+        });
+      } else if (n.type === 'profile_update_requested') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'general',
+          title: 'Profile Update Review Needed',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'member-registry',
+        });
+      } else if (n.type === 'profile_update_reviewed') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'general',
+          title: 'Profile Update Decision',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'my-profile',
         });
       }
     });
@@ -121,71 +197,72 @@ export function HeaderNotificationBell({
         });
       });
 
-    // Unread contribution reminder notifications
-    let hasReminderNotif = false;
-    userUnread.forEach((n) => {
-      if (n.type === 'monthly_contribution_reminder') {
-        hasReminderNotif = true;
+    // Admins do not contribute, so skip personal contribution due reminders for Admins
+    if (user.role !== 'admin') {
+      let hasReminderNotif = false;
+      userUnread.forEach((n) => {
+        if (n.type === 'monthly_contribution_reminder') {
+          hasReminderNotif = true;
+          list.push({
+            id: `notif-${n.id}`,
+            notificationId: n.id,
+            kind: 'contribution_reminder',
+            title: 'Pending Contribution Reminder',
+            detail: n.subject,
+            timestampLabel: formatDateTime(n.createdAt),
+            targetTab: 'monthly-contribution',
+            billingMonth: currentMonth,
+          });
+        }
+      });
+
+      const myCurrentMonthContribs = contributions.filter(
+        (c) => c.userId === user.id && c.billingMonth === currentMonth
+      );
+      const hasApprovedOrPendingCurrentMonth = myCurrentMonthContribs.some(
+        (c) => c.status === 'approved' || c.status === 'pending'
+      );
+      const myPendingContribs = contributions.filter(
+        (c) => c.userId === user.id && c.status === 'pending'
+      );
+
+      if (!hasReminderNotif && !hasApprovedOrPendingCurrentMonth) {
+        const targetAmount = overview?.config.monthlyContributionAmount || 5000;
         list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
+          id: `due-contrib-${currentMonth}`,
           kind: 'contribution_reminder',
-          title: 'Pending Contribution Reminder',
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
+          title: `${currentMonthLabel} Contribution Due`,
+          detail: `Monthly deposit of ${formatMoney(targetAmount, ccy)} has not been submitted yet.`,
+          timestampLabel: 'Current billing cycle',
           targetTab: 'monthly-contribution',
           billingMonth: currentMonth,
         });
+      } else if (myPendingContribs.length > 0) {
+        list.push({
+          id: `pending-contrib-${myPendingContribs[0].id}`,
+          kind: 'contribution_reminder',
+          title: 'Contribution Pending Verification',
+          detail: `${formatBillingMonth(myPendingContribs[0].billingMonth)} deposit (${formatMoney(myPendingContribs[0].amount, ccy)}) awaiting review.`,
+          timestampLabel: formatDateTime(myPendingContribs[0].submittedAt),
+          targetTab: 'monthly-contribution',
+        });
       }
-    });
-
-    // Live check for user's current-month deposit status
-    const myCurrentMonthContribs = contributions.filter(
-      (c) => c.userId === user.id && c.billingMonth === currentMonth
-    );
-    const hasApprovedOrPendingCurrentMonth = myCurrentMonthContribs.some(
-      (c) => c.status === 'approved' || c.status === 'pending'
-    );
-    const myPendingContribs = contributions.filter(
-      (c) => c.userId === user.id && c.status === 'pending'
-    );
-
-    if (!hasReminderNotif && !hasApprovedOrPendingCurrentMonth) {
-      const targetAmount = overview?.config.monthlyContributionAmount || 5000;
-      list.push({
-        id: `due-contrib-${currentMonth}`,
-        kind: 'contribution_reminder',
-        title: `${currentMonthLabel} Contribution Due`,
-        detail: `Monthly deposit of ${formatMoney(targetAmount, ccy)} has not been submitted yet.`,
-        timestampLabel: 'Current billing cycle',
-        targetTab: 'monthly-contribution',
-        billingMonth: currentMonth,
-      });
-    } else if (myPendingContribs.length > 0) {
-      list.push({
-        id: `pending-contrib-${myPendingContribs[0].id}`,
-        kind: 'contribution_reminder',
-        title: 'Contribution Pending Verification',
-        detail: `${formatBillingMonth(myPendingContribs[0].billingMonth)} deposit (${formatMoney(myPendingContribs[0].amount, ccy)}) awaiting review.`,
-        timestampLabel: formatDateTime(myPendingContribs[0].submittedAt),
-        targetTab: 'monthly-contribution',
-      });
     }
 
-    if (isStaff && (overview?.treasury.pendingContributionsCount || 0) > 0) {
+    if (user.role === 'manager' && (overview?.treasury.pendingContributionsCount || 0) > 0) {
       const count = overview?.treasury.pendingContributionsCount || 0;
       list.push({
         id: 'staff-pending-contribs',
         kind: 'contribution_reminder',
-        title: 'Deposits Awaiting Verification',
+        title: 'Deposits Awaiting Manager Verification',
         detail: `${count} member contribution${count === 1 ? '' : 's'} queued for approval.`,
-        timestampLabel: 'Approval queue',
-        targetTab: 'monthly-contribution',
+        timestampLabel: 'Manager Desk queue',
+        targetTab: 'manager-desk',
       });
     }
 
     return list;
-  }, [notifications, loans, contributions, user.id, user.email, isStaff, ccy, overview]);
+  }, [notifications, loans, contributions, user.id, user.email, user.role, isStaff, ccy, overview]);
 
   const unreadInboxCount = overview?.treasury.unreadNotificationsCount || 0;
   const badgeCount = alerts.length > 0 ? alerts.length : unreadInboxCount;

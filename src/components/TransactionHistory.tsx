@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import {
   ArrowRight,
+  CalendarRange,
   ChevronDown,
   ChevronUp,
   CreditCard,
@@ -59,6 +60,7 @@ interface LedgerRow {
   memberName: string;
   memberCode: string;
   sortDate: string;
+  monthKey: string;
   displayDate: string;
   periodLabel: string;
   title: string;
@@ -95,15 +97,19 @@ export function TransactionHistory({
   onNavigate,
 }: TransactionHistoryProps) {
   const ccy = config?.currency || 'BDT';
-  const isStaff = user.role === 'admin' || user.role === 'manager';
+  const isAdmin = user.role === 'admin';
+  const isStaff = isAdmin || user.role === 'manager';
 
-  const [scope, setScope] = useState<'mine' | 'all'>('mine');
+  const [scope, setScope] = useState<'mine' | 'all'>(isAdmin ? 'all' : 'mine');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [monthRangeActive, setMonthRangeActive] = useState(false);
+  const [startMonthIdx, setStartMonthIdx] = useState(0);
+  const [endMonthIdx, setEndMonthIdx] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const effectiveScope = !compact && isStaff ? scope : 'mine';
+  const effectiveScope = !compact && isStaff ? (isAdmin ? 'all' : scope) : isAdmin ? 'all' : 'mine';
 
   const { allRows, activeLoans } = useMemo(() => {
     const rows: LedgerRow[] = [];
@@ -128,6 +134,7 @@ export function TransactionHistory({
         memberName: c.memberName,
         memberCode: c.memberCode,
         sortDate: c.reviewedAt || c.submittedAt,
+        monthKey: c.billingMonth,
         displayDate: formatDateTime(c.submittedAt),
         periodLabel: formatBillingMonth(c.billingMonth),
         title: `Monthly Contribution · ${formatBillingMonth(c.billingMonth)}`,
@@ -183,6 +190,7 @@ export function TransactionHistory({
           memberName: loan.borrowerName,
           memberCode: loan.borrowerCode,
           sortDate: eventIso,
+          monthKey: eventIso.slice(0, 7),
           displayDate,
           periodLabel: `Due ${formatShortDate(inst.dueDate)}`,
           title: `Loan Repayment #${inst.installmentNumber}/${loan.installmentMonths}`,
@@ -243,11 +251,30 @@ export function TransactionHistory({
     };
   }, [allRows, activeLoans]);
 
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    allRows.forEach((r) => {
+      if (/^\d{4}-\d{2}$/.test(r.monthKey)) {
+        set.add(r.monthKey);
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [allRows]);
+
+  const maxMonthIdx = Math.max(0, availableMonths.length - 1);
+  const safeStartIdx = Math.min(startMonthIdx, maxMonthIdx);
+  const safeEndIdx = Math.min(Math.max(endMonthIdx, safeStartIdx), maxMonthIdx);
+  const activeStartMonth = monthRangeActive ? availableMonths[safeStartIdx] : null;
+  const activeEndMonth = monthRangeActive ? availableMonths[safeEndIdx] : null;
+
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return allRows.filter((row) => {
       if (typeFilter !== 'all' && row.category !== typeFilter) return false;
       if (statusFilter !== 'all' && row.statusBucket !== statusFilter) return false;
+      if (activeStartMonth && activeEndMonth) {
+        if (row.monthKey < activeStartMonth || row.monthKey > activeEndMonth) return false;
+      }
       if (q) {
         return (
           row.title.toLowerCase().includes(q) ||
@@ -261,7 +288,7 @@ export function TransactionHistory({
       }
       return true;
     });
-  }, [allRows, typeFilter, statusFilter, search]);
+  }, [allRows, typeFilter, statusFilter, search, activeStartMonth, activeEndMonth]);
 
   const displayedRows = compact ? filteredRows.slice(0, 6) : filteredRows;
 
@@ -350,7 +377,7 @@ export function TransactionHistory({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          {!compact && isStaff && (
+          {!compact && isStaff && !isAdmin && (
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               <button
                 type="button"
@@ -531,6 +558,93 @@ export function TransactionHistory({
         </div>
       </div>
 
+      {/* Month Sliding Filter */}
+      {!compact && availableMonths.length > 0 && (
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200">
+              <CalendarRange className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+              <span>Month Sliding Filter</span>
+              <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
+                {monthRangeActive && activeStartMonth && activeEndMonth
+                  ? `${formatBillingMonth(activeStartMonth)} — ${formatBillingMonth(activeEndMonth)}`
+                  : `All Months (${formatBillingMonth(availableMonths[0])} — ${formatBillingMonth(availableMonths[maxMonthIdx])})`}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!monthRangeActive) {
+                    setStartMonthIdx(0);
+                    setEndMonthIdx(maxMonthIdx);
+                    setMonthRangeActive(true);
+                  } else {
+                    setMonthRangeActive(false);
+                  }
+                }}
+                className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                {monthRangeActive ? 'Show All Months' : 'Enable Month Range'}
+              </button>
+            </div>
+          </div>
+
+          {availableMonths.length > 1 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+              <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <span className="w-16 shrink-0 font-medium">From:</span>
+                <input
+                  type="range"
+                  aria-label="Filter start month"
+                  min={0}
+                  max={maxMonthIdx}
+                  value={monthRangeActive ? safeStartIdx : 0}
+                  onChange={(e) => {
+                    const nextStart = Number(e.target.value);
+                    setMonthRangeActive(true);
+                    setStartMonthIdx(nextStart);
+                    if (nextStart > safeEndIdx) {
+                      setEndMonthIdx(nextStart);
+                    } else if (!monthRangeActive) {
+                      setEndMonthIdx(maxMonthIdx);
+                    }
+                  }}
+                  className="flex-1 accent-emerald-600 cursor-pointer"
+                />
+                <span className="font-mono w-20 text-right shrink-0">
+                  {formatBillingMonth(availableMonths[monthRangeActive ? safeStartIdx : 0])}
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <span className="w-16 shrink-0 font-medium">To:</span>
+                <input
+                  type="range"
+                  aria-label="Filter end month"
+                  min={0}
+                  max={maxMonthIdx}
+                  value={monthRangeActive ? safeEndIdx : maxMonthIdx}
+                  onChange={(e) => {
+                    const nextEnd = Number(e.target.value);
+                    setMonthRangeActive(true);
+                    setEndMonthIdx(nextEnd);
+                    if (nextEnd < safeStartIdx) {
+                      setStartMonthIdx(nextEnd);
+                    }
+                  }}
+                  className="flex-1 accent-emerald-600 cursor-pointer"
+                />
+                <span className="font-mono w-20 text-right shrink-0">
+                  {formatBillingMonth(availableMonths[monthRangeActive ? safeEndIdx : maxMonthIdx])}
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Data Table / Empty / Loading States */}
       {loading ? (
         <div className="space-y-2.5">
@@ -548,7 +662,7 @@ export function TransactionHistory({
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
             {allRows.length === 0
               ? 'Once you submit a monthly Bank/MFS contribution or have an active Qard Hasan repayment schedule, each transaction will appear here.'
-              : 'Try clearing the search box or switching the type and status filters.'}
+              : 'Try clearing the search box or switching the type, status, or month range filters.'}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
             {allRows.length > 0 ? (
@@ -558,6 +672,7 @@ export function TransactionHistory({
                   setTypeFilter('all');
                   setStatusFilter('all');
                   setSearch('');
+                  setMonthRangeActive(false);
                 }}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
               >

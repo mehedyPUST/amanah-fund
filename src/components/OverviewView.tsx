@@ -5,11 +5,15 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  CalendarCheck,
   CheckCircle2,
+  HandCoins,
   Lock,
   Settings,
   ShieldCheck,
+  Users,
   Vote,
+  Wallet,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type {
@@ -149,17 +153,31 @@ export function OverviewView({
               <BarChart3 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Statistics</span>
             </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('monthly-contribution')}
-              className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
-            >
-              <span>Monthly Contribution</span>
-              <ArrowRight
-                className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => onNavigate('site-settings')}
+                className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span>Site Settings</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate('monthly-contribution')}
+                className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span>Monthly Contribution</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -175,19 +193,21 @@ export function OverviewView({
                 {treasury.overdueInstallmentsCount === 1 ? '' : 's'} Detected
               </div>
               <p className="text-xs text-red-800 dark:text-red-300">
-                {!personal.eligibility.noOverdueInstallments
+                {!isAdmin && !personal.eligibility.noOverdueInstallments
                   ? `You have ${personal.eligibility.overdueCount} overdue installment(s). Settle them in Quard Hasan before requesting new financing.`
                   : 'Cooperative repayment scheduler flagged past-due installments requiring follow-up.'}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('quard-hasan')}
-            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
-          >
-            Inspect Repayments →
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              onClick={() => onNavigate('quard-hasan')}
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
+            >
+              Inspect Repayments →
+            </button>
+          )}
         </section>
       )}
 
@@ -265,46 +285,54 @@ export function OverviewView({
         </section>
       )}
 
-      {/* 4-Column Central Fund Balance Accounting KPI Strip */}
+      {/* 4-Column Amanah Treasury Headline KPI Strip */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white border border-emerald-500/30 rounded-xl p-5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-emerald-100">Central Fund Balance</div>
+          <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
+            <span>Amanah Height (Total Raised)</span>
+            <Wallet className="w-4 h-4 text-emerald-100" aria-hidden="true" />
+          </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-white">
-            {formatMoney(treasury.centralBalance, ccy)}
+            {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-emerald-100/90 tabular-nums">
-            + Contributions − Approved Loans + Repayments
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            Approved Contributions (+)
-          </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(treasury.totalContributionsPool, ccy)}
-          </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            {treasury.activeMembersCount} active · Pending{' '}
+            {treasury.contributingMembersCount} contributing members · Pending{' '}
             {formatMoney(treasury.pendingContributionsAmount, ccy)}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-amber-600 dark:text-amber-400">
-            Approved Loans Deducted (−)
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <span>Current Balance</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(treasury.approvedLoansDeducted, ccy)}
+            {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            Active outstanding {formatMoney(treasury.activeLoansOutstanding, ccy)}
+            Amanah Height − Quard Hasan Current
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between text-xs font-medium text-amber-600 dark:text-amber-400">
+            <span>Quard Hasan Total Current</span>
+            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
+          </div>
+          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+            {treasury.activeBorrowers.length} active borrower
+            {treasury.activeBorrowers.length === 1 ? '' : 's'} · Disbursed{' '}
+            {formatMoney(treasury.totalLoansDisbursed, ccy)}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
-            Repayments Returned (+)
+          <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-400">
+            <span>Repayments Returned (+)</span>
+            <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.totalRepaid, ccy)}
@@ -317,106 +345,409 @@ export function OverviewView({
         </div>
       </section>
 
-      {/* Personal Standing + Active Governance & Approval Queues */}
+      {/* This Month Treasury Pulse: Contribution, Due, Hasan Installment, Clearance */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>This Month Contribution ({treasury.thisMonthKey})</span>
+            <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+          </div>
+          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            {formatMoney(treasury.thisMonthContributionCollected, ccy)}{' '}
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              / {formatMoney(treasury.thisMonthContributionTarget, ccy)}
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div
+              className="h-full bg-emerald-600 rounded-full"
+              style={{
+                width: `${
+                  treasury.thisMonthContributionTarget > 0
+                    ? Math.min(
+                        100,
+                        Math.round(
+                          (treasury.thisMonthContributionCollected /
+                            treasury.thisMonthContributionTarget) *
+                            100
+                        )
+                      )
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            This Month Due (Remaining / Target)
+          </div>
+          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+            {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              / {formatMoney(treasury.thisMonthDueTarget, ccy)}
+            </span>
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+            {treasury.thisMonthDueRemaining === 0
+              ? 'All monthly contribution targets collected'
+              : 'Pending collection from members this cycle'}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            This Month Hasan Installment (Collected / Need)
+          </div>
+          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              / {formatMoney(treasury.thisMonthHasanInstallmentNeed, ccy)}
+            </span>
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+            {treasury.thisMonthHasanInstallmentNeed > 0
+              ? 'Installments due & collected this month'
+              : 'No installments due this month'}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>This Month Clearance</span>
+            <Users className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+          </div>
+          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+            {treasury.thisMonthClearanceClearedMembers}{' '}
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              / {treasury.thisMonthClearanceTotalMembers} cleared members
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div
+              className="h-full bg-emerald-600 rounded-full"
+              style={{
+                width: `${
+                  treasury.thisMonthClearanceTotalMembers > 0
+                    ? Math.round(
+                        (treasury.thisMonthClearanceClearedMembers /
+                          treasury.thisMonthClearanceTotalMembers) *
+                          100
+                      )
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="space-y-4">
+        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Your Member Standing
+                Active Quard Hasan Members
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {user.name} · <span className="font-mono">{user.memberCode}</span>
+                Current borrowers with Main Principal / Remaining Due balance
               </p>
             </div>
-
-            <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
-              <div className="py-2.5 flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Your Approved Deposits</span>
-                <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {formatMoney(personal.totalContributed, ccy)}
-                </span>
-              </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Active Loan Balance</span>
-                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                  {formatMoney(personal.activeLoanBalance, ccy)}
-                </span>
-              </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
-                <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {formatMoney(personal.cooperativeEquity, ccy)}
-                  {personal.totalProfitDistributed > 0 && (
-                    <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
-                      (+{formatMoney(personal.totalProfitDistributed, ccy)} profit)
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Annual Loan Quota</span>
-                <span className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
-                  {personal.eligibility.loansUsedThisYear} / {personal.eligibility.maxLoansPerYear}{' '}
-                  used
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-medium">
-                {personal.eligibility.eligible ? (
-                  <>
-                    <CheckCircle2
-                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="text-emerald-700 dark:text-emerald-400">
-                      Eligible for Qard Hasan Request
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Lock
-                      className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="text-amber-700 dark:text-amber-400">
-                      Loan Eligibility Locked
-                    </span>
-                  </>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                {personal.eligibility.reasons[0]}
-              </p>
-            </div>
+            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+              {treasury.activeBorrowers.length} active
+            </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            {onOpenLoanModal && (
+          {treasury.activeBorrowers.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+              No active Qard Hasan loans are currently outstanding.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {treasury.activeBorrowers.map((b) => (
+                <div
+                  key={b.loanId}
+                  className="py-3 first:pt-0 last:pb-0 flex flex-wrap items-center justify-between gap-3 text-xs"
+                >
+                  <div className="min-w-0">
+                    {onViewMemberProfile ? (
+                      <button
+                        type="button"
+                        onClick={() => onViewMemberProfile(b.borrowerId)}
+                        className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                      >
+                        {b.borrowerName}{' '}
+                        <span className="font-mono font-normal text-slate-500">
+                          ({b.borrowerCode})
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        {b.borrowerName}{' '}
+                        <span className="font-mono font-normal text-slate-500">
+                          ({b.borrowerCode})
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                      {b.loanId}
+                      {b.nextDueDate ? ` · Next due ${formatShortDate(b.nextDueDate)}` : ''}
+                      {b.missedInstallmentsCount > 0 && (
+                        <span className="text-red-600 dark:text-red-400 ml-1.5">
+                          · {b.missedInstallmentsCount} overdue
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right font-mono tabular-nums shrink-0">
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {formatMoney(b.mainAmount, ccy)}{' '}
+                      <span className="text-slate-400 font-normal">/</span>{' '}
+                      <span className="text-amber-700 dark:text-amber-400">
+                        {formatMoney(b.dueAmount, ccy)} due
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                      Repaid {formatMoney(b.totalRepaid, ccy)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                This Month Member Clearance ({treasury.thisMonthKey})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Contributing members cleared for the current monthly cycle (Admin excluded)
+              </p>
+            </div>
+            <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
+              {treasury.thisMonthClearanceClearedMembers}/{treasury.thisMonthClearanceTotalMembers}
+            </span>
+          </div>
+
+          {treasury.thisMonthMemberClearance.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+              No active contributing members found.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto pr-1">
+              {treasury.thisMonthMemberClearance.map((entry) => (
+                <div
+                  key={entry.userId}
+                  className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="min-w-0">
+                    {onViewMemberProfile ? (
+                      <button
+                        type="button"
+                        onClick={() => onViewMemberProfile(entry.userId)}
+                        className="font-medium text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left truncate"
+                      >
+                        {entry.memberName}{' '}
+                        <span className="font-mono text-slate-500 font-normal">
+                          ({entry.memberCode})
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {entry.memberName} ({entry.memberCode})
+                      </span>
+                    )}
+                    <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      {formatMoney(entry.contributedAmount, ccy)} /{' '}
+                      {formatMoney(entry.targetAmount, ccy)}
+                    </div>
+                  </div>
+
+                  <span
+                    className={`font-semibold text-[11px] uppercase tracking-wide shrink-0 ${
+                      entry.status === 'cleared'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : entry.status === 'pending'
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : 'text-red-700 dark:text-red-400'
+                    }`}
+                  >
+                    {entry.status === 'cleared'
+                      ? 'Cleared'
+                      : entry.status === 'pending'
+                        ? 'Pending Review'
+                        : 'Due'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        {isAdmin ? (
+          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Administrator Account · Non-Contributing Governance</span>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Platform Oversight &amp; Configuration
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Administrators do not submit monthly contributions or take Qard Hasan loans. Use
+                Site Settings to update cooperative policy variables, User &amp; Role Management to
+                assign Managers/Members, and Opinion Ballot to audit individual votes.
+              </p>
+              <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs pt-1">
+                <div className="py-2 flex items-center justify-between">
+                  <dt className="text-slate-500 dark:text-slate-400">Pending Profile Edits</dt>
+                  <dd className="font-mono font-semibold text-slate-900 dark:text-white">
+                    {treasury.pendingProfileRequestsCount}
+                  </dd>
+                </div>
+                <div className="py-2 flex items-center justify-between">
+                  <dt className="text-slate-500 dark:text-slate-400">Open Decision Polls</dt>
+                  <dd className="font-mono font-semibold text-slate-900 dark:text-white">
+                    {treasury.openDecisionPollsCount}
+                  </dd>
+                </div>
+                <div className="py-2 flex items-center justify-between">
+                  <dt className="text-slate-500 dark:text-slate-400">Upcoming Meetings</dt>
+                  <dd className="font-mono font-semibold text-slate-900 dark:text-white">
+                    {treasury.upcomingMeetingsCount}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
-                onClick={onOpenLoanModal}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={() => onNavigate('member-registry')}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Request Qard Hasan</span>
+                <Users className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Manage Users &amp; Roles</span>
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onNavigate('quard-hasan')}
-              className="group flex-1 py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>{onOpenLoanModal ? 'Schedule & History' : 'Open Quard Hasan & Repayments'}</span>
-              <ArrowRight
-                className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </button>
-          </div>
-        </section>
+              <button
+                type="button"
+                onClick={() => onNavigate('site-settings')}
+                className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Settings className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Site Settings</span>
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Your Member Standing
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {user.name} · <span className="font-mono">{user.memberCode}</span>
+                </p>
+              </div>
+
+              <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Your Approved Deposits</span>
+                  <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                    {formatMoney(personal.totalContributed, ccy)}
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Active Loan Balance</span>
+                  <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                    {formatMoney(personal.activeLoanBalance, ccy)}
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
+                  <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                    {formatMoney(personal.cooperativeEquity, ccy)}
+                    {personal.totalProfitDistributed > 0 && (
+                      <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
+                        (+{formatMoney(personal.totalProfitDistributed, ccy)} profit)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Annual Loan Quota</span>
+                  <span className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
+                    {personal.eligibility.loansUsedThisYear} / {personal.eligibility.maxLoansPerYear}{' '}
+                    used
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium">
+                  {personal.eligibility.eligible ? (
+                    <>
+                      <CheckCircle2
+                        className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        Eligible for Qard Hasan Request
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock
+                        className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="text-amber-700 dark:text-amber-400">
+                        Not Eligible for Qard Hasan
+                      </span>
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {personal.eligibility.reasons[0]}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              {onOpenLoanModal && (
+                <button
+                  type="button"
+                  onClick={onOpenLoanModal}
+                  className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Request Qard Hasan</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onNavigate('my-amanah')}
+                className="group flex-1 py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Open My Amanah</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
@@ -449,7 +780,15 @@ export function OverviewView({
 
               <button
                 type="button"
-                onClick={() => onNavigate('monthly-contribution')}
+                onClick={() =>
+                  onNavigate(
+                    user.role === 'manager'
+                      ? 'manager-desk'
+                      : isAdmin
+                        ? 'transaction-history'
+                        : 'monthly-contribution'
+                  )
+                }
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
@@ -463,13 +802,19 @@ export function OverviewView({
                   {treasury.pendingContributionsCount}
                 </div>
                 <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {isStaff ? 'Review Bank/MFS queue →' : 'View submission status →'}
+                  {user.role === 'manager'
+                    ? 'Review in Manager Desk →'
+                    : isAdmin
+                      ? 'Inspect Transaction Ledger →'
+                      : 'View submission status →'}
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => onNavigate('ballot')}
+                onClick={() =>
+                  onNavigate(user.role === 'manager' ? 'manager-desk' : 'ballot')
+                }
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
@@ -483,13 +828,23 @@ export function OverviewView({
                   {treasury.pendingDisbursementsCount}
                 </div>
                 <div className="mt-1 text-xs text-teal-700 dark:text-teal-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  Multi-sig treasury release →
+                  {user.role === 'manager'
+                    ? 'Confirm disbursement in Manager Desk →'
+                    : 'Multi-sig treasury release →'}
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => onNavigate('quard-hasan')}
+                onClick={() =>
+                  onNavigate(
+                    user.role === 'manager'
+                      ? 'manager-desk'
+                      : isAdmin
+                        ? 'transaction-history'
+                        : 'quard-hasan'
+                  )
+                }
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
@@ -503,7 +858,9 @@ export function OverviewView({
                   {treasury.pendingRepaymentsCount}
                 </div>
                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  Inspect installment receipts →
+                  {user.role === 'manager'
+                    ? 'Verify installments in Manager Desk →'
+                    : 'Inspect installment receipts →'}
                 </div>
               </button>
             </div>

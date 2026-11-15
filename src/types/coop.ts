@@ -5,12 +5,14 @@ export type DashboardSectionId =
   | 'fund-overview'
   | 'monthly-contribution'
   | 'quard-hasan'
+  | 'my-amanah'
   | 'my-profile'
   | 'notification'
   | 'statistics'
   | 'ballot'
   | 'transaction-history'
   | 'community'
+  | 'manager-desk'
   | 'site-activity'
   | 'system-audit-logs'
   | 'member-registry'
@@ -203,6 +205,9 @@ export interface InstallmentItem {
   decryptedReceipt?: RepaymentReceiptDetails;
   verifiedBy?: string;
   verifierName?: string;
+  rejectionNote?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
 }
 
 export interface LoanSensitiveDetails {
@@ -238,6 +243,7 @@ export interface LoanRequest {
   decryptedSensitiveNotes?: LoanSensitiveDetails;
   status:
     | 'pending_guarantor'
+    | 'pending_manager_review'
     | 'pending_vote'
     | 'approved_pending_disbursement'
     | 'active'
@@ -249,6 +255,15 @@ export interface LoanRequest {
   votes: LoanVote[];
   requiredApprovals: number;
   totalEligibleVoters: number;
+  voteInitiatedAt?: string;
+  voteInitiatedBy?: string;
+  voteResultRevealed?: boolean;
+  voteResultRevealedAt?: string;
+  voteResultRevealedBy?: string;
+  totalVotesCast?: number;
+  approveCount?: number;
+  rejectCount?: number;
+  adminVoteLedger?: LoanVote[];
   disbursementSignature?: {
     signedById: string;
     signedByName: string;
@@ -315,10 +330,114 @@ export interface HalalProject {
   votes: PlacementVote[];
   requiredApprovals: number;
   totalEligibleVoters: number;
+  voteResultRevealed?: boolean;
+  revealedAt?: string;
+  revealedBy?: string;
+  totalVotesCast?: number;
+  yesCount?: number;
+  noCount?: number;
+  adminVoteLedger?: PlacementVote[];
   proposedBy?: string;
   approvedAt?: string;
   realizedProfitTotal?: number;
   distributions?: ProfitDistributionRecord[];
+}
+
+export interface DecisionPollVote {
+  voterId: string;
+  voterName: string;
+  voterRole: UserRole;
+  optionId: string;
+  comment?: string;
+  castAt: string;
+  signatureHash: string;
+  isSelf?: boolean;
+}
+
+export interface DecisionPollOption {
+  id: string;
+  label: string;
+  voteCount?: number;
+}
+
+export interface DecisionPoll {
+  id: string;
+  title: string;
+  description: string;
+  category: 'policy' | 'project' | 'qard_hasan' | 'general';
+  options: DecisionPollOption[];
+  status: 'open' | 'closed';
+  voteResultRevealed: boolean;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  closesAt?: string;
+  revealedAt?: string;
+  revealedByName?: string;
+  votes: DecisionPollVote[];
+  totalVotesCast?: number;
+  adminVoteLedger?: DecisionPollVote[];
+}
+
+export interface CoopMeeting {
+  id: string;
+  title: string;
+  agenda: string;
+  scheduledFor: string;
+  locationOrLink: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+}
+
+export interface ProfileChangePayload {
+  name?: string;
+  email?: string;
+  mobile?: string;
+  occupation?: string;
+  companyOrganization?: string;
+  presentAddress?: string;
+  permanentAddress?: string;
+  photoUrl?: string;
+}
+
+export interface ProfileChangeRequest {
+  id: string;
+  userId: string;
+  memberName: string;
+  memberCode: string;
+  memberRole: UserRole;
+  requestedChanges: ProfileChangePayload;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  reviewedBy?: string;
+  reviewerName?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+}
+
+export interface ActiveBorrowerSummary {
+  loanId: string;
+  borrowerId: string;
+  borrowerName: string;
+  borrowerCode: string;
+  mainAmount: number;
+  dueAmount: number;
+  totalRepaid: number;
+  nextDueDate?: string;
+  missedInstallmentsCount: number;
+}
+
+export interface MonthClearanceEntry {
+  userId: string;
+  memberName: string;
+  memberCode: string;
+  role: UserRole;
+  cleared: boolean;
+  contributedAmount: number;
+  targetAmount: number;
+  status: 'cleared' | 'pending' | 'due';
 }
 
 export type NotificationType =
@@ -326,13 +445,20 @@ export type NotificationType =
   | 'signup_approved'
   | 'contribution_placed_manager'
   | 'contribution_accepted'
+  | 'contribution_rejected'
   | 'loan_vote_requested'
   | 'loan_guarantor_requested'
   | 'loan_approved_confirmation'
   | 'loan_rejected_notice'
   | 'loan_repayment_notice'
+  | 'loan_repayment_rejected'
   | 'monthly_contribution_reminder'
   | 'profit_distribution_notice'
+  | 'meeting_scheduled'
+  | 'decision_vote_requested'
+  | 'profile_update_requested'
+  | 'profile_update_reviewed'
+  | 'community_post_created'
   | 'community_moderation'
   | 'community_mention';
 
@@ -408,6 +534,9 @@ export interface DashboardOverview {
   daysUntilMaturity: number;
   treasury: {
     totalContributionsPool: number;
+    amanahHeight: number;
+    currentBalance: number;
+    quardHasanTotalCurrent: number;
     totalLoansDisbursed: number;
     approvedLoansDeducted: number;
     totalRepaid: number;
@@ -416,21 +545,59 @@ export interface DashboardOverview {
     availableLiquidity: number;
     pendingContributionsAmount: number;
     pendingContributionsCount: number;
+    pendingLoansReviewCount: number;
     pendingVotesCount: number;
     pendingDisbursementsCount: number;
     pendingRepaymentsCount: number;
     overdueInstallmentsCount: number;
     totalProfitDistributedPool: number;
     activeMembersCount: number;
+    contributingMembersCount: number;
     pendingMembersCount: number;
+    pendingProfileRequestsCount: number;
+    openDecisionPollsCount: number;
+    upcomingMeetingsCount: number;
     unreadNotificationsCount: number;
+    thisMonthKey: string;
+    thisMonthContributionTarget: number;
+    thisMonthContributionCollected: number;
+    thisMonthDueTarget: number;
+    thisMonthDueRemaining: number;
+    thisMonthHasanInstallmentNeed: number;
+    thisMonthHasanInstallmentCollected: number;
+    thisMonthClearanceTotalMembers: number;
+    thisMonthClearanceClearedMembers: number;
+    activeBorrowers: ActiveBorrowerSummary[];
+    thisMonthMemberClearance: MonthClearanceEntry[];
   };
   personal: {
     totalContributed: number;
     approvedContributionsCount: number;
     pendingContributionsCount: number;
+    lastContribution: {
+      id: string;
+      billingMonth: string;
+      amount: number;
+      submittedAt: string;
+      status: Contribution['status'];
+    } | null;
+    nextContributionDeadline: string;
+    dueContributionMonths: number;
+    dueContributionAmount: number;
     activeLoanBalance: number;
+    activeLoanMainAmount: number;
+    activeLoanDueAmount: number;
     totalRepaidPersonal: number;
+    lastHasanInstallment: {
+      loanId: string;
+      installmentNumber: number;
+      amount: number;
+      paidAt: string;
+    } | null;
+    missedInstallmentsCount: number;
+    missedInstallmentsAmount: number;
+    nextLoanDeadline: string | null;
+    nextOverallDeadline: string;
     totalProfitDistributed: number;
     cooperativeEquity: number;
     eligibility: EligibilityCheck;

@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, Users, X, XCircle } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, Users, X, XCircle } from 'lucide-react';
 import type {
   FundConfig,
   MemberSummary,
+  ProfileChangeRequest,
   PublicUser,
   UserRole,
   UserStatus,
@@ -33,6 +34,10 @@ export function MemberRegistrySection({
 
   const [subTab, setSubTab] = useState<'manage' | 'directory'>('manage');
   const [members, setMembers] = useState<MemberSummary[]>([]);
+  const [profileRequests, setProfileRequests] = useState<ProfileChangeRequest[]>([]);
+  const [rejectingProfileReqId, setRejectingProfileReqId] = useState<string | null>(null);
+  const [profileRejectNote, setProfileRejectNote] = useState('');
+  const [profileBusyId, setProfileBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -46,8 +51,12 @@ export function MemberRegistrySection({
     }
     setLoading(true);
     try {
-      const res = await api.getMembers();
+      const [res, reqRes] = await Promise.all([
+        api.getMembers(),
+        api.getProfileChangeRequests().catch(() => ({ requests: [] as ProfileChangeRequest[] })),
+      ]);
       setMembers(res.members);
+      setProfileRequests(reqRes.requests);
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -103,7 +112,44 @@ export function MemberRegistrySection({
     }
   }
 
+  async function handleReviewProfileChange(
+    requestId: string,
+    decision: 'approved' | 'rejected',
+    note?: string
+  ) {
+    if (decision === 'rejected' && (!note || note.trim().length < 3)) {
+      setFeedback({
+        type: 'error',
+        text: 'Please provide a brief correction note explaining why the profile change is declined.',
+      });
+      return;
+    }
+    setProfileBusyId(requestId);
+    setFeedback(null);
+    try {
+      await api.reviewProfileChangeRequest(requestId, decision, note?.trim());
+      setRejectingProfileReqId(null);
+      setProfileRejectNote('');
+      setFeedback({
+        type: 'success',
+        text:
+          decision === 'approved'
+            ? 'Member profile update approved and applied.'
+            : 'Profile update request declined with feedback.',
+      });
+      await Promise.all([onRefresh(), loadMembers()]);
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to review profile change request.',
+      });
+    } finally {
+      setProfileBusyId(null);
+    }
+  }
+
   const pendingCount = members.filter((m) => m.status === 'pending_approval').length;
+  const pendingProfileRequests = profileRequests.filter((r) => r.status === 'pending');
 
   return (
     <div className="space-y-6">
@@ -163,6 +209,97 @@ export function MemberRegistrySection({
 
       {subTab === 'manage' ? (
         <div className="space-y-6">
+          {pendingProfileRequests.length > 0 && (
+            <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>Admin &amp; Manager Approval Queue</span>
+                </div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+                  Pending Profile Update Requests ({pendingProfileRequests.length})
+                </h3>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {pendingProfileRequests.map((req) => (
+                  <div key={req.id} className="p-4 space-y-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                      <div className="space-y-1 text-xs">
+                        <div className="font-semibold text-slate-900 dark:text-white">
+                          {req.memberName} ({req.memberCode}) ·{' '}
+                          <span className="font-mono text-slate-500">
+                            {formatDateTime(req.requestedAt)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                          {Object.entries(req.requestedChanges).map(([k, v]) => (
+                            <div key={k}>
+                              <span className="font-mono text-slate-400">{k}:</span>{' '}
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                {String(v)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          disabled={profileBusyId === req.id}
+                          onClick={() => {
+                            setRejectingProfileReqId(req.id);
+                            setProfileRejectNote('');
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white cursor-pointer disabled:opacity-50"
+                        >
+                          Decline
+                        </button>
+                        <button
+                          type="button"
+                          disabled={profileBusyId === req.id}
+                          onClick={() => void handleReviewProfileChange(req.id, 'approved')}
+                          className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                        >
+                          Approve Update
+                        </button>
+                      </div>
+                    </div>
+
+                    {rejectingProfileReqId === req.id && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <input
+                          type="text"
+                          value={profileRejectNote}
+                          onChange={(e) => setProfileRejectNote(e.target.value)}
+                          placeholder="Reason for declining profile edit…"
+                          className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-red-200 dark:border-red-900 bg-white dark:bg-slate-950"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void handleReviewProfileChange(req.id, 'rejected', profileRejectNote)
+                          }
+                          className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium cursor-pointer"
+                        >
+                          Confirm Decline
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRejectingProfileReqId(null)}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {isAdmin && (
             <PendingRegistrationsView
               user={user}
@@ -172,18 +309,20 @@ export function MemberRegistrySection({
             />
           )}
 
-          <AdminUserManagementPanel
-            members={members}
-            currentUser={user}
-            config={config}
-            loading={loading}
-            onMembersUpdated={setMembers}
-            onInspectMember={setInspectingMember}
-            onRefreshAll={async () => {
-              await Promise.all([onRefresh(), loadMembers()]);
-            }}
-            onFeedback={setFeedback}
-          />
+          {isAdmin && (
+            <AdminUserManagementPanel
+              members={members}
+              currentUser={user}
+              config={config}
+              loading={loading}
+              onMembersUpdated={setMembers}
+              onInspectMember={setInspectingMember}
+              onRefreshAll={async () => {
+                await Promise.all([onRefresh(), loadMembers()]);
+              }}
+              onFeedback={setFeedback}
+            />
+          )}
         </div>
       ) : (
         <ActiveMembersView

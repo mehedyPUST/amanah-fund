@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import {
   Check,
+  Eye,
+  EyeOff,
+  Lock,
+  PlusCircle,
   ShieldAlert,
   ShieldCheck,
   ThumbsDown,
@@ -12,7 +16,13 @@ import {
   X,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { FundConfig, HalalProject, LoanRequest, PublicUser } from '../types/coop.ts';
+import type {
+  DecisionPoll,
+  FundConfig,
+  HalalProject,
+  LoanRequest,
+  PublicUser,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
 import { StatusText } from './StatusText.tsx';
@@ -20,6 +30,8 @@ import { StatusText } from './StatusText.tsx';
 interface VotingViewProps {
   loans: LoanRequest[];
   projects: HalalProject[];
+  polls?: DecisionPoll[];
+  availableLiquidity?: number;
   config: FundConfig | null;
   user: PublicUser;
   loading: boolean;
@@ -29,23 +41,51 @@ interface VotingViewProps {
 export function VotingView({
   loans,
   projects,
+  polls = [],
+  availableLiquidity,
   config,
   user,
   loading,
   onRefresh,
 }: VotingViewProps) {
   const ccy = config?.currency || 'BDT';
+  const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isVerifiedMember = user.status === 'active';
+  const canCastBallot = isVerifiedMember && !isAdmin;
 
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'loans' | 'investments'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'loans' | 'investments' | 'polls'>(
+    'all'
+  );
   const [comments, setComments] = useState<Record<string, string>>({});
+  const [pollChoices, setPollChoices] = useState<Record<string, string>>({});
+  const [expandedAdminLedgers, setExpandedAdminLedgers] = useState<Record<string, boolean>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
 
+  // Create decision poll drawer state (Manager/Admin)
+  const [showCreatePoll, setShowCreatePoll] = useState(false);
+  const [pollTitle, setPollTitle] = useState('');
+  const [pollDescription, setPollDescription] = useState('');
+  const [pollCategory, setPollCategory] = useState<DecisionPoll['category']>('general');
+  const [pollOptionsText, setPollOptionsText] = useState('Approve\nReject\nAbstain');
+  const [pollClosesAt, setPollClosesAt] = useState('');
+  const [creatingPoll, setCreatingPoll] = useState(false);
+
+  function toggleAdminLedger(id: string) {
+    setExpandedAdminLedgers((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
   async function handleLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
+    if (isAdmin) {
+      setFeedback({
+        type: 'error',
+        text: 'Administrators oversee ballot integrity and do not cast member votes.',
+      });
+      return;
+    }
     if (!isVerifiedMember) {
       setFeedback({
         type: 'error',
@@ -56,17 +96,10 @@ export function VotingView({
     setBusyId(loanId);
     setFeedback(null);
     try {
-      const res = await api.voteLoan(loanId, decision, comments[loanId]);
-      const updated = res.loan;
-      const upvotes = updated.votes.filter((v) => v.decision === 'approve').length;
+      await api.voteLoan(loanId, decision, comments[loanId]);
       setFeedback({
         type: 'success',
-        text:
-          updated.status === 'approved_pending_disbursement'
-            ? `Your UPVOTE was recorded on ${loanId}. 2/3 majority reached (${upvotes}/${updated.requiredApprovals}) — queued for disbursement!`
-            : updated.status === 'rejected'
-              ? `Your DOWNVOTE was recorded on ${loanId}. Request can no longer reach 2/3 quorum and has been declined.`
-              : `Your cryptographic ${decision.toUpperCase()} has been recorded on ${loanId}.`,
+        text: `Your secret ${decision.toUpperCase()} ballot has been cryptographically recorded on ${loanId}. Results remain sealed until Manager/Admin reveals them.`,
       });
       await onRefresh();
     } catch (err) {
@@ -79,19 +112,41 @@ export function VotingView({
     }
   }
 
+  async function handleRevealLoanVote(loanId: string) {
+    setBusyId(`reveal-${loanId}`);
+    setFeedback(null);
+    try {
+      const res = await api.revealLoanVote(loanId);
+      setFeedback({
+        type: 'success',
+        text: `Vote results for ${loanId} are now stopped & revealed (${res.loan.status.replace(/_/g, ' ')}).`,
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to reveal loan vote results.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleProjectVote(projectId: string, decision: 'yes' | 'no') {
+    if (isAdmin) {
+      setFeedback({
+        type: 'error',
+        text: 'Administrators oversee ballot integrity and do not cast member votes.',
+      });
+      return;
+    }
     setBusyId(projectId);
     setFeedback(null);
     try {
       const res = await api.voteHalalProject(projectId, decision, comments[projectId]);
-      const p = res.project;
-      const yesVotes = p.votes.filter((v) => v.decision === 'yes').length;
       setFeedback({
         type: 'success',
-        text:
-          p.votingStatus === 'approved'
-            ? `Vote "${decision.toUpperCase()}" recorded. "${p.title}" reached the 2/3 majority (${yesVotes}/${p.totalEligibleVoters}) and is Approved!`
-            : `Your "${decision.toUpperCase()}" ballot on "${p.title}" has been broadcast in real time.`,
+        text: `Your "${decision.toUpperCase()}" ballot on "${res.project.title}" has been sealed in the ballot box.`,
       });
       await onRefresh();
     } catch (err) {
@@ -104,6 +159,113 @@ export function VotingView({
     }
   }
 
+  async function handleRevealProjectVote(projectId: string) {
+    setBusyId(`reveal-proj-${projectId}`);
+    setFeedback(null);
+    try {
+      const res = await api.revealHalalProjectVote(projectId);
+      setFeedback({
+        type: 'success',
+        text: `Investment vote results for "${res.project.title}" are now stopped & revealed.`,
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to reveal investment vote results.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handlePollVote(pollId: string) {
+    const optionId = pollChoices[pollId];
+    if (!optionId) {
+      setFeedback({ type: 'error', text: 'Please select an option before submitting your ballot.' });
+      return;
+    }
+    setBusyId(`poll-${pollId}`);
+    setFeedback(null);
+    try {
+      await api.votePoll(pollId, optionId, comments[pollId]);
+      setFeedback({
+        type: 'success',
+        text: 'Your secret decision ballot has been recorded. Tallies remain hidden until Manager/Admin reveals results.',
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to submit decision vote.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleRevealPoll(pollId: string) {
+    setBusyId(`reveal-poll-${pollId}`);
+    setFeedback(null);
+    try {
+      await api.revealPoll(pollId);
+      setFeedback({
+        type: 'success',
+        text: 'Decision poll closed and verified results are now visible to all members.',
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to reveal decision poll results.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleCreatePoll(e: FormEvent) {
+    e.preventDefault();
+    setFeedback(null);
+    const parsedOptions = pollOptionsText
+      .split(/\n|,/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (pollTitle.trim().length < 3 || parsedOptions.length < 2) {
+      setFeedback({
+        type: 'error',
+        text: 'Provide a clear poll title and at least two ballot options (one per line or comma-separated).',
+      });
+      return;
+    }
+    setCreatingPoll(true);
+    try {
+      await api.createPoll({
+        title: pollTitle.trim(),
+        description: pollDescription.trim(),
+        category: pollCategory,
+        options: parsedOptions,
+        closesAt: pollClosesAt ? new Date(pollClosesAt).toISOString() : undefined,
+      });
+      setPollTitle('');
+      setPollDescription('');
+      setPollClosesAt('');
+      setShowCreatePoll(false);
+      setFeedback({
+        type: 'success',
+        text: 'Decision poll launched and cooperative members have been notified.',
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to launch decision poll.',
+      });
+    } finally {
+      setCreatingPoll(false);
+    }
+  }
+
   async function handleDisburse(loanId: string) {
     setBusyId(loanId);
     setFeedback(null);
@@ -111,7 +273,7 @@ export function VotingView({
       await api.disburseLoan(loanId);
       setFeedback({
         type: 'success',
-        text: `Multi-sig treasury disbursement completed for ${loanId}. Repayment schedule is now active.`,
+        text: `Qard Hasan disbursement confirmed for ${loanId}. Fund balance deducted and borrower notified.`,
       });
       await onRefresh();
     } catch (err) {
@@ -150,6 +312,9 @@ export function VotingView({
   const openProjects = projects.filter((p) => p.votingStatus === 'open');
   const closedProjects = projects.filter((p) => p.votingStatus !== 'open');
 
+  const openPolls = polls.filter((p) => p.status === 'open');
+  const closedPolls = polls.filter((p) => p.status !== 'open');
+
   const guarantorPendingForMe = loans.filter(
     (l) =>
       l.status === 'pending_guarantor' &&
@@ -162,11 +327,13 @@ export function VotingView({
     (l) =>
       l.status !== 'pending_vote' &&
       l.status !== 'approved_pending_disbursement' &&
-      l.status !== 'pending_guarantor'
+      l.status !== 'pending_guarantor' &&
+      l.status !== 'pending_manager_review'
   );
 
-  const showInvestments = categoryFilter === 'all' || categoryFilter === 'investments';
   const showLoans = categoryFilter === 'all' || categoryFilter === 'loans';
+  const showInvestments = categoryFilter === 'all' || categoryFilter === 'investments';
+  const showPolls = categoryFilter === 'all' || categoryFilter === 'polls';
 
   return (
     <div className="space-y-6">
@@ -183,7 +350,21 @@ export function VotingView({
         </div>
       )}
 
-      {!isVerifiedMember && (
+      {isAdmin && (
+        <div
+          role="note"
+          className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5"
+        >
+          <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+          <span>
+            <strong>Administrator Ballot Audit View:</strong> Only Administrators can inspect
+            individual member votes in the confidential audit ledger. Admins do not cast member
+            ballots.
+          </span>
+        </div>
+      )}
+
+      {!isVerifiedMember && !isAdmin && (
         <div
           role="alert"
           className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2"
@@ -196,50 +377,176 @@ export function VotingView({
         </div>
       )}
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Loan Requests &amp; Anonymized 2/3 Ballot Center
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Verified active members review Qard Hasan loan requests and cast secure, anonymized
-            Upvotes or Downvotes (plus Yes / No on investment placements). Approval requires a{' '}
-            {config?.voteThresholdNumerator || 2}/{config?.voteThresholdDenominator || 3} (66.7%)
-            supermajority; voter identities remain masked behind cryptographic hashes.
-          </p>
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              Opinion Ballot — Qard Hasan, Investment &amp; Decision Polls
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Secret cooperative ballots: members cannot view other members&apos; votes or live
+              results while a poll is ongoing. Only when the Manager stops &amp; reveals a vote do
+              final tallies become visible (Admins retain confidential ledger oversight).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {isStaff && (
+              <button
+                type="button"
+                onClick={() => setShowCreatePoll((v) => !v)}
+                className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{showCreatePoll ? 'Close Poll Form' : 'Initiate Decision Poll'}</span>
+              </button>
+            )}
+
+            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              {(
+                [
+                  { id: 'all', label: 'All Ballots' },
+                  { id: 'loans', label: `Qard Hasan (${pendingOrApprovedLoans.length})` },
+                  { id: 'polls', label: `Decision Polls (${openPolls.length})` },
+                  { id: 'investments', label: `Investments (${openProjects.length})` },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setCategoryFilter(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                    categoryFilter === tab.id
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit shrink-0">
-          {(
-            [
-              { id: 'all', label: 'All Ballots' },
-              { id: 'loans', label: `Loan Requests (${pendingOrApprovedLoans.length})` },
-              { id: 'investments', label: `Investments (${openProjects.length})` },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setCategoryFilter(tab.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                categoryFilter === tab.id
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {isStaff && showCreatePoll && (
+          <form
+            onSubmit={handleCreatePoll}
+            className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            <div>
+              <label
+                htmlFor="poll-title"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Decision Poll Title
+              </label>
+              <input
+                id="poll-title"
+                type="text"
+                required
+                value={pollTitle}
+                onChange={(e) => setPollTitle(e.target.value)}
+                placeholder="e.g. Approve Eid Emergency Qard Hasan Buffer"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="poll-category"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Category
+                </label>
+                <select
+                  id="poll-category"
+                  value={pollCategory}
+                  onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                >
+                  <option value="general">General Decision</option>
+                  <option value="policy">Policy / Rules</option>
+                  <option value="qard_hasan">Qard Hasan Matter</option>
+                  <option value="project">Project / Venture</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="poll-closes"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Optional Closing Date
+                </label>
+                <input
+                  id="poll-closes"
+                  type="datetime-local"
+                  value={pollClosesAt}
+                  onChange={(e) => setPollClosesAt(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="poll-desc"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Context / Description
+              </label>
+              <textarea
+                id="poll-desc"
+                rows={3}
+                value={pollDescription}
+                onChange={(e) => setPollDescription(e.target.value)}
+                placeholder="Background context for cooperative members…"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="poll-opts"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Ballot Options (one per line)
+              </label>
+              <textarea
+                id="poll-opts"
+                rows={3}
+                required
+                value={pollOptionsText}
+                onChange={(e) => setPollOptionsText(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            <div className="md:col-span-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreatePoll(false)}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creatingPoll}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+              >
+                {creatingPoll ? 'Launching…' : 'Launch Secret Poll'}
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
-      {guarantorPendingForMe.length > 0 && (
+      {!isAdmin && guarantorPendingForMe.length > 0 && (
         <section className="bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
-            <span>
-              Awaiting Your Guarantor Co-Signature ({guarantorPendingForMe.length})
-            </span>
+            <span>Awaiting Your Guarantor Co-Signature ({guarantorPendingForMe.length})</span>
           </div>
           <div className="divide-y divide-amber-200/70 dark:divide-amber-900/40">
             {guarantorPendingForMe.map((loan) => (
@@ -288,139 +595,12 @@ export function VotingView({
         </div>
       ) : (
         <>
-          {/* Section A: Fund Investment Placement Ballots (Yes / No) */}
-          {showInvestments && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Fund Investment Placement Proposals (Yes / No)
-                </h3>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {openProjects.length} open for vote
-                </span>
-              </div>
-
-              {openProjects.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No proposed investment placements are currently open for voting.
-                </div>
-              ) : (
-                openProjects.map((proj) => {
-                  const yesVotes = proj.votes.filter((v) => v.decision === 'yes').length;
-                  const noVotes = proj.votes.filter((v) => v.decision === 'no').length;
-                  const totalEligible = proj.totalEligibleVoters || 1;
-                  const reqApprovals =
-                    proj.requiredApprovals || Math.ceil((totalEligible * 2) / 3);
-                  const progressPct = Math.min(100, Math.round((yesVotes / reqApprovals) * 100));
-                  const yesPct = Math.round((yesVotes / totalEligible) * 100);
-                  const myVote = proj.votes.find((v) => v.isSelf || v.voterId === user.id);
-
-                  return (
-                    <article
-                      key={proj.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                        <div className="space-y-1.5">
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                              Investment Placement · {proj.shariahStructure}
-                            </span>
-                            <span aria-hidden="true">·</span>
-                            <span>{proj.sector}</span>
-                            <span aria-hidden="true">·</span>
-                            <StatusText status="pending" />
-                          </div>
-                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            {proj.title} — {formatMoney(proj.targetAllocation, ccy)}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-300">
-                            {proj.shariahScholarNote}
-                          </p>
-                          <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                            Projected Return: {proj.projectedAnnualReturn} · Risk: {proj.riskTier}
-                          </div>
-                        </div>
-
-                        <div className="lg:w-72 shrink-0 space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
-                              2/3 Majority Threshold
-                            </span>
-                            <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                              {yesVotes} / {reqApprovals} Yes ({yesPct}%)
-                            </span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-600 transition-all duration-300"
-                              style={{ width: `${progressPct}%` }}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                            <span>Yes: {yesVotes}</span>
-                            <span>No: {noVotes}</span>
-                            <span>{totalEligible} active members</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                        {myVote ? (
-                          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                            <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-                            <span>
-                              You voted <strong className="uppercase">{myVote.decision}</strong> on{' '}
-                              {formatDateTime(myVote.castAt)} (Sig: {shortHash(myVote.signatureHash)})
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                            <input
-                              type="text"
-                              value={comments[proj.id] || ''}
-                              onChange={(e) =>
-                                setComments((prev) => ({ ...prev, [proj.id]: e.target.value }))
-                              }
-                              placeholder="Optional placement ballot rationale…"
-                              className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                            />
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                type="button"
-                                disabled={busyId === proj.id}
-                                onClick={() => handleProjectVote(proj.id, 'yes')}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                              >
-                                <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                                <span>Vote Yes</span>
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busyId === proj.id}
-                                onClick={() => handleProjectVote(proj.id, 'no')}
-                                className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                              >
-                                <X className="w-3.5 h-3.5" aria-hidden="true" />
-                                <span>Vote No</span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </section>
-          )}
-
-          {/* Section B: Qard Hasan Loan Ballots */}
+          {/* Section 1: Qard Hasan Loan Ballots */}
           {showLoans && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Pending Qard Hasan Loan Requests (Upvote / Downvote · 2/3 Majority)
+                  Qard Hasan Approval Voting
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
                   {pendingOrApprovedLoans.length} active
@@ -429,27 +609,30 @@ export function VotingView({
 
               {pendingOrApprovedLoans.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No loan proposals are currently awaiting 2/3 member votes or treasury
-                  disbursement.
+                  No Qard Hasan proposals are currently open for voting or awaiting disbursement.
                 </div>
               ) : (
                 pendingOrApprovedLoans.map((loan) => {
-                  const approveCount = loan.votes.filter((v) => v.decision === 'approve').length;
-                  const rejectCount = loan.votes.filter((v) => v.decision === 'reject').length;
+                  const isRevealed = Boolean(loan.voteResultRevealed);
+                  const canSeeTally = isRevealed || isAdmin;
+                  const approveCount =
+                    loan.approveCount ?? loan.votes.filter((v) => v.decision === 'approve').length;
+                  const rejectCount =
+                    loan.rejectCount ?? loan.votes.filter((v) => v.decision === 'reject').length;
+                  const totalCast = loan.totalVotesCast ?? loan.votes.length;
                   const remainingNeeded = Math.max(0, loan.requiredApprovals - approveCount);
                   const progressPct = Math.min(
                     100,
-                    Math.round((approveCount / loan.requiredApprovals) * 100)
-                  );
-                  const voterPct = Math.round(
-                    (approveCount / Math.max(1, loan.totalEligibleVoters)) * 100
+                    Math.round((approveCount / Math.max(1, loan.requiredApprovals)) * 100)
                   );
                   const myVote = loan.votes.find((v) => v.isSelf || v.voterId === user.id);
+                  const adminLedger = loan.adminVoteLedger || [];
+                  const ledgerExpanded = Boolean(expandedAdminLedgers[loan.id]);
 
                   return (
                     <article
                       key={loan.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -461,6 +644,12 @@ export function VotingView({
                             <span>Requested {formatDateTime(loan.requestedAt)}</span>
                             <span aria-hidden="true">·</span>
                             <StatusText status={loan.status} />
+                            {!isRevealed && loan.status === 'pending_vote' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
+                                <Lock className="w-3 h-3" aria-hidden="true" />
+                                <span>Poll Ongoing</span>
+                              </span>
+                            )}
                           </div>
                           <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                             {loan.borrowerName} ({loan.borrowerCode}) —{' '}
@@ -487,106 +676,141 @@ export function VotingView({
                           )}
                         </div>
 
-                        <div className="lg:w-80 shrink-0 space-y-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
-                              2/3 Quorum Progress ({voterPct}%)
-                            </span>
-                            <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                              {approveCount} / {loan.requiredApprovals} upvotes
-                            </span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-600 transition-all duration-300"
-                              style={{ width: `${progressPct}%` }}
-                            />
-                          </div>
-                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums">
-                            <span className="text-emerald-700 dark:text-emerald-400">
-                              Upvotes: {approveCount}
-                            </span>
-                            <span className="text-red-700 dark:text-red-400">
-                              Downvotes: {rejectCount}
-                            </span>
-                            <span className="text-slate-500 dark:text-slate-400">
-                              {remainingNeeded > 0
-                                ? `${remainingNeeded} more needed (${loan.totalEligibleVoters} active)`
-                                : `Quorum met (${loan.totalEligibleVoters} active)`}
-                            </span>
-                          </div>
+                        <div className="lg:w-80 shrink-0 space-y-2.5 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                          {canSeeTally ? (
+                            <>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">
+                                  {isRevealed ? 'Revealed Vote Result' : 'Admin Confidential Tally'}
+                                </span>
+                                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                                  {approveCount} / {loan.requiredApprovals} upvotes
+                                </span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-emerald-600 transition-all duration-300"
+                                  style={{ width: `${progressPct}%` }}
+                                />
+                              </div>
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums">
+                                <span className="text-emerald-700 dark:text-emerald-400">
+                                  Upvotes: {approveCount}
+                                </span>
+                                <span className="text-red-700 dark:text-red-400">
+                                  Downvotes: {rejectCount}
+                                </span>
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {remainingNeeded > 0
+                                    ? `${totalCast} cast (${loan.totalEligibleVoters} active)`
+                                    : `Quorum met (${loan.totalEligibleVoters} active)`}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                                <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                                <span>Poll Ongoing — Secret Ballot</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {totalCast} ballot{totalCast === 1 ? '' : 's'} submitted so far (of{' '}
+                                {loan.totalEligibleVoters} eligible voters). Tallies stay hidden
+                                until Manager reveals the vote result.
+                              </p>
+                            </div>
+                          )}
+
+                          {isStaff && loan.status === 'pending_vote' && !isRevealed && (
+                            <button
+                              type="button"
+                              disabled={busyId === `reveal-${loan.id}`}
+                              onClick={() => void handleRevealLoanVote(loan.id)}
+                              className="w-full mt-1 px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>
+                                {busyId === `reveal-${loan.id}`
+                                  ? 'Revealing Result…'
+                                  : 'Stop Voting & Reveal Result'}
+                              </span>
+                            </button>
+                          )}
                         </div>
                       </div>
 
-                      {loan.votes.length > 0 && (
+                      {/* Admin-only Individual Vote Audit Ledger */}
+                      {isAdmin && adminLedger.length > 0 && (
                         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                              Anonymized Member Ballots ({loan.votes.length})
-                            </div>
-                            <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                              Identities masked · SHA-256 verified
+                          <button
+                            type="button"
+                            onClick={() => toggleAdminLedger(loan.id)}
+                            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>
+                              {ledgerExpanded ? 'Hide' : 'Inspect'} Confidential Admin Vote Ledger (
+                              {adminLedger.length})
                             </span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {loan.votes.map((v) => {
-                              const isUp = v.decision === 'approve';
-                              const isSelf = Boolean(v.isSelf || v.voterId === user.id);
-                              return (
-                                <div
-                                  key={`${loan.id}-${v.voterId}`}
-                                  className={`px-3 py-2 rounded-lg border flex items-start justify-between gap-2 text-xs ${
-                                    isSelf
-                                      ? 'border-emerald-300 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25'
-                                      : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
-                                  }`}
-                                >
-                                  <div className="min-w-0 space-y-0.5">
-                                    <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-white">
-                                      {isUp ? (
-                                        <ThumbsUp
-                                          className="w-3.5 h-3.5 text-emerald-600 shrink-0"
-                                          aria-hidden="true"
-                                        />
-                                      ) : (
-                                        <ThumbsDown
-                                          className="w-3.5 h-3.5 text-red-600 shrink-0"
-                                          aria-hidden="true"
-                                        />
+                          </button>
+
+                          {ledgerExpanded && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                              {adminLedger.map((v) => {
+                                const isUp = v.decision === 'approve';
+                                return (
+                                  <div
+                                    key={`${loan.id}-${v.voterId}`}
+                                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-2 text-xs"
+                                  >
+                                    <div className="min-w-0 space-y-0.5">
+                                      <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-white">
+                                        {isUp ? (
+                                          <ThumbsUp
+                                            className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+                                            aria-hidden="true"
+                                          />
+                                        ) : (
+                                          <ThumbsDown
+                                            className="w-3.5 h-3.5 text-red-600 shrink-0"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+                                        <span className="truncate">{v.voterName}</span>
+                                        <span className="text-[10px] uppercase font-mono text-slate-400">
+                                          ({v.voterRole})
+                                        </span>
+                                      </div>
+                                      {v.comment && (
+                                        <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                                          &ldquo;{v.comment}&rdquo;
+                                        </p>
                                       )}
-                                      <span className="truncate">{v.voterName}</span>
-                                      <span className="text-[11px] text-slate-500">
-                                        {isSelf ? '(Your Ballot)' : '(Anonymized)'}
-                                      </span>
                                     </div>
-                                    {v.comment && (
-                                      <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                                        &ldquo;{v.comment}&rdquo;
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="text-right shrink-0">
-                                    <div
-                                      className={`font-semibold text-[11px] ${
-                                        isUp
-                                          ? 'text-emerald-700 dark:text-emerald-400'
-                                          : 'text-red-700 dark:text-red-400'
-                                      }`}
-                                    >
-                                      {isUp ? 'Upvoted' : 'Downvoted'}
-                                    </div>
-                                    <div className="font-mono text-[10px] text-slate-400">
-                                      {shortHash(v.signatureHash)}
+                                    <div className="text-right shrink-0">
+                                      <div
+                                        className={`font-semibold text-[11px] ${
+                                          isUp
+                                            ? 'text-emerald-700 dark:text-emerald-400'
+                                            : 'text-red-700 dark:text-red-400'
+                                        }`}
+                                      >
+                                        {isUp ? 'Upvoted' : 'Downvoted'}
+                                      </div>
+                                      <div className="font-mono text-[10px] text-slate-400">
+                                        {shortHash(v.signatureHash)}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {loan.status === 'pending_vote' && (
+                      {/* Member/Manager Vote Controls */}
+                      {loan.status === 'pending_vote' && !isRevealed && !isAdmin && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                           {myVote ? (
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
@@ -597,35 +821,36 @@ export function VotingView({
                                   {myVote.decision === 'approve' ? 'Upvote' : 'Downvote'}
                                 </strong>{' '}
                                 on {formatDateTime(myVote.castAt)} (Sig:{' '}
-                                {shortHash(myVote.signatureHash)})
+                                {shortHash(myVote.signatureHash)}). Other members cannot see your
+                                vote.
                               </span>
                             </div>
                           ) : (
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                               <input
                                 type="text"
-                                disabled={!isVerifiedMember}
+                                disabled={!canCastBallot}
                                 value={comments[loan.id] || ''}
                                 onChange={(e) =>
                                   setComments((prev) => ({ ...prev, [loan.id]: e.target.value }))
                                 }
-                                placeholder="Optional ballot rationale (recorded in audit log)…"
+                                placeholder="Optional secret rationale (visible only to Admin audit)…"
                                 className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
                               />
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
-                                  disabled={!isVerifiedMember || busyId === loan.id}
-                                  onClick={() => handleLoanVote(loan.id, 'upvote')}
-                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  disabled={!canCastBallot || busyId === loan.id}
+                                  onClick={() => void handleLoanVote(loan.id, 'upvote')}
+                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>Upvote</span>
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={!isVerifiedMember || busyId === loan.id}
-                                  onClick={() => handleLoanVote(loan.id, 'downvote')}
+                                  disabled={!canCastBallot || busyId === loan.id}
+                                  onClick={() => void handleLoanVote(loan.id, 'downvote')}
                                   className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
@@ -640,22 +865,28 @@ export function VotingView({
                       {loan.status === 'approved_pending_disbursement' && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium inline-flex items-center gap-1.5">
-                            <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                            <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                             <span>
-                              2/3 member quorum achieved ({approveCount}/{loan.totalEligibleVoters}
-                              ). Ready for Manager/Admin treasury disbursement.
+                              Approved for Qard Hasan disbursement ({approveCount}/
+                              {loan.totalEligibleVoters} upvotes). Confirming deducts{' '}
+                              {formatMoney(loan.amount, ccy)} from central fund balance and notifies{' '}
+                              {loan.borrowerName}.
                             </span>
                           </div>
                           {isStaff && (
                             <button
                               type="button"
-                              disabled={busyId === loan.id}
-                              onClick={() => handleDisburse(loan.id)}
-                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              disabled={
+                                busyId === loan.id ||
+                                (typeof availableLiquidity === 'number' &&
+                                  loan.amount > availableLiquidity)
+                              }
+                              onClick={() => void handleDisburse(loan.id)}
+                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               {busyId === loan.id
-                                ? 'Signing Disbursement…'
-                                : 'Execute Multi-Sig Disbursement'}
+                                ? 'Disbursing…'
+                                : 'Confirm & Deduct from Fund'}
                             </button>
                           )}
                         </div>
@@ -667,15 +898,500 @@ export function VotingView({
             </section>
           )}
 
-          {/* Completed Voting Outcomes */}
-          {(closedProjects.length > 0 || archivedLoans.length > 0) && (
+          {/* Section 2: General & Policy Decision Polls */}
+          {showPolls && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Cooperative Decision Polls
+                </h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+                  {openPolls.length} ongoing
+                </span>
+              </div>
+
+              {openPolls.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  No cooperative decision polls are currently open.
+                </div>
+              ) : (
+                openPolls.map((poll) => {
+                  const isRevealed = Boolean(poll.voteResultRevealed);
+                  const canSeeTally = isRevealed || isAdmin;
+                  const totalCast = poll.totalVotesCast ?? poll.votes.length;
+                  const myVote = poll.votes.find((v) => v.isSelf || v.voterId === user.id);
+                  const myOptionLabel = myVote
+                    ? poll.options.find((o) => o.id === myVote.optionId)?.label || myVote.optionId
+                    : null;
+                  const adminLedger = poll.adminVoteLedger || [];
+                  const ledgerExpanded = Boolean(expandedAdminLedgers[poll.id]);
+
+                  return (
+                    <article
+                      key={poll.id}
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400 uppercase">
+                              {poll.category.replace(/_/g, ' ')}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span>Initiated by {poll.createdByName}</span>
+                            <span aria-hidden="true">·</span>
+                            <StatusText status={poll.status} />
+                            {!isRevealed && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
+                                <Lock className="w-3 h-3" aria-hidden="true" />
+                                <span>Poll Ongoing</span>
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                            {poll.title}
+                          </h4>
+                          {poll.description && (
+                            <p className="text-sm text-slate-600 dark:text-slate-300">
+                              {poll.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="lg:w-72 shrink-0 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 dark:text-slate-400">Ballots Cast</span>
+                            <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                              {totalCast}
+                            </span>
+                          </div>
+                          {!canSeeTally && (
+                            <p className="text-[11px] text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                              <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                              <span>Results hidden while poll is ongoing.</span>
+                            </p>
+                          )}
+                          {isStaff && !isRevealed && (
+                            <button
+                              type="button"
+                              disabled={busyId === `reveal-poll-${poll.id}`}
+                              onClick={() => void handleRevealPoll(poll.id)}
+                              className="w-full px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>
+                                {busyId === `reveal-poll-${poll.id}`
+                                  ? 'Revealing…'
+                                  : 'Stop Voting & Reveal Results'}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {canSeeTally && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {poll.options.map((opt) => {
+                            const count = opt.voteCount ?? 0;
+                            const pct =
+                              totalCast > 0 ? Math.round((count / totalCast) * 100) : 0;
+                            return (
+                              <div
+                                key={opt.id}
+                                className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 space-y-1.5 text-xs"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-slate-900 dark:text-white">
+                                    {opt.label}
+                                  </span>
+                                  <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                                    {count} ({pct}%)
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                  <div
+                                    className="h-full bg-emerald-600"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isAdmin && adminLedger.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleAdminLedger(poll.id)}
+                            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>
+                              {ledgerExpanded ? 'Hide' : 'Inspect'} Admin Vote Audit Ledger (
+                              {adminLedger.length})
+                            </span>
+                          </button>
+                          {ledgerExpanded && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {adminLedger.map((v) => {
+                                const lbl =
+                                  poll.options.find((o) => o.id === v.optionId)?.label ||
+                                  v.optionId;
+                                return (
+                                  <div
+                                    key={`${poll.id}-${v.voterId}`}
+                                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs flex items-center justify-between gap-2"
+                                  >
+                                    <div>
+                                      <span className="font-medium text-slate-900 dark:text-white">
+                                        {v.voterName}
+                                      </span>{' '}
+                                      <span className="text-[10px] font-mono text-slate-400">
+                                        ({v.voterRole})
+                                      </span>
+                                    </div>
+                                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                                      {lbl}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {!isAdmin && poll.status === 'open' && !isRevealed && (
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                          {myVote ? (
+                            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                              <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                              <span>
+                                Your ballot was recorded for{' '}
+                                <strong>{myOptionLabel}</strong> on{' '}
+                                {formatDateTime(myVote.castAt)} (Sig:{' '}
+                                {shortHash(myVote.signatureHash)}).
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex flex-wrap gap-2">
+                                {poll.options.map((opt) => {
+                                  const selected = pollChoices[poll.id] === opt.id;
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      disabled={!canCastBallot}
+                                      onClick={() =>
+                                        setPollChoices((prev) => ({
+                                          ...prev,
+                                          [poll.id]: opt.id,
+                                        }))
+                                      }
+                                      className={`px-3.5 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors disabled:opacity-50 ${
+                                        selected
+                                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
+                                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                      }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                  type="text"
+                                  disabled={!canCastBallot}
+                                  value={comments[poll.id] || ''}
+                                  onChange={(e) =>
+                                    setComments((prev) => ({
+                                      ...prev,
+                                      [poll.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Optional confidential note…"
+                                  className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                />
+                                <button
+                                  type="button"
+                                  disabled={!canCastBallot || busyId === `poll-${poll.id}`}
+                                  onClick={() => void handlePollVote(poll.id)}
+                                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  Submit Secret Vote
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </section>
+          )}
+
+          {/* Section 3: Fund Investment Placement Ballots */}
+          {showInvestments && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Halal Investment Placement Proposals (Yes / No)
+                </h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {openProjects.length} open for vote
+                </span>
+              </div>
+
+              {openProjects.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  No proposed investment placements are currently open for voting.
+                </div>
+              ) : (
+                openProjects.map((proj) => {
+                  const isRevealed = Boolean(proj.voteResultRevealed);
+                  const canSeeTally = isRevealed || isAdmin;
+                  const yesVotes =
+                    proj.yesCount ?? proj.votes.filter((v) => v.decision === 'yes').length;
+                  const noVotes =
+                    proj.noCount ?? proj.votes.filter((v) => v.decision === 'no').length;
+                  const totalCast = proj.totalVotesCast ?? proj.votes.length;
+                  const totalEligible = proj.totalEligibleVoters || 1;
+                  const reqApprovals =
+                    proj.requiredApprovals || Math.ceil((totalEligible * 2) / 3);
+                  const progressPct = Math.min(100, Math.round((yesVotes / reqApprovals) * 100));
+                  const yesPct = Math.round((yesVotes / totalEligible) * 100);
+                  const myVote = proj.votes.find((v) => v.isSelf || v.voterId === user.id);
+                  const adminLedger = proj.adminVoteLedger || [];
+                  const ledgerExpanded = Boolean(expandedAdminLedgers[proj.id]);
+
+                  return (
+                    <article
+                      key={proj.id}
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                              Investment Placement · {proj.shariahStructure}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span>{proj.sector}</span>
+                            <span aria-hidden="true">·</span>
+                            <StatusText status="pending" />
+                            {!isRevealed && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
+                                <Lock className="w-3 h-3" aria-hidden="true" />
+                                <span>Poll Ongoing</span>
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                            {proj.title} — {formatMoney(proj.targetAllocation, ccy)}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                            {proj.shariahScholarNote}
+                          </p>
+                          <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                            Projected Return: {proj.projectedAnnualReturn} · Risk: {proj.riskTier}
+                          </div>
+                        </div>
+
+                        <div className="lg:w-72 shrink-0 space-y-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                          {canSeeTally ? (
+                            <>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">
+                                  {isRevealed ? 'Revealed Tally' : 'Admin Tally'}
+                                </span>
+                                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                                  {yesVotes} / {reqApprovals} Yes ({yesPct}%)
+                                </span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-emerald-600 transition-all duration-300"
+                                  style={{ width: `${progressPct}%` }}
+                                />
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+                                <span>Yes: {yesVotes}</span>
+                                <span>No: {noVotes}</span>
+                                <span>{totalEligible} active</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="space-y-1 text-xs">
+                              <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                                <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                                <span>Poll Ongoing</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {totalCast} secret ballot{totalCast === 1 ? '' : 's'} submitted.
+                                Results stay sealed until revealed.
+                              </p>
+                            </div>
+                          )}
+
+                          {isStaff && !isRevealed && (
+                            <button
+                              type="button"
+                              disabled={busyId === `reveal-proj-${proj.id}`}
+                              onClick={() => void handleRevealProjectVote(proj.id)}
+                              className="w-full px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>
+                                {busyId === `reveal-proj-${proj.id}`
+                                  ? 'Revealing…'
+                                  : 'Stop Voting & Reveal Result'}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {isAdmin && adminLedger.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleAdminLedger(proj.id)}
+                            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>
+                              {ledgerExpanded ? 'Hide' : 'Inspect'} Confidential Admin Ledger (
+                              {adminLedger.length})
+                            </span>
+                          </button>
+                          {ledgerExpanded && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {adminLedger.map((v) => (
+                                <div
+                                  key={`${proj.id}-${v.voterId}`}
+                                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs flex items-center justify-between gap-2"
+                                >
+                                  <span>{v.voterName}</span>
+                                  <span
+                                    className={`font-semibold uppercase ${
+                                      v.decision === 'yes'
+                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                        : 'text-red-700 dark:text-red-400'
+                                    }`}
+                                  >
+                                    {v.decision}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {!isAdmin && !isRevealed && (
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                          {myVote ? (
+                            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                              <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                              <span>
+                                You voted <strong className="uppercase">{myVote.decision}</strong>{' '}
+                                on {formatDateTime(myVote.castAt)} (Sig:{' '}
+                                {shortHash(myVote.signatureHash)})
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                              <input
+                                type="text"
+                                disabled={!canCastBallot}
+                                value={comments[proj.id] || ''}
+                                onChange={(e) =>
+                                  setComments((prev) => ({ ...prev, [proj.id]: e.target.value }))
+                                }
+                                placeholder="Optional confidential rationale…"
+                                className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              />
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={!canCastBallot || busyId === proj.id}
+                                  onClick={() => void handleProjectVote(proj.id, 'yes')}
+                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>Vote Yes</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!canCastBallot || busyId === proj.id}
+                                  onClick={() => void handleProjectVote(proj.id, 'no')}
+                                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>Vote No</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </section>
+          )}
+
+          {/* Completed Voting Outcomes (Revealed Tallies Only) */}
+          {(closedProjects.length > 0 || archivedLoans.length > 0 || closedPolls.length > 0) && (
             <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-3">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Completed 2/3 Voting Outcomes
+                Completed &amp; Revealed Ballot Outcomes
               </h3>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                {closedPolls.map((poll) => {
+                  const totalCast = poll.totalVotesCast ?? poll.votes.length;
+                  return (
+                    <div
+                      key={poll.id}
+                      className="py-3 flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <div className="space-y-1">
+                        <div>
+                          <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                            Decision Poll
+                          </span>
+                          <span aria-hidden="true"> · </span>
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            {poll.title}
+                          </span>
+                          {(poll.voteResultRevealed || isAdmin) && (
+                            <>
+                              <span aria-hidden="true"> · </span>
+                              <span className="text-slate-500">
+                                {poll.options
+                                  .map((o) => `${o.label}: ${o.voteCount ?? 0}`)
+                                  .join(' / ')}{' '}
+                                ({totalCast} cast)
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <StatusText status={poll.status} />
+                    </div>
+                  );
+                })}
                 {closedProjects.map((proj) => {
-                  const yesVotes = proj.votes.filter((v) => v.decision === 'yes').length;
+                  const canSee = Boolean(proj.voteResultRevealed) || isAdmin;
+                  const yesVotes =
+                    proj.yesCount ?? proj.votes.filter((v) => v.decision === 'yes').length;
                   return (
                     <div
                       key={proj.id}
@@ -693,10 +1409,14 @@ export function VotingView({
                         <span className="font-mono">
                           {formatMoney(proj.targetAllocation, ccy)}
                         </span>
-                        <span aria-hidden="true"> · </span>
-                        <span className="text-slate-500">
-                          {yesVotes}/{proj.totalEligibleVoters} voted Yes
-                        </span>
+                        {canSee && (
+                          <>
+                            <span aria-hidden="true"> · </span>
+                            <span className="text-slate-500">
+                              {yesVotes}/{proj.totalEligibleVoters} voted Yes
+                            </span>
+                          </>
+                        )}
                       </div>
                       <StatusText
                         status={proj.votingStatus === 'approved' ? 'approved' : 'rejected'}
@@ -705,7 +1425,9 @@ export function VotingView({
                   );
                 })}
                 {archivedLoans.map((loan) => {
-                  const approvals = loan.votes.filter((v) => v.decision === 'approve').length;
+                  const canSee = Boolean(loan.voteResultRevealed) || isAdmin;
+                  const approvals =
+                    loan.approveCount ?? loan.votes.filter((v) => v.decision === 'approve').length;
                   return (
                     <div
                       key={loan.id}
@@ -721,10 +1443,14 @@ export function VotingView({
                         </span>
                         <span aria-hidden="true"> · </span>
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
-                        <span aria-hidden="true"> · </span>
-                        <span className="text-slate-500">
-                          {approvals}/{loan.totalEligibleVoters} approved
-                        </span>
+                        {canSee && (
+                          <>
+                            <span aria-hidden="true"> · </span>
+                            <span className="text-slate-500">
+                              {approvals}/{loan.totalEligibleVoters} approved
+                            </span>
+                          </>
+                        )}
                       </div>
                       <StatusText status={loan.status} />
                     </div>

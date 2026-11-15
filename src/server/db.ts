@@ -6,12 +6,15 @@ import type {
   AuditLogEntry,
   CommunityPost,
   Contribution,
+  CoopMeeting,
+  DecisionPoll,
   EmailNotification,
   EncryptedEnvelope,
   FundConfig,
   HalalProject,
   LoanRequest,
   NotificationPreferences,
+  ProfileChangeRequest,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
@@ -65,6 +68,9 @@ export interface VaultState {
   auditLogs: AuditLogEntry[];
   communityPosts: CommunityPost[];
   privateMessages: StoredPrivateMessage[];
+  decisionPolls?: DecisionPoll[];
+  meetings?: CoopMeeting[];
+  profileChangeRequests?: ProfileChangeRequest[];
 }
 
 const VAULT_DIR = path.resolve(process.cwd(), 'data');
@@ -148,6 +154,9 @@ function createSeedState(): VaultState {
     auditLogs,
     communityPosts: [],
     privateMessages: [],
+    decisionPolls: [],
+    meetings: [],
+    profileChangeRequests: [],
   };
 }
 
@@ -251,6 +260,15 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.privateMessages = Array.isArray(state.privateMessages)
     ? state.privateMessages
+    : [];
+  state.decisionPolls = Array.isArray(state.decisionPolls)
+    ? state.decisionPolls
+    : [];
+  state.meetings = Array.isArray(state.meetings)
+    ? state.meetings
+    : [];
+  state.profileChangeRequests = Array.isArray(state.profileChangeRequests)
+    ? state.profileChangeRequests
     : [];
   if (state.fundConfig) {
     if (state.fundConfig.guarantorThresholdAmount === undefined) {
@@ -406,6 +424,12 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('communityPosts').createIndex({ createdAt: -1 }),
         mongoDb.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
+        mongoDb.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('decisionPolls').createIndex({ createdAt: -1 }),
+        mongoDb.collection('meetings').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('meetings').createIndex({ scheduledFor: 1 }),
+        mongoDb.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
       ]);
 
       initialized = true;
@@ -440,6 +464,9 @@ export async function loadVaultState(): Promise<VaultState> {
       auditLogs,
       communityPosts,
       privateMessages,
+      decisionPolls,
+      meetings,
+      profileChangeRequests,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
       mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -450,6 +477,9 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
       mongoDb.collection<CommunityPost>('communityPosts').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
+      mongoDb.collection<DecisionPoll>('decisionPolls').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+      mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
+      mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
     ]);
 
     return normalizeVaultState({
@@ -462,6 +492,9 @@ export async function loadVaultState(): Promise<VaultState> {
       auditLogs,
       communityPosts,
       privateMessages,
+      decisionPolls,
+      meetings,
+      profileChangeRequests,
     });
   }
   return readLocalVault();
@@ -522,6 +555,24 @@ export function updateVaultState(
         syncCollectionById(mongoDb, 'auditLogs', current.auditLogs, next.auditLogs),
         syncCollectionById(mongoDb, 'communityPosts', current.communityPosts, next.communityPosts),
         syncCollectionById(mongoDb, 'privateMessages', current.privateMessages, next.privateMessages),
+        syncCollectionById(
+          mongoDb,
+          'decisionPolls',
+          current.decisionPolls || [],
+          next.decisionPolls || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'meetings',
+          current.meetings || [],
+          next.meetings || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'profileChangeRequests',
+          current.profileChangeRequests || [],
+          next.profileChangeRequests || []
+        ),
       ]);
     } else {
       writeLocalVault(next);

@@ -5,7 +5,9 @@ import type {
   CommunityReactionType,
   Contribution,
   ConversationThreadSummary,
+  CoopMeeting,
   DashboardOverview,
+  DecisionPoll,
   EligibilityCheck,
   EmailNotification,
   FundConfig,
@@ -15,6 +17,7 @@ import type {
   MemberSummary,
   NotificationPreferences,
   PrivateMessage,
+  ProfileChangeRequest,
   PublicUser,
   ReceiptAiExtraction,
   UserRole,
@@ -115,9 +118,30 @@ export const api = {
     occupation?: string;
     companyOrganization?: string;
   }) =>
-    apiRequest<{ user: PublicUser }>('/api/profile', {
+    apiRequest<{
+      pendingApproval?: boolean;
+      user: PublicUser;
+      request?: ProfileChangeRequest;
+      message?: string;
+    }>('/api/profile', {
       method: 'PATCH',
       body: JSON.stringify(payload),
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiRequest<{ ok: boolean; user: PublicUser }>('/api/profile/password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+  getProfileChangeRequests: () =>
+    apiRequest<{ requests: ProfileChangeRequest[] }>('/api/profile/change-requests'),
+  reviewProfileChangeRequest: (
+    id: string,
+    decision: 'approved' | 'rejected',
+    reviewNote?: string
+  ) =>
+    apiRequest<{ request: ProfileChangeRequest }>(`/api/profile/change-requests/${id}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reviewNote }),
     }),
   login: (email: string, password: string) =>
     apiRequest<{ user: PublicUser }>('/api/auth/login', {
@@ -233,6 +257,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ decision, note }),
     }),
+  initiateLoanVote: (id: string) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/initiate-vote`, {
+      method: 'POST',
+    }),
+  revealLoanVote: (id: string) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/reveal-vote`, {
+      method: 'POST',
+    }),
   voteLoan: (
     id: string,
     decision: 'approve' | 'reject' | 'upvote' | 'downvote',
@@ -273,13 +305,14 @@ export const api = {
   verifyInstallmentRepayment: (
     loanId: string,
     installmentNumber: number,
-    decision: 'approve' | 'reject'
+    decision: 'approve' | 'reject',
+    reviewNote?: string
   ) =>
     apiRequest<{ loan: LoanRequest }>(
       `/api/loans/${loanId}/installments/${installmentNumber}/verify`,
       {
         method: 'PATCH',
-        body: JSON.stringify({ decision }),
+        body: JSON.stringify({ decision, reviewNote }),
       }
     ),
   requestLoanReschedule: (loanId: string, payload: { requestedMonths: number; reason: string }) =>
@@ -315,6 +348,10 @@ export const api = {
     apiRequest<{ project: HalalProject }>(`/api/halal-projects/${id}/vote`, {
       method: 'POST',
       body: JSON.stringify({ decision, comment }),
+    }),
+  revealHalalProjectVote: (id: string) =>
+    apiRequest<{ project: HalalProject }>(`/api/halal-projects/${id}/reveal`, {
+      method: 'POST',
     }),
   distributeHalalProfit: (
     id: string,
@@ -552,6 +589,46 @@ export const api = {
   deletePrivateMessage: (messageId: string) =>
     apiRequest<{ ok: boolean; messageId: string }>(`/api/messages/${messageId}`, {
       method: 'DELETE',
+    }),
+
+  // Decision Opinion Polls & Meetings
+  getPolls: () => apiRequest<{ polls: DecisionPoll[] }>('/api/polls'),
+  createPoll: (payload: {
+    title: string;
+    description?: string;
+    category?: DecisionPoll['category'];
+    options: string[];
+    closesAt?: string;
+  }) =>
+    apiRequest<{ poll: DecisionPoll }>('/api/polls', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  votePoll: (id: string, optionId: string, comment?: string) =>
+    apiRequest<{ poll: DecisionPoll }>(`/api/polls/${id}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ optionId, comment }),
+    }),
+  revealPoll: (id: string) =>
+    apiRequest<{ poll: DecisionPoll }>(`/api/polls/${id}/reveal`, {
+      method: 'POST',
+    }),
+
+  getMeetings: () => apiRequest<{ meetings: CoopMeeting[] }>('/api/meetings'),
+  createMeeting: (payload: {
+    title: string;
+    agenda?: string;
+    scheduledFor: string;
+    locationOrLink: string;
+  }) =>
+    apiRequest<{ meeting: CoopMeeting }>('/api/meetings', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateMeetingStatus: (id: string, status: CoopMeeting['status']) =>
+    apiRequest<{ meeting: CoopMeeting }>(`/api/meetings/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     }),
 };
 

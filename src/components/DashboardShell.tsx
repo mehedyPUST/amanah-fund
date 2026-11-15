@@ -9,11 +9,11 @@ import {
   BarChart3,
   Bell,
   CheckCircle2,
+  ClipboardCheck,
   CreditCard,
   HandCoins,
   History,
   Home,
-  HomeIcon,
   LogOut,
   Menu,
   MessageSquare,
@@ -25,6 +25,7 @@ import {
   User,
   Users,
   Vote,
+  Wallet,
   X,
   XCircle,
 } from 'lucide-react';
@@ -37,9 +38,11 @@ import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
+import { ManagerDeskView } from './ManagerDeskView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
+import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
@@ -49,11 +52,14 @@ import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import type {
   Contribution,
+  CoopMeeting,
   DashboardOverview,
   DashboardSectionId,
+  DecisionPoll,
   EmailNotification,
   HalalProject,
   LoanRequest,
+  ProfileChangeRequest,
   UserRole,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -64,26 +70,43 @@ interface NavItemConfig {
   id: DashboardSectionId;
   label: string;
   Icon: typeof BarChart3;
-  group: 'member' | 'admin';
+  group: 'member' | 'manager' | 'admin';
 }
 
-const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Fund Overview', Icon: BarChart3, group: 'member' },
+const MEMBER_NAV_ITEMS: NavItemConfig[] = [
+  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
   { id: 'monthly-contribution', label: 'Monthly Contribution', Icon: CreditCard, group: 'member' },
   { id: 'quard-hasan', label: 'Quard Hasan', Icon: HandCoins, group: 'member' },
-  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+  { id: 'my-amanah', label: 'My Amanah', Icon: Wallet, group: 'member' },
   { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
+  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'ballot', label: 'Ballot', Icon: Vote, group: 'member' },
+  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
   { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
 ];
 
+const MANAGER_NAV_ITEMS: NavItemConfig[] = [
+  { id: 'manager-desk', label: 'Manager Desk', Icon: ClipboardCheck, group: 'manager' },
+  { id: 'member-registry', label: 'Member Updates & Directory', Icon: Users, group: 'manager' },
+];
+
+const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
+  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
+  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
+  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
+  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
+  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
+  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
+  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+];
+
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
+  { id: 'member-registry', label: 'User & Role Management', Icon: Users, group: 'admin' },
+  { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
+  { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
   { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
-  { id: 'member-registry', label: 'Member Registry', Icon: Users, group: 'admin' },
-  { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
 ];
 
 function playSubtleAlertChime() {
@@ -150,6 +173,9 @@ export function DashboardShell() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [halalProjects, setHalalProjects] = useState<HalalProject[]>([]);
+  const [polls, setPolls] = useState<DecisionPoll[]>([]);
+  const [meetings, setMeetings] = useState<CoopMeeting[]>([]);
+  const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [loanModalOpen, setLoanModalOpen] = useState(false);
@@ -169,13 +195,18 @@ export function DashboardShell() {
   const refreshWorkspace = useCallback(async (silent = false): Promise<DashboardOverview | null> => {
     if (!silent) setDataLoading(true);
     try {
-      const [ovRes, cRes, lRes, hRes, nRes, dmRes] = await Promise.all([
+      const [ovRes, cRes, lRes, hRes, nRes, dmRes, pRes, mRes, pcrRes] = await Promise.all([
         api.getDashboard(),
         api.getContributions(),
         api.getLoans(),
         api.getHalalProjects(),
         api.getNotifications(),
         api.getPrivateThreads().catch(() => ({ threads: [], totalUnread: 0, directory: [] })),
+        api.getPolls().catch(() => ({ polls: [] as DecisionPoll[] })),
+        api.getMeetings().catch(() => ({ meetings: [] as CoopMeeting[] })),
+        api
+          .getProfileChangeRequests()
+          .catch(() => ({ requests: [] as ProfileChangeRequest[] })),
       ]);
       setOverview(ovRes);
       setContributions(cRes.contributions);
@@ -183,6 +214,9 @@ export function DashboardShell() {
       setHalalProjects(hRes.projects);
       setNotifications(nRes.notifications);
       setUnreadDmCount(dmRes.totalUnread);
+      setPolls(pRes.polls);
+      setMeetings(mRes.meetings);
+      setProfileChangeRequests(pcrRes.requests);
       return ovRes;
     } catch (err) {
       console.error('Workspace sync error:', err);
@@ -248,10 +282,20 @@ export function DashboardShell() {
     es.addEventListener('investment:voted', handleSync);
     es.addEventListener('investment:created', handleSync);
     es.addEventListener('investment:distributed', handleSync);
+    es.addEventListener('investment:revealed', handleSync);
     es.addEventListener('loan:created', handleLoanCreated);
     es.addEventListener('loan:reviewed', handleSync);
     es.addEventListener('loan:voted', handleSync);
+    es.addEventListener('loan:vote_initiated', handleSync);
+    es.addEventListener('loan:vote_revealed', handleSync);
     es.addEventListener('loan:guarantor', handleSync);
+    es.addEventListener('poll:created', handleSync);
+    es.addEventListener('poll:voted', handleSync);
+    es.addEventListener('poll:revealed', handleSync);
+    es.addEventListener('meeting:scheduled', handleAlertSync);
+    es.addEventListener('meeting:updated', handleSync);
+    es.addEventListener('profile:update_requested', handleSync);
+    es.addEventListener('profile:update_reviewed', handleSync);
     es.addEventListener('contribution:submitted', handleSync);
     es.addEventListener('contribution:reviewed', handleSync);
     es.addEventListener('repayment:submitted', handleSync);
@@ -275,11 +319,19 @@ export function DashboardShell() {
     };
   }, [user, refreshWorkspace]);
 
-  const isStaff = Boolean(user && (user.role === 'admin' || user.role === 'manager'));
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
+  const isStaff = Boolean(user && (isAdmin || isManager));
 
   const visibleNav = useMemo(() => {
-    return isStaff ? [...PRIMARY_NAV_ITEMS, ...ADMIN_NAV_ITEMS] : PRIMARY_NAV_ITEMS;
-  }, [isStaff]);
+    if (isAdmin) {
+      return [...ADMIN_PRIMARY_ITEMS, ...ADMIN_NAV_ITEMS];
+    }
+    if (isManager) {
+      return [...MEMBER_NAV_ITEMS, ...MANAGER_NAV_ITEMS];
+    }
+    return MEMBER_NAV_ITEMS;
+  }, [isAdmin, isManager]);
 
   const navigateToPage = useCallback(
     (
@@ -414,14 +466,26 @@ export function DashboardShell() {
   const pendingBadgeCount = (sectionId: DashboardSectionId): number => {
     if (!overview) return 0;
     const openPlacementVotes = halalProjects.filter((p) => p.votingStatus === 'open').length;
+    const openPollsCount = polls.filter((p) => p.status === 'open').length;
     if (sectionId === 'ballot') {
-      const staffDisbursements =
-        user.role === 'admin' || user.role === 'manager'
-          ? overview.treasury.pendingDisbursementsCount
-          : 0;
-      return overview.treasury.pendingVotesCount + staffDisbursements + openPlacementVotes;
+      const staffDisbursements = isStaff ? overview.treasury.pendingDisbursementsCount : 0;
+      return (
+        overview.treasury.pendingVotesCount +
+        staffDisbursements +
+        openPlacementVotes +
+        openPollsCount
+      );
     }
-    if (sectionId === 'monthly-contribution' && isStaff) {
+    if (sectionId === 'manager-desk' && isStaff) {
+      return (
+        overview.treasury.pendingContributionsCount +
+        overview.treasury.pendingLoansReviewCount +
+        overview.treasury.pendingDisbursementsCount +
+        overview.treasury.pendingRepaymentsCount +
+        overview.treasury.pendingProfileRequestsCount
+      );
+    }
+    if (sectionId === 'monthly-contribution' && isManager) {
       return overview.treasury.pendingContributionsCount;
     }
     if (sectionId === 'notification') {
@@ -430,8 +494,11 @@ export function DashboardShell() {
     if (sectionId === 'community') {
       return unreadDmCount;
     }
-    if (sectionId === 'member-registry' && user.role === 'admin') {
-      return overview.treasury.pendingMembersCount;
+    if (sectionId === 'member-registry' && isStaff) {
+      return (
+        (isAdmin ? overview.treasury.pendingMembersCount : 0) +
+        overview.treasury.pendingProfileRequestsCount
+      );
     }
     return 0;
   };
@@ -478,13 +545,25 @@ export function DashboardShell() {
   }
 
   function renderDashboardNavItems(isMobile = false) {
+    const primaryItems = isAdmin ? ADMIN_PRIMARY_ITEMS : MEMBER_NAV_ITEMS;
     return (
       <div className="space-y-4">
         <div className="space-y-0.5">
-          {PRIMARY_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+          {primaryItems.map((item) => renderNavButton(item, isMobile))}
         </div>
 
-        {isStaff && (
+        {isManager && (
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Manager
+            </div>
+            <div className="space-y-0.5">
+              {MANAGER_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+            </div>
+          </div>
+        )}
+
+        {isAdmin && (
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
             <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Admin
@@ -589,13 +668,15 @@ export function DashboardShell() {
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          <button
-            type="button"
-            onClick={() => setLoanModalOpen(true)}
-            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Request Qard Hasan
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              onClick={() => setLoanModalOpen(true)}
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Request Qard Hasan
+            </button>
+          )}
         </div>
       </header>
 
@@ -807,9 +888,11 @@ export function DashboardShell() {
           })()}
 
           {(() => {
+            if (isAdmin) return null;
             const unvotedLoanProposals = loans.filter(
               (l) =>
                 l.status === 'pending_vote' &&
+                !l.voteResultRevealed &&
                 !l.votes.some((v) => v.isSelf || v.voterId === user.id) &&
                 !dismissedLoanAlertIds.includes(l.id)
             );
@@ -818,9 +901,7 @@ export function DashboardShell() {
             }
             const featuredLoan =
               unvotedLoanProposals.find((l) => l.id === liveLoanPulseId) || unvotedLoanProposals[0];
-            const approvalsCount = featuredLoan.votes.filter(
-              (v) => v.decision === 'approve'
-            ).length;
+            const totalBallotsCast = featuredLoan.totalVotesCast ?? featuredLoan.votes.length;
             const ccy = overview?.config.currency || 'BDT';
 
             return (
@@ -840,14 +921,15 @@ export function DashboardShell() {
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
                       <span>
                         {unvotedLoanProposals.length === 1
-                          ? 'New Qard Hasan Loan Proposal Requires Your Anonymized 2/3 Vote'
-                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Require Your Anonymized 2/3 Vote`}
+                          ? 'Qard Hasan Proposal Open for Secret Opinion Ballot'
+                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Open for Secret Opinion Ballot`}
                       </span>
                       <span aria-hidden="true" className="text-amber-400 dark:text-amber-700">
                         ·
                       </span>
                       <span className="font-mono tabular-nums">
-                        {approvalsCount}/{featuredLoan.requiredApprovals} approvals
+                        Poll ongoing ({totalBallotsCast} ballot{totalBallotsCast === 1 ? '' : 's'}{' '}
+                        cast)
                       </span>
                     </div>
                     <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
@@ -857,9 +939,8 @@ export function DashboardShell() {
                         {formatMoney(featuredLoan.amount, ccy)}
                       </strong>{' '}
                       across {featuredLoan.installmentMonths} monthly installments — &ldquo;
-                      {featuredLoan.purpose}&rdquo;. Active member ballots are needed to reach the
-                      2/3 quorum ({featuredLoan.requiredApprovals} of{' '}
-                      {featuredLoan.totalEligibleVoters} members).
+                      {featuredLoan.purpose}&rdquo;. Cast your secret ballot; results remain hidden
+                      until the Manager stops voting and reveals them.
                     </p>
                   </div>
                 </div>
@@ -924,7 +1005,7 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {activeSection === 'monthly-contribution' && (
+              {!isAdmin && activeSection === 'monthly-contribution' && (
                 <section id="monthly-contribution" className="space-y-4">
                   <SectionEyebrow label="Monthly Contribution" />
                   <ContributionsView
@@ -938,7 +1019,7 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {activeSection === 'quard-hasan' && (
+              {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
                   <SectionEyebrow label="Quard Hasan" />
                   <LoansView
@@ -950,6 +1031,20 @@ export function DashboardShell() {
                     loading={dataLoading && loans.length === 0}
                     onOpenLoanModal={() => setLoanModalOpen(true)}
                     onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
+
+              {!isAdmin && activeSection === 'my-amanah' && (
+                <section id="my-amanah" className="space-y-4">
+                  <SectionEyebrow label="My Amanah" />
+                  <MyAmanahView
+                    overview={overview}
+                    loans={loans}
+                    user={user}
+                    loading={dataLoading && !overview}
+                    onNavigate={(sec) => navigateToPage(sec, false)}
+                    onOpenLoanModal={() => setLoanModalOpen(true)}
                   />
                 </section>
               )}
@@ -967,6 +1062,7 @@ export function DashboardShell() {
                   <NotificationsView
                     user={user}
                     workspace={workspace}
+                    meetings={meetings}
                     connectingGoogle={connectingGoogle}
                     onConnectGoogle={handleConnectGoogle}
                     onDisconnectGoogle={handleDisconnectGoogle}
@@ -991,10 +1087,12 @@ export function DashboardShell() {
 
               {activeSection === 'ballot' && (
                 <section id="ballot" className="space-y-4">
-                  <SectionEyebrow label="Ballot" />
+                  <SectionEyebrow label="Opinion Ballot" />
                   <VotingView
                     loans={loans}
                     projects={halalProjects}
+                    polls={polls}
+                    availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     config={overview?.config || null}
                     user={user}
                     loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
@@ -1050,14 +1148,32 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {isStaff && activeSection === 'site-activity' && (
+              {isStaff && activeSection === 'manager-desk' && (
+                <section id="manager-desk" className="space-y-4 pb-8">
+                  <SectionEyebrow label={isAdmin ? 'Governance Desk' : 'Manager · Manager Desk'} />
+                  <ManagerDeskView
+                    user={user}
+                    config={overview?.config || null}
+                    availableLiquidity={overview?.treasury.availableLiquidity || 0}
+                    contributions={contributions}
+                    loans={loans}
+                    halalProjects={halalProjects}
+                    polls={polls}
+                    meetings={meetings}
+                    profileChangeRequests={profileChangeRequests}
+                    onRefresh={handleRefreshWithAutoSync}
+                  />
+                </section>
+              )}
+
+              {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
                   <SectionEyebrow label="Admin · Site Activity" />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
-              {isStaff && activeSection === 'system-audit-logs' && (
+              {isAdmin && activeSection === 'system-audit-logs' && (
                 <section id="system-audit-logs" className="space-y-4 pb-8">
                   <SectionEyebrow label="Admin · System Audit Logs" />
                   <SystemAuditLogsView user={user} />
@@ -1066,7 +1182,13 @@ export function DashboardShell() {
 
               {isStaff && activeSection === 'member-registry' && (
                 <section id="member-registry" className="space-y-4">
-                  <SectionEyebrow label="Admin · Member Registry" />
+                  <SectionEyebrow
+                    label={
+                      isAdmin
+                        ? 'Admin · User & Role Management'
+                        : 'Manager · Member Updates & Directory'
+                    }
+                  />
                   <MemberRegistrySection
                     user={user}
                     config={overview?.config || null}
@@ -1076,7 +1198,7 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {isStaff && activeSection === 'site-settings' && (
+              {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
                   <SectionEyebrow label="Admin · Site Settings" />
                   <AdminSiteSettingsView
@@ -1099,17 +1221,19 @@ export function DashboardShell() {
         </div>
       </main>
 
-      <RequestQardHasanModal
-        open={loanModalOpen}
-        onClose={() => setLoanModalOpen(false)}
-        user={user}
-        eligibility={overview?.personal.eligibility || null}
-        config={overview?.config || null}
-        availableLiquidity={overview?.treasury.availableLiquidity || 0}
-        onSubmitted={async () => {
-          await handleRefreshWithAutoSync();
-        }}
-      />
+      {!isAdmin && (
+        <RequestQardHasanModal
+          open={loanModalOpen}
+          onClose={() => setLoanModalOpen(false)}
+          user={user}
+          eligibility={overview?.personal.eligibility || null}
+          config={overview?.config || null}
+          availableLiquidity={overview?.treasury.availableLiquidity || 0}
+          onSubmitted={async () => {
+            await handleRefreshWithAutoSync();
+          }}
+        />
+      )}
     </div>
   );
 }

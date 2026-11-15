@@ -151,7 +151,9 @@ export function AdminSiteSettingsView({
     window.location.assign(`/api/reports/export?type=${type}`);
   }
 
-  const pendingReviewLoans = loans.filter((l) => l.status === 'pending_vote');
+  const pendingReviewLoans = loans.filter(
+    (l) => l.status === 'pending_manager_review' || l.status === 'pending_vote'
+  );
 
   return (
     <div className="space-y-6">

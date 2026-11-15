@@ -52,6 +52,7 @@ export function ContributionsView({
   onRefresh,
 }: ContributionsViewProps) {
   const ccy = config?.currency || 'BDT';
+  const isAdmin = user.role === 'admin';
   const isReviewer = user.role === 'admin' || user.role === 'manager';
 
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -204,14 +205,21 @@ export function ContributionsView({
   }
 
   async function handleReview(id: string, decision: 'approved' | 'rejected') {
+    if (decision === 'rejected' && !reviewNote.trim()) {
+      setFeedback({
+        type: 'error',
+        text: 'Please enter a correction message explaining why this contribution is denied before rejecting.',
+      });
+      return;
+    }
     setReviewingId(id);
     setFeedback(null);
     try {
-      await api.reviewContribution(id, decision, reviewNote);
+      await api.reviewContribution(id, decision, reviewNote.trim() || undefined);
       setReviewNote('');
       setFeedback({
         type: 'success',
-        text: `Contribution ${decision === 'approved' ? 'approved and added to treasury liquidity' : 'rejected'}.`,
+        text: `Contribution ${decision === 'approved' ? 'approved and added to treasury liquidity' : 'denied with correction note sent to member'}.`,
       });
       await onRefresh();
     } catch (err) {
@@ -223,6 +231,50 @@ export function ContributionsView({
       setReviewingId(null);
     }
   }
+
+  function handlePrefillForCorrection(item: Contribution) {
+    setBillingMonth(item.billingMonth);
+    setAdvanceMode(false);
+    setAdvanceMonths([item.billingMonth]);
+    amountEditedRef.current = true;
+    setAmount(String(item.amount));
+    setChannel(item.channel);
+    setProviderName(item.providerName);
+    setNotes(
+      item.decryptedDetails?.notes ||
+        `Resubmitted correction for ${formatBillingMonth(item.billingMonth)}`
+    );
+    setFeedback({
+      type: 'success',
+      text: `Loaded denied deposit (${formatBillingMonth(item.billingMonth)}) into the form. Verify your TrxID / slip and re-submit.`,
+    });
+    depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => senderInputRef.current?.focus(), 250);
+  }
+
+  const myContributions = useMemo(
+    () => contributions.filter((c) => c.userId === user.id),
+    [contributions, user.id]
+  );
+  const otherContributions = useMemo(
+    () => contributions.filter((c) => c.userId !== user.id),
+    [contributions, user.id]
+  );
+
+  const ownApprovedTotal = myContributions
+    .filter((c) => c.status === 'approved')
+    .reduce((sum, c) => sum + c.amount, 0);
+  const ownActiveCount = myContributions.filter((c) => c.status === 'pending').length;
+  const ownDeniedCount = myContributions.filter((c) => c.status === 'rejected').length;
+
+  const othersApprovedTotal = otherContributions
+    .filter((c) => c.status === 'approved')
+    .reduce((sum, c) => sum + c.amount, 0);
+  const othersApprovedCount = otherContributions.filter((c) => c.status === 'approved').length;
+
+  const activeCount = contributions.filter((c) => c.status === 'pending').length;
+  const deniedCount = contributions.filter((c) => c.status === 'rejected').length;
+  const historyCount = contributions.filter((c) => c.status === 'approved').length;
 
   const filtered = contributions.filter((c) => {
     if (filter !== 'all' && c.status !== filter) return false;
@@ -240,19 +292,68 @@ export function ContributionsView({
 
   return (
     <div className="space-y-6">
-      <ContributionGoalTracker
-        user={user}
-        contributions={contributions}
-        config={config}
-        loading={loading}
-        onSubmitContribution={(month) => {
-          if (month) {
-            setBillingMonth(month);
-          }
-          depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          window.setTimeout(() => senderInputRef.current?.focus(), 250);
-        }}
-      />
+      {!isAdmin && (
+        <ContributionGoalTracker
+          user={user}
+          contributions={contributions}
+          config={config}
+          loading={loading}
+          onSubmitContribution={(month) => {
+            if (month) {
+              setBillingMonth(month);
+            }
+            depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            window.setTimeout(() => senderInputRef.current?.focus(), 250);
+          }}
+        />
+      )}
+
+      {/* Own Summary & Other Members Summary */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {!isAdmin && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Own Summary (Approved)</div>
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+              {formatMoney(ownApprovedTotal, ccy)}
+            </div>
+            <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+              {myContributions.filter((c) => c.status === 'approved').length} approved · {ownActiveCount} active · {ownDeniedCount} denied
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isAdmin ? 'All Members Approved Pool' : 'Other Members Summary'}
+          </div>
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            {formatMoney(othersApprovedTotal, ccy)}
+          </div>
+          <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            {othersApprovedCount} verified deposits
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs text-slate-500 dark:text-slate-400">Active Requests</div>
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+            {activeCount}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Pending Manager review
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs text-slate-500 dark:text-slate-400">Denied Requests</div>
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-red-700 dark:text-red-400">
+            {deniedCount}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Requires member correction &amp; resubmission
+          </div>
+        </div>
+      </section>
 
       {feedback && (
         <div
@@ -268,11 +369,12 @@ export function ContributionsView({
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Submit Contribution Form */}
-        <section
-          ref={depositFormRef}
-          className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
-        >
+        {/* Submit Contribution Form (Members & Managers only — Admin is not a contributor) */}
+        {!isAdmin && (
+          <section
+            ref={depositFormRef}
+            className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+          >
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Submit Capital Deposit
@@ -546,16 +648,21 @@ export function ContributionsView({
             </button>
           </form>
         </section>
+        )}
 
         {/* Encrypted Ledger & Manager Approval Queue */}
-        <section className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
+        <section
+          className={`${
+            isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
+          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs`}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {isReviewer ? 'Cooperative Contribution Ledger & Approval Queue' : 'Your Encrypted Contribution History'}
+                {isReviewer ? 'Cooperative Contribution Ledger & Approval Queue' : 'Monthly Contribution Requests & History'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Click any entry to inspect the AES-256-GCM encrypted envelope and SHA-256 hash
+                Inspect active requests, denied requests with Manager correction messages, and approved contribution history
               </p>
             </div>
 
@@ -574,19 +681,26 @@ export function ContributionsView({
                 />
               </div>
 
-              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                {(['all', 'pending', 'approved', 'rejected'] as const).map((tab) => (
+              <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                {(
+                  [
+                    { id: 'all', label: `All (${contributions.length})` },
+                    { id: 'pending', label: `Active Requests (${activeCount})` },
+                    { id: 'rejected', label: `Denied Requests (${deniedCount})` },
+                    { id: 'approved', label: `History (${historyCount})` },
+                  ] as const
+                ).map((tab) => (
                   <button
-                    key={tab}
+                    key={tab.id}
                     type="button"
-                    onClick={() => setFilter(tab)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer whitespace-nowrap ${
-                      filter === tab
+                    onClick={() => setFilter(tab.id)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      filter === tab.id
                         ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                         : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    {tab}
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -594,12 +708,12 @@ export function ContributionsView({
           </div>
 
           {isReviewer && filtered.some((c) => c.status === 'pending') && (
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
               <input
                 type="text"
                 value={reviewNote}
                 onChange={(e) => setReviewNote(e.target.value)}
-                placeholder="Optional manager review remark before clicking Approve / Reject…"
+                placeholder="Correction note (optional when approving · REQUIRED when denying a request)…"
                 className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
               />
             </div>
@@ -698,6 +812,24 @@ export function ContributionsView({
                               </button>
                             </div>
                           </div>
+
+                          {item.status === 'rejected' && (
+                            <div className="mb-2.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                              <div className="text-red-800 dark:text-red-300">
+                                <span className="font-semibold">Denied by {item.reviewerName || 'Manager'}:</span>{' '}
+                                <span>{item.reviewNote || 'Correction requested by manager.'}</span>
+                              </div>
+                              {!isAdmin && item.userId === user.id && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrefillForCorrection(item)}
+                                  className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium cursor-pointer whitespace-nowrap"
+                                >
+                                  Fix &amp; Resubmit
+                                </button>
+                              )}
+                            </div>
+                          )}
 
                           {isExpanded && (
                             <div className="mb-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-2">

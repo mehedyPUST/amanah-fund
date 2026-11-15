@@ -11,6 +11,8 @@ import type {
   CommunityReactionType,
   Contribution,
   ConversationThreadSummary,
+  CoopMeeting,
+  DecisionPoll,
   FundConfig,
   HalalProject,
   InstallmentItem,
@@ -18,6 +20,8 @@ import type {
   LoanRequest,
   NotificationPreferences,
   PrivateMessage,
+  ProfileChangePayload,
+  ProfileChangeRequest,
   ProfitDistributionAllocation,
   ProfitDistributionRecord,
   UserRegistrationDetails,
@@ -48,6 +52,7 @@ import {
   evaluateLoanEligibility,
   extractMentionedUsers,
   hydrateContributionForViewer,
+  hydrateDecisionPollForViewer,
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
   queueEmailNotification,
@@ -854,6 +859,82 @@ apiRouter.get('/profile', requireAuth, async (req: AuthenticatedRequest, res) =>
   }
 });
 
+apiRouter.post('/profile/password', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const currentPassword = String(req.body?.currentPassword || '');
+    const newPassword = String(req.body?.newPassword || '');
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+      return;
+    }
+
+    let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+    await updateVaultState((draft) => {
+      const target = draft.users.find((u) => u.id === viewer.id);
+      if (!target) return draft;
+
+      if (target.passwordHash) {
+        if (!currentPassword || !bcrypt.compareSync(currentPassword, target.passwordHash)) {
+          throw new Error('INVALID_CURRENT_PASSWORD');
+        }
+      }
+
+      target.passwordHash = bcrypt.hashSync(newPassword, 10);
+      if (target.authProvider === 'google') {
+        target.authProvider = 'both';
+      }
+      updatedUser = sanitizeUser(target);
+
+      appendAuditLog(draft, {
+        actor: updatedUser,
+        action: 'MEMBER_PASSWORD_CHANGED',
+        resourceType: 'auth',
+        resourceId: target.id,
+        summary: `${target.name} (${target.memberCode}) changed their account password directly`,
+        payload: { userId: target.id },
+      });
+
+      return draft;
+    });
+
+    if (!updatedUser) {
+      res.status(404).json({ error: 'Member account not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'MEMBER_PASSWORD_CHANGED',
+      resourceType: 'auth',
+      resourceId: viewer.id,
+    });
+    res.json({ ok: true, user: updatedUser });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'INVALID_CURRENT_PASSWORD') {
+      res.status(403).json({ error: 'Current password is incorrect.' });
+      return;
+    }
+    console.error('Password change error:', err);
+    res.status(500).json({ error: 'Failed to update password.' });
+  }
+});
+
+apiRouter.get('/profile/change-requests', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const viewer = req.authUser!;
+    const isReviewer = viewer.role === 'admin' || viewer.role === 'manager';
+    const list = (state.profileChangeRequests || []).filter((r) =>
+      isReviewer ? true : r.userId === viewer.id
+    );
+    res.json({ requests: list });
+  } catch (err) {
+    console.error('Profile change requests load error:', err);
+    res.status(500).json({ error: 'Failed to load profile update requests.' });
+  }
+});
+
 apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
@@ -884,6 +965,115 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
 
     if (email !== undefined && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
       res.status(400).json({ error: 'Please provide a valid email address.' });
+      return;
+    }
+
+    // Member & Manager profile updates require Admin/Manager approval
+    if (viewer.role !== 'admin') {
+      let createdReq!: ProfileChangeRequest;
+      let currentProfileUser: (ReturnType<typeof sanitizeUser> & {
+        registrationDetails?: UserRegistrationDetails;
+      }) | null = null;
+
+      await updateVaultState((draft) => {
+        const target = draft.users.find((u) => u.id === viewer.id);
+        if (!target) return draft;
+
+        if (email && email !== target.email.toLowerCase()) {
+          const duplicate = draft.users.some(
+            (u) => u.id !== target.id && u.email.toLowerCase() === email
+          );
+          if (duplicate) {
+            throw new Error('EMAIL_IN_USE');
+          }
+        }
+
+        const requestedChanges: ProfileChangePayload = {
+          ...(name && name !== target.name ? { name } : {}),
+          ...(email && email !== target.email.toLowerCase() ? { email } : {}),
+          mobile,
+          presentAddress,
+          permanentAddress,
+          ...(occupation !== undefined ? { occupation } : {}),
+          ...(companyOrganization !== undefined ? { companyOrganization } : {}),
+        };
+
+        draft.profileChangeRequests = Array.isArray(draft.profileChangeRequests)
+          ? draft.profileChangeRequests
+          : [];
+
+        // Replace any older pending request from the same user so queue stays tidy
+        draft.profileChangeRequests = draft.profileChangeRequests.filter(
+          (r) => !(r.userId === target.id && r.status === 'pending')
+        );
+
+        createdReq = {
+          id: `profreq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          userId: target.id,
+          memberName: target.name,
+          memberCode: target.memberCode,
+          memberRole: target.role,
+          requestedChanges,
+          status: 'pending',
+          requestedAt: new Date().toISOString(),
+        };
+        draft.profileChangeRequests.unshift(createdReq);
+
+        const approvers = draft.users.filter(
+          (u) =>
+            u.status === 'active' &&
+            u.id !== target.id &&
+            (u.role === 'admin' || (target.role === 'member' && u.role === 'manager'))
+        );
+        approvers.forEach((staff) => {
+          queueEmailNotification(draft, {
+            type: 'profile_update_requested',
+            recipientEmail: staff.email,
+            recipientName: staff.name,
+            recipientUserId: staff.id,
+            subject: `Profile Update Approval Needed: ${target.name} (${target.memberCode})`,
+            body: `${target.name} (${target.memberCode}) requested changes to their profile details (mobile/addresses/role info). Please approve or decline in Member Registry / Manager Desk.`,
+            relatedId: createdReq.id,
+          });
+        });
+
+        let regDetails: UserRegistrationDetails | undefined;
+        if (target.encryptedRegistrationDetails) {
+          try {
+            regDetails = decryptSensitiveObject<UserRegistrationDetails>(
+              target.encryptedRegistrationDetails
+            );
+          } catch {
+            regDetails = undefined;
+          }
+        }
+        const sanitized = sanitizeUser(target);
+        currentProfileUser = { ...sanitized, registrationDetails: regDetails };
+
+        appendAuditLog(draft, {
+          actor: sanitized,
+          action: 'MEMBER_PROFILE_CHANGE_REQUESTED',
+          resourceType: 'auth',
+          resourceId: createdReq.id,
+          summary: `${target.name} (${target.memberCode}) submitted profile update request for Admin/Manager approval`,
+          payload: { requestId: createdReq.id, fields: Object.keys(requestedChanges) },
+        });
+        return draft;
+      });
+
+      if (!currentProfileUser) {
+        res.status(404).json({ error: 'Member profile not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('profile:updated', { requestId: createdReq.id });
+      broadcastRealtimeEvent('notification:created', { type: 'profile_update_requested' });
+      res.status(202).json({
+        pendingApproval: true,
+        user: currentProfileUser,
+        request: createdReq,
+        message: 'Profile change request submitted for Administrator / Manager approval.',
+      });
       return;
     }
 
@@ -980,7 +1170,7 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
       resourceType: 'auth',
       resourceId: viewer.id,
     });
-    res.json({ user: updatedPublicUser });
+    res.json({ pendingApproval: false, user: updatedPublicUser });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
       res.status(409).json({ error: 'Another member account already uses that email address.' });
@@ -990,6 +1180,174 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
     res.status(500).json({ error: 'Failed to update member profile.' });
   }
 });
+
+apiRouter.patch(
+  '/profile/change-requests/:id/review',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      const decision =
+        req.body?.decision === 'approved'
+          ? 'approved'
+          : req.body?.decision === 'rejected'
+            ? 'rejected'
+            : null;
+      const reviewNote = String(req.body?.reviewNote || '').trim();
+
+      if (!decision) {
+        res.status(400).json({ error: 'Decision must be "approved" or "rejected".' });
+        return;
+      }
+      if (decision === 'rejected' && !reviewNote) {
+        res.status(400).json({ error: 'Provide a note explaining why the profile update was declined.' });
+        return;
+      }
+
+      let reviewedReq: ProfileChangeRequest | null = null;
+      await updateVaultState((draft) => {
+        draft.profileChangeRequests = Array.isArray(draft.profileChangeRequests)
+          ? draft.profileChangeRequests
+          : [];
+        const targetReq = draft.profileChangeRequests.find((r) => r.id === id);
+        if (!targetReq) return draft;
+        if (targetReq.status !== 'pending') {
+          throw new Error('ALREADY_REVIEWED');
+        }
+        if (viewer.role !== 'admin' && targetReq.userId === viewer.id) {
+          throw new Error('CANNOT_SELF_APPROVE');
+        }
+
+        const member = draft.users.find((u) => u.id === targetReq.userId);
+        if (!member) {
+          throw new Error('USER_NOT_FOUND');
+        }
+
+        const reviewedAt = new Date().toISOString();
+        targetReq.status = decision;
+        targetReq.reviewedBy = viewer.id;
+        targetReq.reviewerName = viewer.name;
+        targetReq.reviewedAt = reviewedAt;
+        targetReq.reviewNote = reviewNote || undefined;
+
+        if (decision === 'approved') {
+          const ch = targetReq.requestedChanges;
+          if (ch.email && ch.email !== member.email.toLowerCase()) {
+            const duplicate = draft.users.some(
+              (u) => u.id !== member.id && u.email.toLowerCase() === ch.email
+            );
+            if (duplicate) {
+              throw new Error('EMAIL_IN_USE');
+            }
+            member.email = ch.email;
+          }
+          if (ch.name) {
+            member.name = ch.name;
+          }
+          if (ch.mobile) {
+            member.phoneMasked = maskReference(ch.mobile);
+          }
+
+          let existingDetails: UserRegistrationDetails = {
+            dateOfBirth: '',
+            referenceMemberName: 'Amanah Administrator',
+            mobile: ch.mobile || '',
+            occupation: ch.occupation || '',
+            companyOrganization: ch.companyOrganization || '',
+            nid: '',
+            presentAddress: ch.presentAddress || '',
+            permanentAddress: ch.permanentAddress || '',
+            photoUrl: member.photoUrl || '',
+          };
+          if (member.encryptedRegistrationDetails) {
+            try {
+              existingDetails = decryptSensitiveObject<UserRegistrationDetails>(
+                member.encryptedRegistrationDetails
+              );
+            } catch {
+              // ignore
+            }
+          }
+
+          const nextDetails: UserRegistrationDetails = {
+            ...existingDetails,
+            mobile: ch.mobile ?? existingDetails.mobile,
+            presentAddress: ch.presentAddress ?? existingDetails.presentAddress,
+            permanentAddress: ch.permanentAddress ?? existingDetails.permanentAddress,
+            occupation: ch.occupation !== undefined ? ch.occupation : existingDetails.occupation,
+            companyOrganization:
+              ch.companyOrganization !== undefined
+                ? ch.companyOrganization
+                : existingDetails.companyOrganization,
+          };
+          member.encryptedRegistrationDetails = encryptSensitiveObject(nextDetails);
+        }
+
+        reviewedReq = targetReq;
+
+        queueEmailNotification(draft, {
+          type: 'profile_update_reviewed',
+          recipientEmail: member.email,
+          recipientName: member.name,
+          recipientUserId: member.id,
+          subject:
+            decision === 'approved'
+              ? 'Profile Update Approved'
+              : 'Profile Update Declined — Please Review Note',
+          body:
+            decision === 'approved'
+              ? `Assalamu Alaikum ${member.name}, your requested profile update has been approved by ${viewer.name}.`
+              : `Assalamu Alaikum ${member.name}, your profile update request was declined by ${viewer.name}. Note: ${reviewNote}`,
+          relatedId: targetReq.id,
+        });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: decision === 'approved' ? 'PROFILE_CHANGE_APPROVED' : 'PROFILE_CHANGE_REJECTED',
+          resourceType: 'auth',
+          resourceId: targetReq.id,
+          summary: `${viewer.name} ${decision} profile update request for ${member.name} (${member.memberCode})`,
+          payload: {
+            requestId: targetReq.id,
+            targetUserId: member.id,
+            decision,
+            reviewNote: reviewNote || undefined,
+          },
+        });
+        return draft;
+      });
+
+      if (!reviewedReq) {
+        res.status(404).json({ error: 'Profile update request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('profile:updated', { requestId: id, decision });
+      broadcastRealtimeEvent('members:updated', { userId: (reviewedReq as ProfileChangeRequest).userId });
+      broadcastRealtimeEvent('notification:created', { type: 'profile_update_reviewed' });
+      res.json({ request: reviewedReq });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
+        res.status(409).json({ error: 'This profile update request has already been reviewed.' });
+        return;
+      }
+      if (err instanceof Error && err.message === 'CANNOT_SELF_APPROVE') {
+        res.status(403).json({
+          error: 'Another Manager or Administrator must approve your own profile change request.',
+        });
+        return;
+      }
+      if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
+        res.status(409).json({ error: 'Requested email address is already used by another user.' });
+        return;
+      }
+      console.error('Review profile change request error:', err);
+      res.status(500).json({ error: 'Failed to review profile change request.' });
+    }
+  }
+);
 
 // ---------------------------------------------------------------------------
 // 2. Real-time Dashboard Overview & Gemini Slip Verification
@@ -1058,6 +1416,13 @@ apiRouter.get('/contributions', requireAuth, async (req: AuthenticatedRequest, r
 apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
+    if (viewer.role === 'admin') {
+      res.status(403).json({
+        error:
+          'Administrator accounts govern site settings, member roles, and audits only and cannot submit member contributions.',
+      });
+      return;
+    }
     const rawMonths = Array.isArray(req.body?.billingMonths)
       ? (req.body.billingMonths as unknown[]).map((m) => String(m || '').trim()).filter(Boolean)
       : [];
@@ -1240,6 +1605,13 @@ apiRouter.patch(
         res.status(400).json({ error: 'Decision must be "approved" or "rejected".' });
         return;
       }
+      if (decision === 'rejected' && !reviewNote) {
+        res.status(400).json({
+          error:
+            'A correction note is required when denying a contribution so the member can fix and resubmit.',
+        });
+        return;
+      }
 
       const viewer = req.authUser!;
       let updated: Contribution | null = null;
@@ -1258,16 +1630,13 @@ apiRouter.patch(
         target.reviewedBy = viewer.id;
         target.reviewerName = viewer.name;
         target.reviewNote =
-          reviewNote ||
-          (decision === 'approved'
-            ? 'Verified against Bank/MFS settlement statement.'
-            : 'Reference could not be reconciled.');
+          reviewNote || 'Verified against Bank/MFS settlement statement.';
 
         updated = target;
 
-        if (decision === 'approved') {
-          const member = draft.users.find((u) => u.id === target.userId);
-          if (member) {
+        const member = draft.users.find((u) => u.id === target.userId);
+        if (member) {
+          if (decision === 'approved') {
             queueEmailNotification(draft, {
               type: 'contribution_accepted',
               recipientEmail: member.email,
@@ -1275,6 +1644,16 @@ apiRouter.patch(
               recipientUserId: member.id,
               subject: `Contribution Accepted: ${target.amount} ${draft.fundConfig.currency} (${target.billingMonth})`,
               body: `Assalamu Alaikum ${member.name}, your monthly contribution of ${target.amount} ${draft.fundConfig.currency} via ${target.providerName} (${target.billingMonth}) has been verified by ${viewer.name} and added to the cooperative central fund balance.`,
+              relatedId: target.id,
+            });
+          } else {
+            queueEmailNotification(draft, {
+              type: 'contribution_rejected',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Contribution Denied — Action Needed (${target.billingMonth})`,
+              body: `Assalamu Alaikum ${member.name}, your contribution submission (${target.amount} ${draft.fundConfig.currency} for ${target.billingMonth}) was denied by ${viewer.name}. Correction Note: "${target.reviewNote}". Please correct your transaction details and resubmit in Monthly Contribution.`,
               relatedId: target.id,
             });
           }
@@ -1307,7 +1686,9 @@ apiRouter.patch(
         contributionId: (updated as Contribution).id,
         decision,
       });
-      broadcastRealtimeEvent('notification:created', { type: 'contribution_accepted' });
+      broadcastRealtimeEvent('notification:created', {
+        type: decision === 'approved' ? 'contribution_accepted' : 'contribution_rejected',
+      });
       broadcastRealtimeEvent('audit:updated', {
         action: decision === 'approved' ? 'CONTRIBUTION_APPROVED' : 'CONTRIBUTION_REJECTED',
         resourceType: 'contribution',
@@ -1357,6 +1738,13 @@ apiRouter.get('/loans', requireAuth, async (req: AuthenticatedRequest, res) => {
 apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
+    if (viewer.role === 'admin') {
+      res.status(403).json({
+        error:
+          'Administrator accounts govern cooperative policy and cannot borrow Qard Hasan.',
+      });
+      return;
+    }
     const amount = Number(req.body?.amount);
     const installmentMonths = Number(req.body?.installmentMonths);
     const purpose = String(req.body?.purpose || '').trim();
@@ -1470,12 +1858,13 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         monthlyInstallment: Math.round((amount / installmentMonths) * 100) / 100,
         purpose,
         encryptedSensitiveNotes,
-        status: needsGuarantor ? 'pending_guarantor' : 'pending_vote',
+        status: needsGuarantor ? 'pending_guarantor' : 'pending_manager_review',
         guarantors: resolvedGuarantors.length > 0 ? resolvedGuarantors : undefined,
         eligibilitySnapshot: eligibility,
         votes: [],
         requiredApprovals,
         totalEligibleVoters: activeVoters,
+        voteResultRevealed: false,
         installments,
         totalRepaid: 0,
         remainingBalance: amount,
@@ -1501,40 +1890,23 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
               recipientName: gUser.name,
               recipientUserId: gUser.id,
               subject: `Guarantor Co-Sign Request: ${viewer.name} (${id})`,
-              body: `${viewer.name} (${viewer.memberCode}) requested a high-value Qard Hasan loan of ${amount} ${currency} (${installmentMonths} months) for "${purpose}" and nominated you as cooperative guarantor. Accept or decline in the Qard Hasan tab before 2/3 member voting begins.`,
+              body: `${viewer.name} (${viewer.memberCode}) requested a high-value Qard Hasan loan of ${amount} ${currency} (${installmentMonths} months) for "${purpose}" and nominated you as cooperative guarantor. Accept or decline in the Qard Hasan tab before Manager review & 2/3 member voting begins.`,
               relatedId: id,
             });
           }
         });
       } else {
-        const notifiedIds = new Set<string>();
-        const adminsAndManagers = draft.users.filter(
-          (u) => u.status === 'active' && (u.role === 'admin' || u.role === 'manager')
+        const managersAndAdmins = draft.users.filter(
+          (u) => u.status === 'active' && (u.role === 'manager' || u.role === 'admin')
         );
-        adminsAndManagers.forEach((staff) => {
-          notifiedIds.add(staff.id);
+        managersAndAdmins.forEach((staff) => {
           queueEmailNotification(draft, {
             type: 'loan_vote_requested',
             recipientEmail: staff.email,
             recipientName: staff.name,
             recipientUserId: staff.id,
-            subject: `Qard Hasan Loan Review Needed: ${viewer.name} (${id})`,
-            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${currency}).`,
-            relatedId: id,
-          });
-        });
-
-        const eligibleVoters = draft.users.filter(
-          (u) => u.status === 'active' && u.id !== viewer.id && !notifiedIds.has(u.id)
-        );
-        eligibleVoters.forEach((member) => {
-          queueEmailNotification(draft, {
-            type: 'loan_vote_requested',
-            recipientEmail: member.email,
-            recipientName: member.name,
-            recipientUserId: member.id,
-            subject: `2/3 Majority Vote Needed: ${viewer.name} (${id})`,
-            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
+            subject: `New Qard Hasan Application (Initiate Vote Needed): ${viewer.name} (${id})`,
+            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan application (${installmentMonths} months) for "${purpose}". Review application details in Manager Desk to initiate the 2/3 member ballot.`,
             relatedId: id,
           });
         });
@@ -1547,7 +1919,7 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         resourceId: id,
         summary: needsGuarantor
           ? `${viewer.name} submitted a ${amount} Qard Hasan request awaiting guarantor co-signature`
-          : `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) for administrative review & 2/3 vote`,
+          : `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) awaiting Manager review to initiate vote`,
         payload: {
           loanId: id,
           amount,
@@ -1680,20 +2052,19 @@ apiRouter.post('/loans/:id/guarantor-respond', requireAuth, async (req: Authenti
           });
         }
       } else if ((loan.guarantors || []).every((g) => g.status === 'accepted')) {
-        loan.status = 'pending_vote';
+        loan.status = 'pending_manager_review';
         movedToVote = true;
-        const overview = buildDashboardOverview(draft, viewer);
-        const eligibleVoters = draft.users.filter(
-          (u) => u.status === 'active' && u.id !== loan.borrowerId
+        const managers = draft.users.filter(
+          (u) => u.status === 'active' && (u.role === 'manager' || u.role === 'admin')
         );
-        eligibleVoters.forEach((member) => {
+        managers.forEach((mgr) => {
           queueEmailNotification(draft, {
             type: 'loan_vote_requested',
-            recipientEmail: member.email,
-            recipientName: member.name,
-            recipientUserId: member.id,
-            subject: `2/3 Majority Vote Needed (Guarantor Verified): ${loan.borrowerName} (${loan.id})`,
-            body: `${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan request has been co-signed by guarantor(s) and is now open for 2/3 member voting (Available liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+            recipientEmail: mgr.email,
+            recipientName: mgr.name,
+            recipientUserId: mgr.id,
+            subject: `Guarantor Accepted — Ready to Initiate Vote: ${loan.borrowerName} (${loan.id})`,
+            body: `All guarantors co-signed ${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan request (${loan.id}). Open Manager Desk to initiate 2/3 member voting.`,
             relatedId: loan.id,
           });
         });
@@ -1750,6 +2121,89 @@ apiRouter.post('/loans/:id/guarantor-respond', requireAuth, async (req: Authenti
   }
 });
 
+apiRouter.post(
+  '/loans/:id/initiate-vote',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      let updatedLoan: LoanRequest | null = null;
+
+      await updateVaultState((draft) => {
+        const loan = draft.loans.find((l) => l.id === id);
+        if (!loan) return draft;
+        if (loan.status !== 'pending_manager_review') {
+          throw new Error('NOT_PENDING_MANAGER_REVIEW');
+        }
+
+        const { activeVoters, requiredApprovals } = computeRequiredApprovals(draft);
+        const now = new Date().toISOString();
+        loan.status = 'pending_vote';
+        loan.voteInitiatedAt = now;
+        loan.voteInitiatedBy = viewer.name;
+        loan.voteResultRevealed = false;
+        loan.totalEligibleVoters = activeVoters;
+        loan.requiredApprovals = requiredApprovals;
+
+        const overview = buildDashboardOverview(draft, viewer);
+        const eligibleVoters = draft.users.filter(
+          (u) => u.status === 'active' && u.role !== 'admin' && u.id !== loan.borrowerId
+        );
+        eligibleVoters.forEach((member) => {
+          queueEmailNotification(draft, {
+            type: 'loan_vote_requested',
+            recipientEmail: member.email,
+            recipientName: member.name,
+            recipientUserId: member.id,
+            subject: `Opinion Ballot Open — Qard Hasan Vote: ${loan.borrowerName} (${loan.id})`,
+            body: `Manager ${viewer.name} opened voting on ${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan application for "${loan.purpose}". Cast your secret ballot in Opinion Ballot (Treasury liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+            relatedId: loan.id,
+          });
+        });
+
+        updatedLoan = loan;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'LOAN_VOTE_INITIATED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary: `${viewer.name} initiated secret Opinion Ballot voting on ${loan.borrowerName}'s Qard Hasan request (${loan.id})`,
+          payload: {
+            loanId: loan.id,
+            requiredApprovals,
+            totalEligibleVoters: activeVoters,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedLoan) {
+        res.status(404).json({ error: 'Loan request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('loan:reviewed', { loanId: id, decision: 'vote_initiated' });
+      broadcastRealtimeEvent('notification:created', { type: 'loan_vote_requested', loanId: id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'LOAN_VOTE_INITIATED',
+        resourceType: 'loan',
+        resourceId: id,
+      });
+      res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'NOT_PENDING_MANAGER_REVIEW') {
+        res.status(409).json({ error: 'This loan is not awaiting Manager review to start voting.' });
+        return;
+      }
+      console.error('Initiate loan vote error:', err);
+      res.status(500).json({ error: 'Failed to initiate Qard Hasan voting.' });
+    }
+  }
+);
+
 apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
@@ -1776,9 +2230,15 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
       });
       return;
     }
+    if (viewer.role === 'admin') {
+      res.status(403).json({
+        error:
+          'Administrator accounts inspect audit ballots only and do not cast member votes.',
+      });
+      return;
+    }
 
     let updatedLoan: LoanRequest | null = null;
-    let quorumDecision: 'approve' | 'reject' | null = null;
 
     await updateVaultState((draft) => {
       const voterRecord = draft.users.find((u) => u.id === viewer.id);
@@ -1789,7 +2249,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
       const loan = draft.loans.find((l) => l.id === id);
       if (!loan) return draft;
 
-      if (loan.status !== 'pending_vote') {
+      if (loan.status !== 'pending_vote' || loan.voteResultRevealed) {
         throw new Error('VOTING_CLOSED');
       }
       if (loan.votes.some((v) => v.voterId === viewer.id)) {
@@ -1811,43 +2271,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
           castAt,
         }),
       });
-
-      const approveCount = loan.votes.filter((v) => v.decision === 'approve').length;
-      const rejectCount = loan.votes.filter((v) => v.decision === 'reject').length;
-
-      if (approveCount >= loan.requiredApprovals) {
-        loan.status = 'approved_pending_disbursement';
-        loan.approvedAt = castAt;
-        quorumDecision = 'approve';
-        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
-        if (borrower) {
-          queueEmailNotification(draft, {
-            type: 'loan_approved_confirmation',
-            recipientEmail: borrower.email,
-            recipientName: borrower.name,
-            recipientUserId: borrower.id,
-            subject: `Qard Hasan Approved (2/3 Quorum): ${loan.id}`,
-            body: `Assalamu Alaikum ${borrower.name}, your interest-free Qard Hasan request (${loan.id}) for ${loan.amount} ${draft.fundConfig.currency} reached the 2/3 member quorum (${approveCount}/${loan.requiredApprovals}). The principal has been allocated from the central fund balance and is ready for treasury disbursement.`,
-            relatedId: loan.id,
-          });
-        }
-      } else if (rejectCount > loan.totalEligibleVoters - loan.requiredApprovals) {
-        loan.status = 'rejected';
-        quorumDecision = 'reject';
-        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
-        if (borrower) {
-          queueEmailNotification(draft, {
-            type: 'loan_rejected_notice',
-            recipientEmail: borrower.email,
-            recipientName: borrower.name,
-            recipientUserId: borrower.id,
-            subject: `Qard Hasan Request Declined (Member Vote): ${loan.id}`,
-            body: `Assalamu Alaikum ${borrower.name}, your Qard Hasan request (${loan.id}) for ${loan.amount} ${draft.fundConfig.currency} did not reach the required 2/3 member approval quorum and has been declined.`,
-            relatedId: loan.id,
-          });
-        }
-      }
-
+      loan.voteResultRevealed = false;
       updatedLoan = loan;
 
       appendAuditLog(draft, {
@@ -1855,40 +2279,13 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         action: 'LOAN_VOTE_CAST',
         resourceType: 'vote',
         resourceId: loan.id,
-        summary: `An anonymized verified member cast ${decision === 'approve' ? 'UPVOTE (Approve)' : 'DOWNVOTE (Reject)'} on ${loan.borrowerName}'s loan (${approveCount}/${loan.requiredApprovals} approvals)`,
+        summary: `An anonymized verified ballot was cast on Qard Hasan request ${loan.id} (${loan.votes.length} total ballots cast)`,
         payload: {
           loanId: loan.id,
           decision,
-          approveCount,
-          rejectCount,
-          requiredApprovals: loan.requiredApprovals,
-          resultingStatus: loan.status,
+          totalVotesCast: loan.votes.length,
         },
       });
-
-      if (loan.status === 'approved_pending_disbursement' || loan.status === 'rejected') {
-        appendAuditLog(draft, {
-          actor: viewer,
-          action:
-            loan.status === 'approved_pending_disbursement'
-              ? 'LOAN_QUORUM_APPROVED'
-              : 'LOAN_QUORUM_REJECTED',
-          resourceType: 'loan',
-          resourceId: loan.id,
-          summary:
-            loan.status === 'approved_pending_disbursement'
-              ? `Qard Hasan loan ${loan.id} (${loan.borrowerName}) reached 2/3 approval quorum and moved to approved_pending_disbursement`
-              : `Qard Hasan loan ${loan.id} (${loan.borrowerName}) failed 2/3 approval quorum and moved to rejected`,
-          payload: {
-            loanId: loan.id,
-            previousStatus: 'pending_vote',
-            resultingStatus: loan.status,
-            approveCount,
-            rejectCount,
-            requiredApprovals: loan.requiredApprovals,
-          },
-        });
-      }
 
       return draft;
     });
@@ -1899,17 +2296,6 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
     }
 
     broadcastRealtimeEvent('loan:voted', { loanId: id });
-    if (quorumDecision) {
-      broadcastRealtimeEvent('loan:reviewed', {
-        loanId: id,
-        borrowerId: (updatedLoan as LoanRequest).borrowerId,
-        decision: quorumDecision,
-      });
-      broadcastRealtimeEvent('notification:created', {
-        type: quorumDecision === 'approve' ? 'loan_approved_confirmation' : 'loan_rejected_notice',
-        recipientUserId: (updatedLoan as LoanRequest).borrowerId,
-      });
-    }
     broadcastRealtimeEvent('audit:updated', {
       action: 'LOAN_VOTE_CAST',
       resourceType: 'vote',
@@ -1935,6 +2321,108 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
     res.status(500).json({ error: 'Failed to record vote.' });
   }
 });
+
+apiRouter.post(
+  '/loans/:id/reveal-vote',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      let updatedLoan: LoanRequest | null = null;
+      let passed = false;
+
+      await updateVaultState((draft) => {
+        const loan = draft.loans.find((l) => l.id === id);
+        if (!loan) return draft;
+        if (loan.status !== 'pending_vote') {
+          throw new Error('VOTING_NOT_OPEN');
+        }
+
+        const now = new Date().toISOString();
+        const approveCount = loan.votes.filter((v) => v.decision === 'approve').length;
+        const rejectCount = loan.votes.filter((v) => v.decision === 'reject').length;
+        passed = approveCount >= loan.requiredApprovals;
+
+        loan.voteResultRevealed = true;
+        loan.voteResultRevealedAt = now;
+        loan.voteResultRevealedBy = viewer.name;
+
+        if (passed) {
+          loan.status = 'approved_pending_disbursement';
+          loan.approvedAt = now;
+        } else {
+          loan.status = 'rejected';
+        }
+
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: passed ? 'loan_approved_confirmation' : 'loan_rejected_notice',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject: passed
+              ? `Qard Hasan Vote Passed (${approveCount} Approve / ${rejectCount} Reject): ${loan.id}`
+              : `Qard Hasan Vote Closed — Not Approved: ${loan.id}`,
+            body: passed
+              ? `Assalamu Alaikum ${borrower.name}, Manager ${viewer.name} revealed the Qard Hasan vote result for ${loan.id} (${approveCount} approve vs ${rejectCount} reject). Your request is approved and awaiting Manager disbursement confirmation (fund balance will deduct upon confirmation).`
+              : `Assalamu Alaikum ${borrower.name}, Manager ${viewer.name} revealed the vote result for ${loan.id} (${approveCount} approve vs ${rejectCount} reject; ${loan.requiredApprovals} required). The request was not approved.`,
+            relatedId: loan.id,
+          });
+        }
+
+        updatedLoan = loan;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: passed ? 'LOAN_VOTE_REVEALED_APPROVED' : 'LOAN_VOTE_REVEALED_REJECTED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary: `${viewer.name} stopped voting and revealed results for ${loan.id}: ${approveCount} approve, ${rejectCount} reject -> ${loan.status}`,
+          payload: {
+            loanId: loan.id,
+            approveCount,
+            rejectCount,
+            requiredApprovals: loan.requiredApprovals,
+            resultingStatus: loan.status,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedLoan) {
+        res.status(404).json({ error: 'Loan request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('loan:voted', { loanId: id });
+      broadcastRealtimeEvent('loan:reviewed', {
+        loanId: id,
+        borrowerId: (updatedLoan as LoanRequest).borrowerId,
+        decision: passed ? 'approve' : 'reject',
+      });
+      broadcastRealtimeEvent('notification:created', {
+        type: passed ? 'loan_approved_confirmation' : 'loan_rejected_notice',
+      });
+      broadcastRealtimeEvent('audit:updated', {
+        action: passed ? 'LOAN_VOTE_REVEALED_APPROVED' : 'LOAN_VOTE_REVEALED_REJECTED',
+        resourceType: 'loan',
+        resourceId: id,
+      });
+
+      res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'VOTING_NOT_OPEN') {
+        res.status(409).json({ error: 'Voting is not currently open on this loan.' });
+        return;
+      }
+      console.error('Reveal loan vote error:', err);
+      res.status(500).json({ error: 'Failed to reveal loan vote results.' });
+    }
+  }
+);
 
 apiRouter.patch(
   '/loans/:id/admin-review',
@@ -1964,7 +2452,7 @@ apiRouter.patch(
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
 
-        if (loan.status !== 'pending_vote') {
+        if (loan.status !== 'pending_vote' && loan.status !== 'pending_manager_review') {
           throw new Error('ALREADY_REVIEWED');
         }
 
@@ -1973,6 +2461,7 @@ apiRouter.patch(
         loan.adminReviewedAt = reviewedAt;
         loan.adminReviewedBy = viewer.name;
         loan.adminReviewNote = reviewNote || undefined;
+        loan.voteResultRevealed = true;
         reviewedBorrowerId = loan.borrowerId;
 
         if (decision === 'approve') {
@@ -2084,7 +2573,7 @@ apiRouter.post(
         }
 
         const overview = buildDashboardOverview(draft, viewer);
-        if (overview.treasury.centralBalance < 0) {
+        if (loan.amount > overview.treasury.availableLiquidity) {
           throw new Error('INSUFFICIENT_LIQUIDITY');
         }
 
@@ -2320,6 +2809,7 @@ apiRouter.patch(
       const { id, installmentNumber } = req.params;
       const num = Number(installmentNumber);
       const rawDecision = req.body?.decision;
+      const reviewNote = String(req.body?.reviewNote || '').trim();
       if (!Number.isInteger(num) || num < 1) {
         res.status(400).json({ error: 'Installment number must be a positive integer.' });
         return;
@@ -2329,6 +2819,13 @@ apiRouter.patch(
         return;
       }
       const approve = rawDecision === 'approve';
+      if (!approve && !reviewNote) {
+        res.status(400).json({
+          error:
+            'A correction note is required when denying an installment payment so the borrower can fix and resubmit.',
+        });
+        return;
+      }
       const viewer = req.authUser!;
       let updatedLoan: LoanRequest | null = null;
 
@@ -2350,6 +2847,9 @@ apiRouter.patch(
           inst.paidAt = new Date().toISOString();
           inst.verifiedBy = viewer.id;
           inst.verifierName = viewer.name;
+          inst.rejectionNote = undefined;
+          inst.rejectedBy = undefined;
+          inst.rejectedAt = undefined;
 
           loan.totalRepaid =
             Math.round(loan.installments.reduce((s, i) => s + i.paidAmount, 0) * 100) / 100;
@@ -2368,13 +2868,16 @@ apiRouter.patch(
           inst.maskedReference = undefined;
           inst.receiptPhotoUrl = undefined;
           inst.encryptedReceipt = undefined;
+          inst.rejectionNote = reviewNote;
+          inst.rejectedBy = viewer.name;
+          inst.rejectedAt = new Date().toISOString();
         }
 
         updatedLoan = loan;
 
-        if (approve) {
-          const borrower = draft.users.find((u) => u.id === loan.borrowerId);
-          if (borrower) {
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          if (approve) {
             queueEmailNotification(draft, {
               type: 'loan_repayment_notice',
               recipientEmail: borrower.email,
@@ -2382,6 +2885,16 @@ apiRouter.patch(
               recipientUserId: borrower.id,
               subject: `Repayment Verified: ${loan.id} Installment #${num}`,
               body: `Assalamu Alaikum ${borrower.name}, installment #${num} (${inst.amount} ${draft.fundConfig.currency}) for ${loan.id} has been verified by ${viewer.name} and added back to the central fund balance. Remaining balance: ${loan.remainingBalance} ${draft.fundConfig.currency}.`,
+              relatedId: `${loan.id}#${num}`,
+            });
+          } else {
+            queueEmailNotification(draft, {
+              type: 'loan_repayment_rejected',
+              recipientEmail: borrower.email,
+              recipientName: borrower.name,
+              recipientUserId: borrower.id,
+              subject: `Installment #${num} Repayment Denied — Action Needed (${loan.id})`,
+              body: `Assalamu Alaikum ${borrower.name}, your repayment submission for installment #${num} (${loan.id}) was denied by ${viewer.name}. Correction Note: "${reviewNote}". Please verify your TrxID/account and resubmit.`,
               relatedId: `${loan.id}#${num}`,
             });
           }
@@ -2397,6 +2910,7 @@ apiRouter.patch(
             loanId: loan.id,
             installmentNumber: num,
             approved: approve,
+            reviewNote: reviewNote || undefined,
             remainingBalance: loan.remainingBalance,
             loanStatus: loan.status,
           },
@@ -2431,7 +2945,9 @@ apiRouter.patch(
         installmentNumber: num,
         approved: approve,
       });
-      broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+      broadcastRealtimeEvent('notification:created', {
+        type: approve ? 'loan_repayment_notice' : 'loan_repayment_rejected',
+      });
       broadcastRealtimeEvent('audit:updated', {
         action: approve ? 'REPAYMENT_VERIFIED' : 'REPAYMENT_REJECTED',
         resourceType: 'repayment',
@@ -2736,6 +3252,7 @@ apiRouter.post(
           votes: [],
           requiredApprovals,
           totalEligibleVoters: activeVoters,
+          voteResultRevealed: false,
           proposedBy: viewer.name,
         };
 
@@ -2745,7 +3262,7 @@ apiRouter.post(
           action: 'HALAL_PROJECT_PROPOSED',
           resourceType: 'halal_project',
           resourceId: project.id,
-          summary: `${viewer.name} proposed investment placement "${title}" (${shariahStructure}) for 2/3 member vote`,
+          summary: `${viewer.name} proposed investment placement "${title}" (${shariahStructure}) for secret member ballot`,
           payload: {
             projectId: project.id,
             shariahStructure,
@@ -2784,13 +3301,19 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
     }
 
     const viewer = req.authUser!;
+    if (viewer.role === 'admin') {
+      res.status(403).json({
+        error: 'Administrator accounts inspect audit ballots only and do not cast member votes.',
+      });
+      return;
+    }
     let updatedProject: HalalProject | null = null;
 
     await updateVaultState((draft) => {
       const project = draft.halalProjects.find((p) => p.id === id);
       if (!project) return draft;
 
-      if (project.votingStatus !== 'open') {
+      if (project.votingStatus !== 'open' || project.voteResultRevealed) {
         throw new Error('PLACEMENT_VOTING_CLOSED');
       }
       if (project.votes.some((v) => v.voterId === viewer.id)) {
@@ -2816,18 +3339,7 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
           castAt,
         }),
       });
-
-      const yesCount = project.votes.filter((v) => v.decision === 'yes').length;
-      const noCount = project.votes.filter((v) => v.decision === 'no').length;
-
-      if (yesCount >= project.requiredApprovals) {
-        project.votingStatus = 'approved';
-        project.status = 'vetted';
-        project.approvedAt = castAt;
-      } else if (noCount > project.totalEligibleVoters - project.requiredApprovals) {
-        project.votingStatus = 'rejected';
-      }
-
+      project.voteResultRevealed = false;
       updatedProject = project;
 
       appendAuditLog(draft, {
@@ -2835,14 +3347,11 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
         action: 'INVESTMENT_VOTE_CAST',
         resourceType: 'vote',
         resourceId: project.id,
-        summary: `An anonymized verified member voted ${decision.toUpperCase()} on "${project.title}" (${yesCount}/${project.requiredApprovals} yes votes)`,
+        summary: `An anonymized verified ballot was recorded on Halal project "${project.title}" (${project.votes.length} total ballots)`,
         payload: {
           projectId: project.id,
           decision,
-          yesCount,
-          noCount,
-          requiredApprovals: project.requiredApprovals,
-          votingStatus: project.votingStatus,
+          totalVotesCast: project.votes.length,
         },
       });
 
@@ -2874,6 +3383,79 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
     res.status(500).json({ error: 'Failed to record placement vote.' });
   }
 });
+
+apiRouter.post(
+  '/halal-projects/:id/reveal',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      let updatedProject: HalalProject | null = null;
+
+      await updateVaultState((draft) => {
+        const project = draft.halalProjects.find((p) => p.id === id);
+        if (!project) return draft;
+        if (project.votingStatus !== 'open') {
+          throw new Error('PLACEMENT_VOTING_CLOSED');
+        }
+
+        const now = new Date().toISOString();
+        const yesCount = project.votes.filter((v) => v.decision === 'yes').length;
+        const noCount = project.votes.filter((v) => v.decision === 'no').length;
+        const passed = yesCount >= project.requiredApprovals;
+
+        project.voteResultRevealed = true;
+        project.revealedAt = now;
+        project.revealedBy = viewer.name;
+        if (passed) {
+          project.votingStatus = 'approved';
+          project.status = 'vetted';
+          project.approvedAt = now;
+        } else {
+          project.votingStatus = 'rejected';
+        }
+        updatedProject = project;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'HALAL_PROJECT_VOTE_REVEALED',
+          resourceType: 'halal_project',
+          resourceId: project.id,
+          summary: `${viewer.name} stopped voting and revealed results for "${project.title}": ${yesCount} yes, ${noCount} no -> ${project.votingStatus}`,
+          payload: {
+            projectId: project.id,
+            yesCount,
+            noCount,
+            votingStatus: project.votingStatus,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedProject) {
+        res.status(404).json({ error: 'Halal investment project not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('investment:voted', { projectId: id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'HALAL_PROJECT_VOTE_REVEALED',
+        resourceType: 'halal_project',
+        resourceId: id,
+      });
+      res.json({ project: hydrateHalalProjectForViewer(updatedProject, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'PLACEMENT_VOTING_CLOSED') {
+        res.status(409).json({ error: 'Voting is already closed on this Halal project.' });
+        return;
+      }
+      console.error('Reveal halal vote error:', err);
+      res.status(500).json({ error: 'Failed to reveal Halal project vote results.' });
+    }
+  }
+);
 
 apiRouter.post(
   '/halal-projects/:id/distribute',
@@ -4262,7 +4844,11 @@ apiRouter.get(
           brokenLinks.push(entry.id);
         }
 
-        if (entry.action === 'LOAN_VOTE_CAST' || entry.action === 'INVESTMENT_VOTE_CAST') {
+        if (
+          entry.action === 'LOAN_VOTE_CAST' ||
+          entry.action === 'INVESTMENT_VOTE_CAST' ||
+          entry.action === 'DECISION_POLL_VOTE_CAST'
+        ) {
           return {
             ...entry,
             actorId: 'anon-ballot',
@@ -4471,7 +5057,10 @@ apiRouter.get(
             'Entry SHA-256 Hash',
           ],
           ...targetLogs.map((a) => {
-            const isVote = a.action === 'LOAN_VOTE_CAST' || a.action === 'INVESTMENT_VOTE_CAST';
+            const isVote =
+              a.action === 'LOAN_VOTE_CAST' ||
+              a.action === 'INVESTMENT_VOTE_CAST' ||
+              a.action === 'DECISION_POLL_VOTE_CAST';
             return [
               a.id,
               a.timestamp,
@@ -4656,6 +5245,7 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
     let mentionCount = 0;
     await updateVaultState((draft) => {
       const mentioned = extractMentionedUsers(`${title} ${content}`, draft.users, viewer.id);
+      const mentionedIds = new Set(mentioned.map((m) => m.id));
       if (mentioned.length > 0) {
         newPost.mentions = mentioned.map((m) => m.memberCode);
         mentionCount = mentioned.length;
@@ -4672,6 +5262,21 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
         });
       }
 
+      // Notify active members of new community posts
+      draft.users
+        .filter((u) => u.status === 'active' && u.id !== viewer.id && !mentionedIds.has(u.id))
+        .forEach((member) => {
+          queueEmailNotification(draft, {
+            type: 'community_post_created',
+            recipientEmail: member.email,
+            recipientName: member.name,
+            recipientUserId: member.id,
+            subject: `New Community Post [${category}]: ${title}`,
+            body: `${viewer.name} (${viewer.memberCode}) shared a new post in ${category}: "${title}". Open Community to read and join the discussion.`,
+            relatedId: newPost.id,
+          });
+        });
+
       draft.communityPosts.unshift(newPost);
       appendAuditLog(draft, {
         actor: viewer,
@@ -4685,9 +5290,9 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
     });
 
     broadcastRealtimeEvent('community:updated', { postId: newPost.id, type: 'post_created' });
-    if (mentionCount > 0) {
-      broadcastRealtimeEvent('notification:created', { type: 'community_mention' });
-    }
+    broadcastRealtimeEvent('notification:created', {
+      type: mentionCount > 0 ? 'community_mention' : 'community_post_created',
+    });
     broadcastRealtimeEvent('audit:updated', {
       action: 'COMMUNITY_POST_CREATED',
       resourceType: 'community',
@@ -5687,4 +6292,396 @@ apiRouter.delete('/messages/:messageId', requireAuth, async (req: AuthenticatedR
     res.status(500).json({ error: 'Failed to delete private message.' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// 11. Decision Opinion Polls & Cooperative Meetings (Manager / Admin Governance)
+// ---------------------------------------------------------------------------
+
+apiRouter.get('/polls', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const viewer = req.authUser!;
+    const polls = (state.decisionPolls || []).map((p) => hydrateDecisionPollForViewer(p, viewer));
+    res.json({ polls });
+  } catch (err) {
+    console.error('Load decision polls error:', err);
+    res.status(500).json({ error: 'Failed to load decision polls.' });
+  }
+});
+
+apiRouter.post(
+  '/polls',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const title = String(req.body?.title || '').trim();
+      const description = String(req.body?.description || '').trim();
+      const rawCat = String(req.body?.category || 'general');
+      const category = (
+        ['policy', 'project', 'qard_hasan', 'general'].includes(rawCat) ? rawCat : 'general'
+      ) as DecisionPoll['category'];
+      const rawOptions = Array.isArray(req.body?.options)
+        ? (req.body.options as unknown[]).map((o) => String(o || '').trim()).filter(Boolean)
+        : ['Approve', 'Decline'];
+      const closesAt = req.body?.closesAt ? String(req.body.closesAt).trim() : undefined;
+
+      if (!title || title.length < 3) {
+        res.status(400).json({ error: 'Poll title must be at least 3 characters.' });
+        return;
+      }
+      if (rawOptions.length < 2 || rawOptions.length > 6) {
+        res.status(400).json({ error: 'Provide between 2 and 6 voting options.' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const poll: DecisionPoll = {
+        id: `poll-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title,
+        description: description || 'Member decision poll opened for cooperative consensus.',
+        category,
+        options: rawOptions.map((label, idx) => ({
+          id: `opt-${idx + 1}`,
+          label,
+        })),
+        status: 'open',
+        voteResultRevealed: false,
+        createdById: viewer.id,
+        createdByName: viewer.name,
+        createdAt: now,
+        closesAt: closesAt || undefined,
+        votes: [],
+      };
+
+      await updateVaultState((draft) => {
+        draft.decisionPolls = Array.isArray(draft.decisionPolls) ? draft.decisionPolls : [];
+        draft.decisionPolls.unshift(poll);
+
+        draft.users
+          .filter((u) => u.status === 'active' && u.role !== 'admin')
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'decision_vote_requested',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Opinion Ballot Open: ${title}`,
+              body: `Manager ${viewer.name} initiated a cooperative decision vote: "${title}". Cast your secret ballot in the Opinion Ballot tab. Results remain hidden until revealed by the Manager.`,
+              relatedId: poll.id,
+            });
+          });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'DECISION_POLL_CREATED',
+          resourceType: 'vote',
+          resourceId: poll.id,
+          summary: `${viewer.name} initiated cooperative decision poll "${title}" with ${poll.options.length} options`,
+          payload: { pollId: poll.id, category, options: rawOptions },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('poll:updated', { pollId: poll.id });
+      broadcastRealtimeEvent('notification:created', { type: 'decision_vote_requested' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'DECISION_POLL_CREATED',
+        resourceType: 'vote',
+        resourceId: poll.id,
+      });
+
+      res.status(201).json({ poll: hydrateDecisionPollForViewer(poll, viewer) });
+    } catch (err) {
+      console.error('Create poll error:', err);
+      res.status(500).json({ error: 'Failed to create decision poll.' });
+    }
+  }
+);
+
+apiRouter.post('/polls/:id/vote', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    if (viewer.role === 'admin') {
+      res.status(403).json({
+        error: 'Administrator accounts inspect audit ballots only and do not cast member votes.',
+      });
+      return;
+    }
+
+    const optionId = String(req.body?.optionId || '').trim();
+    const comment = String(req.body?.comment || '').trim();
+    if (!optionId) {
+      res.status(400).json({ error: 'Select a valid voting option.' });
+      return;
+    }
+
+    let updatedPoll: DecisionPoll | null = null;
+    await updateVaultState((draft) => {
+      draft.decisionPolls = Array.isArray(draft.decisionPolls) ? draft.decisionPolls : [];
+      const poll = draft.decisionPolls.find((p) => p.id === id);
+      if (!poll) return draft;
+      if (poll.status !== 'open' || poll.voteResultRevealed) {
+        throw new Error('POLL_CLOSED');
+      }
+      if (!poll.options.some((o) => o.id === optionId)) {
+        throw new Error('INVALID_OPTION');
+      }
+      if (poll.votes.some((v) => v.voterId === viewer.id)) {
+        throw new Error('ALREADY_VOTED');
+      }
+
+      const castAt = new Date().toISOString();
+      poll.votes.push({
+        voterId: viewer.id,
+        voterName: viewer.name,
+        voterRole: viewer.role,
+        optionId,
+        comment: comment || undefined,
+        castAt,
+        signatureHash: computeSha256Hash({
+          pollId: poll.id,
+          voterId: viewer.id,
+          optionId,
+          castAt,
+        }),
+      });
+      updatedPoll = poll;
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: 'DECISION_POLL_VOTE_CAST',
+        resourceType: 'vote',
+        resourceId: poll.id,
+        summary: `An anonymized verified ballot was cast on decision poll "${poll.title}" (${poll.votes.length} total ballots)`,
+        payload: { pollId: poll.id, optionId, totalVotesCast: poll.votes.length },
+      });
+      return draft;
+    });
+
+    if (!updatedPoll) {
+      res.status(404).json({ error: 'Decision poll not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('poll:updated', { pollId: id });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'DECISION_POLL_VOTE_CAST',
+      resourceType: 'vote',
+      resourceId: id,
+    });
+    res.json({ poll: hydrateDecisionPollForViewer(updatedPoll, viewer) });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'POLL_CLOSED') {
+      res.status(409).json({ error: 'Voting has closed for this decision poll.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'INVALID_OPTION') {
+      res.status(400).json({ error: 'Selected option does not exist in this poll.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'ALREADY_VOTED') {
+      res.status(409).json({ error: 'You have already cast your secret ballot on this poll.' });
+      return;
+    }
+    console.error('Cast decision vote error:', err);
+    res.status(500).json({ error: 'Failed to cast vote.' });
+  }
+});
+
+apiRouter.post(
+  '/polls/:id/reveal',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      let updatedPoll: DecisionPoll | null = null;
+
+      await updateVaultState((draft) => {
+        draft.decisionPolls = Array.isArray(draft.decisionPolls) ? draft.decisionPolls : [];
+        const poll = draft.decisionPolls.find((p) => p.id === id);
+        if (!poll) return draft;
+        if (poll.voteResultRevealed) {
+          throw new Error('ALREADY_REVEALED');
+        }
+
+        const now = new Date().toISOString();
+        poll.status = 'closed';
+        poll.voteResultRevealed = true;
+        poll.revealedAt = now;
+        poll.revealedByName = viewer.name;
+        updatedPoll = poll;
+
+        const summaryLines = poll.options
+          .map((o) => `${o.label}: ${poll.votes.filter((v) => v.optionId === o.id).length}`)
+          .join(' · ');
+
+        draft.users
+          .filter((u) => u.status === 'active' && u.role !== 'admin')
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'decision_vote_requested',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Poll Results Revealed: ${poll.title}`,
+              body: `Manager ${viewer.name} closed voting and revealed the outcome of "${poll.title}": ${summaryLines}. Open Opinion Ballot to inspect results.`,
+              relatedId: poll.id,
+            });
+          });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'DECISION_POLL_REVEALED',
+          resourceType: 'vote',
+          resourceId: poll.id,
+          summary: `${viewer.name} closed and revealed decision poll "${poll.title}" (${poll.votes.length} ballots)`,
+          payload: { pollId: poll.id, totalVotesCast: poll.votes.length },
+        });
+        return draft;
+      });
+
+      if (!updatedPoll) {
+        res.status(404).json({ error: 'Decision poll not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('poll:updated', { pollId: id });
+      broadcastRealtimeEvent('notification:created', { type: 'decision_vote_requested' });
+      res.json({ poll: hydrateDecisionPollForViewer(updatedPoll, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'ALREADY_REVEALED') {
+        res.status(409).json({ error: 'Results have already been revealed for this poll.' });
+        return;
+      }
+      console.error('Reveal poll error:', err);
+      res.status(500).json({ error: 'Failed to reveal poll results.' });
+    }
+  }
+);
+
+apiRouter.get('/meetings', requireAuth, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const meetings = [...(state.meetings || [])].sort((a, b) =>
+      b.scheduledFor.localeCompare(a.scheduledFor)
+    );
+    res.json({ meetings });
+  } catch (err) {
+    console.error('Load meetings error:', err);
+    res.status(500).json({ error: 'Failed to load scheduled meetings.' });
+  }
+});
+
+apiRouter.post(
+  '/meetings',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const title = String(req.body?.title || '').trim();
+      const agenda = String(req.body?.agenda || '').trim();
+      const scheduledFor = String(req.body?.scheduledFor || '').trim();
+      const locationOrLink = String(req.body?.locationOrLink || '').trim();
+
+      if (!title || !scheduledFor || !locationOrLink) {
+        res.status(400).json({
+          error: 'Meeting title, scheduled date/time, and location or meeting link are required.',
+        });
+        return;
+      }
+
+      const meeting: CoopMeeting = {
+        id: `mtg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title,
+        agenda: agenda || 'Regular cooperative treasury & member review session.',
+        scheduledFor,
+        locationOrLink,
+        status: 'scheduled',
+        createdById: viewer.id,
+        createdByName: viewer.name,
+        createdAt: new Date().toISOString(),
+      };
+
+      await updateVaultState((draft) => {
+        draft.meetings = Array.isArray(draft.meetings) ? draft.meetings : [];
+        draft.meetings.unshift(meeting);
+
+        draft.users
+          .filter((u) => u.status === 'active')
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'meeting_scheduled',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Cooperative Meeting Notice: ${title}`,
+              body: `Assalamu Alaikum ${member.name}, ${viewer.name} scheduled a cooperative meeting "${title}" for ${scheduledFor} (${locationOrLink}). Agenda: ${meeting.agenda}`,
+              relatedId: meeting.id,
+            });
+          });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'MEETING_SCHEDULED',
+          resourceType: 'notification',
+          resourceId: meeting.id,
+          summary: `${viewer.name} scheduled cooperative meeting "${title}" for ${scheduledFor}`,
+          payload: { meetingId: meeting.id, title, scheduledFor, locationOrLink },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('meeting:updated', { meetingId: meeting.id });
+      broadcastRealtimeEvent('notification:created', { type: 'meeting_scheduled' });
+      res.status(201).json({ meeting });
+    } catch (err) {
+      console.error('Schedule meeting error:', err);
+      res.status(500).json({ error: 'Failed to schedule cooperative meeting.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/meetings/:id/status',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const status = req.body?.status;
+      if (!['scheduled', 'completed', 'cancelled'].includes(status)) {
+        res.status(400).json({ error: 'Invalid meeting status.' });
+        return;
+      }
+
+      let updated: CoopMeeting | null = null;
+      await updateVaultState((draft) => {
+        draft.meetings = Array.isArray(draft.meetings) ? draft.meetings : [];
+        const target = draft.meetings.find((m) => m.id === id);
+        if (!target) return draft;
+        target.status = status;
+        updated = target;
+        return draft;
+      });
+
+      if (!updated) {
+        res.status(404).json({ error: 'Meeting not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('meeting:updated', { meetingId: id, status });
+      res.json({ meeting: updated });
+    } catch (err) {
+      console.error('Update meeting status error:', err);
+      res.status(500).json({ error: 'Failed to update meeting status.' });
+    }
+  }
+);
+
 

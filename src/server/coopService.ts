@@ -1,9 +1,11 @@
 import type {
+  ActiveBorrowerSummary,
   AuditLogEntry,
   CommunityPost,
   Contribution,
   ContributionSensitiveDetails,
   DashboardOverview,
+  DecisionPoll,
   EligibilityCheck,
   EmailNotification,
   HalalProject,
@@ -12,6 +14,7 @@ import type {
   LoanSensitiveDetails,
   MemberPublicProfile,
   MemberSummary,
+  MonthClearanceEntry,
   MonthlyCashflowPoint,
   NotificationType,
   PublicUser,
@@ -159,12 +162,33 @@ export function extractMentionedUsers(
 export function evaluateLoanEligibility(state: VaultState, userId: string): EligibilityCheck {
   const currentYear = new Date().getFullYear();
   const maxLoansPerYear = state.fundConfig.maxLoansPerYear;
+  const targetUser = state.users.find((u) => u.id === userId);
+
+  if (targetUser?.role === 'admin') {
+    return {
+      noActiveLoan: true,
+      noOverdueInstallments: true,
+      overdueCount: 0,
+      loansUsedThisYear: 0,
+      maxLoansPerYear,
+      quotaAvailable: false,
+      beforeMaturityDate: true,
+      eligible: false,
+      reasons: [
+        'Administrator accounts govern site settings, member roles, and audits only — Admins do not contribute or borrow Qard Hasan.',
+      ],
+    };
+  }
 
   const userLoans = state.loans.filter((l) => l.borrowerId === userId);
   const activeOrPendingLoan = userLoans.find((l) =>
-    ['pending_guarantor', 'pending_vote', 'approved_pending_disbursement', 'active'].includes(
-      l.status
-    )
+    [
+      'pending_guarantor',
+      'pending_manager_review',
+      'pending_vote',
+      'approved_pending_disbursement',
+      'active',
+    ].includes(l.status)
   );
   const noActiveLoan = !activeOrPendingLoan;
 
@@ -254,6 +278,33 @@ export function computeRequiredApprovals(state: VaultState): {
   return { activeVoters, requiredApprovals };
 }
 
+function getMonthEndDate(year: number, monthIndexZero: number): string {
+  const end = new Date(Date.UTC(year, monthIndexZero + 1, 0));
+  return end.toISOString().slice(0, 10);
+}
+
+function listBillingMonthsBetween(startYm: string, endYm: string): string[] {
+  if (!/^\d{4}-\d{2}$/.test(startYm) || !/^\d{4}-\d{2}$/.test(endYm) || startYm > endYm) {
+    return [endYm];
+  }
+  const [sy, sm] = startYm.split('-').map(Number);
+  const [ey, em] = endYm.split('-').map(Number);
+  const out: string[] = [];
+  let y = sy;
+  let m = sm;
+  let guard = 0;
+  while ((y < ey || (y === ey && m <= em)) && guard < 120) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`);
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+    guard += 1;
+  }
+  return out;
+}
+
 export function buildDashboardOverview(state: VaultState, currentUser: PublicUser): DashboardOverview {
   const approvedContributions = state.contributions.filter((c) => c.status === 'approved');
   const pendingContributions = state.contributions.filter((c) => c.status === 'pending');
@@ -261,24 +312,23 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   const totalContributionsPool = approvedContributions.reduce((sum, c) => sum + c.amount, 0);
   const pendingContributionsAmount = pendingContributions.reduce((sum, c) => sum + c.amount, 0);
 
-  const approvedOrDisbursedLoans = state.loans.filter(
-    (l) =>
-      l.status === 'approved_pending_disbursement' ||
-      l.status === 'active' ||
-      l.status === 'repaid'
-  );
+  // Only confirmed / disbursed loans ('active' or 'repaid') deduct from central fund balance
   const disbursedLoans = state.loans.filter((l) => l.status === 'active' || l.status === 'repaid');
-  const approvedLoansDeducted = approvedOrDisbursedLoans.reduce((sum, l) => sum + l.amount, 0);
-  const totalLoansDisbursed = disbursedLoans.reduce((sum, l) => sum + l.amount, 0);
-  const totalRepaid = approvedOrDisbursedLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
-  const activeLoansOutstanding = state.loans
-    .filter((l) => l.status === 'active')
-    .reduce((sum, l) => sum + l.remainingBalance, 0);
+  const approvedLoansDeducted = disbursedLoans.reduce((sum, l) => sum + l.amount, 0);
+  const totalLoansDisbursed = approvedLoansDeducted;
+  const totalRepaid = disbursedLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
+  const activeLoansList = state.loans.filter((l) => l.status === 'active');
+  const activeLoansOutstanding = activeLoansList.reduce((sum, l) => sum + l.remainingBalance, 0);
 
-  // Central balance: + Approved Contributions - Approved Loans + Verified Loan Repayments
+  // Central balance: + Approved Contributions - Disbursed Loans + Verified Loan Repayments
   const centralBalance = totalContributionsPool - approvedLoansDeducted + totalRepaid;
   const availableLiquidity = Math.max(0, centralBalance);
+  const amanahHeight = totalContributionsPool;
+  const quardHasanTotalCurrent = activeLoansOutstanding;
 
+  const pendingLoansReviewCount = state.loans.filter(
+    (l) => l.status === 'pending_manager_review'
+  ).length;
   const pendingVotesCount = state.loans.filter((l) => l.status === 'pending_vote').length;
   const pendingDisbursementsCount = state.loans.filter(
     (l) => l.status === 'approved_pending_disbursement'
@@ -288,27 +338,193 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     0
   );
   const overdueInstallmentsCount = state.loans.reduce(
-    (sum, l) => sum + (l.status === 'active' ? l.installments.filter((i) => i.status === 'overdue').length : 0),
+    (sum, l) =>
+      sum + (l.status === 'active' ? l.installments.filter((i) => i.status === 'overdue').length : 0),
     0
   );
 
-  const totalProfitDistributedPool = Math.round(
-    state.halalProjects.reduce(
-      (sum, proj) =>
-        sum + (proj.distributions || []).reduce((dSum, dist) => dSum + dist.distributablePool, 0),
-      0
-    ) * 100
-  ) / 100;
+  const totalProfitDistributedPool =
+    Math.round(
+      state.halalProjects.reduce(
+        (sum, proj) =>
+          sum + (proj.distributions || []).reduce((dSum, dist) => dSum + dist.distributablePool, 0),
+        0
+      ) * 100
+    ) / 100;
+
+  const now = new Date();
+  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const monthlyTarget = state.fundConfig.monthlyContributionAmount || 5000;
+
+  // Contributing members exclude Admin accounts
+  const contributingActiveMembers = state.users.filter(
+    (u) => u.status === 'active' && u.role !== 'admin'
+  );
+
+  const thisMonthMemberClearance: MonthClearanceEntry[] = contributingActiveMembers.map((m) => {
+    const memberMonthContribs = state.contributions.filter(
+      (c) => c.userId === m.id && c.billingMonth === currentMonthKey
+    );
+    const approvedAmt = memberMonthContribs
+      .filter((c) => c.status === 'approved')
+      .reduce((s, c) => s + c.amount, 0);
+    const pendingAmt = memberMonthContribs
+      .filter((c) => c.status === 'pending')
+      .reduce((s, c) => s + c.amount, 0);
+    const cleared = approvedAmt >= monthlyTarget;
+    return {
+      userId: m.id,
+      memberName: m.name,
+      memberCode: m.memberCode,
+      role: m.role,
+      cleared,
+      contributedAmount: approvedAmt,
+      targetAmount: monthlyTarget,
+      status: cleared ? 'cleared' : pendingAmt > 0 ? 'pending' : 'due',
+    };
+  });
+
+  const thisMonthClearanceTotalMembers = contributingActiveMembers.length;
+  const thisMonthClearanceClearedMembers = thisMonthMemberClearance.filter((e) => e.cleared).length;
+  const thisMonthContributionTarget = thisMonthClearanceTotalMembers * monthlyTarget;
+  const thisMonthContributionCollected = approvedContributions
+    .filter((c) => c.billingMonth === currentMonthKey)
+    .reduce((s, c) => s + c.amount, 0);
+
+  let cumulativeExpectedTarget = 0;
+  let cumulativeUnpaidDue = 0;
+  contributingActiveMembers.forEach((m) => {
+    const joinedYm = m.joinedAt ? m.joinedAt.slice(0, 7) : currentMonthKey;
+    const months = listBillingMonthsBetween(joinedYm <= currentMonthKey ? joinedYm : currentMonthKey, currentMonthKey);
+    const expected = months.length * monthlyTarget;
+    cumulativeExpectedTarget += expected;
+    const paidForWindow = approvedContributions
+      .filter((c) => c.userId === m.id && months.includes(c.billingMonth))
+      .reduce((s, c) => s + c.amount, 0);
+    cumulativeUnpaidDue += Math.max(0, expected - paidForWindow);
+  });
+
+  const thisMonthDueTarget = Math.max(thisMonthContributionTarget, cumulativeExpectedTarget);
+  const thisMonthDueRemaining = cumulativeUnpaidDue;
+
+  let thisMonthHasanInstallmentNeed = 0;
+  let thisMonthHasanInstallmentCollected = 0;
+  state.loans
+    .filter((l) => l.status === 'active' || l.status === 'repaid')
+    .forEach((l) => {
+      l.installments.forEach((inst) => {
+        const dueInCurrentMonth = inst.dueDate.slice(0, 7) === currentMonthKey;
+        const paidInCurrentMonth = Boolean(inst.paidAt && inst.paidAt.slice(0, 7) === currentMonthKey);
+        if (dueInCurrentMonth || inst.status === 'overdue') {
+          thisMonthHasanInstallmentNeed += inst.amount;
+        }
+        if (inst.status === 'paid' && (dueInCurrentMonth || paidInCurrentMonth)) {
+          thisMonthHasanInstallmentCollected += inst.paidAmount;
+        }
+      });
+    });
+
+  const activeBorrowers: ActiveBorrowerSummary[] = activeLoansList.map((l) => {
+    const upcomingInsts = l.installments
+      .filter((inst) => inst.status === 'scheduled' || inst.status === 'overdue' || inst.status === 'pending_verification')
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    const missedInstallmentsCount = l.installments.filter((i) => i.status === 'overdue').length;
+    return {
+      loanId: l.id,
+      borrowerId: l.borrowerId,
+      borrowerName: l.borrowerName,
+      borrowerCode: l.borrowerCode,
+      mainAmount: l.amount,
+      dueAmount: l.remainingBalance,
+      totalRepaid: l.totalRepaid,
+      nextDueDate: upcomingInsts[0]?.dueDate,
+      missedInstallmentsCount,
+    };
+  });
 
   const personalContribs = state.contributions.filter((c) => c.userId === currentUser.id);
   const personalApproved = personalContribs.filter((c) => c.status === 'approved');
   const personalPending = personalContribs.filter((c) => c.status === 'pending');
 
+  const sortedPersonalContribs = [...personalContribs].sort((a, b) =>
+    b.submittedAt.localeCompare(a.submittedAt)
+  );
+  const sortedPersonalApproved = [...personalApproved].sort((a, b) =>
+    b.submittedAt.localeCompare(a.submittedAt)
+  );
+  const latestContrib = sortedPersonalApproved[0] || sortedPersonalContribs[0] || null;
+  const lastContribution = latestContrib
+    ? {
+        id: latestContrib.id,
+        billingMonth: latestContrib.billingMonth,
+        amount: latestContrib.amount,
+        submittedAt: latestContrib.submittedAt,
+        status: latestContrib.status,
+      }
+    : null;
+
+  const hasCurrentMonthApprovedOrPending = personalContribs.some(
+    (c) => c.billingMonth === currentMonthKey && (c.status === 'approved' || c.status === 'pending')
+  );
+  const nextContributionDeadline = hasCurrentMonthApprovedOrPending
+    ? getMonthEndDate(now.getUTCFullYear(), now.getUTCMonth() + 1)
+    : getMonthEndDate(now.getUTCFullYear(), now.getUTCMonth());
+
+  let dueContributionMonths = 0;
+  let dueContributionAmount = 0;
+  if (currentUser.role !== 'admin') {
+    const joinedYm = currentUser.joinedAt ? currentUser.joinedAt.slice(0, 7) : currentMonthKey;
+    const months = listBillingMonthsBetween(joinedYm <= currentMonthKey ? joinedYm : currentMonthKey, currentMonthKey);
+    months.forEach((ym) => {
+      const paidForMonth = personalApproved
+        .filter((c) => c.billingMonth === ym)
+        .reduce((s, c) => s + c.amount, 0);
+      if (paidForMonth < monthlyTarget) {
+        dueContributionMonths += 1;
+        dueContributionAmount += monthlyTarget - paidForMonth;
+      }
+    });
+  }
+
   const personalLoans = state.loans.filter((l) => l.borrowerId === currentUser.id);
-  const activeLoanBalance = personalLoans
-    .filter((l) => l.status === 'active')
-    .reduce((sum, l) => sum + l.remainingBalance, 0);
+  const personalActiveLoans = personalLoans.filter((l) => l.status === 'active');
+  const activeLoanBalance = personalActiveLoans.reduce((sum, l) => sum + l.remainingBalance, 0);
+  const activeLoanMainAmount = personalActiveLoans.reduce((sum, l) => sum + l.amount, 0);
+  const activeLoanDueAmount = activeLoanBalance;
   const totalRepaidPersonal = personalLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
+
+  const allPersonalPaidInsts = personalLoans
+    .flatMap((l) =>
+      l.installments
+        .filter((inst) => inst.status === 'paid' && inst.paidAt)
+        .map((inst) => ({
+          loanId: l.id,
+          installmentNumber: inst.installmentNumber,
+          amount: inst.paidAmount,
+          paidAt: inst.paidAt!,
+        }))
+    )
+    .sort((a, b) => b.paidAt.localeCompare(a.paidAt));
+  const lastHasanInstallment = allPersonalPaidInsts[0] || null;
+
+  const overduePersonalInsts = personalActiveLoans.flatMap((l) =>
+    l.installments.filter((i) => i.status === 'overdue')
+  );
+  const missedInstallmentsCount = overduePersonalInsts.length;
+  const missedInstallmentsAmount = overduePersonalInsts.reduce((s, i) => s + i.amount, 0);
+
+  const nextLoanInsts = personalActiveLoans
+    .flatMap((l) =>
+      l.installments.filter(
+        (i) => i.status === 'scheduled' || i.status === 'overdue' || i.status === 'pending_verification'
+      )
+    )
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const nextLoanDeadline = nextLoanInsts[0]?.dueDate || null;
+  const nextOverallDeadline =
+    nextLoanDeadline && nextLoanDeadline < nextContributionDeadline
+      ? nextLoanDeadline
+      : nextContributionDeadline;
 
   const personalTotalContributed = personalApproved.reduce((s, c) => s + c.amount, 0);
   const totalProfitDistributed =
@@ -332,7 +548,6 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     Math.round((personalTotalContributed - activeLoanBalance + totalProfitDistributed) * 100) / 100
   );
 
-  const now = new Date();
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
   const diffMs = maturity.getTime() - now.getTime();
   const daysUntilMaturity = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
@@ -364,14 +579,24 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   const monthlySeries = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
 
   const pendingMembersCount = state.users.filter((u) => u.status === 'pending_approval').length;
-  const isStaff = currentUser.role === 'admin' || currentUser.role === 'manager';
+  const pendingProfileRequestsCount = (state.profileChangeRequests || []).filter(
+    (r) => r.status === 'pending'
+  ).length;
+  const openDecisionPollsCount = (state.decisionPolls || []).filter(
+    (p) => p.status === 'open'
+  ).length;
+  const upcomingMeetingsCount = (state.meetings || []).filter(
+    (m) => m.status === 'scheduled' && m.scheduledFor >= now.toISOString()
+  ).length;
+
   const unreadNotificationsCount = state.emailNotifications.filter((n) => {
     if (n.readByRecipient) return false;
-    if (isStaff) return true;
+    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
+      if (!n.recipientUserId && !n.recipientEmail) return true;
+    }
     return n.recipientUserId === currentUser.id || n.recipientEmail === currentUser.email;
   }).length;
 
-  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
   const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   const prevMonthKey = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
 
@@ -381,8 +606,7 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   };
 
-  const leaderboard: LeaderboardEntry[] = state.users
-    .filter((u) => u.status === 'active')
+  const leaderboard: LeaderboardEntry[] = contributingActiveMembers
     .map((member) => {
       const memberApproved = approvedContributions.filter((c) => c.userId === member.id);
       const totalContributed = memberApproved.reduce((sum, c) => sum + c.amount, 0);
@@ -390,7 +614,6 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       const approvedMonthsCount = paidMonths.size;
       const currentMonthPaid = paidMonths.has(currentMonthKey);
 
-      // Compute consecutive monthly payment streak ending at current month or previous month
       let streak = 0;
       let cursor = currentMonthPaid
         ? currentMonthKey
@@ -402,7 +625,6 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
         cursor = shiftMonthBack(cursor);
       }
 
-      // Compute expected months since joining (inclusive of current month, minimum 1)
       const joined = new Date(member.joinedAt);
       const monthsSinceJoined = Number.isNaN(joined.getTime())
         ? 1
@@ -448,6 +670,9 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     daysUntilMaturity,
     treasury: {
       totalContributionsPool,
+      amanahHeight,
+      currentBalance: centralBalance,
+      quardHasanTotalCurrent,
       totalLoansDisbursed,
       approvedLoansDeducted,
       totalRepaid,
@@ -456,21 +681,48 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       availableLiquidity,
       pendingContributionsAmount,
       pendingContributionsCount: pendingContributions.length,
+      pendingLoansReviewCount,
       pendingVotesCount,
       pendingDisbursementsCount,
       pendingRepaymentsCount,
       overdueInstallmentsCount,
       totalProfitDistributedPool,
       activeMembersCount: state.users.filter((u) => u.status === 'active').length,
+      contributingMembersCount: contributingActiveMembers.length,
       pendingMembersCount,
+      pendingProfileRequestsCount,
+      openDecisionPollsCount,
+      upcomingMeetingsCount,
       unreadNotificationsCount,
+      thisMonthKey: currentMonthKey,
+      thisMonthContributionTarget,
+      thisMonthContributionCollected,
+      thisMonthDueTarget,
+      thisMonthDueRemaining,
+      thisMonthHasanInstallmentNeed,
+      thisMonthHasanInstallmentCollected,
+      thisMonthClearanceTotalMembers,
+      thisMonthClearanceClearedMembers,
+      activeBorrowers,
+      thisMonthMemberClearance,
     },
     personal: {
       totalContributed: personalTotalContributed,
       approvedContributionsCount: personalApproved.length,
       pendingContributionsCount: personalPending.length,
+      lastContribution,
+      nextContributionDeadline,
+      dueContributionMonths,
+      dueContributionAmount,
       activeLoanBalance,
+      activeLoanMainAmount,
+      activeLoanDueAmount,
       totalRepaidPersonal,
+      lastHasanInstallment,
+      missedInstallmentsCount,
+      missedInstallmentsAmount,
+      nextLoanDeadline,
+      nextOverallDeadline,
       totalProfitDistributed,
       cooperativeEquity,
       eligibility: evaluateLoanEligibility(state, currentUser.id),
@@ -541,9 +793,30 @@ export function hydrateLoanForViewer(loan: LoanRequest, viewer: PublicUser): Loa
     };
   });
 
+  const isAdmin = viewer.role === 'admin';
+  const approveCountRaw = loan.votes.filter((v) => v.decision === 'approve').length;
+  const rejectCountRaw = loan.votes.filter((v) => v.decision === 'reject').length;
+  // Historical/pre-existing decided loans without voteResultRevealed explicitly false are considered revealed
+  const isRevealed =
+    Boolean(loan.voteResultRevealed) ||
+    (loan.voteResultRevealed !== false &&
+      loan.status !== 'pending_vote' &&
+      loan.status !== 'pending_manager_review' &&
+      loan.status !== 'pending_guarantor');
+
   return {
     ...loan,
-    votes: anonymizedVotes,
+    votes: isAdmin ? anonymizedVotes : anonymizedVotes.filter((v) => v.isSelf),
+    voteResultRevealed: isRevealed,
+    totalVotesCast: loan.votes.length,
+    approveCount: isAdmin || isRevealed ? approveCountRaw : undefined,
+    rejectCount: isAdmin || isRevealed ? rejectCountRaw : undefined,
+    adminVoteLedger: isAdmin
+      ? loan.votes.map((v) => ({
+          ...v,
+          isSelf: v.voterId === viewer.id,
+        }))
+      : undefined,
     decryptedSensitiveNotes,
     installments: hydratedInstallments,
   };
@@ -564,9 +837,65 @@ export function hydrateHalalProjectForViewer(
     };
   });
 
+  const isAdmin = viewer.role === 'admin';
+  const yesCountRaw = project.votes.filter((v) => v.decision === 'yes').length;
+  const noCountRaw = project.votes.filter((v) => v.decision === 'no').length;
+  const isRevealed =
+    Boolean(project.voteResultRevealed) ||
+    (project.voteResultRevealed !== false && project.votingStatus !== 'open');
+
   return {
     ...project,
-    votes: anonymizedVotes,
+    votes: isAdmin ? anonymizedVotes : anonymizedVotes.filter((v) => v.isSelf),
+    voteResultRevealed: isRevealed,
+    totalVotesCast: project.votes.length,
+    yesCount: isAdmin || isRevealed ? yesCountRaw : undefined,
+    noCount: isAdmin || isRevealed ? noCountRaw : undefined,
+    adminVoteLedger: isAdmin
+      ? project.votes.map((v) => ({
+          ...v,
+          isSelf: v.voterId === viewer.id,
+        }))
+      : undefined,
+  };
+}
+
+export function hydrateDecisionPollForViewer(
+  poll: DecisionPoll,
+  viewer: PublicUser
+): DecisionPoll {
+  const isAdmin = viewer.role === 'admin';
+  const isRevealed = Boolean(poll.voteResultRevealed);
+  const anonymizedVotes = poll.votes.map((v, idx) => {
+    const isSelf = v.voterId === viewer.id;
+    return {
+      ...v,
+      isSelf,
+      voterId: isSelf ? viewer.id : `anon-${v.signatureHash.slice(0, 8)}-${idx + 1}`,
+      voterName: isSelf ? 'You (Verified Member)' : `Anonymous Member #${idx + 1}`,
+      voterRole: (isSelf ? v.voterRole : 'member') as UserRole,
+    };
+  });
+
+  const options = poll.options.map((opt) => ({
+    ...opt,
+    voteCount:
+      isAdmin || isRevealed
+        ? poll.votes.filter((v) => v.optionId === opt.id).length
+        : undefined,
+  }));
+
+  return {
+    ...poll,
+    options,
+    votes: isAdmin ? anonymizedVotes : anonymizedVotes.filter((v) => v.isSelf),
+    totalVotesCast: poll.votes.length,
+    adminVoteLedger: isAdmin
+      ? poll.votes.map((v) => ({
+          ...v,
+          isSelf: v.voterId === viewer.id,
+        }))
+      : undefined,
   };
 }
 
@@ -588,7 +917,13 @@ export function buildMemberSummaries(
       .filter((l) => l.status === 'active')
       .reduce((s, l) => s + l.remainingBalance, 0);
     const hasActiveLoan = userLoans.some((l) =>
-      ['pending_vote', 'approved_pending_disbursement', 'active'].includes(l.status)
+      [
+        'pending_guarantor',
+        'pending_manager_review',
+        'pending_vote',
+        'approved_pending_disbursement',
+        'active',
+      ].includes(l.status)
     );
 
     let registrationDetails: UserRegistrationDetails | undefined;

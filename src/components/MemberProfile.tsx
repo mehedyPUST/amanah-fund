@@ -8,13 +8,14 @@ import {
   Clock,
   ExternalLink,
   KeyRound,
+  Lock,
   RefreshCw,
   Save,
   ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { NotificationPreferences, PublicUser } from '../types/coop.ts';
+import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { useCoopSession } from './AppProviders.tsx';
@@ -44,6 +45,19 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const [permanentAddress, setPermanentAddress] = useState('');
   const [occupation, setOccupation] = useState('');
   const [companyOrganization, setCompanyOrganization] = useState('');
+
+  // Password change state (instant, no approval required)
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordFeedback, setPasswordFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Profile change approval requests
+  const [changeRequests, setChangeRequests] = useState<ProfileChangeRequest[]>([]);
 
   // 2FA Step-Up Security state
   const [totpSetupData, setTotpSetupData] = useState<{
@@ -90,8 +104,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getProfile();
+      const [res, reqRes] = await Promise.all([
+        api.getProfile(),
+        api.getProfileChangeRequests().catch(() => ({ requests: [] as ProfileChangeRequest[] })),
+      ]);
       populateForm(res.user);
+      setChangeRequests(reqRes.requests.filter((r) => r.userId === user.id));
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -100,7 +118,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     } finally {
       setLoading(false);
     }
-  }, [populateForm]);
+  }, [populateForm, user.id]);
 
   useEffect(() => {
     void loadProfile();
@@ -129,12 +147,22 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         occupation: occupation.trim(),
         companyOrganization: companyOrganization.trim(),
       });
-      populateForm(res.user);
-      setUser(res.user);
-      setFeedback({
-        type: 'success',
-        text: 'Your contact information has been encrypted and saved to your member profile.',
-      });
+      if (res.pendingApproval) {
+        setFeedback({
+          type: 'success',
+          text:
+            res.message ||
+            'Your profile edits have been submitted for Admin/Manager approval. Changes take effect once approved.',
+        });
+        await loadProfile();
+      } else {
+        populateForm(res.user);
+        setUser(res.user);
+        setFeedback({
+          type: 'success',
+          text: 'Your contact information has been encrypted and saved to your profile.',
+        });
+      }
       await onRefresh();
     } catch (err) {
       setFeedback({
@@ -143,6 +171,44 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handlePasswordChange(e: FormEvent) {
+    e.preventDefault();
+    setPasswordFeedback(null);
+    if (newPassword.length < 8) {
+      setPasswordFeedback({
+        type: 'error',
+        text: 'New password must be at least 8 characters long.',
+      });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({
+        type: 'error',
+        text: 'New password and confirmation do not match.',
+      });
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const res = await api.changePassword(currentPassword, newPassword);
+      setUser(res.user);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordFeedback({
+        type: 'success',
+        text: 'Password updated immediately (no Manager or Admin approval required).',
+      });
+    } catch (err) {
+      setPasswordFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Could not change password.',
+      });
+    } finally {
+      setPasswordBusy(false);
     }
   }
 
@@ -448,10 +514,49 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               Update Contact Information
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Keep your mobile number, email, occupation, and residential addresses up to date.
-              Updates are AES-256-GCM encrypted in the cooperative vault.
+              {user.role === 'admin'
+                ? 'Keep your administrator profile details up to date. Encrypted via AES-256-GCM.'
+                : 'Profile edits require Admin or Manager approval before taking effect (password changes apply immediately).'}
             </p>
           </div>
+
+          {(() => {
+            const pendingReq = changeRequests.find((r) => r.status === 'pending');
+            const latestReq = changeRequests[0];
+            if (pendingReq) {
+              return (
+                <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+                  <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="space-y-0.5">
+                    <div className="font-semibold">
+                      Pending Profile Update Request ({formatDateTime(pendingReq.requestedAt)})
+                    </div>
+                    <p>
+                      Requested changes to{' '}
+                      <span className="font-mono">
+                        {Object.keys(pendingReq.requestedChanges).join(', ')}
+                      </span>{' '}
+                      are awaiting Admin or Manager review.
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            if (latestReq && latestReq.status === 'rejected') {
+              return (
+                <div className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="space-y-0.5">
+                    <div className="font-semibold">
+                      Previous Profile Update Declined by {latestReq.reviewerName || 'Reviewer'}
+                    </div>
+                    {latestReq.reviewNote && <p>Note: {latestReq.reviewNote}</p>}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           {feedback && (
             <div
@@ -615,6 +720,101 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </form>
         </section>
       </div>
+
+      {/* Instant Password Change (No Approval Needed) */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Instant Security Credential Update</span>
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+              Change Password (No Approval Needed)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Updating your password takes effect immediately without requiring Admin or Manager
+              approval.
+            </p>
+          </div>
+        </div>
+
+        {passwordFeedback && (
+          <div
+            role="status"
+            className={`p-3 rounded-lg border text-xs font-medium ${
+              passwordFeedback.type === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
+                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
+            }`}
+          >
+            {passwordFeedback.text}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div>
+            <label
+              htmlFor="current-password"
+              className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Current Password
+            </label>
+            <input
+              id="current-password"
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="new-password"
+              className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              New Password (min 8 chars)
+            </label>
+            <input
+              id="new-password"
+              type="password"
+              required
+              minLength={8}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="confirm-password"
+              className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Confirm New Password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={passwordBusy}
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+          >
+            {passwordBusy ? 'Updating…' : 'Update Password Now'}
+          </button>
+        </form>
+      </section>
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
