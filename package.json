@@ -8,14 +8,16 @@
     "build": "NODE_ENV=production next build",
     "start": "NODE_ENV=production node server.ts",
     "clean": "rm -rf .next dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
+    "@google/genai": "^3.3.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
@@ -27,10 +29,12 @@
     "mongodb": "^7.9.0",
     "motion": "^12.23.24",
     "next": "^16.4.6",
+    "qrcode": "^1.5.4",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-loading-skeleton": "^3.5.0",
-    "recharts": "^3.10.1"
+    "recharts": "^3.10.1",
+    "vitest": "^5.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

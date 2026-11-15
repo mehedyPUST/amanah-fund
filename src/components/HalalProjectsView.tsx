@@ -1,7 +1,17 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Calendar, Check, ChevronDown, ChevronUp, Plus, ShieldCheck, Vote, X } from 'lucide-react';
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Coins,
+  Plus,
+  ShieldCheck,
+  Vote,
+  X,
+} from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { DashboardOverview, HalalProject, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -39,6 +49,13 @@ export function HalalProjectsView({
   const [voteComments, setVoteComments] = useState<Record<string, string>>({});
   const [votingId, setVotingId] = useState<string | null>(null);
   const [expandedVotesId, setExpandedVotesId] = useState<string | null>(null);
+  const [expandedDistId, setExpandedDistId] = useState<string | null>(null);
+
+  const [distFormProjectId, setDistFormProjectId] = useState<string | null>(null);
+  const [distPeriodLabel, setDistPeriodLabel] = useState('Q1 Dividend');
+  const [distRealizedProfit, setDistRealizedProfit] = useState('');
+  const [distCoopSharePct, setDistCoopSharePct] = useState('70');
+  const [distBusy, setDistBusy] = useState(false);
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
@@ -98,6 +115,36 @@ export function HalalProjectsView({
       });
     } finally {
       setVotingId(null);
+    }
+  }
+
+  async function handleDistributeProfit(e: FormEvent, projectId: string) {
+    e.preventDefault();
+    setDistBusy(true);
+    setFeedback(null);
+    try {
+      const res = await api.distributeHalalProfit(projectId, {
+        periodLabel: distPeriodLabel.trim(),
+        realizedProfit: Number(distRealizedProfit),
+        coopSharePct: Number(distCoopSharePct),
+      });
+      const latestDist = res.project.distributions?.[0];
+      setFeedback({
+        type: 'success',
+        text: latestDist
+          ? `Distributed ${formatMoney(latestDist.distributablePool, ccy)} (${latestDist.periodLabel}) proportionally across ${latestDist.allocations.length} active cooperative members.`
+          : 'Profit distribution recorded across active cooperative members.',
+      });
+      setDistFormProjectId(null);
+      setDistRealizedProfit('');
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Profit distribution failed.',
+      });
+    } finally {
+      setDistBusy(false);
     }
   }
 
@@ -232,6 +279,15 @@ export function HalalProjectsView({
                           <span className="text-emerald-700 dark:text-emerald-400">
                             Yield: {proj.projectedAnnualReturn}
                           </span>
+                          {typeof proj.realizedProfitTotal === 'number' &&
+                            proj.realizedProfitTotal > 0 && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="text-amber-700 dark:text-amber-400">
+                                  Realized Pool: {formatMoney(proj.realizedProfitTotal, ccy)}
+                                </span>
+                              </>
+                            )}
                         </div>
                       </div>
 
@@ -394,6 +450,171 @@ export function HalalProjectsView({
                               </div>
                             );
                           })
+                        )}
+                      </div>
+                    )}
+
+                    {/* Profit & Dividend Distributions */}
+                    {(proj.votingStatus === 'approved' || proj.status !== 'proposed') && (
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                            <Coins className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                            <span>
+                              Profit Distributions ({(proj.distributions || []).length})
+                            </span>
+                          </div>
+                          {isStaff && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDistFormProjectId(
+                                  distFormProjectId === proj.id ? null : proj.id
+                                )
+                              }
+                              className="px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
+                            >
+                              {distFormProjectId === proj.id
+                                ? 'Cancel'
+                                : 'Record & Distribute Profit'}
+                            </button>
+                          )}
+                        </div>
+
+                        {isStaff && distFormProjectId === proj.id && (
+                          <form
+                            onSubmit={(e) => void handleDistributeProfit(e, proj.id)}
+                            className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"
+                          >
+                            <div>
+                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                Period Label
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                minLength={2}
+                                value={distPeriodLabel}
+                                onChange={(e) => setDistPeriodLabel(e.target.value)}
+                                placeholder="e.g. FY2026 Q2"
+                                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                Realized Profit ({ccy})
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                step="any"
+                                required
+                                value={distRealizedProfit}
+                                onChange={(e) => setDistRealizedProfit(e.target.value)}
+                                placeholder="e.g. 25000"
+                                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                Co-op Share (%)
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                required
+                                value={distCoopSharePct}
+                                onChange={(e) => setDistCoopSharePct(e.target.value)}
+                                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={distBusy}
+                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
+                            >
+                              {distBusy ? 'Distributing…' : 'Distribute Pro-Rata'}
+                            </button>
+                          </form>
+                        )}
+
+                        {(proj.distributions || []).length > 0 && (
+                          <div className="space-y-2">
+                            {(proj.distributions || []).map((dist) => {
+                              const myAlloc = dist.allocations.find((a) => a.userId === user.id);
+                              const isDistOpen = expandedDistId === dist.id;
+                              return (
+                                <div
+                                  key={dist.id}
+                                  className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-xs space-y-2"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-semibold text-slate-900 dark:text-white">
+                                        {dist.periodLabel}
+                                      </span>
+                                      <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                                        ·
+                                      </span>
+                                      <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                                        Pool: {formatMoney(dist.distributablePool, ccy)} ({dist.coopSharePct}% of {formatMoney(dist.realizedProfit, ccy)})
+                                      </span>
+                                      <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                                        ·
+                                      </span>
+                                      <span className="font-mono text-slate-500 dark:text-slate-400">
+                                        {formatShortDate(dist.distributedAt)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      {myAlloc && (
+                                        <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
+                                          Your Share: {formatMoney(myAlloc.payoutAmount, ccy)} ({myAlloc.contributionWeightPct}%)
+                                        </span>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setExpandedDistId(isDistOpen ? null : dist.id)
+                                        }
+                                        className="text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <span>{isDistOpen ? 'Hide' : 'Breakdown'}</span>
+                                        {isDistOpen ? (
+                                          <ChevronUp className="w-3 h-3" />
+                                        ) : (
+                                          <ChevronDown className="w-3 h-3" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {isDistOpen && (
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                      {dist.allocations.map((a) => (
+                                        <div
+                                          key={a.userId}
+                                          className={`px-2.5 py-1.5 rounded border text-[11px] flex items-center justify-between gap-2 ${
+                                            a.userId === user.id
+                                              ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
+                                              : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950'
+                                          }`}
+                                        >
+                                          <span className="truncate font-medium text-slate-800 dark:text-slate-200">
+                                            {a.memberName} ({a.memberCode})
+                                          </span>
+                                          <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
+                                            {formatMoney(a.payoutAmount, ccy)} ({a.contributionWeightPct}%)
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     )}

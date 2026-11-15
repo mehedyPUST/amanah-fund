@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
-import { Router } from 'express';
+import { type Response, Router } from 'express';
+import QRCode from 'qrcode';
 import type {
   CommunityCategory,
   CommunityComment,
+  CommunityPoll,
   CommunityPost,
   CommunityReactionType,
   Contribution,
@@ -12,14 +14,19 @@ import type {
   FundConfig,
   HalalProject,
   InstallmentItem,
+  LoanGuarantor,
   LoanRequest,
+  NotificationPreferences,
   PrivateMessage,
+  ProfitDistributionAllocation,
+  ProfitDistributionRecord,
   UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
 import {
   type AuthenticatedRequest,
   clearAuthCookie,
+  DEFAULT_NOTIFICATION_PREFERENCES,
   requireAuth,
   requireRole,
   sanitizeUser,
@@ -31,12 +38,14 @@ import {
 } from './auth.ts';
 import {
   appendAuditLog,
+  applyOverdueChecksToState,
   buildDashboardOverview,
   buildGoogleSheetsBlueprint,
   buildMemberSummaries,
   computeRequiredApprovals,
   escapeCsvCell,
   evaluateLoanEligibility,
+  extractMentionedUsers,
   hydrateContributionForViewer,
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
@@ -49,11 +58,14 @@ import {
   maskReference,
 } from './crypto.ts';
 import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVaultState } from './db.ts';
+import { verifyPaymentReceiptImage } from './geminiService.ts';
+import { createRateLimiter } from './rateLimit.ts';
 import {
   broadcastRealtimeEvent,
   registerSseClient,
   sendRealtimeEventToUsers,
 } from './realtime.ts';
+import { buildOtpAuthUri, generateTotpSecret, verifyTotpCode } from './totp.ts';
 
 function extractGoogleBearerToken(req: AuthenticatedRequest): string | null {
   const header = req.headers.authorization;
@@ -94,6 +106,89 @@ function nextLoanId(loans: LoanRequest[], year = new Date().getUTCFullYear()): s
   return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
 }
 
+const authRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 30,
+  keyPrefix: 'auth',
+  message: 'Too many authentication attempts. Please wait a few minutes and try again.',
+});
+
+const uploadRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 40,
+  keyPrefix: 'upload',
+  message: 'Upload limit temporarily reached. Please wait a moment before uploading again.',
+});
+
+const geminiRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 25,
+  keyPrefix: 'gemini',
+  message: 'AI receipt verification rate limit reached. Please wait a minute before scanning again.',
+});
+
+async function assertStepUpTotp(req: AuthenticatedRequest, res: Response): Promise<boolean> {
+  const viewer = req.authUser;
+  if (!viewer) {
+    res.status(401).json({ error: 'Authentication required.' });
+    return false;
+  }
+  const state = await loadVaultState();
+  const dbUser = state.users.find((u) => u.id === viewer.id);
+  if (!dbUser || !dbUser.totpEnabled || !dbUser.encryptedTotpSecret) {
+    return true;
+  }
+
+  const headerCode = req.headers['x-totp-code'];
+  const code = String(
+    (Array.isArray(headerCode) ? headerCode[0] : headerCode) || req.body?.totpCode || ''
+  ).trim();
+  if (!code) {
+    res.status(403).json({
+      error: 'Two-factor authentication code required for this privileged action.',
+      code: 'TOTP_REQUIRED',
+    });
+    return false;
+  }
+
+  try {
+    const { secret } = decryptSensitiveObject<{ secret: string }>(dbUser.encryptedTotpSecret);
+    if (!verifyTotpCode(secret, code)) {
+      res.status(403).json({
+        error: 'Invalid or expired two-factor authentication code.',
+        code: 'TOTP_REQUIRED',
+      });
+      return false;
+    }
+    return true;
+  } catch {
+    res.status(403).json({
+      error: 'Unable to verify two-factor authentication secret.',
+      code: 'TOTP_REQUIRED',
+    });
+    return false;
+  }
+}
+
+export async function syncOverdueInstallments(): Promise<number> {
+  const state = await loadVaultState();
+  const preview = applyOverdueChecksToState(structuredClone(state));
+  if (!preview.changed) return 0;
+
+  let newlyOverdue: Array<{ loanId: string; borrowerId: string; installmentNumber: number }> = [];
+  await updateVaultState((draft) => {
+    const res = applyOverdueChecksToState(draft);
+    newlyOverdue = res.newlyOverdue;
+    return draft;
+  });
+
+  if (newlyOverdue.length > 0) {
+    broadcastRealtimeEvent('repayment:overdue', { count: newlyOverdue.length });
+    broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+  }
+  return newlyOverdue.length;
+}
+
 export const apiRouter = Router();
 
 // Real-time Server-Sent Events stream for live voting and treasury synchronization
@@ -102,10 +197,10 @@ apiRouter.get('/events', requireAuth, (req: AuthenticatedRequest, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 1. Authentication (JWT + HttpOnly Cookie)
+// 1. Authentication (JWT + HttpOnly Cookie) & Step-Up 2FA (TOTP)
 // ---------------------------------------------------------------------------
 
-apiRouter.post('/auth/login', async (req, res) => {
+apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
@@ -171,7 +266,7 @@ apiRouter.post('/auth/login', async (req, res) => {
   }
 });
 
-apiRouter.post('/auth/google', async (req, res) => {
+apiRouter.post('/auth/google', authRateLimiter, async (req, res) => {
   try {
     const idToken = String(req.body?.idToken || '').trim();
     if (!idToken) {
@@ -294,7 +389,7 @@ apiRouter.get('/uploads/:filename', (req, res) => {
   res.sendFile(filePath);
 });
 
-apiRouter.post('/upload/imgbb', async (req, res) => {
+apiRouter.post('/upload/imgbb', uploadRateLimiter, async (req, res) => {
   try {
     const rawData = String(req.body?.imageBase64 || '').trim();
     const rawName = String(req.body?.name || 'member-upload').replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -383,7 +478,7 @@ apiRouter.get('/auth/references', async (_req, res) => {
   }
 });
 
-apiRouter.post('/auth/register', async (req, res) => {
+apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
   try {
     const googleRegistrationToken = String(req.body?.googleRegistrationToken || '').trim();
     let verifiedGoogle: ReturnType<typeof verifyGoogleRegistrationToken> | null = null;
@@ -565,6 +660,167 @@ apiRouter.get('/auth/me', requireAuth, (req: AuthenticatedRequest, res) => {
   res.json({ user: req.authUser });
 });
 
+apiRouter.post('/auth/2fa/setup', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const secret = generateTotpSecret(20);
+    const otpAuthUri = buildOtpAuthUri({
+      secret,
+      accountEmail: viewer.email,
+      issuer: 'Amanah',
+    });
+    const qrDataUrl = await QRCode.toDataURL(otpAuthUri, { width: 220, margin: 1 });
+
+    await updateVaultState((draft) => {
+      const user = draft.users.find((u) => u.id === viewer.id);
+      if (user) {
+        user.encryptedTotpSecret = encryptSensitiveObject({ secret });
+        user.totpEnabled = false;
+      }
+      return draft;
+    });
+
+    res.json({ secret, otpAuthUri, qrDataUrl });
+  } catch (err) {
+    console.error('2FA setup error:', err);
+    res.status(500).json({ error: 'Failed to initialize two-factor authentication.' });
+  }
+});
+
+apiRouter.post('/auth/2fa/enable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const code = String(req.body?.code || '').trim();
+    if (!code) {
+      res.status(400).json({ error: 'Enter the 6-digit authenticator verification code.' });
+      return;
+    }
+
+    let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+    await updateVaultState((draft) => {
+      const user = draft.users.find((u) => u.id === viewer.id);
+      if (!user || !user.encryptedTotpSecret) {
+        throw new Error('NO_SETUP');
+      }
+      const { secret } = decryptSensitiveObject<{ secret: string }>(user.encryptedTotpSecret);
+      if (!verifyTotpCode(secret, code)) {
+        throw new Error('INVALID_CODE');
+      }
+      user.totpEnabled = true;
+      updatedUser = sanitizeUser(user);
+      appendAuditLog(draft, {
+        actor: updatedUser,
+        action: 'TOTP_2FA_ENABLED',
+        resourceType: 'auth',
+        resourceId: viewer.id,
+        summary: `${viewer.name} enabled TOTP two-factor step-up protection`,
+        payload: { userId: viewer.id },
+      });
+      return draft;
+    });
+
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'TOTP_2FA_ENABLED',
+      resourceType: 'auth',
+      resourceId: viewer.id,
+    });
+    res.json({ user: updatedUser });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'NO_SETUP') {
+      res.status(400).json({ error: 'Run 2FA setup first before verifying a code.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'INVALID_CODE') {
+      res.status(400).json({ error: 'Invalid 6-digit verification code. Check device clock and try again.' });
+      return;
+    }
+    console.error('2FA enable error:', err);
+    res.status(500).json({ error: 'Failed to enable two-factor authentication.' });
+  }
+});
+
+apiRouter.post('/auth/2fa/disable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const code = String(req.body?.code || '').trim();
+    let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+
+    await updateVaultState((draft) => {
+      const user = draft.users.find((u) => u.id === viewer.id);
+      if (!user) return draft;
+      if (user.totpEnabled && user.encryptedTotpSecret) {
+        const { secret } = decryptSensitiveObject<{ secret: string }>(user.encryptedTotpSecret);
+        if (!verifyTotpCode(secret, code)) {
+          throw new Error('INVALID_CODE');
+        }
+      }
+      user.totpEnabled = false;
+      user.encryptedTotpSecret = undefined;
+      updatedUser = sanitizeUser(user);
+      appendAuditLog(draft, {
+        actor: updatedUser,
+        action: 'TOTP_2FA_DISABLED',
+        resourceType: 'auth',
+        resourceId: viewer.id,
+        summary: `${viewer.name} disabled TOTP two-factor protection`,
+        payload: { userId: viewer.id },
+      });
+      return draft;
+    });
+
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'TOTP_2FA_DISABLED',
+      resourceType: 'auth',
+      resourceId: viewer.id,
+    });
+    res.json({ user: updatedUser });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'INVALID_CODE') {
+      res.status(403).json({ error: 'Valid current 6-digit 2FA code required to disable 2FA.' });
+      return;
+    }
+    console.error('2FA disable error:', err);
+    res.status(500).json({ error: 'Failed to disable two-factor authentication.' });
+  }
+});
+
+apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const body = (req.body || {}) as Partial<NotificationPreferences>;
+    let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+
+    await updateVaultState((draft) => {
+      const target = draft.users.find((u) => u.id === viewer.id);
+      if (!target) return draft;
+      target.notificationPreferences = {
+        ...DEFAULT_NOTIFICATION_PREFERENCES,
+        ...(target.notificationPreferences || {}),
+        ...(typeof body.inAppAlerts === 'boolean' ? { inAppAlerts: body.inAppAlerts } : {}),
+        ...(typeof body.emailBallots === 'boolean' ? { emailBallots: body.emailBallots } : {}),
+        ...(typeof body.emailRepayments === 'boolean'
+          ? { emailRepayments: body.emailRepayments }
+          : {}),
+        ...(typeof body.emailCommunity === 'boolean'
+          ? { emailCommunity: body.emailCommunity }
+          : {}),
+        ...(typeof body.soundEnabled === 'boolean' ? { soundEnabled: body.soundEnabled } : {}),
+      };
+      updatedUser = sanitizeUser(target);
+      return draft;
+    });
+
+    if (!updatedUser) {
+      res.status(404).json({ error: 'Member profile not found.' });
+      return;
+    }
+    res.json({ user: updatedUser });
+  } catch (err) {
+    console.error('Update preferences error:', err);
+    res.status(500).json({ error: 'Failed to save notification preferences.' });
+  }
+});
+
 apiRouter.get('/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const state = await loadVaultState();
@@ -735,11 +991,38 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
 });
 
 // ---------------------------------------------------------------------------
-// 2. Real-time Dashboard Overview
+// 2. Real-time Dashboard Overview & Gemini Slip Verification
 // ---------------------------------------------------------------------------
+
+apiRouter.post(
+  '/gemini/verify-receipt',
+  requireAuth,
+  geminiRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const imageBase64 = String(req.body?.imageBase64 || '').trim();
+      if (!imageBase64) {
+        res.status(400).json({ error: 'Receipt image payload is required.' });
+        return;
+      }
+      const state = await loadVaultState();
+      const result = await verifyPaymentReceiptImage({
+        imageBase64,
+        currency: state.fundConfig.currency,
+      });
+      res.json({ extraction: result });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to analyze payment receipt with Gemini AI.';
+      const status = message.includes('GEMINI_API_KEY') ? 503 : 500;
+      res.status(status).json({ error: message });
+    }
+  }
+);
 
 apiRouter.get('/dashboard', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    await syncOverdueInstallments();
     const state = await loadVaultState();
     const overview = buildDashboardOverview(state, req.authUser!);
     res.json(overview);
@@ -774,16 +1057,29 @@ apiRouter.get('/contributions', requireAuth, async (req: AuthenticatedRequest, r
 apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
-    const billingMonth = String(req.body?.billingMonth || '').trim();
+    const rawMonths = Array.isArray(req.body?.billingMonths)
+      ? (req.body.billingMonths as unknown[]).map((m) => String(m || '').trim()).filter(Boolean)
+      : [];
+    const singleBillingMonth = String(req.body?.billingMonth || '').trim();
+    const billingMonths = Array.from(
+      new Set(rawMonths.length > 0 ? rawMonths : singleBillingMonth ? [singleBillingMonth] : [])
+    ).sort();
+
     const amount = Number(req.body?.amount);
     const channel = req.body?.channel === 'mfs' ? 'mfs' : 'bank';
     const providerName = String(req.body?.providerName || '').trim();
     const referenceId = String(req.body?.referenceId || '').trim();
     const senderAccount = String(req.body?.senderAccount || '').trim();
     const notes = String(req.body?.notes || '').trim();
+    const receiptPhotoUrl = String(req.body?.receiptPhotoUrl || '').trim();
+    const receiptAiSummary = String(req.body?.receiptAiSummary || '').trim();
 
-    if (!/^\d{4}-\d{2}$/.test(billingMonth)) {
-      res.status(400).json({ error: 'Billing month must be in YYYY-MM format.' });
+    if (billingMonths.length === 0 || billingMonths.length > 12) {
+      res.status(400).json({ error: 'Select between 1 and 12 billing months.' });
+      return;
+    }
+    if (!billingMonths.every((m) => /^\d{4}-\d{2}$/.test(m))) {
+      res.status(400).json({ error: 'All billing months must be in YYYY-MM format.' });
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -797,50 +1093,87 @@ apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, 
       return;
     }
 
-    const id = `contrib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    const encryptedDetails = encryptSensitiveObject({
-      referenceId,
-      senderAccount,
-      notes: notes || `Monthly contribution for ${billingMonth}`,
-    });
-
-    const newContribution: Contribution = {
-      id,
-      userId: viewer.id,
-      memberName: viewer.name,
-      memberCode: viewer.memberCode,
-      billingMonth,
-      amount,
-      channel,
-      providerName,
-      maskedReference: maskReference(referenceId),
-      encryptedDetails,
-      status: 'pending',
-      submittedAt: new Date().toISOString(),
-      entryHash: computeSha256Hash({
-        id,
-        userId: viewer.id,
-        billingMonth,
-        amount,
-        channel,
-        referenceId,
-      }),
-    };
+    const count = billingMonths.length;
+    const perMonthBase = Math.floor((amount / count) * 100) / 100;
+    const batchGroupId =
+      count > 1 ? `batch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` : undefined;
+    const submittedAt = new Date().toISOString();
+    const createdList: Contribution[] = [];
 
     await updateVaultState((draft) => {
-      draft.contributions.unshift(newContribution);
+      const duplicateMonths = billingMonths.filter((m) =>
+        draft.contributions.some(
+          (c) => c.userId === viewer.id && c.billingMonth === m && c.status !== 'rejected'
+        )
+      );
+      if (duplicateMonths.length > 0) {
+        throw new Error(`DUPLICATE_MONTHS:${duplicateMonths.join(', ')}`);
+      }
+
+      billingMonths.forEach((month, idx) => {
+        const isLast = idx === count - 1;
+        const allocAmount = isLast
+          ? Math.round((amount - perMonthBase * (count - 1)) * 100) / 100
+          : perMonthBase;
+
+        const id = `contrib-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+        const encryptedDetails = encryptSensitiveObject({
+          referenceId,
+          senderAccount,
+          notes:
+            notes ||
+            (count > 1
+              ? `Multi-month advance contribution (${month}, batch ${idx + 1}/${count})`
+              : `Monthly contribution for ${month}`),
+        });
+
+        const item: Contribution = {
+          id,
+          userId: viewer.id,
+          memberName: viewer.name,
+          memberCode: viewer.memberCode,
+          billingMonth: month,
+          amount: allocAmount,
+          channel,
+          providerName,
+          maskedReference: maskReference(referenceId),
+          receiptPhotoUrl: receiptPhotoUrl || undefined,
+          receiptAiSummary: receiptAiSummary || undefined,
+          batchGroupId,
+          encryptedDetails,
+          status: 'pending',
+          submittedAt,
+          entryHash: computeSha256Hash({
+            id,
+            userId: viewer.id,
+            billingMonth: month,
+            amount: allocAmount,
+            channel,
+            referenceId,
+            batchGroupId,
+          }),
+        };
+
+        draft.contributions.unshift(item);
+        createdList.push(item);
+      });
+
       const reviewers = draft.users.filter(
         (u) => (u.role === 'manager' || u.role === 'admin') && u.status === 'active'
       );
+      const monthsLabel = billingMonths.join(', ');
       reviewers.forEach((mgr) => {
         queueEmailNotification(draft, {
           type: 'contribution_placed_manager',
           recipientEmail: mgr.email,
           recipientName: mgr.name,
           recipientUserId: mgr.id,
-          subject: `Contribution Placement Request: ${viewer.name} (${billingMonth})`,
-          body: `${viewer.name} (${viewer.memberCode}) submitted a monthly contribution of ${amount} ${draft.fundConfig.currency} via ${channel.toUpperCase()} (${providerName}, Ref ${newContribution.maskedReference}) for ${billingMonth}. Please review and approve to credit the central balance.`,
-          relatedId: id,
+          subject:
+            count > 1
+              ? `Advance Contribution Batch (${count} months): ${viewer.name}`
+              : `Contribution Placement Request: ${viewer.name} (${monthsLabel})`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted ${count > 1 ? `a ${count}-month advance contribution totaling` : 'a monthly contribution of'} ${amount} ${draft.fundConfig.currency} via ${channel.toUpperCase()} (${providerName}, Ref ${maskReference(referenceId)}) for ${monthsLabel}. Please review and approve to credit the central balance.`,
+          relatedId: createdList[0].id,
         });
       });
 
@@ -848,36 +1181,45 @@ apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, 
         actor: viewer,
         action: 'CONTRIBUTION_SUBMITTED',
         resourceType: 'contribution',
-        resourceId: id,
-        summary: `${viewer.name} submitted ${channel.toUpperCase()} contribution (${providerName}) for ${billingMonth}`,
+        resourceId: createdList[0].id,
+        summary: `${viewer.name} submitted ${channel.toUpperCase()} contribution (${providerName}) for ${monthsLabel} totaling ${amount}`,
         payload: {
-          contributionId: id,
-          billingMonth,
+          contributionIds: createdList.map((c) => c.id),
+          billingMonths,
           amount,
           channel,
           providerName,
-          maskedReference: newContribution.maskedReference,
+          batchGroupId,
         },
       });
       return draft;
     });
 
     broadcastRealtimeEvent('contribution:submitted', {
-      contributionId: newContribution.id,
-      billingMonth: newContribution.billingMonth,
-      amount: newContribution.amount,
+      contributionId: createdList[0].id,
+      billingMonth: billingMonths[0],
+      amount,
+      count,
     });
     broadcastRealtimeEvent('notification:created', { type: 'contribution_placed_manager' });
     broadcastRealtimeEvent('audit:updated', {
       action: 'CONTRIBUTION_SUBMITTED',
       resourceType: 'contribution',
-      resourceId: newContribution.id,
+      resourceId: createdList[0].id,
     });
 
     res.status(201).json({
-      contribution: hydrateContributionForViewer(newContribution, viewer),
+      contribution: hydrateContributionForViewer(createdList[0], viewer),
+      contributions: createdList.map((c) => hydrateContributionForViewer(c, viewer)),
     });
   } catch (err) {
+    if (err instanceof Error && err.message.startsWith('DUPLICATE_MONTHS:')) {
+      const months = err.message.slice('DUPLICATE_MONTHS:'.length);
+      res.status(409).json({
+        error: `A pending or approved contribution already exists for: ${months}.`,
+      });
+      return;
+    }
     console.error('Create contribution error:', err);
     res.status(500).json({ error: 'Failed to submit contribution request.' });
   }
@@ -988,6 +1330,7 @@ apiRouter.patch(
 
 apiRouter.get('/loans/eligibility', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    await syncOverdueInstallments();
     const state = await loadVaultState();
     const eligibility = evaluateLoanEligibility(state, req.authUser!.id);
     res.json({ eligibility });
@@ -999,6 +1342,7 @@ apiRouter.get('/loans/eligibility', requireAuth, async (req: AuthenticatedReques
 
 apiRouter.get('/loans', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    await syncOverdueInstallments();
     const state = await loadVaultState();
     const viewer = req.authUser!;
     const loans = state.loans.map((l) => hydrateLoanForViewer(l, viewer));
@@ -1019,6 +1363,9 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
     const disbursementAccount = String(req.body?.disbursementAccount || '').trim();
     const channel = req.body?.channel === 'mfs' ? 'mfs' : 'bank';
     const provider = String(req.body?.provider || '').trim();
+    const requestedGuarantorIds = Array.isArray(req.body?.guarantorIds)
+      ? Array.from(new Set((req.body.guarantorIds as unknown[]).map((g) => String(g || '').trim()).filter(Boolean)))
+      : [];
 
     if (!Number.isFinite(amount) || amount <= 0) {
       res.status(400).json({ error: 'Loan amount must be positive.' });
@@ -1065,6 +1412,31 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         throw new Error(`MONTHS_EXCEED_MAX:${draft.fundConfig.maxInstallmentMonths}`);
       }
 
+      const guarantorThreshold = draft.fundConfig.guarantorThresholdAmount ?? 40000;
+      const requiredGuarantors = draft.fundConfig.requiredGuarantorsCount ?? 1;
+      const otherActiveMembers = draft.users.filter((u) => u.status === 'active' && u.id !== viewer.id);
+      const needsGuarantor =
+        amount > guarantorThreshold && requiredGuarantors > 0 && otherActiveMembers.length > 0;
+
+      const resolvedGuarantors: LoanGuarantor[] = [];
+      if (needsGuarantor) {
+        const neededCount = Math.min(requiredGuarantors, otherActiveMembers.length);
+        for (const gid of requestedGuarantorIds) {
+          const gUser = otherActiveMembers.find((u) => u.id === gid);
+          if (gUser) {
+            resolvedGuarantors.push({
+              memberId: gUser.id,
+              memberName: gUser.name,
+              memberCode: gUser.memberCode,
+              status: 'pending',
+            });
+          }
+        }
+        if (resolvedGuarantors.length < neededCount) {
+          throw new Error(`GUARANTORS_REQUIRED:${neededCount}:${guarantorThreshold}`);
+        }
+      }
+
       const overview = buildDashboardOverview(draft, viewer);
       const { activeVoters, requiredApprovals } = computeRequiredApprovals(draft);
       const id = nextLoanId(draft.loans);
@@ -1097,7 +1469,8 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         monthlyInstallment: Math.round((amount / installmentMonths) * 100) / 100,
         purpose,
         encryptedSensitiveNotes,
-        status: 'pending_vote',
+        status: needsGuarantor ? 'pending_guarantor' : 'pending_vote',
+        guarantors: resolvedGuarantors.length > 0 ? resolvedGuarantors : undefined,
         eligibilitySnapshot: eligibility,
         votes: [],
         requiredApprovals,
@@ -1117,50 +1490,70 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
 
       draft.loans.unshift(createdLoan);
 
-      const notifiedIds = new Set<string>();
-      const adminsAndManagers = draft.users.filter(
-        (u) => u.status === 'active' && (u.role === 'admin' || u.role === 'manager')
-      );
-      adminsAndManagers.forEach((staff) => {
-        notifiedIds.add(staff.id);
-        queueEmailNotification(draft, {
-          type: 'loan_vote_requested',
-          recipientEmail: staff.email,
-          recipientName: staff.name,
-          recipientUserId: staff.id,
-          subject: `Qard Hasan Loan Review Needed: ${viewer.name} (${id})`,
-          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${currency}).`,
-          relatedId: id,
+      if (needsGuarantor) {
+        resolvedGuarantors.forEach((g) => {
+          const gUser = draft.users.find((u) => u.id === g.memberId);
+          if (gUser) {
+            queueEmailNotification(draft, {
+              type: 'loan_guarantor_requested',
+              recipientEmail: gUser.email,
+              recipientName: gUser.name,
+              recipientUserId: gUser.id,
+              subject: `Guarantor Co-Sign Request: ${viewer.name} (${id})`,
+              body: `${viewer.name} (${viewer.memberCode}) requested a high-value Qard Hasan loan of ${amount} ${currency} (${installmentMonths} months) for "${purpose}" and nominated you as cooperative guarantor. Accept or decline in the Qard Hasan tab before 2/3 member voting begins.`,
+              relatedId: id,
+            });
+          }
         });
-      });
+      } else {
+        const notifiedIds = new Set<string>();
+        const adminsAndManagers = draft.users.filter(
+          (u) => u.status === 'active' && (u.role === 'admin' || u.role === 'manager')
+        );
+        adminsAndManagers.forEach((staff) => {
+          notifiedIds.add(staff.id);
+          queueEmailNotification(draft, {
+            type: 'loan_vote_requested',
+            recipientEmail: staff.email,
+            recipientName: staff.name,
+            recipientUserId: staff.id,
+            subject: `Qard Hasan Loan Review Needed: ${viewer.name} (${id})`,
+            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${currency}).`,
+            relatedId: id,
+          });
+        });
 
-      const eligibleVoters = draft.users.filter(
-        (u) => u.status === 'active' && u.id !== viewer.id && !notifiedIds.has(u.id)
-      );
-      eligibleVoters.forEach((member) => {
-        queueEmailNotification(draft, {
-          type: 'loan_vote_requested',
-          recipientEmail: member.email,
-          recipientName: member.name,
-          recipientUserId: member.id,
-          subject: `2/3 Majority Vote Needed: ${viewer.name} (${id})`,
-          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
-          relatedId: id,
+        const eligibleVoters = draft.users.filter(
+          (u) => u.status === 'active' && u.id !== viewer.id && !notifiedIds.has(u.id)
+        );
+        eligibleVoters.forEach((member) => {
+          queueEmailNotification(draft, {
+            type: 'loan_vote_requested',
+            recipientEmail: member.email,
+            recipientName: member.name,
+            recipientUserId: member.id,
+            subject: `2/3 Majority Vote Needed: ${viewer.name} (${id})`,
+            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
+            relatedId: id,
+          });
         });
-      });
+      }
 
       appendAuditLog(draft, {
         actor: viewer,
         action: 'LOAN_REQUEST_CREATED',
         resourceType: 'loan',
         resourceId: id,
-        summary: `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) for administrative review & 2/3 vote`,
+        summary: needsGuarantor
+          ? `${viewer.name} submitted a ${amount} Qard Hasan request awaiting guarantor co-signature`
+          : `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) for administrative review & 2/3 vote`,
         payload: {
           loanId: id,
           amount,
           installmentMonths,
           requiredApprovals,
           totalEligibleVoters: activeVoters,
+          guarantorCount: resolvedGuarantors.length,
           availableLiquidityAtSubmission: overview.treasury.availableLiquidity,
         },
       });
@@ -1179,7 +1572,10 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       purpose,
     });
     broadcastRealtimeEvent('notification:created', {
-      type: 'loan_vote_requested',
+      type:
+        createdLoan.status === 'pending_guarantor'
+          ? 'loan_guarantor_requested'
+          : 'loan_vote_requested',
       loanId: createdLoan.id,
     });
     broadcastRealtimeEvent('audit:updated', {
@@ -1215,9 +1611,141 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         res.status(400).json({ error: `Installment schedule cannot exceed ${maxM} months.` });
         return;
       }
+      if (err.message.startsWith('GUARANTORS_REQUIRED:')) {
+        const [, count, threshold] = err.message.split(':');
+        res.status(400).json({
+          error: `Loans above ${threshold} require at least ${count} active cooperative guarantor(s).`,
+        });
+        return;
+      }
     }
     console.error('Create loan error:', err);
     res.status(500).json({ error: 'Failed to submit loan request.' });
+  }
+});
+
+apiRouter.post('/loans/:id/guarantor-respond', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const decision =
+      req.body?.decision === 'accept'
+        ? 'accept'
+        : req.body?.decision === 'decline'
+          ? 'decline'
+          : null;
+    const note = String(req.body?.note || '').trim();
+
+    if (!decision) {
+      res.status(400).json({ error: 'Decision must be "accept" or "decline".' });
+      return;
+    }
+
+    let updatedLoan: LoanRequest | null = null;
+    let movedToVote = false;
+
+    await updateVaultState((draft) => {
+      const loan = draft.loans.find((l) => l.id === id);
+      if (!loan) return draft;
+      if (loan.status !== 'pending_guarantor') {
+        throw new Error('NOT_PENDING_GUARANTOR');
+      }
+      const guarantor = (loan.guarantors || []).find((g) => g.memberId === viewer.id);
+      if (!guarantor) {
+        throw new Error('NOT_A_GUARANTOR');
+      }
+      if (guarantor.status !== 'pending') {
+        throw new Error('ALREADY_RESPONDED');
+      }
+
+      const respondedAt = new Date().toISOString();
+      guarantor.status = decision === 'accept' ? 'accepted' : 'declined';
+      guarantor.respondedAt = respondedAt;
+      guarantor.note = note || undefined;
+
+      const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+
+      if (decision === 'decline') {
+        loan.status = 'rejected';
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: 'loan_rejected_notice',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject: `Guarantor Declined Qard Hasan Co-Sign: ${loan.id}`,
+            body: `Assalamu Alaikum ${borrower.name}, ${viewer.name} (${viewer.memberCode}) declined the guarantor co-sign request for ${loan.id}.${note ? ` Note: ${note}` : ''}`,
+            relatedId: loan.id,
+          });
+        }
+      } else if ((loan.guarantors || []).every((g) => g.status === 'accepted')) {
+        loan.status = 'pending_vote';
+        movedToVote = true;
+        const overview = buildDashboardOverview(draft, viewer);
+        const eligibleVoters = draft.users.filter(
+          (u) => u.status === 'active' && u.id !== loan.borrowerId
+        );
+        eligibleVoters.forEach((member) => {
+          queueEmailNotification(draft, {
+            type: 'loan_vote_requested',
+            recipientEmail: member.email,
+            recipientName: member.name,
+            recipientUserId: member.id,
+            subject: `2/3 Majority Vote Needed (Guarantor Verified): ${loan.borrowerName} (${loan.id})`,
+            body: `${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan request has been co-signed by guarantor(s) and is now open for 2/3 member voting (Available liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+            relatedId: loan.id,
+          });
+        });
+      }
+
+      updatedLoan = loan;
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: decision === 'accept' ? 'LOAN_GUARANTOR_ACCEPTED' : 'LOAN_GUARANTOR_DECLINED',
+        resourceType: 'loan',
+        resourceId: loan.id,
+        summary: `${viewer.name} ${decision === 'accept' ? 'accepted' : 'declined'} guarantor co-sign for ${loan.borrowerName} (${loan.id})`,
+        payload: {
+          loanId: loan.id,
+          decision,
+          resultingStatus: loan.status,
+        },
+      });
+      return draft;
+    });
+
+    if (!updatedLoan) {
+      res.status(404).json({ error: 'Loan request not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('loan:voted', { loanId: id });
+    if (movedToVote) {
+      broadcastRealtimeEvent('notification:created', { type: 'loan_vote_requested', loanId: id });
+    }
+    broadcastRealtimeEvent('audit:updated', {
+      action: decision === 'accept' ? 'LOAN_GUARANTOR_ACCEPTED' : 'LOAN_GUARANTOR_DECLINED',
+      resourceType: 'loan',
+      resourceId: id,
+    });
+
+    res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'NOT_PENDING_GUARANTOR') {
+      res.status(409).json({ error: 'This loan is no longer awaiting guarantor co-signature.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'NOT_A_GUARANTOR') {
+      res.status(403).json({ error: 'You are not listed as a guarantor on this loan request.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'ALREADY_RESPONDED') {
+      res.status(409).json({ error: 'You have already responded as guarantor for this loan.' });
+      return;
+    }
+    console.error('Guarantor response error:', err);
+    res.status(500).json({ error: 'Failed to record guarantor response.' });
   }
 });
 
@@ -1541,6 +2069,7 @@ apiRouter.post(
   requireRole(['admin', 'manager']),
   async (req: AuthenticatedRequest, res) => {
     try {
+      if (!(await assertStepUpTotp(req, res))) return;
       const { id } = req.params;
       const viewer = req.authUser!;
       let updatedLoan: LoanRequest | null = null;
@@ -1659,6 +2188,7 @@ apiRouter.post(
       const referenceId = String(req.body?.referenceId || '').trim();
       const senderAccount = String(req.body?.senderAccount || '').trim();
       const notes = String(req.body?.notes || '').trim();
+      const receiptPhotoUrl = String(req.body?.receiptPhotoUrl || '').trim();
 
       if (!Number.isInteger(num) || num < 1) {
         res.status(400).json({ error: 'Installment number must be a positive integer.' });
@@ -1698,6 +2228,7 @@ apiRouter.post(
         inst.repaymentChannel = channel;
         inst.repaymentProvider = providerName;
         inst.maskedReference = maskReference(referenceId);
+        inst.receiptPhotoUrl = receiptPhotoUrl || undefined;
         inst.encryptedReceipt = encryptSensitiveObject({
           referenceId,
           senderAccount,
@@ -1828,11 +2359,13 @@ apiRouter.patch(
             loan.completedAt = new Date().toISOString();
           }
         } else {
-          inst.status = 'scheduled';
+          const todayUtc = new Date().toISOString().slice(0, 10);
+          inst.status = inst.dueDate < todayUtc ? 'overdue' : 'scheduled';
           inst.submittedAt = undefined;
           inst.repaymentChannel = undefined;
           inst.repaymentProvider = undefined;
           inst.maskedReference = undefined;
+          inst.receiptPhotoUrl = undefined;
           inst.encryptedReceipt = undefined;
         }
 
@@ -1915,6 +2448,229 @@ apiRouter.patch(
       }
       console.error('Verify installment error:', err);
       res.status(500).json({ error: 'Failed to verify installment.' });
+    }
+  }
+);
+
+apiRouter.post('/loans/:id/reschedule', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const requestedMonths = Number(req.body?.requestedMonths);
+    const reason = String(req.body?.reason || '').trim();
+
+    if (!Number.isInteger(requestedMonths) || requestedMonths < 1 || requestedMonths > 36) {
+      res.status(400).json({ error: 'Requested remaining months must be between 1 and 36.' });
+      return;
+    }
+    if (!reason || reason.length < 6) {
+      res.status(400).json({ error: 'Provide a clear reason (at least 6 characters) for rescheduling.' });
+      return;
+    }
+
+    let updatedLoan: LoanRequest | null = null;
+    await updateVaultState((draft) => {
+      const loan = draft.loans.find((l) => l.id === id);
+      if (!loan) return draft;
+      if (loan.borrowerId !== viewer.id && viewer.role === 'member') {
+        throw new Error('FORBIDDEN');
+      }
+      if (loan.status !== 'active' || loan.remainingBalance <= 0) {
+        throw new Error('NOT_ACTIVE');
+      }
+      if (loan.rescheduleRequest?.status === 'pending') {
+        throw new Error('ALREADY_PENDING');
+      }
+
+      loan.rescheduleRequest = {
+        requestedMonths,
+        reason,
+        status: 'pending',
+        requestedAt: new Date().toISOString(),
+      };
+      updatedLoan = loan;
+
+      const staff = draft.users.filter(
+        (u) => (u.role === 'admin' || u.role === 'manager') && u.status === 'active'
+      );
+      staff.forEach((mgr) => {
+        queueEmailNotification(draft, {
+          type: 'loan_repayment_notice',
+          recipientEmail: mgr.email,
+          recipientName: mgr.name,
+          recipientUserId: mgr.id,
+          subject: `Loan Reschedule Request: ${loan.id} (${viewer.name})`,
+          body: `${viewer.name} requested rescheduling remaining balance (${loan.remainingBalance} ${draft.fundConfig.currency}) of ${loan.id} across ${requestedMonths} remaining installments. Reason: "${reason}".`,
+          relatedId: loan.id,
+        });
+      });
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: 'LOAN_RESCHEDULE_REQUESTED',
+        resourceType: 'loan',
+        resourceId: loan.id,
+        summary: `${viewer.name} requested rescheduling ${loan.id} remaining balance over ${requestedMonths} installments`,
+        payload: { loanId: loan.id, requestedMonths, remainingBalance: loan.remainingBalance },
+      });
+      return draft;
+    });
+
+    if (!updatedLoan) {
+      res.status(404).json({ error: 'Loan not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('loan:reviewed', { loanId: id, decision: 'reschedule_requested' });
+    broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'LOAN_RESCHEDULE_REQUESTED',
+      resourceType: 'loan',
+      resourceId: id,
+    });
+    res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN') {
+      res.status(403).json({ error: 'Only the borrower or staff can request rescheduling.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'NOT_ACTIVE') {
+      res.status(409).json({ error: 'Only active loans with remaining balance can be rescheduled.' });
+      return;
+    }
+    if (err instanceof Error && err.message === 'ALREADY_PENDING') {
+      res.status(409).json({ error: 'A reschedule request is already awaiting review.' });
+      return;
+    }
+    console.error('Reschedule request error:', err);
+    res.status(500).json({ error: 'Failed to submit loan reschedule request.' });
+  }
+});
+
+apiRouter.patch(
+  '/loans/:id/reschedule/review',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      const decision =
+        req.body?.decision === 'approve'
+          ? 'approve'
+          : req.body?.decision === 'reject'
+            ? 'reject'
+            : null;
+      const reviewNote = String(req.body?.reviewNote || '').trim();
+
+      if (!decision) {
+        res.status(400).json({ error: 'Decision must be "approve" or "reject".' });
+        return;
+      }
+
+      let updatedLoan: LoanRequest | null = null;
+      await updateVaultState((draft) => {
+        const loan = draft.loans.find((l) => l.id === id);
+        if (!loan) return draft;
+        if (!loan.rescheduleRequest || loan.rescheduleRequest.status !== 'pending') {
+          throw new Error('NO_PENDING_RESCHEDULE');
+        }
+
+        const reviewedAt = new Date().toISOString();
+        loan.rescheduleRequest.status = decision === 'approve' ? 'approved' : 'rejected';
+        loan.rescheduleRequest.reviewedBy = viewer.name;
+        loan.rescheduleRequest.reviewedAt = reviewedAt;
+        loan.rescheduleRequest.reviewNote = reviewNote || undefined;
+
+        if (decision === 'approve') {
+          const settledOrPending = loan.installments.filter(
+            (i) => i.status === 'paid' || i.status === 'pending_verification'
+          );
+          const allocatedSoFar = settledOrPending.reduce(
+            (sum, i) => sum + (i.status === 'paid' ? i.paidAmount : i.amount),
+            0
+          );
+          const remainingToSchedule = Math.max(
+            0,
+            Math.round((loan.amount - allocatedSoFar) * 100) / 100
+          );
+          const newCount = loan.rescheduleRequest.requestedMonths;
+          const base = Math.floor((remainingToSchedule / newCount) * 100) / 100;
+          const anchor = new Date();
+
+          const newInstallments: InstallmentItem[] = Array.from({ length: newCount }, (_, idx) => {
+            const isLast = idx === newCount - 1;
+            const amt = isLast
+              ? Math.round((remainingToSchedule - base * (newCount - 1)) * 100) / 100
+              : base;
+            return {
+              installmentNumber: settledOrPending.length + idx + 1,
+              dueDate: computeInstallmentDueDate(anchor, idx + 1),
+              amount: amt,
+              paidAmount: 0,
+              status: 'scheduled',
+            };
+          });
+
+          loan.installments = [...settledOrPending, ...newInstallments];
+          loan.installmentMonths = loan.installments.length;
+          loan.monthlyInstallment = base;
+        }
+
+        updatedLoan = loan;
+
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: 'loan_repayment_notice',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject: `Loan Reschedule ${decision === 'approve' ? 'Approved' : 'Declined'}: ${loan.id}`,
+            body:
+              decision === 'approve'
+                ? `Assalamu Alaikum ${borrower.name}, ${viewer.name} approved rescheduling ${loan.id} across ${loan.rescheduleRequest.requestedMonths} remaining monthly installments.`
+                : `Assalamu Alaikum ${borrower.name}, ${viewer.name} declined the reschedule request for ${loan.id}.${reviewNote ? ` Note: ${reviewNote}` : ''}`,
+            relatedId: loan.id,
+          });
+        }
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: decision === 'approve' ? 'LOAN_RESCHEDULE_APPROVED' : 'LOAN_RESCHEDULE_REJECTED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary: `${viewer.name} ${decision === 'approve' ? 'approved' : 'declined'} reschedule request for ${loan.id}`,
+          payload: {
+            loanId: loan.id,
+            decision,
+            requestedMonths: loan.rescheduleRequest.requestedMonths,
+            reviewNote: reviewNote || undefined,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedLoan) {
+        res.status(404).json({ error: 'Loan not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('loan:reviewed', { loanId: id, decision: `reschedule_${decision}` });
+      broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: decision === 'approve' ? 'LOAN_RESCHEDULE_APPROVED' : 'LOAN_RESCHEDULE_REJECTED',
+        resourceType: 'loan',
+        resourceId: id,
+      });
+      res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'NO_PENDING_RESCHEDULE') {
+        res.status(409).json({ error: 'No pending reschedule request exists on this loan.' });
+        return;
+      }
+      console.error('Review reschedule error:', err);
+      res.status(500).json({ error: 'Failed to review loan reschedule request.' });
     }
   }
 );
@@ -2118,6 +2874,162 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
   }
 });
 
+apiRouter.post(
+  '/halal-projects/:id/distribute',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      const periodLabel = String(req.body?.periodLabel || '').trim();
+      const realizedProfit = Number(req.body?.realizedProfit);
+      const coopSharePct = Number(req.body?.coopSharePct ?? 70);
+
+      if (!periodLabel || periodLabel.length < 2) {
+        res.status(400).json({ error: 'Provide a distribution period label (e.g. Q1 2029).' });
+        return;
+      }
+      if (!Number.isFinite(realizedProfit) || realizedProfit <= 0) {
+        res.status(400).json({ error: 'Realized profit must be greater than zero.' });
+        return;
+      }
+      if (!Number.isFinite(coopSharePct) || coopSharePct <= 0 || coopSharePct > 100) {
+        res.status(400).json({ error: 'Cooperative share percentage must be between 1 and 100.' });
+        return;
+      }
+
+      let updatedProject: HalalProject | null = null;
+      await updateVaultState((draft) => {
+        const project = draft.halalProjects.find((p) => p.id === id);
+        if (!project) return draft;
+        if (project.votingStatus !== 'approved' && project.status === 'proposed') {
+          throw new Error('PROJECT_NOT_VETTED');
+        }
+
+        const activeUsers = draft.users.filter((u) => u.status === 'active');
+        const approvedContribs = draft.contributions.filter((c) => c.status === 'approved');
+        const userTotals = activeUsers.map((u) => ({
+          user: u,
+          contributed: approvedContribs
+            .filter((c) => c.userId === u.id)
+            .reduce((sum, c) => sum + c.amount, 0),
+        }));
+
+        const totalCapitalWeight = userTotals.reduce((s, item) => s + item.contributed, 0);
+        const distributablePool =
+          Math.round(realizedProfit * (coopSharePct / 100) * 100) / 100;
+
+        let allocations: ProfitDistributionAllocation[] = [];
+        if (totalCapitalWeight > 0) {
+          allocations = userTotals
+            .filter((item) => item.contributed > 0)
+            .map((item) => {
+              const weight = item.contributed / totalCapitalWeight;
+              return {
+                userId: item.user.id,
+                memberName: item.user.name,
+                memberCode: item.user.memberCode,
+                contributionWeightPct: Math.round(weight * 10000) / 100,
+                payoutAmount: Math.round(distributablePool * weight * 100) / 100,
+              };
+            })
+            .sort((a, b) => b.payoutAmount - a.payoutAmount);
+        } else if (activeUsers.length > 0) {
+          const equalWeight = 1 / activeUsers.length;
+          allocations = activeUsers.map((u) => ({
+            userId: u.id,
+            memberName: u.name,
+            memberCode: u.memberCode,
+            contributionWeightPct: Math.round(equalWeight * 10000) / 100,
+            payoutAmount: Math.round(distributablePool * equalWeight * 100) / 100,
+          }));
+        }
+
+        // Reconcile rounding remainder on top recipient
+        if (allocations.length > 0) {
+          const allocatedSum = allocations.reduce((s, a) => s + a.payoutAmount, 0);
+          const diff = Math.round((distributablePool - allocatedSum) * 100) / 100;
+          allocations[0].payoutAmount = Math.round((allocations[0].payoutAmount + diff) * 100) / 100;
+        }
+
+        const record: ProfitDistributionRecord = {
+          id: `dist-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          periodLabel,
+          realizedProfit,
+          coopSharePct,
+          distributablePool,
+          distributedAt: new Date().toISOString(),
+          distributedBy: viewer.name,
+          allocations,
+        };
+
+        project.distributions = Array.isArray(project.distributions) ? project.distributions : [];
+        project.distributions.unshift(record);
+        project.realizedProfitTotal =
+          Math.round(((project.realizedProfitTotal || 0) + distributablePool) * 100) / 100;
+        project.status = 'active_post_maturity';
+        updatedProject = project;
+
+        allocations.forEach((alloc) => {
+          const member = draft.users.find((u) => u.id === alloc.userId);
+          if (member) {
+            queueEmailNotification(draft, {
+              type: 'profit_distribution_notice',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Halal Profit Distribution (${periodLabel}): ${alloc.payoutAmount} ${draft.fundConfig.currency}`,
+              body: `Assalamu Alaikum ${member.name}, your cooperative dividend share of ${alloc.payoutAmount} ${draft.fundConfig.currency} (${alloc.contributionWeightPct}% weight) from "${project.title}" (${periodLabel}) has been recorded.`,
+              relatedId: project.id,
+            });
+          }
+        });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'HALAL_PROFIT_DISTRIBUTED',
+          resourceType: 'halal_project',
+          resourceId: project.id,
+          summary: `${viewer.name} distributed ${distributablePool} ${draft.fundConfig.currency} (${periodLabel}) from "${project.title}" across ${allocations.length} member(s)`,
+          payload: {
+            projectId: project.id,
+            periodLabel,
+            realizedProfit,
+            coopSharePct,
+            distributablePool,
+            recipientsCount: allocations.length,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedProject) {
+        res.status(404).json({ error: 'Halal investment project not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('investment:voted', { projectId: id });
+      broadcastRealtimeEvent('notification:created', { type: 'profit_distribution_notice' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'HALAL_PROFIT_DISTRIBUTED',
+        resourceType: 'halal_project',
+        resourceId: id,
+      });
+      res.json({ project: hydrateHalalProjectForViewer(updatedProject, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'PROJECT_NOT_VETTED') {
+        res.status(409).json({
+          error: 'Halal investment placement must pass 2/3 member approval before distributing profit.',
+        });
+        return;
+      }
+      console.error('Profit distribution error:', err);
+      res.status(500).json({ error: 'Failed to distribute Halal project profits.' });
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // 6. Admin Governance, RBAC, Fund Settings, Audit Logs & Automated Reports
 // ---------------------------------------------------------------------------
@@ -2311,6 +3223,7 @@ apiRouter.patch(
   requireRole(['admin']),
   async (req: AuthenticatedRequest, res) => {
     try {
+      if (!(await assertStepUpTotp(req, res))) return;
       const { id } = req.params;
       const role = req.body?.role as UserRole | undefined;
       const status = req.body?.status as 'pending_approval' | 'active' | 'suspended' | undefined;
@@ -2492,6 +3405,7 @@ apiRouter.delete(
   requireRole(['admin']),
   async (req: AuthenticatedRequest, res) => {
     try {
+      if (!(await assertStepUpTotp(req, res))) return;
       const { id } = req.params;
       const viewer = req.authUser!;
       if (id === viewer.id) {
@@ -2562,6 +3476,7 @@ apiRouter.patch(
   requireRole(['admin']),
   async (req: AuthenticatedRequest, res) => {
     try {
+      if (!(await assertStepUpTotp(req, res))) return;
       const viewer = req.authUser!;
       const body = req.body as Partial<FundConfig>;
 
@@ -2569,6 +3484,8 @@ apiRouter.patch(
       const monthlyContributionAmount = Number(body.monthlyContributionAmount);
       const maxLoanAmount = Number(body.maxLoanAmount);
       const maxInstallmentMonths = Number(body.maxInstallmentMonths);
+      const guarantorThresholdAmount = Number(body.guarantorThresholdAmount);
+      const requiredGuarantorsCount = Number(body.requiredGuarantorsCount);
 
       if (
         body.maxLoansPerYear !== undefined &&
@@ -2600,6 +3517,22 @@ apiRouter.patch(
         res
           .status(400)
           .json({ error: 'Maximum installment months must be an integer between 1 and 36.' });
+        return;
+      }
+      if (
+        body.guarantorThresholdAmount !== undefined &&
+        (!Number.isFinite(guarantorThresholdAmount) || guarantorThresholdAmount < 0)
+      ) {
+        res.status(400).json({ error: 'Guarantor threshold amount cannot be negative.' });
+        return;
+      }
+      if (
+        body.requiredGuarantorsCount !== undefined &&
+        (!Number.isInteger(requiredGuarantorsCount) ||
+          requiredGuarantorsCount < 0 ||
+          requiredGuarantorsCount > 5)
+      ) {
+        res.status(400).json({ error: 'Required guarantors count must be between 0 and 5.' });
         return;
       }
       if (
@@ -2637,6 +3570,12 @@ apiRouter.patch(
         if (body.maxInstallmentMonths !== undefined) {
           cfg.maxInstallmentMonths = maxInstallmentMonths;
         }
+        if (body.guarantorThresholdAmount !== undefined) {
+          cfg.guarantorThresholdAmount = guarantorThresholdAmount;
+        }
+        if (body.requiredGuarantorsCount !== undefined) {
+          cfg.requiredGuarantorsCount = requiredGuarantorsCount;
+        }
         if (body.maturityDate !== undefined) {
           cfg.maturityDate = body.maturityDate;
         }
@@ -2667,6 +3606,8 @@ apiRouter.patch(
             maturityDate: cfg.maturityDate,
             monthlyContributionAmount: cfg.monthlyContributionAmount,
             maxLoanAmount: cfg.maxLoanAmount,
+            guarantorThresholdAmount: cfg.guarantorThresholdAmount,
+            requiredGuarantorsCount: cfg.requiredGuarantorsCount,
             currency: cfg.currency,
             autoSyncSheet: cfg.autoSyncSheet,
           },
@@ -3440,6 +4381,9 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
     const title = String(req.body?.title || '').trim();
     const content = String(req.body?.content || '').trim();
     const imageUrl = String(req.body?.imageUrl || '').trim();
+    const rawPoll = req.body?.poll as
+      | { question?: string; allowMultiple?: boolean; options?: unknown[] }
+      | undefined;
 
     if (!title || title.length < 3 || title.length > 140) {
       res.status(400).json({ error: 'Post title must be between 3 and 140 characters.' });
@@ -3448,6 +4392,30 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
     if (!content || content.length < 3 || content.length > 4000) {
       res.status(400).json({ error: 'Post content must be between 3 and 4000 characters.' });
       return;
+    }
+
+    let builtPoll: CommunityPoll | undefined;
+    if (rawPoll && rawPoll.question && Array.isArray(rawPoll.options)) {
+      const cleanQuestion = String(rawPoll.question || '').trim();
+      const cleanOpts = rawPoll.options
+        .map((o) => String(o || '').trim())
+        .filter((o) => o.length > 0)
+        .slice(0, 6);
+      if (cleanQuestion.length < 3 || cleanOpts.length < 2) {
+        res.status(400).json({
+          error: 'Community poll requires a question and at least 2 non-empty options.',
+        });
+        return;
+      }
+      builtPoll = {
+        question: cleanQuestion,
+        allowMultiple: Boolean(rawPoll.allowMultiple),
+        options: cleanOpts.map((text, idx) => ({
+          id: `opt-${Date.now()}-${idx}`,
+          text,
+          voterIds: [],
+        })),
+      };
     }
 
     const now = new Date().toISOString();
@@ -3463,6 +4431,7 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       title,
       content,
       imageUrl: imageUrl || undefined,
+      poll: builtPoll,
       reactions: [],
       comments: [],
       isPinned: false,
@@ -3471,7 +4440,25 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       createdAt: now,
     };
 
+    let mentionCount = 0;
     await updateVaultState((draft) => {
+      const mentioned = extractMentionedUsers(`${title} ${content}`, draft.users, viewer.id);
+      if (mentioned.length > 0) {
+        newPost.mentions = mentioned.map((m) => m.memberCode);
+        mentionCount = mentioned.length;
+        mentioned.forEach((m) => {
+          queueEmailNotification(draft, {
+            type: 'community_mention',
+            recipientEmail: m.email,
+            recipientName: m.name,
+            recipientUserId: m.id,
+            subject: `${viewer.name} mentioned you in "${title}"`,
+            body: `${viewer.name} (${viewer.memberCode}) mentioned you in the Community Hub post "${title}". View and reply in the Community tab.`,
+            relatedId: newPost.id,
+          });
+        });
+      }
+
       draft.communityPosts.unshift(newPost);
       appendAuditLog(draft, {
         actor: viewer,
@@ -3479,12 +4466,15 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
         resourceType: 'community',
         resourceId: newPost.id,
         summary: `${viewer.name} published community post "${title}" in ${category}`,
-        payload: { postId: newPost.id, category, title },
+        payload: { postId: newPost.id, category, title, hasPoll: Boolean(builtPoll) },
       });
       return draft;
     });
 
     broadcastRealtimeEvent('community:updated', { postId: newPost.id, type: 'post_created' });
+    if (mentionCount > 0) {
+      broadcastRealtimeEvent('notification:created', { type: 'community_mention' });
+    }
     broadcastRealtimeEvent('audit:updated', {
       action: 'COMMUNITY_POST_CREATED',
       resourceType: 'community',
@@ -3495,6 +4485,81 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
   } catch (err) {
     console.error('Create community post error:', err);
     res.status(500).json({ error: 'Failed to create community post.' });
+  }
+});
+
+apiRouter.post('/community/posts/:id/poll-vote', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const optionIds = Array.isArray(req.body?.optionIds)
+      ? Array.from(new Set((req.body.optionIds as unknown[]).map((o) => String(o || '').trim()).filter(Boolean)))
+      : req.body?.optionId
+        ? [String(req.body.optionId).trim()]
+        : [];
+
+    if (optionIds.length === 0) {
+      res.status(400).json({ error: 'Select at least one poll option.' });
+      return;
+    }
+
+    let updatedPost: CommunityPost | null = null;
+    const nextState = await updateVaultState((draft) => {
+      const post = draft.communityPosts.find((p) => p.id === id);
+      if (!post || !post.poll || (post.status === 'hidden' && viewer.role !== 'admin')) {
+        return draft;
+      }
+
+      const validOptionIds = new Set(post.poll.options.map((o) => o.id));
+      const selected = optionIds.filter((oid) => validOptionIds.has(oid));
+      if (selected.length === 0) {
+        throw new Error('INVALID_POLL_OPTION');
+      }
+
+      const chosen = post.poll.allowMultiple ? selected : [selected[0]];
+
+      // Remove existing votes by viewer first when single-choice or toggling
+      if (!post.poll.allowMultiple) {
+        const alreadyVotedSame = post.poll.options.some(
+          (o) => o.id === chosen[0] && o.voterIds.includes(viewer.id)
+        );
+        post.poll.options.forEach((o) => {
+          o.voterIds = o.voterIds.filter((uid) => uid !== viewer.id);
+        });
+        if (!alreadyVotedSame) {
+          const targetOpt = post.poll.options.find((o) => o.id === chosen[0]);
+          if (targetOpt) targetOpt.voterIds.push(viewer.id);
+        }
+      } else {
+        post.poll.options.forEach((o) => {
+          if (chosen.includes(o.id)) {
+            if (o.voterIds.includes(viewer.id)) {
+              o.voterIds = o.voterIds.filter((uid) => uid !== viewer.id);
+            } else {
+              o.voterIds.push(viewer.id);
+            }
+          }
+        });
+      }
+
+      updatedPost = post;
+      return draft;
+    });
+
+    if (!updatedPost) {
+      res.status(404).json({ error: 'Community poll not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('community:updated', { postId: id, type: 'poll_vote' });
+    res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'INVALID_POLL_OPTION') {
+      res.status(400).json({ error: 'Invalid poll option selected.' });
+      return;
+    }
+    console.error('Poll vote error:', err);
+    res.status(500).json({ error: 'Failed to cast poll vote.' });
   }
 });
 
@@ -3728,6 +4793,7 @@ apiRouter.post(
       }
 
       let updatedPost: CommunityPost | null = null;
+      let mentionCount = 0;
       const nextState = await updateVaultState((draft) => {
         const post = draft.communityPosts.find((p) => p.id === id);
         if (!post || (post.status === 'hidden' && viewer.role !== 'admin')) {
@@ -3736,6 +4802,9 @@ apiRouter.post(
         if (post.commentsLocked && viewer.role !== 'admin') {
           throw new Error('COMMENTS_LOCKED');
         }
+
+        const mentioned = extractMentionedUsers(content, draft.users, viewer.id);
+        mentionCount = mentioned.length;
 
         const comment: CommunityComment = {
           id: `cmt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -3746,12 +4815,25 @@ apiRouter.post(
           authorRole: viewer.role,
           authorPhotoUrl: viewer.photoUrl,
           content,
+          mentions: mentioned.length > 0 ? mentioned.map((m) => m.memberCode) : undefined,
           createdAt: new Date().toISOString(),
         };
 
         post.comments = Array.isArray(post.comments) ? post.comments : [];
         post.comments.push(comment);
         updatedPost = post;
+
+        mentioned.forEach((m) => {
+          queueEmailNotification(draft, {
+            type: 'community_mention',
+            recipientEmail: m.email,
+            recipientName: m.name,
+            recipientUserId: m.id,
+            subject: `${viewer.name} mentioned you in a reply on "${post.title}"`,
+            body: `${viewer.name} (${viewer.memberCode}) mentioned you in a comment on "${post.title}": "${content.slice(0, 140)}".`,
+            relatedId: post.id,
+          });
+        });
 
         appendAuditLog(draft, {
           actor: viewer,
@@ -3770,6 +4852,9 @@ apiRouter.post(
       }
 
       broadcastRealtimeEvent('community:updated', { postId: id, type: 'comment_created' });
+      if (mentionCount > 0) {
+        broadcastRealtimeEvent('notification:created', { type: 'community_mention' });
+      }
       broadcastRealtimeEvent('audit:updated', {
         action: 'COMMUNITY_COMMENT_CREATED',
         resourceType: 'community',

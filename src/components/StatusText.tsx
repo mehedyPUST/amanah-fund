@@ -50,6 +50,11 @@ const STATUS_MAP: Record<
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
+  pending_guarantor: {
+    label: 'Awaiting Guarantor Co-Sign',
+    colorClass: 'text-amber-700 dark:text-amber-400',
+    Icon: Clock,
+  },
   pending_vote: {
     label: '2/3 Member Voting',
     colorClass: 'text-amber-700 dark:text-amber-400',

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Award,
+  BarChart2,
   Check,
   CheckCheck,
   Edit3,
@@ -17,6 +18,7 @@ import {
   MessageSquare,
   Pin,
   PinOff,
+  Plus,
   Search,
   Send,
   Shield,
@@ -140,6 +142,21 @@ export function CommunityView({
   const [newImageUrl, setNewImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [creatingPost, setCreatingPost] = useState(false);
+
+  // Poll Builder State
+  const [pollEnabled, setPollEnabled] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [pollMultiSelections, setPollMultiSelections] = useState<Record<string, string[]>>({});
+  const [votingPollId, setVotingPollId] = useState<string | null>(null);
+
+  // @Mention Autocomplete State
+  const [postMentionQuery, setPostMentionQuery] = useState<string | null>(null);
+  const [commentMentionTarget, setCommentMentionTarget] = useState<{
+    postId: string;
+    query: string;
+  } | null>(null);
 
   // Post Edit / Delete / Moderation State
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -316,6 +333,43 @@ export function CommunityView({
     });
   }, [directory, threads, memberSearch]);
 
+  const mentionableMembers = useMemo(() => {
+    const all: DirectoryMember[] = [
+      ...directory,
+      {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        memberCode: user.memberCode,
+        photoUrl: user.photoUrl,
+      },
+    ];
+    return all;
+  }, [directory, user.id, user.name, user.role, user.memberCode, user.photoUrl]);
+
+  function extractTrailingMentionQuery(text: string): string | null {
+    const match = /(?:^|\s)@([A-Za-z0-9_.\-\s]{0,24})$/.exec(text);
+    if (!match) return null;
+    if (match[1].includes('\n')) return null;
+    return match[1];
+  }
+
+  function applyMentionSelection(sourceText: string, memberName: string): string {
+    return sourceText.replace(/(^|\s)@([A-Za-z0-9_.\-\s]{0,24})$/, `$1@${memberName} `);
+  }
+
+  function filterMentionMatches(query: string | null): DirectoryMember[] {
+    if (query === null) return [];
+    const q = query.trim().toLowerCase();
+    return mentionableMembers
+      .filter(
+        (m) =>
+          m.id !== user.id &&
+          (!q || m.name.toLowerCase().includes(q) || m.memberCode.toLowerCase().includes(q))
+      )
+      .slice(0, 6);
+  }
+
   async function handleImagePick(file: File, target: 'new' | 'edit') {
     setFeedError(null);
     setUploadingImage(true);
@@ -337,6 +391,21 @@ export function CommunityView({
     e.preventDefault();
     setFeedError(null);
     setFeedNotice(null);
+
+    let pollPayload: { question: string; allowMultiple: boolean; options: string[] } | undefined;
+    if (pollEnabled) {
+      const cleanedOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+      if (pollQuestion.trim().length < 3 || cleanedOptions.length < 2) {
+        setFeedError('Attached poll requires a question and at least 2 non-empty options.');
+        return;
+      }
+      pollPayload = {
+        question: pollQuestion.trim(),
+        allowMultiple: pollAllowMultiple,
+        options: cleanedOptions,
+      };
+    }
+
     setCreatingPost(true);
     try {
       const res = await api.createCommunityPost({
@@ -344,18 +413,38 @@ export function CommunityView({
         title: newTitle,
         content: newContent,
         imageUrl: newImageUrl || undefined,
+        poll: pollPayload,
       });
       setPosts((prev) => [res.post, ...prev]);
       setNewTitle('');
       setNewContent('');
       setNewImageUrl('');
       setNewCategory('General');
+      setPollEnabled(false);
+      setPollQuestion('');
+      setPollAllowMultiple(false);
+      setPollOptions(['', '']);
+      setPostMentionQuery(null);
       setComposerOpen(false);
       setFeedNotice('Post published to the Amanah Community.');
     } catch (err) {
       setFeedError(err instanceof Error ? err.message : 'Failed to publish post.');
     } finally {
       setCreatingPost(false);
+    }
+  }
+
+  async function handleVotePoll(postId: string, optionIds: string[]) {
+    if (optionIds.length === 0) return;
+    setVotingPollId(postId);
+    setFeedError(null);
+    try {
+      const res = await api.voteCommunityPoll(postId, optionIds);
+      setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
+    } catch (err) {
+      setFeedError(err instanceof Error ? err.message : 'Failed to record poll vote.');
+    } finally {
+      setVotingPollId(null);
     }
   }
 
@@ -739,12 +828,12 @@ export function CommunityView({
                   </div>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label
                     htmlFor="post-content"
                     className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
                   >
-                    Message
+                    Message (type <span className="font-mono">@Name</span> to mention a member)
                   </label>
                   <textarea
                     id="post-content"
@@ -753,11 +842,119 @@ export function CommunityView({
                     minLength={3}
                     maxLength={4000}
                     value={newContent}
-                    onChange={(e) => setNewContent(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewContent(val);
+                      setPostMentionQuery(extractTrailingMentionQuery(val));
+                    }}
                     placeholder="Write clearly for verified Amanah members..."
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
                   />
+                  {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
+                    <div
+                      role="listbox"
+                      aria-label="Mention member suggestions"
+                      className="mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
+                    >
+                      {filterMentionMatches(postMentionQuery).map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            setNewContent((prev) => applyMentionSelection(prev, m.name));
+                            setPostMentionQuery(null);
+                          }}
+                          className="w-full px-3 py-2 text-left text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center justify-between gap-2 cursor-pointer"
+                        >
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            @{m.name}
+                          </span>
+                          <span className="font-mono text-slate-500 dark:text-slate-400">
+                            {m.memberCode}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* Optional Poll Builder */}
+                {pollEnabled && (
+                  <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                        <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Community Poll</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPollEnabled(false)}
+                        className="text-xs text-slate-500 hover:text-red-600 cursor-pointer"
+                      >
+                        Remove Poll
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={pollQuestion}
+                      onChange={(e) => setPollQuestion(e.target.value)}
+                      placeholder="Poll question (e.g. Best date for monthly Amanah review call?)"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs sm:text-sm"
+                    />
+                    <div className="space-y-2">
+                      {pollOptions.map((opt, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) =>
+                              setPollOptions((prev) =>
+                                prev.map((v, i) => (i === idx ? e.target.value : v))
+                              )
+                            }
+                            placeholder={`Option ${idx + 1}`}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs"
+                          />
+                          {pollOptions.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPollOptions((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                              aria-label="Remove option"
+                              className="p-1.5 text-slate-400 hover:text-red-600 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      {pollOptions.length < 6 ? (
+                        <button
+                          type="button"
+                          onClick={() => setPollOptions((prev) => [...prev, ''])}
+                          className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Option</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Max 6 options</span>
+                      )}
+                      <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={pollAllowMultiple}
+                          onChange={(e) => setPollAllowMultiple(e.target.checked)}
+                          className="rounded border-slate-300 text-emerald-600"
+                        />
+                        <span>Allow multiple choices</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 {newImageUrl && (
                   <div className="relative inline-block">
@@ -779,21 +976,33 @@ export function CommunityView({
                 )}
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
-                    <ImagePlus className="w-3.5 h-3.5" />
-                    <span>{uploadingImage ? 'Uploading...' : 'Attach Image'}</span>
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      disabled={uploadingImage}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) void handleImagePick(file, 'new');
-                        e.currentTarget.value = '';
-                      }}
-                    />
-                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
+                      <ImagePlus className="w-3.5 h-3.5" />
+                      <span>{uploadingImage ? 'Uploading...' : 'Attach Image'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        disabled={uploadingImage}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void handleImagePick(file, 'new');
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    {!pollEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => setPollEnabled(true)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                      >
+                        <BarChart2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Attach Poll</span>
+                      </button>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-2">
                     <button
@@ -1279,6 +1488,116 @@ export function CommunityView({
                             className="max-h-80 rounded-lg border border-slate-200 dark:border-slate-800 object-cover"
                           />
                         )}
+                        {post.poll && (
+                          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3">
+                            {(() => {
+                              const poll = post.poll!;
+                              const totalVotes = poll.options.reduce(
+                                (sum, o) => sum + o.voterIds.length,
+                                0
+                              );
+                              const currentMyOptionIds = poll.options
+                                .filter((o) => o.voterIds.includes(user.id))
+                                .map((o) => o.id);
+                              const draftMultiIds =
+                                pollMultiSelections[post.id] ?? currentMyOptionIds;
+
+                              return (
+                                <>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                      <BarChart2
+                                        className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
+                                        aria-hidden="true"
+                                      />
+                                      <span>{poll.question}</span>
+                                    </div>
+                                    <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                                      {totalVotes} vote{totalVotes === 1 ? '' : 's'}
+                                      {poll.allowMultiple ? ' · Multi-select' : ''}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {poll.options.map((opt) => {
+                                      const optVotes = opt.voterIds.length;
+                                      const pct =
+                                        totalVotes > 0
+                                          ? Math.round((optVotes / totalVotes) * 100)
+                                          : 0;
+                                      const isSelected = poll.allowMultiple
+                                        ? draftMultiIds.includes(opt.id)
+                                        : currentMyOptionIds.includes(opt.id);
+
+                                      return (
+                                        <button
+                                          key={opt.id}
+                                          type="button"
+                                          disabled={votingPollId === post.id}
+                                          onClick={() => {
+                                            if (poll.allowMultiple) {
+                                              const next = draftMultiIds.includes(opt.id)
+                                                ? draftMultiIds.filter((id) => id !== opt.id)
+                                                : [...draftMultiIds, opt.id];
+                                              setPollMultiSelections((prev) => ({
+                                                ...prev,
+                                                [post.id]: next,
+                                              }));
+                                            } else {
+                                              void handleVotePoll(post.id, [opt.id]);
+                                            }
+                                          }}
+                                          className={`relative w-full text-left rounded-lg border px-3 py-2 text-xs overflow-hidden transition-colors cursor-pointer ${
+                                            isSelected
+                                              ? 'border-emerald-400 dark:border-emerald-700 bg-white dark:bg-slate-900'
+                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-300'
+                                          }`}
+                                        >
+                                          <div
+                                            className={`absolute inset-y-0 left-0 transition-all duration-300 ${
+                                              isSelected
+                                                ? 'bg-emerald-500/15 dark:bg-emerald-500/20'
+                                                : 'bg-slate-200/45 dark:bg-slate-800/45'
+                                            }`}
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                          <div className="relative flex items-center justify-between gap-2">
+                                            <span className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
+                                              {isSelected && (
+                                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                              )}
+                                              <span>{opt.text}</span>
+                                            </span>
+                                            <span className="font-mono tabular-nums text-[11px] text-slate-600 dark:text-slate-300 shrink-0">
+                                              {optVotes} ({pct}%)
+                                            </span>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {poll.allowMultiple && (
+                                    <div className="flex justify-end">
+                                      <button
+                                        type="button"
+                                        disabled={
+                                          votingPollId === post.id || draftMultiIds.length === 0
+                                        }
+                                        onClick={() => void handleVotePoll(post.id, draftMultiIds)}
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer"
+                                      >
+                                        {votingPollId === post.id
+                                          ? 'Saving Vote…'
+                                          : 'Submit Selected Choices'}
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
                         {post.status === 'hidden' && post.moderationReason && (
                           <div className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg px-3 py-2">
                             Moderation note ({post.moderatedByName || 'Admin'}):{' '}
@@ -1467,41 +1786,82 @@ export function CommunityView({
                           <span>Replies to this discussion have been locked by an administrator.</span>
                         </div>
                       ) : user.communityMuted ? null : (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            void handleAddComment(post.id);
-                          }}
-                          className="flex items-center gap-2 pt-1"
-                        >
-                          <input
-                            type="text"
-                            maxLength={2000}
-                            value={commentDrafts[post.id] || ''}
-                            onChange={(e) =>
-                              setCommentDrafts((prev) => ({
-                                ...prev,
-                                [post.id]: e.target.value,
-                              }))
-                            }
-                            placeholder={
-                              post.commentsLocked
-                                ? 'Replies locked (Admin reply only)...'
-                                : 'Write a comment...'
-                            }
-                            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                          />
-                          <button
-                            type="submit"
-                            disabled={
-                              !(commentDrafts[post.id] || '').trim() ||
-                              submittingCommentPostId === post.id
-                            }
-                            className="px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                        <div className="space-y-1.5 pt-1">
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              void handleAddComment(post.id);
+                              setCommentMentionTarget(null);
+                            }}
+                            className="flex items-center gap-2"
                           >
-                            {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
-                          </button>
-                        </form>
+                            <input
+                              type="text"
+                              maxLength={2000}
+                              value={commentDrafts[post.id] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCommentDrafts((prev) => ({
+                                  ...prev,
+                                  [post.id]: val,
+                                }));
+                                const q = extractTrailingMentionQuery(val);
+                                setCommentMentionTarget(
+                                  q !== null ? { postId: post.id, query: q } : null
+                                );
+                              }}
+                              placeholder={
+                                post.commentsLocked
+                                  ? 'Replies locked (Admin reply only)...'
+                                  : 'Write a comment (type @Name to mention)...'
+                              }
+                              className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            />
+                            <button
+                              type="submit"
+                              disabled={
+                                !(commentDrafts[post.id] || '').trim() ||
+                                submittingCommentPostId === post.id
+                              }
+                              className="px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                            >
+                              {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
+                            </button>
+                          </form>
+                          {commentMentionTarget?.postId === post.id &&
+                            filterMentionMatches(commentMentionTarget.query).length > 0 && (
+                              <div
+                                role="listbox"
+                                aria-label="Mention member in comment"
+                                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
+                              >
+                                {filterMentionMatches(commentMentionTarget.query).map((m) => (
+                                  <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setCommentDrafts((prev) => ({
+                                        ...prev,
+                                        [post.id]: applyMentionSelection(
+                                          prev[post.id] || '',
+                                          m.name
+                                        ),
+                                      }));
+                                      setCommentMentionTarget(null);
+                                    }}
+                                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center justify-between gap-2 cursor-pointer"
+                                  >
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                      @{m.name}
+                                    </span>
+                                    <span className="font-mono text-slate-500 dark:text-slate-400">
+                                      {m.memberCode}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
                       )}
                     </div>
                   </article>
@@ -1735,10 +2095,13 @@ export function CommunityView({
                             {mine && (
                               <>
                                 {msg.readAt ? (
-                                  <CheckCheck
-                                    className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
-                                    aria-label="Read"
-                                  />
+                                  <span
+                                    title={`Read ${formatDateTime(msg.readAt)}`}
+                                    className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"
+                                  >
+                                    <CheckCheck className="w-3.5 h-3.5" aria-label="Read" />
+                                    <span>Read {formatDateTime(msg.readAt)}</span>
+                                  </span>
                                 ) : (
                                   <Check className="w-3.5 h-3.5" aria-label="Sent" />
                                 )}

@@ -12,8 +12,18 @@ const GOOGLE_CERTS_URL =
 let cachedGoogleCerts: Record<string, string> = {};
 let cachedGoogleCertsExpiry = 0;
 
+let warnedJwtSecret = false;
+
 function getJwtSecret(): string {
-  return process.env.JWT_SECRET || 'amanah-coop-jwt-dev-secret-2026-change-in-prod';
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret && secret.length >= 16) return secret;
+  if (!warnedJwtSecret && process.env.NODE_ENV === 'production') {
+    warnedJwtSecret = true;
+    console.warn(
+      '[SECURITY] JWT_SECRET is missing or shorter than 16 characters in production! Configure a strong JWT_SECRET environment variable.'
+    );
+  }
+  return secret || 'amanah-coop-jwt-dev-secret-2026-change-in-prod';
 }
 
 function getFirebaseProjectId(): string {
@@ -160,6 +170,14 @@ export interface AuthenticatedRequest extends Request {
   authUser?: PublicUser;
 }
 
+export const DEFAULT_NOTIFICATION_PREFERENCES = {
+  inAppAlerts: true,
+  emailBallots: true,
+  emailRepayments: true,
+  emailCommunity: true,
+  soundEnabled: false,
+};
+
 export function sanitizeUser(user: StoredUser): PublicUser {
   const authProvider =
     user.authProvider ||
@@ -181,6 +199,11 @@ export function sanitizeUser(user: StoredUser): PublicUser {
     photoUrl: user.photoUrl,
     authProvider,
     communityMuted: Boolean(user.communityMuted),
+    totpEnabled: Boolean(user.totpEnabled && user.encryptedTotpSecret),
+    notificationPreferences: {
+      ...DEFAULT_NOTIFICATION_PREFERENCES,
+      ...(user.notificationPreferences || {}),
+    },
   };
 }
 

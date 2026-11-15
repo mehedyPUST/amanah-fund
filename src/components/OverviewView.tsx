@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
   BarChart3,
   CheckCircle2,
@@ -161,6 +162,33 @@ export function OverviewView({
         </div>
       </section>
 
+      {/* Overdue Installment Warning */}
+      {treasury.overdueInstallmentsCount > 0 && (
+        <section className="bg-red-50/85 dark:bg-red-950/35 border border-red-200 dark:border-red-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-0.5">
+              <div className="text-xs font-semibold text-red-900 dark:text-red-200">
+                {treasury.overdueInstallmentsCount} Overdue Qard Hasan Installment
+                {treasury.overdueInstallmentsCount === 1 ? '' : 's'} Detected
+              </div>
+              <p className="text-xs text-red-800 dark:text-red-300">
+                {!personal.eligibility.noOverdueInstallments
+                  ? `You have ${personal.eligibility.overdueCount} overdue installment(s). Settle them in Quard Hasan before requesting new financing.`
+                  : 'Cooperative repayment scheduler flagged past-due installments requiring follow-up.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('quard-hasan')}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
+          >
+            Inspect Repayments →
+          </button>
+        </section>
+      )}
+
       {/* Pending Member Signup Approvals Notice for Admins */}
       {isAdmin && treasury.pendingMembersCount > 0 && (
         <section className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200">
@@ -311,6 +339,17 @@ export function OverviewView({
                 <span className="text-slate-600 dark:text-slate-400">Active Loan Balance</span>
                 <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                   {formatMoney(personal.activeLoanBalance, ccy)}
+                </span>
+              </div>
+              <div className="py-2.5 flex items-center justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
+                <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  {formatMoney(personal.cooperativeEquity, ccy)}
+                  {personal.totalProfitDistributed > 0 && (
+                    <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
+                      (+{formatMoney(personal.totalProfitDistributed, ccy)} profit)
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">

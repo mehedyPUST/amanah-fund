@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   ThumbsDown,
   ThumbsUp,
+  UserCheck,
   Vote,
   X,
 } from 'lucide-react';
@@ -123,14 +124,45 @@ export function VotingView({
     }
   }
 
+  async function handleGuarantorRespond(loanId: string, decision: 'accept' | 'decline') {
+    setBusyId(loanId);
+    setFeedback(null);
+    try {
+      await api.respondAsGuarantor(loanId, decision);
+      setFeedback({
+        type: 'success',
+        text:
+          decision === 'accept'
+            ? `Guarantor co-signature recorded on ${loanId}.`
+            : `Guarantor co-signature declined for ${loanId}.`,
+      });
+      await onRefresh();
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to respond as guarantor.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const openProjects = projects.filter((p) => p.votingStatus === 'open');
   const closedProjects = projects.filter((p) => p.votingStatus !== 'open');
 
+  const guarantorPendingForMe = loans.filter(
+    (l) =>
+      l.status === 'pending_guarantor' &&
+      l.guarantors?.some((g) => g.memberId === user.id && g.status === 'pending')
+  );
   const pendingOrApprovedLoans = loans.filter(
     (l) => l.status === 'pending_vote' || l.status === 'approved_pending_disbursement'
   );
   const archivedLoans = loans.filter(
-    (l) => l.status !== 'pending_vote' && l.status !== 'approved_pending_disbursement'
+    (l) =>
+      l.status !== 'pending_vote' &&
+      l.status !== 'approved_pending_disbursement' &&
+      l.status !== 'pending_guarantor'
   );
 
   const showInvestments = categoryFilter === 'all' || categoryFilter === 'investments';
@@ -200,6 +232,53 @@ export function VotingView({
           ))}
         </div>
       </section>
+
+      {guarantorPendingForMe.length > 0 && (
+        <section className="bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+            <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+            <span>
+              Awaiting Your Guarantor Co-Signature ({guarantorPendingForMe.length})
+            </span>
+          </div>
+          <div className="divide-y divide-amber-200/70 dark:divide-amber-900/40">
+            {guarantorPendingForMe.map((loan) => (
+              <div
+                key={loan.id}
+                className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div className="text-xs space-y-0.5">
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                    <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
+                  </div>
+                  <div className="text-slate-600 dark:text-slate-300">
+                    {loan.id} · {loan.purpose}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    disabled={busyId === loan.id}
+                    onClick={() => void handleGuarantorRespond(loan.id, 'accept')}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    Accept Co-Sign
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyId === loan.id}
+                    onClick={() => void handleGuarantorRespond(loan.id, 'decline')}
+                    className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 text-xs font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <div className="space-y-4">
@@ -394,6 +473,18 @@ export function VotingView({
                             Repayment Plan: {loan.installmentMonths} monthly installments of{' '}
                             {formatMoney(loan.monthlyInstallment, ccy)} (0% interest)
                           </div>
+                          {loan.guarantors && loan.guarantors.length > 0 && (
+                            <div className="text-xs text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                              <span>
+                                Co-signed by{' '}
+                                {loan.guarantors
+                                  .filter((g) => g.status === 'accepted')
+                                  .map((g) => `${g.memberName} (${g.memberCode})`)
+                                  .join(', ') || 'guarantor(s)'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="lg:w-80 shrink-0 space-y-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">

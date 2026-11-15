@@ -2,14 +2,27 @@ import crypto from 'node:crypto';
 import type { EncryptedEnvelope } from '../types/coop.ts';
 
 const KEY_VERSION = 'aes-256-gcm-v1';
+let warnedWeakKey = false;
 
 function resolveEncryptionKey(): Buffer {
   const raw = process.env.ENCRYPTION_KEY;
   if (raw && /^[0-9a-fA-F]{64}$/.test(raw)) {
     return Buffer.from(raw, 'hex');
   }
-  const seed = process.env.JWT_SECRET || 'amanah-coop-default-dev-key-material-2026';
-  return crypto.createHash('sha256').update(seed).digest();
+  const seed = process.env.JWT_SECRET;
+  if (seed && seed.length >= 16) {
+    return crypto.createHash('sha256').update(seed).digest();
+  }
+  if (!warnedWeakKey && process.env.NODE_ENV === 'production') {
+    warnedWeakKey = true;
+    console.warn(
+      '[SECURITY] ENCRYPTION_KEY (64-hex-char AES-256 key) is not configured in production! Falling back to deterministic development key.'
+    );
+  }
+  return crypto
+    .createHash('sha256')
+    .update(seed || 'amanah-coop-default-dev-key-material-2026')
+    .digest();
 }
 
 export function encryptSensitiveObject<T extends object>(payload: T): EncryptedEnvelope {

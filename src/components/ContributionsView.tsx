@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Check, Lock, Search, Shield, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Check, ExternalLink, FileImage, Lock, Search, Shield, Sparkles, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { Contribution, FundConfig, PublicUser } from '../types/coop.ts';
+import type { Contribution, FundConfig, PublicUser, ReceiptAiExtraction } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
   BANK_PROVIDERS,
@@ -15,6 +15,24 @@ import {
 } from '../utils/format.ts';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { StatusText } from './StatusText.tsx';
+
+function shiftBillingMonth(baseMonth: string, offset: number): string {
+  const [yStr, mStr] = baseMonth.split('-');
+  const year = Number(yStr) || new Date().getFullYear();
+  const month = (Number(mStr) || 1) - 1;
+  const d = new Date(Date.UTC(year, month + offset, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function matchProviderOption(extracted: string, channel: 'bank' | 'mfs'): string {
+  const list = channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS;
+  const norm = extracted.trim().toLowerCase();
+  if (!norm) return list[0];
+  const exactOrPartial = list.find(
+    (opt) => opt.toLowerCase().includes(norm) || norm.includes(opt.toLowerCase())
+  );
+  return exactOrPartial || list[0];
+}
 
 interface ContributionsViewProps {
   contributions: Contribution[];
@@ -38,23 +56,45 @@ export function ContributionsView({
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [billingMonth, setBillingMonth] = useState(initialBillingMonth || currentMonth);
+  const [advanceMode, setAdvanceMode] = useState(false);
+  const [advanceMonths, setAdvanceMonths] = useState<string[]>([initialBillingMonth || currentMonth]);
+
   useEffect(() => {
     if (initialBillingMonth) {
       setBillingMonth(initialBillingMonth);
+      setAdvanceMonths([initialBillingMonth]);
+      setAdvanceMode(false);
     }
   }, [initialBillingMonth]);
+
+  const upcomingMonthOptions = useMemo(
+    () => Array.from({ length: 6 }, (_, i) => shiftBillingMonth(billingMonth, i)),
+    [billingMonth]
+  );
+
+  const effectiveBillingMonths = useMemo(() => {
+    if (!advanceMode) return [billingMonth];
+    const unique = Array.from(new Set([billingMonth, ...advanceMonths])).sort();
+    return unique.slice(0, 12);
+  }, [advanceMode, billingMonth, advanceMonths]);
+
   const [amount, setAmount] = useState(String(config?.monthlyContributionAmount || 5000));
   const amountEditedRef = useRef(false);
   useEffect(() => {
     if (config && !amountEditedRef.current) {
-      setAmount(String(config.monthlyContributionAmount));
+      setAmount(String(config.monthlyContributionAmount * effectiveBillingMonths.length));
     }
-  }, [config]);
+  }, [config, effectiveBillingMonths.length]);
+
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
   const [providerName, setProviderName] = useState<string>(MFS_PROVIDERS[0]);
   const [senderAccount, setSenderAccount] = useState('');
   const [referenceId, setReferenceId] = useState('');
   const [notes, setNotes] = useState('');
+  const [receiptPhotoUrl, setReceiptPhotoUrl] = useState('');
+  const [receiptAiResult, setReceiptAiResult] = useState<ReceiptAiExtraction | null>(null);
+  const [scanningReceipt, setScanningReceipt] = useState(false);
+  const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const depositFormRef = useRef<HTMLElement | null>(null);
   const senderInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -69,6 +109,56 @@ export function ContributionsView({
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
 
+  async function handleReceiptUploadAndScan(file: File) {
+    setScanningReceipt(true);
+    setReceiptNotice(null);
+    setFeedback(null);
+    try {
+      const [uploadRes, aiRes] = await Promise.allSettled([
+        api.uploadImage(file, `contrib-receipt-${Date.now()}`),
+        api.verifyReceiptWithGemini(file),
+      ]);
+
+      if (uploadRes.status === 'fulfilled') {
+        setReceiptPhotoUrl(uploadRes.value.url);
+      }
+
+      if (aiRes.status === 'fulfilled' && aiRes.value.extraction) {
+        const ext = aiRes.value.extraction;
+        setReceiptAiResult(ext);
+        setChannel(ext.channel);
+        setProviderName(matchProviderOption(ext.providerName, ext.channel));
+        if (ext.referenceId) setReferenceId(ext.referenceId);
+        if (ext.senderAccount) setSenderAccount(ext.senderAccount);
+        if (ext.amount && ext.amount > 0) {
+          amountEditedRef.current = true;
+          setAmount(String(ext.amount));
+        }
+        setReceiptNotice(
+          `Gemini AI extracted (${ext.confidence} confidence): ${ext.summary}`
+        );
+      } else if (uploadRes.status === 'fulfilled') {
+        setReceiptNotice(
+          'Receipt screenshot attached. Verify transfer fields manually before submitting.'
+        );
+      } else {
+        setFeedback({
+          type: 'error',
+          text: 'Could not upload receipt image. Please check file size (<8 MB) and try again.',
+        });
+      }
+    } finally {
+      setScanningReceipt(false);
+    }
+  }
+
+  function toggleAdvanceMonth(month: string) {
+    if (month === billingMonth) return;
+    setAdvanceMonths((prev) =>
+      prev.includes(month) ? prev.filter((m) => m !== month) : [...prev, month]
+    );
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFeedback(null);
@@ -76,19 +166,31 @@ export function ContributionsView({
     try {
       await api.submitContribution({
         billingMonth,
+        billingMonths: effectiveBillingMonths.length > 1 ? effectiveBillingMonths : undefined,
         amount: Number(amount),
         channel,
         providerName,
         senderAccount,
         referenceId,
         notes,
+        receiptPhotoUrl: receiptPhotoUrl || undefined,
+        receiptAiSummary: receiptAiResult?.summary || undefined,
       });
       setSenderAccount('');
       setReferenceId('');
       setNotes('');
+      setReceiptPhotoUrl('');
+      setReceiptAiResult(null);
+      setReceiptNotice(null);
+      setAdvanceMode(false);
+      setAdvanceMonths([billingMonth]);
+      amountEditedRef.current = false;
       setFeedback({
         type: 'success',
-        text: 'Contribution request submitted and encrypted with AES-256-GCM. Awaiting manager verification.',
+        text:
+          effectiveBillingMonths.length > 1
+            ? `${effectiveBillingMonths.length}-month advance contribution batch submitted and encrypted with AES-256-GCM. Awaiting manager verification.`
+            : 'Contribution request submitted and encrypted with AES-256-GCM. Awaiting manager verification.',
       });
       await onRefresh();
     } catch (err) {
@@ -182,23 +284,93 @@ export function ContributionsView({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Receipt Screenshot Upload + Gemini AI Scan */}
+            <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                  <span>Bank / MFS Slip Proof (Optional AI Scan)</span>
+                </span>
+                {receiptPhotoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReceiptPhotoUrl('');
+                      setReceiptAiResult(null);
+                      setReceiptNotice(null);
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                <span>
+                  {scanningReceipt
+                    ? 'Uploading & Scanning Slip with Gemini AI…'
+                    : receiptPhotoUrl
+                      ? 'Replace Receipt Screenshot'
+                      : 'Upload Slip & Auto-Fill TrxID'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={scanningReceipt}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleReceiptUploadAndScan(file);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </label>
+
+              {receiptNotice && (
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                  {receiptNotice}
+                </p>
+              )}
+              {receiptPhotoUrl && (
+                <a
+                  href={receiptPhotoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+                >
+                  <span>View Attached Slip Image</span>
+                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                </a>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Billing Month
+                  Primary Month
                 </label>
                 <input
                   type="month"
                   required
                   value={billingMonth}
-                  onChange={(e) => setBillingMonth(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setBillingMonth(next);
+                    if (!advanceMode) {
+                      setAdvanceMonths([next]);
+                    }
+                  }}
                   className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Amount ({ccy})
+                  {effectiveBillingMonths.length > 1
+                    ? `Total (${effectiveBillingMonths.length} mo, ${ccy})`
+                    : `Amount (${ccy})`}
                 </label>
                 <input
                   type="number"
@@ -212,6 +384,61 @@ export function ContributionsView({
                   className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
+            </div>
+
+            {/* Multi-Month Advance Contribution Selector */}
+            <div className="space-y-2">
+              <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={advanceMode}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setAdvanceMode(checked);
+                    if (!checked) {
+                      setAdvanceMonths([billingMonth]);
+                    } else {
+                      setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
+                    }
+                  }}
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
+                />
+                <span>Pay multiple months in advance (single transfer)</span>
+              </label>
+
+              {advanceMode && (
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {upcomingMonthOptions.map((m) => {
+                      const active = effectiveBillingMonths.includes(m);
+                      const isPrimary = m === billingMonth;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          disabled={isPrimary}
+                          onClick={() => toggleAdvanceMonth(m)}
+                          className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
+                            active
+                              ? 'bg-emerald-600 text-white font-medium'
+                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-400'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                    {effectiveBillingMonths.length} month(s) selected ·{' '}
+                    {formatMoney(
+                      Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
+                      ccy
+                    )}
+                    /mo split evenly
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -516,6 +743,29 @@ export function ContributionsView({
                                   AES-256-GCM Ciphertext: {item.encryptedDetails.ciphertext.slice(0, 72)}… (IV: {item.encryptedDetails.iv.slice(0, 12)}…)
                                 </div>
                                 <div>SHA-256 Entry Hash: {shortHash(item.entryHash)}</div>
+                                {item.batchGroupId && (
+                                  <div className="text-emerald-700 dark:text-emerald-400">
+                                    Advance Batch ID: {item.batchGroupId}
+                                  </div>
+                                )}
+                                {item.receiptAiSummary && (
+                                  <div className="font-sans text-emerald-700 dark:text-emerald-400">
+                                    Gemini AI Verification: {item.receiptAiSummary}
+                                  </div>
+                                )}
+                                {item.receiptPhotoUrl && (
+                                  <div className="pt-1 font-sans">
+                                    <a
+                                      href={item.receiptPhotoUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium hover:underline"
+                                    >
+                                      <span>Open Attached Transfer Receipt</span>
+                                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                                    </a>
+                                  </div>
+                                )}
                                 {item.reviewerName && (
                                   <div className="font-sans text-slate-600 dark:text-slate-300">
                                     Reviewed by {item.reviewerName} on {formatDateTime(item.reviewedAt)} — {item.reviewNote}

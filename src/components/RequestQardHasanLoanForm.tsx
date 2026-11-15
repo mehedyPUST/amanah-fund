@@ -9,8 +9,15 @@ import {
   ChevronUp,
   Lock,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
-import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import type {
+  ActiveMemberDirectoryItem,
+  EligibilityCheck,
+  FundConfig,
+  LoanRequest,
+  PublicUser,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
   BANK_PROVIDERS,
@@ -57,6 +64,8 @@ export function RequestQardHasanLoanForm({
   const [disbursementAccount, setDisbursementAccount] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showSchedulePreview, setShowSchedulePreview] = useState(false);
+  const [activeMembers, setActiveMembers] = useState<ActiveMemberDirectoryItem[]>([]);
+  const [selectedGuarantorIds, setSelectedGuarantorIds] = useState<string[]>([]);
 
   const amountEditedRef = useRef(false);
   const monthsEditedRef = useRef(false);
@@ -71,6 +80,24 @@ export function RequestQardHasanLoanForm({
     }
   }, [config]);
 
+  useEffect(() => {
+    if (!isVerifiedMember) return;
+    let cancelled = false;
+    api
+      .getActiveMembers()
+      .then((res) => {
+        if (!cancelled) {
+          setActiveMembers(res.members.filter((m) => m.id !== user.id));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setActiveMembers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isVerifiedMember, user.id]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdLoan, setCreatedLoan] = useState<LoanRequest | null>(null);
@@ -80,6 +107,13 @@ export function RequestQardHasanLoanForm({
     maxInstallmentMonths,
     Math.max(1, Math.floor(Number(installmentMonths) || 1))
   );
+  const guarantorThreshold = config?.guarantorThresholdAmount ?? 40000;
+  const requiredGuarantorsCount = config?.requiredGuarantorsCount ?? 1;
+  const needsGuarantors =
+    parsedAmount > guarantorThreshold &&
+    requiredGuarantorsCount > 0 &&
+    activeMembers.length > 0;
+  const effectiveRequiredGuarantors = Math.min(requiredGuarantorsCount, activeMembers.length);
 
   const schedulePreview = useMemo(() => {
     if (parsedAmount <= 0 || parsedMonths < 1) return [];
@@ -148,6 +182,12 @@ export function RequestQardHasanLoanForm({
       setError('Please confirm the 0% interest Qard Hasan terms and repayment commitment.');
       return;
     }
+    if (needsGuarantors && selectedGuarantorIds.length < effectiveRequiredGuarantors) {
+      setError(
+        `Loans above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -159,11 +199,13 @@ export function RequestQardHasanLoanForm({
         channel,
         provider: provider.trim(),
         disbursementAccount: disbursementAccount.trim(),
+        guarantorIds: needsGuarantors ? selectedGuarantorIds : undefined,
       });
       setCreatedLoan(res.loan);
       setPurpose('');
       setEmergencyContext('');
       setDisbursementAccount('');
+      setSelectedGuarantorIds([]);
       setAgreedToTerms(false);
       setShowSchedulePreview(false);
       await onSubmitted(res.loan);
@@ -225,12 +267,18 @@ export function RequestQardHasanLoanForm({
         >
           <div className="font-semibold flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            <span>Submitted for Review &amp; 2/3 Anonymized Ballot ({createdLoan.id})</span>
+            <span>
+              {createdLoan.status === 'pending_guarantor'
+                ? `Awaiting Guarantor Co-Signature (${createdLoan.id})`
+                : `Submitted for Review & 2/3 Anonymized Ballot (${createdLoan.id})`}
+            </span>
           </div>
           <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">
             Requested {formatMoney(createdLoan.amount, ccy)} across {createdLoan.installmentMonths}{' '}
-            monthly installments of {formatMoney(createdLoan.monthlyInstallment, ccy)}.
-            Administrators and active voters have been notified.
+            monthly installments of {formatMoney(createdLoan.monthlyInstallment, ccy)}.{' '}
+            {createdLoan.status === 'pending_guarantor'
+              ? 'Selected guarantor member(s) must co-sign before the 2/3 ballot opens.'
+              : 'Administrators and active voters have been notified.'}
           </p>
           {onClose && (
             <div className="pt-1 flex justify-end">
@@ -509,6 +557,58 @@ export function RequestQardHasanLoanForm({
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
+
+        {needsGuarantors && (
+          <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 space-y-2.5">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Co-Signing Guarantors Required</span>
+              </span>
+              <span className="font-mono text-[11px] text-amber-800 dark:text-amber-300">
+                {selectedGuarantorIds.length} / {effectiveRequiredGuarantors} selected
+              </span>
+            </div>
+            <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+              Requests exceeding {formatMoney(guarantorThreshold, ccy)} require{' '}
+              {effectiveRequiredGuarantors} active member co-signer(s) before opening for 2/3
+              ballot voting.
+            </p>
+            <div className="max-h-32 overflow-y-auto divide-y divide-amber-200/60 dark:divide-amber-900/40 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950">
+              {activeMembers.map((member) => {
+                const checked = selectedGuarantorIds.includes(member.id);
+                return (
+                  <label
+                    key={member.id}
+                    className="px-3 py-2 flex items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900"
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <input
+                        type="checkbox"
+                        disabled={!canSubmit}
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedGuarantorIds((prev) =>
+                            prev.includes(member.id)
+                              ? prev.filter((id) => id !== member.id)
+                              : [...prev, member.id]
+                          )
+                        }
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30"
+                      />
+                      <span className="font-medium text-slate-900 dark:text-white truncate">
+                        {member.name}
+                      </span>
+                    </span>
+                    <span className="font-mono text-[11px] text-slate-500 shrink-0">
+                      {member.memberCode}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 cursor-pointer">
           <input

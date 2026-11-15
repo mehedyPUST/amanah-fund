@@ -17,10 +17,14 @@ import type {
   Contribution,
   DashboardSectionId,
   FundConfig,
+  HalalProject,
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
-import { downloadContributionAndLoanPdfStatement } from '../utils/pdfStatement.ts';
+import {
+  downloadAnnualZakatStatementPdf,
+  downloadContributionAndLoanPdfStatement,
+} from '../utils/pdfStatement.ts';
 import {
   escapeCsvCell,
   formatBillingMonth,
@@ -36,6 +40,7 @@ export type TransactionTabTarget = DashboardSectionId;
 interface TransactionHistoryProps {
   contributions: Contribution[];
   loans: LoanRequest[];
+  halalProjects?: HalalProject[];
   config: FundConfig | null;
   user: PublicUser;
   loading: boolean;
@@ -75,12 +80,14 @@ interface LedgerRow {
   reviewerOrVerifier?: string;
   reviewNote?: string;
   entryHash?: string;
+  batchGroupId?: string;
 }
 
 
 export function TransactionHistory({
   contributions,
   loans,
+  halalProjects = [],
   config,
   user,
   loading,
@@ -141,6 +148,7 @@ export function TransactionHistory({
         reviewerOrVerifier: c.reviewerName,
         reviewNote: c.reviewNote,
         entryHash: c.entryHash,
+        batchGroupId: c.batchGroupId,
       });
     });
 
@@ -309,6 +317,16 @@ export function TransactionHistory({
     });
   }
 
+  function handleDownloadZakatPdf() {
+    downloadAnnualZakatStatementPdf({
+      user,
+      config,
+      contributions,
+      loans,
+      halalProjects,
+    });
+  }
+
   return (
     <section
       aria-label="Member Transaction History"
@@ -371,14 +389,26 @@ export function TransactionHistory({
           )}
 
           {!loading && (
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Download PDF Statement</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Download PDF Statement</span>
+              </button>
+              {!compact && (
+                <button
+                  type="button"
+                  onClick={handleDownloadZakatPdf}
+                  className="px-3.5 py-2 rounded-lg border border-amber-200 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 dark:hover:bg-amber-950/60 text-xs font-medium text-amber-800 dark:text-amber-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
+                >
+                  <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Zakat &amp; Equity PDF</span>
+                </button>
+              )}
+            </>
           )}
 
           {compact && onNavigate && (
@@ -736,6 +766,14 @@ function FragmentRow({
                     <span className="text-slate-400 dark:text-slate-500">Entry Hash: </span>
                     <span className="text-slate-800 dark:text-slate-200">
                       {shortHash(row.entryHash)}
+                    </span>
+                  </div>
+                )}
+                {row.batchGroupId && (
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500">Advance Batch: </span>
+                    <span className="text-emerald-700 dark:text-emerald-400">
+                      {row.batchGroupId}
                     </span>
                   </div>
                 )}

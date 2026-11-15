@@ -1,12 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Check, Mail, Send, ShieldAlert } from 'lucide-react';
+import { Bell, Check, Mail, Send, ShieldAlert, Volume2 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { EmailNotification, NotificationType, PublicUser } from '../types/coop.ts';
+import type {
+  EmailNotification,
+  NotificationPreferences,
+  NotificationType,
+  PublicUser,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { useCoopSession } from './AppProviders.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 
 interface NotificationsViewProps {
@@ -24,11 +30,22 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   contribution_placed_manager: 'Contribution Placed (Manager)',
   contribution_accepted: 'Contribution Accepted',
   loan_vote_requested: '2/3 Loan Vote Required',
+  loan_guarantor_requested: 'Guarantor Co-Sign Request',
   loan_approved_confirmation: 'Loan Request Approved',
   loan_rejected_notice: 'Loan Request Declined',
   loan_repayment_notice: 'Loan Repayment Notice',
   monthly_contribution_reminder: 'Monthly Contribution Reminder',
+  profit_distribution_notice: 'Halal Profit Distribution',
   community_moderation: 'Community Moderation',
+  community_mention: 'Community Mention',
+};
+
+const DEFAULT_PREFS: NotificationPreferences = {
+  inAppAlerts: true,
+  soundEnabled: false,
+  emailBallots: true,
+  emailRepayments: true,
+  emailCommunity: true,
 };
 
 export function NotificationsView({
@@ -39,6 +56,7 @@ export function NotificationsView({
   onDisconnectGoogle,
   onRefresh,
 }: NotificationsViewProps) {
+  const { setUser } = useCoopSession();
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,9 +65,19 @@ export function NotificationsView({
   const [sendingGmail, setSendingGmail] = useState(false);
   const [confirmGmailOpen, setConfirmGmailOpen] = useState(false);
   const [pendingSendIds, setPendingSendIds] = useState<string[] | undefined>(undefined);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [prefs, setPrefs] = useState<NotificationPreferences>(
+    user.notificationPreferences || DEFAULT_PREFS
+  );
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
+
+  useEffect(() => {
+    if (user.notificationPreferences) {
+      setPrefs(user.notificationPreferences);
+    }
+  }, [user.notificationPreferences]);
 
   const loadNotifications = useCallback(async () => {
     setLoading(true);
@@ -100,6 +128,25 @@ export function NotificationsView({
       await onRefresh();
     } catch {
       // ignore transient error
+    }
+  }
+
+  async function handleTogglePreference(key: keyof NotificationPreferences) {
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    setSavingPrefs(true);
+    try {
+      const res = await api.updatePreferences({ [key]: next[key] });
+      setUser(res.user);
+      setPrefs(res.user.notificationPreferences || next);
+    } catch (err) {
+      setPrefs(prefs);
+      setFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to save notification preference.',
+      });
+    } finally {
+      setSavingPrefs(false);
     }
   }
 
@@ -249,6 +296,43 @@ export function NotificationsView({
               </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Notification & Sound Preferences */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+            <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <span>Notification &amp; In-App Sound Preferences</span>
+          </div>
+          {savingPrefs && (
+            <span className="text-[11px] font-mono text-slate-400">Saving…</span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+          {(
+            [
+              { key: 'inAppAlerts', label: 'In-App Alerts' },
+              { key: 'soundEnabled', label: 'Subtle Sound Chime' },
+              { key: 'emailBallots', label: 'Ballot & Guarantor' },
+              { key: 'emailRepayments', label: 'Repayment Reminders' },
+              { key: 'emailCommunity', label: 'Community Mentions' },
+            ] as const
+          ).map((item) => (
+            <label
+              key={item.key}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+            >
+              <span className="font-medium truncate">{item.label}</span>
+              <input
+                type="checkbox"
+                checked={Boolean(prefs[item.key])}
+                onChange={() => void handleTogglePreference(item.key)}
+                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+              />
+            </label>
+          ))}
         </div>
       </section>
 

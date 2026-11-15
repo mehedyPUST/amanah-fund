@@ -5,13 +5,16 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
+  type FormEvent,
   type ReactNode,
 } from 'react';
+import { ShieldCheck, X } from 'lucide-react';
 import { MotionConfig } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
-import { api } from '../utils/api.ts';
+import { api, registerTotpChallengeHandler } from '../utils/api.ts';
 import { signOutGoogleIdentity } from '../utils/googleAuth.ts';
 import {
   connectGoogleWorkspace,
@@ -54,6 +57,40 @@ export function AppProviders({ children }: { children: ReactNode }) {
     getWorkspaceSessionInfo()
   );
   const [connectingGoogle, setConnectingGoogle] = useState(false);
+
+  const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
+  const [totpCodeInput, setTotpCodeInput] = useState('');
+  const totpResolverRef = useRef<((code: string | null) => void) | null>(null);
+
+  useEffect(() => {
+    registerTotpChallengeHandler((message: string) => {
+      return new Promise<string | null>((resolve) => {
+        totpResolverRef.current = resolve;
+        setTotpCodeInput('');
+        setTotpPrompt({ message });
+      });
+    });
+    return () => {
+      registerTotpChallengeHandler(null);
+    };
+  }, []);
+
+  const submitTotpPrompt = (e: FormEvent) => {
+    e.preventDefault();
+    const clean = totpCodeInput.replace(/\s+/g, '').trim();
+    if (!/^\d{6}$/.test(clean)) return;
+    const resolve = totpResolverRef.current;
+    totpResolverRef.current = null;
+    setTotpPrompt(null);
+    resolve?.(clean);
+  };
+
+  const cancelTotpPrompt = () => {
+    const resolve = totpResolverRef.current;
+    totpResolverRef.current = null;
+    setTotpPrompt(null);
+    resolve?.(null);
+  };
 
   useEffect(() => {
     const saved = window.localStorage.getItem('amanah_theme');
@@ -168,6 +205,64 @@ export function AppProviders({ children }: { children: ReactNode }) {
           highlightColor={darkMode ? '#334155' : '#f8fafc'}
         >
           {children}
+          {totpPrompt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+              <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-lg">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                    <ShieldCheck className="w-5 h-5 shrink-0" />
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Two-Factor Step-Up Required
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={cancelTotpPrompt}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    aria-label="Cancel 2FA challenge"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {totpPrompt.message}
+                </p>
+                <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      6-Digit Authenticator Code
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      autoFocus
+                      value={totpCodeInput}
+                      onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelTotpPrompt}
+                      className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={totpCodeInput.length !== 6}
+                      className="rounded-md bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      Verify & Continue
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </SkeletonTheme>
       </MotionConfig>
     </CoopSessionContext.Provider>

@@ -62,6 +62,12 @@ export function AdminSiteSettingsView({
   const [maxInstallmentMonths, setMaxInstallmentMonths] = useState(
     String(config?.maxInstallmentMonths ?? 12)
   );
+  const [guarantorThresholdAmount, setGuarantorThresholdAmount] = useState(
+    String(config?.guarantorThresholdAmount ?? 40000)
+  );
+  const [requiredGuarantorsCount, setRequiredGuarantorsCount] = useState(
+    String(config?.requiredGuarantorsCount ?? 1)
+  );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
@@ -79,6 +85,8 @@ export function AdminSiteSettingsView({
       setMonthlyContributionAmount(String(config.monthlyContributionAmount));
       setMaxLoanAmount(String(config.maxLoanAmount));
       setMaxInstallmentMonths(String(config.maxInstallmentMonths));
+      setGuarantorThresholdAmount(String(config.guarantorThresholdAmount ?? 40000));
+      setRequiredGuarantorsCount(String(config.requiredGuarantorsCount ?? 1));
       setCurrency(config.currency);
       setHalalThesis(config.halalInvestmentThesis);
     }
@@ -96,12 +104,14 @@ export function AdminSiteSettingsView({
         monthlyContributionAmount: Number(monthlyContributionAmount),
         maxLoanAmount: Number(maxLoanAmount),
         maxInstallmentMonths: Number(maxInstallmentMonths),
+        guarantorThresholdAmount: Number(guarantorThresholdAmount),
+        requiredGuarantorsCount: Number(requiredGuarantorsCount),
         currency,
         halalInvestmentThesis: halalThesis,
       });
       setFeedback({
         type: 'success',
-        text: `Site & project policy saved (${fundName}, max ${maxLoansPerYear} loans/yr, maturity ${maturityDate}).`,
+        text: `Site & project policy saved (${fundName}, max ${maxLoansPerYear} loans/yr, guarantor threshold ${guarantorThresholdAmount} ${currency}).`,
       });
       await onRefresh();
     } catch (err) {
@@ -290,6 +300,35 @@ export function AdminSiteSettingsView({
                     className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Guarantor Threshold ({ccy})
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  value={guarantorThresholdAmount}
+                  onChange={(e) => setGuarantorThresholdAmount(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Required Co-Signers (Above Threshold)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={5}
+                  required
+                  value={requiredGuarantorsCount}
+                  onChange={(e) => setRequiredGuarantorsCount(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
               </div>
             </div>
 

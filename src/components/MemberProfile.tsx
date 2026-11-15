@@ -3,15 +3,18 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   AlertCircle,
+  Bell,
   CheckCircle2,
   Clock,
   ExternalLink,
+  KeyRound,
   RefreshCw,
   Save,
+  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { PublicUser } from '../types/coop.ts';
+import type { NotificationPreferences, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { useCoopSession } from './AppProviders.tsx';
@@ -42,6 +45,31 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const [occupation, setOccupation] = useState('');
   const [companyOrganization, setCompanyOrganization] = useState('');
 
+  // 2FA Step-Up Security state
+  const [totpSetupData, setTotpSetupData] = useState<{
+    secret: string;
+    otpAuthUri: string;
+    qrDataUrl: string;
+  } | null>(null);
+  const [totpCodeInput, setTotpCodeInput] = useState('');
+  const [totpBusy, setTotpBusy] = useState(false);
+  const [securityFeedback, setSecurityFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Notification & sound preferences
+  const [prefs, setPrefs] = useState<NotificationPreferences>(
+    user.notificationPreferences || {
+      inAppAlerts: true,
+      soundEnabled: false,
+      emailBallots: true,
+      emailRepayments: true,
+      emailCommunity: true,
+    }
+  );
+  const [prefsBusy, setPrefsBusy] = useState(false);
+
   const populateForm = useCallback((loaded: PublicUser) => {
     const reg = loaded.registrationDetails;
     setProfile(loaded);
@@ -52,6 +80,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setPermanentAddress(reg?.permanentAddress || '');
     setOccupation(reg?.occupation || '');
     setCompanyOrganization(reg?.companyOrganization || '');
+    if (loaded.notificationPreferences) {
+      setPrefs(loaded.notificationPreferences);
+    }
     setPhotoBroken(false);
     setAgreementBroken(false);
   }, []);
@@ -112,6 +143,92 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleStart2faSetup() {
+    setTotpBusy(true);
+    setSecurityFeedback(null);
+    try {
+      const res = await api.setup2fa();
+      setTotpSetupData(res);
+      setTotpCodeInput('');
+    } catch (err) {
+      setSecurityFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to initialize 2FA setup.',
+      });
+    } finally {
+      setTotpBusy(false);
+    }
+  }
+
+  async function handleEnable2fa(e: FormEvent) {
+    e.preventDefault();
+    setTotpBusy(true);
+    setSecurityFeedback(null);
+    try {
+      const res = await api.enable2fa(totpCodeInput.trim());
+      setUser(res.user);
+      setProfile(res.user);
+      setTotpSetupData(null);
+      setTotpCodeInput('');
+      setSecurityFeedback({
+        type: 'success',
+        text: 'Two-factor authentication (TOTP) is now active for high-privilege actions.',
+      });
+      await onRefresh();
+    } catch (err) {
+      setSecurityFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid verification code.',
+      });
+    } finally {
+      setTotpBusy(false);
+    }
+  }
+
+  async function handleDisable2fa(e: FormEvent) {
+    e.preventDefault();
+    setTotpBusy(true);
+    setSecurityFeedback(null);
+    try {
+      const res = await api.disable2fa(totpCodeInput.trim());
+      setUser(res.user);
+      setProfile(res.user);
+      setTotpCodeInput('');
+      setSecurityFeedback({
+        type: 'success',
+        text: 'Two-factor authentication has been disabled.',
+      });
+      await onRefresh();
+    } catch (err) {
+      setSecurityFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid authenticator code.',
+      });
+    } finally {
+      setTotpBusy(false);
+    }
+  }
+
+  async function handleTogglePref(key: keyof NotificationPreferences) {
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    setPrefsBusy(true);
+    try {
+      const res = await api.updatePreferences({ [key]: next[key] });
+      setUser(res.user);
+      setProfile(res.user);
+      setPrefs(res.user.notificationPreferences || next);
+    } catch (err) {
+      setPrefs(prefs);
+      setSecurityFeedback({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Could not save notification preference.',
+      });
+    } finally {
+      setPrefsBusy(false);
     }
   }
 
@@ -496,6 +613,208 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               </button>
             </div>
           </form>
+        </section>
+      </div>
+
+      {/* Step-Up Two-Factor Authentication & Alert Preferences */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <KeyRound className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Step-Up Two-Factor Authentication (TOTP)</span>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+                Authenticator App Protection
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Protects high-privilege treasury disbursements, policy edits, and member management
+                with a 6-digit authenticator code.
+              </p>
+            </div>
+            <span
+              className={`text-xs font-mono font-semibold shrink-0 ${
+                profile.totpEnabled
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              {profile.totpEnabled ? 'ENABLED' : 'OFF'}
+            </span>
+          </div>
+
+          {securityFeedback && (
+            <div
+              role="status"
+              className={`p-3 rounded-lg border text-xs font-medium ${
+                securityFeedback.type === 'success'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
+              }`}
+            >
+              {securityFeedback.text}
+            </div>
+          )}
+
+          {profile.totpEnabled ? (
+            <form onSubmit={handleDisable2fa} className="space-y-3 pt-1">
+              <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/60 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
+                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>
+                  2FA is active. Enter your current 6-digit code below only if you need to disable
+                  step-up verification.
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  value={totpCodeInput}
+                  onChange={(e) => setTotpCodeInput(e.target.value)}
+                  placeholder="6-digit code"
+                  className="w-40 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+                <button
+                  type="submit"
+                  disabled={totpBusy}
+                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {totpBusy ? 'Disabling…' : 'Disable 2FA'}
+                </button>
+              </div>
+            </form>
+          ) : !totpSetupData ? (
+            <button
+              type="button"
+              disabled={totpBusy}
+              onClick={() => void handleStart2faSetup()}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
+            </button>
+          ) : (
+            <form onSubmit={handleEnable2fa} className="space-y-4 pt-1">
+              <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                <img
+                  src={totpSetupData.qrDataUrl}
+                  alt="2FA Authenticator QR Code"
+                  referrerPolicy="no-referrer"
+                  className="w-32 h-32 rounded-lg border border-slate-200 dark:border-slate-700 bg-white p-1 shrink-0"
+                />
+                <div className="space-y-2 text-xs min-w-0">
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                    Scan this QR code in Google Authenticator, Authy, or 1Password, or enter the
+                    Base32 setup key manually:
+                  </p>
+                  <div className="font-mono text-[11px] px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white break-all select-all">
+                    {totpSetupData.secret}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  value={totpCodeInput}
+                  onChange={(e) => setTotpCodeInput(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-44 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+                <button
+                  type="submit"
+                  disabled={totpBusy}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {totpBusy ? 'Verifying…' : 'Verify & Activate 2FA'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTotpSetupData(null);
+                    setTotpCodeInput('');
+                  }}
+                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+
+        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <Bell className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Alerts &amp; Sound Controls</span>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+                Alert &amp; Sound Preferences
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Customize real-time chimes and email digest categories.
+              </p>
+            </div>
+            {prefsBusy && <span className="text-[11px] font-mono text-slate-400">Saving…</span>}
+          </div>
+
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            {(
+              [
+                {
+                  key: 'inAppAlerts',
+                  title: 'In-App Treasury Alerts',
+                  desc: 'Show live decision banners and notification badges inside the dashboard.',
+                },
+                {
+                  key: 'soundEnabled',
+                  title: 'Subtle In-App Sound Chime',
+                  desc: 'Play a gentle two-tone chime when new notifications or private messages arrive.',
+                },
+                {
+                  key: 'emailBallots',
+                  title: '2/3 Ballots & Guarantor Co-Sign Notices',
+                  desc: 'Receive notices when a loan needs guarantor co-signature or member vote.',
+                },
+                {
+                  key: 'emailRepayments',
+                  title: 'Installment & Overdue Repayment Reminders',
+                  desc: 'Alert before installment due dates and when installments become overdue.',
+                },
+                {
+                  key: 'emailCommunity',
+                  title: 'Community @Mentions & Moderation Updates',
+                  desc: 'Notify when another verified member mentions you in Community.',
+                },
+              ] as const
+            ).map((row) => (
+              <label
+                key={row.key}
+                className="py-2.5 flex items-center justify-between gap-4 cursor-pointer"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium text-slate-900 dark:text-white">{row.title}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{row.desc}</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={Boolean(prefs[row.key])}
+                  onChange={() => void handleTogglePref(row.key)}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600 shrink-0"
+                />
+              </label>
+            ))}
+          </div>
         </section>
       </div>
     </div>

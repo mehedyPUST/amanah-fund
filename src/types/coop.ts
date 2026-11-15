@@ -22,6 +22,14 @@ export interface EncryptedEnvelope {
   keyVersion: string;
 }
 
+export interface NotificationPreferences {
+  inAppAlerts: boolean;
+  emailBallots: boolean;
+  emailRepayments: boolean;
+  emailCommunity: boolean;
+  soundEnabled: boolean;
+}
+
 export interface UserRegistrationDetails {
   dateOfBirth: string;
   referenceMemberName: string;
@@ -47,6 +55,8 @@ export interface PublicUser {
   photoUrl?: string;
   authProvider?: 'password' | 'google' | 'both';
   communityMuted?: boolean;
+  totpEnabled?: boolean;
+  notificationPreferences?: NotificationPreferences;
   registrationDetails?: UserRegistrationDetails;
 }
 
@@ -84,6 +94,8 @@ export interface FundConfig {
   maxLoansPerYear: number;
   maxLoanAmount: number;
   maxInstallmentMonths: number;
+  guarantorThresholdAmount?: number;
+  requiredGuarantorsCount?: number;
   voteThresholdNumerator: number;
   voteThresholdDenominator: number;
   maturityDate: string; // YYYY-MM-DD
@@ -94,6 +106,16 @@ export interface FundConfig {
   autoSyncSheet?: boolean;
   updatedAt: string;
   updatedBy: string;
+}
+
+export interface ReceiptAiExtraction {
+  channel: 'bank' | 'mfs';
+  providerName: string;
+  referenceId: string;
+  senderAccount: string;
+  amount: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  summary: string;
 }
 
 export interface ContributionSensitiveDetails {
@@ -112,6 +134,9 @@ export interface Contribution {
   channel: 'bank' | 'mfs';
   providerName: string;
   maskedReference: string;
+  receiptPhotoUrl?: string;
+  receiptAiSummary?: string;
+  batchGroupId?: string;
   encryptedDetails: EncryptedEnvelope;
   decryptedDetails?: ContributionSensitiveDetails;
   status: 'pending' | 'approved' | 'rejected';
@@ -134,6 +159,25 @@ export interface LoanVote {
   isSelf?: boolean;
 }
 
+export interface LoanGuarantor {
+  memberId: string;
+  memberName: string;
+  memberCode: string;
+  status: 'pending' | 'accepted' | 'declined';
+  respondedAt?: string;
+  note?: string;
+}
+
+export interface LoanRescheduleRequest {
+  requestedMonths: number;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+}
+
 export interface RepaymentReceiptDetails {
   referenceId: string;
   senderAccount: string;
@@ -148,9 +192,11 @@ export interface InstallmentItem {
   status: 'scheduled' | 'pending_verification' | 'paid' | 'overdue';
   submittedAt?: string;
   paidAt?: string;
+  overdueNotifiedAt?: string;
   repaymentChannel?: 'bank' | 'mfs';
   repaymentProvider?: string;
   maskedReference?: string;
+  receiptPhotoUrl?: string;
   encryptedReceipt?: EncryptedEnvelope;
   decryptedReceipt?: RepaymentReceiptDetails;
   verifiedBy?: string;
@@ -166,6 +212,8 @@ export interface LoanSensitiveDetails {
 
 export interface EligibilityCheck {
   noActiveLoan: boolean;
+  noOverdueInstallments: boolean;
+  overdueCount?: number;
   activeLoanId?: string;
   loansUsedThisYear: number;
   maxLoansPerYear: number;
@@ -187,11 +235,14 @@ export interface LoanRequest {
   encryptedSensitiveNotes: EncryptedEnvelope;
   decryptedSensitiveNotes?: LoanSensitiveDetails;
   status:
+    | 'pending_guarantor'
     | 'pending_vote'
     | 'approved_pending_disbursement'
     | 'active'
     | 'repaid'
     | 'rejected';
+  guarantors?: LoanGuarantor[];
+  rescheduleRequest?: LoanRescheduleRequest;
   eligibilitySnapshot: EligibilityCheck;
   votes: LoanVote[];
   requiredApprovals: number;
@@ -228,6 +279,25 @@ export interface PlacementVote {
   isSelf?: boolean;
 }
 
+export interface ProfitDistributionAllocation {
+  userId: string;
+  memberName: string;
+  memberCode: string;
+  contributionWeightPct: number;
+  payoutAmount: number;
+}
+
+export interface ProfitDistributionRecord {
+  id: string;
+  periodLabel: string;
+  realizedProfit: number;
+  coopSharePct: number;
+  distributablePool: number;
+  distributedAt: string;
+  distributedBy: string;
+  allocations: ProfitDistributionAllocation[];
+}
+
 export interface HalalProject {
   id: string;
   title: string;
@@ -245,6 +315,8 @@ export interface HalalProject {
   totalEligibleVoters: number;
   proposedBy?: string;
   approvedAt?: string;
+  realizedProfitTotal?: number;
+  distributions?: ProfitDistributionRecord[];
 }
 
 export type NotificationType =
@@ -253,11 +325,14 @@ export type NotificationType =
   | 'contribution_placed_manager'
   | 'contribution_accepted'
   | 'loan_vote_requested'
+  | 'loan_guarantor_requested'
   | 'loan_approved_confirmation'
   | 'loan_rejected_notice'
   | 'loan_repayment_notice'
   | 'monthly_contribution_reminder'
-  | 'community_moderation';
+  | 'profit_distribution_notice'
+  | 'community_moderation'
+  | 'community_mention';
 
 export interface EmailNotification {
   id: string;
@@ -340,6 +415,8 @@ export interface DashboardOverview {
     pendingVotesCount: number;
     pendingDisbursementsCount: number;
     pendingRepaymentsCount: number;
+    overdueInstallmentsCount: number;
+    totalProfitDistributedPool: number;
     activeMembersCount: number;
     pendingMembersCount: number;
     unreadNotificationsCount: number;
@@ -350,6 +427,8 @@ export interface DashboardOverview {
     pendingContributionsCount: number;
     activeLoanBalance: number;
     totalRepaidPersonal: number;
+    totalProfitDistributed: number;
+    cooperativeEquity: number;
     eligibility: EligibilityCheck;
   };
   monthlySeries: MonthlyCashflowPoint[];
@@ -382,8 +461,22 @@ export interface CommunityComment {
   authorRole: UserRole;
   authorPhotoUrl?: string;
   content: string;
+  mentions?: string[];
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface CommunityPollOption {
+  id: string;
+  text: string;
+  voterIds: string[];
+}
+
+export interface CommunityPoll {
+  question: string;
+  allowMultiple: boolean;
+  closesAt?: string;
+  options: CommunityPollOption[];
 }
 
 export interface CommunityPost {
@@ -398,6 +491,8 @@ export interface CommunityPost {
   title: string;
   content: string;
   imageUrl?: string;
+  poll?: CommunityPoll;
+  mentions?: string[];
   reactions: CommunityReaction[];
   comments: CommunityComment[];
   isPinned: boolean;

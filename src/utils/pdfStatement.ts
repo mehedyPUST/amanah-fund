@@ -1,5 +1,11 @@
 import { jsPDF } from 'jspdf';
-import type { Contribution, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import type {
+  Contribution,
+  FundConfig,
+  HalalProject,
+  LoanRequest,
+  PublicUser,
+} from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatShortDate } from './format.ts';
 
 export interface PdfStatementInput {
@@ -8,6 +14,15 @@ export interface PdfStatementInput {
   contributions: Contribution[];
   loans: LoanRequest[];
   scope: 'mine' | 'all';
+}
+
+export interface ZakatStatementInput {
+  user: PublicUser;
+  config: FundConfig | null;
+  contributions: Contribution[];
+  loans: LoanRequest[];
+  halalProjects?: HalalProject[];
+  year?: number;
 }
 
 function pdfMoney(amount: number, currency: FundConfig['currency']): string {
@@ -347,4 +362,227 @@ export function downloadContributionAndLoanPdfStatement({
   const dateStamp = new Date().toISOString().slice(0, 10);
   const fileScope = scope === 'mine' ? user.memberCode.toLowerCase() : 'coop-all';
   doc.save(`amanah-statement-${fileScope}-${dateStamp}.pdf`);
+}
+
+export function downloadAnnualZakatStatementPdf({
+  user,
+  config,
+  contributions,
+  loans,
+  halalProjects = [],
+  year = new Date().getFullYear(),
+}: ZakatStatementInput): void {
+  const currency: FundConfig['currency'] = config?.currency || 'BDT';
+  const fundName = config?.fundName || 'Amanah';
+  const yearPrefix = `${year}-`;
+
+  const myApprovedContribs = contributions.filter(
+    (c) => c.userId === user.id && c.status === 'approved'
+  );
+  const myYearContribs = myApprovedContribs.filter((c) => c.billingMonth.startsWith(yearPrefix));
+  const totalVerifiedEquityContributed = myApprovedContribs.reduce((s, c) => s + c.amount, 0);
+  const yearContributed = myYearContribs.reduce((s, c) => s + c.amount, 0);
+
+  const myActiveLoans = loans.filter((l) => l.borrowerId === user.id && l.status === 'active');
+  const activeLoanDebt = myActiveLoans.reduce((s, l) => s + l.remainingBalance, 0);
+
+  const myProfitDividends = halalProjects.flatMap((proj) =>
+    (proj.distributions || []).flatMap((dist) =>
+      dist.allocations
+        .filter((a) => a.userId === user.id)
+        .map((a) => ({
+          projectTitle: proj.title,
+          periodLabel: dist.periodLabel,
+          distributedAt: dist.distributedAt,
+          payoutAmount: a.payoutAmount,
+        }))
+    )
+  );
+  const totalDividends = myProfitDividends.reduce((s, d) => s + d.payoutAmount, 0);
+  const netCooperativeEquity = Math.max(
+    0,
+    totalVerifiedEquityContributed - activeLoanDebt + totalDividends
+  );
+  const indicativeZakatDue = Math.round(netCooperativeEquity * 0.025 * 100) / 100;
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 46;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(15, 23, 42);
+  doc.text(fundName, margin, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(5, 150, 105);
+  doc.text(`ANNUAL ZAKAT & COOPERATIVE EQUITY STATEMENT (${year})`, pageWidth - margin, y, {
+    align: 'right',
+  });
+
+  y += 18;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(51, 65, 85);
+  doc.text('Member Zakatable Cooperative Capital & Profit Share Certificate', margin, y);
+
+  y += 12;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Member: ${user.name} (${user.memberCode})`, margin, y);
+  doc.text(`Generated: ${formatDateTime(new Date().toISOString())}`, pageWidth - margin, y, {
+    align: 'right',
+  });
+  y += 14;
+  doc.text(`Email: ${user.email}`, margin, y);
+  doc.text(`Currency: ${currency}`, pageWidth - margin, y, { align: 'right' });
+  y += 20;
+
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, y, contentWidth, 72, 4, 4, 'FD');
+
+  const items = [
+    {
+      label: 'Verified Capital Contributed',
+      value: pdfMoney(totalVerifiedEquityContributed, currency),
+      sub: `${year}: ${pdfMoney(yearContributed, currency)}`,
+    },
+    {
+      label: 'Less Qard Hasan Debt Due',
+      value: pdfMoney(activeLoanDebt, currency),
+      sub: `${myActiveLoans.length} active loan(s)`,
+    },
+    {
+      label: 'Net Cooperative Equity',
+      value: pdfMoney(netCooperativeEquity, currency),
+      sub: `Dividends: ${pdfMoney(totalDividends, currency)}`,
+    },
+    {
+      label: 'Indicative Zakat (2.5%)',
+      value: pdfMoney(indicativeZakatDue, currency),
+      sub: 'Subject to Nisab & Hawl',
+    },
+  ];
+  const colW = contentWidth / 4;
+  items.forEach((card, idx) => {
+    const cx = margin + 12 + idx * colW;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(card.label, cx, y + 18);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(idx === 3 ? 5 : 15, idx === 3 ? 150 : 23, idx === 3 ? 105 : 42);
+    doc.text(card.value, cx, y + 38);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(card.sub, cx, y + 54);
+  });
+
+  y += 92;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(71, 85, 105);
+  const noteLines = doc.splitTextToSize(
+    'Zakat Calculation Note: Cooperative equity reflects your cumulative verified contributions plus realized Halal investment profit distributions minus any outstanding 0% Qard Hasan repayment liability. Consult a qualified Shariah advisor regarding your household Nisab threshold and lunar Hawl anniversary.',
+    contentWidth
+  );
+  doc.text(noteLines, margin, y);
+  y += noteLines.length * 12 + 14;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${year} Approved Contribution Breakdown (${myYearContribs.length})`, margin, y);
+  y += 12;
+
+  if (myYearContribs.length === 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`No approved monthly contributions recorded for ${year}.`, margin, y + 8);
+    y += 24;
+  } else {
+    doc.setFillColor(241, 245, 249);
+    doc.rect(margin, y, contentWidth, 20, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(51, 65, 85);
+    doc.text('Billing Month', margin + 6, y + 13);
+    doc.text('Channel', margin + 120, y + 13);
+    doc.text('Verified Date', margin + 260, y + 13);
+    doc.text('Reference', margin + 370, y + 13);
+    doc.text('Amount', pageWidth - margin - 6, y + 13, { align: 'right' });
+    y += 22;
+
+    myYearContribs.forEach((c) => {
+      if (y > pageHeight - 60) {
+        doc.addPage();
+        y = 46;
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(15, 23, 42);
+      doc.text(formatBillingMonth(c.billingMonth), margin + 6, y + 11);
+      doc.text(`${c.channel.toUpperCase()} / ${c.providerName}`, margin + 120, y + 11);
+      doc.text(formatShortDate(c.reviewedAt || c.submittedAt), margin + 260, y + 11);
+      doc.setFont('courier', 'normal');
+      doc.text(c.decryptedDetails?.referenceId || c.maskedReference, margin + 370, y + 11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(pdfMoney(c.amount, currency), pageWidth - margin - 6, y + 11, { align: 'right' });
+      y += 18;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 2;
+    });
+    y += 16;
+  }
+
+  if (myProfitDividends.length > 0) {
+    if (y > pageHeight - 90) {
+      doc.addPage();
+      y = 46;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Halal Investment Profit Distributions (${myProfitDividends.length})`, margin, y);
+    y += 12;
+
+    myProfitDividends.forEach((d) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${d.projectTitle} (${d.periodLabel})`, margin + 6, y + 11);
+      doc.text(formatShortDate(d.distributedAt), margin + 320, y + 11);
+      doc.text(pdfMoney(d.payoutAmount, currency), pageWidth - margin - 6, y + 11, {
+        align: 'right',
+      });
+      y += 18;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 2;
+    });
+  }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`${fundName} · Annual Zakat & Equity Statement`, margin, pageHeight - 24);
+  doc.text('Shariah-Compliant Non-Interest Ledger', pageWidth - margin, pageHeight - 24, {
+    align: 'right',
+  });
+
+  doc.save(`amanah-zakat-equity-${user.memberCode.toLowerCase()}-${year}.pdf`);
 }

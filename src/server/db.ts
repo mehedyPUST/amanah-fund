@@ -11,6 +11,7 @@ import type {
   FundConfig,
   HalalProject,
   LoanRequest,
+  NotificationPreferences,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
@@ -30,6 +31,9 @@ export interface StoredUser {
   phoneMasked?: string;
   photoUrl?: string;
   communityMuted?: boolean;
+  totpEnabled?: boolean;
+  encryptedTotpSecret?: EncryptedEnvelope;
+  notificationPreferences?: NotificationPreferences;
   encryptedRegistrationDetails?: EncryptedEnvelope;
 }
 
@@ -98,6 +102,8 @@ function createSeedState(): VaultState {
     maxLoansPerYear: 3,
     maxLoanAmount: 75000,
     maxInstallmentMonths: 12,
+    guarantorThresholdAmount: 40000,
+    requiredGuarantorsCount: 1,
     voteThresholdNumerator: 2,
     voteThresholdDenominator: 3,
     maturityDate: '2028-12-31',
@@ -246,6 +252,14 @@ function normalizeVaultState(state: VaultState): VaultState {
   state.privateMessages = Array.isArray(state.privateMessages)
     ? state.privateMessages
     : [];
+  if (state.fundConfig) {
+    if (state.fundConfig.guarantorThresholdAmount === undefined) {
+      state.fundConfig.guarantorThresholdAmount = 40000;
+    }
+    if (state.fundConfig.requiredGuarantorsCount === undefined) {
+      state.fundConfig.requiredGuarantorsCount = 1;
+    }
+  }
   const activeVoters = Math.max(1, state.users.filter((u) => u.status === 'active').length);
   const reqApprovals = Math.max(
     1,
@@ -376,6 +390,24 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
           }),
         ]);
       }
+      await Promise.allSettled([
+        mongoDb.collection('users').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('users').createIndex({ email: 1 }),
+        mongoDb.collection('contributions').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('contributions').createIndex({ userId: 1, billingMonth: 1 }),
+        mongoDb.collection('loans').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('loans').createIndex({ borrowerId: 1, status: 1 }),
+        mongoDb.collection('halalProjects').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('emailNotifications').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('emailNotifications').createIndex({ recipientUserId: 1, createdAt: -1 }),
+        mongoDb.collection('auditLogs').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('auditLogs').createIndex({ timestamp: -1 }),
+        mongoDb.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('communityPosts').createIndex({ createdAt: -1 }),
+        mongoDb.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
+      ]);
+
       initialized = true;
       return storageEngine;
     } catch (err) {
@@ -435,6 +467,36 @@ export async function loadVaultState(): Promise<VaultState> {
   return readLocalVault();
 }
 
+async function syncCollectionById<T extends { id: string }>(
+  db: Db,
+  collectionName: string,
+  prevItems: T[],
+  nextItems: T[]
+): Promise<void> {
+  const collection = db.collection<T>(collectionName);
+  const prevMap = new Map(prevItems.map((item) => [item.id, JSON.stringify(item)]));
+  const nextIds = new Set(nextItems.map((item) => item.id));
+
+  const removedIds = prevItems.filter((item) => !nextIds.has(item.id)).map((item) => item.id);
+  const changedOrNew = nextItems.filter((item) => prevMap.get(item.id) !== JSON.stringify(item));
+
+  if (removedIds.length > 0) {
+    await collection.deleteMany({ id: { $in: removedIds } } as never);
+  }
+  if (changedOrNew.length > 0) {
+    await collection.bulkWrite(
+      changedOrNew.map((doc) => ({
+        replaceOne: {
+          filter: { id: doc.id } as never,
+          replacement: doc,
+          upsert: true,
+        },
+      })),
+      { ordered: false }
+    );
+  }
+}
+
 export function updateVaultState(
   mutator: (state: VaultState) => VaultState | Promise<VaultState>
 ): Promise<VaultState> {
@@ -444,43 +506,22 @@ export function updateVaultState(
 
     if (mongoDb) {
       await Promise.all([
+        syncCollectionById(mongoDb, 'users', current.users, next.users),
         mongoDb
-          .collection('users')
-          .deleteMany({})
-          .then(() => (next.users.length ? mongoDb!.collection('users').insertMany(next.users) : null)),
-        mongoDb.collection('fundConfig').replaceOne({ id: 'default-config' }, next.fundConfig, { upsert: true }),
-        mongoDb
-          .collection('contributions')
-          .deleteMany({})
-          .then(() => (next.contributions.length ? mongoDb!.collection('contributions').insertMany(next.contributions) : null)),
-        mongoDb
-          .collection('loans')
-          .deleteMany({})
-          .then(() => (next.loans.length ? mongoDb!.collection('loans').insertMany(next.loans) : null)),
-        mongoDb
-          .collection('halalProjects')
-          .deleteMany({})
-          .then(() => (next.halalProjects.length ? mongoDb!.collection('halalProjects').insertMany(next.halalProjects) : null)),
-        mongoDb
-          .collection('emailNotifications')
-          .deleteMany({})
-          .then(() => (next.emailNotifications.length ? mongoDb!.collection('emailNotifications').insertMany(next.emailNotifications) : null)),
-        mongoDb
-          .collection('auditLogs')
-          .deleteMany({})
-          .then(() => (next.auditLogs.length ? mongoDb!.collection('auditLogs').insertMany(next.auditLogs) : null)),
-        mongoDb
-          .collection('communityPosts')
-          .deleteMany({})
-          .then(() =>
-            next.communityPosts.length ? mongoDb!.collection('communityPosts').insertMany(next.communityPosts) : null
-          ),
-        mongoDb
-          .collection('privateMessages')
-          .deleteMany({})
-          .then(() =>
-            next.privateMessages.length ? mongoDb!.collection('privateMessages').insertMany(next.privateMessages) : null
-          ),
+          .collection('fundConfig')
+          .replaceOne({ id: 'default-config' }, next.fundConfig, { upsert: true }),
+        syncCollectionById(mongoDb, 'contributions', current.contributions, next.contributions),
+        syncCollectionById(mongoDb, 'loans', current.loans, next.loans),
+        syncCollectionById(mongoDb, 'halalProjects', current.halalProjects, next.halalProjects),
+        syncCollectionById(
+          mongoDb,
+          'emailNotifications',
+          current.emailNotifications,
+          next.emailNotifications
+        ),
+        syncCollectionById(mongoDb, 'auditLogs', current.auditLogs, next.auditLogs),
+        syncCollectionById(mongoDb, 'communityPosts', current.communityPosts, next.communityPosts),
+        syncCollectionById(mongoDb, 'privateMessages', current.privateMessages, next.privateMessages),
       ]);
     } else {
       writeLocalVault(next);

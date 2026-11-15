@@ -81,6 +81,38 @@ const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
 ];
 
+function playSubtleAlertChime() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    [587.33, 880].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + idx * 0.09 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.24);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.09);
+      osc.stop(now + idx * 0.09 + 0.26);
+    });
+
+    window.setTimeout(() => {
+      void ctx.close().catch(() => {});
+    }, 500);
+  } catch {
+    // Web Audio may be blocked prior to user gesture
+  }
+}
+
 export function DashboardShell() {
   const router = useRouter();
   const {
@@ -110,6 +142,8 @@ export function DashboardShell() {
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
   const autoSyncBusyRef = useRef(false);
+  const soundEnabledRef = useRef(false);
+  soundEnabledRef.current = Boolean(user?.notificationPreferences?.soundEnabled);
 
   useEffect(() => {
     if (!authChecking && !user) {
@@ -183,20 +217,36 @@ export function DashboardShell() {
       }
       void refreshWorkspace(true);
     };
+    const handleAlertSync = (evt: MessageEvent) => {
+      if (soundEnabledRef.current) {
+        try {
+          const payload = JSON.parse(evt.data || '{}') as { senderId?: string };
+          if (!payload.senderId || payload.senderId !== user.id) {
+            playSubtleAlertChime();
+          }
+        } catch {
+          playSubtleAlertChime();
+        }
+      }
+      void refreshWorkspace(true);
+    };
     es.addEventListener('investment:voted', handleSync);
     es.addEventListener('investment:created', handleSync);
+    es.addEventListener('investment:distributed', handleSync);
     es.addEventListener('loan:created', handleLoanCreated);
     es.addEventListener('loan:reviewed', handleSync);
     es.addEventListener('loan:voted', handleSync);
+    es.addEventListener('loan:guarantor', handleSync);
     es.addEventListener('contribution:submitted', handleSync);
     es.addEventListener('contribution:reviewed', handleSync);
     es.addEventListener('repayment:submitted', handleSync);
     es.addEventListener('repayment:verified', handleSync);
+    es.addEventListener('repayment:overdue', handleSync);
     es.addEventListener('config:updated', handleSync);
-    es.addEventListener('notification:created', handleSync);
+    es.addEventListener('notification:created', handleAlertSync);
     es.addEventListener('members:updated', handleSync);
     es.addEventListener('sheet:synced', handleSync);
-    es.addEventListener('dm:received', handleSync);
+    es.addEventListener('dm:received', handleAlertSync);
     es.addEventListener('dm:read', handleSync);
     es.addEventListener('dm:deleted', handleSync);
 
@@ -914,6 +964,7 @@ export function DashboardShell() {
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
+                    halalProjects={halalProjects}
                     config={overview?.config || null}
                     user={user}
                     loading={dataLoading && contributions.length === 0 && loans.length === 0}

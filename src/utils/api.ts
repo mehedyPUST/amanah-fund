@@ -12,30 +12,60 @@ import type {
   HalalProject,
   LoanRequest,
   MemberSummary,
+  NotificationPreferences,
   PrivateMessage,
   PublicUser,
+  ReceiptAiExtraction,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
 
-async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+type TotpChallengeHandler = (message: string) => Promise<string | null>;
+let totpChallengeHandler: TotpChallengeHandler | null = null;
+
+export function registerTotpChallengeHandler(handler: TotpChallengeHandler | null): void {
+  totpChallengeHandler = handler;
+}
+
+async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
   const res = await fetch(path, {
     credentials: 'include',
+    ...init,
     headers: {
       'Content-Type': 'application/json',
       ...(init?.headers || {}),
     },
-    ...init,
   });
 
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
+    let code = '';
     try {
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; code?: string };
       if (data?.error) message = data.error;
+      if (data?.code) code = data.code;
     } catch {
       // ignore non-json
     }
+
+    if (res.status === 403 && code === 'TOTP_REQUIRED' && !hasRetriedTotp && totpChallengeHandler) {
+      const totpCode = await totpChallengeHandler(message);
+      if (!totpCode) {
+        throw new Error('Two-factor authentication cancelled.');
+      }
+      return apiRequest<T>(
+        path,
+        {
+          ...init,
+          headers: {
+            ...(init?.headers || {}),
+            'X-TOTP-Code': totpCode,
+          },
+        },
+        true
+      );
+    }
+
     throw new Error(message);
   }
 
@@ -115,6 +145,37 @@ export const api = {
       }),
     });
   },
+  setup2fa: () =>
+    apiRequest<{ secret: string; otpAuthUri: string; qrDataUrl: string }>('/api/auth/2fa/setup', {
+      method: 'POST',
+    }),
+  enable2fa: (code: string) =>
+    apiRequest<{ user: PublicUser }>('/api/auth/2fa/enable', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+  disable2fa: (code: string) =>
+    apiRequest<{ user: PublicUser }>('/api/auth/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+  updatePreferences: (prefs: Partial<NotificationPreferences>) =>
+    apiRequest<{ user: PublicUser }>('/api/profile/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(prefs),
+    }),
+  verifyReceiptWithGemini: async (file: File): Promise<{ extraction: ReceiptAiExtraction }> => {
+    const imageBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected receipt image.'));
+      reader.readAsDataURL(file);
+    });
+    return apiRequest<{ extraction: ReceiptAiExtraction }>('/api/gemini/verify-receipt', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64 }),
+    });
+  },
   register: (payload: RegisterMemberPayload) =>
     apiRequest<{ pendingApproval?: boolean; message?: string; user: PublicUser }>(
       '/api/auth/register',
@@ -130,14 +191,17 @@ export const api = {
   getContributions: () => apiRequest<{ contributions: Contribution[] }>('/api/contributions'),
   submitContribution: (payload: {
     billingMonth: string;
+    billingMonths?: string[];
     amount: number;
     channel: 'bank' | 'mfs';
     providerName: string;
     referenceId: string;
     senderAccount: string;
     notes?: string;
+    receiptPhotoUrl?: string;
+    receiptAiSummary?: string;
   }) =>
-    apiRequest<{ contribution: Contribution }>('/api/contributions', {
+    apiRequest<{ contribution: Contribution; contributions?: Contribution[] }>('/api/contributions', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -157,10 +221,16 @@ export const api = {
     channel: 'bank' | 'mfs';
     provider: string;
     disbursementAccount: string;
+    guarantorIds?: string[];
   }) =>
     apiRequest<{ loan: LoanRequest }>('/api/loans', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  respondAsGuarantor: (id: string, decision: 'accept' | 'decline', note?: string) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/guarantor-respond`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, note }),
     }),
   voteLoan: (
     id: string,
@@ -189,6 +259,7 @@ export const api = {
       referenceId: string;
       senderAccount: string;
       notes?: string;
+      receiptPhotoUrl?: string;
     }
   ) =>
     apiRequest<{ loan: LoanRequest }>(
@@ -210,6 +281,20 @@ export const api = {
         body: JSON.stringify({ decision }),
       }
     ),
+  requestLoanReschedule: (loanId: string, payload: { requestedMonths: number; reason: string }) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${loanId}/reschedule`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  reviewLoanReschedule: (
+    loanId: string,
+    decision: 'approve' | 'reject',
+    reviewNote?: string
+  ) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${loanId}/reschedule/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reviewNote }),
+    }),
 
   getHalalProjects: () => apiRequest<{ projects: HalalProject[] }>('/api/halal-projects'),
   createHalalProject: (payload: {
@@ -229,6 +314,14 @@ export const api = {
     apiRequest<{ project: HalalProject }>(`/api/halal-projects/${id}/vote`, {
       method: 'POST',
       body: JSON.stringify({ decision, comment }),
+    }),
+  distributeHalalProfit: (
+    id: string,
+    payload: { periodLabel: string; realizedProfit: number; coopSharePct: number }
+  ) =>
+    apiRequest<{ project: HalalProject }>(`/api/halal-projects/${id}/distribute`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 
   getActiveMembers: () =>
@@ -344,10 +437,16 @@ export const api = {
     title: string;
     content: string;
     imageUrl?: string;
+    poll?: { question: string; allowMultiple?: boolean; options: string[] };
   }) =>
     apiRequest<{ post: CommunityPost }>('/api/community/posts', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  voteCommunityPoll: (postId: string, optionIds: string[]) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${postId}/poll-vote`, {
+      method: 'POST',
+      body: JSON.stringify({ optionIds }),
     }),
   updateCommunityPost: (
     id: string,

@@ -95,15 +95,86 @@ export function appendAuditLog(
   });
 }
 
+export function applyOverdueChecksToState(
+  state: VaultState,
+  referenceDate = new Date()
+): { changed: boolean; newlyOverdue: Array<{ loanId: string; borrowerId: string; installmentNumber: number }> } {
+  const todayUtc = referenceDate.toISOString().slice(0, 10);
+  let changed = false;
+  const newlyOverdue: Array<{ loanId: string; borrowerId: string; installmentNumber: number }> = [];
+
+  for (const loan of state.loans) {
+    if (loan.status !== 'active') continue;
+    for (const inst of loan.installments) {
+      if (inst.status === 'scheduled' && inst.dueDate < todayUtc) {
+        inst.status = 'overdue';
+        changed = true;
+        if (!inst.overdueNotifiedAt) {
+          inst.overdueNotifiedAt = referenceDate.toISOString();
+          newlyOverdue.push({
+            loanId: loan.id,
+            borrowerId: loan.borrowerId,
+            installmentNumber: inst.installmentNumber,
+          });
+          const borrower = state.users.find((u) => u.id === loan.borrowerId);
+          if (borrower) {
+            queueEmailNotification(state, {
+              type: 'loan_repayment_notice',
+              recipientEmail: borrower.email,
+              recipientName: borrower.name,
+              recipientUserId: borrower.id,
+              subject: `Overdue Installment Reminder: ${loan.id} Installment #${inst.installmentNumber}`,
+              body: `Assalamu Alaikum ${borrower.name}, installment #${inst.installmentNumber} (${inst.amount} ${state.fundConfig.currency}) for Qard Hasan loan ${loan.id} passed its due date (${inst.dueDate}). Please submit your Bank/MFS repayment reference in the Qard Hasan tab.`,
+              relatedId: `${loan.id}#${inst.installmentNumber}`,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return { changed, newlyOverdue };
+}
+
+export function extractMentionedUsers(
+  text: string,
+  users: VaultState['users'],
+  excludeUserId?: string
+): Array<{ id: string; name: string; email: string; memberCode: string }> {
+  const lower = text.toLowerCase();
+  const matched: Array<{ id: string; name: string; email: string; memberCode: string }> = [];
+  for (const u of users) {
+    if (u.status !== 'active' || u.id === excludeUserId) continue;
+    const byCode = `@${u.memberCode.toLowerCase()}`;
+    const byName = `@${u.name.toLowerCase()}`;
+    if (lower.includes(byCode) || lower.includes(byName)) {
+      matched.push({ id: u.id, name: u.name, email: u.email, memberCode: u.memberCode });
+    }
+  }
+  return matched;
+}
+
 export function evaluateLoanEligibility(state: VaultState, userId: string): EligibilityCheck {
   const currentYear = new Date().getFullYear();
   const maxLoansPerYear = state.fundConfig.maxLoansPerYear;
 
   const userLoans = state.loans.filter((l) => l.borrowerId === userId);
   const activeOrPendingLoan = userLoans.find((l) =>
-    ['pending_vote', 'approved_pending_disbursement', 'active'].includes(l.status)
+    ['pending_guarantor', 'pending_vote', 'approved_pending_disbursement', 'active'].includes(
+      l.status
+    )
   );
   const noActiveLoan = !activeOrPendingLoan;
+
+  const overdueCount = userLoans.reduce(
+    (sum, l) =>
+      sum +
+      l.installments.filter(
+        (inst) => inst.status === 'overdue'
+      ).length,
+    0
+  );
+  const noOverdueInstallments = overdueCount === 0;
 
   // Count non-rejected loans requested in the current calendar year
   const loansUsedThisYear = userLoans.filter((l) => {
@@ -126,6 +197,14 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
     reasons.push('No active or pending Qard Hasan loan.');
   }
 
+  if (!noOverdueInstallments) {
+    reasons.push(
+      `${overdueCount} overdue installment(s) detected. Settle overdue repayments before requesting new financing.`
+    );
+  } else {
+    reasons.push('Zero overdue loan installments.');
+  }
+
   if (!quotaAvailable) {
     reasons.push(
       `Annual limit reached: ${loansUsedThisYear} of ${maxLoansPerYear} permitted loans used in ${currentYear}.`
@@ -146,12 +225,14 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
 
   return {
     noActiveLoan,
+    noOverdueInstallments,
+    overdueCount,
     activeLoanId: activeOrPendingLoan?.id,
     loansUsedThisYear,
     maxLoansPerYear,
     quotaAvailable,
     beforeMaturityDate,
-    eligible: noActiveLoan && quotaAvailable && beforeMaturityDate,
+    eligible: noActiveLoan && noOverdueInstallments && quotaAvailable && beforeMaturityDate,
     reasons,
   };
 }
@@ -204,6 +285,18 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     (sum, l) => sum + l.installments.filter((i) => i.status === 'pending_verification').length,
     0
   );
+  const overdueInstallmentsCount = state.loans.reduce(
+    (sum, l) => sum + (l.status === 'active' ? l.installments.filter((i) => i.status === 'overdue').length : 0),
+    0
+  );
+
+  const totalProfitDistributedPool = Math.round(
+    state.halalProjects.reduce(
+      (sum, proj) =>
+        sum + (proj.distributions || []).reduce((dSum, dist) => dSum + dist.distributablePool, 0),
+      0
+    ) * 100
+  ) / 100;
 
   const personalContribs = state.contributions.filter((c) => c.userId === currentUser.id);
   const personalApproved = personalContribs.filter((c) => c.status === 'approved');
@@ -214,6 +307,28 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     .filter((l) => l.status === 'active')
     .reduce((sum, l) => sum + l.remainingBalance, 0);
   const totalRepaidPersonal = personalLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
+
+  const personalTotalContributed = personalApproved.reduce((s, c) => s + c.amount, 0);
+  const totalProfitDistributed =
+    Math.round(
+      state.halalProjects.reduce(
+        (sum, proj) =>
+          sum +
+          (proj.distributions || []).reduce(
+            (dSum, dist) =>
+              dSum +
+              dist.allocations
+                .filter((a) => a.userId === currentUser.id)
+                .reduce((aSum, a) => aSum + a.payoutAmount, 0),
+            0
+          ),
+        0
+      ) * 100
+    ) / 100;
+  const cooperativeEquity = Math.max(
+    0,
+    Math.round((personalTotalContributed - activeLoanBalance + totalProfitDistributed) * 100) / 100
+  );
 
   const now = new Date();
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
@@ -342,16 +457,20 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       pendingVotesCount,
       pendingDisbursementsCount,
       pendingRepaymentsCount,
+      overdueInstallmentsCount,
+      totalProfitDistributedPool,
       activeMembersCount: state.users.filter((u) => u.status === 'active').length,
       pendingMembersCount,
       unreadNotificationsCount,
     },
     personal: {
-      totalContributed: personalApproved.reduce((s, c) => s + c.amount, 0),
+      totalContributed: personalTotalContributed,
       approvedContributionsCount: personalApproved.length,
       pendingContributionsCount: personalPending.length,
       activeLoanBalance,
       totalRepaidPersonal,
+      totalProfitDistributed,
+      cooperativeEquity,
       eligibility: evaluateLoanEligibility(state, currentUser.id),
     },
     monthlySeries,
