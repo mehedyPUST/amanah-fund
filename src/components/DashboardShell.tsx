@@ -67,7 +67,6 @@ import type {
   ProfileChangeRequest,
   UserRole,
 } from '../types/coop.ts';
-import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 
