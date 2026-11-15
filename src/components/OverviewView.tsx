@@ -7,10 +7,12 @@ import {
   BarChart3,
   CalendarCheck,
   CheckCircle2,
+  Clock,
   HandCoins,
   Lock,
   Settings,
   ShieldCheck,
+  UserCheck,
   Users,
   Vote,
   Wallet,
@@ -26,8 +28,10 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
+import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
 import { RepaymentSchedule } from './RepaymentSchedule.tsx';
+import { StatusText } from './StatusText.tsx';
 
 export type NavTab = DashboardSectionId;
 
@@ -38,6 +42,7 @@ interface OverviewViewProps {
   user: PublicUser;
   loading: boolean;
   onNavigate: (section: DashboardSectionId) => void;
+  onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onOpenLoanModal?: () => void;
   onViewMemberProfile?: (userId: string) => void;
   onRefresh: () => Promise<void>;
@@ -50,6 +55,7 @@ export function OverviewView({
   user,
   loading,
   onNavigate,
+  onOpenManagerDeskTab,
   onOpenLoanModal,
   onViewMemberProfile,
   onRefresh,
@@ -114,6 +120,30 @@ export function OverviewView({
   const ccy = config.currency;
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isAdmin = user.role === 'admin';
+
+  const myActiveOrPendingLoan = !isAdmin
+    ? loans.find(
+        (l) =>
+          l.borrowerId === user.id &&
+          [
+            'pending_guarantor',
+            'pending_manager_review',
+            'pending_vote',
+            'approved_pending_disbursement',
+            'active',
+          ].includes(l.status)
+      ) || null
+    : null;
+
+  const myGuarantorRequests = !isAdmin
+    ? loans.filter(
+        (l) =>
+          l.status === 'pending_guarantor' &&
+          l.guarantors?.some((g) => g.memberId === user.id && g.status === 'pending')
+      )
+    : [];
+
+  const pendingGuarantorLoansCount = loans.filter((l) => l.status === 'pending_guarantor').length;
 
   return (
     <div className="space-y-6">
@@ -181,6 +211,142 @@ export function OverviewView({
           </div>
         </div>
       </section>
+
+      {/* Active or Pending Qard Hasan Request Tracker (Member / Manager Personal View) */}
+      {myActiveOrPendingLoan && (() => {
+        const loan = myActiveOrPendingLoan;
+        let progressPct = 20;
+        let stageCaption = '';
+        let barColor = 'bg-amber-500';
+        if (loan.status === 'pending_guarantor') {
+          progressPct = 15;
+          const pendingNames = (loan.guarantors || [])
+            .filter((g) => g.status === 'pending')
+            .map((g) => g.memberName)
+            .join(', ');
+          stageCaption = pendingNames
+            ? `Waiting for guarantor co-signature from ${pendingNames} before Manager review.`
+            : 'Waiting for guarantor co-signature before Manager review.';
+        } else if (loan.status === 'pending_manager_review') {
+          progressPct = 35;
+          stageCaption =
+            'Application submitted and queued in Manager Desk to initiate the 2/3 Opinion Ballot.';
+        } else if (loan.status === 'pending_vote') {
+          progressPct = 60;
+          const cast = loan.totalVotesCast ?? loan.votes.length;
+          stageCaption = `Secret 2/3 Opinion Ballot is open (${cast} of ${loan.totalEligibleVoters} member ballot(s) cast).`;
+        } else if (loan.status === 'approved_pending_disbursement') {
+          progressPct = 85;
+          stageCaption =
+            '2/3 quorum approved! Awaiting Manager payout confirmation in Manager Desk.';
+          barColor = 'bg-teal-600 dark:bg-teal-500';
+        } else if (loan.status === 'active') {
+          progressPct =
+            loan.amount > 0
+              ? Math.min(100, Math.round((loan.totalRepaid / loan.amount) * 100))
+              : 0;
+          stageCaption = `Disbursed · Repaid ${formatMoney(loan.totalRepaid, ccy)} of ${formatMoney(loan.amount, ccy)} (${formatMoney(loan.remainingBalance, ccy)} remaining).`;
+          barColor = 'bg-emerald-600';
+        }
+
+        return (
+          <section
+            aria-label="Your Active Qard Hasan Request"
+            className="bg-white dark:bg-slate-900 border border-emerald-200/90 dark:border-emerald-900/60 rounded-xl p-5 sm:p-6 shadow-xs space-y-4"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
+                    <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span>Your Active Qard Hasan Request</span>
+                  </span>
+                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    {loan.id}
+                  </span>
+                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                  <StatusText status={loan.status} />
+                </div>
+
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h3 className="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                    {formatMoney(loan.amount, ccy)}
+                  </h3>
+                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    {loan.installmentMonths} monthly installments of{' '}
+                    {formatMoney(loan.monthlyInstallment, ccy)} (0% interest)
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-3xl">
+                  Purpose: {loan.purpose}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {loan.status === 'pending_vote' && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('ballot')}
+                    className="px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    <Vote className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Open Opinion Ballot</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('quard-hasan')}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <span>View in Quard Hasan</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>{stageCaption}</span>
+                <span className="font-mono tabular-nums shrink-0">{progressPct}%</span>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Guarantor Co-Sign Alert */}
+      {myGuarantorRequests.length > 0 && (
+        <section className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-0.5">
+              <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                {myGuarantorRequests.length} Guarantor Co-Signature Request
+                {myGuarantorRequests.length === 1 ? '' : 's'} Waiting for You
+              </div>
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                {myGuarantorRequests[0].borrowerName} ({myGuarantorRequests[0].id}) nominated you as cooperative guarantor for{' '}
+                {formatMoney(myGuarantorRequests[0].amount, ccy)}. Accept or decline so Manager review can begin.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('quard-hasan')}
+            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
+          >
+            Respond in Quard Hasan →
+          </button>
+        </section>
+      )}
 
       {/* Overdue Installment Warning */}
       {treasury.overdueInstallmentsCount > 0 && (
@@ -667,11 +833,28 @@ export function OverviewView({
                     {formatMoney(personal.totalContributed, ccy)}
                   </span>
                 </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Active Loan Balance</span>
-                  <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                    {formatMoney(personal.activeLoanBalance, ccy)}
+                <div className="py-2.5 flex items-center justify-between gap-2">
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {personal.activeLoanBalance > 0
+                      ? 'Active Loan Balance'
+                      : myActiveOrPendingLoan
+                        ? 'Pending Qard Hasan Request'
+                        : 'Active Loan Balance'}
                   </span>
+                  <div className="text-right">
+                    <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                      {personal.activeLoanBalance > 0
+                        ? formatMoney(personal.activeLoanBalance, ccy)
+                        : myActiveOrPendingLoan
+                          ? formatMoney(myActiveOrPendingLoan.amount, ccy)
+                          : formatMoney(0, ccy)}
+                    </span>
+                    {personal.activeLoanBalance === 0 && myActiveOrPendingLoan && (
+                      <div className="flex justify-end mt-0.5">
+                        <StatusText status={myActiveOrPendingLoan.status} />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="py-2.5 flex items-center justify-between">
                   <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
@@ -760,7 +943,32 @@ export function OverviewView({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  isStaff && onOpenManagerDeskTab
+                    ? onOpenManagerDeskTab('qard-hasan')
+                    : onNavigate(isStaff ? 'manager-desk' : 'quard-hasan')
+                }
+                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+              >
+                <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  <span>Pending Loan Reviews</span>
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                </div>
+                <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                  {treasury.pendingLoansReviewCount}
+                </div>
+                <div className="mt-1 text-xs text-amber-700 dark:text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
+                  {isStaff
+                    ? pendingGuarantorLoansCount > 0
+                      ? `Open Manager Desk (+${pendingGuarantorLoansCount} guarantor) →`
+                      : 'Initiate 2/3 ballot in Manager Desk →'
+                    : 'Inspect Qard Hasan queue →'}
+                </div>
+              </button>
+
               <button
                 type="button"
                 onClick={() => onNavigate('ballot')}
@@ -780,15 +988,19 @@ export function OverviewView({
 
               <button
                 type="button"
-                onClick={() =>
-                  onNavigate(
-                    user.role === 'manager'
-                      ? 'manager-desk'
-                      : isAdmin
-                        ? 'transaction-history'
-                        : 'monthly-contribution'
-                  )
-                }
+                onClick={() => {
+                  if (isStaff && onOpenManagerDeskTab) {
+                    onOpenManagerDeskTab('contributions');
+                  } else {
+                    onNavigate(
+                      user.role === 'manager'
+                        ? 'manager-desk'
+                        : isAdmin
+                          ? 'transaction-history'
+                          : 'monthly-contribution'
+                    );
+                  }
+                }}
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
@@ -802,19 +1014,21 @@ export function OverviewView({
                   {treasury.pendingContributionsCount}
                 </div>
                 <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {user.role === 'manager'
+                  {isStaff
                     ? 'Review in Manager Desk →'
-                    : isAdmin
-                      ? 'Inspect Transaction Ledger →'
-                      : 'View submission status →'}
+                    : 'View submission status →'}
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  onNavigate(user.role === 'manager' ? 'manager-desk' : 'ballot')
-                }
+                onClick={() => {
+                  if (isStaff && onOpenManagerDeskTab) {
+                    onOpenManagerDeskTab('qard-hasan');
+                  } else {
+                    onNavigate(isStaff ? 'manager-desk' : 'ballot');
+                  }
+                }}
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
@@ -828,7 +1042,7 @@ export function OverviewView({
                   {treasury.pendingDisbursementsCount}
                 </div>
                 <div className="mt-1 text-xs text-teal-700 dark:text-teal-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {user.role === 'manager'
+                  {isStaff
                     ? 'Confirm disbursement in Manager Desk →'
                     : 'Multi-sig treasury release →'}
                 </div>
@@ -836,16 +1050,20 @@ export function OverviewView({
 
               <button
                 type="button"
-                onClick={() =>
-                  onNavigate(
-                    user.role === 'manager'
-                      ? 'manager-desk'
-                      : isAdmin
-                        ? 'transaction-history'
-                        : 'quard-hasan'
-                  )
-                }
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                onClick={() => {
+                  if (isStaff && onOpenManagerDeskTab) {
+                    onOpenManagerDeskTab('installments');
+                  } else {
+                    onNavigate(
+                      user.role === 'manager'
+                        ? 'manager-desk'
+                        : isAdmin
+                          ? 'transaction-history'
+                          : 'quard-hasan'
+                    );
+                  }
+                }}
+                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-2"
               >
                 <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
                   <span>Pending Repayments</span>
@@ -858,7 +1076,7 @@ export function OverviewView({
                   {treasury.pendingRepaymentsCount}
                 </div>
                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {user.role === 'manager'
+                  {isStaff
                     ? 'Verify installments in Manager Desk →'
                     : 'Inspect installment receipts →'}
                 </div>

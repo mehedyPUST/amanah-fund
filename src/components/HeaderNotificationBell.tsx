@@ -11,6 +11,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney } from '../utils/format.ts';
+import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 
 interface HeaderNotificationBellProps {
   user: PublicUser;
@@ -19,6 +20,7 @@ interface HeaderNotificationBellProps {
   loans: LoanRequest[];
   notifications: EmailNotification[];
   onNavigate: (tab: DashboardSectionId) => void;
+  onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onOpenContributionMonth: (billingMonth: string) => void;
   onMarkRead: (notificationId: string) => Promise<void>;
 }
@@ -31,6 +33,7 @@ interface BellAlertItem {
   detail: string;
   timestampLabel: string;
   targetTab: DashboardSectionId;
+  managerDeskTab?: ManagerDeskTab;
   billingMonth?: string;
 }
 
@@ -41,6 +44,7 @@ export function HeaderNotificationBell({
   loans,
   notifications,
   onNavigate,
+  onOpenManagerDeskTab,
   onOpenContributionMonth,
   onMarkRead,
 }: HeaderNotificationBellProps) {
@@ -135,15 +139,31 @@ export function HeaderNotificationBell({
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'notification',
         });
-      } else if (n.type === 'loan_vote_requested' || n.type === 'decision_vote_requested') {
+      } else if (n.type === 'loan_guarantor_requested') {
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'general',
-          title: 'Opinion Ballot Open',
+          title: 'Guarantor Co-Sign Request',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'ballot',
+          targetTab: 'quard-hasan',
+        });
+      } else if (n.type === 'loan_vote_requested' || n.type === 'decision_vote_requested') {
+        const isManagerReviewNotice =
+          isStaff &&
+          n.type === 'loan_vote_requested' &&
+          (n.subject.toLowerCase().includes('initiate vote') ||
+            n.subject.toLowerCase().includes('ready to initiate'));
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: isManagerReviewNotice ? 'approved_loan' : 'general',
+          title: isManagerReviewNotice ? 'Qard Hasan Application Ready for Review' : 'Opinion Ballot Open',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: isManagerReviewNotice ? 'manager-desk' : 'ballot',
+          managerDeskTab: isManagerReviewNotice ? 'qard-hasan' : undefined,
         });
       } else if (n.type === 'community_post_created' || n.type === 'community_mention') {
         list.push({
@@ -190,10 +210,11 @@ export function HeaderNotificationBell({
         list.push({
           id: `loan-approved-${l.id}`,
           kind: 'approved_loan',
-          title: l.borrowerId === user.id ? 'Your Loan Was Approved' : 'Approved Loan Ready',
+          title: l.borrowerId === user.id ? 'Your Loan Was Approved' : 'Approved Loan Ready to Disburse',
           detail: `${l.id} · ${l.borrowerName} · ${formatMoney(l.amount, ccy)}`,
           timestampLabel: formatDateTime(l.approvedAt || l.requestedAt),
-          targetTab: isStaff ? 'ballot' : 'quard-hasan',
+          targetTab: isStaff ? 'manager-desk' : 'quard-hasan',
+          managerDeskTab: isStaff ? 'qard-hasan' : undefined,
         });
       });
 
@@ -249,6 +270,19 @@ export function HeaderNotificationBell({
       }
     }
 
+    if (isStaff && (overview?.treasury.pendingLoansReviewCount || 0) > 0) {
+      const count = overview?.treasury.pendingLoansReviewCount || 0;
+      list.push({
+        id: 'staff-pending-loan-reviews',
+        kind: 'approved_loan',
+        title: 'Qard Hasan Awaiting Vote Initiation',
+        detail: `${count} Qard Hasan request${count === 1 ? '' : 's'} waiting in Manager Desk to initiate 2/3 ballot.`,
+        timestampLabel: 'Manager Desk queue',
+        targetTab: 'manager-desk',
+        managerDeskTab: 'qard-hasan',
+      });
+    }
+
     if (user.role === 'manager' && (overview?.treasury.pendingContributionsCount || 0) > 0) {
       const count = overview?.treasury.pendingContributionsCount || 0;
       list.push({
@@ -258,6 +292,7 @@ export function HeaderNotificationBell({
         detail: `${count} member contribution${count === 1 ? '' : 's'} queued for approval.`,
         timestampLabel: 'Manager Desk queue',
         targetTab: 'manager-desk',
+        managerDeskTab: 'contributions',
       });
     }
 
@@ -272,7 +307,9 @@ export function HeaderNotificationBell({
     if (alert.notificationId) {
       await onMarkRead(alert.notificationId);
     }
-    if (alert.targetTab === 'monthly-contribution' && alert.billingMonth) {
+    if (alert.targetTab === 'manager-desk' && alert.managerDeskTab && onOpenManagerDeskTab) {
+      onOpenManagerDeskTab(alert.managerDeskTab);
+    } else if (alert.targetTab === 'monthly-contribution' && alert.billingMonth) {
       onOpenContributionMonth(alert.billingMonth);
     } else {
       onNavigate(alert.targetTab);

@@ -96,8 +96,30 @@ export function RecentTransactions({
       });
 
     loans
-      .filter((l) => l.borrowerId === user.id && (l.status === 'active' || l.status === 'repaid'))
+      .filter((l) => l.borrowerId === user.id)
       .forEach((loan) => {
+        if (loan.status !== 'active' && loan.status !== 'repaid') {
+          list.push({
+            id: `loan-req-${loan.id}`,
+            type: 'loan_payment',
+            title: `Qard Hasan Request · ${loan.id}`,
+            subtitle: `${loan.installmentMonths} monthly installments · ${loan.purpose}`,
+            dateIso: loan.approvedAt || loan.requestedAt,
+            dateLabel: formatShortDate(loan.requestedAt),
+            fullDateLabel: formatDateTime(loan.requestedAt),
+            channel: loan.decryptedSensitiveNotes?.channel.toUpperCase() || 'QARD HASAN',
+            provider: loan.decryptedSensitiveNotes?.provider || 'Application',
+            maskedReference: loan.id,
+            amount: loan.amount,
+            status: loan.status,
+            sortPriority: 0,
+            reviewerName: loan.adminReviewedBy || loan.voteInitiatedBy,
+            note: loan.purpose,
+            targetTab: 'quard-hasan',
+          });
+          return;
+        }
+
         let addedNextScheduled = false;
 
         loan.installments.forEach((inst) => {

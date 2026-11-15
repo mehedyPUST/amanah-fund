@@ -41,7 +41,7 @@ import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
 import { ManagerCycleView } from './ManagerCycleView.tsx';
-import { ManagerDeskView } from './ManagerDeskView.tsx';
+import { ManagerDeskView, type ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
@@ -174,6 +174,10 @@ export function DashboardShell() {
     photoUrl?: string;
   } | null>(null);
   const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
+  const [managerDeskTabRequest, setManagerDeskTabRequest] = useState<{
+    tab: ManagerDeskTab;
+    key: number;
+  } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -371,6 +375,14 @@ export function DashboardShell() {
       }
     },
     [visibleNav]
+  );
+
+  const openManagerDeskTab = useCallback(
+    (tab: ManagerDeskTab) => {
+      setManagerDeskTabRequest({ tab, key: Date.now() });
+      navigateToPage('manager-desk', true);
+    },
+    [navigateToPage]
   );
 
   const handleViewMemberProfile = useCallback(
@@ -648,6 +660,7 @@ export function DashboardShell() {
             loans={loans}
             notifications={notifications}
             onNavigate={(section) => navigateToPage(section, false)}
+            onOpenManagerDeskTab={openManagerDeskTab}
             onOpenContributionMonth={(month) => {
               setPreselectedBillingMonth(month);
               navigateToPage('monthly-contribution', false, true, true);
@@ -1005,6 +1018,7 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && !overview}
                     onNavigate={(sec) => navigateToPage(sec, false)}
+                    onOpenManagerDeskTab={openManagerDeskTab}
                     onOpenLoanModal={() => setLoanModalOpen(true)}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
@@ -1075,6 +1089,8 @@ export function DashboardShell() {
                     connectingGoogle={connectingGoogle}
                     onConnectGoogle={handleConnectGoogle}
                     onDisconnectGoogle={handleDisconnectGoogle}
+                    onNavigate={(sec) => navigateToPage(sec, false)}
+                    onOpenManagerDeskTab={openManagerDeskTab}
                     onRefresh={handleRefreshWithAutoSync}
                   />
                 </section>
@@ -1197,6 +1213,7 @@ export function DashboardShell() {
                     polls={polls}
                     meetings={meetings}
                     profileChangeRequests={profileChangeRequests}
+                    requestedTab={managerDeskTabRequest}
                     onViewMemberProfile={handleViewMemberProfile}
                     onOpenManagerCycle={() => navigateToPage('manager-cycle', false)}
                     onRefresh={handleRefreshWithAutoSync}

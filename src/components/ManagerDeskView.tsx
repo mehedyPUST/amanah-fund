@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -38,7 +38,7 @@ import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
 import { MemberAuditLogWidget } from './MemberAuditLogWidget.tsx';
 import { StatusText } from './StatusText.tsx';
 
-type ManagerDeskTab =
+export type ManagerDeskTab =
   | 'contributions'
   | 'qard-hasan'
   | 'installments'
@@ -79,6 +79,7 @@ interface ManagerDeskViewProps {
   polls: DecisionPoll[];
   meetings: CoopMeeting[];
   profileChangeRequests: ProfileChangeRequest[];
+  requestedTab?: { tab: ManagerDeskTab; key: number } | null;
   onViewMemberProfile?: (memberId: string) => void;
   onOpenManagerCycle?: () => void;
   onRefresh: () => Promise<void>;
@@ -96,15 +97,26 @@ export function ManagerDeskView({
   polls,
   meetings,
   profileChangeRequests,
+  requestedTab = null,
   onViewMemberProfile,
   onOpenManagerCycle,
   onRefresh,
 }: ManagerDeskViewProps) {
   const ccy = config?.currency || 'BDT';
-  const [activeTab, setActiveTab] = useState<ManagerDeskTab>('contributions');
+  const [activeTab, setActiveTab] = useState<ManagerDeskTab>(
+    requestedTab?.tab || 'contributions'
+  );
+  const hasUserSelectedTabRef = useRef(Boolean(requestedTab));
   const [contribSearch, setContribSearch] = useState('');
   const [modal, setModal] = useState<DeskModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+
+  useEffect(() => {
+    if (requestedTab?.tab) {
+      setActiveTab(requestedTab.tab);
+      hasUserSelectedTabRef.current = true;
+    }
+  }, [requestedTab]);
 
   // Create Decision Poll state
   const [pollTitle, setPollTitle] = useState('');
@@ -133,6 +145,7 @@ export function ManagerDeskView({
     );
   });
 
+  const pendingGuarantorLoans = loans.filter((l) => l.status === 'pending_guarantor');
   const pendingReviewLoans = loans.filter((l) => l.status === 'pending_manager_review');
   const pendingDisbursementLoans = loans.filter(
     (l) => l.status === 'approved_pending_disbursement'
@@ -151,9 +164,33 @@ export function ManagerDeskView({
   const scheduledMeetings = meetings.filter((m) => m.status === 'scheduled');
 
   const qardHasanActionCount =
-    pendingReviewLoans.length + pendingDisbursementLoans.length + votingLoans.length;
+    pendingReviewLoans.length +
+    pendingDisbursementLoans.length +
+    votingLoans.length +
+    pendingGuarantorLoans.length;
   const ballotsCount = votingLoans.length + openPolls.length + openProjects.length;
   const meetingsProfilesCount = scheduledMeetings.length + pendingProfileRequests.length;
+
+  useEffect(() => {
+    if (loading || hasUserSelectedTabRef.current) return;
+    if (pendingContributions.length > 0) return;
+    if (qardHasanActionCount > 0) {
+      setActiveTab('qard-hasan');
+    } else if (pendingInstallments.length > 0) {
+      setActiveTab('installments');
+    } else if (ballotsCount > 0) {
+      setActiveTab('ballots');
+    } else if (meetingsProfilesCount > 0) {
+      setActiveTab('meetings-profiles');
+    }
+  }, [
+    loading,
+    pendingContributions.length,
+    qardHasanActionCount,
+    pendingInstallments.length,
+    ballotsCount,
+    meetingsProfilesCount,
+  ]);
 
   function showNotice(
     tone: 'emerald' | 'amber' | 'red' | 'slate',
@@ -631,7 +668,10 @@ export function ManagerDeskView({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  hasUserSelectedTabRef.current = true;
+                  setActiveTab(tab.id);
+                }}
                 className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                   active
                     ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 shadow-xs'
@@ -865,7 +905,7 @@ export function ManagerDeskView({
                         </>
                       ) : (
                         <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
-                          Peer / Admin Review Required
+                          Submitted by you · Another Manager or Admin must initiate 2/3 vote
                         </span>
                       )}
                     </div>
@@ -874,6 +914,72 @@ export function ManagerDeskView({
               </div>
             )}
           </section>
+
+          {pendingGuarantorLoans.length > 0 && (
+            <section className="bg-white dark:bg-slate-900 border border-amber-200/90 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Awaiting Guarantor Co-Signature ({pendingGuarantorLoans.length})
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  High-value applications require co-signature acceptance from nominated cooperative
+                  guarantor(s) before Stage 1 vote initiation unlocks.
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {pendingGuarantorLoans.map((loan) => (
+                  <div
+                    key={loan.id}
+                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-amber-50/35 dark:bg-amber-950/15"
+                  >
+                    <div className="space-y-1 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                          {loan.id}
+                        </span>
+                        <StatusText status={loan.status} />
+                      </div>
+                      <div className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(loan.borrowerId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {loan.borrowerName}
+                          </button>
+                        ) : (
+                          loan.borrowerName
+                        )}{' '}
+                        ({loan.borrowerCode}) ·{' '}
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span> (
+                        {loan.installmentMonths} months)
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+                        <span>Guarantors:</span>
+                        {(loan.guarantors || []).map((g) => (
+                          <span
+                            key={g.memberId}
+                            className={`px-2 py-0.5 rounded border ${
+                              g.status === 'accepted'
+                                ? 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30'
+                                : 'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30'
+                            }`}
+                          >
+                            {g.memberName} ({g.memberCode}): {g.status}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-white/80 dark:bg-slate-900/80 shrink-0">
+                      Waiting on Guarantor Co-Sign
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Stage 2: Ongoing Ballots */}
           <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
@@ -1013,7 +1119,7 @@ export function ManagerDeskView({
                         </button>
                       ) : (
                         <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 shrink-0">
-                          Peer / Admin Disbursement Required
+                          Submitted by you · Another Manager or Admin must confirm payout
                         </span>
                       )}
                     </div>

@@ -220,18 +220,29 @@ export function MyAmanahView({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60">
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Active Qard Hasan (Main Amount / Due)
-              </div>
-              <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {personal.activeLoanMainAmount > 0
-                  ? `${formatMoney(personal.activeLoanMainAmount, ccy)} / ${formatMoney(personal.activeLoanDueAmount, ccy)}`
-                  : 'No Active Qard Hasan'}
+                  ? 'Active Qard Hasan (Main Amount / Due)'
+                  : myPendingLoan
+                    ? 'Active Qard Hasan Request'
+                    : 'Active Qard Hasan (Main Amount / Due)'}
+              </div>
+              <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+                {personal.activeLoanMainAmount > 0 ? (
+                  `${formatMoney(personal.activeLoanMainAmount, ccy)} / ${formatMoney(personal.activeLoanDueAmount, ccy)}`
+                ) : myPendingLoan ? (
+                  <>
+                    <span>{formatMoney(myPendingLoan.amount, ccy)}</span>
+                    <StatusText status={myPendingLoan.status} />
+                  </>
+                ) : (
+                  'No Active Qard Hasan'
+                )}
               </div>
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                 {myActiveLoan
                   ? `${myActiveLoan.id} · Repaid ${formatMoney(myActiveLoan.totalRepaid, ccy)}`
                   : myPendingLoan
-                    ? `Pending request ${myPendingLoan.id} (${myPendingLoan.status.replace(/_/g, ' ')})`
+                    ? `${myPendingLoan.id} · ${myPendingLoan.installmentMonths} months · ${myPendingLoan.purpose}`
                     : `Lifetime repaid: ${formatMoney(personal.totalRepaidPersonal, ccy)}`}
               </div>
             </div>

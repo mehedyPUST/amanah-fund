@@ -4,7 +4,7 @@ import express from 'express';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { encryptSensitiveObject } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
-import type { LoanRequest } from '../src/types/coop.ts';
+import type { DashboardOverview, LoanRequest } from '../src/types/coop.ts';
 
 let mockState: VaultState;
 
@@ -40,6 +40,16 @@ function createTestVault(): VaultState {
         memberCode: 'AC-003',
         status: 'active',
         joinedAt: '2026-01-10T00:00:00.000Z',
+      },
+      {
+        id: 'u-manager-1',
+        name: 'Tariq Karim',
+        email: 'tariq@amanahcoop.org',
+        passwordHash: 'hash4',
+        role: 'manager',
+        memberCode: 'AC-004',
+        status: 'active',
+        joinedAt: '2026-01-12T00:00:00.000Z',
       },
     ],
     fundConfig: {
@@ -290,5 +300,55 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
       }),
     });
     expect(secondRes.status).toBe(400);
+  });
+
+  it('surfaces submitted loan immediately in borrower dashboard overview, loans list, and manager desk review queue', async () => {
+    const createRes = await fetch(`${baseUrl}/api/loans`, {
+      method: 'POST',
+      headers: authHeaders('u-member-1'),
+      body: JSON.stringify({
+        amount: 20000,
+        installmentMonths: 5,
+        purpose: 'Medical diagnostic checkup',
+        channel: 'mfs',
+        provider: 'bKash',
+        disbursementAccount: '01711223344',
+      }),
+    });
+    expect(createRes.status).toBe(201);
+    const { loan } = (await createRes.json()) as { loan: LoanRequest };
+
+    const memberOvRes = await fetch(`${baseUrl}/api/dashboard`, {
+      headers: authHeaders('u-member-1'),
+    });
+    expect(memberOvRes.status).toBe(200);
+    const memberOv = (await memberOvRes.json()) as DashboardOverview;
+    expect(memberOv.personal.eligibility.activeLoanId).toBe(loan.id);
+    expect(memberOv.treasury.pendingLoansReviewCount).toBe(1);
+
+    const mgrLoansRes = await fetch(`${baseUrl}/api/loans`, {
+      headers: authHeaders('u-manager-1'),
+    });
+    expect(mgrLoansRes.status).toBe(200);
+    const mgrLoansData = (await mgrLoansRes.json()) as { loans: LoanRequest[] };
+    expect(mgrLoansData.loans.some((l) => l.id === loan.id && l.status === 'pending_manager_review')).toBe(
+      true
+    );
+
+    const initVoteRes = await fetch(`${baseUrl}/api/loans/${loan.id}/initiate-vote`, {
+      method: 'POST',
+      headers: authHeaders('u-manager-1'),
+      body: JSON.stringify({}),
+    });
+    expect(initVoteRes.status).toBe(200);
+    const initVoteData = (await initVoteRes.json()) as { loan: LoanRequest };
+    expect(initVoteData.loan.status).toBe('pending_vote');
+
+    const mgrOvAfterRes = await fetch(`${baseUrl}/api/dashboard`, {
+      headers: authHeaders('u-manager-1'),
+    });
+    const mgrOvAfter = (await mgrOvAfterRes.json()) as DashboardOverview;
+    expect(mgrOvAfter.treasury.pendingLoansReviewCount).toBe(0);
+    expect(mgrOvAfter.treasury.pendingVotesCount).toBe(1);
   });
 });

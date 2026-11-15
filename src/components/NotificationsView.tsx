@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Calendar, Check, Mail, Send, Volume2 } from 'lucide-react';
+import { ArrowRight, Bell, Calendar, Check, Mail, Send, Volume2 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   CoopMeeting,
+  DashboardSectionId,
   EmailNotification,
   NotificationPreferences,
   NotificationType,
@@ -16,6 +17,7 @@ import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWor
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
+import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 
 interface NotificationsViewProps {
   user: PublicUser;
@@ -24,6 +26,8 @@ interface NotificationsViewProps {
   connectingGoogle: boolean;
   onConnectGoogle: () => Promise<void>;
   onDisconnectGoogle: () => Promise<void>;
+  onNavigate?: (section: DashboardSectionId) => void;
+  onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -94,6 +98,8 @@ export function NotificationsView({
   connectingGoogle,
   onConnectGoogle,
   onDisconnectGoogle,
+  onNavigate,
+  onOpenManagerDeskTab,
   onRefresh,
 }: NotificationsViewProps) {
   const { setUser } = useCoopSession();
@@ -521,7 +527,91 @@ export function NotificationsView({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {(() => {
+                  const subjLower = item.subject.toLowerCase();
+                  if (
+                    isStaff &&
+                    item.type === 'loan_vote_requested' &&
+                    (subjLower.includes('initiate vote') || subjLower.includes('ready to initiate')) &&
+                    onOpenManagerDeskTab
+                  ) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.readByRecipient) void handleMarkRead(item.id);
+                          onOpenManagerDeskTab('qard-hasan');
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Review in Manager Desk</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    );
+                  }
+                  if (
+                    isStaff &&
+                    item.type === 'contribution_placed_manager' &&
+                    onOpenManagerDeskTab
+                  ) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.readByRecipient) void handleMarkRead(item.id);
+                          onOpenManagerDeskTab('contributions');
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Open Manager Desk</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    );
+                  }
+                  if (
+                    (item.type === 'loan_vote_requested' || item.type === 'decision_vote_requested') &&
+                    onNavigate
+                  ) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.readByRecipient) void handleMarkRead(item.id);
+                          onNavigate('ballot');
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Open Opinion Ballot</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    );
+                  }
+                  if (
+                    (item.type === 'loan_guarantor_requested' ||
+                      item.type === 'loan_approved_confirmation' ||
+                      item.type === 'loan_rejected_notice' ||
+                      item.type === 'loan_repayment_notice' ||
+                      item.type === 'loan_repayment_rejected') &&
+                    user.role !== 'admin' &&
+                    onNavigate
+                  ) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.readByRecipient) void handleMarkRead(item.id);
+                          onNavigate('quard-hasan');
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Open Quard Hasan</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
                 {!item.readByRecipient && (
                   <button
                     type="button"
