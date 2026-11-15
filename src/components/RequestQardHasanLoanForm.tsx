@@ -382,8 +382,16 @@ export function RequestQardHasanLoanForm({
     });
   }
 
-  async function executeLoanSubmission() {
-    const payload = pendingLoanPayloadRef.current;
+  const modalRef = useRef(modal);
+  modalRef.current = modal;
+
+  const executeLoanSubmission = useCallback(async () => {
+    // Prefer the frozen ref; fall back to payload stored on the confirm modal state
+    // so a parent re-render cannot lose the confirmed application.
+    const currentModal = modalRef.current;
+    const fromRef = pendingLoanPayloadRef.current;
+    const fromModal = currentModal?.mode === 'confirm' ? currentModal.payload : null;
+    const payload = fromRef || fromModal;
     if (!payload) {
       openErrorModal(
         'Could Not Place Qard Hasan Request',
@@ -442,10 +450,11 @@ export function RequestQardHasanLoanForm({
       );
       setSubmitting(false);
     }
-  }
+  }, [ccy, variant, onClose, onSubmitted]);
 
+  // Stable close handler so ActionModal Escape listener does not re-bind every render.
   const handleActionModalClose = useCallback(() => {
-    const current = modal;
+    const current = modalRef.current;
     if (current?.mode === 'confirm') {
       pendingLoanPayloadRef.current = null;
     }
@@ -456,7 +465,7 @@ export function RequestQardHasanLoanForm({
       // without being unmounted mid-animation by the parent portal.
       Promise.resolve().then(() => onClose());
     }
-  }, [modal, onClose]);
+  }, [onClose]);
 
   const wrapperClass =
     variant === 'modal'

@@ -58,10 +58,25 @@ export function ActionModal({
   const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState(initialInputValue);
   const [inputError, setInputError] = useState<string | null>(null);
+  /** Local processing flag so Confirm disables immediately without waiting for parent re-render */
+  const [localBusy, setLocalBusy] = useState(false);
+  const isBusy = busy || localBusy;
+
   const modalTokenRef = useRef<symbol | null>(null);
   if (!modalTokenRef.current) {
     modalTokenRef.current = Symbol('ActionModal');
   }
+
+  // Keep latest callbacks/busy in refs so the Escape listener does not re-bind
+  // (and briefly drop the modal stack) on every parent re-render.
+  const onCloseRef = useRef(onClose);
+  const busyRef = useRef(isBusy);
+  const onConfirmRef = useRef(onConfirm);
+  const modeRef = useRef(mode);
+  onCloseRef.current = onClose;
+  busyRef.current = isBusy;
+  onConfirmRef.current = onConfirm;
+  modeRef.current = mode;
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +86,16 @@ export function ActionModal({
     if (open) {
       setInputValue(initialInputValue);
       setInputError(null);
+      setLocalBusy(false);
     }
   }, [open, initialInputValue, title]);
+
+  // Reset local busy when parent takes over the busy flag or mode flips to notice
+  useEffect(() => {
+    if (busy || mode === 'notice') {
+      setLocalBusy(false);
+    }
+  }, [busy, mode]);
 
   useBodyScrollLock(open);
 
@@ -82,10 +105,10 @@ export function ActionModal({
     const unregister = registerTopModal(token);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isTopModal(token) && !busy) {
+      if (e.key === 'Escape' && isTopModal(token) && !busyRef.current) {
         e.preventDefault();
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     // Capture phase so a nested ActionModal always wins over a parent modal
@@ -95,7 +118,7 @@ export function ActionModal({
       unregister();
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [open, busy, onClose]);
+  }, [open]);
 
   const Icon =
     mode === 'notice'
@@ -130,20 +153,33 @@ export function ActionModal({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (mode === 'notice') {
-      onClose();
+    e.stopPropagation();
+    if (modeRef.current === 'notice') {
+      onCloseRef.current();
       return;
     }
+    if (busyRef.current) return;
+
     const trimmed = inputValue.trim();
     if (inputLabel && inputRequired && !trimmed) {
       setInputError(`Please enter ${inputLabel.toLowerCase()} before continuing.`);
       return;
     }
     setInputError(null);
-    if (onConfirm) {
-      await onConfirm(trimmed);
+
+    const confirmFn = onConfirmRef.current;
+    if (confirmFn) {
+      setLocalBusy(true);
+      try {
+        await confirmFn(trimmed);
+      } catch (err) {
+        console.error('ActionModal onConfirm failed:', err);
+      } finally {
+        // Parent may keep busy=true; local flag clears when parent busy/mode updates
+        setLocalBusy(false);
+      }
     } else {
-      onClose();
+      onCloseRef.current();
     }
   }
 
@@ -166,7 +202,7 @@ export function ActionModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.14 }}
             onClick={() => {
-              if (!busy) onClose();
+              if (!isBusy) onCloseRef.current();
             }}
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
             aria-hidden="true"
@@ -201,10 +237,10 @@ export function ActionModal({
                   </div>
                 </div>
 
-                {!busy && (
+                {!isBusy && (
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={() => onCloseRef.current()}
                     aria-label="Close dialog"
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
                   >
@@ -241,7 +277,7 @@ export function ActionModal({
                     <textarea
                       rows={3}
                       required={inputRequired}
-                      disabled={busy}
+                      disabled={isBusy}
                       value={inputValue}
                       onChange={(e) => {
                         setInputValue(e.target.value);
@@ -254,7 +290,7 @@ export function ActionModal({
                     <input
                       type="text"
                       required={inputRequired}
-                      disabled={busy}
+                      disabled={isBusy}
                       value={inputValue}
                       onChange={(e) => {
                         setInputValue(e.target.value);
@@ -276,8 +312,8 @@ export function ActionModal({
                 {mode === 'confirm' && (
                   <button
                     type="button"
-                    disabled={busy}
-                    onClick={onClose}
+                    disabled={isBusy}
+                    onClick={() => onCloseRef.current()}
                     className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {cancelLabel}
@@ -285,10 +321,10 @@ export function ActionModal({
                 )}
                 <button
                   type="submit"
-                  disabled={busy}
+                  disabled={isBusy}
                   className={`px-4 py-2 rounded-lg text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 ${confirmBtnClass}`}
                 >
-                  {busy ? 'Processing…' : confirmLabel}
+                  {isBusy ? 'Processing…' : confirmLabel}
                 </button>
               </div>
             </form>
