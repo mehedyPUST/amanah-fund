@@ -13,6 +13,7 @@ import {
   HandCoins,
   History,
   Home,
+  HomeIcon,
   LogOut,
   Menu,
   MessageSquare,
@@ -671,7 +672,7 @@ export function DashboardShell() {
                   onClick={() => setMobileNavOpen(false)}
                   className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Globe className="w-3.5 h-3.5" />
+                  <Home className="w-3.5 h-3.5" />
                   <span>Public Website</span>
                 </Link>
                 <button
