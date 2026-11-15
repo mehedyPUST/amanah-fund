@@ -7,22 +7,33 @@ import {
   ArrowRight,
   CheckCircle2,
   FileCheck2,
+  Globe,
   ImagePlus,
   Loader2,
   ShieldCheck,
   UserPlus,
+  X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../utils/api.ts';
+import {
+  GOOGLE_ONBOARDING_STORAGE_KEY,
+  signInWithGoogleIdentity,
+  type StoredGoogleOnboarding,
+} from '../utils/googleAuth.ts';
 import { useCoopSession } from './AppProviders.tsx';
 
 export function SignUpForm() {
   const router = useRouter();
-  const { user, authChecking } = useCoopSession();
+  const { user, authChecking, setUser } = useCoopSession();
 
   const [referenceOptions, setReferenceOptions] = useState<
     Array<{ name: string; memberCode: string }>
   >([]);
+
+  // Google-verified onboarding state
+  const [googleOnboarding, setGoogleOnboarding] = useState<StoredGoogleOnboarding | null>(null);
+  const [googleVerifying, setGoogleVerifying] = useState(false);
 
   // Required & optional signup fields
   const [name, setName] = useState('');
@@ -55,6 +66,22 @@ export function SignUpForm() {
   }, [authChecking, user, router]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = window.sessionStorage.getItem(GOOGLE_ONBOARDING_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as StoredGoogleOnboarding;
+      if (parsed?.registrationToken && parsed?.googleProfile?.email) {
+        setGoogleOnboarding(parsed);
+        setName((prev) => prev || parsed.googleProfile.name || '');
+        setEmail(parsed.googleProfile.email);
+      }
+    } catch {
+      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
     api
       .getReferenceMembers()
@@ -74,6 +101,49 @@ export function SignUpForm() {
       setPermanentAddress(presentAddress);
     }
   }, [sameAsPresent, presentAddress]);
+
+  async function handleStartGoogleOnboarding() {
+    setError(null);
+    setSuccessMessage(null);
+    setGoogleVerifying(true);
+    try {
+      const { idToken } = await signInWithGoogleIdentity();
+      const res = await api.googleAuth(idToken);
+
+      if (res.status === 'authenticated') {
+        setUser(res.user);
+        router.push('/dashboard');
+        return;
+      }
+
+      const onboardingPayload: StoredGoogleOnboarding = {
+        registrationToken: res.registrationToken,
+        googleProfile: res.googleProfile,
+      };
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(
+          GOOGLE_ONBOARDING_STORAGE_KEY,
+          JSON.stringify(onboardingPayload)
+        );
+      }
+      setGoogleOnboarding(onboardingPayload);
+      setName(res.googleProfile.name || '');
+      setEmail(res.googleProfile.email);
+      setPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google verification failed.');
+    } finally {
+      setGoogleVerifying(false);
+    }
+  }
+
+  function handleClearGoogleOnboarding() {
+    setGoogleOnboarding(null);
+    setEmail('');
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
+    }
+  }
 
   async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>, target: 'photo' | 'agreement') {
     const file = e.target.files?.[0];
@@ -116,8 +186,12 @@ export function SignUpForm() {
       setError('Please upload your profile photo before submitting the application.');
       return;
     }
-    if (password.length < 6) {
+    if (!googleOnboarding && password.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (googleOnboarding && password.length > 0 && password.length < 6) {
+      setError('Optional backup password must be at least 6 characters long (or leave blank).');
       return;
     }
 
@@ -126,7 +200,8 @@ export function SignUpForm() {
       const res = await api.register({
         name,
         email,
-        password,
+        password: password || undefined,
+        googleRegistrationToken: googleOnboarding?.registrationToken,
         dateOfBirth,
         referenceMemberName,
         mobile,
@@ -138,6 +213,11 @@ export function SignUpForm() {
         photoUrl,
         agreementPhotoUrl: agreementPhotoUrl || undefined,
       });
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
+      }
+      setGoogleOnboarding(null);
 
       setSuccessMessage(
         res.message ||
@@ -227,9 +307,63 @@ export function SignUpForm() {
             {error && (
               <div
                 role="alert"
-                className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300"
+                className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300 leading-relaxed"
               >
                 {error}
+              </div>
+            )}
+
+            {/* Google Identity Prefill / Verification Banner */}
+            {googleOnboarding ? (
+              <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2
+                    className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                      Google Identity Verified · {googleOnboarding.googleProfile.email}
+                    </p>
+                    <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
+                      Complete the required cooperative KYC fields below. Once an administrator
+                      approves your application, you can sign in directly with Google.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearGoogleOnboarding}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Use Email Instead</span>
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Applying with a Google account?
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Verify your Google email first to pre-fill your identity and skip creating a
+                    password—you will still complete KYC verification below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleStartGoogleOnboarding}
+                  disabled={googleVerifying || submitting}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-100 shadow-2xs transition-colors cursor-pointer disabled:opacity-60 shrink-0 whitespace-nowrap"
+                >
+                  {googleVerifying ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" aria-hidden="true" />
+                  ) : (
+                    <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  )}
+                  <span>{googleVerifying ? 'Verifying…' : 'Continue with Google'}</span>
+                </button>
               </div>
             )}
 
@@ -256,28 +390,51 @@ export function SignUpForm() {
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Email Address <span className="text-red-500">*</span>
+                    {googleOnboarding && (
+                      <span className="ml-1.5 text-[11px] font-normal text-emerald-700 dark:text-emerald-400">
+                        (Verified via Google)
+                      </span>
+                    )}
                   </label>
                   <input
                     type="email"
                     required
+                    readOnly={Boolean(googleOnboarding)}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="member@example.com"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 ${
+                      googleOnboarding
+                        ? 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 cursor-not-allowed'
+                        : 'bg-white dark:bg-slate-950'
+                    }`}
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Password (min 6 chars) <span className="text-red-500">*</span>
+                    {googleOnboarding ? (
+                      <>
+                        Backup Password{' '}
+                        <span className="text-slate-400 font-normal">(Optional for Google)</span>
+                      </>
+                    ) : (
+                      <>
+                        Password (min 6 chars) <span className="text-red-500">*</span>
+                      </>
+                    )}
                   </label>
                   <input
                     type="password"
-                    required
-                    minLength={6}
+                    required={!googleOnboarding}
+                    minLength={googleOnboarding && password.length === 0 ? undefined : 6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a secure password"
+                    placeholder={
+                      googleOnboarding
+                        ? 'Leave blank to sign in with Google only'
+                        : 'Create a secure password'
+                    }
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>

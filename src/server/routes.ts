@@ -19,6 +19,9 @@ import {
   sanitizeUser,
   setAuthCookie,
   signAuthToken,
+  signGoogleRegistrationToken,
+  verifyFirebaseGoogleIdToken,
+  verifyGoogleRegistrationToken,
 } from './auth.ts';
 import {
   appendAuditLog,
@@ -103,7 +106,17 @@ apiRouter.post('/auth/login', async (req, res) => {
 
     const state = await loadVaultState();
     const user = state.users.find((u) => u.email.toLowerCase() === email);
-    if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+    if (!user) {
+      res.status(401).json({ error: 'Invalid email or password.' });
+      return;
+    }
+    if (!user.passwordHash) {
+      res.status(401).json({
+        error: 'This account uses Google Sign-In. Please click "Continue with Google" to sign in.',
+      });
+      return;
+    }
+    if (!bcrypt.compareSync(password, user.passwordHash)) {
       res.status(401).json({ error: 'Invalid email or password.' });
       return;
     }
@@ -139,6 +152,108 @@ apiRouter.post('/auth/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Authentication service failed.' });
+  }
+});
+
+apiRouter.post('/auth/google', async (req, res) => {
+  try {
+    const idToken = String(req.body?.idToken || '').trim();
+    if (!idToken) {
+      res.status(400).json({ error: 'Google ID token is required.' });
+      return;
+    }
+
+    let googleIdentity;
+    try {
+      googleIdentity = await verifyFirebaseGoogleIdToken(idToken);
+    } catch (verifyErr) {
+      res.status(401).json({
+        error:
+          verifyErr instanceof Error
+            ? verifyErr.message
+            : 'Unable to verify Google Sign-In credentials.',
+      });
+      return;
+    }
+
+    if (!googleIdentity.emailVerified) {
+      res.status(403).json({
+        error: 'Your Google account email must be verified before signing in.',
+      });
+      return;
+    }
+
+    const state = await loadVaultState();
+    const existingUser = state.users.find(
+      (u) =>
+        u.googleUid === googleIdentity.uid ||
+        u.email.toLowerCase() === googleIdentity.email
+    );
+
+    if (existingUser) {
+      if (existingUser.status === 'pending_approval') {
+        res.status(403).json({
+          status: 'pending_approval',
+          error:
+            'Your membership application is awaiting administrator approval. Only approved members can sign in.',
+        });
+        return;
+      }
+
+      if (existingUser.status !== 'active') {
+        res.status(403).json({
+          status: 'suspended',
+          error: 'Account is suspended. Contact an administrator.',
+        });
+        return;
+      }
+
+      let updatedUser = existingUser;
+      await updateVaultState((draft) => {
+        const target = draft.users.find((u) => u.id === existingUser.id);
+        if (target) {
+          if (!target.googleUid) {
+            target.googleUid = googleIdentity.uid;
+          }
+          target.authProvider = target.passwordHash ? 'both' : 'google';
+          updatedUser = target;
+        }
+        const actor = sanitizeUser(updatedUser);
+        appendAuditLog(draft, {
+          actor,
+          action: 'AUTH_LOGIN',
+          resourceType: 'auth',
+          resourceId: actor.id,
+          summary: `${actor.name} (${actor.role}) signed in via Google SSO`,
+          payload: { email: actor.email, role: actor.role, provider: 'google' },
+        });
+        return draft;
+      });
+
+      const sanitized = sanitizeUser(updatedUser);
+      const token = signAuthToken(updatedUser);
+      setAuthCookie(req, res, token);
+
+      res.json({
+        status: 'authenticated',
+        user: sanitized,
+      });
+      return;
+    }
+
+    const registrationToken = signGoogleRegistrationToken(googleIdentity);
+    res.json({
+      status: 'needs_onboarding',
+      registrationToken,
+      googleProfile: {
+        name: googleIdentity.name,
+        email: googleIdentity.email,
+        photoUrl: googleIdentity.picture || '',
+      },
+    });
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(500).json({ error: 'Google authentication failed.' });
   }
 });
 
@@ -249,8 +364,26 @@ apiRouter.get('/auth/references', async (_req, res) => {
 
 apiRouter.post('/auth/register', async (req, res) => {
   try {
-    const name = String(req.body?.name || '').trim();
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    const googleRegistrationToken = String(req.body?.googleRegistrationToken || '').trim();
+    let verifiedGoogle: ReturnType<typeof verifyGoogleRegistrationToken> | null = null;
+    if (googleRegistrationToken) {
+      try {
+        verifiedGoogle = verifyGoogleRegistrationToken(googleRegistrationToken);
+      } catch (tokenErr) {
+        res.status(401).json({
+          error:
+            tokenErr instanceof Error
+              ? tokenErr.message
+              : 'Google onboarding token expired. Please verify with Google again.',
+        });
+        return;
+      }
+    }
+
+    const name = String(req.body?.name || verifiedGoogle?.name || '').trim();
+    const email = (verifiedGoogle ? verifiedGoogle.email : String(req.body?.email || ''))
+      .trim()
+      .toLowerCase();
     const password = String(req.body?.password || '');
     const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
     const referenceMemberName = String(req.body?.referenceMemberName || '').trim();
@@ -263,10 +396,21 @@ apiRouter.post('/auth/register', async (req, res) => {
     const photoUrl = String(req.body?.photoUrl || '').trim();
     const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
+    if (!verifiedGoogle && password.length < 6) {
+      res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+      return;
+    }
+
+    if (verifiedGoogle && password.length > 0 && password.length < 6) {
+      res.status(400).json({
+        error: 'Optional backup password must be at least 6 characters long (or leave it blank).',
+      });
+      return;
+    }
+
     if (
       !name ||
       !email ||
-      password.length < 6 ||
       !dateOfBirth ||
       !referenceMemberName ||
       !mobile ||
@@ -297,12 +441,23 @@ apiRouter.post('/auth/register', async (req, res) => {
       agreementPhotoUrl: agreementPhotoUrl || undefined,
     };
 
-    const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordHash = password.length >= 6 ? bcrypt.hashSync(password, 10) : '';
+    const authProvider: StoredUser['authProvider'] = verifiedGoogle
+      ? passwordHash
+        ? 'both'
+        : 'google'
+      : 'password';
     let createdUser!: StoredUser;
     let sanitized!: ReturnType<typeof sanitizeUser>;
 
     await updateVaultState((draft) => {
-      if (draft.users.some((u) => u.email.toLowerCase() === email)) {
+      if (
+        draft.users.some(
+          (u) =>
+            u.email.toLowerCase() === email ||
+            (verifiedGoogle && u.googleUid === verifiedGoogle.uid)
+        )
+      ) {
         throw new Error('EMAIL_IN_USE');
       }
 
@@ -311,6 +466,8 @@ apiRouter.post('/auth/register', async (req, res) => {
         name,
         email,
         passwordHash,
+        googleUid: verifiedGoogle?.uid,
+        authProvider,
         role: 'member',
         memberCode: nextMemberCode(draft.users),
         status: 'pending_approval',
@@ -331,7 +488,7 @@ apiRouter.post('/auth/register', async (req, res) => {
           recipientName: admin.name,
           recipientUserId: admin.id,
           subject: `New Member Signup Pending Approval: ${name} (${createdUser.memberCode})`,
-          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
+          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}${verifiedGoogle ? ', Google-verified email' : ''}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
           relatedId: createdUser.id,
         });
       });
@@ -346,6 +503,7 @@ apiRouter.post('/auth/register', async (req, res) => {
           email: createdUser.email,
           memberCode: createdUser.memberCode,
           referenceMemberName,
+          authProvider,
           status: 'pending_approval',
         },
       });
@@ -358,8 +516,9 @@ apiRouter.post('/auth/register', async (req, res) => {
     res.status(201).json({
       pendingApproval: true,
       user: sanitized,
-      message:
-        'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
+      message: verifiedGoogle
+        ? 'Membership application submitted with your verified Google account. An administrator will review your KYC details and approve your account before you can sign in with Google.'
+        : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {

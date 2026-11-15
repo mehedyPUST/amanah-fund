@@ -12,6 +12,7 @@ import { MotionConfig } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { signOutGoogleIdentity } from '../utils/googleAuth.ts';
 import {
   connectGoogleWorkspace,
   disconnectGoogleWorkspace,
@@ -125,6 +126,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     try {
       await api.logout();
     } finally {
+      await signOutGoogleIdentity();
       setUser(null);
     }
   }, []);

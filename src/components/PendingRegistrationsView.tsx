@@ -326,6 +326,15 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
                         <span>{applicant.email}</span>
+                        {(applicant.authProvider === 'google' ||
+                          applicant.authProvider === 'both') && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="font-sans font-medium text-emerald-700 dark:text-emerald-400">
+                              Google Verified
+                            </span>
+                          </>
+                        )}
                         <span aria-hidden="true">·</span>
                         <span>Applied {formatDateTime(applicant.joinedAt)}</span>
                       </div>

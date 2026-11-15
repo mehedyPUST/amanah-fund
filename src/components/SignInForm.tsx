@@ -3,9 +3,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Globe, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../utils/api.ts';
+import {
+  GOOGLE_ONBOARDING_STORAGE_KEY,
+  signInWithGoogleIdentity,
+} from '../utils/googleAuth.ts';
 import { useCoopSession } from './AppProviders.tsx';
 
 export function SignInForm() {
@@ -15,6 +19,7 @@ export function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,6 +42,38 @@ export function SignInForm() {
       setLoading(false);
     }
   }
+
+  async function handleGoogleSignIn() {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const { idToken } = await signInWithGoogleIdentity();
+      const res = await api.googleAuth(idToken);
+
+      if (res.status === 'authenticated') {
+        setUser(res.user);
+        router.push('/dashboard');
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(
+          GOOGLE_ONBOARDING_STORAGE_KEY,
+          JSON.stringify({
+            registrationToken: res.registrationToken,
+            googleProfile: res.googleProfile,
+          })
+        );
+      }
+      router.push('/signup?mode=google');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google Sign-In failed.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  const isBusy = loading || googleLoading;
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
@@ -63,11 +100,35 @@ export function SignInForm() {
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300"
+            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300 leading-relaxed"
           >
             {error}
           </div>
         )}
+
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isBusy}
+            className="w-full py-2.5 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 text-slate-800 dark:text-slate-100 text-sm font-medium shadow-2xs transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer"
+          >
+            {googleLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" aria-hidden="true" />
+            ) : (
+              <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            )}
+            <span>{googleLoading ? 'Verifying with Google…' : 'Continue with Google'}</span>
+          </button>
+
+          <div className="relative flex items-center py-1">
+            <div className="grow border-t border-slate-200 dark:border-slate-800" />
+            <span className="shrink-0 mx-3 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+              or sign in with email
+            </span>
+            <div className="grow border-t border-slate-200 dark:border-slate-800" />
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -110,7 +171,7 @@ export function SignInForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isBusy}
             className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             <Lock className="w-4 h-4" aria-hidden="true" />

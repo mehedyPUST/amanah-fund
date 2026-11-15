@@ -20,6 +20,8 @@ export interface StoredUser {
   name: string;
   email: string;
   passwordHash: string;
+  googleUid?: string;
+  authProvider?: 'password' | 'google' | 'both';
   role: UserRole;
   memberCode: string;
   status: UserStatus;

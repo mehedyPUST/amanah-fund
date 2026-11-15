@@ -45,7 +45,8 @@ export interface SheetTabBlueprint {
 export interface RegisterMemberPayload {
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  googleRegistrationToken?: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;
@@ -57,6 +58,14 @@ export interface RegisterMemberPayload {
   photoUrl: string;
   agreementPhotoUrl?: string;
 }
+
+export type GoogleAuthResponse =
+  | { status: 'authenticated'; user: PublicUser }
+  | {
+      status: 'needs_onboarding';
+      registrationToken: string;
+      googleProfile: { name: string; email: string; photoUrl: string };
+    };
 
 export const api = {
   getMe: () => apiRequest<{ user: PublicUser }>('/api/auth/me'),
@@ -78,6 +87,11 @@ export const api = {
     apiRequest<{ user: PublicUser }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    }),
+  googleAuth: (idToken: string) =>
+    apiRequest<GoogleAuthResponse>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
     }),
   getReferenceMembers: () =>
     apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),

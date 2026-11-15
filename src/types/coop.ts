@@ -31,6 +31,7 @@ export interface PublicUser {
   joinedAt: string;
   phoneMasked?: string;
   photoUrl?: string;
+  authProvider?: 'password' | 'google' | 'both';
   registrationDetails?: UserRegistrationDetails;
 }
 
