@@ -80,13 +80,15 @@ export function RequestQardHasanModal({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isTopModal(token)) {
+        e.preventDefault();
+        e.stopPropagation();
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
       unregister();
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [open, onClose]);
 
@@ -100,6 +102,8 @@ export function RequestQardHasanModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="request-qard-hasan-modal-title"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <motion.div
             initial={{ opacity: 0 }}
@@ -116,6 +120,7 @@ export function RequestQardHasanModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.18 }}
+            onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
           >
             <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/80 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
