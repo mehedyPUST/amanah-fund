@@ -309,6 +309,20 @@ export interface MonthlyCashflowPoint {
   repaid: number;
 }
 
+export interface LeaderboardEntry {
+  userId: string;
+  memberName: string;
+  memberCode: string;
+  photoUrl?: string;
+  totalContributed: number;
+  approvedContributionsCount: number;
+  approvedMonthsCount: number;
+  currentStreakMonths: number;
+  consistencyScore: number;
+  currentMonthPaid: boolean;
+  isSelf: boolean;
+}
+
 export interface DashboardOverview {
   config: FundConfig;
   phase: 'qard_hasan' | 'halal_investment';
@@ -339,6 +353,7 @@ export interface DashboardOverview {
     eligibility: EligibilityCheck;
   };
   monthlySeries: MonthlyCashflowPoint[];
+  leaderboard: LeaderboardEntry[];
   storageEngine: 'mongodb_atlas' | 'encrypted_local_vault';
 }
 

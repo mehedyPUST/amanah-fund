@@ -6,6 +6,7 @@ import type {
   EligibilityCheck,
   EmailNotification,
   HalalProject,
+  LeaderboardEntry,
   LoanRequest,
   LoanSensitiveDetails,
   MemberSummary,
@@ -253,6 +254,77 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     return n.recipientUserId === currentUser.id || n.recipientEmail === currentUser.email;
   }).length;
 
+  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const prevMonthKey = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const shiftMonthBack = (ym: string): string => {
+    const [yStr, mStr] = ym.split('-');
+    const d = new Date(Date.UTC(Number(yStr), Number(mStr) - 2, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const leaderboard: LeaderboardEntry[] = state.users
+    .filter((u) => u.status === 'active')
+    .map((member) => {
+      const memberApproved = approvedContributions.filter((c) => c.userId === member.id);
+      const totalContributed = memberApproved.reduce((sum, c) => sum + c.amount, 0);
+      const paidMonths = new Set(memberApproved.map((c) => c.billingMonth));
+      const approvedMonthsCount = paidMonths.size;
+      const currentMonthPaid = paidMonths.has(currentMonthKey);
+
+      // Compute consecutive monthly payment streak ending at current month or previous month
+      let streak = 0;
+      let cursor = currentMonthPaid
+        ? currentMonthKey
+        : paidMonths.has(prevMonthKey)
+          ? prevMonthKey
+          : '';
+      while (cursor && paidMonths.has(cursor) && streak < 120) {
+        streak += 1;
+        cursor = shiftMonthBack(cursor);
+      }
+
+      // Compute expected months since joining (inclusive of current month, minimum 1)
+      const joined = new Date(member.joinedAt);
+      const monthsSinceJoined = Number.isNaN(joined.getTime())
+        ? 1
+        : Math.max(
+            1,
+            (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
+              (now.getUTCMonth() - joined.getUTCMonth()) +
+              1
+          );
+      const denominator = Math.max(monthsSinceJoined, approvedMonthsCount, 1);
+      const consistencyScore = Math.min(
+        100,
+        Math.round((approvedMonthsCount / denominator) * 100)
+      );
+
+      return {
+        userId: member.id,
+        memberName: member.name,
+        memberCode: member.memberCode,
+        photoUrl: member.photoUrl,
+        totalContributed,
+        approvedContributionsCount: memberApproved.length,
+        approvedMonthsCount,
+        currentStreakMonths: streak,
+        consistencyScore,
+        currentMonthPaid,
+        isSelf: member.id === currentUser.id,
+      };
+    })
+    .sort((a, b) => {
+      if (b.totalContributed !== a.totalContributed) {
+        return b.totalContributed - a.totalContributed;
+      }
+      if (b.currentStreakMonths !== a.currentStreakMonths) {
+        return b.currentStreakMonths - a.currentStreakMonths;
+      }
+      return b.approvedMonthsCount - a.approvedMonthsCount;
+    });
+
   return {
     config: state.fundConfig,
     phase,
@@ -283,6 +355,7 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       eligibility: evaluateLoanEligibility(state, currentUser.id),
     },
     monthlySeries,
+    leaderboard,
     storageEngine: getStorageEngine(),
   };
 }

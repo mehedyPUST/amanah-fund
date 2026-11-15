@@ -20,7 +20,9 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
+import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 
 export type NavTab = DashboardSectionId;
 
@@ -466,6 +468,28 @@ export function OverviewView({
             </div>
           </div>
         </section>
+      </div>
+
+      {/* Repayment Schedule & Contribution Leaderboard */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        <div className="xl:col-span-6 flex [&>section]:w-full">
+          <RepaymentSchedule
+            loans={loans}
+            config={config}
+            user={user}
+            loading={loading}
+            onNavigate={onNavigate}
+            onOpenLoanModal={onOpenLoanModal}
+          />
+        </div>
+        <div className="xl:col-span-6 flex [&>section]:w-full">
+          <ContributionLeaderboard
+            entries={overview.leaderboard || []}
+            config={config}
+            loading={loading}
+            onNavigate={onNavigate}
+          />
+        </div>
       </div>
 
       {/* User's Latest Monthly Contributions & Loan Payments */}
