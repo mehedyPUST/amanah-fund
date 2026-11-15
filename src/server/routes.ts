@@ -104,11 +104,14 @@ function nextMemberCode(users: StoredUser[]): string {
 }
 
 function nextLoanId(loans: LoanRequest[], year = new Date().getUTCFullYear()): string {
-  const prefix = `loan-${year}-`;
+  // Use qh- prefix so sequential IDs never collide with old demo seed ids (loan-2026-00x).
+  const prefix = `qh-${year}-`;
+  const legacyPrefix = `loan-${year}-`;
   const existingIds = new Set(loans.map((l) => l.id));
   let maxNum = loans.reduce((max, l) => {
-    if (!l.id.startsWith(prefix)) return max;
-    const seq = Number(l.id.slice(prefix.length));
+    let seq = 0;
+    if (l.id.startsWith(prefix)) seq = Number(l.id.slice(prefix.length));
+    else if (l.id.startsWith(legacyPrefix)) seq = Number(l.id.slice(legacyPrefix.length));
     return Number.isFinite(seq) && seq > max ? seq : max;
   }, 0);
   let candidate = `${prefix}${String(maxNum + 1).padStart(3, '0')}`;

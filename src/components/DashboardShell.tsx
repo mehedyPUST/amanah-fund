@@ -194,8 +194,11 @@ export function DashboardShell() {
   const [loanGateNotice, setLoanGateNotice] = useState<{
     title: string;
     description: string;
+    /** When set, confirm button withdraws this pending loan then opens the form */
+    withdrawLoanId?: string;
   } | null>(null);
   const [loanGateChecking, setLoanGateChecking] = useState(false);
+  const [loanGateBusy, setLoanGateBusy] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
@@ -414,15 +417,28 @@ export function DashboardShell() {
         const reason =
           eligibility.reasons?.[0] ||
           'You do not currently meet the cooperative loan eligibility criteria.';
-        const hasPending =
-          !eligibility.noActiveLoan ||
-          /existing loan/i.test(reason) ||
-          /pending/i.test(reason);
+        const pendingLoan =
+          loans.find(
+            (l) =>
+              l.borrowerId === user.id &&
+              (l.status === 'pending_manager_review' || l.status === 'pending_guarantor')
+          ) || null;
+        const withdrawId =
+          pendingLoan?.id ||
+          eligibility.activeLoanId ||
+          undefined;
+        const canWithdraw =
+          Boolean(withdrawId) &&
+          (!eligibility.noActiveLoan ||
+            /existing loan/i.test(reason) ||
+            /pending/i.test(reason));
+
         setLoanGateNotice({
           title: 'Eligibility Requirements Not Met',
-          description: hasPending
-            ? `${reason}\n\nGo to Qard Hasan → Withdraw Application on your pending request, then try again.`
+          description: canWithdraw
+            ? `${reason}\n\nYou can withdraw that pending application now and open a new request.`
             : reason,
+          withdrawLoanId: canWithdraw ? withdrawId : undefined,
         });
         return;
       }
@@ -438,7 +454,7 @@ export function DashboardShell() {
     } finally {
       setLoanGateChecking(false);
     }
-  }, [user, overview]);
+  }, [user, overview, loans]);
 
   const openManagerDeskTab = useCallback(
     (tab: ManagerDeskTab) => {
@@ -1343,12 +1359,81 @@ export function DashboardShell() {
       {!isAdmin && (
         <ActionModal
           open={Boolean(loanGateNotice)}
-          mode="notice"
+          mode={loanGateNotice?.withdrawLoanId ? 'confirm' : 'notice'}
           tone="amber"
           title={loanGateNotice?.title || ''}
           description={loanGateNotice?.description || ''}
-          confirmLabel="Understood"
-          onClose={() => setLoanGateNotice(null)}
+          confirmLabel={
+            loanGateNotice?.withdrawLoanId
+              ? 'Withdraw Pending Application'
+              : 'Understood'
+          }
+          cancelLabel="Close"
+          busy={loanGateBusy}
+          onConfirm={
+            loanGateNotice?.withdrawLoanId
+              ? async () => {
+                  const id = loanGateNotice.withdrawLoanId!;
+                  setLoanGateBusy(true);
+                  try {
+                    await api.withdrawLoan(id);
+                    setLoans((prev) =>
+                      prev.map((l) =>
+                        l.id === id
+                          ? {
+                              ...l,
+                              status: 'rejected',
+                              adminReviewNote:
+                                'Withdrawn by borrower before manager vote initiation.',
+                            }
+                          : l
+                      )
+                    );
+                    setOverview((prev) => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        personal: {
+                          ...prev.personal,
+                          eligibility: {
+                            ...prev.personal.eligibility,
+                            eligible: true,
+                            noActiveLoan: true,
+                            activeLoanId: undefined,
+                            reasons: [
+                              'No active or pending Qard Hasan loan.',
+                              ...(prev.personal.eligibility.reasons || []).filter(
+                                (r) => !r.startsWith('Existing loan')
+                              ),
+                            ],
+                          },
+                        },
+                      };
+                    });
+                    setLoanGateNotice(null);
+                    setLoanModalOpen(true);
+                    try {
+                      await handleRefreshWithAutoSync();
+                    } catch {
+                      /* optimistic state already applied */
+                    }
+                  } catch (err) {
+                    setLoanGateNotice({
+                      title: 'Could Not Withdraw Application',
+                      description:
+                        err instanceof Error
+                          ? err.message
+                          : 'Failed to withdraw the pending loan application.',
+                    });
+                  } finally {
+                    setLoanGateBusy(false);
+                  }
+                }
+              : undefined
+          }
+          onClose={() => {
+            if (!loanGateBusy) setLoanGateNotice(null);
+          }}
         />
       )}
 

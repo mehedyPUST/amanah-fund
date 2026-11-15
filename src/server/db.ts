@@ -180,7 +180,8 @@ const LEGACY_FAKE_USER_EMAILS = new Set([
   'bilal@amanahcoop.org',
 ]);
 
-const LEGACY_FAKE_LOAN_IDS = new Set(['loan-2026-001', 'loan-2026-002', 'loan-2026-003']);
+/** Only purge loans clearly tied to demo seed users — do NOT purge by sequential
+ *  IDs like loan-2026-001 (those collide with real first-of-year loan IDs). */
 const LEGACY_FAKE_PROJECT_IDS = new Set(['halal-proj-1', 'halal-proj-2', 'halal-proj-3']);
 const LEGACY_FAKE_NOTIF_IDS = new Set(['notif-001', 'notif-002', 'notif-003', 'notif-004']);
 const LEGACY_FAKE_AUDIT_IDS = new Set(['audit-002', 'audit-003']);
@@ -203,6 +204,8 @@ function purgeLegacyFakeSeedData(state: VaultState): { state: VaultState; change
     return u;
   });
 
+  const realUserIds = new Set(state.users.map((u) => u.id));
+
   if (state.fundConfig?.updatedBy === 'Tariq Al-Mansoor') {
     state.fundConfig.updatedBy = 'Amanah Administrator';
     changed = true;
@@ -212,14 +215,23 @@ function purgeLegacyFakeSeedData(state: VaultState): { state: VaultState; change
   state.contributions = (state.contributions || []).filter(
     (c) =>
       !LEGACY_FAKE_USER_IDS.has(c.userId) &&
+      realUserIds.has(c.userId) &&
       !/^contrib-2026-\d{2}-usr-/.test(c.id)
   );
   if (state.contributions.length !== beforeContribs) changed = true;
 
+  // Drop loans for deleted/fake users OR orphan borrowers (no matching user).
+  // Never delete by sequential loan-YYYY-NNN alone — those are real production IDs.
   const beforeLoans = (state.loans || []).length;
-  state.loans = (state.loans || []).filter(
-    (l) => !LEGACY_FAKE_LOAN_IDS.has(l.id) && !LEGACY_FAKE_USER_IDS.has(l.borrowerId)
-  );
+  state.loans = (state.loans || []).filter((l) => {
+    const fakeBorrower = LEGACY_FAKE_USER_IDS.has(l.borrowerId);
+    const orphanBorrower = !realUserIds.has(l.borrowerId);
+    if (fakeBorrower || orphanBorrower) {
+      changed = true;
+      return false;
+    }
+    return true;
+  });
   if (state.loans.length !== beforeLoans) changed = true;
 
   const beforeProjects = (state.halalProjects || []).length;
@@ -393,10 +405,7 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
             ],
           }),
           mongoDb.collection('loans').deleteMany({
-            $or: [
-              { id: { $in: Array.from(LEGACY_FAKE_LOAN_IDS) } },
-              { borrowerId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
-            ],
+            borrowerId: { $in: Array.from(LEGACY_FAKE_USER_IDS) },
           }),
           mongoDb.collection('halalProjects').deleteMany({
             id: { $in: Array.from(LEGACY_FAKE_PROJECT_IDS) },
