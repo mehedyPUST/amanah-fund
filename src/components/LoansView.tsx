@@ -638,6 +638,54 @@ export function LoansView({
                     <span className="font-mono tabular-nums shrink-0">{loanProgressPct}%</span>
                   )}
                 </div>
+
+                {myActiveOrPendingLoan &&
+                  (myActiveOrPendingLoan.status === 'pending_manager_review' ||
+                    myActiveOrPendingLoan.status === 'pending_guarantor') && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Only one pending application is allowed. Withdraw this request if you need to
+                        submit a new one.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const loanId = myActiveOrPendingLoan.id;
+                          setModal({
+                            mode: 'confirm',
+                            tone: 'amber',
+                            title: 'Withdraw Loan Application?',
+                            description: `This will cancel ${loanId} and free your eligibility so you can submit a new Qard Hasan request. This cannot be undone.`,
+                            details: [
+                              { label: 'Application', value: loanId },
+                              {
+                                label: 'Amount',
+                                value: formatMoney(myActiveOrPendingLoan.amount, ccy),
+                              },
+                              {
+                                label: 'Status',
+                                value: myActiveOrPendingLoan.status.replace(/_/g, ' '),
+                              },
+                            ],
+                            confirmLabel: 'Yes, Withdraw Application',
+                            run: async () => {
+                              await api.withdrawLoan(loanId);
+                              await onRefresh();
+                              setModal({
+                                mode: 'notice',
+                                tone: 'emerald',
+                                title: 'Application Withdrawn',
+                                description: `${loanId} was withdrawn. You can now open a new Qard Hasan request.`,
+                              });
+                            },
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-[11px] font-medium hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer shrink-0"
+                      >
+                        Withdraw Application
+                      </button>
+                    </div>
+                  )}
               </div>
             </div>
           )}

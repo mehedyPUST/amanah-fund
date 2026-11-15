@@ -2030,6 +2030,82 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
   }
 });
 
+/** Borrower may withdraw a pending application so they can re-apply later. */
+apiRouter.post('/loans/:id/withdraw', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    let updatedLoan: LoanRequest | null = null;
+
+    await updateVaultState((draft) => {
+      const loan = draft.loans.find((l) => l.id === id);
+      if (!loan) throw new Error('LOAN_NOT_FOUND');
+      if (loan.borrowerId !== viewer.id) throw new Error('NOT_BORROWER');
+      const previousStatus = loan.status;
+      if (
+        previousStatus !== 'pending_guarantor' &&
+        previousStatus !== 'pending_manager_review'
+      ) {
+        throw new Error('NOT_WITHDRAWABLE');
+      }
+
+      loan.status = 'rejected';
+      loan.adminDecision = 'rejected';
+      loan.adminReviewedAt = new Date().toISOString();
+      loan.adminReviewedBy = viewer.name;
+      loan.adminReviewNote = 'Withdrawn by borrower before manager vote initiation.';
+      updatedLoan = loan;
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: 'LOAN_WITHDRAWN_BY_BORROWER',
+        resourceType: 'loan',
+        resourceId: loan.id,
+        summary: `${viewer.name} withdrew Qard Hasan application ${loan.id} (was ${previousStatus})`,
+        payload: { loanId: loan.id, amount: loan.amount, previousStatus },
+      });
+      return draft;
+    });
+
+    if (!updatedLoan) {
+      res.status(404).json({ error: 'Loan application not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('loan:updated', {
+      loanId: (updatedLoan as LoanRequest).id,
+      status: 'rejected',
+    });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'LOAN_WITHDRAWN_BY_BORROWER',
+      resourceType: 'loan',
+      resourceId: (updatedLoan as LoanRequest).id,
+    });
+
+    res.json({ loan: hydrateLoanForViewer(updatedLoan as LoanRequest, viewer) });
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === 'LOAN_NOT_FOUND') {
+        res.status(404).json({ error: 'Loan application not found.' });
+        return;
+      }
+      if (err.message === 'NOT_BORROWER') {
+        res.status(403).json({ error: 'Only the borrower can withdraw this application.' });
+        return;
+      }
+      if (err.message === 'NOT_WITHDRAWABLE') {
+        res.status(400).json({
+          error:
+            'Only applications still awaiting guarantor response or manager review can be withdrawn.',
+        });
+        return;
+      }
+    }
+    console.error('Withdraw loan error:', err);
+    res.status(500).json({ error: 'Failed to withdraw loan application.' });
+  }
+});
+
 apiRouter.post('/loans/:id/guarantor-respond', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;

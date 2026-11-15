@@ -411,11 +411,18 @@ export function DashboardShell() {
         eligibility = res.eligibility;
       }
       if (!eligibility.eligible) {
+        const reason =
+          eligibility.reasons?.[0] ||
+          'You do not currently meet the cooperative loan eligibility criteria.';
+        const hasPending =
+          !eligibility.noActiveLoan ||
+          /existing loan/i.test(reason) ||
+          /pending/i.test(reason);
         setLoanGateNotice({
           title: 'Eligibility Requirements Not Met',
-          description:
-            eligibility.reasons?.[0] ||
-            'You do not currently meet the cooperative loan eligibility criteria.',
+          description: hasPending
+            ? `${reason}\n\nGo to Qard Hasan → Withdraw Application on your pending request, then try again.`
+            : reason,
         });
         return;
       }

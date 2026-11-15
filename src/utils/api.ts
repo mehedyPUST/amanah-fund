@@ -253,6 +253,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  withdrawLoan: (id: string) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/withdraw`, {
+      method: 'POST',
+    }),
   respondAsGuarantor: (id: string, decision: 'accept' | 'decline', note?: string) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/guarantor-respond`, {
       method: 'POST',
