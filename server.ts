@@ -40,6 +40,10 @@ async function startServer() {
   // Mount Express API routes (JSON + Cookies + SSE) before Next.js request handler
   app.use('/api', express.json({ limit: '12mb' }), cookieParser(), apiRouter);
 
+  app.get('/favicon.ico', (_req, res) => {
+    res.redirect(307, '/icon');
+  });
+
   // Delegate all Next.js App Router pages, assets, and RSC requests to Next.js
   app.all('*', (req, res) => {
     return handle(req, res);
