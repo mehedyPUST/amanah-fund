@@ -105,12 +105,18 @@ function nextMemberCode(users: StoredUser[]): string {
 
 function nextLoanId(loans: LoanRequest[], year = new Date().getUTCFullYear()): string {
   const prefix = `loan-${year}-`;
-  const maxNum = loans.reduce((max, l) => {
+  const existingIds = new Set(loans.map((l) => l.id));
+  let maxNum = loans.reduce((max, l) => {
     if (!l.id.startsWith(prefix)) return max;
     const seq = Number(l.id.slice(prefix.length));
     return Number.isFinite(seq) && seq > max ? seq : max;
   }, 0);
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  let candidate = `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  while (existingIds.has(candidate)) {
+    maxNum += 1;
+    candidate = `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  }
+  return candidate;
 }
 
 const authRateLimiter = createRateLimiter({
@@ -1755,7 +1761,7 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       });
       return;
     }
-    const amount = Number(req.body?.amount);
+    const rawAmount = Number(req.body?.amount);
     const installmentMonths = Number(req.body?.installmentMonths);
     const purpose = String(req.body?.purpose || '').trim();
     const emergencyContext = String(req.body?.emergencyContext || '').trim();
@@ -1766,12 +1772,17 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       ? Array.from(new Set((req.body.guarantorIds as unknown[]).map((g) => String(g || '').trim()).filter(Boolean)))
       : [];
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
       res.status(400).json({ error: 'Loan amount must be positive.' });
       return;
     }
-    if (!Number.isInteger(installmentMonths) || installmentMonths < 1 || installmentMonths > 24) {
-      res.status(400).json({ error: 'Installment duration must be between 1 and 24 months.' });
+    const amount = Math.round(rawAmount * 100) / 100;
+    if (amount < 100) {
+      res.status(400).json({ error: 'Minimum Qard Hasan loan amount is 100.' });
+      return;
+    }
+    if (!Number.isInteger(installmentMonths) || installmentMonths < 1 || installmentMonths > 36) {
+      res.status(400).json({ error: 'Installment duration must be between 1 and 36 months.' });
       return;
     }
     if (!purpose || !disbursementAccount || !provider) {

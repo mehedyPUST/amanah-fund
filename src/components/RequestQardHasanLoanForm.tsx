@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
+  AlertTriangle,
   Calendar,
   ChevronDown,
   ChevronUp,
   Lock,
+  RefreshCw,
   ShieldCheck,
   UserCheck,
 } from 'lucide-react';
@@ -69,6 +71,8 @@ export function RequestQardHasanLoanForm({
 
   const [localEligibility, setLocalEligibility] = useState<EligibilityCheck | null>(null);
   const [eligibilityChecking, setEligibilityChecking] = useState(false);
+  const [eligibilityError, setEligibilityError] = useState<string | null>(null);
+  const [eligibilityRetryKey, setEligibilityRetryKey] = useState(0);
 
   const eligibility = eligibilityProp ?? localEligibility;
 
@@ -76,13 +80,21 @@ export function RequestQardHasanLoanForm({
     if (eligibilityProp || user.role === 'admin' || user.status !== 'active') return;
     let cancelled = false;
     setEligibilityChecking(true);
+    setEligibilityError(null);
     api
       .getEligibility()
       .then((res) => {
-        if (!cancelled) setLocalEligibility(res.eligibility);
+        if (!cancelled) {
+          setLocalEligibility(res.eligibility);
+          setEligibilityError(null);
+        }
       })
-      .catch(() => {
-        // Leave null if offline
+      .catch((err) => {
+        if (!cancelled) {
+          setEligibilityError(
+            err instanceof Error ? err.message : 'Unable to verify cooperative loan eligibility.'
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setEligibilityChecking(false);
@@ -90,7 +102,7 @@ export function RequestQardHasanLoanForm({
     return () => {
       cancelled = true;
     };
-  }, [eligibilityProp, user.role, user.status]);
+  }, [eligibilityProp, user.role, user.status, eligibilityRetryKey]);
 
   const isVerifiedMember = user.status === 'active';
   const canSubmit = isVerifiedMember && Boolean(eligibility?.eligible);
@@ -105,8 +117,12 @@ export function RequestQardHasanLoanForm({
   const [provider, setProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [disbursementAccount, setDisbursementAccount] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsHighlight, setTermsHighlight] = useState(false);
   const [showSchedulePreview, setShowSchedulePreview] = useState(false);
   const [activeMembers, setActiveMembers] = useState<ActiveMemberDirectoryItem[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
+  const [membersRetryKey, setMembersRetryKey] = useState(0);
   const [selectedGuarantorIds, setSelectedGuarantorIds] = useState<string[]>([]);
 
   const amountEditedRef = useRef(false);
@@ -122,42 +138,68 @@ export function RequestQardHasanLoanForm({
     }
   }, [config]);
 
+  const loadMembers = useCallback(() => {
+    setMembersRetryKey((k) => k + 1);
+  }, []);
+
   useEffect(() => {
     if (!isVerifiedMember) return;
     let cancelled = false;
+    setMembersLoading(true);
+    setMembersError(null);
     api
       .getActiveMembers()
       .then((res) => {
         if (!cancelled) {
           // Admin is never a guarantor or participant in cooperative loans
-          setActiveMembers(
-            res.members.filter((m) => m.id !== user.id && m.role !== 'admin')
+          const eligibleGuarantors = res.members.filter(
+            (m) => m.id !== user.id && m.role !== 'admin'
+          );
+          setActiveMembers(eligibleGuarantors);
+          setSelectedGuarantorIds((prev) =>
+            prev.filter((id) => eligibleGuarantors.some((m) => m.id === id))
           );
         }
       })
-      .catch(() => {
-        if (!cancelled) setActiveMembers([]);
+      .catch((err) => {
+        if (!cancelled) {
+          setActiveMembers([]);
+          setMembersError(
+            err instanceof Error ? err.message : 'Unable to load active member guarantors.'
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setMembersLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [isVerifiedMember, user.id]);
+  }, [isVerifiedMember, user.id, membersRetryKey]);
 
   const [submitting, setSubmitting] = useState(false);
   const [modal, setModal] = useState<LoanModalState | null>(null);
 
-  const parsedAmount = Math.max(0, Number(amount) || 0);
+  const rawAmount = Number(amount);
+  const parsedAmount = Number.isFinite(rawAmount)
+    ? Math.max(0, Math.round(rawAmount * 100) / 100)
+    : 0;
+  const rawMonths = Number(installmentMonths);
   const parsedMonths = Math.min(
     maxInstallmentMonths,
-    Math.max(1, Math.floor(Number(installmentMonths) || 1))
+    Math.max(1, Math.floor(Number.isFinite(rawMonths) ? rawMonths : 1))
   );
   const guarantorThreshold = config?.guarantorThresholdAmount ?? 40000;
   const requiredGuarantorsCount = config?.requiredGuarantorsCount ?? 1;
-  const needsGuarantors =
-    parsedAmount > guarantorThreshold &&
-    requiredGuarantorsCount > 0 &&
-    activeMembers.length > 0;
+  const exceedsGuarantorThreshold =
+    parsedAmount > guarantorThreshold && requiredGuarantorsCount > 0;
+  const needsGuarantors = exceedsGuarantorThreshold && activeMembers.length > 0;
   const effectiveRequiredGuarantors = Math.min(requiredGuarantorsCount, activeMembers.length);
+  const validSelectedGuarantorIds = useMemo(
+    () =>
+      selectedGuarantorIds.filter((id) => activeMembers.some((member) => member.id === id)),
+    [selectedGuarantorIds, activeMembers]
+  );
 
   const schedulePreview = useMemo(() => {
     if (parsedAmount <= 0 || parsedMonths < 1) return [];
@@ -219,14 +261,26 @@ export function RequestQardHasanLoanForm({
       openErrorModal(
         'Eligibility Requirements Not Met',
         eligibility?.reasons?.[0] ||
+          eligibilityError ||
           'You do not currently meet the cooperative loan eligibility criteria.'
       );
       return;
     }
-    if (parsedAmount < 100 || parsedAmount > maxLoanAmount) {
+    if (!Number.isFinite(rawAmount) || parsedAmount < 100 || parsedAmount > maxLoanAmount) {
       openErrorModal(
         'Invalid Requested Amount',
         `Requested amount must be between ${formatMoney(100, ccy)} and ${formatMoney(maxLoanAmount, ccy)}.`
+      );
+      return;
+    }
+    if (
+      !Number.isInteger(rawMonths) ||
+      rawMonths < 1 ||
+      rawMonths > maxInstallmentMonths
+    ) {
+      openErrorModal(
+        'Invalid Repayment Duration',
+        `Repayment duration must be a whole number between 1 and ${maxInstallmentMonths} months.`
       );
       return;
     }
@@ -237,29 +291,46 @@ export function RequestQardHasanLoanForm({
       );
       return;
     }
+    if (exceedsGuarantorThreshold) {
+      if (membersLoading) {
+        openErrorModal(
+          'Loading Guarantor Directory',
+          'Please wait a moment while active cooperative members load so you can select co-signing guarantor(s).'
+        );
+        return;
+      }
+      if (membersError) {
+        openErrorModal(
+          'Guarantor Directory Unavailable',
+          `${membersError} Please retry loading the member list before submitting a request above ${formatMoney(guarantorThreshold, ccy)}.`
+        );
+        return;
+      }
+      if (needsGuarantors && validSelectedGuarantorIds.length < effectiveRequiredGuarantors) {
+        openErrorModal(
+          'Guarantors Required',
+          `Requests above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
+        );
+        return;
+      }
+    }
     if (!agreedToTerms) {
+      setTermsHighlight(true);
       openErrorModal(
         'Commitment Required',
-        'Please confirm the 0% interest Qard Hasan terms and repayment commitment.'
-      );
-      return;
-    }
-    if (needsGuarantors && selectedGuarantorIds.length < effectiveRequiredGuarantors) {
-      openErrorModal(
-        'Guarantors Required',
-        `Requests above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
+        'Please confirm the 0% interest Qard Hasan terms and repayment commitment checkbox before submitting.'
       );
       return;
     }
 
     const guarantorNames = activeMembers
-      .filter((m) => selectedGuarantorIds.includes(m.id))
+      .filter((m) => validSelectedGuarantorIds.includes(m.id))
       .map((m) => `${m.name} (${m.memberCode})`)
       .join(', ');
 
     const details: ActionModalDetailItem[] = [
       { label: 'Requested Amount', value: formatMoney(parsedAmount, ccy) },
-      { label: 'Repayment Plan', value: `${parsedMonths} months · 0% interest` },
+      { label: 'Repayment Plan', value: `${rawMonths} months · 0% interest` },
       { label: 'Monthly Installment', value: formatMoney(monthlyInstallmentPreview, ccy) },
       {
         label: 'Payout Channel',
@@ -287,13 +358,13 @@ export function RequestQardHasanLoanForm({
     try {
       const res = await api.requestLoan({
         amount: parsedAmount,
-        installmentMonths: parsedMonths,
+        installmentMonths: rawMonths,
         purpose: purpose.trim(),
         emergencyContext: emergencyContext.trim() || undefined,
         channel,
         provider: provider.trim(),
         disbursementAccount: disbursementAccount.trim(),
-        guarantorIds: needsGuarantors ? selectedGuarantorIds : undefined,
+        guarantorIds: needsGuarantors ? validSelectedGuarantorIds : undefined,
       });
       const created = res.loan;
       setPurpose('');
@@ -301,6 +372,7 @@ export function RequestQardHasanLoanForm({
       setDisbursementAccount('');
       setSelectedGuarantorIds([]);
       setAgreedToTerms(false);
+      setTermsHighlight(false);
       setShowSchedulePreview(false);
       await onSubmitted(created);
       setModal({
@@ -372,7 +444,43 @@ export function RequestQardHasanLoanForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {eligibilityError && !eligibility && (
+        <div
+          role="alert"
+          className="p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-center justify-between gap-3"
+        >
+          <span className="inline-flex items-center gap-1.5 min-w-0">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{eligibilityError}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setEligibilityRetryKey((k) => k + 1)}
+            className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
+          >
+            <RefreshCw className="w-3 h-3" aria-hidden="true" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
+      {variant === 'card' && eligibility && !eligibility.eligible && (
+        <div
+          role="alert"
+          className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-1"
+        >
+          <div className="font-semibold flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
+            <span>Loan Placement Locked</span>
+          </div>
+          <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+            {eligibility.reasons[0] ||
+              'Your account does not currently meet the cooperative loan eligibility rules.'}
+          </p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <label
@@ -407,6 +515,7 @@ export function RequestQardHasanLoanForm({
             type="number"
             min={100}
             max={maxLoanAmount}
+            step="any"
             required
             disabled={!canSubmit}
             value={amount}
@@ -478,6 +587,7 @@ export function RequestQardHasanLoanForm({
             type="number"
             min={1}
             max={maxInstallmentMonths}
+            step={1}
             required
             disabled={!canSubmit}
             value={installmentMonths}
@@ -487,6 +597,12 @@ export function RequestQardHasanLoanForm({
             }}
             className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
+          {installmentMonths.trim() !== '' &&
+            (!Number.isInteger(rawMonths) || rawMonths < 1 || rawMonths > maxInstallmentMonths) && (
+              <p className="text-[11px] text-red-600 dark:text-red-400">
+                Enter a whole number between 1 and {maxInstallmentMonths} months.
+              </p>
+            )}
 
           <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
             <div className="flex items-center justify-between">
@@ -631,64 +747,95 @@ export function RequestQardHasanLoanForm({
           />
         </div>
 
-        {needsGuarantors && (
+        {exceedsGuarantorThreshold && (needsGuarantors || membersLoading || membersError) && (
           <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 space-y-2.5">
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>Co-Signing Guarantors Required</span>
               </span>
-              <span className="font-mono text-[11px] text-amber-800 dark:text-amber-300">
-                {selectedGuarantorIds.length} / {effectiveRequiredGuarantors} selected
-              </span>
+              {!membersLoading && !membersError && (
+                <span className="font-mono text-[11px] text-amber-800 dark:text-amber-300">
+                  {validSelectedGuarantorIds.length} / {effectiveRequiredGuarantors} selected
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
               Requests exceeding {formatMoney(guarantorThreshold, ccy)} require{' '}
-              {effectiveRequiredGuarantors} active member co-signer(s) before opening for 2/3
-              ballot voting.
+              {membersLoading || membersError
+                ? requiredGuarantorsCount
+                : effectiveRequiredGuarantors}{' '}
+              active member co-signer(s) before opening for 2/3 ballot voting.
             </p>
-            <div className="max-h-32 overflow-y-auto divide-y divide-amber-200/60 dark:divide-amber-900/40 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950">
-              {activeMembers.map((member) => {
-                const checked = selectedGuarantorIds.includes(member.id);
-                return (
-                  <label
-                    key={member.id}
-                    className="px-3 py-2 flex items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900"
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <input
-                        type="checkbox"
-                        disabled={!canSubmit}
-                        checked={checked}
-                        onChange={() =>
-                          setSelectedGuarantorIds((prev) =>
-                            prev.includes(member.id)
-                              ? prev.filter((id) => id !== member.id)
-                              : [...prev, member.id]
-                          )
-                        }
-                        className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30"
-                      />
-                      <span className="font-medium text-slate-900 dark:text-white truncate">
-                        {member.name}
+            {membersLoading ? (
+              <div className="px-3 py-2.5 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950 text-[11px] text-slate-500 dark:text-slate-400">
+                Loading active member directory…
+              </div>
+            ) : membersError ? (
+              <div className="px-3 py-2.5 rounded border border-red-200 dark:border-red-900/60 bg-white dark:bg-slate-950 flex items-center justify-between gap-2 text-[11px] text-red-700 dark:text-red-400">
+                <span className="truncate">{membersError}</span>
+                <button
+                  type="button"
+                  onClick={loadMembers}
+                  className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" aria-hidden="true" />
+                  <span>Retry</span>
+                </button>
+              </div>
+            ) : (
+              <div className="max-h-32 overflow-y-auto divide-y divide-amber-200/60 dark:divide-amber-900/40 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950">
+                {activeMembers.map((member) => {
+                  const checked = validSelectedGuarantorIds.includes(member.id);
+                  return (
+                    <label
+                      key={member.id}
+                      className="px-3 py-2 flex items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900"
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <input
+                          type="checkbox"
+                          disabled={!canSubmit}
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedGuarantorIds((prev) =>
+                              prev.includes(member.id)
+                                ? prev.filter((id) => id !== member.id)
+                                : [...prev, member.id]
+                            )
+                          }
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30"
+                        />
+                        <span className="font-medium text-slate-900 dark:text-white truncate">
+                          {member.name}
+                        </span>
                       </span>
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-500 shrink-0">
-                      {member.memberCode}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
+                      <span className="font-mono text-[11px] text-slate-500 shrink-0">
+                        {member.memberCode}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 cursor-pointer">
+        <label
+          className={`flex items-start gap-2.5 p-3 rounded-lg border transition-colors cursor-pointer ${
+            termsHighlight && !agreedToTerms
+              ? 'border-red-400 dark:border-red-700 bg-red-50/70 dark:bg-red-950/30'
+              : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
+          }`}
+        >
           <input
             type="checkbox"
             disabled={!canSubmit}
             checked={agreedToTerms}
-            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            onChange={(e) => {
+              setAgreedToTerms(e.target.checked);
+              if (e.target.checked) setTermsHighlight(false);
+            }}
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
           />
           <span className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
@@ -708,7 +855,7 @@ export function RequestQardHasanLoanForm({
           )}
           <button
             type="submit"
-            disabled={!canSubmit || submitting || !agreedToTerms}
+            disabled={!canSubmit || submitting}
             className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -717,11 +864,13 @@ export function RequestQardHasanLoanForm({
                 ? 'Member Account Verification Required'
                 : eligibilityChecking && !eligibility
                   ? 'Checking Eligibility…'
-                  : !eligibility?.eligible
-                    ? 'Eligibility Requirements Not Met'
-                    : submitting
-                      ? 'Encrypting & Submitting…'
-                      : 'Review & Submit Qard Hasan Request'}
+                  : eligibilityError && !eligibility
+                    ? 'Eligibility Check Failed'
+                    : !eligibility?.eligible
+                      ? 'Eligibility Requirements Not Met'
+                      : submitting
+                        ? 'Encrypting & Submitting…'
+                        : 'Review & Submit Qard Hasan Request'}
             </span>
           </button>
         </div>

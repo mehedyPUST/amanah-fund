@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -10,6 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 
 export interface ActionModalDetailItem {
   label: string;
@@ -53,8 +55,17 @@ export function ActionModal({
   onConfirm,
   onClose,
 }: ActionModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState(initialInputValue);
   const [inputError, setInputError] = useState<string | null>(null);
+  const modalTokenRef = useRef<symbol | null>(null);
+  if (!modalTokenRef.current) {
+    modalTokenRef.current = Symbol('ActionModal');
+  }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -63,19 +74,22 @@ export function ActionModal({
     }
   }, [open, initialInputValue, title]);
 
+  useBodyScrollLock(open);
+
   useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (!open || !modalTokenRef.current) return;
+    const token = modalTokenRef.current;
+    const unregister = registerTopModal(token);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) {
+      if (e.key === 'Escape' && isTopModal(token) && !busy) {
+        e.stopPropagation();
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unregister();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, busy, onClose]);
@@ -130,7 +144,9 @@ export function ActionModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div
@@ -273,6 +289,7 @@ export function ActionModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

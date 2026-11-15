@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Lock, ShieldCheck, X, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
+import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 
 interface RequestQardHasanModalProps {
@@ -31,43 +33,66 @@ export function RequestQardHasanModal({
   const maxLoanAmount = config?.maxLoanAmount || 75000;
   const maxInstallmentMonths = config?.maxInstallmentMonths || 12;
 
+  const [mounted, setMounted] = useState(false);
   const [fetchedEligibility, setFetchedEligibility] = useState<EligibilityCheck | null>(null);
+  const [eligibilityError, setEligibilityError] = useState<string | null>(null);
+  const [eligibilityAttempt, setEligibilityAttempt] = useState(0);
   const effectiveEligibility = eligibilityProp ?? fetchedEligibility;
+  const modalTokenRef = useRef<symbol | null>(null);
+  if (!modalTokenRef.current) {
+    modalTokenRef.current = Symbol('RequestQardHasanModal');
+  }
 
   useEffect(() => {
-    if (!open || eligibilityProp || user.role === 'admin') return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open || eligibilityProp || user.role === 'admin' || user.status !== 'active') return;
     let cancelled = false;
+    setEligibilityError(null);
     api
       .getEligibility()
       .then((res) => {
-        if (!cancelled) setFetchedEligibility(res.eligibility);
+        if (!cancelled) {
+          setFetchedEligibility(res.eligibility);
+          setEligibilityError(null);
+        }
       })
-      .catch(() => {
-        // Handled cleanly inside RequestQardHasanLoanForm
+      .catch((err) => {
+        if (!cancelled) {
+          setEligibilityError(
+            err instanceof Error ? err.message : 'Unable to verify loan eligibility.'
+          );
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [open, eligibilityProp, user.role]);
+  }, [open, eligibilityProp, user.role, user.status, eligibilityAttempt]);
+
+  useBodyScrollLock(open);
 
   useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (!open || !modalTokenRef.current) return;
+    const token = modalTokenRef.current;
+    const unregister = registerTopModal(token);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && isTopModal(token)) {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unregister();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div
@@ -145,9 +170,19 @@ export function RequestQardHasanModal({
                     Annual Quota Standing
                   </div>
                   <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                    {effectiveEligibility
-                      ? `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
-                      : 'Checking…'}
+                    {effectiveEligibility ? (
+                      `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
+                    ) : eligibilityError ? (
+                      <button
+                        type="button"
+                        onClick={() => setEligibilityAttempt((c) => c + 1)}
+                        className="text-red-600 dark:text-red-400 underline cursor-pointer"
+                      >
+                        Retry check
+                      </button>
+                    ) : (
+                      'Checking…'
+                    )}
                   </div>
                 </div>
               </div>
@@ -190,6 +225,7 @@ export function RequestQardHasanModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
