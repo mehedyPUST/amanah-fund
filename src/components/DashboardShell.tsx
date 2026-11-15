@@ -10,9 +10,9 @@ import {
   Bell,
   CheckCircle2,
   CreditCard,
-  Globe,
   HandCoins,
   History,
+  Home,
   LogOut,
   Menu,
   MessageSquare,
@@ -110,7 +110,7 @@ function playSubtleAlertChime() {
     });
 
     window.setTimeout(() => {
-      void ctx.close().catch(() => {});
+      void ctx.close().catch(() => { });
     }, 500);
   } catch {
     // Web Audio may be blocked prior to user gesture
@@ -445,27 +445,24 @@ export function DashboardShell() {
         type="button"
         onClick={() => navigateToPage(item.id, isMobile)}
         aria-current={active ? 'page' : undefined}
-        className={`group w-full px-3 py-2 text-sm flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${
-          active
-            ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white'
-        }`}
+        className={`group w-full px-3 py-2 text-sm flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${active
+          ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
+          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white'
+          }`}
       >
         <span className="flex items-center gap-3 min-w-0">
           <Icon
-            className={`w-4 h-4 shrink-0 transition-colors ${
-              active
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200'
-            }`}
+            className={`w-4 h-4 shrink-0 transition-colors ${active
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+              }`}
             aria-hidden="true"
           />
           <span
-            className={`truncate ${
-              active
-                ? 'underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4'
-                : 'group-hover:underline group-hover:decoration-slate-300 dark:group-hover:decoration-slate-700 group-hover:underline-offset-4'
-            }`}
+            className={`truncate ${active
+              ? 'underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4'
+              : 'group-hover:underline group-hover:decoration-slate-300 dark:group-hover:decoration-slate-700 group-hover:underline-offset-4'
+              }`}
           >
             {item.label}
           </span>
@@ -553,8 +550,8 @@ export function DashboardShell() {
             title="View Public Website"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 whitespace-nowrap"
           >
-            <Globe className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Public Site</span>
+            <Home className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Home</span>
           </Link>
 
           <HeaderNotificationBell
@@ -716,19 +713,17 @@ export function DashboardShell() {
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18 }}
-                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${
-                        isApproved
-                          ? 'bg-emerald-50/85 dark:bg-emerald-950/35 border-emerald-200 dark:border-emerald-900/60'
-                          : 'bg-red-50/85 dark:bg-red-950/35 border-red-200 dark:border-red-900/60'
-                      }`}
+                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${isApproved
+                        ? 'bg-emerald-50/85 dark:bg-emerald-950/35 border-emerald-200 dark:border-emerald-900/60'
+                        : 'bg-red-50/85 dark:bg-red-950/35 border-red-200 dark:border-red-900/60'
+                        }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                            isApproved
-                              ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-red-600/15 text-red-700 dark:text-red-400'
-                          }`}
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${isApproved
+                            ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
+                            : 'bg-red-600/15 text-red-700 dark:text-red-400'
+                            }`}
                         >
                           {isApproved ? (
                             <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
@@ -738,11 +733,10 @@ export function DashboardShell() {
                         </div>
                         <div className="space-y-1 min-w-0">
                           <div
-                            className={`flex flex-wrap items-center gap-2 text-xs font-semibold ${
-                              isApproved
-                                ? 'text-emerald-900 dark:text-emerald-200'
-                                : 'text-red-900 dark:text-red-200'
-                            }`}
+                            className={`flex flex-wrap items-center gap-2 text-xs font-semibold ${isApproved
+                              ? 'text-emerald-900 dark:text-emerald-200'
+                              : 'text-red-900 dark:text-red-200'
+                              }`}
                           >
                             <span>
                               {isApproved
@@ -757,20 +751,18 @@ export function DashboardShell() {
                             </span>
                           </div>
                           <p
-                            className={`text-xs font-medium ${
-                              isApproved
-                                ? 'text-emerald-900 dark:text-emerald-100'
-                                : 'text-red-900 dark:text-red-100'
-                            }`}
+                            className={`text-xs font-medium ${isApproved
+                              ? 'text-emerald-900 dark:text-emerald-100'
+                              : 'text-red-900 dark:text-red-100'
+                              }`}
                           >
                             {alert.subject}
                           </p>
                           <p
-                            className={`text-xs leading-relaxed ${
-                              isApproved
-                                ? 'text-emerald-800 dark:text-emerald-300'
-                                : 'text-red-800 dark:text-red-300'
-                            }`}
+                            className={`text-xs leading-relaxed ${isApproved
+                              ? 'text-emerald-800 dark:text-emerald-300'
+                              : 'text-red-800 dark:text-red-300'
+                              }`}
                           >
                             {alert.body}
                           </p>
@@ -781,11 +773,10 @@ export function DashboardShell() {
                         <button
                           type="button"
                           onClick={() => void handleOpenLoanFromDecisionAlert(alert.id)}
-                          className={`px-3.5 py-2 rounded-lg text-white text-xs font-medium transition-all duration-200 hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                            isApproved
-                              ? 'bg-emerald-600 hover:bg-emerald-700'
-                              : 'bg-red-600 hover:bg-red-700'
-                          }`}
+                          className={`px-3.5 py-2 rounded-lg text-white text-xs font-medium transition-all duration-200 hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${isApproved
+                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                            : 'bg-red-600 hover:bg-red-700'
+                            }`}
                         >
                           <span>View Loan Status</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
