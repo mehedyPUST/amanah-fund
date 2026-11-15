@@ -454,7 +454,7 @@ export function RequestQardHasanLoanForm({
     if (shouldCloseParent && onClose) {
       // Defer parent close so this ActionModal can finish its own exit
       // without being unmounted mid-animation by the parent portal.
-      queuePromise.resolve().then(() => onClose());
+      Promise.resolve().then(() => onClose());
     }
   }, [modal, onClose]);
 
