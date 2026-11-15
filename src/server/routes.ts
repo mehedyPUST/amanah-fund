@@ -593,16 +593,19 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         throw new Error('EMAIL_IN_USE');
       }
 
+      // First account on an empty cooperative becomes the bootstrap administrator.
+      const isBootstrapAdmin = draft.users.length === 0;
+
       createdUser = {
-        id: `usr-mem-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: `usr-${isBootstrapAdmin ? 'adm' : 'mem'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name,
         email,
         passwordHash,
         googleUid: verifiedGoogle?.uid,
         authProvider,
-        role: 'member',
+        role: isBootstrapAdmin ? 'admin' : 'member',
         memberCode: nextMemberCode(draft.users),
-        status: 'pending_approval',
+        status: isBootstrapAdmin ? 'active' : 'pending_approval',
         joinedAt: new Date().toISOString(),
         phoneMasked: maskReference(mobile),
         photoUrl,
@@ -612,50 +615,63 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       sanitized = sanitizeUser(createdUser);
       draft.users.push(createdUser);
 
-      const activeAdmins = draft.users.filter((u) => u.role === 'admin' && u.status === 'active');
-      activeAdmins.forEach((admin) => {
-        queueEmailNotification(draft, {
-          type: 'signup_pending_admin',
-          recipientEmail: admin.email,
-          recipientName: admin.name,
-          recipientUserId: admin.id,
-          subject: `New Member Signup Pending Approval: ${name} (${createdUser.memberCode})`,
-          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}${verifiedGoogle ? ', Google-verified email' : ''}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
-          relatedId: createdUser.id,
+      if (!isBootstrapAdmin) {
+        const activeAdmins = draft.users.filter((u) => u.role === 'admin' && u.status === 'active');
+        activeAdmins.forEach((admin) => {
+          queueEmailNotification(draft, {
+            type: 'signup_pending_admin',
+            recipientEmail: admin.email,
+            recipientName: admin.name,
+            recipientUserId: admin.id,
+            subject: `New Member Signup Pending Approval: ${name} (${createdUser.memberCode})`,
+            body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}${verifiedGoogle ? ', Google-verified email' : ''}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
+            relatedId: createdUser.id,
+          });
         });
-      });
+      }
 
       appendAuditLog(draft, {
         actor: sanitized,
-        action: 'MEMBER_SIGNUP_REQUESTED',
+        action: isBootstrapAdmin ? 'BOOTSTRAP_ADMIN_CREATED' : 'MEMBER_SIGNUP_REQUESTED',
         resourceType: 'auth',
         resourceId: createdUser.id,
-        summary: `New registration from ${name} (${createdUser.memberCode}) queued for administrator approval`,
+        summary: isBootstrapAdmin
+          ? `Bootstrap administrator ${name} (${createdUser.memberCode}) created — empty cooperative initialized`
+          : `New registration from ${name} (${createdUser.memberCode}) queued for administrator approval`,
         payload: {
           email: createdUser.email,
           memberCode: createdUser.memberCode,
           referenceMemberName,
           authProvider,
-          status: 'pending_approval',
+          status: createdUser.status,
+          role: createdUser.role,
+          bootstrap: isBootstrapAdmin,
         },
       });
       return draft;
     });
 
     broadcastRealtimeEvent('members:updated', { userId: createdUser.id });
-    broadcastRealtimeEvent('notification:created', { type: 'signup_pending_admin' });
+    if (createdUser.status === 'pending_approval') {
+      broadcastRealtimeEvent('notification:created', { type: 'signup_pending_admin' });
+    }
     broadcastRealtimeEvent('audit:updated', {
-      action: 'MEMBER_SIGNUP_REQUESTED',
+      action:
+        createdUser.role === 'admin' ? 'BOOTSTRAP_ADMIN_CREATED' : 'MEMBER_SIGNUP_REQUESTED',
       resourceType: 'auth',
       resourceId: createdUser.id,
     });
 
     res.status(201).json({
-      pendingApproval: true,
+      pendingApproval: createdUser.status === 'pending_approval',
+      bootstrapAdmin: createdUser.role === 'admin' && createdUser.status === 'active',
       user: sanitized,
-      message: verifiedGoogle
-        ? 'Membership application submitted with your verified Google account. An administrator will review your KYC details and approve your account before you can sign in with Google.'
-        : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
+      message:
+        createdUser.role === 'admin'
+          ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is ready to sign in.'
+          : verifiedGoogle
+            ? 'Membership application submitted with your verified Google account. An administrator will review your KYC details and approve your account before you can sign in with Google.'
+            : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {

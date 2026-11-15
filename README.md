@@ -183,7 +183,4 @@ If a member cannot access the self-service dashboard (for example, following acc
    npm run build
    ```
 3. Open `http://localhost:3000`.
-4. Clean bootstrap starts with **only the Administrator account** (no fake members or demo ledger entries):
-   - **Email**: `admin@amanahcoop.org`
-   - **Password**: `Amanah@2026`
-   - **Member Code**: `AC-001`
+4. Clean bootstrap starts with **no users and no demo data**. Register the first account — it becomes the **bootstrap administrator** (active immediately). Later signups stay pending until an admin approves them. Fund defaults (contribution amount, loan caps, maturity, etc.) are editable under Admin → Site Settings.

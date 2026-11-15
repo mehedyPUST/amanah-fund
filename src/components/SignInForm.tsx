@@ -191,7 +191,8 @@ export function SignInForm() {
             </Link>
           </div>
           <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-            Default bootstrap administrator: <span className="font-mono">admin@amanahcoop.org</span>
+            First registration on an empty cooperative becomes the administrator. Later members
+            require admin approval.
           </p>
         </div>
       </motion.div>

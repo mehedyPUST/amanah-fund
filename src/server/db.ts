@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import bcrypt from 'bcryptjs';
 import { MongoClient, type Db } from 'mongodb';
 import type {
   AuditLogEntry,
@@ -18,7 +17,6 @@ import type {
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
-import { computeSha256Hash, encryptSensitiveObject } from './crypto.ts';
 
 export interface StoredUser {
   id: string;
@@ -83,23 +81,11 @@ let initialized = false;
 let memoryState: VaultState | null = null;
 let vaultWriteQueue: Promise<void> = Promise.resolve();
 
-function createSeedState(): VaultState {
-  const passwordHash = bcrypt.hashSync('Amanah@2026', 10);
-
-  const users: StoredUser[] = [
-    {
-      id: 'usr-admin-1',
-      name: 'Amanah Administrator',
-      email: 'admin@amanahcoop.org',
-      passwordHash,
-      role: 'admin',
-      memberCode: 'AC-001',
-      status: 'active',
-      joinedAt: '2026-01-01T09:00:00.000Z',
-      phoneMasked: '••••4102',
-    },
-  ];
-
+/** Empty cooperative vault — no demo users, loans, or sample content.
+ *  Fund defaults are starting values only; admins change them in Site Settings.
+ *  The first registered account becomes the bootstrap admin (see /auth/register). */
+function createEmptyVaultState(): VaultState {
+  const now = new Date().toISOString();
   const fundConfig: FundConfig = {
     id: 'default-config',
     fundName: 'Amanah',
@@ -114,46 +100,21 @@ function createSeedState(): VaultState {
     voteThresholdDenominator: 3,
     maturityDate: '2028-12-31',
     managerCycleMonths: 3,
-    managerCycleStartDate: '2026-01-01',
+    managerCycleStartDate: now.slice(0, 10),
     halalInvestmentThesis:
       'Upon reaching the pre-specified maturity date, accumulated cooperative capital transitions from Qard Hasan liquidity into Shariah-screened Mudarabah SME agriculture, healthcare equipment Murabahah, and clean-energy Musharakah ventures.',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    updatedBy: 'Amanah Administrator',
+    updatedAt: now,
+    updatedBy: 'System',
   };
-
-  const log1Payload = {
-    event: 'treasury_genesis',
-    maturityDate: fundConfig.maturityDate,
-    maxLoansPerYear: fundConfig.maxLoansPerYear,
-  };
-  const log1Hash = computeSha256Hash({ index: 1, ...log1Payload });
-
-  const auditLogs: AuditLogEntry[] = [
-    {
-      id: 'audit-001',
-      timestamp: '2026-01-01T00:05:00.000Z',
-      actorId: 'usr-admin-1',
-      actorName: 'Amanah Administrator',
-      actorRole: 'admin',
-      action: 'FUND_CONFIG_INITIALIZED',
-      resourceType: 'config',
-      resourceId: 'default-config',
-      summary:
-        'Cooperative fund initialized with 2028-12-31 Halal maturity date and 3 loans/year limit',
-      encryptedPayload: encryptSensitiveObject(log1Payload),
-      prevHash: '0000000000000000000000000000000000000000000000000000000000000000',
-      entryHash: log1Hash,
-    },
-  ];
 
   return {
-    users,
+    users: [],
     fundConfig,
     contributions: [],
     loans: [],
     halalProjects: [],
     emailNotifications: [],
-    auditLogs,
+    auditLogs: [],
     communityPosts: [],
     privateMessages: [],
     decisionPolls: [],
@@ -162,7 +123,17 @@ function createSeedState(): VaultState {
   };
 }
 
-const LEGACY_FAKE_USER_IDS = new Set([
+const DEMO_SEED_EMAILS = new Set([
+  'admin@amanahcoop.org',
+  'nadia@amanahcoop.org',
+  'imran@amanahcoop.org',
+  'fatima@amanahcoop.org',
+  'yusuf@amanahcoop.org',
+  'ayesha@amanahcoop.org',
+  'bilal@amanahcoop.org',
+]);
+const DEMO_SEED_USER_IDS = new Set([
+  'usr-admin-1',
   'usr-mgr-1',
   'usr-mem-1',
   'usr-mem-2',
@@ -171,101 +142,43 @@ const LEGACY_FAKE_USER_IDS = new Set([
   'usr-pending-1',
 ]);
 
-const LEGACY_FAKE_USER_EMAILS = new Set([
-  'nadia@amanahcoop.org',
-  'imran@amanahcoop.org',
-  'fatima@amanahcoop.org',
-  'yusuf@amanahcoop.org',
-  'ayesha@amanahcoop.org',
-  'bilal@amanahcoop.org',
-]);
-
-/** Only purge loans clearly tied to demo seed users — do NOT purge by sequential
- *  IDs like loan-2026-001 (those collide with real first-of-year loan IDs). */
-const LEGACY_FAKE_PROJECT_IDS = new Set(['halal-proj-1', 'halal-proj-2', 'halal-proj-3']);
-const LEGACY_FAKE_NOTIF_IDS = new Set(['notif-001', 'notif-002', 'notif-003', 'notif-004']);
-const LEGACY_FAKE_AUDIT_IDS = new Set(['audit-002', 'audit-003']);
-
-function purgeLegacyFakeSeedData(state: VaultState): { state: VaultState; changed: boolean } {
+/** Strip legacy demo seed accounts + orphan records. Production data is kept. */
+function purgeOrphanRecords(state: VaultState): { state: VaultState; changed: boolean } {
   let changed = false;
 
-  const filteredUsers = (state.users || []).filter((u) => {
-    const isFake =
-      LEGACY_FAKE_USER_IDS.has(u.id) || LEGACY_FAKE_USER_EMAILS.has(u.email.toLowerCase());
-    if (isFake) changed = true;
-    return !isFake;
-  });
-
-  state.users = filteredUsers.map((u) => {
-    if (u.id === 'usr-admin-1' && u.name === 'Tariq Al-Mansoor') {
-      changed = true;
-      return { ...u, name: 'Amanah Administrator' };
-    }
-    return u;
-  });
+  const beforeUsers = (state.users || []).length;
+  state.users = (state.users || []).filter(
+    (u) =>
+      !DEMO_SEED_USER_IDS.has(u.id) &&
+      !DEMO_SEED_EMAILS.has((u.email || '').toLowerCase())
+  );
+  if (state.users.length !== beforeUsers) changed = true;
 
   const realUserIds = new Set(state.users.map((u) => u.id));
 
-  if (state.fundConfig?.updatedBy === 'Tariq Al-Mansoor') {
-    state.fundConfig.updatedBy = 'Amanah Administrator';
-    changed = true;
-  }
-
   const beforeContribs = (state.contributions || []).length;
-  state.contributions = (state.contributions || []).filter(
-    (c) =>
-      !LEGACY_FAKE_USER_IDS.has(c.userId) &&
-      realUserIds.has(c.userId) &&
-      !/^contrib-2026-\d{2}-usr-/.test(c.id)
-  );
+  state.contributions = (state.contributions || []).filter((c) => realUserIds.has(c.userId));
   if (state.contributions.length !== beforeContribs) changed = true;
 
-  // Drop loans for deleted/fake users OR orphan borrowers (no matching user).
-  // Never delete by sequential loan-YYYY-NNN alone — those are real production IDs.
   const beforeLoans = (state.loans || []).length;
-  state.loans = (state.loans || []).filter((l) => {
-    const fakeBorrower = LEGACY_FAKE_USER_IDS.has(l.borrowerId);
-    const orphanBorrower = !realUserIds.has(l.borrowerId);
-    if (fakeBorrower || orphanBorrower) {
-      changed = true;
-      return false;
-    }
-    return true;
-  });
+  state.loans = (state.loans || []).filter((l) => realUserIds.has(l.borrowerId));
   if (state.loans.length !== beforeLoans) changed = true;
-
-  const beforeProjects = (state.halalProjects || []).length;
-  state.halalProjects = (state.halalProjects || []).filter(
-    (p) => !LEGACY_FAKE_PROJECT_IDS.has(p.id)
-  );
-  if (state.halalProjects.length !== beforeProjects) changed = true;
 
   const beforeNotifs = (state.emailNotifications || []).length;
   state.emailNotifications = (state.emailNotifications || []).filter(
-    (n) =>
-      !LEGACY_FAKE_NOTIF_IDS.has(n.id) &&
-      !LEGACY_FAKE_USER_EMAILS.has((n.recipientEmail || '').toLowerCase()) &&
-      !(n.recipientUserId && LEGACY_FAKE_USER_IDS.has(n.recipientUserId))
+    (n) => !n.recipientUserId || realUserIds.has(n.recipientUserId)
   );
   if (state.emailNotifications.length !== beforeNotifs) changed = true;
 
   const beforeAudits = (state.auditLogs || []).length;
-  state.auditLogs = (state.auditLogs || [])
-    .filter((a) => !LEGACY_FAKE_AUDIT_IDS.has(a.id) && !LEGACY_FAKE_USER_IDS.has(a.actorId))
-    .map((a) => {
-      if (a.id === 'audit-001' && a.actorName === 'Tariq Al-Mansoor') {
-        changed = true;
-        return { ...a, actorName: 'Amanah Administrator' };
-      }
-      return a;
-    });
+  state.auditLogs = (state.auditLogs || []).filter((a) => !DEMO_SEED_USER_IDS.has(a.actorId));
   if (state.auditLogs.length !== beforeAudits) changed = true;
 
   return { state, changed };
 }
 
 function normalizeVaultState(state: VaultState): VaultState {
-  purgeLegacyFakeSeedData(state);
+  purgeOrphanRecords(state);
   state.emailNotifications = Array.isArray(state.emailNotifications)
     ? state.emailNotifications
     : [];
@@ -340,14 +253,14 @@ function readLocalVault(): VaultState {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   }
   if (!fs.existsSync(VAULT_FILE)) {
-    const seed = createSeedState();
-    fs.writeFileSync(VAULT_FILE, JSON.stringify(seed, null, 2), 'utf8');
-    memoryState = seed;
-    return structuredClone(seed);
+    const empty = createEmptyVaultState();
+    fs.writeFileSync(VAULT_FILE, JSON.stringify(empty, null, 2), 'utf8');
+    memoryState = empty;
+    return structuredClone(empty);
   }
   const raw = fs.readFileSync(VAULT_FILE, 'utf8');
   const parsed = JSON.parse(raw) as VaultState;
-  const { changed } = purgeLegacyFakeSeedData(parsed);
+  const { changed } = purgeOrphanRecords(parsed);
   memoryState = normalizeVaultState(parsed);
   if (changed) {
     fs.writeFileSync(VAULT_FILE, JSON.stringify(memoryState, null, 2), 'utf8');
@@ -374,57 +287,61 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
       mongoDb = mongoClient.db('amanah_coop');
       storageEngine = 'mongodb_atlas';
 
-      const usersCount = await mongoDb.collection('users').countDocuments();
-      if (usersCount === 0) {
-        const seed = createSeedState();
-        await mongoDb.collection('users').insertMany(seed.users);
-        await mongoDb.collection('fundConfig').insertOne(seed.fundConfig);
-        if (seed.auditLogs.length) {
-          await mongoDb.collection('auditLogs').insertMany(seed.auditLogs);
-        }
-      } else {
-        await Promise.all([
-          mongoDb.collection('users').deleteMany({
-            $or: [
-              { id: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
-              { email: { $in: Array.from(LEGACY_FAKE_USER_EMAILS) } },
-            ],
-          }),
-          mongoDb.collection('users').updateOne(
-            { id: 'usr-admin-1', name: 'Tariq Al-Mansoor' },
-            { $set: { name: 'Amanah Administrator' } }
-          ),
-          mongoDb.collection('fundConfig').updateOne(
-            { id: 'default-config', updatedBy: 'Tariq Al-Mansoor' },
-            { $set: { updatedBy: 'Amanah Administrator' } }
-          ),
-          mongoDb.collection('contributions').deleteMany({
-            $or: [
-              { userId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
-              { id: { $regex: '^contrib-2026-\\d{2}-usr-' } },
-            ],
-          }),
-          mongoDb.collection('loans').deleteMany({
-            borrowerId: { $in: Array.from(LEGACY_FAKE_USER_IDS) },
-          }),
-          mongoDb.collection('halalProjects').deleteMany({
-            id: { $in: Array.from(LEGACY_FAKE_PROJECT_IDS) },
-          }),
-          mongoDb.collection('emailNotifications').deleteMany({
-            $or: [
-              { id: { $in: Array.from(LEGACY_FAKE_NOTIF_IDS) } },
-              { recipientEmail: { $in: Array.from(LEGACY_FAKE_USER_EMAILS) } },
-              { recipientUserId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
-            ],
-          }),
-          mongoDb.collection('auditLogs').deleteMany({
-            $or: [
-              { id: { $in: Array.from(LEGACY_FAKE_AUDIT_IDS) } },
-              { actorId: { $in: Array.from(LEGACY_FAKE_USER_IDS) } },
-            ],
-          }),
-        ]);
+      const configCount = await mongoDb.collection('fundConfig').countDocuments({
+        id: 'default-config',
+      });
+      if (configCount === 0) {
+        const empty = createEmptyVaultState();
+        await mongoDb.collection('fundConfig').insertOne(empty.fundConfig);
       }
+
+      // One-time migration: remove historical demo seed accounts & related rows.
+      // Real production members are never matched by these exact seed identifiers.
+      const DEMO_EMAILS = [
+        'admin@amanahcoop.org',
+        'nadia@amanahcoop.org',
+        'imran@amanahcoop.org',
+        'fatima@amanahcoop.org',
+        'yusuf@amanahcoop.org',
+        'ayesha@amanahcoop.org',
+        'bilal@amanahcoop.org',
+      ];
+      const DEMO_USER_IDS = [
+        'usr-admin-1',
+        'usr-mgr-1',
+        'usr-mem-1',
+        'usr-mem-2',
+        'usr-mem-3',
+        'usr-mem-4',
+        'usr-pending-1',
+      ];
+      await Promise.allSettled([
+        mongoDb.collection('users').deleteMany({
+          $or: [
+            { email: { $in: DEMO_EMAILS } },
+            { id: { $in: DEMO_USER_IDS } },
+          ],
+        }),
+        mongoDb.collection('contributions').deleteMany({
+          userId: { $in: DEMO_USER_IDS },
+        }),
+        mongoDb.collection('loans').deleteMany({
+          borrowerId: { $in: DEMO_USER_IDS },
+        }),
+        mongoDb.collection('emailNotifications').deleteMany({
+          $or: [
+            { recipientEmail: { $in: DEMO_EMAILS } },
+            { recipientUserId: { $in: DEMO_USER_IDS } },
+          ],
+        }),
+        mongoDb.collection('auditLogs').deleteMany({
+          actorId: { $in: DEMO_USER_IDS },
+        }),
+        mongoDb.collection('halalProjects').deleteMany({
+          id: { $in: ['halal-proj-1', 'halal-proj-2', 'halal-proj-3'] },
+        }),
+      ]);
+      // No demo users or sample content are inserted. First signup becomes admin.
       await Promise.allSettled([
         mongoDb.collection('users').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('users').createIndex({ email: 1 }),
@@ -501,7 +418,7 @@ export async function loadVaultState(): Promise<VaultState> {
 
     return normalizeVaultState({
       users,
-      fundConfig: configDoc || createSeedState().fundConfig,
+      fundConfig: configDoc || createEmptyVaultState().fundConfig,
       contributions,
       loans,
       halalProjects,
