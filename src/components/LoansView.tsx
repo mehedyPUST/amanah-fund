@@ -13,7 +13,12 @@ import {
 import Skeleton from 'react-loading-skeleton';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney, formatShortDate } from '../utils/format.ts';
+import {
+  BANK_PROVIDERS,
+  MFS_PROVIDERS,
+  formatMoney,
+  formatShortDate,
+} from '../utils/format.ts';
 import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -52,7 +57,7 @@ export function LoansView({
     installmentNumber: number;
   } | null>(null);
   const [repayChannel, setRepayChannel] = useState<'bank' | 'mfs'>('mfs');
-  const [repayProvider, setRepayProvider] = useState('bKash');
+  const [repayProvider, setRepayProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [repayAccount, setRepayAccount] = useState('');
   const [repayRef, setRepayRef] = useState('');
   const [repayBusy, setRepayBusy] = useState(false);
@@ -649,21 +654,24 @@ export function LoansView({
                           onChange={(e) => {
                             const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
                             setRepayChannel(ch);
-                            setRepayProvider(ch === 'mfs' ? 'bKash' : 'Islami Bank Bangladesh');
+                            setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
                           }}
                           className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                         >
                           <option value="mfs">MFS</option>
                           <option value="bank">Bank</option>
                         </select>
-                        <input
-                          type="text"
-                          required
+                        <select
                           value={repayProvider}
                           onChange={(e) => setRepayProvider(e.target.value)}
-                          placeholder="Provider / Bank"
                           className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                        />
+                        >
+                          {(repayChannel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS).map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
                         <input
                           type="text"
                           required

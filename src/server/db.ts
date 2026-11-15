@@ -47,6 +47,7 @@ let mongoDb: Db | null = null;
 let storageEngine: 'mongodb_atlas' | 'encrypted_local_vault' = 'encrypted_local_vault';
 let initialized = false;
 let memoryState: VaultState | null = null;
+let vaultWriteQueue: Promise<void> = Promise.resolve();
 
 function createSeedState(): VaultState {
   const passwordHash = bcrypt.hashSync('Amanah@2026', 10);
@@ -250,7 +251,7 @@ function normalizeVaultState(state: VaultState): VaultState {
 }
 
 function readLocalVault(): VaultState {
-  if (memoryState) return memoryState;
+  if (memoryState) return structuredClone(memoryState);
   if (!fs.existsSync(VAULT_DIR)) {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   }
@@ -258,7 +259,7 @@ function readLocalVault(): VaultState {
     const seed = createSeedState();
     fs.writeFileSync(VAULT_FILE, JSON.stringify(seed, null, 2), 'utf8');
     memoryState = seed;
-    return seed;
+    return structuredClone(seed);
   }
   const raw = fs.readFileSync(VAULT_FILE, 'utf8');
   const parsed = JSON.parse(raw) as VaultState;
@@ -267,11 +268,11 @@ function readLocalVault(): VaultState {
   if (changed) {
     fs.writeFileSync(VAULT_FILE, JSON.stringify(memoryState, null, 2), 'utf8');
   }
-  return memoryState;
+  return structuredClone(memoryState);
 }
 
 function writeLocalVault(state: VaultState): void {
-  memoryState = state;
+  memoryState = structuredClone(state);
   if (!fs.existsSync(VAULT_DIR)) {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   }
@@ -389,34 +390,51 @@ export async function loadVaultState(): Promise<VaultState> {
   return readLocalVault();
 }
 
-export async function updateVaultState(mutator: (state: VaultState) => VaultState | Promise<VaultState>): Promise<VaultState> {
-  const current = await loadVaultState();
-  const next = await mutator(structuredClone(current));
+export function updateVaultState(
+  mutator: (state: VaultState) => VaultState | Promise<VaultState>
+): Promise<VaultState> {
+  const run = async (): Promise<VaultState> => {
+    const current = await loadVaultState();
+    const next = await mutator(structuredClone(current));
 
-  if (mongoDb) {
-    await Promise.all([
-      mongoDb.collection('users').deleteMany({}).then(() => (next.users.length ? mongoDb!.collection('users').insertMany(next.users) : null)),
-      mongoDb.collection('fundConfig').replaceOne({ id: 'default-config' }, next.fundConfig, { upsert: true }),
-      mongoDb
-        .collection('contributions')
-        .deleteMany({})
-        .then(() => (next.contributions.length ? mongoDb!.collection('contributions').insertMany(next.contributions) : null)),
-      mongoDb.collection('loans').deleteMany({}).then(() => (next.loans.length ? mongoDb!.collection('loans').insertMany(next.loans) : null)),
-      mongoDb
-        .collection('halalProjects')
-        .deleteMany({})
-        .then(() => (next.halalProjects.length ? mongoDb!.collection('halalProjects').insertMany(next.halalProjects) : null)),
-      mongoDb
-        .collection('emailNotifications')
-        .deleteMany({})
-        .then(() => (next.emailNotifications.length ? mongoDb!.collection('emailNotifications').insertMany(next.emailNotifications) : null)),
-      mongoDb
-        .collection('auditLogs')
-        .deleteMany({})
-        .then(() => (next.auditLogs.length ? mongoDb!.collection('auditLogs').insertMany(next.auditLogs) : null)),
-    ]);
-  } else {
-    writeLocalVault(next);
-  }
-  return next;
+    if (mongoDb) {
+      await Promise.all([
+        mongoDb
+          .collection('users')
+          .deleteMany({})
+          .then(() => (next.users.length ? mongoDb!.collection('users').insertMany(next.users) : null)),
+        mongoDb.collection('fundConfig').replaceOne({ id: 'default-config' }, next.fundConfig, { upsert: true }),
+        mongoDb
+          .collection('contributions')
+          .deleteMany({})
+          .then(() => (next.contributions.length ? mongoDb!.collection('contributions').insertMany(next.contributions) : null)),
+        mongoDb
+          .collection('loans')
+          .deleteMany({})
+          .then(() => (next.loans.length ? mongoDb!.collection('loans').insertMany(next.loans) : null)),
+        mongoDb
+          .collection('halalProjects')
+          .deleteMany({})
+          .then(() => (next.halalProjects.length ? mongoDb!.collection('halalProjects').insertMany(next.halalProjects) : null)),
+        mongoDb
+          .collection('emailNotifications')
+          .deleteMany({})
+          .then(() => (next.emailNotifications.length ? mongoDb!.collection('emailNotifications').insertMany(next.emailNotifications) : null)),
+        mongoDb
+          .collection('auditLogs')
+          .deleteMany({})
+          .then(() => (next.auditLogs.length ? mongoDb!.collection('auditLogs').insertMany(next.auditLogs) : null)),
+      ]);
+    } else {
+      writeLocalVault(next);
+    }
+    return next;
+  };
+
+  const result = vaultWriteQueue.then(run, run);
+  vaultWriteQueue = result.then(
+    () => undefined,
+    () => undefined
+  );
+  return result;
 }

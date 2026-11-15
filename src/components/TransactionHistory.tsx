@@ -16,6 +16,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { downloadContributionAndLoanPdfStatement } from '../utils/pdfStatement.ts';
 import {
+  escapeCsvCell,
   formatBillingMonth,
   formatDateTime,
   formatMoney,
@@ -80,13 +81,6 @@ interface LedgerRow {
   entryHash?: string;
 }
 
-function escapeCsvCell(value: string | number | undefined): string {
-  const str = value === undefined ? '' : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
 
 export function TransactionHistory({
   contributions,
@@ -154,13 +148,14 @@ export function TransactionHistory({
       });
     });
 
-    const scopedActiveLoans = loans.filter(
+    const scopedRepayableLoans = loans.filter(
       (l) =>
-        l.status === 'active' &&
+        (l.status === 'active' || l.status === 'repaid') &&
         (effectiveScope === 'mine' ? l.borrowerId === user.id : true)
     );
+    const scopedActiveLoans = scopedRepayableLoans.filter((l) => l.status === 'active');
 
-    scopedActiveLoans.forEach((loan) => {
+    scopedRepayableLoans.forEach((loan) => {
       loan.installments.forEach((inst) => {
         const statusBucket: LedgerRow['statusBucket'] =
           inst.status === 'paid'
@@ -331,12 +326,12 @@ export function TransactionHistory({
             <span>General Treasury Ledger</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Transaction History · Contributions & Active Loan Repayments
+            Transaction History · Contributions & Loan Repayments
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {effectiveScope === 'mine'
-              ? `Unified record of ${user.name}'s (${user.memberCode}) monthly Bank/MFS contributions and active Qard Hasan repayments`
-              : 'Cooperative-wide view of member monthly contributions and active Qard Hasan loan repayments'}
+              ? `Unified record of ${user.name}'s (${user.memberCode}) monthly Bank/MFS contributions and Qard Hasan repayments`
+              : 'Cooperative-wide view of member monthly contributions and Qard Hasan loan repayments'}
           </p>
         </div>
 

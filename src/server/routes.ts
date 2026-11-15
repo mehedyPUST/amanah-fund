@@ -56,6 +56,30 @@ function encodeBase64Url(input: string): string {
     .replace(/=+$/, '');
 }
 
+function computeInstallmentDueDate(anchor: Date | string, monthOffset: number): string {
+  const base = anchor instanceof Date ? anchor : new Date(anchor);
+  const due = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + monthOffset, 15));
+  return due.toISOString().slice(0, 10);
+}
+
+function nextMemberCode(users: StoredUser[]): string {
+  const maxNum = users.reduce((max, u) => {
+    const num = Number(u.memberCode.replace(/\D/g, ''));
+    return Number.isFinite(num) && num > max ? num : max;
+  }, 0);
+  return `AC-${String(maxNum + 1).padStart(3, '0')}`;
+}
+
+function nextLoanId(loans: LoanRequest[], year = new Date().getUTCFullYear()): string {
+  const prefix = `loan-${year}-`;
+  const maxNum = loans.reduce((max, l) => {
+    if (!l.id.startsWith(prefix)) return max;
+    const seq = Number(l.id.slice(prefix.length));
+    return Number.isFinite(seq) && seq > max ? seq : max;
+  }, 0);
+  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+}
+
 export const apiRouter = Router();
 
 // Real-time Server-Sent Events stream for live voting and treasury synchronization
@@ -260,12 +284,6 @@ apiRouter.post('/auth/register', async (req, res) => {
       return;
     }
 
-    const state = await loadVaultState();
-    if (state.users.some((u) => u.email.toLowerCase() === email)) {
-      res.status(409).json({ error: 'An account with this email already exists.' });
-      return;
-    }
-
     const registrationDetails: UserRegistrationDetails = {
       dateOfBirth,
       referenceMemberName,
@@ -279,25 +297,32 @@ apiRouter.post('/auth/register', async (req, res) => {
       agreementPhotoUrl: agreementPhotoUrl || undefined,
     };
 
-    const nextNumber = state.users.length + 1;
-    const newUser: StoredUser = {
-      id: `usr-mem-${Date.now()}`,
-      name,
-      email,
-      passwordHash: bcrypt.hashSync(password, 10),
-      role: 'member',
-      memberCode: `AC-${String(nextNumber).padStart(3, '0')}`,
-      status: 'pending_approval',
-      joinedAt: new Date().toISOString(),
-      phoneMasked: maskReference(mobile),
-      photoUrl,
-      encryptedRegistrationDetails: encryptSensitiveObject(registrationDetails),
-    };
-
-    const sanitized = sanitizeUser(newUser);
+    const passwordHash = bcrypt.hashSync(password, 10);
+    let createdUser!: StoredUser;
+    let sanitized!: ReturnType<typeof sanitizeUser>;
 
     await updateVaultState((draft) => {
-      draft.users.push(newUser);
+      if (draft.users.some((u) => u.email.toLowerCase() === email)) {
+        throw new Error('EMAIL_IN_USE');
+      }
+
+      createdUser = {
+        id: `usr-mem-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name,
+        email,
+        passwordHash,
+        role: 'member',
+        memberCode: nextMemberCode(draft.users),
+        status: 'pending_approval',
+        joinedAt: new Date().toISOString(),
+        phoneMasked: maskReference(mobile),
+        photoUrl,
+        encryptedRegistrationDetails: encryptSensitiveObject(registrationDetails),
+      };
+
+      sanitized = sanitizeUser(createdUser);
+      draft.users.push(createdUser);
+
       const activeAdmins = draft.users.filter((u) => u.role === 'admin' && u.status === 'active');
       activeAdmins.forEach((admin) => {
         queueEmailNotification(draft, {
@@ -305,9 +330,9 @@ apiRouter.post('/auth/register', async (req, res) => {
           recipientEmail: admin.email,
           recipientName: admin.name,
           recipientUserId: admin.id,
-          subject: `New Member Signup Pending Approval: ${name} (${newUser.memberCode})`,
-          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}) submitted a cooperative membership application (${newUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
-          relatedId: newUser.id,
+          subject: `New Member Signup Pending Approval: ${name} (${createdUser.memberCode})`,
+          body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
+          relatedId: createdUser.id,
         });
       });
 
@@ -315,11 +340,11 @@ apiRouter.post('/auth/register', async (req, res) => {
         actor: sanitized,
         action: 'MEMBER_SIGNUP_REQUESTED',
         resourceType: 'auth',
-        resourceId: newUser.id,
-        summary: `New registration from ${name} (${newUser.memberCode}) queued for administrator approval`,
+        resourceId: createdUser.id,
+        summary: `New registration from ${name} (${createdUser.memberCode}) queued for administrator approval`,
         payload: {
-          email: newUser.email,
-          memberCode: newUser.memberCode,
+          email: createdUser.email,
+          memberCode: createdUser.memberCode,
           referenceMemberName,
           status: 'pending_approval',
         },
@@ -327,7 +352,7 @@ apiRouter.post('/auth/register', async (req, res) => {
       return draft;
     });
 
-    broadcastRealtimeEvent('members:updated', { userId: newUser.id });
+    broadcastRealtimeEvent('members:updated', { userId: createdUser.id });
     broadcastRealtimeEvent('notification:created', { type: 'signup_pending_admin' });
 
     res.status(201).json({
@@ -337,6 +362,10 @@ apiRouter.post('/auth/register', async (req, res) => {
         'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
     });
   } catch (err) {
+    if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
+      res.status(409).json({ error: 'An account with this email already exists.' });
+      return;
+    }
     console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed.' });
   }
@@ -797,62 +826,6 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       return;
     }
 
-    const state = await loadVaultState();
-    const dbUser = state.users.find((u) => u.id === viewer.id);
-    if (!dbUser || dbUser.status !== 'active') {
-      res.status(403).json({
-        error: 'Only verified active members can submit a Qard Hasan loan request.',
-      });
-      return;
-    }
-
-    const eligibility = evaluateLoanEligibility(state, viewer.id);
-    if (!eligibility.eligible) {
-      res.status(400).json({
-        error: eligibility.reasons[0] || 'Member is not eligible for a Qard Hasan loan right now.',
-        eligibility,
-      });
-      return;
-    }
-
-    if (amount > state.fundConfig.maxLoanAmount) {
-      res.status(400).json({
-        error: `Requested amount exceeds cooperative cap of ${state.fundConfig.maxLoanAmount}.`,
-      });
-      return;
-    }
-
-    if (installmentMonths > state.fundConfig.maxInstallmentMonths) {
-      res.status(400).json({
-        error: `Installment schedule cannot exceed ${state.fundConfig.maxInstallmentMonths} months.`,
-      });
-      return;
-    }
-
-    const overview = buildDashboardOverview(state, viewer);
-
-    const { activeVoters, requiredApprovals } = computeRequiredApprovals(state);
-    const id = `loan-${new Date().getFullYear()}-${String(state.loans.length + 1).padStart(3, '0')}`;
-
-    const baseInstallment = Math.floor((amount / installmentMonths) * 100) / 100;
-    const installments: InstallmentItem[] = Array.from({ length: installmentMonths }, (_, idx) => {
-      const due = new Date();
-      due.setMonth(due.getMonth() + idx + 1);
-      due.setDate(15);
-      const isLast = idx === installmentMonths - 1;
-      const installmentAmount = isLast
-        ? Math.round((amount - baseInstallment * (installmentMonths - 1)) * 100) / 100
-        : baseInstallment;
-
-      return {
-        installmentNumber: idx + 1,
-        dueDate: due.toISOString().slice(0, 10),
-        amount: installmentAmount,
-        paidAmount: 0,
-        status: 'scheduled',
-      };
-    });
-
     const encryptedSensitiveNotes = encryptSensitiveObject({
       emergencyContext: emergencyContext || purpose,
       disbursementAccount,
@@ -860,36 +833,80 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       provider,
     });
 
-    const newLoan: LoanRequest = {
-      id,
-      borrowerId: viewer.id,
-      borrowerName: viewer.name,
-      borrowerCode: viewer.memberCode,
-      amount,
-      installmentMonths,
-      monthlyInstallment: Math.round((amount / installmentMonths) * 100) / 100,
-      purpose,
-      encryptedSensitiveNotes,
-      status: 'pending_vote',
-      eligibilitySnapshot: eligibility,
-      votes: [],
-      requiredApprovals,
-      totalEligibleVoters: activeVoters,
-      installments,
-      totalRepaid: 0,
-      remainingBalance: amount,
-      requestedAt: new Date().toISOString(),
-      entryHash: computeSha256Hash({
-        id,
-        borrowerId: viewer.id,
-        amount,
-        installmentMonths,
-        purpose,
-      }),
-    };
+    let createdLoan!: LoanRequest;
+    let currency: FundConfig['currency'] = 'BDT';
 
     await updateVaultState((draft) => {
-      draft.loans.unshift(newLoan);
+      const dbUser = draft.users.find((u) => u.id === viewer.id);
+      if (!dbUser || dbUser.status !== 'active') {
+        throw new Error('UNVERIFIED_MEMBER');
+      }
+
+      const eligibility = evaluateLoanEligibility(draft, viewer.id);
+      if (!eligibility.eligible) {
+        const err = new Error('LOAN_INELIGIBLE') as Error & { eligibility?: typeof eligibility };
+        err.eligibility = eligibility;
+        throw err;
+      }
+
+      if (amount > draft.fundConfig.maxLoanAmount) {
+        throw new Error(`AMOUNT_EXCEEDS_MAX:${draft.fundConfig.maxLoanAmount}`);
+      }
+      if (installmentMonths > draft.fundConfig.maxInstallmentMonths) {
+        throw new Error(`MONTHS_EXCEED_MAX:${draft.fundConfig.maxInstallmentMonths}`);
+      }
+
+      const overview = buildDashboardOverview(draft, viewer);
+      const { activeVoters, requiredApprovals } = computeRequiredApprovals(draft);
+      const id = nextLoanId(draft.loans);
+      const requestedAt = new Date().toISOString();
+      currency = draft.fundConfig.currency;
+
+      const baseInstallment = Math.floor((amount / installmentMonths) * 100) / 100;
+      const installments: InstallmentItem[] = Array.from({ length: installmentMonths }, (_, idx) => {
+        const isLast = idx === installmentMonths - 1;
+        const installmentAmount = isLast
+          ? Math.round((amount - baseInstallment * (installmentMonths - 1)) * 100) / 100
+          : baseInstallment;
+
+        return {
+          installmentNumber: idx + 1,
+          dueDate: computeInstallmentDueDate(requestedAt, idx + 1),
+          amount: installmentAmount,
+          paidAmount: 0,
+          status: 'scheduled',
+        };
+      });
+
+      createdLoan = {
+        id,
+        borrowerId: viewer.id,
+        borrowerName: viewer.name,
+        borrowerCode: viewer.memberCode,
+        amount,
+        installmentMonths,
+        monthlyInstallment: Math.round((amount / installmentMonths) * 100) / 100,
+        purpose,
+        encryptedSensitiveNotes,
+        status: 'pending_vote',
+        eligibilitySnapshot: eligibility,
+        votes: [],
+        requiredApprovals,
+        totalEligibleVoters: activeVoters,
+        installments,
+        totalRepaid: 0,
+        remainingBalance: amount,
+        requestedAt,
+        entryHash: computeSha256Hash({
+          id,
+          borrowerId: viewer.id,
+          amount,
+          installmentMonths,
+          purpose,
+        }),
+      };
+
+      draft.loans.unshift(createdLoan);
 
       const notifiedIds = new Set<string>();
       const adminsAndManagers = draft.users.filter(
@@ -903,7 +920,7 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
           recipientName: staff.name,
           recipientUserId: staff.id,
           subject: `Qard Hasan Loan Review Needed: ${viewer.name} (${id})`,
-          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${draft.fundConfig.currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan request (${installmentMonths} monthly installments) for "${purpose}". Review in Admin & Reports or 2/3 Member Voting (Available liquidity: ${overview.treasury.availableLiquidity} ${currency}).`,
           relatedId: id,
         });
       });
@@ -918,7 +935,7 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
           recipientName: member.name,
           recipientUserId: member.id,
           subject: `2/3 Majority Vote Needed: ${viewer.name} (${id})`,
-          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${draft.fundConfig.currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan proposal (${installmentMonths} monthly installments) for "${purpose}". Your vote is requested in the 2/3 Member Voting tab (${requiredApprovals} of ${activeVoters} approvals required).`,
           relatedId: id,
         });
       });
@@ -942,23 +959,49 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
     });
 
     broadcastRealtimeEvent('loan:created', {
-      loanId: id,
+      loanId: createdLoan.id,
       borrowerId: viewer.id,
       borrowerName: viewer.name,
       borrowerCode: viewer.memberCode,
       amount,
-      currency: state.fundConfig.currency,
-      requiredApprovals,
-      totalEligibleVoters: activeVoters,
+      currency,
+      requiredApprovals: createdLoan.requiredApprovals,
+      totalEligibleVoters: createdLoan.totalEligibleVoters,
       purpose,
     });
     broadcastRealtimeEvent('notification:created', {
       type: 'loan_vote_requested',
-      loanId: id,
+      loanId: createdLoan.id,
     });
 
-    res.status(201).json({ loan: hydrateLoanForViewer(newLoan, viewer) });
+    res.status(201).json({ loan: hydrateLoanForViewer(createdLoan, viewer) });
   } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === 'UNVERIFIED_MEMBER') {
+        res.status(403).json({
+          error: 'Only verified active members can submit a Qard Hasan loan request.',
+        });
+        return;
+      }
+      if (err.message === 'LOAN_INELIGIBLE') {
+        const eligibility = (err as Error & { eligibility?: ReturnType<typeof evaluateLoanEligibility> }).eligibility;
+        res.status(400).json({
+          error: eligibility?.reasons[0] || 'Member is not eligible for a Qard Hasan loan right now.',
+          eligibility,
+        });
+        return;
+      }
+      if (err.message.startsWith('AMOUNT_EXCEEDS_MAX:')) {
+        const cap = err.message.split(':')[1];
+        res.status(400).json({ error: `Requested amount exceeds cooperative cap of ${cap}.` });
+        return;
+      }
+      if (err.message.startsWith('MONTHS_EXCEED_MAX:')) {
+        const maxM = err.message.split(':')[1];
+        res.status(400).json({ error: `Installment schedule cannot exceed ${maxM} months.` });
+        return;
+      }
+    }
     console.error('Create loan error:', err);
     res.status(500).json({ error: 'Failed to submit loan request.' });
   }
@@ -1287,8 +1330,7 @@ apiRouter.post(
         }
 
         const overview = buildDashboardOverview(draft, viewer);
-        // Approved loans already reserve/deduct their amount from centralBalance; verify pool isn't negative
-        if (overview.treasury.centralBalance + loan.amount < loan.amount) {
+        if (overview.treasury.centralBalance < 0) {
           throw new Error('INSUFFICIENT_LIQUIDITY');
         }
 
@@ -1308,16 +1350,23 @@ apiRouter.post(
           }),
         };
 
-        // Anchor installment due dates starting next month from disbursement
-        loan.installments = loan.installments.map((inst, idx) => {
-          const due = new Date(signedAt);
-          due.setMonth(due.getMonth() + idx + 1);
-          due.setDate(15);
-          return {
-            ...inst,
-            dueDate: due.toISOString().slice(0, 10),
-          };
-        });
+        loan.installments = loan.installments.map((inst, idx) => ({
+          ...inst,
+          dueDate: computeInstallmentDueDate(signedAt, idx + 1),
+        }));
+
+        const borrower = draft.users.find((u) => u.id === loan.borrowerId);
+        if (borrower) {
+          queueEmailNotification(draft, {
+            type: 'loan_approved_confirmation',
+            recipientEmail: borrower.email,
+            recipientName: borrower.name,
+            recipientUserId: borrower.id,
+            subject: `Qard Hasan Disbursed: ${loan.id}`,
+            body: `Assalamu Alaikum ${borrower.name}, ${viewer.name} completed multi-sig treasury disbursement of ${loan.amount} ${draft.fundConfig.currency} for ${loan.id}. Your ${loan.installmentMonths}-month 0% repayment schedule is now active.`,
+            relatedId: loan.id,
+          });
+        }
 
         updatedLoan = loan;
 
@@ -1342,6 +1391,16 @@ apiRouter.post(
         res.status(404).json({ error: 'Loan request not found.' });
         return;
       }
+
+      broadcastRealtimeEvent('loan:reviewed', {
+        loanId: id,
+        borrowerId: (updatedLoan as LoanRequest).borrowerId,
+        decision: 'disbursed',
+      });
+      broadcastRealtimeEvent('notification:created', {
+        type: 'loan_approved_confirmation',
+        recipientUserId: (updatedLoan as LoanRequest).borrowerId,
+      });
 
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
@@ -1372,6 +1431,10 @@ apiRouter.post(
       const senderAccount = String(req.body?.senderAccount || '').trim();
       const notes = String(req.body?.notes || '').trim();
 
+      if (!Number.isInteger(num) || num < 1) {
+        res.status(400).json({ error: 'Installment number must be a positive integer.' });
+        return;
+      }
       if (!providerName || !referenceId || !senderAccount) {
         res
           .status(400)
@@ -1460,6 +1523,14 @@ apiRouter.post(
         res.status(403).json({ error: 'Only the borrower or treasury staff can submit installments.' });
         return;
       }
+      if (err instanceof Error && err.message === 'LOAN_NOT_ACTIVE') {
+        res.status(409).json({ error: 'Repayments can only be submitted on active disbursed loans.' });
+        return;
+      }
+      if (err instanceof Error && err.message === 'INSTALLMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Installment number not found on this loan schedule.' });
+        return;
+      }
       if (err instanceof Error && err.message === 'INSTALLMENT_ALREADY_SUBMITTED') {
         res.status(409).json({ error: 'Installment is already paid or awaiting verification.' });
         return;
@@ -1478,7 +1549,16 @@ apiRouter.patch(
     try {
       const { id, installmentNumber } = req.params;
       const num = Number(installmentNumber);
-      const approve = req.body?.decision !== 'reject';
+      const rawDecision = req.body?.decision;
+      if (!Number.isInteger(num) || num < 1) {
+        res.status(400).json({ error: 'Installment number must be a positive integer.' });
+        return;
+      }
+      if (rawDecision !== 'approve' && rawDecision !== 'reject') {
+        res.status(400).json({ error: 'Decision must be "approve" or "reject".' });
+        return;
+      }
+      const approve = rawDecision === 'approve';
       const viewer = req.authUser!;
       let updatedLoan: LoanRequest | null = null;
 
@@ -1487,7 +1567,10 @@ apiRouter.patch(
         if (!loan) return draft;
 
         const inst = loan.installments.find((i) => i.installmentNumber === num);
-        if (!inst || inst.status !== 'pending_verification') {
+        if (!inst) {
+          throw new Error('INSTALLMENT_NOT_FOUND');
+        }
+        if (inst.status !== 'pending_verification') {
           throw new Error('NO_PENDING_INSTALLMENT');
         }
 
@@ -1574,6 +1657,10 @@ apiRouter.patch(
       broadcastRealtimeEvent('notification:created', { type: 'loan_repayment_notice' });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'INSTALLMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Installment number not found on this loan schedule.' });
+        return;
+      }
       if (err instanceof Error && err.message === 'NO_PENDING_INSTALLMENT') {
         res.status(409).json({ error: 'Installment is not pending verification.' });
         return;
@@ -1622,28 +1709,28 @@ apiRouter.post(
       }
 
       const viewer = req.authUser!;
-      const currentState = await loadVaultState();
-      const { activeVoters, requiredApprovals } = computeRequiredApprovals(currentState);
-
-      const project: HalalProject = {
-        id: `halal-proj-${Date.now()}`,
-        title,
-        sector,
-        shariahStructure,
-        targetAllocation,
-        projectedAnnualReturn: projectedAnnualReturn || '10% – 13% p.a.',
-        riskTier,
-        status: 'proposed',
-        shariahScholarNote: shariahScholarNote || 'Submitted for member 2/3 placement vote.',
-        createdAt: new Date().toISOString(),
-        votingStatus: 'open',
-        votes: [],
-        requiredApprovals,
-        totalEligibleVoters: activeVoters,
-        proposedBy: viewer.name,
-      };
+      let project!: HalalProject;
 
       await updateVaultState((draft) => {
+        const { activeVoters, requiredApprovals } = computeRequiredApprovals(draft);
+        project = {
+          id: `halal-proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          title,
+          sector,
+          shariahStructure,
+          targetAllocation,
+          projectedAnnualReturn: projectedAnnualReturn || '10% – 13% p.a.',
+          riskTier,
+          status: 'proposed',
+          shariahScholarNote: shariahScholarNote || 'Submitted for member 2/3 placement vote.',
+          createdAt: new Date().toISOString(),
+          votingStatus: 'open',
+          votes: [],
+          requiredApprovals,
+          totalEligibleVoters: activeVoters,
+          proposedBy: viewer.name,
+        };
+
         draft.halalProjects.unshift(project);
         appendAuditLog(draft, {
           actor: viewer,
@@ -1878,18 +1965,6 @@ apiRouter.post(
         return;
       }
 
-      const state = await loadVaultState();
-      if (state.users.some((u) => u.email.toLowerCase() === email)) {
-        res.status(409).json({ error: 'A user with this email already exists.' });
-        return;
-      }
-
-      const existingNumbers = state.users
-        .map((u) => Number(u.memberCode.replace(/\D/g, '')))
-        .filter((n) => Number.isFinite(n));
-      const nextNum = (existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0) + 1;
-      const memberCode = `AC-${String(nextNum).padStart(3, '0')}`;
-
       const hasDetails = Boolean(
         mobile || occupation || companyOrganization || presentAddress || permanentAddress || nid || dateOfBirth
       );
@@ -1907,20 +1982,27 @@ apiRouter.post(
           }
         : undefined;
 
-      const newUser: StoredUser = {
-        id: `usr-${role === 'admin' ? 'adm' : role === 'manager' ? 'mgr' : 'mem'}-${Date.now()}`,
-        name,
-        email,
-        passwordHash: bcrypt.hashSync(password, 10),
-        role,
-        memberCode,
-        status,
-        joinedAt: new Date().toISOString(),
-        phoneMasked: mobile ? maskReference(mobile) : undefined,
-        encryptedRegistrationDetails: regDetails ? encryptSensitiveObject(regDetails) : undefined,
-      };
+      const passwordHash = bcrypt.hashSync(password, 10);
+      let newUser!: StoredUser;
 
       const nextState = await updateVaultState((draft) => {
+        if (draft.users.some((u) => u.email.toLowerCase() === email)) {
+          throw new Error('EMAIL_IN_USE');
+        }
+
+        newUser = {
+          id: `usr-${role === 'admin' ? 'adm' : role === 'manager' ? 'mgr' : 'mem'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          name,
+          email,
+          passwordHash,
+          role,
+          memberCode: nextMemberCode(draft.users),
+          status,
+          joinedAt: new Date().toISOString(),
+          phoneMasked: mobile ? maskReference(mobile) : undefined,
+          encryptedRegistrationDetails: regDetails ? encryptSensitiveObject(regDetails) : undefined,
+        };
+
         draft.users.push(newUser);
         if (status === 'active') {
           queueEmailNotification(draft, {
@@ -1947,6 +2029,10 @@ apiRouter.post(
       broadcastRealtimeEvent('members:updated', { userId: newUser.id });
       res.status(201).json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
+        res.status(409).json({ error: 'A user with this email already exists.' });
+        return;
+      }
       console.error('Admin create member error:', err);
       res.status(500).json({ error: 'Failed to create user account.' });
     }
@@ -2004,7 +2090,7 @@ apiRouter.patch(
 
       let found = false;
       let approvedNow = false;
-      await updateVaultState((draft) => {
+      const nextState = await updateVaultState((draft) => {
         const user = draft.users.find((u) => u.id === id);
         if (!user) return draft;
         found = true;
@@ -2117,7 +2203,6 @@ apiRouter.patch(
       if (approvedNow) {
         broadcastRealtimeEvent('notification:created', { type: 'signup_approved' });
       }
-      const nextState = await loadVaultState();
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -2145,7 +2230,7 @@ apiRouter.delete(
 
       let removedName = '';
       let wasPending = false;
-      await updateVaultState((draft) => {
+      const nextState = await updateVaultState((draft) => {
         const idx = draft.users.findIndex((u) => u.id === id);
         if (idx === -1) return draft;
         const target = draft.users[idx];
@@ -2181,7 +2266,6 @@ apiRouter.delete(
       }
 
       broadcastRealtimeEvent('members:updated', { userId: id });
-      const nextState = await loadVaultState();
       res.json({ members: buildMemberSummaries(nextState, true) });
     } catch (err) {
       if (err instanceof Error && err.message === 'USER_HAS_ACTIVE_LOAN') {
@@ -2210,40 +2294,88 @@ apiRouter.patch(
       const maxLoanAmount = Number(body.maxLoanAmount);
       const maxInstallmentMonths = Number(body.maxInstallmentMonths);
 
-      if (body.maxLoansPerYear !== undefined && (!Number.isInteger(maxLoansPerYear) || maxLoansPerYear < 1 || maxLoansPerYear > 12)) {
+      if (
+        body.maxLoansPerYear !== undefined &&
+        (!Number.isInteger(maxLoansPerYear) || maxLoansPerYear < 1 || maxLoansPerYear > 12)
+      ) {
         res.status(400).json({ error: 'Loans per year limit must be an integer between 1 and 12.' });
         return;
+      }
+      if (
+        body.monthlyContributionAmount !== undefined &&
+        (!Number.isFinite(monthlyContributionAmount) || monthlyContributionAmount <= 0)
+      ) {
+        res.status(400).json({ error: 'Monthly contribution amount must be greater than zero.' });
+        return;
+      }
+      if (
+        body.maxLoanAmount !== undefined &&
+        (!Number.isFinite(maxLoanAmount) || maxLoanAmount <= 0)
+      ) {
+        res.status(400).json({ error: 'Maximum loan amount must be greater than zero.' });
+        return;
+      }
+      if (
+        body.maxInstallmentMonths !== undefined &&
+        (!Number.isInteger(maxInstallmentMonths) ||
+          maxInstallmentMonths < 1 ||
+          maxInstallmentMonths > 36)
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Maximum installment months must be an integer between 1 and 36.' });
+        return;
+      }
+      if (
+        body.currency !== undefined &&
+        !['BDT', 'USD', 'MYR', 'GBP'].includes(body.currency)
+      ) {
+        res.status(400).json({ error: 'Unsupported currency code.' });
+        return;
+      }
+      if (body.maturityDate !== undefined) {
+        const parsedDate = Date.parse(`${body.maturityDate}T00:00:00Z`);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(body.maturityDate) || Number.isNaN(parsedDate)) {
+          res.status(400).json({ error: 'Maturity date must be a valid YYYY-MM-DD date.' });
+          return;
+        }
       }
 
       const nextState = await updateVaultState((draft) => {
         const cfg = draft.fundConfig;
-        if (body.fundName) cfg.fundName = String(body.fundName).trim();
-        if (body.currency && ['BDT', 'USD', 'MYR', 'GBP'].includes(body.currency)) {
+        if (typeof body.fundName === 'string' && body.fundName.trim()) {
+          cfg.fundName = body.fundName.trim();
+        }
+        if (body.currency) {
           cfg.currency = body.currency;
         }
-        if (Number.isFinite(monthlyContributionAmount) && monthlyContributionAmount > 0) {
+        if (body.monthlyContributionAmount !== undefined) {
           cfg.monthlyContributionAmount = monthlyContributionAmount;
         }
-        if (Number.isInteger(maxLoansPerYear) && maxLoansPerYear >= 1) {
+        if (body.maxLoansPerYear !== undefined) {
           cfg.maxLoansPerYear = maxLoansPerYear;
         }
-        if (Number.isFinite(maxLoanAmount) && maxLoanAmount > 0) {
+        if (body.maxLoanAmount !== undefined) {
           cfg.maxLoanAmount = maxLoanAmount;
         }
-        if (Number.isInteger(maxInstallmentMonths) && maxInstallmentMonths >= 1 && maxInstallmentMonths <= 36) {
+        if (body.maxInstallmentMonths !== undefined) {
           cfg.maxInstallmentMonths = maxInstallmentMonths;
         }
-        if (body.maturityDate && /^\d{4}-\d{2}-\d{2}$/.test(body.maturityDate)) {
+        if (body.maturityDate !== undefined) {
           cfg.maturityDate = body.maturityDate;
         }
-        if (body.halalInvestmentThesis) {
-          cfg.halalInvestmentThesis = String(body.halalInvestmentThesis).trim();
+        if (typeof body.halalInvestmentThesis === 'string' && body.halalInvestmentThesis.trim()) {
+          cfg.halalInvestmentThesis = body.halalInvestmentThesis.trim();
         }
         if (typeof body.autoSyncSheet === 'boolean') {
           cfg.autoSyncSheet = body.autoSyncSheet;
         }
         if (typeof body.googleSheetId === 'string') {
-          cfg.googleSheetId = body.googleSheetId.trim() || undefined;
+          const trimmedId = body.googleSheetId.trim();
+          cfg.googleSheetId = trimmedId || undefined;
+          if (!trimmedId) {
+            cfg.googleSheetUrl = undefined;
+          }
         }
         cfg.updatedAt = new Date().toISOString();
         cfg.updatedBy = viewer.name;

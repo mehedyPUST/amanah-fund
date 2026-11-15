@@ -258,7 +258,9 @@ export function AdminAuditLog({
       }
       if (
         categoryFilter === 'treasury_policy' &&
-        (USER_APPROVAL_ACTIONS.has(entry.action) || LOAN_STATUS_ACTIONS.has(entry.action))
+        (USER_APPROVAL_ACTIONS.has(entry.action) ||
+          LOAN_STATUS_ACTIONS.has(entry.action) ||
+          REJECTION_ACTIONS.has(entry.action))
       ) {
         return false;
       }

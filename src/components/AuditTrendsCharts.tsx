@@ -149,13 +149,6 @@ export function AuditTrendsCharts({
       if (loan.status === 'rejected') return;
       const ym = (loan.disbursedAt || loan.approvedAt || loan.requestedAt).slice(0, 7);
       ensureBucket(ym).monthlyLoanVolume += loan.amount;
-
-      loan.installments.forEach((inst) => {
-        if (inst.status === 'paid' && inst.paidAt) {
-          ensureBucket(inst.paidAt.slice(0, 7)).monthlyRepaid =
-            Math.max(ensureBucket(inst.paidAt.slice(0, 7)).monthlyRepaid, 0);
-        }
-      });
     });
 
     // Recompute exact monthlyRepaid from paid installments if loans are present

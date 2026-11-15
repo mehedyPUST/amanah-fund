@@ -21,11 +21,17 @@ export function registerSseClient(userId: string, res: Response): string {
   clients.set(clientId, { id: clientId, userId, res });
 
   const heartbeat = setInterval(() => {
-    if (!clients.has(clientId)) {
+    if (!clients.has(clientId) || res.writableEnded || res.destroyed) {
       clearInterval(heartbeat);
+      clients.delete(clientId);
       return;
     }
-    res.write(`: heartbeat\n\n`);
+    try {
+      res.write(`: heartbeat\n\n`);
+    } catch {
+      clearInterval(heartbeat);
+      clients.delete(clientId);
+    }
   }, 25000);
 
   res.on('close', () => {
@@ -43,6 +49,10 @@ export function broadcastRealtimeEvent(event: string, payload: Record<string, un
   })}\n\n`;
 
   for (const client of clients.values()) {
+    if (client.res.writableEnded || client.res.destroyed) {
+      clients.delete(client.id);
+      continue;
+    }
     try {
       client.res.write(serialized);
     } catch {

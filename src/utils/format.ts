@@ -52,3 +52,27 @@ export function shortHash(hash?: string): string {
   if (hash.length <= 14) return hash;
   return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
 }
+
+export const MFS_PROVIDERS = ['bKash', 'Nagad', 'Rocket', 'Upay'] as const;
+
+export const BANK_PROVIDERS = [
+  'Islami Bank Bangladesh',
+  'Dutch-Bangla Bank',
+  'City Bank',
+  'Bank Asia',
+  'Standard Chartered',
+] as const;
+
+export function escapeCsvCell(value: string | number | undefined): string {
+  const str = value === undefined ? '' : String(value);
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export function computeInstallmentDueDate(anchor: Date, monthOffset: number): string {
+  const due = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + monthOffset, 15));
+  return due.toISOString().slice(0, 10);
+}
+

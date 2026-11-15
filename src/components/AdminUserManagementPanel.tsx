@@ -175,11 +175,13 @@ export function AdminUserManagementPanel({
     setCreateSaving(true);
     onFeedback(null);
     try {
+      const createdName = createForm.name.trim();
+      const createdRole = createForm.role;
       const res = await api.createMember({
-        name: createForm.name.trim(),
+        name: createdName,
         email: createForm.email.trim(),
         password: createForm.password,
-        role: createForm.role,
+        role: createdRole,
         status: createForm.status,
         mobile: createForm.mobile.trim() || undefined,
         occupation: createForm.occupation.trim() || undefined,
@@ -203,7 +205,7 @@ export function AdminUserManagementPanel({
       });
       onFeedback({
         type: 'success',
-        text: `User account created for ${createForm.name.trim()} (${createForm.role}).`,
+        text: `User account created for ${createdName} (${createdRole}).`,
       });
       await onRefreshAll();
     } catch (err) {

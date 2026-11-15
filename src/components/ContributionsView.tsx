@@ -1,11 +1,18 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Lock, Search, Shield, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatBillingMonth, formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
+import {
+  BANK_PROVIDERS,
+  MFS_PROVIDERS,
+  formatBillingMonth,
+  formatDateTime,
+  formatMoney,
+  shortHash,
+} from '../utils/format.ts';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -17,15 +24,6 @@ interface ContributionsViewProps {
   initialBillingMonth?: string | null;
   onRefresh: () => Promise<void>;
 }
-
-const BANK_PROVIDERS = [
-  'Islami Bank Bangladesh',
-  'Dutch-Bangla Bank',
-  'City Bank',
-  'Bank Asia',
-  'Standard Chartered',
-];
-const MFS_PROVIDERS = ['bKash', 'Nagad', 'Rocket', 'Upay'];
 
 export function ContributionsView({
   contributions,
@@ -46,8 +44,14 @@ export function ContributionsView({
     }
   }, [initialBillingMonth]);
   const [amount, setAmount] = useState(String(config?.monthlyContributionAmount || 5000));
+  const amountEditedRef = useRef(false);
+  useEffect(() => {
+    if (config && !amountEditedRef.current) {
+      setAmount(String(config.monthlyContributionAmount));
+    }
+  }, [config]);
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
-  const [providerName, setProviderName] = useState('bKash');
+  const [providerName, setProviderName] = useState<string>(MFS_PROVIDERS[0]);
   const [senderAccount, setSenderAccount] = useState('');
   const [referenceId, setReferenceId] = useState('');
   const [notes, setNotes] = useState('');
@@ -194,7 +198,10 @@ export function ContributionsView({
                   min={1}
                   required
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => {
+                    amountEditedRef.current = true;
+                    setAmount(e.target.value);
+                  }}
                   className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>

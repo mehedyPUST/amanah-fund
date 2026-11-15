@@ -29,8 +29,12 @@ function getMembershipDuration(joinedAtIso: string): { label: string; monthsTota
   const now = new Date();
   const diffMs = Math.max(0, now.getTime() - joined.getTime());
   const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const totalMonths =
+  let totalMonths =
     (now.getFullYear() - joined.getFullYear()) * 12 + (now.getMonth() - joined.getMonth());
+  if (now.getDate() < joined.getDate()) {
+    totalMonths -= 1;
+  }
+  totalMonths = Math.max(0, totalMonths);
 
   if (totalDays < 1) return { label: 'Joined today', monthsTotal: 0 };
   if (totalDays < 30) return { label: `${totalDays} day${totalDays === 1 ? '' : 's'}`, monthsTotal: 0 };

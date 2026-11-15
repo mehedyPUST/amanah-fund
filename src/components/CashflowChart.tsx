@@ -26,7 +26,6 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
     ...recent.flatMap((d) => [d.contributions, d.disbursed, d.repaid])
   );
   const chartHeight = 180;
-  const barGroupWidth = 100 / recent.length;
 
   return (
     <div className="space-y-4">
@@ -125,7 +124,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   x={centerX - barW * 1.6}
                   y={chartHeight - h1}
                   width={barW}
-                  height={Math.max(2, h1)}
+                  height={Math.max(point.contributions > 0 ? 3 : 0, h1)}
                   rx={2}
                   className="fill-emerald-600 transition-opacity"
                 />
@@ -157,7 +156,6 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
             );
           })}
         </svg>
-        <div className="sr-only" style={{ width: `${barGroupWidth}%` }} />
       </div>
     </div>
   );

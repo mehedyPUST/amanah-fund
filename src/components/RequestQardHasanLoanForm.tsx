@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   AlertCircle,
   Calendar,
@@ -12,7 +12,13 @@ import {
 } from 'lucide-react';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney, formatShortDate } from '../utils/format.ts';
+import {
+  BANK_PROVIDERS,
+  MFS_PROVIDERS,
+  computeInstallmentDueDate,
+  formatMoney,
+  formatShortDate,
+} from '../utils/format.ts';
 
 interface RequestQardHasanLoanFormProps {
   user: PublicUser;
@@ -21,15 +27,6 @@ interface RequestQardHasanLoanFormProps {
   availableLiquidity: number;
   onSubmitted: (loan: LoanRequest) => Promise<void> | void;
 }
-
-const MFS_PROVIDERS = ['bKash', 'Nagad', 'Rocket', 'Upay'];
-const BANK_PROVIDERS = [
-  'Islami Bank Bangladesh',
-  'Dutch-Bangla Bank',
-  'City Bank',
-  'Bank Asia',
-  'Standard Chartered',
-];
 
 export function RequestQardHasanLoanForm({
   user,
@@ -52,9 +49,22 @@ export function RequestQardHasanLoanForm({
   const [purpose, setPurpose] = useState('');
   const [emergencyContext, setEmergencyContext] = useState('');
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
-  const [provider, setProvider] = useState(MFS_PROVIDERS[0]);
+  const [provider, setProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [disbursementAccount, setDisbursementAccount] = useState('');
   const [showSchedulePreview, setShowSchedulePreview] = useState(false);
+
+  const amountEditedRef = useRef(false);
+  const monthsEditedRef = useRef(false);
+
+  useEffect(() => {
+    if (!config) return;
+    if (!amountEditedRef.current) {
+      setAmount(String(Math.min(20000, config.maxLoanAmount)));
+    }
+    if (!monthsEditedRef.current) {
+      setInstallmentMonths(String(Math.min(6, config.maxInstallmentMonths)));
+    }
+  }, [config]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,17 +79,15 @@ export function RequestQardHasanLoanForm({
   const schedulePreview = useMemo(() => {
     if (parsedAmount <= 0 || parsedMonths < 1) return [];
     const base = Math.floor((parsedAmount / parsedMonths) * 100) / 100;
+    const anchor = new Date();
     return Array.from({ length: parsedMonths }, (_, idx) => {
-      const due = new Date();
-      due.setMonth(due.getMonth() + idx + 1);
-      due.setDate(15);
       const isLast = idx === parsedMonths - 1;
       const instAmount = isLast
         ? Math.round((parsedAmount - base * (parsedMonths - 1)) * 100) / 100
         : base;
       return {
         installmentNumber: idx + 1,
-        dueDate: due.toISOString().slice(0, 10),
+        dueDate: computeInstallmentDueDate(anchor, idx + 1),
         amount: instAmount,
       };
     });
@@ -226,7 +234,10 @@ export function RequestQardHasanLoanForm({
                   key={preset}
                   type="button"
                   disabled={!canSubmit}
-                  onClick={() => setAmount(String(preset))}
+                  onClick={() => {
+                    amountEditedRef.current = true;
+                    setAmount(String(preset));
+                  }}
                   className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
                     parsedAmount === preset
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
@@ -246,7 +257,10 @@ export function RequestQardHasanLoanForm({
             required
             disabled={!canSubmit}
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              amountEditedRef.current = true;
+              setAmount(e.target.value);
+            }}
             className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
           {parsedAmount > availableLiquidity && (
@@ -292,7 +306,10 @@ export function RequestQardHasanLoanForm({
                   key={m}
                   type="button"
                   disabled={!canSubmit}
-                  onClick={() => setInstallmentMonths(String(m))}
+                  onClick={() => {
+                    monthsEditedRef.current = true;
+                    setInstallmentMonths(String(m));
+                  }}
                   className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
                     parsedMonths === m
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
@@ -313,7 +330,10 @@ export function RequestQardHasanLoanForm({
             required
             disabled={!canSubmit}
             value={installmentMonths}
-            onChange={(e) => setInstallmentMonths(e.target.value)}
+            onChange={(e) => {
+              monthsEditedRef.current = true;
+              setInstallmentMonths(e.target.value);
+            }}
             className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
 

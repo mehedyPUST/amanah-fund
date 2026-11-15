@@ -108,7 +108,7 @@ export function DashboardShell() {
     }
   }, [authChecking, user, router]);
 
-  const refreshWorkspace = useCallback(async (silent = false) => {
+  const refreshWorkspace = useCallback(async (silent = false): Promise<DashboardOverview | null> => {
     if (!silent) setDataLoading(true);
     try {
       const [ovRes, cRes, lRes, hRes, nRes] = await Promise.all([
@@ -123,8 +123,10 @@ export function DashboardShell() {
       setLoans(lRes.loans);
       setHalalProjects(hRes.projects);
       setNotifications(nRes.notifications);
+      return ovRes;
     } catch (err) {
       console.error('Workspace sync error:', err);
+      return null;
     } finally {
       if (!silent) setDataLoading(false);
     }
@@ -196,8 +198,8 @@ export function DashboardShell() {
   }
 
   async function handleRefreshWithAutoSync() {
-    await refreshWorkspace(true);
-    await triggerAutoSheetSyncIfEnabled(overview);
+    const freshOverview = await refreshWorkspace(true);
+    await triggerAutoSheetSyncIfEnabled(freshOverview);
   }
 
   async function handleDismissLoanDecisionAlert(notificationId: string) {
@@ -242,9 +244,13 @@ export function DashboardShell() {
     if (!overview) return 0;
     const openPlacementVotes = halalProjects.filter((p) => p.votingStatus === 'open').length;
     if (tabId === 'voting') {
+      const staffDisbursements =
+        user.role === 'admin' || user.role === 'manager'
+          ? overview.treasury.pendingDisbursementsCount
+          : 0;
       return (
         overview.treasury.pendingVotesCount +
-        overview.treasury.pendingDisbursementsCount +
+        staffDisbursements +
         openPlacementVotes
       );
     }

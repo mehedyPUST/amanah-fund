@@ -130,11 +130,14 @@ export function ContributionGoalTracker({
     const pendingTotal = monthlyBuckets.reduce((sum, b) => sum + b.pendingAmount, 0);
     const combinedTotal = approvedTotal + pendingTotal;
 
-    const approvedPct = Math.min(100, Math.round((approvedTotal / Math.max(1, yearlyGoal)) * 100));
-    const pendingPct = Math.min(
-      100 - approvedPct,
-      Math.round((pendingTotal / Math.max(1, yearlyGoal)) * 100)
-    );
+    const approvedPct =
+      approvedTotal >= yearlyGoal
+        ? 100
+        : Math.min(99, Math.round((approvedTotal / Math.max(1, yearlyGoal)) * 100));
+    const pendingPct =
+      pendingTotal <= 0
+        ? 0
+        : Math.min(100 - approvedPct, Math.round((pendingTotal / Math.max(1, yearlyGoal)) * 100));
     const remainingToGoal = Math.max(0, yearlyGoal - approvedTotal);
     const surplusAmount = Math.max(0, approvedTotal - yearlyGoal);
 
@@ -520,14 +523,17 @@ export function ContributionGoalTracker({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-3.5">
           {trackerData.monthlyBuckets.map((month) => {
-            const approvedMonthPct = Math.min(
-              100,
-              Math.round((month.approvedAmount / Math.max(1, monthlyPaceTarget)) * 100)
-            );
-            const pendingMonthPct = Math.min(
-              100 - approvedMonthPct,
-              Math.round((month.pendingAmount / Math.max(1, monthlyPaceTarget)) * 100)
-            );
+            const approvedMonthPct =
+              month.approvedAmount >= monthlyPaceTarget
+                ? 100
+                : Math.min(99, Math.round((month.approvedAmount / Math.max(1, monthlyPaceTarget)) * 100));
+            const pendingMonthPct =
+              month.pendingAmount <= 0
+                ? 0
+                : Math.min(
+                    100 - approvedMonthPct,
+                    Math.round((month.pendingAmount / Math.max(1, monthlyPaceTarget)) * 100)
+                  );
             const isVerifiedComplete = month.approvedAmount >= monthlyPaceTarget;
             const hasPending = month.pendingAmount > 0;
             const isPastOrCurrent =
