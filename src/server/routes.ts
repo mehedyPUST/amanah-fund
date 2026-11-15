@@ -1781,8 +1781,14 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       res.status(400).json({ error: 'Minimum Qard Hasan loan amount is 100.' });
       return;
     }
-    if (!Number.isInteger(installmentMonths) || installmentMonths < 1 || installmentMonths > 36) {
-      res.status(400).json({ error: 'Installment duration must be between 1 and 36 months.' });
+    // Absolute safety bound (config max is applied later). Accept whole numbers only.
+    if (
+      !Number.isFinite(installmentMonths) ||
+      !Number.isInteger(installmentMonths) ||
+      installmentMonths < 1 ||
+      installmentMonths > 60
+    ) {
+      res.status(400).json({ error: 'Installment duration must be a whole number between 1 and 60 months.' });
       return;
     }
     if (!purpose || !disbursementAccount || !provider) {

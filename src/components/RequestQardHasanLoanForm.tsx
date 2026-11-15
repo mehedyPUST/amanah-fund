@@ -39,6 +39,17 @@ interface RequestQardHasanLoanFormProps {
   onSubmitted: (loan: LoanRequest) => Promise<void> | void;
 }
 
+type LoanSubmitPayload = {
+  amount: number;
+  installmentMonths: number;
+  purpose: string;
+  emergencyContext?: string;
+  channel: 'bank' | 'mfs';
+  provider: string;
+  disbursementAccount: string;
+  guarantorIds?: string[];
+};
+
 type LoanModalState =
   | {
       mode: 'confirm';
@@ -46,6 +57,8 @@ type LoanModalState =
       title: string;
       description: string;
       details: ActionModalDetailItem[];
+      /** Frozen snapshot used for the real API call so confirmation cannot drift from live form state */
+      payload: LoanSubmitPayload;
     }
   | {
       mode: 'notice';
@@ -127,6 +140,8 @@ export function RequestQardHasanLoanForm({
 
   const amountEditedRef = useRef(false);
   const monthsEditedRef = useRef(false);
+  /** Holds the exact payload the user confirmed so the API call cannot drift from the modal summary */
+  const pendingLoanPayloadRef = useRef<LoanSubmitPayload | null>(null);
 
   useEffect(() => {
     if (!config) return;
@@ -343,6 +358,19 @@ export function RequestQardHasanLoanForm({
       details.push({ label: 'Co-Sign Guarantors', value: guarantorNames });
     }
 
+    const payload: LoanSubmitPayload = {
+      amount: parsedAmount,
+      installmentMonths: Math.trunc(rawMonths),
+      purpose: purpose.trim(),
+      emergencyContext: emergencyContext.trim() || undefined,
+      channel,
+      provider: provider.trim(),
+      disbursementAccount: disbursementAccount.trim(),
+      guarantorIds: needsGuarantors ? [...validSelectedGuarantorIds] : undefined,
+    };
+
+    pendingLoanPayloadRef.current = payload;
+
     setModal({
       mode: 'confirm',
       tone: 'emerald',
@@ -350,22 +378,23 @@ export function RequestQardHasanLoanForm({
       description:
         'Review your encrypted Qard Hasan application summary before submitting it to the cooperative workflow.',
       details,
+      payload,
     });
   }
 
   async function executeLoanSubmission() {
+    const payload = pendingLoanPayloadRef.current;
+    if (!payload) {
+      openErrorModal(
+        'Could Not Place Qard Hasan Request',
+        'Confirmation data was lost. Please close this dialog and submit the form again.'
+      );
+      return;
+    }
     setSubmitting(true);
     try {
-      const res = await api.requestLoan({
-        amount: parsedAmount,
-        installmentMonths: rawMonths,
-        purpose: purpose.trim(),
-        emergencyContext: emergencyContext.trim() || undefined,
-        channel,
-        provider: provider.trim(),
-        disbursementAccount: disbursementAccount.trim(),
-        guarantorIds: needsGuarantors ? validSelectedGuarantorIds : undefined,
-      });
+      const res = await api.requestLoan(payload);
+      pendingLoanPayloadRef.current = null;
       const created = res.loan;
       setPurpose('');
       setEmergencyContext('');
@@ -395,7 +424,7 @@ export function RequestQardHasanLoanForm({
           },
           {
             label: 'Payout Provider',
-            value: `${(created.decryptedSensitiveNotes?.channel || channel).toUpperCase()} · ${created.decryptedSensitiveNotes?.provider || provider}`,
+            value: `${(created.decryptedSensitiveNotes?.channel || payload.channel).toUpperCase()} · ${created.decryptedSensitiveNotes?.provider || payload.provider}`,
           },
         ],
         closeParentOnDone: variant === 'modal' && Boolean(onClose),
@@ -888,6 +917,9 @@ export function RequestQardHasanLoanForm({
         onConfirm={modal?.mode === 'confirm' ? executeLoanSubmission : undefined}
         onClose={() => {
           const shouldCloseParent = modal?.mode === 'notice' && modal.closeParentOnDone;
+          if (modal?.mode === 'confirm') {
+            pendingLoanPayloadRef.current = null;
+          }
           setModal(null);
           if (shouldCloseParent && onClose) {
             onClose();
