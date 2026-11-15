@@ -19,12 +19,14 @@ interface MemberRegistrySectionProps {
   user: PublicUser;
   config: FundConfig | null;
   onRefresh: () => Promise<void>;
+  onViewMemberProfile?: (userId: string) => void;
 }
 
 export function MemberRegistrySection({
   user,
   config,
   onRefresh,
+  onViewMemberProfile,
 }: MemberRegistrySectionProps) {
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isAdmin = user.role === 'admin';
@@ -184,7 +186,11 @@ export function MemberRegistrySection({
           />
         </div>
       ) : (
-        <ActiveMembersView user={user} config={config} />
+        <ActiveMembersView
+          user={user}
+          config={config}
+          onViewMemberProfile={onViewMemberProfile}
+        />
       )}
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}

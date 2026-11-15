@@ -14,7 +14,8 @@ export type DashboardSectionId =
   | 'site-activity'
   | 'system-audit-logs'
   | 'member-registry'
-  | 'site-settings';
+  | 'site-settings'
+  | 'member-profile';
 
 export interface EncryptedEnvelope {
   iv: string;
@@ -536,4 +537,61 @@ export interface ConversationThreadSummary {
   lastMessageAt: string;
   lastMessageSenderId: string;
   unreadCount: number;
+}
+
+export interface MemberPublicProfileAbout {
+  email: string;
+  mobile?: string;
+  occupation?: string;
+  companyOrganization?: string;
+  presentAddress?: string;
+  referenceMemberName?: string;
+  joinedAt: string;
+  postsCount: number;
+  commentsCount: number;
+  reactionsReceivedCount: number;
+}
+
+export interface MemberPublicProfileContributionItem {
+  id: string;
+  billingMonth: string;
+  amount: number;
+  channel: 'bank' | 'mfs';
+  submittedAt: string;
+  status: 'approved';
+}
+
+export interface MemberPublicProfileFundSummary {
+  currency: FundConfig['currency'];
+  monthlyTarget: number;
+  totalContributed: number;
+  approvedContributionsCount: number;
+  pendingContributionsCount: number;
+  approvedMonthsCount: number;
+  currentStreakMonths: number;
+  consistencyScore: number;
+  currentMonthPaid: boolean;
+  fundSharePct: number;
+  totalProfitDistributed: number;
+  activeLoanBalance: number;
+  totalRepaid: number;
+  totalLoansTakenCount: number;
+  loansRepaidCount: number;
+  cooperativeEquity: number;
+  guarantorCount: number;
+  recentContributions: MemberPublicProfileContributionItem[];
+}
+
+export interface MemberPublicProfile {
+  id: string;
+  name: string;
+  memberCode: string;
+  role: UserRole;
+  status: UserStatus;
+  joinedAt: string;
+  photoUrl?: string;
+  isSelf: boolean;
+  about: MemberPublicProfileAbout;
+  fundSummary: MemberPublicProfileFundSummary;
+  communityPosts: CommunityPost[];
 }

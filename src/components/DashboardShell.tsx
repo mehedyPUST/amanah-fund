@@ -37,6 +37,7 @@ import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
+import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
@@ -52,6 +53,7 @@ import type {
   EmailNotification,
   HalalProject,
   LoanRequest,
+  UserRole,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
@@ -130,6 +132,16 @@ export function DashboardShell() {
   } = useCoopSession();
 
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('fund-overview');
+  const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
+  const [profileReturnSection, setProfileReturnSection] =
+    useState<DashboardSectionId>('fund-overview');
+  const [pendingDmPeer, setPendingDmPeer] = useState<{
+    id: string;
+    name: string;
+    role: UserRole;
+    memberCode: string;
+    photoUrl?: string;
+  } | null>(null);
   const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -288,8 +300,9 @@ export function DashboardShell() {
       }
       if (pushHistory && typeof window !== 'undefined') {
         const url = new URL(window.location.href);
-        if (url.searchParams.get('page') !== targetId) {
+        if (url.searchParams.get('page') !== targetId || url.searchParams.has('memberId')) {
           url.searchParams.set('page', targetId);
+          url.searchParams.delete('memberId');
           window.history.pushState({ page: targetId }, '', url);
         }
       }
@@ -300,11 +313,45 @@ export function DashboardShell() {
     [visibleNav]
   );
 
+  const handleViewMemberProfile = useCallback(
+    (memberId: string) => {
+      if (!memberId) return;
+      setProfileReturnSection((prev) =>
+        activeSection !== 'member-profile' ? activeSection : prev
+      );
+      setViewingMemberId(memberId);
+      setActiveSection('member-profile');
+      setMobileNavOpen(false);
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (
+          url.searchParams.get('page') !== 'member-profile' ||
+          url.searchParams.get('memberId') !== memberId
+        ) {
+          url.searchParams.set('page', 'member-profile');
+          url.searchParams.set('memberId', memberId);
+          window.history.pushState({ page: 'member-profile', memberId }, '', url);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [activeSection]
+  );
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const syncFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const requested = params.get('page') as DashboardSectionId | null;
+      const requestedMemberId = params.get('memberId');
+
+      if (requested === 'member-profile' && requestedMemberId) {
+        setViewingMemberId(requestedMemberId);
+        setActiveSection('member-profile');
+        setPreselectedBillingMonth(null);
+        return;
+      }
+
       const valid =
         requested && visibleNav.some((item) => item.id === requested)
           ? requested
@@ -493,7 +540,9 @@ export function DashboardShell() {
             <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Amanah</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4">
-              {activeNavMeta?.label || 'Fund Overview'}
+              {activeSection === 'member-profile'
+                ? 'Member Profile'
+                : activeNavMeta?.label || 'Fund Overview'}
             </h1>
           </div>
         </div>
@@ -877,6 +926,7 @@ export function DashboardShell() {
                     onNavigate={(sec) => navigateToPage(sec, false)}
                     onOpenLoanModal={() => setLoanModalOpen(true)}
                     onRefresh={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -980,8 +1030,29 @@ export function DashboardShell() {
                   <SectionEyebrow label="Community" />
                   <CommunityView
                     user={user}
+                    currency={overview?.config.currency}
                     onUnreadDmChange={setUnreadDmCount}
                     onRefreshWorkspace={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
+                    initialDmPeer={pendingDmPeer}
+                    onConsumeInitialDmPeer={() => setPendingDmPeer(null)}
+                  />
+                </section>
+              )}
+
+              {activeSection === 'member-profile' && viewingMemberId && (
+                <section id="member-profile" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Member Profile" />
+                  <MemberPublicProfileView
+                    memberId={viewingMemberId}
+                    currentUser={user}
+                    onBack={() => navigateToPage(profileReturnSection, false)}
+                    onOpenDirectMessage={(peer) => {
+                      setPendingDmPeer(peer);
+                      navigateToPage('community', false);
+                    }}
+                    onOpenOwnProfile={() => navigateToPage('my-profile', false)}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -1007,6 +1078,7 @@ export function DashboardShell() {
                     user={user}
                     config={overview?.config || null}
                     onRefresh={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}

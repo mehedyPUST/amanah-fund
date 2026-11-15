@@ -11,6 +11,7 @@ import type {
   FundConfig,
   HalalProject,
   LoanRequest,
+  MemberPublicProfile,
   MemberSummary,
   NotificationPreferences,
   PrivateMessage,
@@ -327,6 +328,10 @@ export const api = {
   getActiveMembers: () =>
     apiRequest<{ members: import('../types/coop.ts').ActiveMemberDirectoryItem[] }>(
       '/api/members/active'
+    ),
+  getMemberProfile: (memberId: string) =>
+    apiRequest<{ profile: MemberPublicProfile }>(
+      `/api/members/${encodeURIComponent(memberId)}/profile`
     ),
   getPendingRegistrations: () =>
     apiRequest<{ registrations: MemberSummary[] }>('/api/admin/registrations/pending'),

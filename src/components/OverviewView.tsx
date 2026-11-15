@@ -35,6 +35,7 @@ interface OverviewViewProps {
   loading: boolean;
   onNavigate: (section: DashboardSectionId) => void;
   onOpenLoanModal?: () => void;
+  onViewMemberProfile?: (userId: string) => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -46,6 +47,7 @@ export function OverviewView({
   loading,
   onNavigate,
   onOpenLoanModal,
+  onViewMemberProfile,
   onRefresh,
 }: OverviewViewProps) {
   const [quotaInput, setQuotaInput] = useState(
@@ -527,6 +529,7 @@ export function OverviewView({
             config={config}
             loading={loading}
             onNavigate={onNavigate}
+            onViewMemberProfile={onViewMemberProfile}
           />
         </div>
       </div>

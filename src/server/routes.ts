@@ -41,6 +41,7 @@ import {
   applyOverdueChecksToState,
   buildDashboardOverview,
   buildGoogleSheetsBlueprint,
+  buildMemberPublicProfile,
   buildMemberSummaries,
   computeRequiredApprovals,
   escapeCsvCell,
@@ -3063,6 +3064,28 @@ apiRouter.get('/members/active', requireAuth, async (_req: AuthenticatedRequest,
   } catch (err) {
     console.error('Active members directory error:', err);
     res.status(500).json({ error: 'Failed to load active members directory.' });
+  }
+});
+
+apiRouter.get('/members/:id/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const memberId = String(req.params.id || '').trim();
+    if (!memberId) {
+      res.status(400).json({ error: 'Member ID is required.' });
+      return;
+    }
+
+    const state = await loadVaultState();
+    const profile = buildMemberPublicProfile(state, memberId, req.authUser!);
+    if (!profile) {
+      res.status(404).json({ error: 'Verified member profile not found.' });
+      return;
+    }
+
+    res.json({ profile });
+  } catch (err) {
+    console.error('Member public profile error:', err);
+    res.status(500).json({ error: 'Failed to load member profile.' });
   }
 });
 

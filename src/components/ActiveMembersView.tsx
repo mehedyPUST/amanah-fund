@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Search,
   ShieldAlert,
+  User as UserIcon,
   Users,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
@@ -19,6 +20,7 @@ import { formatMoney, formatShortDate } from '../utils/format.ts';
 interface ActiveMembersViewProps {
   user: PublicUser | null;
   config: FundConfig | null;
+  onViewMemberProfile?: (userId: string) => void;
 }
 
 function getMembershipDuration(joinedAtIso: string): { label: string; monthsTotal: number } {
@@ -55,7 +57,11 @@ function getMembershipDuration(joinedAtIso: string): { label: string; monthsTota
   };
 }
 
-export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
+export function ActiveMembersView({
+  user,
+  config,
+  onViewMemberProfile,
+}: ActiveMembersViewProps) {
   const ccy = config?.currency || 'BDT';
 
   const [members, setMembers] = useState<ActiveMemberDirectoryItem[]>([]);
@@ -321,6 +327,9 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
                   <th className="py-3 px-4 font-medium">Contact Details</th>
                   <th className="py-3 px-4 font-medium">Membership Duration</th>
                   <th className="py-3 px-4 font-medium text-right">Total Contributed</th>
+                  {onViewMemberProfile && (
+                    <th className="py-3 px-4 font-medium text-right">Profile</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -416,6 +425,19 @@ export function ActiveMembersView({ user, config }: ActiveMembersViewProps) {
                           {m.approvedContributionsCount === 1 ? '' : 's'}
                         </div>
                       </td>
+
+                      {onViewMemberProfile && (
+                        <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(m.id)}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <UserIcon className="w-3 h-3" aria-hidden="true" />
+                            <span>View Profile</span>
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

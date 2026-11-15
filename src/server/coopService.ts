@@ -1,5 +1,6 @@
 import type {
   AuditLogEntry,
+  CommunityPost,
   Contribution,
   ContributionSensitiveDetails,
   DashboardOverview,
@@ -9,6 +10,7 @@ import type {
   LeaderboardEntry,
   LoanRequest,
   LoanSensitiveDetails,
+  MemberPublicProfile,
   MemberSummary,
   MonthlyCashflowPoint,
   NotificationType,
@@ -618,6 +620,207 @@ export function buildMemberSummaries(
       hasActiveLoan,
     };
   });
+}
+
+export function buildMemberPublicProfile(
+  state: VaultState,
+  targetUserId: string,
+  viewer: PublicUser
+): MemberPublicProfile | null {
+  const target = state.users.find((u) => u.id === targetUserId);
+  if (!target) return null;
+  if (target.status !== 'active' && viewer.role !== 'admin') return null;
+
+  let reg: UserRegistrationDetails | undefined;
+  if (target.encryptedRegistrationDetails) {
+    try {
+      reg = decryptSensitiveObject<UserRegistrationDetails>(target.encryptedRegistrationDetails);
+    } catch {
+      reg = undefined;
+    }
+  }
+
+  const allApprovedContribs = state.contributions.filter((c) => c.status === 'approved');
+  const totalPool = allApprovedContribs.reduce((sum, c) => sum + c.amount, 0);
+
+  const memberContribs = state.contributions.filter((c) => c.userId === target.id);
+  const memberApproved = memberContribs.filter((c) => c.status === 'approved');
+  const memberPending = memberContribs.filter((c) => c.status === 'pending');
+
+  const totalContributed = memberApproved.reduce((sum, c) => sum + c.amount, 0);
+  const paidMonths = new Set(memberApproved.map((c) => c.billingMonth));
+  const approvedMonthsCount = paidMonths.size;
+
+  const now = new Date();
+  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const prevMonthKey = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const shiftMonthBack = (ym: string): string => {
+    const [yStr, mStr] = ym.split('-');
+    const d = new Date(Date.UTC(Number(yStr), Number(mStr) - 2, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const currentMonthPaid = paidMonths.has(currentMonthKey);
+  let streak = 0;
+  let cursor = currentMonthPaid
+    ? currentMonthKey
+    : paidMonths.has(prevMonthKey)
+      ? prevMonthKey
+      : '';
+  while (cursor && paidMonths.has(cursor) && streak < 120) {
+    streak += 1;
+    cursor = shiftMonthBack(cursor);
+  }
+
+  const joined = new Date(target.joinedAt);
+  const monthsSinceJoined = Number.isNaN(joined.getTime())
+    ? 1
+    : Math.max(
+        1,
+        (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
+          (now.getUTCMonth() - joined.getUTCMonth()) +
+          1
+      );
+  const denominator = Math.max(monthsSinceJoined, approvedMonthsCount, 1);
+  const consistencyScore = Math.min(100, Math.round((approvedMonthsCount / denominator) * 100));
+
+  const fundSharePct =
+    totalPool > 0 ? Math.round((totalContributed / totalPool) * 10000) / 100 : 0;
+
+  const totalProfitDistributed =
+    Math.round(
+      state.halalProjects.reduce(
+        (sum, proj) =>
+          sum +
+          (proj.distributions || []).reduce(
+            (dSum, dist) =>
+              dSum +
+              dist.allocations
+                .filter((a) => a.userId === target.id)
+                .reduce((aSum, a) => aSum + a.payoutAmount, 0),
+            0
+          ),
+        0
+      ) * 100
+    ) / 100;
+
+  const memberLoans = state.loans.filter((l) => l.borrowerId === target.id);
+  const takenLoans = memberLoans.filter((l) =>
+    ['approved_pending_disbursement', 'active', 'repaid'].includes(l.status)
+  );
+  const activeLoanBalance = memberLoans
+    .filter((l) => l.status === 'active')
+    .reduce((sum, l) => sum + l.remainingBalance, 0);
+  const totalRepaid = takenLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
+  const loansRepaidCount = memberLoans.filter((l) => l.status === 'repaid').length;
+
+  const cooperativeEquity = Math.max(
+    0,
+    Math.round((totalContributed - activeLoanBalance + totalProfitDistributed) * 100) / 100
+  );
+
+  const guarantorCount = state.loans.filter((l) =>
+    (l.guarantors || []).some((g) => g.memberId === target.id && g.status === 'accepted')
+  ).length;
+
+  const recentContributions = [...memberApproved]
+    .sort((a, b) => b.billingMonth.localeCompare(a.billingMonth) || b.submittedAt.localeCompare(a.submittedAt))
+    .slice(0, 12)
+    .map((c) => ({
+      id: c.id,
+      billingMonth: c.billingMonth,
+      amount: c.amount,
+      channel: c.channel,
+      submittedAt: c.submittedAt,
+      status: 'approved' as const,
+    }));
+
+  const isAdmin = viewer.role === 'admin';
+  const allActiveCommunityPosts = (state.communityPosts || []).filter(
+    (post) => post.status === 'active'
+  );
+
+  const rawAuthorPosts = (state.communityPosts || []).filter(
+    (post) => post.authorId === target.id && (isAdmin || post.status === 'active')
+  );
+
+  const communityPosts: CommunityPost[] = rawAuthorPosts
+    .map((post) => ({
+      ...post,
+      authorPhotoUrl: target.photoUrl || post.authorPhotoUrl,
+      authorMuted: Boolean(target.communityMuted),
+      reactions: Array.isArray(post.reactions) ? post.reactions : [],
+      comments: Array.isArray(post.comments)
+        ? post.comments.map((c) => {
+            const commentAuthor = state.users.find((u) => u.id === c.authorId);
+            return {
+              ...c,
+              authorPhotoUrl: commentAuthor?.photoUrl || c.authorPhotoUrl,
+            };
+          })
+        : [],
+    }))
+    .sort((a, b) => {
+      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+  const activeAuthorPosts = allActiveCommunityPosts.filter((p) => p.authorId === target.id);
+  const commentsCount = allActiveCommunityPosts.reduce(
+    (sum, p) =>
+      sum + (Array.isArray(p.comments) ? p.comments.filter((c) => c.authorId === target.id).length : 0),
+    0
+  );
+  const reactionsReceivedCount = activeAuthorPosts.reduce(
+    (sum, p) => sum + (Array.isArray(p.reactions) ? p.reactions.length : 0),
+    0
+  );
+
+  return {
+    id: target.id,
+    name: target.name,
+    memberCode: target.memberCode,
+    role: target.role,
+    status: target.status,
+    joinedAt: target.joinedAt,
+    photoUrl: reg?.photoUrl || target.photoUrl,
+    isSelf: target.id === viewer.id,
+    about: {
+      email: target.email,
+      mobile: reg?.mobile || target.phoneMasked || undefined,
+      occupation: reg?.occupation || undefined,
+      companyOrganization: reg?.companyOrganization || undefined,
+      presentAddress: reg?.presentAddress || undefined,
+      referenceMemberName: reg?.referenceMemberName || undefined,
+      joinedAt: target.joinedAt,
+      postsCount: activeAuthorPosts.length,
+      commentsCount,
+      reactionsReceivedCount,
+    },
+    fundSummary: {
+      currency: state.fundConfig.currency,
+      monthlyTarget: state.fundConfig.monthlyContributionAmount,
+      totalContributed,
+      approvedContributionsCount: memberApproved.length,
+      pendingContributionsCount: memberPending.length,
+      approvedMonthsCount,
+      currentStreakMonths: streak,
+      consistencyScore,
+      currentMonthPaid,
+      fundSharePct,
+      totalProfitDistributed,
+      activeLoanBalance,
+      totalRepaid,
+      totalLoansTakenCount: takenLoans.length,
+      loansRepaidCount,
+      cooperativeEquity,
+      guarantorCount,
+      recentContributions,
+    },
+    communityPosts,
+  };
 }
 
 export function escapeCsvCell(value: string | number | undefined | null): string {

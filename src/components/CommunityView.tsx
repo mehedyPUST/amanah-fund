@@ -25,7 +25,9 @@ import {
   ThumbsUp,
   Trash2,
   Unlock,
+  User,
   UserCheck,
+  Users,
   Volume2,
   VolumeX,
   X,
@@ -33,21 +35,27 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
+  ActiveMemberDirectoryItem,
   CommunityCategory,
   CommunityPost,
   CommunityReactionType,
   ConversationThreadSummary,
+  FundConfig,
   PrivateMessage,
   PublicUser,
   UserRole,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatDateTime } from '../utils/format.ts';
+import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
 
 interface CommunityViewProps {
   user: PublicUser;
+  currency?: FundConfig['currency'];
   onUnreadDmChange?: (count: number) => void;
   onRefreshWorkspace?: () => Promise<unknown>;
+  onViewMemberProfile?: (memberId: string) => void;
+  initialDmPeer?: DirectoryMember | null;
+  onConsumeInitialDmPeer?: () => void;
 }
 
 interface DirectoryMember {
@@ -120,11 +128,18 @@ function AvatarBadge({
 
 export function CommunityView({
   user,
+  currency = 'BDT',
   onUnreadDmChange,
   onRefreshWorkspace,
+  onViewMemberProfile,
+  initialDmPeer,
+  onConsumeInitialDmPeer,
 }: CommunityViewProps) {
   const isAdmin = user.role === 'admin';
-  const [activeTab, setActiveTab] = useState<'feed' | 'messages'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'messages' | 'members'>('feed');
+  const [activeMembersList, setActiveMembersList] = useState<ActiveMemberDirectoryItem[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
+  const [directorySearch, setDirectorySearch] = useState('');
 
   // Community Feed State
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -245,10 +260,23 @@ export function CommunityView({
     [loadThreads]
   );
 
+  const loadActiveMembers = useCallback(async (silent = false) => {
+    if (!silent) setMembersLoading(true);
+    try {
+      const res = await api.getActiveMembers();
+      setActiveMembersList(res.members);
+    } catch {
+      // ignore transient error
+    } finally {
+      if (!silent) setMembersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadPosts(false);
     void loadThreads(false);
-  }, [loadPosts, loadThreads]);
+    void loadActiveMembers(false);
+  }, [loadPosts, loadThreads, loadActiveMembers]);
 
   useEffect(() => {
     const es = new EventSource('/api/events', { withCredentials: true });
@@ -287,6 +315,15 @@ export function CommunityView({
       chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [activeTab, selectedPeerId, messages.length]);
+
+  useEffect(() => {
+    if (!initialDmPeer) return;
+    setActiveTab('messages');
+    setSelectedPeerId(initialDmPeer.id);
+    setSelectedPeer(initialDmPeer);
+    void loadConversation(initialDmPeer.id, false);
+    onConsumeInitialDmPeer?.();
+  }, [initialDmPeer, loadConversation, onConsumeInitialDmPeer]);
 
   const filteredPosts = useMemo(() => {
     const q = feedSearch.trim().toLowerCase();
@@ -688,6 +725,23 @@ export function CommunityView({
                   {totalUnread}
                 </span>
               )}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'members'}
+              onClick={() => setActiveTab('members')}
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
+                activeTab === 'members'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Members</span>
+              <span className="font-mono tabular-nums text-[11px] text-slate-500 dark:text-slate-400">
+                {activeMembersList.length > 0 ? activeMembersList.length : directory.length + 1}
+              </span>
             </button>
           </div>
 
@@ -1124,12 +1178,33 @@ export function CommunityView({
                     {/* Author Header & Clean Unboxed Metadata */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
-                        <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(post.authorId)}
+                            title={`View ${post.authorName}'s profile`}
+                            className="shrink-0 cursor-pointer rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                          >
+                            <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
+                          </button>
+                        ) : (
+                          <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
+                        )}
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                            <span className="font-semibold text-slate-900 dark:text-white">
-                              {post.authorName}
-                            </span>
+                            {onViewMemberProfile ? (
+                              <button
+                                type="button"
+                                onClick={() => onViewMemberProfile(post.authorId)}
+                                className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                              >
+                                {post.authorName}
+                              </button>
+                            ) : (
+                              <span className="font-semibold text-slate-900 dark:text-white">
+                                {post.authorName}
+                              </span>
+                            )}
                             <span className="font-mono text-slate-500 dark:text-slate-400">
                               {post.authorCode}
                             </span>
@@ -1198,6 +1273,16 @@ export function CommunityView({
 
                       {/* Author / Message / Admin Controls */}
                       <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                        {onViewMemberProfile && (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(post.authorId)}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                          >
+                            <User className="w-3 h-3" />
+                            <span>Profile</span>
+                          </button>
+                        )}
                         {!isAuthor && (
                           <button
                             type="button"
@@ -1657,9 +1742,19 @@ export function CommunityView({
                               >
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                                    <span className="font-semibold text-slate-900 dark:text-white">
-                                      {comment.authorName}
-                                    </span>
+                                    {onViewMemberProfile ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => onViewMemberProfile(comment.authorId)}
+                                        className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                                      >
+                                        {comment.authorName}
+                                      </button>
+                                    ) : (
+                                      <span className="font-semibold text-slate-900 dark:text-white">
+                                        {comment.authorName}
+                                      </span>
+                                    )}
                                     <span className="font-mono text-slate-500 dark:text-slate-400">
                                       {comment.authorCode}
                                     </span>
@@ -2051,10 +2146,22 @@ export function CommunityView({
                       </div>
                     </div>
                   </div>
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
-                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    AES-256-GCM
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {onViewMemberProfile && (
+                      <button
+                        type="button"
+                        onClick={() => onViewMemberProfile(selectedPeer.id)}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <User className="w-3 h-3" aria-hidden="true" />
+                        <span>View Profile</span>
+                      </button>
+                    )}
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
+                      <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      AES-256-GCM
+                    </span>
+                  </div>
                 </div>
 
                 {dmError && (
@@ -2171,6 +2278,151 @@ export function CommunityView({
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* MEMBERS DIRECTORY TAB */}
+      {activeTab === 'members' && (
+        <div className="space-y-5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Verified Cooperative Members ({activeMembersList.length})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Select any member to view their profile, community posts, about details, and fund
+                summary.
+              </p>
+            </div>
+            <div className="relative w-full sm:w-72 shrink-0">
+              <Search
+                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={directorySearch}
+                onChange={(e) => setDirectorySearch(e.target.value)}
+                placeholder="Search name, code, occupation..."
+                className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              />
+            </div>
+          </div>
+
+          {membersLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5"
+                >
+                  <Skeleton height={86} />
+                </div>
+              ))}
+            </div>
+          ) : (() => {
+            const q = directorySearch.trim().toLowerCase();
+            const list = activeMembersList.filter(
+              (m) =>
+                !q ||
+                m.name.toLowerCase().includes(q) ||
+                m.memberCode.toLowerCase().includes(q) ||
+                (m.occupation || '').toLowerCase().includes(q) ||
+                (m.companyOrganization || '').toLowerCase().includes(q)
+            );
+            if (list.length === 0) {
+              return (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                  No verified members match your search.
+                </div>
+              );
+            }
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {list.map((member) => {
+                  const isSelf = member.id === user.id;
+                  return (
+                    <div
+                      key={member.id}
+                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs transition-all duration-200"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <AvatarBadge name={member.name} photoUrl={member.photoUrl} />
+                        <div className="min-w-0 space-y-0.5 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                              {member.name}
+                            </span>
+                            {isSelf && (
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
+                                (You)
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="font-mono">{member.memberCode}</span>
+                            <span aria-hidden="true">·</span>
+                            <span className="capitalize">{member.role}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>Joined {formatShortDate(member.joinedAt)}</span>
+                          </div>
+                          {(member.occupation || member.companyOrganization) && (
+                            <div className="text-xs text-slate-600 dark:text-slate-300 truncate pt-0.5">
+                              {[member.occupation, member.companyOrganization]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                        <div className="text-xs">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Contributed
+                          </div>
+                          <div className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                            {formatMoney(member.totalContributed, currency)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {!isSelf && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenDirectMessage({
+                                  id: member.id,
+                                  name: member.name,
+                                  memberCode: member.memberCode,
+                                  role: member.role,
+                                  photoUrl: member.photoUrl,
+                                })
+                              }
+                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Mail className="w-3 h-3" aria-hidden="true" />
+                              <span>Message</span>
+                            </button>
+                          )}
+                          {onViewMemberProfile && (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(member.id)}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <User className="w-3 h-3" aria-hidden="true" />
+                              <span>View Profile</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

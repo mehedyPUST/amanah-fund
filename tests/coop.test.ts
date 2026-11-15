@@ -3,6 +3,7 @@ import {
   appendAuditLog,
   applyOverdueChecksToState,
   buildDashboardOverview,
+  buildMemberPublicProfile,
   computeRequiredApprovals,
   evaluateLoanEligibility,
   extractMentionedUsers,
@@ -449,4 +450,159 @@ describe('System Audit Logs immutability & hash chaining', () => {
     expect(recomputedHash).toBe(latest.entryHash);
   });
 });
+
+describe('Member public profile builder', () => {
+  it('returns community posts, about info, and fund summary while protecting sensitive KYC fields and pending accounts', () => {
+    const state = makeBaseState();
+    const bilal = state.users.find((u) => u.id === 'u-2')!;
+    bilal.encryptedRegistrationDetails = encryptSensitiveObject({
+      mobile: '+8801700005678',
+      occupation: 'Software Engineer',
+      companyOrganization: 'Amanah Tech',
+      presentAddress: 'Dhaka, Bangladesh',
+      referenceMemberName: 'Amina Rahman',
+      nid: '1999123456789',
+      dateOfBirth: '1999-01-01',
+      permanentAddress: 'Secret Village Address',
+      photoUrl: '',
+    });
+
+    state.loans.push({
+      id: 'loan-profile-1',
+      borrowerId: 'u-2',
+      borrowerName: 'Bilal Hasan',
+      borrowerCode: 'AC-002',
+      amount: 6000,
+      installmentMonths: 3,
+      monthlyInstallment: 2000,
+      purpose: 'Medical support',
+      encryptedSensitiveNotes: encryptSensitiveObject({
+        emergencyContext: 'Clinic bill',
+        disbursementAccount: '01700005678',
+        channel: 'mfs',
+        provider: 'bKash',
+      }),
+      status: 'active',
+      eligibilitySnapshot: evaluateLoanEligibility(state, 'u-2'),
+      votes: [],
+      requiredApprovals: 2,
+      totalEligibleVoters: 3,
+      installments: [
+        { installmentNumber: 1, dueDate: '2026-02-15', amount: 2000, paidAmount: 2000, status: 'paid' },
+        { installmentNumber: 2, dueDate: '2026-03-15', amount: 2000, paidAmount: 0, status: 'scheduled' },
+        { installmentNumber: 3, dueDate: '2026-04-15', amount: 2000, paidAmount: 0, status: 'scheduled' },
+      ],
+      totalRepaid: 2000,
+      remainingBalance: 4000,
+      requestedAt: '2026-01-20T00:00:00.000Z',
+      entryHash: 'hash-lp1',
+    });
+
+    state.communityPosts.push(
+      {
+        id: 'post-vis',
+        authorId: 'u-2',
+        authorName: 'Bilal Hasan',
+        authorCode: 'AC-002',
+        authorRole: 'member',
+        category: 'General',
+        title: 'Monthly Treasury Update',
+        content: 'Glad to contribute this month!',
+        reactions: [
+          {
+            userId: 'u-1',
+            userName: 'Amina Rahman',
+            type: 'like',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+        comments: [],
+        isPinned: false,
+        commentsLocked: false,
+        status: 'active',
+        createdAt: '2026-02-01T00:00:00.000Z',
+      },
+      {
+        id: 'post-hidden',
+        authorId: 'u-2',
+        authorName: 'Bilal Hasan',
+        authorCode: 'AC-002',
+        authorRole: 'member',
+        category: 'General',
+        title: 'Hidden Post',
+        content: 'Moderated post',
+        reactions: [],
+        comments: [],
+        isPinned: false,
+        commentsLocked: false,
+        status: 'hidden',
+        createdAt: '2026-02-02T00:00:00.000Z',
+      },
+      {
+        id: 'post-other',
+        authorId: 'u-1',
+        authorName: 'Amina Rahman',
+        authorCode: 'AC-001',
+        authorRole: 'admin',
+        category: 'Announcements',
+        title: 'Other Member Post',
+        content: 'Hello everyone',
+        reactions: [],
+        comments: [
+          {
+            id: 'cm-1',
+            postId: 'post-other',
+            authorId: 'u-2',
+            authorName: 'Bilal Hasan',
+            authorCode: 'AC-002',
+            authorRole: 'member',
+            content: 'Thank you!',
+            createdAt: '2026-02-03T00:00:00.000Z',
+          },
+        ],
+        isPinned: true,
+        commentsLocked: false,
+        status: 'active',
+        createdAt: '2026-02-02T00:00:00.000Z',
+      }
+    );
+
+    const viewerFatima: PublicUser = {
+      id: 'u-3',
+      name: 'Fatima Zahra',
+      email: 'fatima@amanahcoop.org',
+      role: 'member',
+      memberCode: 'AC-003',
+      status: 'active',
+      joinedAt: '2026-01-10T00:00:00.000Z',
+    };
+
+    const profile = buildMemberPublicProfile(state, 'u-2', viewerFatima);
+    expect(profile).not.toBeNull();
+    expect(profile?.isSelf).toBe(false);
+    expect(profile?.about.occupation).toBe('Software Engineer');
+    expect(profile?.about.companyOrganization).toBe('Amanah Tech');
+    expect(profile?.about.postsCount).toBe(1);
+    expect(profile?.about.commentsCount).toBe(1);
+    expect(profile?.about.reactionsReceivedCount).toBe(1);
+
+    // Ensure private KYC & transaction IDs are never exposed
+    const serialized = JSON.stringify(profile);
+    expect(serialized).not.toContain('1999123456789');
+    expect(serialized).not.toContain('Secret Village Address');
+    expect(serialized).not.toContain('BK5678');
+
+    // Fund summary assertions
+    expect(profile?.fundSummary.totalContributed).toBe(5000);
+    expect(profile?.fundSummary.totalProfitDistributed).toBe(1000);
+    expect(profile?.fundSummary.activeLoanBalance).toBe(4000);
+    expect(profile?.fundSummary.cooperativeEquity).toBe(2000);
+    expect(profile?.fundSummary.recentContributions).toHaveLength(1);
+    expect(profile?.communityPosts.map((p) => p.id)).toEqual(['post-vis']);
+
+    // Pending account is hidden from regular members
+    expect(buildMemberPublicProfile(state, 'u-pending', viewerFatima)).toBeNull();
+  });
+});
+
 

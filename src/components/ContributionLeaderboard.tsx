@@ -11,6 +11,7 @@ interface ContributionLeaderboardProps {
   config: FundConfig | null;
   loading?: boolean;
   onNavigate: (section: DashboardSectionId) => void;
+  onViewMemberProfile?: (userId: string) => void;
 }
 
 function MemberInitials({ name, photoUrl }: { name: string; photoUrl?: string }) {
@@ -49,6 +50,7 @@ export function ContributionLeaderboard({
   config,
   loading = false,
   onNavigate,
+  onViewMemberProfile,
 }: ContributionLeaderboardProps) {
   const ccy = config?.currency || 'BDT';
   const [mode, setMode] = useState<'top' | 'consistent'>('top');
@@ -208,9 +210,20 @@ export function ContributionLeaderboard({
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 text-xs">
-                          <span className="font-semibold text-slate-900 dark:text-white truncate">
-                            {entry.memberName}
-                          </span>
+                          {onViewMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(entry.userId)}
+                              title={`View ${entry.memberName}'s profile`}
+                              className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate cursor-pointer text-left"
+                            >
+                              {entry.memberName}
+                            </button>
+                          ) : (
+                            <span className="font-semibold text-slate-900 dark:text-white truncate">
+                              {entry.memberName}
+                            </span>
+                          )}
                           {entry.isSelf && (
                             <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
                               (You)
