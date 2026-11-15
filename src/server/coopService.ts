@@ -5,6 +5,7 @@ import type {
   DashboardOverview,
   EligibilityCheck,
   EmailNotification,
+  HalalProject,
   LoanRequest,
   LoanSensitiveDetails,
   MemberSummary,
@@ -13,6 +14,7 @@ import type {
   PublicUser,
   RepaymentReceiptDetails,
   UserRegistrationDetails,
+  UserRole,
 } from '../types/coop.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
 import { getStorageEngine, type VaultState } from './db.ts';
@@ -334,10 +336,43 @@ export function hydrateLoanForViewer(loan: LoanRequest, viewer: PublicUser): Loa
     }
   });
 
+  const anonymizedVotes = loan.votes.map((v, idx) => {
+    const isSelf = v.voterId === viewer.id;
+    return {
+      ...v,
+      isSelf,
+      voterId: isSelf ? viewer.id : `anon-${v.signatureHash.slice(0, 8)}-${idx + 1}`,
+      voterName: isSelf ? 'You (Verified Member)' : `Anonymous Member #${idx + 1}`,
+      voterRole: (isSelf ? v.voterRole : 'member') as UserRole,
+    };
+  });
+
   return {
     ...loan,
+    votes: anonymizedVotes,
     decryptedSensitiveNotes,
     installments: hydratedInstallments,
+  };
+}
+
+export function hydrateHalalProjectForViewer(
+  project: HalalProject,
+  viewer: PublicUser
+): HalalProject {
+  const anonymizedVotes = project.votes.map((v, idx) => {
+    const isSelf = v.voterId === viewer.id;
+    return {
+      ...v,
+      isSelf,
+      voterId: isSelf ? viewer.id : `anon-${v.signatureHash.slice(0, 8)}-${idx + 1}`,
+      voterName: isSelf ? 'You (Verified Member)' : `Anonymous Member #${idx + 1}`,
+      voterRole: (isSelf ? v.voterRole : 'member') as UserRole,
+    };
+  });
+
+  return {
+    ...project,
+    votes: anonymizedVotes,
   };
 }
 
@@ -430,7 +465,7 @@ export function buildGoogleSheetsBlueprint(state: VaultState): SheetTabBlueprint
     ['Verified Repayments (+)', totalRepaid, 'Installments returned to fund'],
     ['Central Fund Balance (=)', centralBalance, 'Live available cooperative treasury'],
     ['Active Members', state.users.filter((u) => u.status === 'active').length, 'Eligible voters'],
-    ['Last Blueprint Generated', new Date().toISOString(), 'Amanah Co-op Treasury'],
+    ['Last Blueprint Generated', new Date().toISOString(), 'Amanah'],
   ];
 
   const memberSummaries = buildMemberSummaries(state);

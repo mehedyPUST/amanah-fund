@@ -3,10 +3,15 @@
 import { useMemo } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { Contribution, FundConfig, LoanRequest } from '../types/coop.ts';
+import type {
+  Contribution,
+  DashboardSectionId,
+  FundConfig,
+  LoanRequest,
+} from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
 
-export type SnapshotNavTarget = 'contributions' | 'loans';
+export type SnapshotNavTarget = DashboardSectionId;
 
 interface MonthlyFinancialSnapshotProps {
   contributions: Contribution[];
@@ -117,7 +122,7 @@ export function MonthlyFinancialSnapshot({
             <>
               <button
                 type="button"
-                onClick={() => onNavigate('contributions')}
+                onClick={() => onNavigate('monthly-contribution')}
                 className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>Deposits</span>
@@ -128,7 +133,7 @@ export function MonthlyFinancialSnapshot({
               </span>
               <button
                 type="button"
-                onClick={() => onNavigate('loans')}
+                onClick={() => onNavigate('quard-hasan')}
                 className="text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>Loan Activity</span>

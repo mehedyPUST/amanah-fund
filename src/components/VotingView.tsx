@@ -167,13 +167,13 @@ export function VotingView({
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Verified Member 2/3 Ballots Center
+            Loan Requests &amp; Anonymized 2/3 Ballot Center
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Verified members review pending Qard Hasan loan requests and cast an Upvote or Downvote
-            (plus Yes / No on investment placements). Approval requires a{' '}
+            Verified active members review Qard Hasan loan requests and cast secure, anonymized
+            Upvotes or Downvotes (plus Yes / No on investment placements). Approval requires a{' '}
             {config?.voteThresholdNumerator || 2}/{config?.voteThresholdDenominator || 3} (66.7%)
-            supermajority of active members.
+            supermajority; voter identities remain masked behind cryptographic hashes.
           </p>
         </div>
 
@@ -181,7 +181,7 @@ export function VotingView({
           {(
             [
               { id: 'all', label: 'All Ballots' },
-              { id: 'loans', label: `Qard Hasan Loans (${pendingOrApprovedLoans.length})` },
+              { id: 'loans', label: `Loan Requests (${pendingOrApprovedLoans.length})` },
               { id: 'investments', label: `Investments (${openProjects.length})` },
             ] as const
           ).map((tab) => (
@@ -234,7 +234,7 @@ export function VotingView({
                     proj.requiredApprovals || Math.ceil((totalEligible * 2) / 3);
                   const progressPct = Math.min(100, Math.round((yesVotes / reqApprovals) * 100));
                   const yesPct = Math.round((yesVotes / totalEligible) * 100);
-                  const myVote = proj.votes.find((v) => v.voterId === user.id);
+                  const myVote = proj.votes.find((v) => v.isSelf || v.voterId === user.id);
 
                   return (
                     <article
@@ -365,7 +365,7 @@ export function VotingView({
                   const voterPct = Math.round(
                     (approveCount / Math.max(1, loan.totalEligibleVoters)) * 100
                   );
-                  const myVote = loan.votes.find((v) => v.voterId === user.id);
+                  const myVote = loan.votes.find((v) => v.isSelf || v.voterId === user.id);
 
                   return (
                     <article
@@ -429,16 +429,26 @@ export function VotingView({
 
                       {loan.votes.length > 0 && (
                         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Verified Member Ballots ({loan.votes.length})
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                              Anonymized Member Ballots ({loan.votes.length})
+                            </div>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                              Identities masked · SHA-256 verified
+                            </span>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {loan.votes.map((v) => {
                               const isUp = v.decision === 'approve';
+                              const isSelf = Boolean(v.isSelf || v.voterId === user.id);
                               return (
                                 <div
                                   key={`${loan.id}-${v.voterId}`}
-                                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-2 text-xs"
+                                  className={`px-3 py-2 rounded-lg border flex items-start justify-between gap-2 text-xs ${
+                                    isSelf
+                                      ? 'border-emerald-300 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25'
+                                      : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
+                                  }`}
                                 >
                                   <div className="min-w-0 space-y-0.5">
                                     <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-white">
@@ -454,8 +464,8 @@ export function VotingView({
                                         />
                                       )}
                                       <span className="truncate">{v.voterName}</span>
-                                      <span className="text-[11px] text-slate-500 capitalize">
-                                        ({v.voterRole})
+                                      <span className="text-[11px] text-slate-500">
+                                        {isSelf ? '(Your Ballot)' : '(Anonymized)'}
                                       </span>
                                     </div>
                                     {v.comment && (

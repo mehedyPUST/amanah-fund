@@ -565,7 +565,9 @@ export function LoansView({
                     const downvotes = activeSelectedLoan.votes.filter(
                       (v) => v.decision === 'reject'
                     ).length;
-                    const myVote = activeSelectedLoan.votes.find((v) => v.voterId === user.id);
+                    const myVote = activeSelectedLoan.votes.find(
+                      (v) => v.isSelf || v.voterId === user.id
+                    );
                     const pct = Math.min(
                       100,
                       Math.round((upvotes / activeSelectedLoan.requiredApprovals) * 100)

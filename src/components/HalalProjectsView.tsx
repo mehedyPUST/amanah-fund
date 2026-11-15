@@ -192,7 +192,7 @@ export function HalalProjectsView({
                 const reqApprovals = proj.requiredApprovals || Math.ceil((totalEligible * 2) / 3);
                 const yesPctOfMembers = Math.round((yesVotes / totalEligible) * 100);
                 const progressPct = Math.min(100, Math.round((yesVotes / reqApprovals) * 100));
-                const myVote = proj.votes.find((v) => v.voterId === user.id);
+                const myVote = proj.votes.find((v) => v.isSelf || v.voterId === user.id);
                 const isExpanded = expandedVotesId === proj.id;
 
                 const votingStatusLabel =
@@ -355,18 +355,24 @@ export function HalalProjectsView({
                         {proj.votes.length === 0 ? (
                           <div className="text-xs text-slate-500">No votes cast yet.</div>
                         ) : (
-                          proj.votes.map((v) => (
-                            <div
-                              key={v.voterId}
-                              className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs flex items-start justify-between gap-2"
-                            >
-                              <div className="min-w-0">
-                                <div className="font-medium text-slate-900 dark:text-white">
-                                  {v.voterName}{' '}
-                                  <span className="text-slate-500 font-normal capitalize">
-                                    · {v.voterRole}
-                                  </span>
-                                </div>
+                          proj.votes.map((v) => {
+                            const isSelf = Boolean(v.isSelf || v.voterId === user.id);
+                            return (
+                              <div
+                                key={v.voterId}
+                                className={`p-2.5 rounded-lg border text-xs flex items-start justify-between gap-2 ${
+                                  isSelf
+                                    ? 'bg-emerald-50/50 dark:bg-emerald-950/25 border-emerald-300 dark:border-emerald-800/70'
+                                    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="font-medium text-slate-900 dark:text-white">
+                                    {v.voterName}{' '}
+                                    <span className="text-slate-500 font-normal">
+                                      · {isSelf ? 'Your Ballot' : 'Anonymized'}
+                                    </span>
+                                  </div>
                                 {v.comment && (
                                   <p className="text-slate-600 dark:text-slate-400 mt-0.5 truncate">
                                     “{v.comment}”
@@ -383,10 +389,11 @@ export function HalalProjectsView({
                                     : 'text-red-700 dark:text-red-400'
                                 }`}
                               >
-                                {v.decision}
-                              </span>
-                            </div>
-                          ))
+                                  {v.decision}
+                                </span>
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                     )}

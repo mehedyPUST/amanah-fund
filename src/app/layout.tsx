@@ -23,11 +23,11 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Amanah Co-op Treasury — Qard Hasan & Halal Fund Management',
+  title: 'Amanah — Qard Hasan & Halal Fund Management',
   description:
     'Encrypted cooperative fund management platform for monthly contributions, 2/3 member-voted Qard Hasan interest-free loans, and post-maturity Halal project investment.',
   openGraph: {
-    title: 'Amanah Co-op Treasury — Qard Hasan & Halal Fund Management',
+    title: 'Amanah — Qard Hasan & Halal Fund Management',
     description:
       'Encrypted cooperative fund management platform for monthly contributions, 2/3 member-voted Qard Hasan interest-free loans, and post-maturity Halal project investment.',
     type: 'website',

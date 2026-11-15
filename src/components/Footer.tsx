@@ -17,7 +17,7 @@ export function Footer() {
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                Amanah Co-op Treasury
+                Amanah
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -107,7 +107,7 @@ export function Footer() {
 
         <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            © {new Date().getFullYear()} Amanah Co-op Fund Management · 0% Interest · Shariah-Governed
+            © {new Date().getFullYear()} Amanah · 0% Interest · Shariah-Governed
           </span>
 
           <div className="flex items-center gap-4">

@@ -145,7 +145,7 @@ export function Hero() {
               <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 aspect-[16/10]">
                 <img
                   src={HERO_IMAGE_URL}
-                  alt="Qard Hasan cooperative banking alternative visualization for Amanah Co-op"
+                  alt="Qard Hasan cooperative banking alternative visualization for Amanah"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />

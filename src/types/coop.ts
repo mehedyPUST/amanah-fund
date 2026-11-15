@@ -1,6 +1,19 @@
 export type UserRole = 'admin' | 'manager' | 'member';
 export type UserStatus = 'pending_approval' | 'active' | 'suspended';
 
+export type DashboardSectionId =
+  | 'fund-overview'
+  | 'monthly-contribution'
+  | 'quard-hasan'
+  | 'my-profile'
+  | 'notification'
+  | 'statistics'
+  | 'ballot'
+  | 'transaction-history'
+  | 'site-activity'
+  | 'member-registry'
+  | 'site-settings';
+
 export interface EncryptedEnvelope {
   iv: string;
   tag: string;
@@ -116,6 +129,7 @@ export interface LoanVote {
   comment?: string;
   castAt: string;
   signatureHash: string;
+  isSelf?: boolean;
 }
 
 export interface RepaymentReceiptDetails {
@@ -209,6 +223,7 @@ export interface PlacementVote {
   comment?: string;
   castAt: string;
   signatureHash: string;
+  isSelf?: boolean;
 }
 
 export interface HalalProject {

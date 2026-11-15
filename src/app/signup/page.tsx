@@ -3,7 +3,7 @@ import { PublicShell } from '../../components/PublicShell.tsx';
 import { SignUpForm } from '../../components/SignUpForm.tsx';
 
 export const metadata: Metadata = {
-  title: 'Apply for Membership — Amanah Co-op Treasury',
+  title: 'Apply for Membership — Amanah',
 };
 
 export default function SignUpPage() {

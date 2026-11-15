@@ -55,6 +55,8 @@ export function ContributionsView({
   const [senderAccount, setSenderAccount] = useState('');
   const [referenceId, setReferenceId] = useState('');
   const [notes, setNotes] = useState('');
+  const depositFormRef = useRef<HTMLElement | null>(null);
+  const senderInputRef = useRef<HTMLInputElement | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -145,6 +147,8 @@ export function ContributionsView({
           if (month) {
             setBillingMonth(month);
           }
+          depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          window.setTimeout(() => senderInputRef.current?.focus(), 250);
         }}
       />
 
@@ -163,7 +167,10 @@ export function ContributionsView({
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Submit Contribution Form */}
-        <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+        <section
+          ref={depositFormRef}
+          className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+        >
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Submit Capital Deposit
@@ -265,6 +272,7 @@ export function ContributionsView({
                 {channel === 'mfs' ? 'Sender Mobile Number' : 'Sender Account / Routing Ref'}
               </label>
               <input
+                ref={senderInputRef}
                 type="text"
                 required
                 value={senderAccount}

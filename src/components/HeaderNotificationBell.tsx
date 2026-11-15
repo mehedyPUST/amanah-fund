@@ -5,12 +5,12 @@ import { ArrowRight, Bell, Check, CheckCircle2, Clock } from 'lucide-react';
 import type {
   Contribution,
   DashboardOverview,
+  DashboardSectionId,
   EmailNotification,
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney } from '../utils/format.ts';
-import type { NavTab } from './OverviewView.tsx';
 
 interface HeaderNotificationBellProps {
   user: PublicUser;
@@ -18,7 +18,7 @@ interface HeaderNotificationBellProps {
   contributions: Contribution[];
   loans: LoanRequest[];
   notifications: EmailNotification[];
-  onNavigate: (tab: NavTab) => void;
+  onNavigate: (tab: DashboardSectionId) => void;
   onOpenContributionMonth: (billingMonth: string) => void;
   onMarkRead: (notificationId: string) => Promise<void>;
 }
@@ -30,7 +30,7 @@ interface BellAlertItem {
   title: string;
   detail: string;
   timestampLabel: string;
-  targetTab: NavTab;
+  targetTab: DashboardSectionId;
   billingMonth?: string;
 }
 
@@ -97,7 +97,7 @@ export function HeaderNotificationBell({
           title: 'Loan Approved',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'loans',
+          targetTab: 'quard-hasan',
         });
       }
     });
@@ -117,7 +117,7 @@ export function HeaderNotificationBell({
           title: l.borrowerId === user.id ? 'Your Loan Was Approved' : 'Approved Loan Ready',
           detail: `${l.id} · ${l.borrowerName} · ${formatMoney(l.amount, ccy)}`,
           timestampLabel: formatDateTime(l.approvedAt || l.requestedAt),
-          targetTab: isStaff ? 'voting' : 'loans',
+          targetTab: isStaff ? 'ballot' : 'quard-hasan',
         });
       });
 
@@ -133,7 +133,7 @@ export function HeaderNotificationBell({
           title: 'Pending Contribution Reminder',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'contributions',
+          targetTab: 'monthly-contribution',
           billingMonth: currentMonth,
         });
       }
@@ -158,7 +158,7 @@ export function HeaderNotificationBell({
         title: `${currentMonthLabel} Contribution Due`,
         detail: `Monthly deposit of ${formatMoney(targetAmount, ccy)} has not been submitted yet.`,
         timestampLabel: 'Current billing cycle',
-        targetTab: 'contributions',
+        targetTab: 'monthly-contribution',
         billingMonth: currentMonth,
       });
     } else if (myPendingContribs.length > 0) {
@@ -168,7 +168,7 @@ export function HeaderNotificationBell({
         title: 'Contribution Pending Verification',
         detail: `${formatBillingMonth(myPendingContribs[0].billingMonth)} deposit (${formatMoney(myPendingContribs[0].amount, ccy)}) awaiting review.`,
         timestampLabel: formatDateTime(myPendingContribs[0].submittedAt),
-        targetTab: 'contributions',
+        targetTab: 'monthly-contribution',
       });
     }
 
@@ -180,7 +180,7 @@ export function HeaderNotificationBell({
         title: 'Deposits Awaiting Verification',
         detail: `${count} member contribution${count === 1 ? '' : 's'} queued for approval.`,
         timestampLabel: 'Approval queue',
-        targetTab: 'contributions',
+        targetTab: 'monthly-contribution',
       });
     }
 
@@ -195,7 +195,7 @@ export function HeaderNotificationBell({
     if (alert.notificationId) {
       await onMarkRead(alert.notificationId);
     }
-    if (alert.targetTab === 'contributions' && alert.billingMonth) {
+    if (alert.targetTab === 'monthly-contribution' && alert.billingMonth) {
       onOpenContributionMonth(alert.billingMonth);
     } else {
       onNavigate(alert.targetTab);
@@ -326,7 +326,7 @@ export function HeaderNotificationBell({
               type="button"
               onClick={() => {
                 setOpen(false);
-                onNavigate('notifications');
+                onNavigate('notification');
               }}
               className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >

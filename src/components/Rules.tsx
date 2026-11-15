@@ -104,7 +104,7 @@ export function Rules() {
             Operating Rules & Shariah Charter
           </h1>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-            These rules are enforced programmatically in the Amanah Co-op backend, encrypted audit
+            These rules are enforced programmatically in the Amanah backend, encrypted audit
             trail, and 2/3 member voting engine.
           </p>
         </div>

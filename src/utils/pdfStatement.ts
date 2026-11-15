@@ -25,7 +25,7 @@ export function downloadContributionAndLoanPdfStatement({
   scope,
 }: PdfStatementInput): void {
   const currency: FundConfig['currency'] = config?.currency || 'BDT';
-  const fundName = config?.fundName || 'Amanah Co-op Treasury';
+  const fundName = config?.fundName || 'Amanah';
 
   const scopedContribs = (
     scope === 'mine' ? contributions.filter((c) => c.userId === user.id) : contributions

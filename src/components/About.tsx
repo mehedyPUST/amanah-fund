@@ -63,7 +63,7 @@ export function About() {
             Transparent mutual support before maturity. Real-economy Halal growth after maturity.
           </h1>
           <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-            Amanah Co-op was designed so a trusted community can pool monthly savings without
+            Amanah was designed so a trusted community can pool monthly savings without
             interest, extend interest-free Qard Hasan relief to fellow members through democratic 2/3
             voting, and later deploy the matured capital into vetted Mudarabah, Musharakah, and
             Murabahah enterprises.

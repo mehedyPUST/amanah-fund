@@ -13,7 +13,13 @@ import {
   Search,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { Contribution, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import type {
+  Contribution,
+  DashboardSectionId,
+  FundConfig,
+  LoanRequest,
+  PublicUser,
+} from '../types/coop.ts';
 import { downloadContributionAndLoanPdfStatement } from '../utils/pdfStatement.ts';
 import {
   escapeCsvCell,
@@ -25,17 +31,7 @@ import {
 } from '../utils/format.ts';
 import { StatusText } from './StatusText.tsx';
 
-export type TransactionTabTarget =
-  | 'overview'
-  | 'contributions'
-  | 'loans'
-  | 'voting'
-  | 'halal'
-  | 'members'
-  | 'notifications'
-  | 'transactions'
-  | 'profile'
-  | 'admin';
+export type TransactionTabTarget = DashboardSectionId;
 
 interface TransactionHistoryProps {
   contributions: Contribution[];
@@ -388,7 +384,7 @@ export function TransactionHistory({
           {compact && onNavigate && (
             <button
               type="button"
-              onClick={() => onNavigate('transactions')}
+              onClick={() => onNavigate('transaction-history')}
               className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
               <span>Full General Ledger</span>
@@ -542,7 +538,7 @@ export function TransactionHistory({
                 <>
                   <button
                     type="button"
-                    onClick={() => onNavigate('contributions')}
+                    onClick={() => onNavigate('monthly-contribution')}
                     className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
@@ -550,7 +546,7 @@ export function TransactionHistory({
                   </button>
                   <button
                     type="button"
-                    onClick={() => onNavigate('loans')}
+                    onClick={() => onNavigate('quard-hasan')}
                     className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
@@ -600,7 +596,7 @@ export function TransactionHistory({
           </span>
           <button
             type="button"
-            onClick={() => onNavigate('transactions')}
+            onClick={() => onNavigate('transaction-history')}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
             <span>Inspect all {filteredRows.length} transactions</span>
@@ -748,7 +744,7 @@ function FragmentRow({
               {onNavigate && row.category === 'loan_repayment' && row.status === 'scheduled' && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('loans')}
+                  onClick={() => onNavigate('quard-hasan')}
                   className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center"
                 >
                   <span>Submit Repayment</span>

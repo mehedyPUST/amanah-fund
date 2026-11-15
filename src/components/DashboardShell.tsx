@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  Activity,
   ArrowRight,
   BarChart3,
   Bell,
-  Briefcase,
   CheckCircle2,
   CreditCard,
   Globe,
@@ -17,11 +17,10 @@ import {
   Menu,
   Moon,
   RefreshCw,
-  ScrollText,
+  Settings,
   Shield,
   Sun,
   User,
-  UserCheck,
   Users,
   Vote,
   X,
@@ -29,23 +28,23 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
-import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
-import { AdminReportsView } from './AdminReportsView.tsx';
+import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
-import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
+import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
-import { type NavTab, OverviewView } from './OverviewView.tsx';
-import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
+import { OverviewView } from './OverviewView.tsx';
+import { StatisticsView } from './StatisticsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import type {
   Contribution,
   DashboardOverview,
+  DashboardSectionId,
   EmailNotification,
   HalalProject,
   LoanRequest,
@@ -54,25 +53,28 @@ import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 
-const NAV_ITEMS: Array<{
-  id: NavTab;
+interface NavItemConfig {
+  id: DashboardSectionId;
   label: string;
   Icon: typeof BarChart3;
-  staffOnly?: boolean;
-  adminOnly?: boolean;
-}> = [
-  { id: 'overview', label: 'Executive Summary', Icon: BarChart3 },
-  { id: 'contributions', label: 'Capital Deposits', Icon: CreditCard },
-  { id: 'loans', label: 'Qard Hasan', Icon: HandCoins },
-  { id: 'transactions', label: 'General Ledger', Icon: History },
-  { id: 'voting', label: 'Member Ballots', Icon: Vote },
-  { id: 'halal', label: 'Halal Ventures', Icon: Briefcase },
-  { id: 'members', label: 'Member Registry', Icon: Users },
-  { id: 'notifications', label: 'Dispatch & Alerts', Icon: Bell },
-  { id: 'profile', label: 'Profile & KYC', Icon: User },
-  { id: 'registrations', label: 'Onboarding Queue', Icon: UserCheck, adminOnly: true },
-  { id: 'audit', label: 'Audit Trail', Icon: ScrollText, adminOnly: true },
-  { id: 'admin', label: 'Administration', Icon: Shield, staffOnly: true },
+  group: 'member' | 'admin';
+}
+
+const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
+  { id: 'fund-overview', label: 'Fund Overview', Icon: BarChart3, group: 'member' },
+  { id: 'monthly-contribution', label: 'Monthly Contribution', Icon: CreditCard, group: 'member' },
+  { id: 'quard-hasan', label: 'Quard Hasan', Icon: HandCoins, group: 'member' },
+  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
+  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
+  { id: 'ballot', label: 'Ballot', Icon: Vote, group: 'member' },
+  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
+];
+
+const ADMIN_NAV_ITEMS: NavItemConfig[] = [
+  { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
+  { id: 'member-registry', label: 'Member Registry', Icon: Users, group: 'admin' },
+  { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
 ];
 
 export function DashboardShell() {
@@ -89,7 +91,7 @@ export function DashboardShell() {
     handleDisconnectGoogle,
   } = useCoopSession();
 
-  const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const [activeSection, setActiveSection] = useState<DashboardSectionId>('fund-overview');
   const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -102,6 +104,7 @@ export function DashboardShell() {
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const autoSyncBusyRef = useRef(false);
+  const manualScrollLockUntilRef = useRef(0);
 
   useEffect(() => {
     if (!authChecking && !user) {
@@ -193,6 +196,74 @@ export function DashboardShell() {
     };
   }, [user, refreshWorkspace]);
 
+  const isStaff = Boolean(user && (user.role === 'admin' || user.role === 'manager'));
+
+  const visibleNav = useMemo(() => {
+    return isStaff ? [...PRIMARY_NAV_ITEMS, ...ADMIN_NAV_ITEMS] : PRIMARY_NAV_ITEMS;
+  }, [isStaff]);
+
+  const scrollToSection = useCallback(
+    (sectionId: DashboardSectionId, closeMobile = true) => {
+      setActiveSection(sectionId);
+      manualScrollLockUntilRef.current = Date.now() + 750;
+      if (closeMobile) {
+        setMobileNavOpen(false);
+      }
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    []
+  );
+
+  // Scrollspy: update activeSection smoothly as the member scrolls through the one-page dashboard
+  useEffect(() => {
+    if (!user) return;
+    const sectionIds = visibleNav.map((item) => item.id);
+    let rafId = 0;
+
+    const updateActiveOnScroll = () => {
+      if (Date.now() < manualScrollLockUntilRef.current) return;
+
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 48;
+      if (atBottom && sectionIds.length > 0) {
+        const lastId = sectionIds[sectionIds.length - 1];
+        if (document.getElementById(lastId)) {
+          setActiveSection(lastId);
+          return;
+        }
+      }
+
+      const thresholdY = 128; // just below 64px sticky header + breathing margin
+      let currentId: DashboardSectionId = sectionIds[0] || 'fund-overview';
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        if (top <= thresholdY) {
+          currentId = id;
+        }
+      }
+      setActiveSection(currentId);
+    };
+
+    const handleScroll = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(updateActiveOnScroll);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    updateActiveOnScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [user, visibleNav]);
+
   async function handleSignOut() {
     await logout();
     router.push('/');
@@ -216,7 +287,7 @@ export function DashboardShell() {
   }
 
   async function handleOpenLoanFromDecisionAlert(notificationId: string) {
-    setActiveTab('loans');
+    scrollToSection('quard-hasan');
     await handleDismissLoanDecisionAlert(notificationId);
   }
 
@@ -234,89 +305,104 @@ export function DashboardShell() {
     );
   }
 
-  const visibleNav = NAV_ITEMS.filter(
-    (item) =>
-      (!item.staffOnly || user.role === 'admin' || user.role === 'manager') &&
-      (!item.adminOnly || user.role === 'admin')
-  );
-  const activeNavMeta = visibleNav.find((n) => n.id === activeTab) || visibleNav[0];
+  const activeNavMeta = visibleNav.find((n) => n.id === activeSection) || visibleNav[0];
 
-  const pendingBadgeCount = (tabId: NavTab): number => {
+  const pendingBadgeCount = (sectionId: DashboardSectionId): number => {
     if (!overview) return 0;
     const openPlacementVotes = halalProjects.filter((p) => p.votingStatus === 'open').length;
-    if (tabId === 'voting') {
+    if (sectionId === 'ballot') {
       const staffDisbursements =
         user.role === 'admin' || user.role === 'manager'
           ? overview.treasury.pendingDisbursementsCount
           : 0;
-      return (
-        overview.treasury.pendingVotesCount +
-        staffDisbursements +
-        openPlacementVotes
-      );
+      return overview.treasury.pendingVotesCount + staffDisbursements + openPlacementVotes;
     }
-    if (tabId === 'halal') {
-      return openPlacementVotes;
-    }
-    if (tabId === 'contributions' && (user.role === 'admin' || user.role === 'manager')) {
+    if (sectionId === 'monthly-contribution' && isStaff) {
       return overview.treasury.pendingContributionsCount;
     }
-    if (tabId === 'notifications') {
+    if (sectionId === 'notification') {
       return overview.treasury.unreadNotificationsCount;
     }
-    if (tabId === 'registrations' && user.role === 'admin') {
+    if (sectionId === 'member-registry' && user.role === 'admin') {
       return overview.treasury.pendingMembersCount;
     }
     return 0;
   };
 
-  function renderDashboardNavItems(isMobile = false) {
-    return visibleNav.map((item) => {
-      const Icon = item.Icon;
-      const active = activeTab === item.id;
-      const count = pendingBadgeCount(item.id);
-      return (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => {
-            setActiveTab(item.id);
-            if (isMobile) setMobileNavOpen(false);
-          }}
-          className={`group w-full px-3.5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer whitespace-nowrap ${
-            active
-              ? 'bg-emerald-50/95 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs'
-              : 'border border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white hover:translate-x-0.5'
-          }`}
-        >
-          <span className="flex items-center gap-3 min-w-0">
-            <Icon
-              className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                active ? 'text-emerald-600 dark:text-emerald-400' : 'group-hover:scale-105'
-              }`}
-              aria-hidden="true"
-            />
-            <span className="truncate">{item.label}</span>
+  function renderNavButton(item: NavItemConfig, isMobile = false) {
+    const Icon = item.Icon;
+    const active = activeSection === item.id;
+    const count = pendingBadgeCount(item.id);
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => scrollToSection(item.id, isMobile)}
+        aria-current={active ? 'location' : undefined}
+        className={`group w-full px-3 py-2 text-sm flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${
+          active
+            ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
+            : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white'
+        }`}
+      >
+        <span className="flex items-center gap-3 min-w-0">
+          <Icon
+            className={`w-4 h-4 shrink-0 transition-colors ${
+              active
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+            }`}
+            aria-hidden="true"
+          />
+          <span
+            className={`truncate ${
+              active
+                ? 'underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4'
+                : 'group-hover:underline group-hover:decoration-slate-300 dark:group-hover:decoration-slate-700 group-hover:underline-offset-4'
+            }`}
+          >
+            {item.label}
           </span>
-          {count > 0 && (
-            <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
-              {count}
-            </span>
-          )}
-        </button>
-      );
-    });
+        </span>
+        {count > 0 && (
+          <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
+            {count}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  function renderDashboardNavItems(isMobile = false) {
+    return (
+      <div className="space-y-4">
+        <div className="space-y-0.5">
+          {PRIMARY_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+        </div>
+
+        {isStaff && (
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Admin
+            </div>
+            <div className="space-y-0.5">
+              {ADMIN_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
     /* Strict 4-Grid Dashboard Layout (Footer Strictly Hidden):
-       Grid 1 (Top-Left, 260px x 64px): Members Dashboard Header
+       Grid 1 (Top-Left, 260px x 64px): Amanah Brand Header
        Grid 2 (Top-Right, 1fr x 64px): Dashboard Nav
        Grid 3 (Bottom-Left, 260px x 1fr): Dashboard Sidebar
-       Grid 4 (Bottom-Right, 1fr x 1fr): Dashboard Contents
+       Grid 4 (Bottom-Right, 1fr x 1fr): Single-Page Scrollable Dashboard Contents
     */
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
-      {/* GRID 1: Members Dashboard (height == Grid 2 height [64px], width == Grid 3 width [260px]) */}
+      {/* GRID 1 */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -324,7 +410,7 @@ export function DashboardShell() {
           </span>
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              Amanah Treasury
+              Amanah
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
               Member Portal
@@ -333,7 +419,7 @@ export function DashboardShell() {
         </div>
       </div>
 
-      {/* GRID 2: Dashboard Nav (height == Grid 1 height [64px], width == Grid 4 width [1fr]) */}
+      {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-0 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -345,10 +431,10 @@ export function DashboardShell() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 text-sm min-w-0">
-            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Treasury</span>
+            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Amanah</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
-            <h1 className="font-semibold text-slate-900 dark:text-white truncate">
-              {activeNavMeta?.label || 'Executive Summary'}
+            <h1 className="font-semibold text-slate-900 dark:text-white truncate underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4">
+              {activeNavMeta?.label || 'Fund Overview'}
             </h1>
           </div>
         </div>
@@ -369,10 +455,10 @@ export function DashboardShell() {
             contributions={contributions}
             loans={loans}
             notifications={notifications}
-            onNavigate={setActiveTab}
+            onNavigate={(section) => scrollToSection(section, false)}
             onOpenContributionMonth={(month) => {
               setPreselectedBillingMonth(month);
-              setActiveTab('contributions');
+              scrollToSection('monthly-contribution', false);
             }}
             onMarkRead={handleDismissLoanDecisionAlert}
           />
@@ -399,7 +485,7 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('loans')}
+            onClick={() => scrollToSection('quard-hasan', false)}
             className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
           >
             Request Qard Hasan
@@ -407,16 +493,16 @@ export function DashboardShell() {
         </div>
       </header>
 
-      {/* GRID 3: Dashboard Sidebar (width == Grid 1 width [260px]) */}
+      {/* GRID 3 */}
       <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:w-[260px] lg:flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)]">
-        <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto" aria-label="Primary">
+        <nav className="flex-1 px-3 py-5 overflow-y-auto" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
 
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
           <button
             type="button"
-            onClick={() => setActiveTab('profile')}
+            onClick={() => scrollToSection('my-profile', false)}
             className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
           >
             <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
@@ -440,7 +526,7 @@ export function DashboardShell() {
         </div>
       </aside>
 
-      {/* Mobile Drawer for < lg screens */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileNavOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex">
@@ -458,7 +544,7 @@ export function DashboardShell() {
             >
               <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <span className="font-display font-bold text-base text-slate-900 dark:text-white">
-                  Amanah Treasury
+                  Amanah
                 </span>
                 <button
                   type="button"
@@ -470,7 +556,7 @@ export function DashboardShell() {
                 </button>
               </div>
 
-              <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+              <nav className="flex-1 p-3 overflow-y-auto">
                 {renderDashboardNavItems(true)}
               </nav>
 
@@ -497,10 +583,10 @@ export function DashboardShell() {
         )}
       </AnimatePresence>
 
-      {/* GRID 4: Dashboard Contents (width == Grid 2 width [1fr], NO FOOTER) */}
+      {/* GRID 4: Single-Page Scrollable Sections */}
       <main className="lg:col-start-2 lg:row-start-2 min-w-0 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Member Alert: Qard Hasan Loan Approved or Rejected by Admin */}
+        <div className="max-w-7xl mx-auto space-y-12">
+          {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
               (n) =>
@@ -598,7 +684,7 @@ export function DashboardShell() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setActiveTab('notifications')}
+                          onClick={() => scrollToSection('notification', false)}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors whitespace-nowrap cursor-pointer"
                         >
                           Inbox
@@ -624,10 +710,10 @@ export function DashboardShell() {
             const unvotedLoanProposals = loans.filter(
               (l) =>
                 l.status === 'pending_vote' &&
-                !l.votes.some((v) => v.voterId === user.id) &&
+                !l.votes.some((v) => v.isSelf || v.voterId === user.id) &&
                 !dismissedLoanAlertIds.includes(l.id)
             );
-            if (activeTab === 'voting' || unvotedLoanProposals.length === 0) {
+            if (activeSection === 'ballot' || unvotedLoanProposals.length === 0) {
               return null;
             }
             const featuredLoan =
@@ -654,8 +740,8 @@ export function DashboardShell() {
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
                       <span>
                         {unvotedLoanProposals.length === 1
-                          ? 'New Qard Hasan Loan Proposal Requires Your 2/3 Majority Vote'
-                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Require Your 2/3 Majority Vote`}
+                          ? 'New Qard Hasan Loan Proposal Requires Your Anonymized 2/3 Vote'
+                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Require Your Anonymized 2/3 Vote`}
                       </span>
                       <span aria-hidden="true" className="text-amber-400 dark:text-amber-700">
                         ·
@@ -682,13 +768,16 @@ export function DashboardShell() {
                   <button
                     type="button"
                     onClick={() => {
-                      setActiveTab('voting');
+                      scrollToSection('ballot', false);
                       setLiveLoanPulseId(null);
                     }}
                     className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
-                    <span>Cast 2/3 Vote</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+                    <span>Open Ballot</span>
+                    <ArrowRight
+                      className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    />
                   </button>
                   <button
                     type="button"
@@ -709,117 +798,186 @@ export function DashboardShell() {
             );
           })()}
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.18 }}
-            >
-              {activeTab === 'overview' && (
-                <OverviewView
+          {/* 1. Fund Overview */}
+          <section id="fund-overview" className="scroll-mt-20 space-y-4">
+            <SectionEyebrow label="Fund Overview" />
+            <OverviewView
+              overview={overview}
+              contributions={contributions}
+              loans={loans}
+              user={user}
+              loading={dataLoading && !overview}
+              onNavigate={(sec) => scrollToSection(sec, false)}
+              onRefresh={handleRefreshWithAutoSync}
+            />
+          </section>
+
+          {/* 2. Monthly Contribution */}
+          <section
+            id="monthly-contribution"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Monthly Contribution" />
+            <ContributionsView
+              contributions={contributions}
+              config={overview?.config || null}
+              user={user}
+              loading={dataLoading && contributions.length === 0}
+              initialBillingMonth={preselectedBillingMonth}
+              onRefresh={handleRefreshWithAutoSync}
+            />
+          </section>
+
+          {/* 3. Quard Hasan */}
+          <section
+            id="quard-hasan"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Quard Hasan" />
+            <LoansView
+              loans={loans}
+              eligibility={overview?.personal.eligibility || null}
+              config={overview?.config || null}
+              availableLiquidity={overview?.treasury.availableLiquidity || 0}
+              user={user}
+              loading={dataLoading && loans.length === 0}
+              onRefresh={handleRefreshWithAutoSync}
+            />
+          </section>
+
+          {/* 4. My Profile */}
+          <section
+            id="my-profile"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="My Profile" />
+            <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
+          </section>
+
+          {/* 5. Notification */}
+          <section
+            id="notification"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Notification" />
+            <NotificationsView
+              user={user}
+              workspace={workspace}
+              connectingGoogle={connectingGoogle}
+              onConnectGoogle={handleConnectGoogle}
+              onDisconnectGoogle={handleDisconnectGoogle}
+              onRefresh={handleRefreshWithAutoSync}
+            />
+          </section>
+
+          {/* 6. Statistics */}
+          <section
+            id="statistics"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Statistics" />
+            <StatisticsView
+              overview={overview}
+              contributions={contributions}
+              loans={loans}
+              user={user}
+              loading={dataLoading && !overview}
+              onNavigate={(sec) => scrollToSection(sec, false)}
+            />
+          </section>
+
+          {/* 7. Ballot (Loan Requests & Anonymized 2/3 Voting) */}
+          <section
+            id="ballot"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Ballot" />
+            <VotingView
+              loans={loans}
+              projects={halalProjects}
+              config={overview?.config || null}
+              user={user}
+              loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
+              onRefresh={handleRefreshWithAutoSync}
+            />
+          </section>
+
+          {/* 8. Transaction History */}
+          <section
+            id="transaction-history"
+            className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+          >
+            <SectionEyebrow label="Transaction History" />
+            <TransactionHistory
+              contributions={contributions}
+              loans={loans}
+              config={overview?.config || null}
+              user={user}
+              loading={dataLoading && contributions.length === 0 && loans.length === 0}
+              onNavigate={(sec) => scrollToSection(sec, false)}
+            />
+          </section>
+
+          {/* Admin Sections */}
+          {isStaff && (
+            <>
+              {/* 9. Site Activity */}
+              <section
+                id="site-activity"
+                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+              >
+                <SectionEyebrow label="Admin · Site Activity" />
+                <AdminAuditLog user={user} />
+              </section>
+
+              {/* 10. Member Registry */}
+              <section
+                id="member-registry"
+                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4"
+              >
+                <SectionEyebrow label="Admin · Member Registry" />
+                <MemberRegistrySection
+                  user={user}
+                  config={overview?.config || null}
+                  onRefresh={handleRefreshWithAutoSync}
+                />
+              </section>
+
+              {/* 11. Site Settings */}
+              <section
+                id="site-settings"
+                className="scroll-mt-20 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4 pb-8"
+              >
+                <SectionEyebrow label="Admin · Site Settings" />
+                <AdminSiteSettingsView
                   overview={overview}
-                  contributions={contributions}
-                  loans={loans}
-                  user={user}
-                  loading={dataLoading && !overview}
-                  onNavigate={setActiveTab}
-                  onSubmitContributionMonth={(month) => {
-                    setPreselectedBillingMonth(month || null);
-                    setActiveTab('contributions');
-                  }}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'contributions' && (
-                <ContributionsView
-                  contributions={contributions}
                   config={overview?.config || null}
                   user={user}
-                  loading={dataLoading && contributions.length === 0}
-                  initialBillingMonth={preselectedBillingMonth}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'loans' && (
-                <LoansView
-                  loans={loans}
-                  eligibility={overview?.personal.eligibility || null}
-                  config={overview?.config || null}
-                  availableLiquidity={overview?.treasury.availableLiquidity || 0}
-                  user={user}
-                  loading={dataLoading && loans.length === 0}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'transactions' && (
-                <TransactionHistory
-                  contributions={contributions}
-                  loans={loans}
-                  config={overview?.config || null}
-                  user={user}
-                  loading={dataLoading && contributions.length === 0 && loans.length === 0}
-                  onNavigate={setActiveTab}
-                />
-              )}
-              {activeTab === 'voting' && (
-                <VotingView
                   loans={loans}
                   projects={halalProjects}
-                  config={overview?.config || null}
-                  user={user}
-                  loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'halal' && (
-                <HalalProjectsView
-                  projects={halalProjects}
-                  overview={overview}
-                  user={user}
                   loading={dataLoading && halalProjects.length === 0}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-              {activeTab === 'members' && (
-                <ActiveMembersView user={user} config={overview?.config || null} />
-              )}
-              {activeTab === 'notifications' && (
-                <NotificationsView
-                  user={user}
                   workspace={workspace}
                   connectingGoogle={connectingGoogle}
                   onConnectGoogle={handleConnectGoogle}
                   onDisconnectGoogle={handleDisconnectGoogle}
                   onRefresh={handleRefreshWithAutoSync}
                 />
-              )}
-              {activeTab === 'profile' && (
-                <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
-              )}
-              {activeTab === 'registrations' && (
-                <PendingRegistrationsView user={user} onRefresh={handleRefreshWithAutoSync} />
-              )}
-              {activeTab === 'audit' && <AdminAuditLog user={user} />}
-              {activeTab === 'admin' && (
-                <AdminReportsView
-                  config={overview?.config || null}
-                  user={user}
-                  contributions={contributions}
-                  loans={loans}
-                  monthlySeries={overview?.monthlySeries || []}
-                  workspace={workspace}
-                  connectingGoogle={connectingGoogle}
-                  onConnectGoogle={handleConnectGoogle}
-                  onDisconnectGoogle={handleDisconnectGoogle}
-                  onRefresh={handleRefreshWithAutoSync}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+              </section>
+            </>
+          )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function SectionEyebrow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+        {label}
+      </h2>
+      <div className="h-px flex-1 bg-slate-200/80 dark:bg-slate-800/80" aria-hidden="true" />
     </div>
   );
 }

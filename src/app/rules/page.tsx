@@ -3,7 +3,7 @@ import { PublicShell } from '../../components/PublicShell.tsx';
 import { Rules } from '../../components/Rules.tsx';
 
 export const metadata: Metadata = {
-  title: 'Cooperative Rules & Shariah Charter — Amanah Co-op Treasury',
+  title: 'Cooperative Rules & Shariah Charter — Amanah',
 };
 
 export default function RulesPage() {

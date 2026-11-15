@@ -10,11 +10,17 @@ import {
   History,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import type { Contribution, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import type {
+  Contribution,
+  DashboardSectionId,
+  FundConfig,
+  LoanRequest,
+  PublicUser,
+} from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
 import { StatusText } from './StatusText.tsx';
 
-export type RecentTransactionsNavTarget = 'contributions' | 'loans' | 'transactions';
+export type RecentTransactionsNavTarget = DashboardSectionId;
 
 interface RecentTransactionsProps {
   contributions: Contribution[];
@@ -85,7 +91,7 @@ export function RecentTransactions({
           sortPriority: 0,
           reviewerName: c.reviewerName,
           note: c.reviewNote || c.decryptedDetails?.notes,
-          targetTab: 'contributions',
+          targetTab: 'monthly-contribution',
         });
       });
 
@@ -130,7 +136,7 @@ export function RecentTransactions({
             sortPriority: inst.status === 'scheduled' ? 1 : 0,
             reviewerName: inst.verifierName,
             note: inst.decryptedReceipt?.notes,
-            targetTab: 'loans',
+            targetTab: 'quard-hasan',
           });
         });
       });
@@ -230,7 +236,7 @@ export function RecentTransactions({
           {onNavigate && (
             <button
               type="button"
-              onClick={() => onNavigate('transactions')}
+              onClick={() => onNavigate('transaction-history')}
               className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
               <span>Full General Ledger</span>
@@ -276,7 +282,7 @@ export function RecentTransactions({
             {onNavigate && (filter === 'all' || filter === 'contribution') && (
               <button
                 type="button"
-                onClick={() => onNavigate('contributions')}
+                onClick={() => onNavigate('monthly-contribution')}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs"
               >
                 <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
@@ -286,7 +292,7 @@ export function RecentTransactions({
             {onNavigate && (filter === 'all' || filter === 'loan_payment') && (
               <button
                 type="button"
-                onClick={() => onNavigate('loans')}
+                onClick={() => onNavigate('quard-hasan')}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
@@ -432,7 +438,7 @@ export function RecentTransactions({
           </span>
           <button
             type="button"
-            onClick={() => onNavigate('transactions')}
+            onClick={() => onNavigate('transaction-history')}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
           >
             <span>View all {filteredItems.length} in General Ledger</span>

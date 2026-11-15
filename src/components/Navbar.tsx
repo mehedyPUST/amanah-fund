@@ -45,7 +45,7 @@ export function Navbar() {
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
-            Amanah Co-op
+            Amanah
           </span>
         </Link>
 

@@ -70,7 +70,7 @@ function createSeedState(): VaultState {
 
   const fundConfig: FundConfig = {
     id: 'default-config',
-    fundName: 'Amanah Mutual Qard & Halal Fund',
+    fundName: 'Amanah',
     currency: 'BDT',
     monthlyContributionAmount: 5000,
     maxLoansPerYear: 3,

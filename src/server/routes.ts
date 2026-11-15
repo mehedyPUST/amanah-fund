@@ -32,6 +32,7 @@ import {
   escapeCsvCell,
   evaluateLoanEligibility,
   hydrateContributionForViewer,
+  hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
   queueEmailNotification,
 } from './coopService.ts';
@@ -1271,7 +1272,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
         action: 'LOAN_VOTE_CAST',
         resourceType: 'vote',
         resourceId: loan.id,
-        summary: `${viewer.name} cast ${decision === 'approve' ? 'UPVOTE (Approve)' : 'DOWNVOTE (Reject)'} on ${loan.borrowerName}'s loan (${approveCount}/${loan.requiredApprovals} approvals)`,
+        summary: `An anonymized verified member cast ${decision === 'approve' ? 'UPVOTE (Approve)' : 'DOWNVOTE (Reject)'} on ${loan.borrowerName}'s loan (${approveCount}/${loan.requiredApprovals} approvals)`,
         payload: {
           loanId: loan.id,
           decision,
@@ -1834,10 +1835,13 @@ apiRouter.patch(
 // 5. Halal Investment Projects (Post-Maturity Deployment)
 // ---------------------------------------------------------------------------
 
-apiRouter.get('/halal-projects', requireAuth, async (_req, res) => {
+apiRouter.get('/halal-projects', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const state = await loadVaultState();
-    res.json({ projects: state.halalProjects });
+    const viewer = req.authUser!;
+    res.json({
+      projects: state.halalProjects.map((project) => hydrateHalalProjectForViewer(project, viewer)),
+    });
   } catch (err) {
     console.error('Halal projects error:', err);
     res.status(500).json({ error: 'Failed to load Halal projects.' });
@@ -1909,7 +1913,7 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('investment:created', { projectId: project.id });
-      res.status(201).json({ project });
+      res.status(201).json({ project: hydrateHalalProjectForViewer(project, viewer) });
     } catch (err) {
       console.error('Create Halal project error:', err);
       res.status(500).json({ error: 'Failed to create Halal project.' });
@@ -1981,7 +1985,7 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
         action: 'INVESTMENT_VOTE_CAST',
         resourceType: 'vote',
         resourceId: project.id,
-        summary: `${viewer.name} voted ${decision.toUpperCase()} on "${project.title}" (${yesCount}/${project.requiredApprovals} yes votes)`,
+        summary: `An anonymized verified member voted ${decision.toUpperCase()} on "${project.title}" (${yesCount}/${project.requiredApprovals} yes votes)`,
         payload: {
           projectId: project.id,
           decision,
@@ -2001,7 +2005,7 @@ apiRouter.post('/halal-projects/:id/vote', requireAuth, async (req: Authenticate
     }
 
     broadcastRealtimeEvent('investment:voted', { projectId: id });
-    res.json({ project: updatedProject });
+    res.json({ project: hydrateHalalProjectForViewer(updatedProject, viewer) });
   } catch (err) {
     if (err instanceof Error && err.message === 'PLACEMENT_VOTING_CLOSED') {
       res.status(409).json({ error: 'Voting has already closed for this investment placement.' });
@@ -3043,6 +3047,18 @@ apiRouter.get(
         } catch {
           decryptedPayload = undefined;
         }
+        if (entry.action === 'LOAN_VOTE_CAST' || entry.action === 'INVESTMENT_VOTE_CAST') {
+          return {
+            ...entry,
+            actorId: 'anon-ballot',
+            actorName: 'Anonymized Verified Member',
+            actorRole: 'member' as UserRole,
+            summary: entry.summary.includes('anonymized')
+              ? entry.summary
+              : `Anonymized ballot recorded (${entry.resourceId})`,
+            decryptedPayload,
+          };
+        }
         return { ...entry, decryptedPayload };
       });
 
@@ -3074,7 +3090,7 @@ apiRouter.get(
       const viewer = req.authUser!;
 
       let csv = '';
-      let filename = `amanah-coop-${type}-${new Date().toISOString().slice(0, 10)}.csv`;
+      let filename = `amanah-${type}-${new Date().toISOString().slice(0, 10)}.csv`;
 
       if (type === 'contributions') {
         const rows = [
@@ -3172,19 +3188,24 @@ apiRouter.get(
       } else {
         const rows = [
           ['Audit ID', 'Timestamp', 'Actor', 'Role', 'Action', 'Resource', 'Summary', 'Entry Hash'],
-          ...state.auditLogs.map((a) => [
-            a.id,
-            a.timestamp,
-            a.actorName,
-            a.actorRole,
-            a.action,
-            a.resourceId,
-            a.summary,
-            a.entryHash,
-          ]),
+          ...state.auditLogs.map((a) => {
+            const isVote = a.action === 'LOAN_VOTE_CAST' || a.action === 'INVESTMENT_VOTE_CAST';
+            return [
+              a.id,
+              a.timestamp,
+              isVote ? 'Anonymized Verified Member' : a.actorName,
+              isVote ? 'member' : a.actorRole,
+              a.action,
+              a.resourceId,
+              isVote && !a.summary.includes('anonymized')
+                ? `Anonymized ballot recorded (${a.resourceId})`
+                : a.summary,
+              a.entryHash,
+            ];
+          }),
         ];
         csv = rows.map((r) => r.map(escapeCsvCell).join(',')).join('\n');
-        filename = `amanah-coop-audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+        filename = `amanah-audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
       }
 
       await updateVaultState((draft) => {

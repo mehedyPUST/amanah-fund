@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
+  AlertCircle,
   ArrowRight,
   CheckCircle2,
   Clock,
+  CreditCard,
+  History,
   Pencil,
   RotateCcw,
   Target,
@@ -12,7 +15,13 @@ import {
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, PublicUser } from '../types/coop.ts';
-import { formatMoney } from '../utils/format.ts';
+import {
+  formatBillingMonth,
+  formatDateTime,
+  formatMoney,
+  shortHash,
+} from '../utils/format.ts';
+import { StatusText } from './StatusText.tsx';
 
 interface ContributionGoalTrackerProps {
   user: PublicUser;
@@ -178,6 +187,52 @@ export function ContributionGoalTracker({
     currentMonthIndex,
   ]);
 
+  const nowBillingMonth = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+
+  const currentMonthSummary = useMemo(() => {
+    const entries = contributions
+      .filter((c) => c.userId === user.id && c.billingMonth === nowBillingMonth)
+      .slice()
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+
+    const approvedAmount = entries
+      .filter((c) => c.status === 'approved')
+      .reduce((sum, c) => sum + c.amount, 0);
+    const pendingAmount = entries
+      .filter((c) => c.status === 'pending')
+      .reduce((sum, c) => sum + c.amount, 0);
+    const latestEntry = entries[0] || null;
+
+    let state: 'paid' | 'pending' | 'rejected' | 'due' = 'due';
+    if (approvedAmount >= monthlyBaseTarget) {
+      state = 'paid';
+    } else if (pendingAmount > 0) {
+      state = 'pending';
+    } else if (latestEntry?.status === 'rejected') {
+      state = 'rejected';
+    } else if (approvedAmount > 0) {
+      state = 'due';
+    }
+
+    return {
+      billingMonth: nowBillingMonth,
+      monthLabel: formatBillingMonth(nowBillingMonth),
+      entries,
+      approvedAmount,
+      pendingAmount,
+      latestEntry,
+      state,
+      remainingAmount: Math.max(0, monthlyBaseTarget - approvedAmount - pendingAmount),
+    };
+  }, [contributions, user.id, nowBillingMonth, monthlyBaseTarget]);
+
+  const personalPaymentHistory = useMemo(() => {
+    return contributions
+      .filter((c) => c.userId === user.id)
+      .slice()
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  }, [contributions, user.id]);
+
   function handleSaveGoal(e: FormEvent) {
     e.preventDefault();
     const parsed = Number(goalInput);
@@ -315,6 +370,136 @@ export function ContributionGoalTracker({
             >
               <span>Deposit Month</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Current Month Contribution Status Banner */}
+      <div
+        className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+          currentMonthSummary.state === 'paid'
+            ? 'bg-emerald-50/75 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
+            : currentMonthSummary.state === 'pending'
+              ? 'bg-amber-50/75 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60'
+              : currentMonthSummary.state === 'rejected'
+                ? 'bg-red-50/75 dark:bg-red-950/30 border-red-200 dark:border-red-900/60'
+                : 'bg-slate-50/90 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
+        }`}
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <div
+            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+              currentMonthSummary.state === 'paid'
+                ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
+                : currentMonthSummary.state === 'pending'
+                  ? 'bg-amber-600/15 text-amber-700 dark:text-amber-400'
+                  : currentMonthSummary.state === 'rejected'
+                    ? 'bg-red-600/15 text-red-700 dark:text-red-400'
+                    : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            {currentMonthSummary.state === 'paid' ? (
+              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+            ) : currentMonthSummary.state === 'pending' ? (
+              <Clock className="w-4 h-4" aria-hidden="true" />
+            ) : currentMonthSummary.state === 'rejected' ? (
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <CreditCard className="w-4 h-4" aria-hidden="true" />
+            )}
+          </div>
+
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-semibold text-slate-900 dark:text-white">
+                Current Month Status · {currentMonthSummary.monthLabel}
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                ·
+              </span>
+              {currentMonthSummary.state === 'paid' ? (
+                <StatusText status="approved" />
+              ) : currentMonthSummary.state === 'pending' ? (
+                <StatusText status="pending" />
+              ) : currentMonthSummary.state === 'rejected' ? (
+                <StatusText status="rejected" />
+              ) : (
+                <span className="font-semibold text-amber-700 dark:text-amber-400">
+                  Contribution Due
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {currentMonthSummary.state === 'paid' && (
+                <>
+                  Verified{' '}
+                  <strong className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                    {formatMoney(currentMonthSummary.approvedAmount, ccy)}
+                  </strong>{' '}
+                  against your{' '}
+                  <span className="font-mono tabular-nums">
+                    {formatMoney(monthlyBaseTarget, ccy)}
+                  </span>{' '}
+                  monthly cooperative requirement.
+                </>
+              )}
+              {currentMonthSummary.state === 'pending' && (
+                <>
+                  Submitted{' '}
+                  <strong className="font-mono tabular-nums text-amber-700 dark:text-amber-300">
+                    {formatMoney(currentMonthSummary.pendingAmount, ccy)}
+                  </strong>{' '}
+                  via {currentMonthSummary.latestEntry?.providerName} (
+                  <span className="font-mono">
+                    {currentMonthSummary.latestEntry?.maskedReference}
+                  </span>
+                  ). Awaiting manager verification.
+                </>
+              )}
+              {currentMonthSummary.state === 'rejected' && (
+                <>
+                  Last submission for {currentMonthSummary.monthLabel} was declined
+                  {currentMonthSummary.latestEntry?.reviewNote
+                    ? ` (${currentMonthSummary.latestEntry.reviewNote})`
+                    : ''}
+                  . Submit a corrected Bank or MFS reference below.
+                </>
+              )}
+              {currentMonthSummary.state === 'due' && (
+                <>
+                  Monthly contribution target of{' '}
+                  <strong className="font-mono tabular-nums text-slate-900 dark:text-white">
+                    {formatMoney(currentMonthSummary.remainingAmount, ccy)}
+                  </strong>{' '}
+                  has not been submitted for {currentMonthSummary.monthLabel} yet.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="text-right font-mono tabular-nums">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Monthly Target</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white">
+              {formatMoney(monthlyBaseTarget, ccy)}
+            </div>
+          </div>
+
+          {onSubmitContribution && currentMonthSummary.state !== 'paid' && (
+            <button
+              type="button"
+              onClick={() => onSubmitContribution(nowBillingMonth)}
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            >
+              <span>
+                {currentMonthSummary.state === 'rejected'
+                  ? `Resubmit ${MONTH_NAMES[currentMonthIndex]}`
+                  : `Pay ${MONTH_NAMES[currentMonthIndex]} Now`}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -639,6 +824,81 @@ export function ContributionGoalTracker({
             );
           })}
         </div>
+      </div>
+
+      {/* Member Personal Payment History */}
+      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+              Your Contribution Payment History ({personalPaymentHistory.length})
+            </h4>
+          </div>
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            {user.memberCode} · Chronological Record
+          </span>
+        </div>
+
+        {personalPaymentHistory.length === 0 ? (
+          <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 text-center">
+            No monthly contributions recorded under your account yet. Submit your first deposit below.
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg max-h-64 overflow-y-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="sticky top-0 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                <tr>
+                  <th className="py-2 px-3 font-medium">Billing Month</th>
+                  <th className="py-2 px-3 font-medium">Submitted</th>
+                  <th className="py-2 px-3 font-medium">Channel & Ref</th>
+                  <th className="py-2 px-3 font-medium">Status</th>
+                  <th className="py-2 px-3 font-medium text-right">Amount</th>
+                  <th className="py-2 px-3 font-medium">Verification Note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {personalPaymentHistory.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                  >
+                    <td className="py-2.5 px-3 font-mono font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                      {formatBillingMonth(item.billingMonth)}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {formatDateTime(item.submittedAt)}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                        {item.providerName}
+                      </span>
+                      <span aria-hidden="true"> · </span>
+                      <span className="uppercase text-slate-500">{item.channel}</span>
+                      <span aria-hidden="true"> · </span>
+                      <span className="font-mono text-slate-600 dark:text-slate-400">
+                        {item.decryptedDetails?.referenceId || item.maskedReference}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <StatusText status={item.status} />
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white whitespace-nowrap">
+                      {formatMoney(item.amount, ccy)}
+                    </td>
+                    <td className="py-2.5 px-3 text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                      {item.reviewNote
+                        ? item.reviewNote
+                        : item.reviewerName
+                          ? `Verified by ${item.reviewerName}`
+                          : `Hash ${shortHash(item.entryHash)}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </section>
   );
