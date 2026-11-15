@@ -21,6 +21,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
 
 interface AdminUserManagementPanelProps {
@@ -31,8 +32,25 @@ interface AdminUserManagementPanelProps {
   onMembersUpdated: (nextMembers: MemberSummary[]) => void;
   onInspectMember: (member: MemberSummary) => void;
   onRefreshAll: () => Promise<void>;
-  onFeedback: (feedback: { type: 'success' | 'error'; text: string } | null) => void;
 }
+
+type UserMgmtModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      run: () => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
 
 export function AdminUserManagementPanel({
   members,
@@ -42,7 +60,6 @@ export function AdminUserManagementPanel({
   onMembersUpdated,
   onInspectMember,
   onRefreshAll,
-  onFeedback,
 }: AdminUserManagementPanelProps) {
   const isAdmin = currentUser.role === 'admin';
   const ccy = config?.currency || 'BDT';
@@ -51,7 +68,8 @@ export function AdminUserManagementPanel({
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | UserStatus>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [modal, setModal] = useState<UserMgmtModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   // Create User modal state
   const [createOpen, setCreateOpen] = useState(false);
@@ -126,131 +144,239 @@ export function AdminUserManagementPanel({
     });
   }
 
-  async function handleQuickRoleOrStatus(
-    memberId: string,
+  function requestQuickRoleOrStatus(
+    member: MemberSummary,
     payload: { role?: UserRole; status?: UserStatus },
     successText: string
   ) {
-    setBusyId(memberId);
-    onFeedback(null);
-    try {
-      const res = await api.updateMember(memberId, payload);
-      onMembersUpdated(res.members);
-      onFeedback({ type: 'success', text: successText });
-      await onRefreshAll();
-    } catch (err) {
-      onFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update user account.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+    const isSuspend = payload.status === 'suspended';
+    const actionLabel = payload.role
+      ? `Change Role to ${payload.role}`
+      : payload.status === 'active'
+        ? member.status === 'pending_approval'
+          ? 'Approve Membership'
+          : 'Reactivate Account'
+        : 'Suspend Account';
+
+    setModal({
+      mode: 'confirm',
+      tone: isSuspend ? 'red' : payload.role === 'admin' ? 'amber' : 'emerald',
+      title: `${actionLabel}?`,
+      description: isSuspend
+        ? 'Suspending this account immediately revokes login, voting, and loan request access.'
+        : 'Confirm this account permission or status update for the cooperative directory.',
+      details: [
+        { label: 'Member', value: `${member.name} (${member.memberCode})` },
+        { label: 'Current Role', value: member.role.toUpperCase() },
+        { label: 'Current Status', value: member.status.replace(/_/g, ' ') },
+        ...(payload.role ? [{ label: 'New Role', value: payload.role.toUpperCase() }] : []),
+        ...(payload.status
+          ? [{ label: 'New Status', value: payload.status.replace(/_/g, ' ') }]
+          : []),
+      ],
+      confirmLabel: actionLabel,
+      run: async () => {
+        setBusyId(member.id);
+        try {
+          const res = await api.updateMember(member.id, payload);
+          onMembersUpdated(res.members);
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'User Account Updated',
+            description: successText,
+            details: [
+              { label: 'Member', value: `${member.name} (${member.memberCode})` },
+              ...(payload.role ? [{ label: 'Role', value: payload.role.toUpperCase() }] : []),
+              ...(payload.status
+                ? [{ label: 'Status', value: payload.status.replace(/_/g, ' ') }]
+                : []),
+            ],
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Update Failed',
+            description: err instanceof Error ? err.message : 'Failed to update user account.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleDeleteUser(member: MemberSummary) {
-    setBusyId(member.id);
-    onFeedback(null);
-    try {
-      const res = await api.deleteMember(member.id);
-      onMembersUpdated(res.members);
-      setConfirmDeleteId(null);
-      onFeedback({
-        type: 'success',
-        text: `Removed user ${member.name} (${member.memberCode}) from cooperative directory.`,
-      });
-      await onRefreshAll();
-    } catch (err) {
-      onFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to remove user account.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function requestDeleteUser(member: MemberSummary) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Delete User Account?',
+      description:
+        'Removing this user deletes their access from the cooperative directory. Historical financial ledger entries remain intact.',
+      details: [
+        { label: 'Member', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+        { label: 'Role', value: member.role.toUpperCase() },
+      ],
+      confirmLabel: 'Delete Account',
+      run: async () => {
+        setBusyId(member.id);
+        try {
+          const res = await api.deleteMember(member.id);
+          onMembersUpdated(res.members);
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'User Removed',
+            description: `Removed user ${member.name} (${member.memberCode}) from cooperative directory.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Delete Failed',
+            description: err instanceof Error ? err.message : 'Failed to remove user account.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleCreateUserSubmit(e: FormEvent) {
+  function handleCreateUserSubmit(e: FormEvent) {
     e.preventDefault();
-    setCreateSaving(true);
-    onFeedback(null);
-    try {
-      const createdName = createForm.name.trim();
-      const createdRole = createForm.role;
-      const res = await api.createMember({
-        name: createdName,
-        email: createForm.email.trim(),
-        password: createForm.password,
-        role: createdRole,
-        status: createForm.status,
-        mobile: createForm.mobile.trim() || undefined,
-        occupation: createForm.occupation.trim() || undefined,
-        companyOrganization: createForm.companyOrganization.trim() || undefined,
-        presentAddress: createForm.presentAddress.trim() || undefined,
-        permanentAddress: createForm.permanentAddress.trim() || undefined,
-      });
-      onMembersUpdated(res.members);
-      setCreateOpen(false);
-      setCreateForm({
-        name: '',
-        email: '',
-        password: '',
-        role: 'member',
-        status: 'active',
-        mobile: '',
-        occupation: '',
-        companyOrganization: '',
-        presentAddress: '',
-        permanentAddress: '',
-      });
-      onFeedback({
-        type: 'success',
-        text: `User account created for ${createdName} (${createdRole}).`,
-      });
-      await onRefreshAll();
-    } catch (err) {
-      onFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not create user account.',
-      });
-    } finally {
-      setCreateSaving(false);
-    }
+    const createdName = createForm.name.trim();
+    const createdEmail = createForm.email.trim();
+    const createdRole = createForm.role;
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Provision New Cooperative User?',
+      description:
+        'Confirm provisioning this user account with encrypted registration credentials and RBAC role.',
+      details: [
+        { label: 'Full Name', value: createdName },
+        { label: 'Email', value: createdEmail },
+        { label: 'Role', value: createdRole.toUpperCase() },
+        { label: 'Initial Status', value: createForm.status.replace(/_/g, ' ') },
+      ],
+      confirmLabel: 'Create User Account',
+      run: async () => {
+        setCreateSaving(true);
+        try {
+          const res = await api.createMember({
+            name: createdName,
+            email: createdEmail,
+            password: createForm.password,
+            role: createdRole,
+            status: createForm.status,
+            mobile: createForm.mobile.trim() || undefined,
+            occupation: createForm.occupation.trim() || undefined,
+            companyOrganization: createForm.companyOrganization.trim() || undefined,
+            presentAddress: createForm.presentAddress.trim() || undefined,
+            permanentAddress: createForm.permanentAddress.trim() || undefined,
+          });
+          onMembersUpdated(res.members);
+          setCreateOpen(false);
+          setCreateForm({
+            name: '',
+            email: '',
+            password: '',
+            role: 'member',
+            status: 'active',
+            mobile: '',
+            occupation: '',
+            companyOrganization: '',
+            presentAddress: '',
+            permanentAddress: '',
+          });
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'User Account Created',
+            description: `User account created for ${createdName} (${createdRole}).`,
+            details: [
+              { label: 'Name', value: createdName },
+              { label: 'Email', value: createdEmail },
+              { label: 'Role', value: createdRole.toUpperCase() },
+            ],
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'User Provisioning Failed',
+            description: err instanceof Error ? err.message : 'Could not create user account.',
+          });
+        } finally {
+          setCreateSaving(false);
+        }
+      },
+    });
   }
 
-  async function handleEditUserSubmit(e: FormEvent) {
+  function handleEditUserSubmit(e: FormEvent) {
     e.preventDefault();
     if (!editingMember) return;
-    setEditSaving(true);
-    onFeedback(null);
-    try {
-      const res = await api.updateMember(editingMember.id, {
-        name: editForm.name.trim(),
-        email: editForm.email.trim(),
-        role: editForm.role,
-        status: editForm.status,
-        mobile: editForm.mobile.trim(),
-        occupation: editForm.occupation.trim(),
-        companyOrganization: editForm.companyOrganization.trim(),
-        presentAddress: editForm.presentAddress.trim(),
-        permanentAddress: editForm.permanentAddress.trim(),
-        ...(editForm.password.trim() ? { password: editForm.password } : {}),
-      });
-      onMembersUpdated(res.members);
-      onFeedback({
-        type: 'success',
-        text: `Updated user profile & permissions for ${editForm.name.trim()} (${editingMember.memberCode}).`,
-      });
-      setEditingMember(null);
-      await onRefreshAll();
-    } catch (err) {
-      onFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to save user edits.',
-      });
-    } finally {
-      setEditSaving(false);
-    }
+    const targetMember = editingMember;
+    const trimmedName = editForm.name.trim();
+    const trimmedEmail = editForm.email.trim();
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Save User Account Changes?',
+      description: 'Confirm updating profile details, RBAC role, and account status.',
+      details: [
+        { label: 'Member', value: `${trimmedName} (${targetMember.memberCode})` },
+        { label: 'Email', value: trimmedEmail },
+        { label: 'Role', value: editForm.role.toUpperCase() },
+        { label: 'Status', value: editForm.status.replace(/_/g, ' ') },
+        ...(editForm.password.trim()
+          ? [{ label: 'Password Reset', value: 'New password will be applied' }]
+          : []),
+      ],
+      confirmLabel: 'Save Changes',
+      run: async () => {
+        setEditSaving(true);
+        try {
+          const res = await api.updateMember(targetMember.id, {
+            name: trimmedName,
+            email: trimmedEmail,
+            role: editForm.role,
+            status: editForm.status,
+            mobile: editForm.mobile.trim(),
+            occupation: editForm.occupation.trim(),
+            companyOrganization: editForm.companyOrganization.trim(),
+            presentAddress: editForm.presentAddress.trim(),
+            permanentAddress: editForm.permanentAddress.trim(),
+            ...(editForm.password.trim() ? { password: editForm.password } : {}),
+          });
+          onMembersUpdated(res.members);
+          setEditingMember(null);
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'User Profile Updated',
+            description: `Updated user profile & permissions for ${trimmedName} (${targetMember.memberCode}).`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Save Failed',
+            description: err instanceof Error ? err.message : 'Failed to save user edits.',
+          });
+        } finally {
+          setEditSaving(false);
+        }
+      },
+    });
   }
 
   return (
@@ -398,7 +524,6 @@ export function AdminUserManagementPanel({
               {filteredMembers.map((m) => {
                 const isSelf = m.id === currentUser.id;
                 const isBusy = busyId === m.id;
-                const isConfirmingDelete = confirmDeleteId === m.id;
 
                 return (
                   <tr key={m.id} className="hover:bg-emerald-50/30 dark:hover:bg-slate-800/40 transition-colors">
@@ -417,13 +542,16 @@ export function AdminUserManagementPanel({
                           aria-label={`Role for ${m.name}`}
                           disabled={isBusy || isSelf}
                           value={m.role}
-                          onChange={(e) =>
-                            void handleQuickRoleOrStatus(
-                              m.id,
-                              { role: e.target.value as UserRole },
-                              `Updated ${m.name}'s role to ${e.target.value}.`
-                            )
-                          }
+                          onChange={(e) => {
+                            const nextRole = e.target.value as UserRole;
+                            if (nextRole !== m.role) {
+                              requestQuickRoleOrStatus(
+                                m,
+                                { role: nextRole },
+                                `Updated ${m.name}'s role to ${nextRole}.`
+                              );
+                            }
+                          }}
                           className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 capitalize disabled:opacity-60"
                         >
                           <option value="member">member</option>
@@ -485,8 +613,8 @@ export function AdminUserManagementPanel({
                                 onClick={() => {
                                   const nextStatus: UserStatus =
                                     m.status === 'active' ? 'suspended' : 'active';
-                                  void handleQuickRoleOrStatus(
-                                    m.id,
+                                  requestQuickRoleOrStatus(
+                                    m,
                                     { status: nextStatus },
                                     nextStatus === 'active'
                                       ? `Activated ${m.name} (${m.memberCode}).`
@@ -506,36 +634,16 @@ export function AdminUserManagementPanel({
                                     : 'Activate'}
                               </button>
 
-                              {isConfirmingDelete ? (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={() => void handleDeleteUser(m)}
-                                    className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
-                                  >
-                                    Confirm
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setConfirmDeleteId(null)}
-                                    className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  disabled={isBusy}
-                                  onClick={() => setConfirmDeleteId(m.id)}
-                                  title="Delete user account"
-                                  aria-label={`Delete ${m.name}`}
-                                  className="p-1.5 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                disabled={isBusy}
+                                onClick={() => requestDeleteUser(m)}
+                                title="Delete user account"
+                                aria-label={`Delete ${m.name}`}
+                                className="p-1.5 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
                             </>
                           )}
 
@@ -921,6 +1029,31 @@ export function AdminUserManagementPanel({
           </div>
         </div>
       )}
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async () => {
+                setModalBusy(true);
+                try {
+                  await modal.run();
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </section>
   );
 }

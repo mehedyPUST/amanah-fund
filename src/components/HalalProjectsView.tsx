@@ -16,7 +16,26 @@ import Skeleton from 'react-loading-skeleton';
 import type { DashboardOverview, HalalProject, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate, shortHash } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
+
+type ProjectModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      run: () => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
 
 interface HalalProjectsViewProps {
   projects: HalalProject[];
@@ -57,114 +76,180 @@ export function HalalProjectsView({
   const [distCoopSharePct, setDistCoopSharePct] = useState('70');
   const [distBusy, setDistBusy] = useState(false);
 
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<ProjectModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setFeedback(null);
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal() {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
     try {
-      await api.createHalalProject({
-        title,
-        sector,
-        shariahStructure,
-        targetAllocation: Number(targetAllocation),
-        projectedAnnualReturn,
-        riskTier,
-        shariahScholarNote,
-      });
-      setTitle('');
-      setSector('');
-      setShariahScholarNote('');
-      setFeedback({
-        type: 'success',
-        text: 'Investment placement proposed and opened for real-time 2/3 member voting.',
-      });
-      await onRefresh();
+      await modal.run();
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to create project proposal.',
-      });
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
     } finally {
-      setSubmitting(false);
+      setModalBusy(false);
     }
   }
 
-  async function handlePlacementVote(projectId: string, decision: 'yes' | 'no') {
-    setVotingId(projectId);
-    setFeedback(null);
-    try {
-      const res = await api.voteHalalProject(projectId, decision, voteComments[projectId]);
-      const p = res.project;
-      const yesCount = p.votes.filter((v) => v.decision === 'yes').length;
-      setFeedback({
-        type: 'success',
-        text:
-          p.votingStatus === 'approved'
-            ? `Vote "${decision.toUpperCase()}" recorded. Placement reached 2/3 majority (${yesCount}/${p.totalEligibleVoters}) and is now Approved!`
-            : `Your "${decision.toUpperCase()}" vote has been recorded in real time (${yesCount}/${p.requiredApprovals} required).`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to record vote.',
-      });
-    } finally {
-      setVotingId(null);
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const numericAllocation = Number(targetAllocation);
+    if (!Number.isFinite(numericAllocation) || numericAllocation < 1000) {
+      showNotice(
+        'red',
+        'Invalid Allocation Amount',
+        'Target allocation must be at least 1,000.'
+      );
+      return;
     }
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Confirm Halal Investment Proposal?',
+      description:
+        'Submitting opens this Shariah-compliant venture for real-time 2/3 member voting.',
+      details: [
+        { label: 'Project Title', value: title.trim() },
+        { label: 'Sector', value: sector.trim() },
+        { label: 'Contract & Risk', value: `${shariahStructure} · ${riskTier}` },
+        { label: 'Target Allocation', value: formatMoney(numericAllocation, ccy) },
+        { label: 'Projected Return', value: projectedAnnualReturn.trim() },
+      ],
+      confirmLabel: 'Open for 2/3 Member Vote',
+      run: async () => {
+        setSubmitting(true);
+        try {
+          await api.createHalalProject({
+            title: title.trim(),
+            sector: sector.trim(),
+            shariahStructure,
+            targetAllocation: numericAllocation,
+            projectedAnnualReturn: projectedAnnualReturn.trim(),
+            riskTier,
+            shariahScholarNote: shariahScholarNote.trim(),
+          });
+          setTitle('');
+          setSector('');
+          setShariahScholarNote('');
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Investment Placement Proposed',
+            'Project proposal published and opened for real-time 2/3 member voting.'
+          );
+        } finally {
+          setSubmitting(false);
+        }
+      },
+    });
   }
 
-  async function handleDistributeProfit(e: FormEvent, projectId: string) {
+  function handlePlacementVote(proj: HalalProject, decision: 'yes' | 'no') {
+    const comment = (voteComments[proj.id] || '').trim();
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'yes' ? 'emerald' : 'red',
+      title: `Confirm "${decision.toUpperCase()}" Vote?`,
+      description:
+        'Your vote is cryptographically signed and sealed for the cooperative 2/3 majority tally.',
+      details: [
+        { label: 'Venture', value: proj.title },
+        { label: 'Contract', value: `${proj.shariahStructure} · ${formatMoney(proj.targetAllocation, ccy)}` },
+        { label: 'Decision', value: decision.toUpperCase() },
+        ...(comment ? [{ label: 'Vote Note', value: comment }] : []),
+      ],
+      confirmLabel: decision === 'yes' ? 'Confirm Vote Yes' : 'Confirm Vote No',
+      run: async () => {
+        setVotingId(proj.id);
+        try {
+          const res = await api.voteHalalProject(proj.id, decision, comment || undefined);
+          const p = res.project;
+          const yesCount = p.votes.filter((v) => v.decision === 'yes').length;
+          await onRefresh();
+          showNotice(
+            'emerald',
+            p.votingStatus === 'approved' ? 'Placement Approved (2/3 Quorum)' : 'Vote Recorded',
+            p.votingStatus === 'approved'
+              ? `Vote "${decision.toUpperCase()}" recorded. "${p.title}" reached 2/3 majority (${yesCount}/${p.totalEligibleVoters}) and is now Approved!`
+              : `Your "${decision.toUpperCase()}" vote has been recorded (${yesCount}/${p.requiredApprovals} required).`
+          );
+        } finally {
+          setVotingId(null);
+        }
+      },
+    });
+  }
+
+  function handleDistributeProfit(e: FormEvent, proj: HalalProject) {
     e.preventDefault();
-    setDistBusy(true);
-    setFeedback(null);
-    try {
-      const res = await api.distributeHalalProfit(projectId, {
-        periodLabel: distPeriodLabel.trim(),
-        realizedProfit: Number(distRealizedProfit),
-        coopSharePct: Number(distCoopSharePct),
-      });
-      const latestDist = res.project.distributions?.[0];
-      setFeedback({
-        type: 'success',
-        text: latestDist
-          ? `Distributed ${formatMoney(latestDist.distributablePool, ccy)} (${latestDist.periodLabel}) proportionally across ${latestDist.allocations.length} active cooperative members.`
-          : 'Profit distribution recorded across active cooperative members.',
-      });
-      setDistFormProjectId(null);
-      setDistRealizedProfit('');
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Profit distribution failed.',
-      });
-    } finally {
-      setDistBusy(false);
+    const profit = Number(distRealizedProfit);
+    const sharePct = Number(distCoopSharePct);
+    if (!Number.isFinite(profit) || profit <= 0 || !Number.isFinite(sharePct) || sharePct <= 0) {
+      showNotice(
+        'red',
+        'Invalid Distribution Values',
+        'Enter a valid realized profit and cooperative share percentage.'
+      );
+      return;
     }
+    const estPool = Math.round((profit * sharePct) / 100);
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Distribute Halal Profit (${proj.title})?`,
+      description:
+        'Distributes the realized cooperative profit share pro-rata across active verified members based on contribution weight.',
+      details: [
+        { label: 'Period Label', value: distPeriodLabel.trim() },
+        { label: 'Realized Profit', value: formatMoney(profit, ccy) },
+        { label: 'Co-op Share', value: `${sharePct}% (${formatMoney(estPool, ccy)})` },
+      ],
+      confirmLabel: 'Confirm Pro-Rata Distribution',
+      run: async () => {
+        setDistBusy(true);
+        try {
+          const res = await api.distributeHalalProfit(proj.id, {
+            periodLabel: distPeriodLabel.trim(),
+            realizedProfit: profit,
+            coopSharePct: sharePct,
+          });
+          const latestDist = res.project.distributions?.[0];
+          setDistFormProjectId(null);
+          setDistRealizedProfit('');
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Profit Distributed Pro-Rata',
+            latestDist
+              ? `Distributed ${formatMoney(latestDist.distributablePool, ccy)} (${latestDist.periodLabel}) proportionally across ${latestDist.allocations.length} active cooperative members.`
+              : 'Profit distribution recorded across active cooperative members.'
+          );
+        } finally {
+          setDistBusy(false);
+        }
+      },
+    });
   }
 
   const totalTarget = projects.reduce((s, p) => s + p.targetAllocation, 0);
 
   return (
     <div className="space-y-6">
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
       {/* Maturity Transition Summary */}
       <section className="bg-gradient-to-br from-amber-50/65 via-white to-white dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -372,8 +457,8 @@ export function HalalProjectsView({
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
-                              disabled={votingId === proj.id}
-                              onClick={() => handlePlacementVote(proj.id, 'yes')}
+                              disabled={votingId === proj.id || modalBusy}
+                              onClick={() => handlePlacementVote(proj, 'yes')}
                               className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
@@ -381,8 +466,8 @@ export function HalalProjectsView({
                             </button>
                             <button
                               type="button"
-                              disabled={votingId === proj.id}
-                              onClick={() => handlePlacementVote(proj.id, 'no')}
+                              disabled={votingId === proj.id || modalBusy}
+                              onClick={() => handlePlacementVote(proj, 'no')}
                               className="px-3.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
@@ -483,7 +568,7 @@ export function HalalProjectsView({
 
                         {isStaff && distFormProjectId === proj.id && (
                           <form
-                            onSubmit={(e) => void handleDistributeProfit(e, proj.id)}
+                            onSubmit={(e) => handleDistributeProfit(e, proj)}
                             className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"
                           >
                             <div>
@@ -757,6 +842,21 @@ export function HalalProjectsView({
           </section>
         )}
       </div>
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

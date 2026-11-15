@@ -56,6 +56,7 @@ type SettingsModalState =
       tone: 'emerald' | 'amber' | 'red';
       title: string;
       description: string;
+      details?: ActionModalDetailItem[];
     };
 
 export function AdminSiteSettingsView({

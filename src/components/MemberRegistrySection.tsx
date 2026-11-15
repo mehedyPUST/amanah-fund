@@ -12,9 +12,32 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
+
+type RegistryModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      inputMultiline?: boolean;
+      run: (inputValue: string) => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
 
 interface MemberRegistrySectionProps {
   user: PublicUser;
@@ -35,14 +58,36 @@ export function MemberRegistrySection({
   const [subTab, setSubTab] = useState<'manage' | 'directory'>('manage');
   const [members, setMembers] = useState<MemberSummary[]>([]);
   const [profileRequests, setProfileRequests] = useState<ProfileChangeRequest[]>([]);
-  const [rejectingProfileReqId, setRejectingProfileReqId] = useState<string | null>(null);
-  const [profileRejectNote, setProfileRejectNote] = useState('');
   const [profileBusyId, setProfileBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<RegistryModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
+
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal(inputValue: string) {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
+    try {
+      await modal.run(inputValue);
+    } catch (err) {
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setModalBusy(false);
+    }
+  }
 
   const loadMembers = useCallback(async () => {
     if (!isStaff) {
@@ -58,10 +103,11 @@ export function MemberRegistrySection({
       setMembers(res.members);
       setProfileRequests(reqRes.requests);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to load member registry.',
-      });
+      showNotice(
+        'red',
+        'Could Not Load Member Registry',
+        err instanceof Error ? err.message : 'Failed to load member registry.'
+      );
     } finally {
       setLoading(false);
     }
@@ -71,80 +117,123 @@ export function MemberRegistrySection({
     void loadMembers();
   }, [loadMembers]);
 
-  async function handleMemberChange(
-    memberId: string,
-    payload: { role?: UserRole; status?: UserStatus }
-  ) {
-    setFeedback(null);
-    try {
-      const res = await api.updateMember(memberId, payload);
-      setMembers(res.members);
-      setInspectingMember((prev) => (prev?.id === memberId ? null : prev));
-      setFeedback({
-        type: 'success',
-        text:
-          payload.status === 'active'
-            ? 'Member approved and activated. Welcome notification queued.'
-            : 'Member registry record updated.',
-      });
-      await Promise.all([onRefresh(), loadMembers()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update member.',
-      });
-    }
+  function confirmApprovePendingMember(member: MemberSummary) {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Approve Signup (${member.name})?`,
+      description:
+        'Approving activates cooperative membership immediately and dispatches a welcome notification.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+      ],
+      confirmLabel: 'Approve Signup',
+      run: async () => {
+        const res = await api.updateMember(member.id, { status: 'active' });
+        setMembers(res.members);
+        setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+        await Promise.all([onRefresh(), loadMembers()]);
+        showNotice(
+          'emerald',
+          'Member Approved & Activated',
+          `${member.name} (${member.memberCode}) is now an active cooperative member. Welcome notification queued.`
+        );
+      },
+    });
   }
 
-  async function handleDeclinePending(memberId: string) {
-    setFeedback(null);
-    try {
-      const res = await api.declinePendingMember(memberId);
-      setMembers(res.members);
-      setInspectingMember((prev) => (prev?.id === memberId ? null : prev));
-      setFeedback({ type: 'success', text: 'Pending member registration declined and removed.' });
-      await Promise.all([onRefresh(), loadMembers()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to decline pending registration.',
-      });
-    }
+  function confirmDeclinePendingMember(member: MemberSummary) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: `Decline Application (${member.name})?`,
+      description: 'Declining rejects and removes this pending membership registration.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+      ],
+      confirmLabel: 'Decline Application',
+      run: async () => {
+        const res = await api.declinePendingMember(member.id);
+        setMembers(res.members);
+        setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+        await Promise.all([onRefresh(), loadMembers()]);
+        showNotice(
+          'amber',
+          'Pending Registration Declined',
+          `Pending member registration for ${member.name} (${member.memberCode}) was declined and removed.`
+        );
+      },
+    });
   }
 
-  async function handleReviewProfileChange(
-    requestId: string,
-    decision: 'approved' | 'rejected',
-    note?: string
+  function confirmProfileChangeReview(
+    req: ProfileChangeRequest,
+    decision: 'approved' | 'rejected'
   ) {
-    if (decision === 'rejected' && (!note || note.trim().length < 3)) {
-      setFeedback({
-        type: 'error',
-        text: 'Please provide a brief correction note explaining why the profile change is declined.',
+    const changesSummary = Object.entries(req.requestedChanges)
+      .filter(([, v]) => Boolean(v))
+      .map(([k, v]) => `${k}: ${String(v)}`)
+      .join(' | ');
+
+    if (decision === 'approved') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Approve Profile Update (${req.memberName})?`,
+        description: 'Applying immediately updates the member’s encrypted profile record.',
+        details: [
+          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
+          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+        ],
+        confirmLabel: 'Approve Update',
+        run: async () => {
+          setProfileBusyId(req.id);
+          try {
+            await api.reviewProfileChangeRequest(req.id, 'approved');
+            await Promise.all([onRefresh(), loadMembers()]);
+            showNotice(
+              'emerald',
+              'Profile Update Approved',
+              `${req.memberName}'s profile changes have been applied.`
+            );
+          } finally {
+            setProfileBusyId(null);
+          }
+        },
       });
-      return;
-    }
-    setProfileBusyId(requestId);
-    setFeedback(null);
-    try {
-      await api.reviewProfileChangeRequest(requestId, decision, note?.trim());
-      setRejectingProfileReqId(null);
-      setProfileRejectNote('');
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approved'
-            ? 'Member profile update approved and applied.'
-            : 'Profile update request declined with feedback.',
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Decline Profile Update (${req.memberName})?`,
+        description:
+          'Provide a clear correction note explaining why this profile modification request is declined.',
+        details: [
+          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
+          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+        ],
+        inputLabel: 'Reason for Declining (min 3 chars)',
+        inputPlaceholder: 'Explain why this update could not be approved…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Decline Profile Update',
+        run: async (note) => {
+          setProfileBusyId(req.id);
+          try {
+            await api.reviewProfileChangeRequest(req.id, 'rejected', note.trim());
+            await Promise.all([onRefresh(), loadMembers()]);
+            showNotice(
+              'amber',
+              'Profile Update Declined',
+              `Profile update request from ${req.memberName} was declined with your feedback note.`
+            );
+          } finally {
+            setProfileBusyId(null);
+          }
+        },
       });
-      await Promise.all([onRefresh(), loadMembers()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review profile change request.',
-      });
-    } finally {
-      setProfileBusyId(null);
     }
   }
 
@@ -194,19 +283,6 @@ export function MemberRegistrySection({
         </div>
       </section>
 
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
       {subTab === 'manage' ? (
         <div className="space-y-6">
           {pendingProfileRequests.length > 0 && (
@@ -247,53 +323,22 @@ export function MemberRegistrySection({
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
-                          disabled={profileBusyId === req.id}
-                          onClick={() => {
-                            setRejectingProfileReqId(req.id);
-                            setProfileRejectNote('');
-                          }}
+                          disabled={profileBusyId === req.id || modalBusy}
+                          onClick={() => confirmProfileChangeReview(req, 'rejected')}
                           className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white cursor-pointer disabled:opacity-50"
                         >
                           Decline
                         </button>
                         <button
                           type="button"
-                          disabled={profileBusyId === req.id}
-                          onClick={() => void handleReviewProfileChange(req.id, 'approved')}
+                          disabled={profileBusyId === req.id || modalBusy}
+                          onClick={() => confirmProfileChangeReview(req, 'approved')}
                           className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                         >
                           Approve Update
                         </button>
                       </div>
                     </div>
-
-                    {rejectingProfileReqId === req.id && (
-                      <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <input
-                          type="text"
-                          value={profileRejectNote}
-                          onChange={(e) => setProfileRejectNote(e.target.value)}
-                          placeholder="Reason for declining profile edit…"
-                          className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-red-200 dark:border-red-900 bg-white dark:bg-slate-950"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void handleReviewProfileChange(req.id, 'rejected', profileRejectNote)
-                          }
-                          className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium cursor-pointer"
-                        >
-                          Confirm Decline
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRejectingProfileReqId(null)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -320,7 +365,6 @@ export function MemberRegistrySection({
               onRefreshAll={async () => {
                 await Promise.all([onRefresh(), loadMembers()]);
               }}
-              onFeedback={setFeedback}
             />
           )}
         </div>
@@ -494,7 +538,8 @@ export function MemberRegistrySection({
                 <>
                   <button
                     type="button"
-                    onClick={() => void handleDeclinePending(inspectingMember.id)}
+                    disabled={modalBusy}
+                    onClick={() => confirmDeclinePendingMember(inspectingMember)}
                     className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
@@ -502,9 +547,8 @@ export function MemberRegistrySection({
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      void handleMemberChange(inspectingMember.id, { status: 'active' })
-                    }
+                    disabled={modalBusy}
+                    onClick={() => confirmApprovePendingMember(inspectingMember)}
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -523,6 +567,25 @@ export function MemberRegistrySection({
           </div>
         </div>
       )}
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

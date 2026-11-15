@@ -232,7 +232,10 @@ export function downloadContributionAndLoanPdfStatement({
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(100, 116, 139);
-      const purposeLine = doc.splitTextToSize(`Purpose: ${loan.purpose}`, contentWidth - 16);
+      const txSuffix = loan.disbursementSignature?.transactionNumber
+        ? ` | Tx #: ${loan.disbursementSignature.transactionNumber}`
+        : '';
+      const purposeLine = doc.splitTextToSize(`Purpose: ${loan.purpose}${txSuffix}`, contentWidth - 16);
       doc.text(purposeLine[0] || '', margin + 6, y + 6);
       y += 12;
       drawHorizontalRule(y);

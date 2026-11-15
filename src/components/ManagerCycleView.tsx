@@ -21,6 +21,7 @@ interface ManagerCycleViewProps {
   user: PublicUser;
   config: FundConfig | null;
   onViewMemberProfile?: (memberId: string) => void;
+  onOpenConfig?: () => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -39,12 +40,14 @@ type CycleModalState =
       tone: 'emerald' | 'red' | 'slate';
       title: string;
       description: string;
+      details?: ActionModalDetailItem[];
     };
 
 export function ManagerCycleView({
   user,
   config,
   onViewMemberProfile,
+  onOpenConfig,
   onRefresh,
 }: ManagerCycleViewProps) {
   const isAdmin = user.role === 'admin';
@@ -163,7 +166,7 @@ export function ManagerCycleView({
           ? `${slot.memberName} (${slot.memberCode}) will receive Manager Desk permissions for approvals, secret ballot initiation, and meeting scheduling.`
           : `${slot.memberName} (${slot.memberCode}) will return to regular member permissions.`,
       details: [
-        { label: 'Cycle Slot', value: `#${slot.cycleIndex} (${formatShortDate(slot.startDate)} – ${formatShortDate(slot.endDate)})` },
+        { label: 'Cycle Slot', value: `#${slot.cycleNumber} (${formatShortDate(slot.startDate)} – ${formatShortDate(slot.endDate)})` },
         { label: 'Current Role', value: slot.currentRole },
         { label: 'New Role', value: nextRole },
       ],
@@ -252,6 +255,15 @@ export function ManagerCycleView({
                   {preset} Months
                 </button>
               ))}
+              {onOpenConfig && (
+                <button
+                  type="button"
+                  onClick={onOpenConfig}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Site Settings
+                </button>
+              )}
             </div>
           </div>
 
@@ -312,7 +324,7 @@ export function ManagerCycleView({
                   <span>Current Cycle Manager</span>
                 </span>
                 <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                  Cycle #{schedule.currentSlot?.cycleIndex ?? '—'}
+                  Cycle #{schedule.currentSlot?.cycleNumber ?? '—'}
                 </span>
               </div>
 
@@ -360,7 +372,7 @@ export function ManagerCycleView({
                   <span>Next Up in Rotation</span>
                 </span>
                 <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                  Cycle #{schedule.nextSlot?.cycleIndex ?? '—'}
+                  Cycle #{schedule.nextSlot?.cycleNumber ?? '—'}
                 </span>
               </div>
 
@@ -403,14 +415,14 @@ export function ManagerCycleView({
           </div>
 
           {/* Active Assigned Managers Note */}
-          {schedule.activeRoleManagers.length > 0 && (
+          {schedule.activeDesignatedManagers.length > 0 && (
             <section className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                 <span>Currently Active Manager Role Holder(s):</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                {schedule.activeRoleManagers.map((m) => (
+                {schedule.activeDesignatedManagers.map((m) => (
                   <button
                     key={m.id}
                     type="button"
@@ -463,7 +475,7 @@ export function ManagerCycleView({
                       const isSelf = slot.memberId === user.id;
                       return (
                         <tr
-                          key={`${slot.cycleIndex}-${slot.memberId}`}
+                          key={`${slot.cycleNumber}-${slot.memberId}`}
                           className={
                             slot.status === 'current'
                               ? 'bg-emerald-50/50 dark:bg-emerald-950/20'
@@ -471,7 +483,7 @@ export function ManagerCycleView({
                           }
                         >
                           <td className="py-3 px-4 font-mono font-semibold text-slate-900 dark:text-white">
-                            #{slot.cycleIndex}
+                            #{slot.cycleNumber}
                           </td>
                           <td className="py-3 px-4">
                             <div className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">

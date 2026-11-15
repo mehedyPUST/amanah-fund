@@ -321,7 +321,10 @@ export function RequestQardHasanLoanForm({
             label: 'Schedule',
             value: `${created.installmentMonths} × ${formatMoney(created.monthlyInstallment, ccy)}`,
           },
-          { label: 'Payout Provider', value: `${created.channel.toUpperCase()} · ${created.provider}` },
+          {
+            label: 'Payout Provider',
+            value: `${(created.decryptedSensitiveNotes?.channel || channel).toUpperCase()} · ${created.decryptedSensitiveNotes?.provider || provider}`,
+          },
         ],
         closeParentOnDone: variant === 'modal' && Boolean(onClose),
       });
@@ -583,7 +586,9 @@ export function RequestQardHasanLoanForm({
               onChange={setProvider}
               disabled={!canSubmit}
               placeholder={
-                channel === 'mfs' ? 'Search MFS wallet…' : 'Search all 61 BD banks…'
+                channel === 'mfs'
+                  ? 'Search MFS wallet…'
+                  : `Search all ${BANK_PROVIDERS.length} BD banks…`
               }
             />
           </div>

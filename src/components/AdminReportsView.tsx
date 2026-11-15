@@ -26,6 +26,7 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
@@ -77,9 +78,26 @@ export function AdminReportsView({
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
   const [savingPolicy, setSavingPolicy] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        run: () => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   async function loadAdminData() {
     setLoading(true);
@@ -89,9 +107,11 @@ export function AdminReportsView({
       setLogs(aRes.logs);
       setChainValid(aRes.chainValid);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to load admin records.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Failed to Load Admin Records',
+        description: err instanceof Error ? err.message : 'Failed to load admin records.',
       });
     } finally {
       setLoading(false);
@@ -113,73 +133,125 @@ export function AdminReportsView({
     }
   }, [config]);
 
-  async function handleSavePolicy(e: FormEvent) {
+  function handleSavePolicy(e: FormEvent) {
     e.preventDefault();
-    setSavingPolicy(true);
-    setFeedback(null);
-    try {
-      await api.updateConfig({
-        maxLoansPerYear: Number(maxLoansPerYear),
-        maturityDate,
-        monthlyContributionAmount: Number(monthlyContributionAmount),
-        maxLoanAmount: Number(maxLoanAmount),
-        currency,
-        halalInvestmentThesis: halalThesis,
-      });
-      setFeedback({
-        type: 'success',
-        text: `Cooperative policy updated (annual loan limit: ${maxLoansPerYear}/year, maturity: ${maturityDate}).`,
-      });
-      await Promise.all([onRefresh(), loadAdminData()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to save cooperative policy.',
-      });
-    } finally {
-      setSavingPolicy(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Update Cooperative Fund Policy?',
+      description:
+        'Confirm saving these governance limits and treasury policy parameters for all cooperative members.',
+      details: [
+        { label: 'Loans / Member / Year', value: `${maxLoansPerYear}` },
+        { label: 'Halal Maturity Date', value: maturityDate },
+        { label: 'Monthly Target', value: formatMoney(Number(monthlyContributionAmount || 0), currency) },
+        { label: 'Max Loan Cap', value: formatMoney(Number(maxLoanAmount || 0), currency) },
+        { label: 'Currency', value: currency },
+      ],
+      confirmLabel: 'Save Policy',
+      run: async () => {
+        setSavingPolicy(true);
+        try {
+          await api.updateConfig({
+            maxLoansPerYear: Number(maxLoansPerYear),
+            maturityDate,
+            monthlyContributionAmount: Number(monthlyContributionAmount),
+            maxLoanAmount: Number(maxLoanAmount),
+            currency,
+            halalInvestmentThesis: halalThesis,
+          });
+          await Promise.all([onRefresh(), loadAdminData()]);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Cooperative Policy Updated',
+            description: `Cooperative policy updated (annual loan limit: ${maxLoansPerYear}/year, maturity: ${maturityDate}).`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Policy Save Failed',
+            description: err instanceof Error ? err.message : 'Failed to save cooperative policy.',
+          });
+        } finally {
+          setSavingPolicy(false);
+        }
+      },
+    });
   }
 
-  async function handleMemberChange(
-    memberId: string,
-    payload: { role?: UserRole; status?: UserStatus }
-  ) {
-    setFeedback(null);
-    try {
-      const res = await api.updateMember(memberId, payload);
-      setMembers(res.members);
-      setInspectingMember((prev) => (prev?.id === memberId ? null : prev));
-      setFeedback({
-        type: 'success',
-        text:
-          payload.status === 'active'
-            ? 'Member approved and activated. Welcome notification queued.'
-            : 'Member RBAC permissions updated.',
-      });
-      await Promise.all([onRefresh(), loadAdminData()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update member.',
-      });
-    }
+  function confirmApproveMember(member: MemberSummary) {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Approve Member Registration?',
+      description:
+        'Approving activates this applicant account for monthly deposits, community participation, and voting.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+      ],
+      confirmLabel: 'Approve Signup',
+      run: async () => {
+        try {
+          const res = await api.updateMember(member.id, { status: 'active' });
+          setMembers(res.members);
+          setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+          await Promise.all([onRefresh(), loadAdminData()]);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Membership Approved',
+            description: `${member.name} (${member.memberCode}) is now an active verified member. Welcome notification queued.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Approval Failed',
+            description: err instanceof Error ? err.message : 'Failed to approve member.',
+          });
+        }
+      },
+    });
   }
 
-  async function handleDeclinePending(memberId: string) {
-    setFeedback(null);
-    try {
-      const res = await api.declinePendingMember(memberId);
-      setMembers(res.members);
-      setInspectingMember((prev) => (prev?.id === memberId ? null : prev));
-      setFeedback({ type: 'success', text: 'Pending member registration declined and removed.' });
-      await Promise.all([onRefresh(), loadAdminData()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to decline pending registration.',
-      });
-    }
+  function confirmDeclinePending(member: MemberSummary) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Decline Pending Registration?',
+      description:
+        'Declining removes this pending signup application from the verification queue.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+      ],
+      confirmLabel: 'Decline Application',
+      run: async () => {
+        try {
+          const res = await api.declinePendingMember(member.id);
+          setMembers(res.members);
+          setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+          await Promise.all([onRefresh(), loadAdminData()]);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Application Declined',
+            description: `Pending registration for ${member.name} (${member.memberCode}) declined and removed.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Decline Failed',
+            description:
+              err instanceof Error ? err.message : 'Failed to decline pending registration.',
+          });
+        }
+      },
+    });
   }
 
   function downloadCsvReport(type: 'contributions' | 'loans' | 'members' | 'audit') {
@@ -188,27 +260,50 @@ export function AdminReportsView({
 
   const [loanReviewBusyId, setLoanReviewBusyId] = useState<string | null>(null);
 
-  async function handleAdminLoanReview(loanId: string, decision: 'approve' | 'reject') {
-    setLoanReviewBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.adminReviewLoan(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approve'
-            ? `Qard Hasan loan ${loanId} approved for treasury disbursement.`
-            : `Qard Hasan loan ${loanId} declined during administrative review.`,
-      });
-      await Promise.all([onRefresh(), loadAdminData()]);
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review loan request.',
-      });
-    } finally {
-      setLoanReviewBusyId(null);
-    }
+  function confirmAdminLoanReview(loan: LoanRequest, decision: 'approve' | 'reject') {
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'approve' ? 'emerald' : 'red',
+      title:
+        decision === 'approve'
+          ? 'Approve Qard Hasan Loan for Disbursement?'
+          : 'Decline Qard Hasan Loan Request?',
+      description:
+        decision === 'approve'
+          ? 'Administrative approval moves this loan into the disbursement queue.'
+          : 'Declining ends administrative review and notifies the borrower.',
+      details: [
+        { label: 'Loan ID', value: loan.id },
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+      ],
+      confirmLabel: decision === 'approve' ? 'Approve for Disbursement' : 'Decline Loan',
+      run: async () => {
+        setLoanReviewBusyId(loan.id);
+        try {
+          await api.adminReviewLoan(loan.id, decision);
+          await Promise.all([onRefresh(), loadAdminData()]);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: decision === 'approve' ? 'Loan Approved' : 'Loan Declined',
+            description:
+              decision === 'approve'
+                ? `Qard Hasan loan ${loan.id} approved for treasury disbursement.`
+                : `Qard Hasan loan ${loan.id} declined during administrative review.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Loan Review Failed',
+            description: err instanceof Error ? err.message : 'Failed to review loan request.',
+          });
+        } finally {
+          setLoanReviewBusyId(null);
+        }
+      },
+    });
   }
 
   const pendingMembers = members.filter((m) => m.status === 'pending_approval');
@@ -245,19 +340,6 @@ export function AdminReportsView({
           ))}
         </div>
       </div>
-
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
 
       {/* New User Signup Approval Queue (Admin) */}
       {isAdmin && (adminSection === 'all' || adminSection === 'users') && (
@@ -333,7 +415,7 @@ export function AdminReportsView({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleDeclinePending(pm.id)}
+                        onClick={() => confirmDeclinePending(pm)}
                         className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
@@ -341,7 +423,7 @@ export function AdminReportsView({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleMemberChange(pm.id, { status: 'active' })}
+                        onClick={() => confirmApproveMember(pm)}
                         className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -420,24 +502,32 @@ export function AdminReportsView({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      disabled={loanReviewBusyId === loan.id}
-                      onClick={() => void handleAdminLoanReview(loan.id, 'reject')}
-                      className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
-                    >
-                      <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Decline</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loanReviewBusyId === loan.id}
-                      onClick={() => void handleAdminLoanReview(loan.id, 'approve')}
-                      className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Approve for Disbursement</span>
-                    </button>
+                    {isAdmin || loan.borrowerId !== user.id ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={loanReviewBusyId === loan.id}
+                          onClick={() => confirmAdminLoanReview(loan, 'reject')}
+                          className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                        >
+                          <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Decline</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loanReviewBusyId === loan.id}
+                          onClick={() => confirmAdminLoanReview(loan, 'approve')}
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Approve for Disbursement</span>
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                        Peer / Admin Review Required
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -634,7 +724,6 @@ export function AdminReportsView({
           onRefreshAll={async () => {
             await Promise.all([onRefresh(), loadAdminData()]);
           }}
-          onFeedback={setFeedback}
         />
       )}
 
@@ -813,7 +902,7 @@ export function AdminReportsView({
                 <>
                   <button
                     type="button"
-                    onClick={() => void handleDeclinePending(inspectingMember.id)}
+                    onClick={() => confirmDeclinePending(inspectingMember)}
                     className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
@@ -821,9 +910,7 @@ export function AdminReportsView({
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      void handleMemberChange(inspectingMember.id, { status: 'active' })
-                    }
+                    onClick={() => confirmApproveMember(inspectingMember)}
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -842,6 +929,32 @@ export function AdminReportsView({
           </div>
         </div>
       )}
+
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async () => {
+                setModalBusy(true);
+                try {
+                  await modal.run();
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

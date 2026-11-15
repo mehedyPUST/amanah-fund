@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle,
   Award,
   BarChart2,
   Check,
@@ -47,6 +46,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 
 interface CommunityViewProps {
   user: PublicUser;
@@ -146,8 +146,6 @@ export function CommunityView({
   const [postsLoading, setPostsLoading] = useState(true);
   const [feedCategory, setFeedCategory] = useState<'all' | 'pinned' | 'hidden' | CommunityCategory>('all');
   const [feedSearch, setFeedSearch] = useState('');
-  const [feedError, setFeedError] = useState<string | null>(null);
-  const [feedNotice, setFeedNotice] = useState<string | null>(null);
 
   // Composer State
   const [composerOpen, setComposerOpen] = useState(false);
@@ -181,8 +179,6 @@ export function CommunityView({
   const [editImageUrl, setEditImageUrl] = useState('');
   const [savingPostEdit, setSavingPostEdit] = useState(false);
 
-  const [confirmDeletePostId, setConfirmDeletePostId] = useState<string | null>(null);
-  const [deleteReason, setDeleteReason] = useState('');
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
 
   // Comments State
@@ -190,7 +186,6 @@ export function CommunityView({
   const [submittingCommentPostId, setSubmittingCommentPostId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
-  const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState<string | null>(null);
 
   // Private Messaging State
   const [threads, setThreads] = useState<ConversationThreadSummary[]>([]);
@@ -206,7 +201,30 @@ export function CommunityView({
   const [messageInput, setMessageInput] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [dmError, setDmError] = useState<string | null>(null);
-  const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState<string | null>(null);
+
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        inputLabel?: string;
+        inputPlaceholder?: string;
+        inputRequired?: boolean;
+        run: (inputValue: string) => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const selectedPeerIdRef = useRef<string | null>(null);
@@ -218,7 +236,12 @@ export function CommunityView({
       const res = await api.getCommunityPosts();
       setPosts(res.posts);
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to load community posts.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Community Feed Unavailable',
+        description: err instanceof Error ? err.message : 'Failed to load community posts.',
+      });
     } finally {
       if (!silent) setPostsLoading(false);
     }
@@ -408,7 +431,6 @@ export function CommunityView({
   }
 
   async function handleImagePick(file: File, target: 'new' | 'edit') {
-    setFeedError(null);
     setUploadingImage(true);
     try {
       const res = await api.uploadImage(file, `community-${Date.now()}`);
@@ -418,22 +440,30 @@ export function CommunityView({
         setEditImageUrl(res.url);
       }
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Image upload failed.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Image Upload Failed',
+        description: err instanceof Error ? err.message : 'Image upload failed.',
+      });
     } finally {
       setUploadingImage(false);
     }
   }
 
-  async function handleCreatePost(e: React.FormEvent) {
+  function handleCreatePost(e: React.FormEvent) {
     e.preventDefault();
-    setFeedError(null);
-    setFeedNotice(null);
 
     let pollPayload: { question: string; allowMultiple: boolean; options: string[] } | undefined;
     if (pollEnabled) {
       const cleanedOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
       if (pollQuestion.trim().length < 3 || cleanedOptions.length < 2) {
-        setFeedError('Attached poll requires a question and at least 2 non-empty options.');
+        setModal({
+          mode: 'notice',
+          tone: 'red',
+          title: 'Invalid Community Poll',
+          description: 'Attached poll requires a question and at least 2 non-empty options.',
+        });
         return;
       }
       pollPayload = {
@@ -443,43 +473,72 @@ export function CommunityView({
       };
     }
 
-    setCreatingPost(true);
-    try {
-      const res = await api.createCommunityPost({
-        category: newCategory,
-        title: newTitle,
-        content: newContent,
-        imageUrl: newImageUrl || undefined,
-        poll: pollPayload,
-      });
-      setPosts((prev) => [res.post, ...prev]);
-      setNewTitle('');
-      setNewContent('');
-      setNewImageUrl('');
-      setNewCategory('General');
-      setPollEnabled(false);
-      setPollQuestion('');
-      setPollAllowMultiple(false);
-      setPollOptions(['', '']);
-      setPostMentionQuery(null);
-      setComposerOpen(false);
-      setFeedNotice('Post published to the Amanah Community.');
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to publish post.');
-    } finally {
-      setCreatingPost(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Publish Community Post?',
+      description: 'Confirm publishing this post to the verified Amanah Member Community.',
+      details: [
+        { label: 'Topic', value: newCategory },
+        { label: 'Headline', value: newTitle.trim() },
+        ...(pollPayload ? [{ label: 'Attached Poll', value: pollPayload.question }] : []),
+        ...(newImageUrl ? [{ label: 'Attachment', value: 'Image attached' }] : []),
+      ],
+      confirmLabel: 'Publish Post',
+      run: async () => {
+        setCreatingPost(true);
+        try {
+          const res = await api.createCommunityPost({
+            category: newCategory,
+            title: newTitle,
+            content: newContent,
+            imageUrl: newImageUrl || undefined,
+            poll: pollPayload,
+          });
+          setPosts((prev) => [res.post, ...prev]);
+          setNewTitle('');
+          setNewContent('');
+          setNewImageUrl('');
+          setNewCategory('General');
+          setPollEnabled(false);
+          setPollQuestion('');
+          setPollAllowMultiple(false);
+          setPollOptions(['', '']);
+          setPostMentionQuery(null);
+          setComposerOpen(false);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Post Published',
+            description: 'Post published to the Amanah Community.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Publish Failed',
+            description: err instanceof Error ? err.message : 'Failed to publish post.',
+          });
+        } finally {
+          setCreatingPost(false);
+        }
+      },
+    });
   }
 
   async function handleVotePoll(postId: string, optionIds: string[]) {
     if (optionIds.length === 0) return;
     setVotingPollId(postId);
-    setFeedError(null);
     try {
       const res = await api.voteCommunityPoll(postId, optionIds);
       setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to record poll vote.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Poll Vote Failed',
+        description: err instanceof Error ? err.message : 'Failed to record poll vote.',
+      });
     } finally {
       setVotingPollId(null);
     }
@@ -491,52 +550,108 @@ export function CommunityView({
     setEditContent(post.content);
     setEditCategory(post.category);
     setEditImageUrl(post.imageUrl || '');
-    setFeedError(null);
   }
 
-  async function handleSavePostEdit(postId: string) {
-    setSavingPostEdit(true);
-    setFeedError(null);
-    try {
-      const res = await api.updateCommunityPost(postId, {
-        title: editTitle,
-        content: editContent,
-        category: editCategory,
-        imageUrl: editImageUrl,
-      });
-      setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
-      setEditingPostId(null);
-      setFeedNotice('Post updated.');
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to save changes.');
-    } finally {
-      setSavingPostEdit(false);
-    }
+  function handleSavePostEdit(postId: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Save Post Changes?',
+      description: 'Confirm saving your edited post content.',
+      details: [
+        { label: 'Topic', value: editCategory },
+        { label: 'Headline', value: editTitle.trim() },
+      ],
+      confirmLabel: 'Save Changes',
+      run: async () => {
+        setSavingPostEdit(true);
+        try {
+          const res = await api.updateCommunityPost(postId, {
+            title: editTitle,
+            content: editContent,
+            category: editCategory,
+            imageUrl: editImageUrl,
+          });
+          setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
+          setEditingPostId(null);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Post Updated',
+            description: 'Your changes have been saved.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Update Failed',
+            description: err instanceof Error ? err.message : 'Failed to save changes.',
+          });
+        } finally {
+          setSavingPostEdit(false);
+        }
+      },
+    });
   }
 
-  async function handleDeletePost(postId: string) {
-    setModerationBusyId(postId);
-    setFeedError(null);
-    try {
-      await api.deleteCommunityPost(postId, deleteReason.trim() || undefined);
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
-      setConfirmDeletePostId(null);
-      setDeleteReason('');
-      setFeedNotice('Post deleted.');
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to delete post.');
-    } finally {
-      setModerationBusyId(null);
-    }
+  function requestDeletePost(post: CommunityPost) {
+    const isAuthor = post.authorId === user.id;
+    const isAdminModeration = isAdmin && !isAuthor;
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: isAdminModeration ? 'Remove Post as Administrator?' : 'Delete Community Post?',
+      description: isAdminModeration
+        ? `Confirm removing "${post.title}" by ${post.authorName}.`
+        : `Delete your post "${post.title}"? This action cannot be undone.`,
+      details: [
+        { label: 'Author', value: `${post.authorName} (${post.authorCode})` },
+        { label: 'Topic', value: post.category },
+      ],
+      confirmLabel: isAdminModeration ? 'Remove Post' : 'Delete Post',
+      ...(isAdminModeration
+        ? {
+            inputLabel: 'Moderation note sent to author (optional)',
+            inputPlaceholder: 'Reason for removing post…',
+            inputRequired: false,
+          }
+        : {}),
+      run: async (reasonInput) => {
+        setModerationBusyId(post.id);
+        try {
+          await api.deleteCommunityPost(post.id, reasonInput.trim() || undefined);
+          setPosts((prev) => prev.filter((p) => p.id !== post.id));
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Post Deleted',
+            description: 'The community post has been removed.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Delete Failed',
+            description: err instanceof Error ? err.message : 'Failed to delete post.',
+          });
+        } finally {
+          setModerationBusyId(null);
+        }
+      },
+    });
   }
 
   async function handleToggleReaction(postId: string, type: CommunityReactionType) {
-    setFeedError(null);
     try {
       const res = await api.reactCommunityPost(postId, type);
       setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to update reaction.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Reaction Failed',
+        description: err instanceof Error ? err.message : 'Failed to update reaction.',
+      });
     }
   }
 
@@ -544,13 +659,17 @@ export function CommunityView({
     const content = (commentDrafts[postId] || '').trim();
     if (!content) return;
     setSubmittingCommentPostId(postId);
-    setFeedError(null);
     try {
       const res = await api.addCommunityComment(postId, content);
       setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
       setCommentDrafts((prev) => ({ ...prev, [postId]: '' }));
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to add comment.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Comment Failed',
+        description: err instanceof Error ? err.message : 'Failed to add comment.',
+      });
     } finally {
       setSubmittingCommentPostId(null);
     }
@@ -559,68 +678,138 @@ export function CommunityView({
   async function handleSaveCommentEdit(postId: string, commentId: string) {
     const trimmed = editCommentText.trim();
     if (!trimmed) return;
-    setFeedError(null);
     try {
       const res = await api.updateCommunityComment(postId, commentId, trimmed);
       setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
       setEditingCommentId(null);
       setEditCommentText('');
     } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to update comment.');
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Comment Update Failed',
+        description: err instanceof Error ? err.message : 'Failed to update comment.',
+      });
     }
   }
 
-  async function handleDeleteComment(postId: string, commentId: string) {
-    setFeedError(null);
-    try {
-      const res = await api.deleteCommunityComment(postId, commentId);
-      setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
-      setConfirmDeleteCommentId(null);
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to delete comment.');
-    }
+  function requestDeleteComment(postId: string, commentId: string, authorName: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Delete Comment?',
+      description: 'Confirm removing this comment from the discussion thread.',
+      details: [{ label: 'Author', value: authorName }],
+      confirmLabel: 'Delete Comment',
+      run: async () => {
+        try {
+          const res = await api.deleteCommunityComment(postId, commentId);
+          setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Comment Removed',
+            description: 'The comment has been deleted.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Delete Failed',
+            description: err instanceof Error ? err.message : 'Failed to delete comment.',
+          });
+        }
+      },
+    });
   }
 
-  async function handleModeratePost(
-    postId: string,
+  function requestModeratePost(
+    post: CommunityPost,
     action: 'pin' | 'unpin' | 'lock' | 'unlock' | 'hide' | 'restore'
   ) {
-    setModerationBusyId(postId);
-    setFeedError(null);
-    try {
-      const res = await api.moderateCommunityPost(postId, action);
-      setPosts((prev) => {
-        const next = prev.map((p) => (p.id === postId ? res.post : p));
-        return next.sort((a, b) => {
-          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
-      });
-      setFeedNotice(`Moderation action "${action}" applied.`);
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Moderation action failed.');
-    } finally {
-      setModerationBusyId(null);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: action === 'hide' || action === 'lock' ? 'amber' : 'emerald',
+      title: `${action.charAt(0).toUpperCase() + action.slice(1)} Community Post?`,
+      description: `Confirm applying moderation action "${action}" to this post.`,
+      details: [
+        { label: 'Post', value: post.title },
+        { label: 'Author', value: `${post.authorName} (${post.authorCode})` },
+      ],
+      confirmLabel: `Confirm ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      run: async () => {
+        setModerationBusyId(post.id);
+        try {
+          const res = await api.moderateCommunityPost(post.id, action);
+          setPosts((prev) => {
+            const next = prev.map((p) => (p.id === post.id ? res.post : p));
+            return next.sort((a, b) => {
+              if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+          });
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Moderation Applied',
+            description: `Moderation action "${action}" applied.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Moderation Failed',
+            description: err instanceof Error ? err.message : 'Moderation action failed.',
+          });
+        } finally {
+          setModerationBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleToggleMuteAuthor(authorId: string, authorName: string, currentlyMuted: boolean) {
-    setModerationBusyId(authorId);
-    setFeedError(null);
-    try {
-      await api.toggleCommunityMuteMember(authorId, !currentlyMuted);
-      await loadPosts(true);
-      await onRefreshWorkspace?.();
-      setFeedNotice(
-        !currentlyMuted
-          ? `${authorName} has been muted from posting or commenting in Community.`
-          : `${authorName}'s Community privileges have been restored.`
-      );
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed to update mute status.');
-    } finally {
-      setModerationBusyId(null);
-    }
+  function requestToggleMuteAuthor(
+    authorId: string,
+    authorName: string,
+    currentlyMuted: boolean
+  ) {
+    setModal({
+      mode: 'confirm',
+      tone: currentlyMuted ? 'emerald' : 'red',
+      title: currentlyMuted
+        ? `Restore Posting for ${authorName}?`
+        : `Mute ${authorName} in Community?`,
+      description: currentlyMuted
+        ? 'Restoring privileges allows this member to create posts and comments again.'
+        : 'Muting restricts this member from creating new posts or comments in Community.',
+      details: [{ label: 'Member', value: authorName }],
+      confirmLabel: currentlyMuted ? 'Unmute Member' : 'Mute Member',
+      run: async () => {
+        setModerationBusyId(authorId);
+        try {
+          await api.toggleCommunityMuteMember(authorId, !currentlyMuted);
+          await loadPosts(true);
+          await onRefreshWorkspace?.();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: currentlyMuted ? 'Member Unmuted' : 'Member Muted',
+            description: !currentlyMuted
+              ? `${authorName} has been muted from posting or commenting in Community.`
+              : `${authorName}'s Community privileges have been restored.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Mute Update Failed',
+            description: err instanceof Error ? err.message : 'Failed to update mute status.',
+          });
+        } finally {
+          setModerationBusyId(null);
+        }
+      },
+    });
   }
 
   function handleOpenDirectMessage(peer: {
@@ -658,16 +847,36 @@ export function CommunityView({
     }
   }
 
-  async function handleDeletePrivateMessage(messageId: string) {
-    setDmError(null);
-    try {
-      await api.deletePrivateMessage(messageId);
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      setConfirmDeleteMessageId(null);
-      await loadThreads(true);
-    } catch (err) {
-      setDmError(err instanceof Error ? err.message : 'Failed to delete message.');
-    }
+  function requestDeletePrivateMessage(messageId: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Delete Private Message?',
+      description: 'Confirm permanently deleting this encrypted direct message for both participants.',
+      confirmLabel: 'Delete Message',
+      run: async () => {
+        setDmError(null);
+        try {
+          await api.deletePrivateMessage(messageId);
+          setMessages((prev) => prev.filter((m) => m.id !== messageId));
+          await loadThreads(true);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Message Deleted',
+            description: 'The private message has been deleted.',
+          });
+        } catch (err) {
+          setDmError(err instanceof Error ? err.message : 'Failed to delete message.');
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Delete Failed',
+            description: err instanceof Error ? err.message : 'Failed to delete message.',
+          });
+        }
+      },
+    });
   }
 
   return (
@@ -750,7 +959,6 @@ export function CommunityView({
               type="button"
               onClick={() => {
                 setComposerOpen((prev) => !prev);
-                setFeedError(null);
               }}
               className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
@@ -777,46 +985,6 @@ export function CommunityView({
                   account. You may still read discussions and use Private Messages.
                 </p>
               </div>
-            </div>
-          )}
-
-          {feedError && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 px-4 py-3 text-xs text-red-800 dark:text-red-300 flex items-center justify-between gap-3"
-            >
-              <span className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{feedError}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setFeedError(null)}
-                aria-label="Dismiss error"
-                className="p-1 hover:opacity-75 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {feedNotice && (
-            <div
-              role="status"
-              className="rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/80 dark:bg-emerald-950/30 px-4 py-3 text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-3"
-            >
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4 shrink-0" />
-                <span>{feedNotice}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setFeedNotice(null)}
-                aria-label="Dismiss notice"
-                className="p-1 hover:opacity-75 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
           )}
 
@@ -1319,7 +1487,7 @@ export function CommunityView({
                               type="button"
                               disabled={moderationBusyId === post.id}
                               onClick={() =>
-                                void handleModeratePost(post.id, post.isPinned ? 'unpin' : 'pin')
+                                requestModeratePost(post, post.isPinned ? 'unpin' : 'pin')
                               }
                               title={post.isPinned ? 'Unpin post' : 'Pin post to top'}
                               className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
@@ -1341,8 +1509,8 @@ export function CommunityView({
                               type="button"
                               disabled={moderationBusyId === post.id}
                               onClick={() =>
-                                void handleModeratePost(
-                                  post.id,
+                                requestModeratePost(
+                                  post,
                                   post.commentsLocked ? 'unlock' : 'lock'
                                 )
                               }
@@ -1368,8 +1536,8 @@ export function CommunityView({
                               type="button"
                               disabled={moderationBusyId === post.id}
                               onClick={() =>
-                                void handleModeratePost(
-                                  post.id,
+                                requestModeratePost(
+                                  post,
                                   post.status === 'hidden' ? 'restore' : 'hide'
                                 )
                               }
@@ -1398,7 +1566,7 @@ export function CommunityView({
                                 type="button"
                                 disabled={moderationBusyId === post.authorId}
                                 onClick={() =>
-                                  void handleToggleMuteAuthor(
+                                  requestToggleMuteAuthor(
                                     post.authorId,
                                     post.authorName,
                                     Boolean(post.authorMuted)
@@ -1430,13 +1598,9 @@ export function CommunityView({
                         {canDeletePost && (
                           <button
                             type="button"
-                            onClick={() => {
-                              setConfirmDeletePostId(
-                                confirmDeletePostId === post.id ? null : post.id
-                              );
-                              setDeleteReason('');
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                            disabled={moderationBusyId === post.id}
+                            onClick={() => requestDeletePost(post)}
+                            className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3 h-3" />
                             <span>Delete</span>
@@ -1444,45 +1608,6 @@ export function CommunityView({
                         )}
                       </div>
                     </div>
-
-                    {/* Inline Delete Confirmation */}
-                    {confirmDeletePostId === post.id && (
-                      <div className="rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex-1 space-y-2">
-                          <p className="text-xs font-medium text-red-900 dark:text-red-200">
-                            {isAdmin && !isAuthor
-                              ? `Remove "${post.title}" as Administrator?`
-                              : `Delete your post "${post.title}"? This action cannot be undone.`}
-                          </p>
-                          {isAdmin && !isAuthor && (
-                            <input
-                              type="text"
-                              value={deleteReason}
-                              onChange={(e) => setDeleteReason(e.target.value)}
-                              placeholder="Optional moderation note sent to the author..."
-                              className="w-full px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
-                            />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeletePostId(null)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            disabled={moderationBusyId === post.id}
-                            onClick={() => void handleDeletePost(post.id)}
-                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium cursor-pointer"
-                          >
-                            {moderationBusyId === post.id ? 'Removing...' : 'Confirm Delete'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Post Body or Inline Edit Form */}
                     {isEditingThis ? (
@@ -1549,7 +1674,7 @@ export function CommunityView({
                             <button
                               type="button"
                               disabled={savingPostEdit}
-                              onClick={() => void handleSavePostEdit(post.id)}
+                              onClick={() => handleSavePostEdit(post.id)}
                               className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer"
                             >
                               {savingPostEdit ? 'Saving...' : 'Save Changes'}
@@ -1805,34 +1930,19 @@ export function CommunityView({
                                       </button>
                                     )}
                                     {canDeleteComment && (
-                                      confirmDeleteCommentId === comment.id ? (
-                                        <span className="inline-flex items-center gap-1.5">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              void handleDeleteComment(post.id, comment.id)
-                                            }
-                                            className="text-red-600 dark:text-red-400 font-semibold hover:underline cursor-pointer"
-                                          >
-                                            Confirm
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setConfirmDeleteCommentId(null)}
-                                            className="text-slate-500 hover:underline cursor-pointer"
-                                          >
-                                            Cancel
-                                          </button>
-                                        </span>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => setConfirmDeleteCommentId(comment.id)}
-                                          className="text-red-600 dark:text-red-400 hover:underline cursor-pointer"
-                                        >
-                                          {isAdmin && !isCommentAuthor ? 'Remove' : 'Delete'}
-                                        </button>
-                                      )
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          requestDeleteComment(
+                                            post.id,
+                                            comment.id,
+                                            comment.authorName
+                                          )
+                                        }
+                                        className="text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                      >
+                                        {isAdmin && !isCommentAuthor ? 'Remove' : 'Delete'}
+                                      </button>
                                     )}
                                   </div>
                                 </div>
@@ -2212,32 +2322,13 @@ export function CommunityView({
                                 ) : (
                                   <Check className="w-3.5 h-3.5" aria-label="Sent" />
                                 )}
-                                {confirmDeleteMessageId === msg.id ? (
-                                  <span className="inline-flex items-center gap-1.5 font-sans">
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleDeletePrivateMessage(msg.id)}
-                                      className="text-red-600 dark:text-red-400 hover:underline cursor-pointer"
-                                    >
-                                      Confirm
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setConfirmDeleteMessageId(null)}
-                                      className="hover:underline cursor-pointer"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setConfirmDeleteMessageId(msg.id)}
-                                    className="font-sans hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
-                                  >
-                                    Delete
-                                  </button>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => requestDeletePrivateMessage(msg.id)}
+                                  className="font-sans hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                                >
+                                  Delete
+                                </button>
                               </>
                             )}
                           </div>
@@ -2425,6 +2516,34 @@ export function CommunityView({
           })()}
         </div>
       )}
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : undefined}
+        busy={modalBusy}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async (val) => {
+                setModalBusy(true);
+                try {
+                  await modal.run(val);
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

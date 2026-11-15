@@ -774,6 +774,7 @@ export interface ManagerCycleSlot {
   memberName: string;
   memberCode: string;
   currentRole: UserRole;
+  joinedAt?: string;
   photoUrl?: string;
   startDate: string;
   endDate: string;

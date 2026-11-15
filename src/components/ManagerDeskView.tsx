@@ -302,7 +302,7 @@ export function ManagerDeskView({
           label: 'Payout Destination',
           value: loan.decryptedSensitiveNotes
             ? `${loan.decryptedSensitiveNotes.channel.toUpperCase()} · ${loan.decryptedSensitiveNotes.provider} (${loan.decryptedSensitiveNotes.disbursementAccount})`
-            : `${loan.channel.toUpperCase()} · ${loan.provider}`,
+            : 'Encrypted Bank / MFS Payout',
         },
       ],
       inputLabel: 'Disbursement Transaction Number (TrxID / Bank Ref)',
@@ -728,24 +728,32 @@ export function ManagerDeskView({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmContributionDecision(c, 'approved')}
-                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Approve</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmContributionDecision(c, 'rejected')}
-                        className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <X className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Deny with Note</span>
-                      </button>
+                      {user.role === 'admin' || c.userId !== user.id ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmContributionDecision(c, 'approved')}
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmContributionDecision(c, 'rejected')}
+                            className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Deny with Note</span>
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                          Peer / Admin Review Required
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -813,23 +821,31 @@ export function ManagerDeskView({
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmInitiateLoanVote(loan)}
-                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Initiate 2/3 Vote</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmDeclineLoanReview(loan)}
-                        className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                      >
-                        Decline
-                      </button>
+                      {user.role === 'admin' || loan.borrowerId !== user.id ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmInitiateLoanVote(loan)}
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Vote className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Initiate 2/3 Vote</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmDeclineLoanReview(loan)}
+                            className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                          >
+                            Decline
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                          Peer / Admin Review Required
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -861,7 +877,19 @@ export function ManagerDeskView({
                   >
                     <div className="text-xs space-y-1">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        {loan.id} · {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                        {loan.id} ·{' '}
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(loan.borrowerId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {loan.borrowerName}
+                          </button>
+                        ) : (
+                          loan.borrowerName
+                        )}{' '}
+                        ({loan.borrowerCode}) ·{' '}
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 font-mono">
@@ -929,7 +957,18 @@ export function ManagerDeskView({
                           )}
                         </div>
                         <div className="font-semibold text-slate-900 dark:text-white text-sm">
-                          {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                          {onViewMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(loan.borrowerId)}
+                              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              {loan.borrowerName}
+                            </button>
+                          ) : (
+                            loan.borrowerName
+                          )}{' '}
+                          ({loan.borrowerCode}) ·{' '}
                           <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                         </div>
                         {loan.decryptedSensitiveNotes && (
@@ -940,15 +979,21 @@ export function ManagerDeskView({
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmDisbursement(loan)}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Confirm Disbursement &amp; Deduct Balance</span>
-                      </button>
+                      {user.role === 'admin' || loan.borrowerId !== user.id ? (
+                        <button
+                          type="button"
+                          disabled={modalBusy}
+                          onClick={() => confirmDisbursement(loan)}
+                          className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Confirm Disbursement &amp; Deduct Balance</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 shrink-0">
+                          Peer / Admin Disbursement Required
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -1019,28 +1064,36 @@ export function ManagerDeskView({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() =>
-                          confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
-                        }
-                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Accept</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() =>
-                          confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
-                        }
-                        className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <X className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Deny with Note</span>
-                      </button>
+                      {user.role === 'admin' || loan.borrowerId !== user.id ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() =>
+                              confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
+                            }
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Accept</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() =>
+                              confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
+                            }
+                            className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Deny with Note</span>
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                          Peer / Admin Review Required
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

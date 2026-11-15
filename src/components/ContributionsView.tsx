@@ -679,7 +679,9 @@ export function ContributionsView({
                   value={providerName}
                   onChange={setProviderName}
                   placeholder={
-                    channel === 'mfs' ? 'Search MFS wallet…' : 'Search all 61 BD banks…'
+                    channel === 'mfs'
+                      ? 'Search MFS wallet…'
+                      : `Search all ${BANK_PROVIDERS.length} BD banks…`
                   }
                 />
               </div>
@@ -871,28 +873,37 @@ export function ContributionsView({
                             </div>
 
                             <div className="col-span-4 sm:col-span-1 flex items-center justify-end gap-1.5">
-                              {isReviewer && item.status === 'pending' && (
-                                <>
-                                  <button
-                                    type="button"
-                                    title="Approve contribution"
-                                    disabled={modalBusy}
-                                    onClick={() => confirmReview(item, 'approved')}
-                                    className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
+                              {isReviewer &&
+                                item.status === 'pending' &&
+                                (isAdmin || item.userId !== user.id ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      title="Approve contribution"
+                                      disabled={modalBusy}
+                                      onClick={() => confirmReview(item, 'approved')}
+                                      className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Deny with correction note"
+                                      disabled={modalBusy}
+                                      onClick={() => confirmReview(item, 'rejected')}
+                                      className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span
+                                    title="Non-admin managers cannot approve their own deposit"
+                                    className="text-[10px] font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap"
                                   >
-                                    <Check className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Deny with correction note"
-                                    disabled={modalBusy}
-                                    onClick={() => confirmReview(item, 'rejected')}
-                                    className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </>
-                              )}
+                                    Peer Review
+                                  </span>
+                                ))}
                               <button
                                 type="button"
                                 onClick={() => setExpandedId(isExpanded ? null : item.id)}

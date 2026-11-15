@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLink, RefreshCw, Sheet, ShieldAlert } from 'lucide-react';
+import { ExternalLink, RefreshCw, Sheet } from 'lucide-react';
 import type { FundConfig } from '../types/coop.ts';
 import { api, type SheetTabBlueprint } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 
 interface GoogleSheetSyncCardProps {
@@ -28,9 +29,26 @@ export function GoogleSheetSyncCard({
   const [blueprint, setBlueprint] = useState<SheetTabBlueprint[]>([]);
   const [loadingBlueprint, setLoadingBlueprint] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [createNewSheet, setCreateNewSheet] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        run: () => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   async function fetchBlueprint() {
     setLoadingBlueprint(true);
@@ -38,9 +56,11 @@ export function GoogleSheetSyncCard({
       const res = await api.getBlueprint();
       setBlueprint(res.tabs);
     } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not load Google Sheet blueprint.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Blueprint Load Failed',
+        description: err instanceof Error ? err.message : 'Could not load Google Sheet blueprint.',
       });
     } finally {
       setLoadingBlueprint(false);
@@ -51,50 +71,93 @@ export function GoogleSheetSyncCard({
     void fetchBlueprint();
   }, []);
 
-  async function executeSync() {
-    const token = getWorkspaceToken();
-    if (!token) {
-      setMessage({
-        type: 'error',
-        text: 'Please connect your Google Workspace account first to authorize Sheets sync.',
-      });
-      setConfirmOpen(false);
-      return;
-    }
+  function requestSync(createNew: boolean) {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Synchronize Google Sheets Blueprint?',
+      description:
+        createNew || !config?.googleSheetId
+          ? 'This will create a new Google Spreadsheet in your connected Google account and populate all 7 cooperative treasury blueprint tabs.'
+          : `This will clear and overwrite the 7 blueprint tabs inside spreadsheet ${config.googleSheetId} with current live treasury data.`,
+      details: [
+        { label: 'Google Account', value: workspace.email || 'Connected Account' },
+        { label: 'Mode', value: createNew || !config?.googleSheetId ? 'Create New Spreadsheet' : 'Overwrite Linked Sheet' },
+        { label: 'Tabs', value: blueprint.map((b) => b.sheetName).join(', ') || '7 Blueprint Tabs' },
+      ],
+      confirmLabel: 'Confirm & Sync to Google Sheets',
+      run: async () => {
+        const token = getWorkspaceToken();
+        if (!token) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Google Authorization Required',
+            description:
+              'Please connect your Google Workspace account first to authorize Sheets sync.',
+          });
+          return;
+        }
 
-    setSyncing(true);
-    setMessage(null);
-    try {
-      const res = await api.syncGoogleSheet(token, {
-        createNew: createNewSheet,
-      });
-      setConfirmOpen(false);
-      setMessage({
-        type: 'success',
-        text: `Synchronized ${res.syncedTabs} blueprint tabs to Google Sheets (${res.spreadsheetId}).`,
-      });
-      await Promise.all([onSynced(), fetchBlueprint()]);
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Google Sheets synchronization failed.',
-      });
-    } finally {
-      setSyncing(false);
-    }
+        setSyncing(true);
+        try {
+          const res = await api.syncGoogleSheet(token, { createNew });
+          await Promise.all([onSynced(), fetchBlueprint()]);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Google Sheets Synchronized',
+            description: `Synchronized ${res.syncedTabs} blueprint tabs to Google Sheets (${res.spreadsheetId}).`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Synchronization Failed',
+            description:
+              err instanceof Error ? err.message : 'Google Sheets synchronization failed.',
+          });
+        } finally {
+          setSyncing(false);
+        }
+      },
+    });
   }
 
-  async function handleToggleAutoSync() {
+  function handleToggleAutoSync() {
     if (!config) return;
-    try {
-      await api.updateConfig({ autoSyncSheet: !config.autoSyncSheet });
-      await onSynced();
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not update auto-sync preference.',
-      });
-    }
+    const nextEnabled = !config.autoSyncSheet;
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: nextEnabled ? 'Enable Google Sheets Auto-Sync?' : 'Disable Google Sheets Auto-Sync?',
+      description: nextEnabled
+        ? 'Future verified treasury updates will automatically mirror to your linked Google Sheet when connected.'
+        : 'Automatic ledger mirroring to Google Sheets will be paused until re-enabled.',
+      confirmLabel: nextEnabled ? 'Enable Auto-Sync' : 'Disable Auto-Sync',
+      run: async () => {
+        try {
+          await api.updateConfig({ autoSyncSheet: nextEnabled });
+          await onSynced();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Auto-Sync Preference Updated',
+            description: nextEnabled
+              ? 'Google Sheets blueprint auto-sync is now enabled.'
+              : 'Google Sheets blueprint auto-sync is now disabled.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Preference Save Failed',
+            description:
+              err instanceof Error ? err.message : 'Could not update auto-sync preference.',
+          });
+        }
+      },
+    });
   }
 
   return (
@@ -122,19 +185,6 @@ export function GoogleSheetSyncCard({
           onDisconnect={() => void onDisconnectGoogle()}
         />
       </div>
-
-      {message && (
-        <div
-          role="status"
-          className={`p-3 rounded-lg border text-xs font-medium ${
-            message.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* 7-Tab Blueprint Summary Strip */}
       <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -207,7 +257,7 @@ export function GoogleSheetSyncCard({
             <input
               type="checkbox"
               checked={Boolean(config?.autoSyncSheet)}
-              onChange={() => void handleToggleAutoSync()}
+              onChange={handleToggleAutoSync}
               className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
             />
             <span>Auto-sync on ledger changes (when Google connected)</span>
@@ -217,10 +267,7 @@ export function GoogleSheetSyncCard({
             <button
               type="button"
               disabled={!workspace.connected || syncing}
-              onClick={() => {
-                setCreateNewSheet(true);
-                setConfirmOpen(true);
-              }}
+              onClick={() => requestSync(true)}
               className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
             >
               Create New Sheet
@@ -230,10 +277,7 @@ export function GoogleSheetSyncCard({
           <button
             type="button"
             disabled={!workspace.connected || syncing}
-            onClick={() => {
-              setCreateNewSheet(!config?.googleSheetId);
-              setConfirmOpen(true);
-            }}
+            onClick={() => requestSync(!config?.googleSheetId)}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
@@ -242,65 +286,31 @@ export function GoogleSheetSyncCard({
         </div>
       </div>
 
-      {/* Explicit Confirmation Modal before modifying Google Sheets */}
-      {confirmOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-sheet-sync-title"
-          className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"
-        >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
-            <div className="flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="space-y-1">
-                <h4
-                  id="confirm-sheet-sync-title"
-                  className="text-base font-semibold text-slate-900 dark:text-white"
-                >
-                  Confirm Google Sheets Blueprint Synchronization
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {createNewSheet || !config?.googleSheetId
-                    ? 'This will create a new Google Spreadsheet in your connected Google account and populate all 7 cooperative treasury blueprint tabs.'
-                    : `This will clear and overwrite the 7 blueprint tabs inside spreadsheet ${config.googleSheetId} with current live treasury data.`}
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
-              <div>
-                Connected account: <span className="font-mono">{workspace.email}</span>
-              </div>
-              <div>
-                Tabs to sync:{' '}
-                <span className="font-mono">
-                  {blueprint.map((b) => b.sheetName).join(', ')}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={syncing}
-                onClick={() => setConfirmOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={syncing}
-                onClick={() => void executeSync()}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer"
-              >
-                {syncing ? 'Synchronizing…' : 'Confirm & Sync to Google Sheets'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy || syncing}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async () => {
+                setModalBusy(true);
+                try {
+                  await modal.run();
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy && !syncing) setModal(null);
+        }}
+      />
     </section>
   );
 }

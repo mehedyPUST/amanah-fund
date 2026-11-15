@@ -18,6 +18,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 
 interface MemberProfileProps {
@@ -33,9 +34,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const [saving, setSaving] = useState(false);
   const [photoBroken, setPhotoBroken] = useState(false);
   const [agreementBroken, setAgreementBroken] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
 
   // Editable contact & profile fields
   const [name, setName] = useState(user.name);
@@ -51,10 +49,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordBusy, setPasswordBusy] = useState(false);
-  const [passwordFeedback, setPasswordFeedback] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
 
   // Profile change approval requests
   const [changeRequests, setChangeRequests] = useState<ProfileChangeRequest[]>([]);
@@ -67,10 +61,27 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
   const [totpBusy, setTotpBusy] = useState(false);
-  const [securityFeedback, setSecurityFeedback] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
+
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        run: () => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   // Notification & sound preferences
   const [prefs, setPrefs] = useState<NotificationPreferences>(
@@ -111,9 +122,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       populateForm(res.user);
       setChangeRequests(reqRes.requests.filter((r) => r.userId === user.id));
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to load member profile details.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Profile Load Failed',
+        description: err instanceof Error ? err.message : 'Failed to load member profile details.',
       });
     } finally {
       setLoading(false);
@@ -124,158 +137,235 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     void loadProfile();
   }, [loadProfile]);
 
-  async function handleSaveContactInfo(e: FormEvent) {
+  function handleSaveContactInfo(e: FormEvent) {
     e.preventDefault();
-    setFeedback(null);
 
     if (!mobile.trim() || !presentAddress.trim() || !permanentAddress.trim()) {
-      setFeedback({
-        type: 'error',
-        text: 'Mobile number, present address, and permanent address are required.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Missing Required Contact Fields',
+        description: 'Mobile number, present address, and permanent address are required.',
       });
       return;
     }
 
-    setSaving(true);
-    try {
-      const res = await api.updateProfile({
-        name: name.trim(),
-        email: email.trim(),
-        mobile: mobile.trim(),
-        presentAddress: presentAddress.trim(),
-        permanentAddress: permanentAddress.trim(),
-        occupation: occupation.trim(),
-        companyOrganization: companyOrganization.trim(),
-      });
-      if (res.pendingApproval) {
-        setFeedback({
-          type: 'success',
-          text:
-            res.message ||
-            'Your profile edits have been submitted for Admin/Manager approval. Changes take effect once approved.',
-        });
-        await loadProfile();
-      } else {
-        populateForm(res.user);
-        setUser(res.user);
-        setFeedback({
-          type: 'success',
-          text: 'Your contact information has been encrypted and saved to your profile.',
-        });
-      }
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not update contact information.',
-      });
-    } finally {
-      setSaving(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title:
+        user.role === 'admin'
+          ? 'Save Encrypted Profile Details?'
+          : 'Submit Profile Update for Approval?',
+      description:
+        user.role === 'admin'
+          ? 'Your updated contact information will be encrypted with AES-256-GCM and saved immediately.'
+          : 'Profile edits are encrypted and routed to an Admin or Manager for approval before taking effect.',
+      details: [
+        { label: 'Full Name', value: name.trim() },
+        { label: 'Email', value: email.trim() },
+        { label: 'Mobile', value: mobile.trim() },
+        { label: 'Occupation', value: occupation.trim() || '—' },
+      ],
+      confirmLabel: user.role === 'admin' ? 'Save Contact Info' : 'Submit Profile Update',
+      run: async () => {
+        setSaving(true);
+        try {
+          const res = await api.updateProfile({
+            name: name.trim(),
+            email: email.trim(),
+            mobile: mobile.trim(),
+            presentAddress: presentAddress.trim(),
+            permanentAddress: permanentAddress.trim(),
+            occupation: occupation.trim(),
+            companyOrganization: companyOrganization.trim(),
+          });
+          if (res.pendingApproval) {
+            await loadProfile();
+            await onRefresh();
+            setModal({
+              mode: 'notice',
+              tone: 'emerald',
+              title: 'Profile Update Submitted',
+              description:
+                res.message ||
+                'Your profile edits have been submitted for Admin/Manager approval. Changes take effect once approved.',
+            });
+          } else {
+            populateForm(res.user);
+            setUser(res.user);
+            await onRefresh();
+            setModal({
+              mode: 'notice',
+              tone: 'emerald',
+              title: 'Profile Saved',
+              description:
+                'Your contact information has been encrypted and saved to your profile.',
+            });
+          }
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Profile Save Failed',
+            description:
+              err instanceof Error ? err.message : 'Could not update contact information.',
+          });
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   }
 
-  async function handlePasswordChange(e: FormEvent) {
+  function handlePasswordChange(e: FormEvent) {
     e.preventDefault();
-    setPasswordFeedback(null);
     if (newPassword.length < 8) {
-      setPasswordFeedback({
-        type: 'error',
-        text: 'New password must be at least 8 characters long.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Password Too Short',
+        description: 'New password must be at least 8 characters long.',
       });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordFeedback({
-        type: 'error',
-        text: 'New password and confirmation do not match.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Passwords Do Not Match',
+        description: 'New password and confirmation do not match.',
       });
       return;
     }
-    setPasswordBusy(true);
-    try {
-      const res = await api.changePassword(currentPassword, newPassword);
-      setUser(res.user);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setPasswordFeedback({
-        type: 'success',
-        text: 'Password updated immediately (no Manager or Admin approval required).',
-      });
-    } catch (err) {
-      setPasswordFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not change password.',
-      });
-    } finally {
-      setPasswordBusy(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Update Account Password?',
+      description:
+        'Your password updates immediately without Admin or Manager approval. Confirm changing your password now.',
+      confirmLabel: 'Update Password',
+      run: async () => {
+        setPasswordBusy(true);
+        try {
+          const res = await api.changePassword(currentPassword, newPassword);
+          setUser(res.user);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Password Updated',
+            description: 'Password updated immediately (no Manager or Admin approval required).',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Password Update Failed',
+            description: err instanceof Error ? err.message : 'Could not change password.',
+          });
+        } finally {
+          setPasswordBusy(false);
+        }
+      },
+    });
   }
 
   async function handleStart2faSetup() {
     setTotpBusy(true);
-    setSecurityFeedback(null);
     try {
       const res = await api.setup2fa();
       setTotpSetupData(res);
       setTotpCodeInput('');
     } catch (err) {
-      setSecurityFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to initialize 2FA setup.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: '2FA Setup Failed',
+        description: err instanceof Error ? err.message : 'Failed to initialize 2FA setup.',
       });
     } finally {
       setTotpBusy(false);
     }
   }
 
-  async function handleEnable2fa(e: FormEvent) {
+  function handleEnable2fa(e: FormEvent) {
     e.preventDefault();
-    setTotpBusy(true);
-    setSecurityFeedback(null);
-    try {
-      const res = await api.enable2fa(totpCodeInput.trim());
-      setUser(res.user);
-      setProfile(res.user);
-      setTotpSetupData(null);
-      setTotpCodeInput('');
-      setSecurityFeedback({
-        type: 'success',
-        text: 'Two-factor authentication (TOTP) is now active for high-privilege actions.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setSecurityFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Invalid verification code.',
-      });
-    } finally {
-      setTotpBusy(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Activate Two-Factor Authentication?',
+      description:
+        'Enabling TOTP requires a 6-digit authenticator code for sensitive treasury actions.',
+      details: [{ label: 'Verification Code', value: totpCodeInput.trim() }],
+      confirmLabel: 'Verify & Enable 2FA',
+      run: async () => {
+        setTotpBusy(true);
+        try {
+          const res = await api.enable2fa(totpCodeInput.trim());
+          setUser(res.user);
+          setProfile(res.user);
+          setTotpSetupData(null);
+          setTotpCodeInput('');
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: '2FA Enabled',
+            description:
+              'Two-factor authentication (TOTP) is now active for high-privilege actions.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Verification Failed',
+            description: err instanceof Error ? err.message : 'Invalid verification code.',
+          });
+        } finally {
+          setTotpBusy(false);
+        }
+      },
+    });
   }
 
-  async function handleDisable2fa(e: FormEvent) {
+  function handleDisable2fa(e: FormEvent) {
     e.preventDefault();
-    setTotpBusy(true);
-    setSecurityFeedback(null);
-    try {
-      const res = await api.disable2fa(totpCodeInput.trim());
-      setUser(res.user);
-      setProfile(res.user);
-      setTotpCodeInput('');
-      setSecurityFeedback({
-        type: 'success',
-        text: 'Two-factor authentication has been disabled.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setSecurityFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Invalid authenticator code.',
-      });
-    } finally {
-      setTotpBusy(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Disable Two-Factor Authentication?',
+      description:
+        'Disabling TOTP removes step-up authenticator protection from your account. Confirm disabling 2FA.',
+      confirmLabel: 'Disable 2FA',
+      run: async () => {
+        setTotpBusy(true);
+        try {
+          const res = await api.disable2fa(totpCodeInput.trim());
+          setUser(res.user);
+          setProfile(res.user);
+          setTotpCodeInput('');
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: '2FA Disabled',
+            description: 'Two-factor authentication has been disabled.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Could Not Disable 2FA',
+            description: err instanceof Error ? err.message : 'Invalid authenticator code.',
+          });
+        } finally {
+          setTotpBusy(false);
+        }
+      },
+    });
   }
 
   async function handleTogglePref(key: keyof NotificationPreferences) {
@@ -289,9 +379,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setPrefs(res.user.notificationPreferences || next);
     } catch (err) {
       setPrefs(prefs);
-      setSecurityFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not save notification preference.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Preference Save Failed',
+        description:
+          err instanceof Error ? err.message : 'Could not save notification preference.',
       });
     } finally {
       setPrefsBusy(false);
@@ -558,19 +651,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             return null;
           })()}
 
-          {feedback && (
-            <div
-              role="status"
-              className={`p-3.5 rounded-lg border text-xs font-medium ${
-                feedback.type === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-              }`}
-            >
-              {feedback.text}
-            </div>
-          )}
-
           <form onSubmit={handleSaveContactInfo} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -701,7 +781,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 type="button"
                 onClick={() => {
                   populateForm(profile);
-                  setFeedback(null);
                 }}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
               >
@@ -738,19 +817,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             </p>
           </div>
         </div>
-
-        {passwordFeedback && (
-          <div
-            role="status"
-            className={`p-3 rounded-lg border text-xs font-medium ${
-              passwordFeedback.type === 'success'
-                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {passwordFeedback.text}
-          </div>
-        )}
 
         <form onSubmit={handlePasswordChange} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
           <div>
@@ -843,19 +909,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               {profile.totpEnabled ? 'ENABLED' : 'OFF'}
             </span>
           </div>
-
-          {securityFeedback && (
-            <div
-              role="status"
-              className={`p-3 rounded-lg border text-xs font-medium ${
-                securityFeedback.type === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-              }`}
-            >
-              {securityFeedback.text}
-            </div>
-          )}
 
           {profile.totpEnabled ? (
             <form onSubmit={handleDisable2fa} className="space-y-3 pt-1">
@@ -1017,6 +1070,32 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </div>
         </section>
       </div>
+
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async () => {
+                setModalBusy(true);
+                try {
+                  await modal.run();
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

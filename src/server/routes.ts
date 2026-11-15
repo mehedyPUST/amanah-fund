@@ -1622,6 +1622,9 @@ apiRouter.patch(
         if (idx === -1) return draft;
 
         const target = draft.contributions[idx];
+        if (viewer.role !== 'admin' && target.userId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         if (target.status !== 'pending') {
           throw new Error('ALREADY_REVIEWED');
         }
@@ -1697,6 +1700,12 @@ apiRouter.patch(
       });
       res.json({ contribution: hydrateContributionForViewer(updated, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: Managers cannot approve or decline their own contribution. Ask a peer manager or admin.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
         res.status(409).json({ error: 'This contribution has already been reviewed.' });
         return;
@@ -2137,6 +2146,9 @@ apiRouter.post(
       await updateVaultState((draft) => {
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
+        if (viewer.role !== 'admin' && loan.borrowerId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         if (loan.status !== 'pending_manager_review') {
           throw new Error('NOT_PENDING_MANAGER_REVIEW');
         }
@@ -2197,6 +2209,12 @@ apiRouter.post(
       });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: You cannot initiate voting on your own Qard Hasan loan request.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'NOT_PENDING_MANAGER_REVIEW') {
         res.status(409).json({ error: 'This loan is not awaiting Manager review to start voting.' });
         return;
@@ -2455,6 +2473,9 @@ apiRouter.patch(
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
 
+        if (viewer.role !== 'admin' && loan.borrowerId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         if (loan.status !== 'pending_vote' && loan.status !== 'pending_manager_review') {
           throw new Error('ALREADY_REVIEWED');
         }
@@ -2540,6 +2561,12 @@ apiRouter.patch(
       });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: Managers cannot approve or decline their own Qard Hasan loan request.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
         res.status(409).json({ error: 'This loan request is no longer pending review.' });
         return;
@@ -2572,6 +2599,9 @@ apiRouter.post(
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
 
+        if (viewer.role !== 'admin' && loan.borrowerId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         if (loan.status !== 'approved_pending_disbursement') {
           throw new Error('NOT_READY_FOR_DISBURSEMENT');
         }
@@ -2659,6 +2689,12 @@ apiRouter.post(
 
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: Managers cannot execute disbursement on their own loan.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'NOT_READY_FOR_DISBURSEMENT') {
         res.status(409).json({ error: 'Loan must pass 2/3 member voting before disbursement.' });
         return;
@@ -2840,6 +2876,9 @@ apiRouter.patch(
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
 
+        if (viewer.role !== 'admin' && loan.borrowerId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         const inst = loan.installments.find((i) => i.installmentNumber === num);
         if (!inst) {
           throw new Error('INSTALLMENT_NOT_FOUND');
@@ -2962,6 +3001,12 @@ apiRouter.patch(
       });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: Managers cannot verify or reject their own loan repayments.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'INSTALLMENT_NOT_FOUND') {
         res.status(404).json({ error: 'Installment number not found on this loan schedule.' });
         return;
@@ -3096,6 +3141,9 @@ apiRouter.patch(
       await updateVaultState((draft) => {
         const loan = draft.loans.find((l) => l.id === id);
         if (!loan) return draft;
+        if (viewer.role !== 'admin' && loan.borrowerId === viewer.id) {
+          throw new Error('CANNOT_SELF_REVIEW');
+        }
         if (!loan.rescheduleRequest || loan.rescheduleRequest.status !== 'pending') {
           throw new Error('NO_PENDING_RESCHEDULE');
         }
@@ -3189,6 +3237,12 @@ apiRouter.patch(
       });
       res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
     } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_SELF_REVIEW') {
+        res.status(403).json({
+          error: 'Governance rule: Managers cannot approve or decline their own loan reschedule request.',
+        });
+        return;
+      }
       if (err instanceof Error && err.message === 'NO_PENDING_RESCHEDULE') {
         res.status(409).json({ error: 'No pending reschedule request exists on this loan.' });
         return;
@@ -4976,26 +5030,31 @@ apiRouter.get(
             'Amount',
             'Channel',
             'Provider',
+            'Transaction Number',
             'Masked Reference',
             'Status',
             'Submitted At',
             'Reviewed By',
             'Entry Hash',
           ],
-          ...state.contributions.map((c) => [
-            c.id,
-            c.memberCode,
-            c.memberName,
-            c.billingMonth,
-            c.amount,
-            c.channel.toUpperCase(),
-            c.providerName,
-            c.maskedReference,
-            c.status,
-            c.submittedAt,
-            c.reviewerName || '',
-            c.entryHash,
-          ]),
+          ...state.contributions.map((c) => {
+            const hydrated = hydrateContributionForViewer(c, viewer);
+            return [
+              c.id,
+              c.memberCode,
+              c.memberName,
+              c.billingMonth,
+              c.amount,
+              c.channel.toUpperCase(),
+              c.providerName,
+              hydrated.decryptedDetails?.referenceId || c.maskedReference,
+              c.maskedReference,
+              c.status,
+              c.submittedAt,
+              c.reviewerName || '',
+              c.entryHash,
+            ];
+          }),
         ];
         csv = rows.map((r) => r.map(escapeCsvCell).join(',')).join('\n');
       } else if (type === 'loans') {
@@ -5012,6 +5071,7 @@ apiRouter.get(
             'Approvals',
             'Required Quorum',
             'Status',
+            'Disbursement Transaction Number',
             'Requested At',
             'Disbursed At',
           ],
@@ -5027,6 +5087,7 @@ apiRouter.get(
             l.votes.filter((v) => v.decision === 'approve').length,
             l.requiredApprovals,
             l.status,
+            l.disbursementSignature?.transactionNumber || '',
             l.requestedAt,
             l.disbursedAt || '',
           ]),

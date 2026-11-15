@@ -25,6 +25,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
 
 interface VotingViewProps {
@@ -61,9 +62,29 @@ export function VotingView({
   const [pollChoices, setPollChoices] = useState<Record<string, string>>({});
   const [expandedAdminLedgers, setExpandedAdminLedgers] = useState<Record<string, boolean>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        inputLabel?: string;
+        inputPlaceholder?: string;
+        inputRequired?: boolean;
+        run: (inputValue: string) => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   // Create decision poll drawer state (Manager/Admin)
   const [showCreatePoll, setShowCreatePoll] = useState(false);
@@ -78,235 +99,431 @@ export function VotingView({
     setExpandedAdminLedgers((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  async function handleLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
+  function handleLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
     if (isAdmin) {
-      setFeedback({
-        type: 'error',
-        text: 'Administrators oversee ballot integrity and do not cast member votes.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Ballot Restricted for Administrators',
+        description: 'Administrators oversee ballot integrity and do not cast member votes.',
       });
       return;
     }
     if (!isVerifiedMember) {
-      setFeedback({
-        type: 'error',
-        text: 'Only verified active cooperative members can vote on Qard Hasan loan requests.',
+      setModal({
+        mode: 'notice',
+        tone: 'amber',
+        title: 'Verified Membership Required',
+        description:
+          'Only verified active cooperative members can vote on Qard Hasan loan requests.',
       });
       return;
     }
-    setBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.voteLoan(loanId, decision, comments[loanId]);
-      setFeedback({
-        type: 'success',
-        text: `Your secret ${decision.toUpperCase()} ballot has been cryptographically recorded on ${loanId}. Results remain sealed until Manager/Admin reveals them.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to submit vote.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+    const loan = loans.find((l) => l.id === loanId);
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'upvote' ? 'emerald' : 'red',
+      title: `Cast Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} Ballot?`,
+      description:
+        'Your ballot is cryptographically signed and sealed until Manager or Admin reveals the tally.',
+      details: [
+        { label: 'Loan ID', value: loanId },
+        ...(loan
+          ? [
+              { label: 'Applicant', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+            ]
+          : []),
+        { label: 'Ballot Choice', value: decision.toUpperCase() },
+      ],
+      confirmLabel: decision === 'upvote' ? 'Confirm Upvote' : 'Confirm Downvote',
+      run: async () => {
+        setBusyId(loanId);
+        try {
+          await api.voteLoan(loanId, decision, comments[loanId]);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Secret Ballot Recorded',
+            description: `Your secret ${decision.toUpperCase()} ballot has been cryptographically recorded on ${loanId}. Results remain sealed until Manager/Admin reveals them.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Vote Submission Failed',
+            description: err instanceof Error ? err.message : 'Failed to submit vote.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleRevealLoanVote(loanId: string) {
-    setBusyId(`reveal-${loanId}`);
-    setFeedback(null);
-    try {
-      const res = await api.revealLoanVote(loanId);
-      setFeedback({
-        type: 'success',
-        text: `Vote results for ${loanId} are now stopped & revealed (${res.loan.status.replace(/_/g, ' ')}).`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal loan vote results.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function handleRevealLoanVote(loanId: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Stop Voting & Reveal Ballot Result?',
+      description:
+        'This closes secret balloting on this loan proposal and publishes final upvote/downvote tallies to all members.',
+      details: [{ label: 'Loan ID', value: loanId }],
+      confirmLabel: 'Stop & Reveal Result',
+      run: async () => {
+        setBusyId(`reveal-${loanId}`);
+        try {
+          const res = await api.revealLoanVote(loanId);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Ballot Result Revealed',
+            description: `Vote results for ${loanId} are now stopped & revealed (${res.loan.status.replace(/_/g, ' ')}).`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Reveal Failed',
+            description: err instanceof Error ? err.message : 'Failed to reveal loan vote results.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleProjectVote(projectId: string, decision: 'yes' | 'no') {
+  function handleProjectVote(projectId: string, decision: 'yes' | 'no') {
     if (isAdmin) {
-      setFeedback({
-        type: 'error',
-        text: 'Administrators oversee ballot integrity and do not cast member votes.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Ballot Restricted for Administrators',
+        description: 'Administrators oversee ballot integrity and do not cast member votes.',
       });
       return;
     }
-    setBusyId(projectId);
-    setFeedback(null);
-    try {
-      const res = await api.voteHalalProject(projectId, decision, comments[projectId]);
-      setFeedback({
-        type: 'success',
-        text: `Your "${decision.toUpperCase()}" ballot on "${res.project.title}" has been sealed in the ballot box.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to submit placement vote.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+    const proj = projects.find((p) => p.id === projectId);
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'yes' ? 'emerald' : 'red',
+      title: `Seal "${decision.toUpperCase()}" Investment Ballot?`,
+      description:
+        'Confirm your secret placement vote. Tallies stay hidden until revealed by Manager/Admin.',
+      details: [
+        ...(proj ? [{ label: 'Project', value: proj.title }] : []),
+        { label: 'Decision', value: decision.toUpperCase() },
+      ],
+      confirmLabel: decision === 'yes' ? 'Confirm Vote Yes' : 'Confirm Vote No',
+      run: async () => {
+        setBusyId(projectId);
+        try {
+          const res = await api.voteHalalProject(projectId, decision, comments[projectId]);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Investment Ballot Sealed',
+            description: `Your "${decision.toUpperCase()}" ballot on "${res.project.title}" has been sealed in the ballot box.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Ballot Failed',
+            description: err instanceof Error ? err.message : 'Failed to submit placement vote.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleRevealProjectVote(projectId: string) {
-    setBusyId(`reveal-proj-${projectId}`);
-    setFeedback(null);
-    try {
-      const res = await api.revealHalalProjectVote(projectId);
-      setFeedback({
-        type: 'success',
-        text: `Investment vote results for "${res.project.title}" are now stopped & revealed.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal investment vote results.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function handleRevealProjectVote(projectId: string) {
+    const proj = projects.find((p) => p.id === projectId);
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Stop Investment Vote & Reveal Result?',
+      description:
+        'Closing voting reveals the final Yes/No tally for this Halal investment placement proposal.',
+      details: [{ label: 'Proposal', value: proj?.title || projectId }],
+      confirmLabel: 'Stop & Reveal Result',
+      run: async () => {
+        setBusyId(`reveal-proj-${projectId}`);
+        try {
+          const res = await api.revealHalalProjectVote(projectId);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Investment Vote Revealed',
+            description: `Investment vote results for "${res.project.title}" are now stopped & revealed.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Reveal Failed',
+            description:
+              err instanceof Error ? err.message : 'Failed to reveal investment vote results.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handlePollVote(pollId: string) {
+  function handlePollVote(pollId: string) {
     const optionId = pollChoices[pollId];
     if (!optionId) {
-      setFeedback({ type: 'error', text: 'Please select an option before submitting your ballot.' });
+      setModal({
+        mode: 'notice',
+        tone: 'amber',
+        title: 'Select a Ballot Option',
+        description: 'Please select an option before submitting your ballot.',
+      });
       return;
     }
-    setBusyId(`poll-${pollId}`);
-    setFeedback(null);
-    try {
-      await api.votePoll(pollId, optionId, comments[pollId]);
-      setFeedback({
-        type: 'success',
-        text: 'Your secret decision ballot has been recorded. Tallies remain hidden until Manager/Admin reveals results.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to submit decision vote.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+    const poll = polls.find((p) => p.id === pollId);
+    const optionLabel = poll?.options.find((o) => o.id === optionId)?.label || optionId;
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Submit Secret Decision Ballot?',
+      description: 'Confirm casting your sealed vote on this cooperative decision poll.',
+      details: [
+        { label: 'Poll', value: poll?.title || pollId },
+        { label: 'Selected Option', value: optionLabel },
+      ],
+      confirmLabel: 'Cast Secret Vote',
+      run: async () => {
+        setBusyId(`poll-${pollId}`);
+        try {
+          await api.votePoll(pollId, optionId, comments[pollId]);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Decision Ballot Recorded',
+            description:
+              'Your secret decision ballot has been recorded. Tallies remain hidden until Manager/Admin reveals results.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Vote Failed',
+            description: err instanceof Error ? err.message : 'Failed to submit decision vote.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleRevealPoll(pollId: string) {
-    setBusyId(`reveal-poll-${pollId}`);
-    setFeedback(null);
-    try {
-      await api.revealPoll(pollId);
-      setFeedback({
-        type: 'success',
-        text: 'Decision poll closed and verified results are now visible to all members.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal decision poll results.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function handleRevealPoll(pollId: string) {
+    const poll = polls.find((p) => p.id === pollId);
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Close Poll & Reveal Verified Tallies?',
+      description: 'Closing this decision poll makes verified tallies visible to all members.',
+      details: [{ label: 'Poll', value: poll?.title || pollId }],
+      confirmLabel: 'Close & Reveal Poll',
+      run: async () => {
+        setBusyId(`reveal-poll-${pollId}`);
+        try {
+          await api.revealPoll(pollId);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Decision Poll Revealed',
+            description:
+              'Decision poll closed and verified results are now visible to all members.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Reveal Failed',
+            description:
+              err instanceof Error ? err.message : 'Failed to reveal decision poll results.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleCreatePoll(e: FormEvent) {
+  function handleCreatePoll(e: FormEvent) {
     e.preventDefault();
-    setFeedback(null);
     const parsedOptions = pollOptionsText
       .split(/\n|,/)
       .map((s) => s.trim())
       .filter(Boolean);
     if (pollTitle.trim().length < 3 || parsedOptions.length < 2) {
-      setFeedback({
-        type: 'error',
-        text: 'Provide a clear poll title and at least two ballot options (one per line or comma-separated).',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Poll Configuration',
+        description:
+          'Provide a clear poll title and at least two ballot options (one per line or comma-separated).',
       });
       return;
     }
-    setCreatingPoll(true);
-    try {
-      await api.createPoll({
-        title: pollTitle.trim(),
-        description: pollDescription.trim(),
-        category: pollCategory,
-        options: parsedOptions,
-        closesAt: pollClosesAt ? new Date(pollClosesAt).toISOString() : undefined,
-      });
-      setPollTitle('');
-      setPollDescription('');
-      setPollClosesAt('');
-      setShowCreatePoll(false);
-      setFeedback({
-        type: 'success',
-        text: 'Decision poll launched and cooperative members have been notified.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to launch decision poll.',
-      });
-    } finally {
-      setCreatingPoll(false);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Launch Secret Decision Poll?',
+      description: 'Members will be notified to cast secret ballots once launched.',
+      details: [
+        { label: 'Title', value: pollTitle.trim() },
+        { label: 'Category', value: pollCategory.replace(/_/g, ' ') },
+        { label: 'Options', value: parsedOptions.join(' / ') },
+      ],
+      confirmLabel: 'Launch Poll',
+      run: async () => {
+        setCreatingPoll(true);
+        try {
+          await api.createPoll({
+            title: pollTitle.trim(),
+            description: pollDescription.trim(),
+            category: pollCategory,
+            options: parsedOptions,
+            closesAt: pollClosesAt ? new Date(pollClosesAt).toISOString() : undefined,
+          });
+          setPollTitle('');
+          setPollDescription('');
+          setPollClosesAt('');
+          setShowCreatePoll(false);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Decision Poll Launched',
+            description: 'Decision poll launched and cooperative members have been notified.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Poll Creation Failed',
+            description: err instanceof Error ? err.message : 'Failed to launch decision poll.',
+          });
+        } finally {
+          setCreatingPoll(false);
+        }
+      },
+    });
   }
 
-  async function handleDisburse(loanId: string) {
-    setBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.disburseLoan(loanId);
-      setFeedback({
-        type: 'success',
-        text: `Qard Hasan disbursement confirmed for ${loanId}. Fund balance deducted and borrower notified.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to disburse loan.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function handleDisburse(loanId: string) {
+    const loan = loans.find((l) => l.id === loanId);
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Confirm Qard Hasan Disbursement?',
+      description:
+        'Confirming deducts principal from available treasury liquidity, signs a SHA-256 disbursement voucher, and notifies the borrower.',
+      details: [
+        { label: 'Loan ID', value: loanId },
+        ...(loan
+          ? [
+              { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+            ]
+          : []),
+      ],
+      confirmLabel: 'Confirm & Disburse',
+      inputLabel: 'Disbursement Transaction Number (TrxID / Bank Ref)',
+      inputPlaceholder: 'e.g. TRX-99887766 or Bank Ref (auto-generated if blank)',
+      inputRequired: false,
+      run: async (txInput) => {
+        setBusyId(loanId);
+        try {
+          await api.disburseLoan(
+            loanId,
+            txInput.trim() ? { transactionNumber: txInput.trim() } : undefined
+          );
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Qard Hasan Disbursed',
+            description: `Qard Hasan disbursement confirmed for ${loanId}. Fund balance deducted and borrower notified.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Disbursement Failed',
+            description: err instanceof Error ? err.message : 'Failed to disburse loan.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function handleGuarantorRespond(loanId: string, decision: 'accept' | 'decline') {
-    setBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.respondAsGuarantor(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'accept'
-            ? `Guarantor co-signature recorded on ${loanId}.`
-            : `Guarantor co-signature declined for ${loanId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to respond as guarantor.',
-      });
-    } finally {
-      setBusyId(null);
-    }
+  function handleGuarantorRespond(loanId: string, decision: 'accept' | 'decline') {
+    const loan = loans.find((l) => l.id === loanId);
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'accept' ? 'emerald' : 'red',
+      title:
+        decision === 'accept'
+          ? 'Accept Guarantor Co-Signature?'
+          : 'Decline Guarantor Co-Signature?',
+      description:
+        decision === 'accept'
+          ? 'Co-signing vouches for this member loan request in the cooperative ledger.'
+          : 'Declining informs the borrower and stops this guarantor nomination.',
+      details: [
+        { label: 'Loan ID', value: loanId },
+        ...(loan
+          ? [
+              { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+            ]
+          : []),
+      ],
+      confirmLabel: decision === 'accept' ? 'Accept Co-Sign' : 'Decline Request',
+      run: async () => {
+        setBusyId(loanId);
+        try {
+          await api.respondAsGuarantor(loanId, decision);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: decision === 'accept' ? 'Co-Signature Recorded' : 'Co-Signature Declined',
+            description:
+              decision === 'accept'
+                ? `Guarantor co-signature recorded on ${loanId}.`
+                : `Guarantor co-signature declined for ${loanId}.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Guarantor Response Failed',
+            description: err instanceof Error ? err.message : 'Failed to respond as guarantor.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
   const openProjects = projects.filter((p) => p.votingStatus === 'open');
@@ -337,18 +554,6 @@ export function VotingView({
 
   return (
     <div className="space-y-6">
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
 
       {isAdmin && (
         <div
@@ -874,20 +1079,26 @@ export function VotingView({
                             </span>
                           </div>
                           {isStaff && (
-                            <button
-                              type="button"
-                              disabled={
-                                busyId === loan.id ||
-                                (typeof availableLiquidity === 'number' &&
-                                  loan.amount > availableLiquidity)
-                              }
-                              onClick={() => void handleDisburse(loan.id)}
-                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                            >
-                              {busyId === loan.id
-                                ? 'Disbursing…'
-                                : 'Confirm & Deduct from Fund'}
-                            </button>
+                            isAdmin || loan.borrowerId !== user.id ? (
+                              <button
+                                type="button"
+                                disabled={
+                                  busyId === loan.id ||
+                                  (typeof availableLiquidity === 'number' &&
+                                    loan.amount > availableLiquidity)
+                                }
+                                onClick={() => handleDisburse(loan.id)}
+                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {busyId === loan.id
+                                  ? 'Disbursing…'
+                                  : 'Confirm & Deduct from Fund'}
+                              </button>
+                            ) : (
+                              <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 whitespace-nowrap">
+                                Peer / Admin Disbursement Required
+                              </span>
+                            )
                           )}
                         </div>
                       )}
@@ -1461,6 +1672,34 @@ export function VotingView({
           )}
         </>
       )}
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : undefined}
+        busy={modalBusy}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async (val) => {
+                setModalBusy(true);
+                try {
+                  await modal.run(val);
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

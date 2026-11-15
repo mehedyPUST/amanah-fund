@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Calendar, Check, Mail, Send, ShieldAlert, Volume2 } from 'lucide-react';
+import { Bell, Calendar, Check, Mail, Send, Volume2 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   CoopMeeting,
@@ -13,6 +13,7 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 
@@ -103,15 +104,30 @@ export function NotificationsView({
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [generatingReminders, setGeneratingReminders] = useState(false);
   const [sendingGmail, setSendingGmail] = useState(false);
-  const [confirmGmailOpen, setConfirmGmailOpen] = useState(false);
-  const [pendingSendIds, setPendingSendIds] = useState<string[] | undefined>(undefined);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPreferences>(
     user.notificationPreferences || DEFAULT_PREFS
   );
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<
+    | {
+        mode: 'confirm';
+        tone: 'emerald' | 'amber' | 'red';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+        confirmLabel: string;
+        run: () => Promise<void>;
+      }
+    | {
+        mode: 'notice';
+        tone: 'emerald' | 'amber' | 'red' | 'slate';
+        title: string;
+        description: string;
+        details?: ActionModalDetailItem[];
+      }
+    | null
+  >(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   useEffect(() => {
     if (user.notificationPreferences) {
@@ -125,9 +141,11 @@ export function NotificationsView({
       const res = await api.getNotifications();
       setNotifications(res.notifications);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to load notifications.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Notification Load Failed',
+        description: err instanceof Error ? err.message : 'Failed to load notifications.',
       });
     } finally {
       setLoading(false);
@@ -138,25 +156,38 @@ export function NotificationsView({
     void loadNotifications();
   }, [loadNotifications]);
 
-  async function handleGenerateReminders() {
-    setGeneratingReminders(true);
-    setFeedback(null);
-    try {
-      const res = await api.sendReminders();
-      setNotifications(res.notifications);
-      setFeedback({
-        type: 'success',
-        text: `Generated ${res.createdCount} monthly contribution & scheduled loan repayment reminder(s).`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not generate reminders.',
-      });
-    } finally {
-      setGeneratingReminders(false);
-    }
+  function handleGenerateReminders() {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Trigger Monthly & Repayment Reminders?',
+      description:
+        'Generates automated monthly contribution and scheduled Qard Hasan installment notices for all active members.',
+      confirmLabel: 'Generate Reminders',
+      run: async () => {
+        setGeneratingReminders(true);
+        try {
+          const res = await api.sendReminders();
+          setNotifications(res.notifications);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Reminders Generated',
+            description: `Generated ${res.createdCount} monthly contribution & scheduled loan repayment reminder(s).`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Reminder Generation Failed',
+            description: err instanceof Error ? err.message : 'Could not generate reminders.',
+          });
+        } finally {
+          setGeneratingReminders(false);
+        }
+      },
+    });
   }
 
   async function handleMarkRead(id: string) {
@@ -181,55 +212,79 @@ export function NotificationsView({
       setPrefs(res.user.notificationPreferences || next);
     } catch (err) {
       setPrefs(prefs);
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to save notification preference.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Preference Update Failed',
+        description:
+          err instanceof Error ? err.message : 'Failed to save notification preference.',
       });
     } finally {
       setSavingPrefs(false);
     }
   }
 
-  async function handleConfirmGmailSend() {
-    const token = getWorkspaceToken();
-    if (!token) {
-      setFeedback({
-        type: 'error',
-        text: 'Please sign in with Google first to authorize Gmail sending.',
-      });
-      setConfirmGmailOpen(false);
-      return;
-    }
+  function requestGmailSend(ids?: string[]) {
+    const targets = ids
+      ? notifications.filter((n) => ids.includes(n.id))
+      : notifications.filter((n) => n.deliveryStatus === 'queued').slice(0, 15);
 
-    setSendingGmail(true);
-    setFeedback(null);
-    try {
-      const res = await api.sendViaGmail(token, pendingSendIds);
-      setNotifications(res.notifications);
-      setConfirmGmailOpen(false);
-      setPendingSendIds(undefined);
-      setFeedback({
-        type: res.failedCount > 0 && res.sentCount === 0 ? 'error' : 'success',
-        text:
-          res.failedCount > 0
-            ? `Dispatched ${res.sentCount} email(s) via Gmail API (${res.failedCount} failed: ${res.errors[0] || ''}).`
-            : `Dispatched ${res.sentCount} notification email(s) via Gmail API.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Gmail dispatch failed.',
-      });
-    } finally {
-      setSendingGmail(false);
-    }
+    const previewDetails: ActionModalDetailItem[] = [
+      { label: 'Sender Account', value: workspace.email || 'Connected Google Workspace' },
+      { label: 'Queued Recipients', value: `${targets.length} email(s)` },
+      ...targets.slice(0, 4).map((t) => ({
+        label: t.recipientEmail,
+        value: t.subject.slice(0, 48),
+      })),
+    ];
+
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Send Notification Email(s) via Gmail?',
+      description: `Confirm sending ${targets.length} automated cooperative treasury email(s) from your connected Google account.`,
+      details: previewDetails,
+      confirmLabel: 'Confirm & Send Emails',
+      run: async () => {
+        const token = getWorkspaceToken();
+        if (!token) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Google Authorization Required',
+            description: 'Please sign in with Google first to authorize Gmail sending.',
+          });
+          return;
+        }
+        setSendingGmail(true);
+        try {
+          const res = await api.sendViaGmail(token, ids);
+          setNotifications(res.notifications);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: res.failedCount > 0 && res.sentCount === 0 ? 'red' : 'emerald',
+            title: res.failedCount > 0 ? 'Gmail Dispatch Completed with Errors' : 'Emails Sent',
+            description:
+              res.failedCount > 0
+                ? `Dispatched ${res.sentCount} email(s) via Gmail API (${res.failedCount} failed: ${res.errors[0] || ''}).`
+                : `Dispatched ${res.sentCount} notification email(s) via Gmail API.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Gmail Dispatch Failed',
+            description: err instanceof Error ? err.message : 'Gmail dispatch failed.',
+          });
+        } finally {
+          setSendingGmail(false);
+        }
+      },
+    });
   }
 
   const queuedItems = notifications.filter((n) => n.deliveryStatus === 'queued');
-  const targetsForModal = pendingSendIds
-    ? notifications.filter((n) => pendingSendIds.includes(n.id))
-    : queuedItems.slice(0, 15);
 
   const visibleNotifications = notifications.filter((n) => {
     if (filterType === 'queued' && n.deliveryStatus !== 'queued') return false;
@@ -294,19 +349,6 @@ export function NotificationsView({
           )}
         </div>
 
-        {feedback && (
-          <div
-            role="status"
-            className={`p-3 rounded-lg border text-xs font-medium ${
-              feedback.type === 'success'
-                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {feedback.text}
-          </div>
-        )}
-
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-1.5">
             {(
@@ -339,7 +381,7 @@ export function NotificationsView({
               <button
                 type="button"
                 disabled={generatingReminders}
-                onClick={() => void handleGenerateReminders()}
+                onClick={handleGenerateReminders}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-amber-50/50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 disabled:opacity-50 transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Bell className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
@@ -353,10 +395,7 @@ export function NotificationsView({
               <button
                 type="button"
                 disabled={!workspace.connected || queuedItems.length === 0 || sendingGmail}
-                onClick={() => {
-                  setPendingSendIds(undefined);
-                  setConfirmGmailOpen(true);
-                }}
+                onClick={() => requestGmailSend(undefined)}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" aria-hidden="true" />
@@ -496,10 +535,7 @@ export function NotificationsView({
                 {isStaff && item.deliveryStatus === 'queued' && workspace.connected && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setPendingSendIds([item.id]);
-                      setConfirmGmailOpen(true);
-                    }}
+                    onClick={() => requestGmailSend([item.id])}
                     className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Send className="w-3 h-3" aria-hidden="true" />
@@ -512,64 +548,31 @@ export function NotificationsView({
         )}
       </section>
 
-      {/* Explicit Confirmation Modal before sending emails via Gmail API */}
-      {confirmGmailOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-gmail-title"
-          className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"
-        >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
-            <div className="flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="space-y-1">
-                <h4
-                  id="confirm-gmail-title"
-                  className="text-base font-semibold text-slate-900 dark:text-white"
-                >
-                  Confirm Sending Email(s) via Gmail
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  You are about to send {targetsForModal.length} automated cooperative treasury
-                  email(s) from your connected Google account ({workspace.email}).
-                </p>
-              </div>
-            </div>
-
-            <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
-              {targetsForModal.map((n) => (
-                <div key={n.id} className="p-2.5 space-y-0.5">
-                  <div className="font-mono text-slate-900 dark:text-white">{n.recipientEmail}</div>
-                  <div className="text-slate-600 dark:text-slate-400 truncate">{n.subject}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={sendingGmail}
-                onClick={() => {
-                  setConfirmGmailOpen(false);
-                  setPendingSendIds(undefined);
-                }}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={sendingGmail}
-                onClick={() => void handleConfirmGmailSend()}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer"
-              >
-                {sendingGmail ? 'Sending via Gmail…' : 'Confirm & Send Emails'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionModal
+        open={modal !== null}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy || sendingGmail || generatingReminders}
+        onConfirm={
+          modal?.mode === 'confirm'
+            ? async () => {
+                setModalBusy(true);
+                try {
+                  await modal.run();
+                } finally {
+                  setModalBusy(false);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          if (!modalBusy && !sendingGmail && !generatingReminders) setModal(null);
+        }}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   ArrowRight,
   BarChart3,
   Bell,
+  CalendarClock,
   CheckCircle2,
   ClipboardCheck,
   CreditCard,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
@@ -38,6 +40,7 @@ import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
+import { ManagerCycleView } from './ManagerCycleView.tsx';
 import { ManagerDeskView } from './ManagerDeskView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
@@ -82,6 +85,8 @@ const MEMBER_NAV_ITEMS: NavItemConfig[] = [
   { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
   { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
 ];
@@ -96,6 +101,8 @@ const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
   { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
   { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
+  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
   { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
@@ -1015,6 +1022,7 @@ export function DashboardShell() {
                     loading={dataLoading && contributions.length === 0}
                     initialBillingMonth={preselectedBillingMonth}
                     onRefresh={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -1031,6 +1039,7 @@ export function DashboardShell() {
                     loading={dataLoading && loans.length === 0}
                     onOpenLoanModal={() => setLoanModalOpen(true)}
                     onRefresh={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -1112,6 +1121,31 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && contributions.length === 0 && loans.length === 0}
                     onNavigate={(sec) => navigateToPage(sec, false)}
+                    onViewMemberProfile={handleViewMemberProfile}
+                  />
+                </section>
+              )}
+
+              {activeSection === 'members' && (
+                <section id="members" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Member Directory" />
+                  <ActiveMembersView
+                    user={user}
+                    config={overview?.config || null}
+                    onViewMemberProfile={handleViewMemberProfile}
+                  />
+                </section>
+              )}
+
+              {activeSection === 'manager-cycle' && (
+                <section id="manager-cycle" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Manager Rotation Cycle" />
+                  <ManagerCycleView
+                    user={user}
+                    config={overview?.config || null}
+                    onViewMemberProfile={handleViewMemberProfile}
+                    onOpenConfig={isAdmin ? () => navigateToPage('site-settings', false) : undefined}
+                    onRefresh={handleRefreshWithAutoSync}
                   />
                 </section>
               )}
@@ -1161,6 +1195,7 @@ export function DashboardShell() {
                     polls={polls}
                     meetings={meetings}
                     profileChangeRequests={profileChangeRequests}
+                    onViewMemberProfile={handleViewMemberProfile}
                     onRefresh={handleRefreshWithAutoSync}
                   />
                 </section>

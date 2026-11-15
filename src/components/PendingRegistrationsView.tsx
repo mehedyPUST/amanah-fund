@@ -16,6 +16,26 @@ import type { MemberSummary, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+
+type RegModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      run: () => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
+
 interface PendingRegistrationsViewProps {
   user: PublicUser;
   onRefresh: () => Promise<void>;
@@ -31,9 +51,33 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     null
   );
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<RegModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
+
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal() {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
+    try {
+      await modal.run();
+    } catch (err) {
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setModalBusy(false);
+    }
+  }
 
   const loadPendingRegistrations = useCallback(async () => {
     if (!isAdmin) {
@@ -45,13 +89,13 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       const res = await api.getPendingRegistrations();
       setRegistrations(res.registrations);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text:
-          err instanceof Error
-            ? err.message
-            : 'Failed to load pending user registrations from the database.',
-      });
+      showNotice(
+        'red',
+        'Could Not Load Registrations',
+        err instanceof Error
+          ? err.message
+          : 'Failed to load pending user registrations from the database.'
+      );
     } finally {
       setLoading(false);
     }
@@ -61,46 +105,69 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     void loadPendingRegistrations();
   }, [loadPendingRegistrations]);
 
-  async function handleApprove(member: MemberSummary) {
-    setBusyAction({ id: member.id, type: 'approve' });
-    setFeedback(null);
-    try {
-      await api.updateMember(member.id, { status: 'active' });
-      setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
-      setFeedback({
-        type: 'success',
-        text: `Approved ${member.name} (${member.memberCode}). Account is now active and welcome notice queued.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to approve user registration.',
-      });
-    } finally {
-      setBusyAction(null);
-    }
+  function confirmApprove(member: MemberSummary) {
+    const reg = member.registrationDetails;
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Approve Membership (${member.name})?`,
+      description:
+        'Approving activates cooperative access immediately and queues a welcome email notification.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+        ...(reg?.nid ? [{ label: 'National ID (NID)', value: reg.nid }] : []),
+        ...(reg?.mobile ? [{ label: 'Mobile', value: reg.mobile }] : []),
+      ],
+      confirmLabel: 'Approve & Activate Member',
+      run: async () => {
+        setBusyAction({ id: member.id, type: 'approve' });
+        try {
+          await api.updateMember(member.id, { status: 'active' });
+          setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Member Registration Approved',
+            `Approved ${member.name} (${member.memberCode}). Account is now active and welcome notice queued.`
+          );
+        } finally {
+          setBusyAction(null);
+        }
+      },
+    });
   }
 
-  async function handleReject(member: MemberSummary) {
-    setBusyAction({ id: member.id, type: 'reject' });
-    setFeedback(null);
-    try {
-      await api.declinePendingMember(member.id);
-      setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
-      setFeedback({
-        type: 'success',
-        text: `Rejected registration for ${member.name} (${member.memberCode}) and removed pending access.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reject user registration.',
-      });
-    } finally {
-      setBusyAction(null);
-    }
+  function confirmReject(member: MemberSummary) {
+    const reg = member.registrationDetails;
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: `Reject Application (${member.name})?`,
+      description:
+        'Rejecting permanently declines this pending registration and removes pending access.',
+      details: [
+        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+        ...(reg?.nid ? [{ label: 'National ID (NID)', value: reg.nid }] : []),
+      ],
+      confirmLabel: 'Reject Application',
+      run: async () => {
+        setBusyAction({ id: member.id, type: 'reject' });
+        try {
+          await api.declinePendingMember(member.id);
+          setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
+          await onRefresh();
+          showNotice(
+            'amber',
+            'Registration Rejected',
+            `Rejected registration for ${member.name} (${member.memberCode}) and removed pending access.`
+          );
+        } finally {
+          setBusyAction(null);
+        }
+      },
+    });
   }
 
   const filteredRegistrations = useMemo(() => {
@@ -194,19 +261,6 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             </button>
           </div>
         </div>
-
-        {feedback && (
-          <div
-            role="status"
-            className={`p-3.5 rounded-lg border text-xs font-medium ${
-              feedback.type === 'success'
-                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {feedback.text}
-          </div>
-        )}
       </section>
 
       {/* Loading / Empty / Registration Cards */}
@@ -344,8 +398,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                   <div className="flex items-center gap-2.5 shrink-0">
                     <button
                       type="button"
-                      disabled={isBusy}
-                      onClick={() => void handleReject(applicant)}
+                      disabled={isBusy || modalBusy}
+                      onClick={() => confirmReject(applicant)}
                       className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
@@ -356,8 +410,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
                     <button
                       type="button"
-                      disabled={isBusy}
-                      onClick={() => void handleApprove(applicant)}
+                      disabled={isBusy || modalBusy}
+                      onClick={() => confirmApprove(applicant)}
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -511,6 +565,21 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           })}
         </div>
       )}
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

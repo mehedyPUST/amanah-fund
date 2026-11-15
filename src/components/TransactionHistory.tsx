@@ -187,8 +187,8 @@ export function TransactionHistory({
             effectiveScope === 'all'
               ? `${loan.borrowerName} (${loan.borrowerCode}) · ${loan.purpose}`
               : loan.purpose,
-          channelLabel: loan.channel.toUpperCase(),
-          providerName: loan.provider,
+          channelLabel: (loan.decryptedSensitiveNotes?.channel || 'bank').toUpperCase(),
+          providerName: loan.decryptedSensitiveNotes?.provider || 'Qard Hasan Payout',
           maskedReference: txRef,
           status: loan.status === 'repaid' ? 'repaid' : 'disbursed',
           statusBucket: 'completed',
@@ -197,7 +197,7 @@ export function TransactionHistory({
           loanId: loan.id,
           loanRemainingBalance: loan.remainingBalance,
           decryptedReference: txRef,
-          decryptedSenderAccount: loan.decryptedPayoutAccount,
+          decryptedSenderAccount: loan.decryptedSensitiveNotes?.disbursementAccount,
           reviewerOrVerifier: loan.disbursementSignature.signedByName,
           entryHash: loan.entryHash,
         });

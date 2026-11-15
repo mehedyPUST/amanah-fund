@@ -1468,6 +1468,7 @@ export function buildManagerCycleSchedule(
       memberName: member.name,
       memberCode: member.memberCode,
       currentRole: member.role,
+      joinedAt: member.joinedAt,
       photoUrl: member.photoUrl,
       startDate: slotStart.toISOString().slice(0, 10),
       endDate: slotEnd.toISOString().slice(0, 10),

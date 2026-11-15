@@ -918,8 +918,10 @@ export function LoansView({
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {activeSelectedLoan.installmentMonths} monthly installments at{' '}
-                        {formatMoney(activeSelectedLoan.monthlyInstallment, ccy)}/mo (0% interest) ·{' '}
-                        {activeSelectedLoan.channel.toUpperCase()} · {activeSelectedLoan.provider}
+                        {formatMoney(activeSelectedLoan.monthlyInstallment, ccy)}/mo (0% interest)
+                        {activeSelectedLoan.decryptedSensitiveNotes
+                          ? ` · ${activeSelectedLoan.decryptedSensitiveNotes.channel.toUpperCase()} · ${activeSelectedLoan.decryptedSensitiveNotes.provider}`
+                          : ''}
                       </p>
                     </div>
                     {activeSelectedLoan.disbursementSignature && (
@@ -1079,28 +1081,34 @@ export function LoansView({
                             </div>
                           </div>
                           {isStaff && activeSelectedLoan.rescheduleRequest.status === 'pending' && (
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                type="button"
-                                disabled={modalBusy}
-                                onClick={() =>
-                                  confirmReviewReschedule(activeSelectedLoan.id, 'approve')
-                                }
-                                className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                type="button"
-                                disabled={modalBusy}
-                                onClick={() =>
-                                  confirmReviewReschedule(activeSelectedLoan.id, 'reject')
-                                }
-                                className="px-2.5 py-1 rounded border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
-                              >
-                                Reject
-                              </button>
-                            </div>
+                            isAdmin || activeSelectedLoan.borrowerId !== user.id ? (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={modalBusy}
+                                  onClick={() =>
+                                    confirmReviewReschedule(activeSelectedLoan.id, 'approve')
+                                  }
+                                  className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={modalBusy}
+                                  onClick={() =>
+                                    confirmReviewReschedule(activeSelectedLoan.id, 'reject')
+                                  }
+                                  className="px-2.5 py-1 rounded border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 shrink-0">
+                                Peer / Admin Review Required
+                              </span>
+                            )
                           )}
                         </div>
                       )}
@@ -1212,7 +1220,9 @@ export function LoansView({
                             value={repayProvider}
                             onChange={setRepayProvider}
                             placeholder={
-                              repayChannel === 'mfs' ? 'Search MFS…' : 'Search 61 BD banks…'
+                              repayChannel === 'mfs'
+                                ? 'Search MFS…'
+                                : `Search ${BANK_PROVIDERS.length} BD banks…`
                             }
                           />
                         </div>
@@ -1289,7 +1299,9 @@ export function LoansView({
                             (inst.status === 'scheduled' || inst.status === 'overdue') &&
                             (activeSelectedLoan.borrowerId === user.id || user.role === 'manager');
                           const canVerify =
-                            isStaff && inst.status === 'pending_verification';
+                            isStaff &&
+                            inst.status === 'pending_verification' &&
+                            (isAdmin || activeSelectedLoan.borrowerId !== user.id);
                           const txNumber =
                             inst.decryptedReceipt?.referenceId || inst.maskedReference;
 

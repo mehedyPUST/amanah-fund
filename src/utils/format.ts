@@ -85,9 +85,13 @@ export const BANK_PROVIDERS = [
   'Janata Bank',
   'Agrani Bank',
   'Rupali Bank',
+  'Ansar-VDP Unnayan Bank',
   'BASIC Bank',
   'Bangladesh Development Bank (BDBL)',
   'Bangladesh Krishi Bank',
+  'Grameen Bank',
+  'Karmasangsthan Bank',
+  'Palli Sanchay Bank',
   'Rajshahi Krishi Unnayan Bank (RAKUB)',
   'Probashi Kallyan Bank',
   // Private Commercial Banks (Conventional)
