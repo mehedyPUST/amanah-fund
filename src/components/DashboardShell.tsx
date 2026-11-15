@@ -396,7 +396,7 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 sm:p-10 max-w-6xl mx-auto space-y-6">
+      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 space-y-6">
         <Skeleton height={44} width={280} />
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -692,8 +692,8 @@ export function DashboardShell() {
       </AnimatePresence>
 
       {/* GRID 4: Multi-Page Dashboard Content */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 w-full flex flex-col p-4 sm:p-5 lg:p-6">
+        <div className="w-full flex-1 space-y-6">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
@@ -913,6 +913,7 @@ export function DashboardShell() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.16 }}
+              className="w-full"
             >
               {activeSection === 'fund-overview' && (
                 <section id="fund-overview" className="space-y-4">

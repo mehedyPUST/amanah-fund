@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
 
-type HomeSectionId = 'overview' | 'architecture' | 'governance-charter';
+type HomeSectionId = 'overview' | 'architecture' | 'governance-charter' | 'community';
 
 interface PublicNavItem {
   id?: HomeSectionId;
@@ -24,6 +24,7 @@ const PUBLIC_NAV_LINKS: PublicNavItem[] = [
     altPath: '/rules',
     label: 'Governance Charter',
   },
+  { id: 'community', href: '/#community', label: 'Community' },
 ];
 
 export function Navbar() {
@@ -58,7 +59,12 @@ export function Navbar() {
   useEffect(() => {
     if (pathname !== '/') return;
     const hash = window.location.hash.replace('#', '') as HomeSectionId;
-    if (hash === 'overview' || hash === 'architecture' || hash === 'governance-charter') {
+    if (
+      hash === 'overview' ||
+      hash === 'architecture' ||
+      hash === 'governance-charter' ||
+      hash === 'community'
+    ) {
       const timer = window.setTimeout(() => {
         scrollToHomeSection(hash, false);
       }, 60);
@@ -69,7 +75,12 @@ export function Navbar() {
   // Scrollspy on the one-page Home page
   useEffect(() => {
     if (pathname !== '/') return;
-    const sectionIds: HomeSectionId[] = ['overview', 'architecture', 'governance-charter'];
+    const sectionIds: HomeSectionId[] = [
+      'overview',
+      'architecture',
+      'governance-charter',
+      'community',
+    ];
     let rafId = 0;
 
     const updateActiveOnScroll = () => {
@@ -78,7 +89,7 @@ export function Navbar() {
       const atBottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
       if (atBottom) {
-        setActiveHomeSection('governance-charter');
+        setActiveHomeSection('community');
         return;
       }
 

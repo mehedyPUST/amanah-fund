@@ -69,6 +69,15 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/#community"
+                  onClick={(e) => scrollIfHome(e, 'community')}
+                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
+                  Community
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/signup"
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
