@@ -60,3 +60,29 @@ export function broadcastRealtimeEvent(event: string, payload: Record<string, un
     }
   }
 }
+
+export function sendRealtimeEventToUsers(
+  userIds: string[],
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  const targetSet = new Set(userIds);
+  const serialized = `event: ${event}\ndata: ${JSON.stringify({
+    ...payload,
+    timestamp: new Date().toISOString(),
+  })}\n\n`;
+
+  for (const client of clients.values()) {
+    if (!targetSet.has(client.userId)) continue;
+    if (client.res.writableEnded || client.res.destroyed) {
+      clients.delete(client.id);
+      continue;
+    }
+    try {
+      client.res.write(serialized);
+    } catch {
+      clients.delete(client.id);
+    }
+  }
+}
+

@@ -28,6 +28,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   loan_rejected_notice: 'Loan Request Declined',
   loan_repayment_notice: 'Loan Repayment Notice',
   monthly_contribution_reminder: 'Monthly Contribution Reminder',
+  community_moderation: 'Community Moderation',
 };
 
 export function NotificationsView({

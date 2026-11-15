@@ -19,3 +19,63 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Modern, classy scrollbars (Light & Dark Mode) */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.32) transparent;
+}
+
+html.dark {
+  scrollbar-color: rgba(148, 163, 184, 0.26) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 116, 139, 0.28);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 150ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(5, 150, 105, 0.55);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(4, 120, 87, 0.8);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.22);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(16, 185, 129, 0.55);
+}
+
+html.dark ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(52, 211, 153, 0.78);
+}
+
+.scrollbar-subtle::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.scrollbar-subtle::-webkit-scrollbar-thumb {
+  border-width: 1.5px;
+}

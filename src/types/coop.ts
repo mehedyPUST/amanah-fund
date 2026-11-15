@@ -10,6 +10,7 @@ export type DashboardSectionId =
   | 'statistics'
   | 'ballot'
   | 'transaction-history'
+  | 'community'
   | 'site-activity'
   | 'member-registry'
   | 'site-settings';
@@ -45,6 +46,7 @@ export interface PublicUser {
   phoneMasked?: string;
   photoUrl?: string;
   authProvider?: 'password' | 'google' | 'both';
+  communityMuted?: boolean;
   registrationDetails?: UserRegistrationDetails;
 }
 
@@ -254,7 +256,8 @@ export type NotificationType =
   | 'loan_approved_confirmation'
   | 'loan_rejected_notice'
   | 'loan_repayment_notice'
-  | 'monthly_contribution_reminder';
+  | 'monthly_contribution_reminder'
+  | 'community_moderation';
 
 export interface EmailNotification {
   id: string;
@@ -289,7 +292,8 @@ export interface AuditLogEntry {
     | 'halal_project'
     | 'report'
     | 'notification'
-    | 'workspace_sync';
+    | 'workspace_sync'
+    | 'community';
   resourceId: string;
   summary: string;
   encryptedPayload: EncryptedEnvelope;
@@ -336,4 +340,87 @@ export interface DashboardOverview {
   };
   monthlySeries: MonthlyCashflowPoint[];
   storageEngine: 'mongodb_atlas' | 'encrypted_local_vault';
+}
+
+export type CommunityCategory =
+  | 'General'
+  | 'Qard Hasan'
+  | 'Halal Ventures'
+  | 'Announcements'
+  | 'Help & Support';
+
+export type CommunityReactionType = 'like' | 'support' | 'celebrate' | 'helpful';
+
+export interface CommunityReaction {
+  userId: string;
+  userName: string;
+  type: CommunityReactionType;
+  createdAt: string;
+}
+
+export interface CommunityComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorCode: string;
+  authorRole: UserRole;
+  authorPhotoUrl?: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorCode: string;
+  authorRole: UserRole;
+  authorPhotoUrl?: string;
+  authorMuted?: boolean;
+  category: CommunityCategory;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  reactions: CommunityReaction[];
+  comments: CommunityComment[];
+  isPinned: boolean;
+  commentsLocked: boolean;
+  status: 'active' | 'hidden';
+  moderationReason?: string;
+  moderatedByName?: string;
+  moderatedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface PrivateMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderCode: string;
+  senderRole: UserRole;
+  senderPhotoUrl?: string;
+  recipientId: string;
+  recipientName: string;
+  recipientCode: string;
+  recipientRole: UserRole;
+  recipientPhotoUrl?: string;
+  body: string;
+  createdAt: string;
+  readAt?: string;
+}
+
+export interface ConversationThreadSummary {
+  peerId: string;
+  peerName: string;
+  peerCode: string;
+  peerRole: UserRole;
+  peerPhotoUrl?: string;
+  lastMessageBody: string;
+  lastMessageAt: string;
+  lastMessageSenderId: string;
+  unreadCount: number;
 }

@@ -3,11 +3,17 @@ import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import type {
+  CommunityCategory,
+  CommunityComment,
+  CommunityPost,
+  CommunityReactionType,
   Contribution,
+  ConversationThreadSummary,
   FundConfig,
   HalalProject,
   InstallmentItem,
   LoanRequest,
+  PrivateMessage,
   UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
@@ -42,8 +48,12 @@ import {
   encryptSensitiveObject,
   maskReference,
 } from './crypto.ts';
-import { loadVaultState, type StoredUser, updateVaultState } from './db.ts';
-import { broadcastRealtimeEvent, registerSseClient } from './realtime.ts';
+import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVaultState } from './db.ts';
+import {
+  broadcastRealtimeEvent,
+  registerSseClient,
+  sendRealtimeEventToUsers,
+} from './realtime.ts';
 
 function extractGoogleBearerToken(req: AuthenticatedRequest): string | null {
   const header = req.headers.authorization;
@@ -3358,3 +3368,1025 @@ apiRouter.get(
     }
   }
 );
+
+// ---------------------------------------------------------------------------
+// 9. Community Forum (Posts, Reactions, Comments & Admin Moderation)
+// ---------------------------------------------------------------------------
+
+const COMMUNITY_CATEGORIES: CommunityCategory[] = [
+  'General',
+  'Qard Hasan',
+  'Halal Ventures',
+  'Announcements',
+  'Help & Support',
+];
+
+const COMMUNITY_REACTIONS: CommunityReactionType[] = ['like', 'support', 'celebrate', 'helpful'];
+
+function hydrateCommunityPost(post: CommunityPost, users: StoredUser[]): CommunityPost {
+  const author = users.find((u) => u.id === post.authorId);
+  return {
+    ...post,
+    authorPhotoUrl: author?.photoUrl || post.authorPhotoUrl,
+    authorMuted: Boolean(author?.communityMuted),
+    reactions: Array.isArray(post.reactions) ? post.reactions : [],
+    comments: Array.isArray(post.comments)
+      ? post.comments.map((c) => {
+          const commentAuthor = users.find((u) => u.id === c.authorId);
+          return {
+            ...c,
+            authorPhotoUrl: commentAuthor?.photoUrl || c.authorPhotoUrl,
+          };
+        })
+      : [],
+  };
+}
+
+apiRouter.get('/community/posts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const viewer = req.authUser!;
+    const isAdmin = viewer.role === 'admin';
+
+    const visiblePosts = (state.communityPosts || [])
+      .filter((post) => isAdmin || post.status === 'active')
+      .map((post) => hydrateCommunityPost(post, state.users))
+      .sort((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+    res.json({ posts: visiblePosts });
+  } catch (err) {
+    console.error('Community posts load error:', err);
+    res.status(500).json({ error: 'Failed to load community posts.' });
+  }
+});
+
+apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    if (viewer.communityMuted) {
+      res.status(403).json({
+        error: 'Your community posting privileges are currently muted by an administrator.',
+      });
+      return;
+    }
+
+    const rawCategory = String(req.body?.category || 'General') as CommunityCategory;
+    const category: CommunityCategory = COMMUNITY_CATEGORIES.includes(rawCategory)
+      ? rawCategory
+      : 'General';
+    const title = String(req.body?.title || '').trim();
+    const content = String(req.body?.content || '').trim();
+    const imageUrl = String(req.body?.imageUrl || '').trim();
+
+    if (!title || title.length < 3 || title.length > 140) {
+      res.status(400).json({ error: 'Post title must be between 3 and 140 characters.' });
+      return;
+    }
+    if (!content || content.length < 3 || content.length > 4000) {
+      res.status(400).json({ error: 'Post content must be between 3 and 4000 characters.' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const newPost: CommunityPost = {
+      id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      authorId: viewer.id,
+      authorName: viewer.name,
+      authorCode: viewer.memberCode,
+      authorRole: viewer.role,
+      authorPhotoUrl: viewer.photoUrl,
+      authorMuted: false,
+      category,
+      title,
+      content,
+      imageUrl: imageUrl || undefined,
+      reactions: [],
+      comments: [],
+      isPinned: false,
+      commentsLocked: false,
+      status: 'active',
+      createdAt: now,
+    };
+
+    await updateVaultState((draft) => {
+      draft.communityPosts.unshift(newPost);
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: 'COMMUNITY_POST_CREATED',
+        resourceType: 'community',
+        resourceId: newPost.id,
+        summary: `${viewer.name} published community post "${title}" in ${category}`,
+        payload: { postId: newPost.id, category, title },
+      });
+      return draft;
+    });
+
+    broadcastRealtimeEvent('community:updated', { postId: newPost.id, type: 'post_created' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'COMMUNITY_POST_CREATED',
+      resourceType: 'community',
+      resourceId: newPost.id,
+    });
+
+    res.status(201).json({ post: newPost });
+  } catch (err) {
+    console.error('Create community post error:', err);
+    res.status(500).json({ error: 'Failed to create community post.' });
+  }
+});
+
+apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const title = req.body?.title !== undefined ? String(req.body.title).trim() : undefined;
+    const content = req.body?.content !== undefined ? String(req.body.content).trim() : undefined;
+    const rawCategory = req.body?.category as CommunityCategory | undefined;
+    const imageUrl =
+      req.body?.imageUrl !== undefined ? String(req.body.imageUrl || '').trim() : undefined;
+
+    if (title !== undefined && (title.length < 3 || title.length > 140)) {
+      res.status(400).json({ error: 'Post title must be between 3 and 140 characters.' });
+      return;
+    }
+    if (content !== undefined && (content.length < 3 || content.length > 4000)) {
+      res.status(400).json({ error: 'Post content must be between 3 and 4000 characters.' });
+      return;
+    }
+
+    let updatedPost: CommunityPost | null = null;
+    const nextState = await updateVaultState((draft) => {
+      const target = draft.communityPosts.find((p) => p.id === id);
+      if (!target) return draft;
+      if (target.authorId !== viewer.id) {
+        throw new Error('FORBIDDEN_POST_EDIT');
+      }
+
+      if (title !== undefined) target.title = title;
+      if (content !== undefined) target.content = content;
+      if (rawCategory && COMMUNITY_CATEGORIES.includes(rawCategory)) {
+        target.category = rawCategory;
+      }
+      if (imageUrl !== undefined) {
+        target.imageUrl = imageUrl || undefined;
+      }
+      target.updatedAt = new Date().toISOString();
+      updatedPost = target;
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: 'COMMUNITY_POST_EDITED',
+        resourceType: 'community',
+        resourceId: target.id,
+        summary: `${viewer.name} edited their community post "${target.title}"`,
+        payload: { postId: target.id, title: target.title },
+      });
+      return draft;
+    });
+
+    if (!updatedPost) {
+      res.status(404).json({ error: 'Community post not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('community:updated', { postId: id, type: 'post_edited' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'COMMUNITY_POST_EDITED',
+      resourceType: 'community',
+      resourceId: id,
+    });
+
+    res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN_POST_EDIT') {
+      res.status(403).json({ error: 'You can only edit your own posts.' });
+      return;
+    }
+    console.error('Edit community post error:', err);
+    res.status(500).json({ error: 'Failed to update community post.' });
+  }
+});
+
+apiRouter.delete('/community/posts/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const reason = String(req.body?.reason || req.query?.reason || '').trim();
+    let deletedPost: CommunityPost | null = null;
+    let isAdminAction = false;
+
+    await updateVaultState((draft) => {
+      const idx = draft.communityPosts.findIndex((p) => p.id === id);
+      if (idx === -1) return draft;
+
+      const target = draft.communityPosts[idx];
+      const isAuthor = target.authorId === viewer.id;
+      const isAdmin = viewer.role === 'admin';
+      if (!isAuthor && !isAdmin) {
+        throw new Error('FORBIDDEN_POST_DELETE');
+      }
+
+      isAdminAction = !isAuthor && isAdmin;
+      deletedPost = target;
+      draft.communityPosts.splice(idx, 1);
+
+      if (isAdminAction) {
+        const author = draft.users.find((u) => u.id === target.authorId);
+        if (author) {
+          queueEmailNotification(draft, {
+            type: 'community_moderation',
+            recipientEmail: author.email,
+            recipientName: author.name,
+            recipientUserId: author.id,
+            subject: `Community Post Removed by Administrator`,
+            body: `Assalamu Alaikum ${author.name}, your community post "${target.title}" was removed by administrator ${viewer.name}.${reason ? ` Reason: ${reason}` : ''}`,
+            relatedId: target.id,
+          });
+        }
+      }
+
+      appendAuditLog(draft, {
+        actor: viewer,
+        action: isAdminAction ? 'COMMUNITY_POST_DELETED_BY_ADMIN' : 'COMMUNITY_POST_DELETED',
+        resourceType: 'community',
+        resourceId: target.id,
+        summary: isAdminAction
+          ? `${viewer.name} (Admin) removed post "${target.title}" by ${target.authorName}${reason ? ` (${reason})` : ''}`
+          : `${viewer.name} deleted their community post "${target.title}"`,
+        payload: {
+          postId: target.id,
+          authorId: target.authorId,
+          title: target.title,
+          reason: reason || undefined,
+        },
+      });
+      return draft;
+    });
+
+    if (!deletedPost) {
+      res.status(404).json({ error: 'Community post not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('community:updated', { postId: id, type: 'post_deleted' });
+    if (isAdminAction) {
+      broadcastRealtimeEvent('notification:created', { type: 'community_moderation' });
+    }
+    broadcastRealtimeEvent('audit:updated', {
+      action: isAdminAction ? 'COMMUNITY_POST_DELETED_BY_ADMIN' : 'COMMUNITY_POST_DELETED',
+      resourceType: 'community',
+      resourceId: id,
+    });
+
+    res.json({ ok: true, id });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN_POST_DELETE') {
+      res.status(403).json({ error: 'Only the post author or an administrator can delete this post.' });
+      return;
+    }
+    console.error('Delete community post error:', err);
+    res.status(500).json({ error: 'Failed to delete community post.' });
+  }
+});
+
+apiRouter.post('/community/posts/:id/react', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const viewer = req.authUser!;
+    const rawType = String(req.body?.type || '') as CommunityReactionType;
+    if (!COMMUNITY_REACTIONS.includes(rawType)) {
+      res.status(400).json({ error: 'Invalid reaction type.' });
+      return;
+    }
+
+    let updatedPost: CommunityPost | null = null;
+    const nextState = await updateVaultState((draft) => {
+      const post = draft.communityPosts.find((p) => p.id === id);
+      if (!post || (post.status === 'hidden' && viewer.role !== 'admin')) {
+        return draft;
+      }
+
+      post.reactions = Array.isArray(post.reactions) ? post.reactions : [];
+      const existingIdx = post.reactions.findIndex((r) => r.userId === viewer.id);
+      if (existingIdx !== -1) {
+        if (post.reactions[existingIdx].type === rawType) {
+          post.reactions.splice(existingIdx, 1);
+        } else {
+          post.reactions[existingIdx] = {
+            userId: viewer.id,
+            userName: viewer.name,
+            type: rawType,
+            createdAt: new Date().toISOString(),
+          };
+        }
+      } else {
+        post.reactions.push({
+          userId: viewer.id,
+          userName: viewer.name,
+          type: rawType,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      updatedPost = post;
+      return draft;
+    });
+
+    if (!updatedPost) {
+      res.status(404).json({ error: 'Community post not found.' });
+      return;
+    }
+
+    broadcastRealtimeEvent('community:updated', { postId: id, type: 'reaction' });
+    res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+  } catch (err) {
+    console.error('React to post error:', err);
+    res.status(500).json({ error: 'Failed to update reaction.' });
+  }
+});
+
+apiRouter.post(
+  '/community/posts/:id/comments',
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      if (viewer.communityMuted) {
+        res.status(403).json({
+          error: 'Your community commenting privileges are currently muted by an administrator.',
+        });
+        return;
+      }
+
+      const content = String(req.body?.content || '').trim();
+      if (!content || content.length > 2000) {
+        res.status(400).json({ error: 'Comment must be between 1 and 2000 characters.' });
+        return;
+      }
+
+      let updatedPost: CommunityPost | null = null;
+      const nextState = await updateVaultState((draft) => {
+        const post = draft.communityPosts.find((p) => p.id === id);
+        if (!post || (post.status === 'hidden' && viewer.role !== 'admin')) {
+          return draft;
+        }
+        if (post.commentsLocked && viewer.role !== 'admin') {
+          throw new Error('COMMENTS_LOCKED');
+        }
+
+        const comment: CommunityComment = {
+          id: `cmt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          postId: post.id,
+          authorId: viewer.id,
+          authorName: viewer.name,
+          authorCode: viewer.memberCode,
+          authorRole: viewer.role,
+          authorPhotoUrl: viewer.photoUrl,
+          content,
+          createdAt: new Date().toISOString(),
+        };
+
+        post.comments = Array.isArray(post.comments) ? post.comments : [];
+        post.comments.push(comment);
+        updatedPost = post;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'COMMUNITY_COMMENT_CREATED',
+          resourceType: 'community',
+          resourceId: comment.id,
+          summary: `${viewer.name} commented on "${post.title}"`,
+          payload: { postId: post.id, commentId: comment.id },
+        });
+        return draft;
+      });
+
+      if (!updatedPost) {
+        res.status(404).json({ error: 'Community post not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', { postId: id, type: 'comment_created' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'COMMUNITY_COMMENT_CREATED',
+        resourceType: 'community',
+        resourceId: id,
+      });
+
+      res.status(201).json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'COMMENTS_LOCKED') {
+        res.status(403).json({ error: 'Comments on this discussion have been locked by an administrator.' });
+        return;
+      }
+      console.error('Create comment error:', err);
+      res.status(500).json({ error: 'Failed to post comment.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/community/posts/:postId/comments/:commentId',
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { postId, commentId } = req.params;
+      const viewer = req.authUser!;
+      const content = String(req.body?.content || '').trim();
+      if (!content || content.length > 2000) {
+        res.status(400).json({ error: 'Comment must be between 1 and 2000 characters.' });
+        return;
+      }
+
+      let updatedPost: CommunityPost | null = null;
+      let commentFound = false;
+      const nextState = await updateVaultState((draft) => {
+        const post = draft.communityPosts.find((p) => p.id === postId);
+        if (!post) return draft;
+        const comment = (post.comments || []).find((c) => c.id === commentId);
+        if (!comment) return draft;
+        commentFound = true;
+        if (comment.authorId !== viewer.id) {
+          throw new Error('FORBIDDEN_COMMENT_EDIT');
+        }
+        comment.content = content;
+        comment.updatedAt = new Date().toISOString();
+        updatedPost = post;
+        return draft;
+      });
+
+      if (!updatedPost || !commentFound) {
+        res.status(404).json({ error: 'Comment not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', { postId, type: 'comment_edited' });
+      res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'FORBIDDEN_COMMENT_EDIT') {
+        res.status(403).json({ error: 'You can only edit your own comments.' });
+        return;
+      }
+      console.error('Edit comment error:', err);
+      res.status(500).json({ error: 'Failed to edit comment.' });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/community/posts/:postId/comments/:commentId',
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { postId, commentId } = req.params;
+      const viewer = req.authUser!;
+      const reason = String(req.body?.reason || req.query?.reason || '').trim();
+      let updatedPost: CommunityPost | null = null;
+      let commentFound = false;
+      let isAdminAction = false;
+
+      const nextState = await updateVaultState((draft) => {
+        const post = draft.communityPosts.find((p) => p.id === postId);
+        if (!post) return draft;
+        const idx = (post.comments || []).findIndex((c) => c.id === commentId);
+        if (idx === -1) return draft;
+        commentFound = true;
+
+        const targetComment = post.comments[idx];
+        const isAuthor = targetComment.authorId === viewer.id;
+        const isAdmin = viewer.role === 'admin';
+        if (!isAuthor && !isAdmin) {
+          throw new Error('FORBIDDEN_COMMENT_DELETE');
+        }
+
+        isAdminAction = !isAuthor && isAdmin;
+        post.comments.splice(idx, 1);
+        updatedPost = post;
+
+        if (isAdminAction) {
+          const author = draft.users.find((u) => u.id === targetComment.authorId);
+          if (author) {
+            queueEmailNotification(draft, {
+              type: 'community_moderation',
+              recipientEmail: author.email,
+              recipientName: author.name,
+              recipientUserId: author.id,
+              subject: `Community Comment Removed by Administrator`,
+              body: `Assalamu Alaikum ${author.name}, your comment on "${post.title}" was removed by administrator ${viewer.name}.${reason ? ` Reason: ${reason}` : ''}`,
+              relatedId: post.id,
+            });
+          }
+        }
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: isAdminAction
+            ? 'COMMUNITY_COMMENT_DELETED_BY_ADMIN'
+            : 'COMMUNITY_COMMENT_DELETED',
+          resourceType: 'community',
+          resourceId: commentId,
+          summary: isAdminAction
+            ? `${viewer.name} (Admin) deleted a comment by ${targetComment.authorName} on "${post.title}"`
+            : `${viewer.name} deleted their comment on "${post.title}"`,
+          payload: {
+            postId: post.id,
+            commentId,
+            commentAuthorId: targetComment.authorId,
+            reason: reason || undefined,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedPost || !commentFound) {
+        res.status(404).json({ error: 'Comment not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', { postId, type: 'comment_deleted' });
+      if (isAdminAction) {
+        broadcastRealtimeEvent('notification:created', { type: 'community_moderation' });
+      }
+      broadcastRealtimeEvent('audit:updated', {
+        action: isAdminAction
+          ? 'COMMUNITY_COMMENT_DELETED_BY_ADMIN'
+          : 'COMMUNITY_COMMENT_DELETED',
+        resourceType: 'community',
+        resourceId: commentId,
+      });
+
+      res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'FORBIDDEN_COMMENT_DELETE') {
+        res
+          .status(403)
+          .json({ error: 'Only the comment author or an administrator can delete this comment.' });
+        return;
+      }
+      console.error('Delete comment error:', err);
+      res.status(500).json({ error: 'Failed to delete comment.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/community/posts/:id/moderate',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      const action = String(req.body?.action || '').trim();
+      const reason = String(req.body?.reason || '').trim();
+
+      if (!['pin', 'unpin', 'lock', 'unlock', 'hide', 'restore'].includes(action)) {
+        res.status(400).json({ error: 'Invalid moderation action.' });
+        return;
+      }
+
+      let updatedPost: CommunityPost | null = null;
+      const nextState = await updateVaultState((draft) => {
+        const post = draft.communityPosts.find((p) => p.id === id);
+        if (!post) return draft;
+
+        if (action === 'pin') post.isPinned = true;
+        if (action === 'unpin') post.isPinned = false;
+        if (action === 'lock') post.commentsLocked = true;
+        if (action === 'unlock') post.commentsLocked = false;
+        if (action === 'hide') {
+          post.status = 'hidden';
+          post.moderationReason = reason || 'Hidden by administrator during moderation review.';
+          post.moderatedByName = viewer.name;
+          post.moderatedAt = new Date().toISOString();
+
+          const author = draft.users.find((u) => u.id === post.authorId);
+          if (author && author.id !== viewer.id) {
+            queueEmailNotification(draft, {
+              type: 'community_moderation',
+              recipientEmail: author.email,
+              recipientName: author.name,
+              recipientUserId: author.id,
+              subject: `Community Post Hidden for Review`,
+              body: `Assalamu Alaikum ${author.name}, your community post "${post.title}" was hidden from public member view by administrator ${viewer.name}. Note: ${post.moderationReason}`,
+              relatedId: post.id,
+            });
+          }
+        }
+        if (action === 'restore') {
+          post.status = 'active';
+          post.moderationReason = undefined;
+          post.moderatedByName = undefined;
+          post.moderatedAt = undefined;
+        }
+
+        updatedPost = post;
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: `COMMUNITY_POST_${action.toUpperCase()}`,
+          resourceType: 'community',
+          resourceId: post.id,
+          summary: `${viewer.name} applied moderation "${action}" on "${post.title}"`,
+          payload: { postId: post.id, action, reason: reason || undefined },
+        });
+        return draft;
+      });
+
+      if (!updatedPost) {
+        res.status(404).json({ error: 'Community post not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', { postId: id, type: `moderated_${action}` });
+      if (action === 'hide') {
+        broadcastRealtimeEvent('notification:created', { type: 'community_moderation' });
+      }
+      broadcastRealtimeEvent('audit:updated', {
+        action: `COMMUNITY_POST_${action.toUpperCase()}`,
+        resourceType: 'community',
+        resourceId: id,
+      });
+
+      res.json({ post: hydrateCommunityPost(updatedPost, nextState.users) });
+    } catch (err) {
+      console.error('Moderate post error:', err);
+      res.status(500).json({ error: 'Failed to moderate community post.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/community/members/:userId/mute',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { userId } = req.params;
+      const viewer = req.authUser!;
+      const muted = Boolean(req.body?.muted);
+      const reason = String(req.body?.reason || '').trim();
+
+      if (userId === viewer.id) {
+        res.status(400).json({ error: 'Administrators cannot mute their own account.' });
+        return;
+      }
+
+      let found = false;
+      let targetName = '';
+      await updateVaultState((draft) => {
+        const target = draft.users.find((u) => u.id === userId);
+        if (!target) return draft;
+        if (target.role === 'admin') {
+          throw new Error('CANNOT_MUTE_ADMIN');
+        }
+        found = true;
+        targetName = target.name;
+        target.communityMuted = muted;
+
+        queueEmailNotification(draft, {
+          type: 'community_moderation',
+          recipientEmail: target.email,
+          recipientName: target.name,
+          recipientUserId: target.id,
+          subject: muted
+            ? 'Community Posting Privileges Muted'
+            : 'Community Posting Privileges Restored',
+          body: muted
+            ? `Assalamu Alaikum ${target.name}, administrator ${viewer.name} has temporarily muted your ability to create community posts or comments.${reason ? ` Note: ${reason}` : ''}`
+            : `Assalamu Alaikum ${target.name}, administrator ${viewer.name} has restored your community posting and commenting privileges.`,
+          relatedId: target.id,
+        });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: muted ? 'COMMUNITY_MEMBER_MUTED' : 'COMMUNITY_MEMBER_UNMUTED',
+          resourceType: 'community',
+          resourceId: target.id,
+          summary: muted
+            ? `${viewer.name} muted ${target.name} (${target.memberCode}) in Community${reason ? `: ${reason}` : ''}`
+            : `${viewer.name} unmuted ${target.name} (${target.memberCode}) in Community`,
+          payload: { targetUserId: target.id, muted, reason: reason || undefined },
+        });
+        return draft;
+      });
+
+      if (!found) {
+        res.status(404).json({ error: 'Member not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', { type: 'member_mute_changed', userId });
+      broadcastRealtimeEvent('members:updated', { userId });
+      broadcastRealtimeEvent('notification:created', { type: 'community_moderation' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: muted ? 'COMMUNITY_MEMBER_MUTED' : 'COMMUNITY_MEMBER_UNMUTED',
+        resourceType: 'community',
+        resourceId: userId,
+      });
+
+      res.json({ ok: true, userId, targetName, muted });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'CANNOT_MUTE_ADMIN') {
+        res.status(400).json({ error: 'Administrator accounts cannot be muted.' });
+        return;
+      }
+      console.error('Community mute member error:', err);
+      res.status(500).json({ error: 'Failed to update member community privileges.' });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// 10. Private Encrypted Messaging Among Registered Active Users
+// ---------------------------------------------------------------------------
+
+function makeConversationId(userA: string, userB: string): string {
+  return [userA, userB].sort().join('--');
+}
+
+function decryptPrivateMessage(msg: StoredPrivateMessage): PrivateMessage {
+  let body = '[Encrypted message could not be decrypted]';
+  try {
+    const decrypted = decryptSensitiveObject<{ body?: string }>(msg.encryptedBody);
+    if (typeof decrypted?.body === 'string') {
+      body = decrypted.body;
+    }
+  } catch {
+    // keep fallback string
+  }
+
+  return {
+    id: msg.id,
+    conversationId: msg.conversationId,
+    senderId: msg.senderId,
+    senderName: msg.senderName,
+    senderCode: msg.senderCode,
+    senderRole: msg.senderRole,
+    senderPhotoUrl: msg.senderPhotoUrl,
+    recipientId: msg.recipientId,
+    recipientName: msg.recipientName,
+    recipientCode: msg.recipientCode,
+    recipientRole: msg.recipientRole,
+    recipientPhotoUrl: msg.recipientPhotoUrl,
+    body,
+    createdAt: msg.createdAt,
+    readAt: msg.readAt,
+  };
+}
+
+apiRouter.get('/messages/threads', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const viewer = req.authUser!;
+
+    const directory = state.users
+      .filter((u) => u.status === 'active' && u.id !== viewer.id)
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        memberCode: u.memberCode,
+        photoUrl: u.photoUrl,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const myMessages = (state.privateMessages || []).filter(
+      (m) => m.senderId === viewer.id || m.recipientId === viewer.id
+    );
+
+    const threadMap = new Map<string, ConversationThreadSummary>();
+    let totalUnread = 0;
+
+    for (const stored of myMessages) {
+      const isViewerSender = stored.senderId === viewer.id;
+      const peerId = isViewerSender ? stored.recipientId : stored.senderId;
+      const peerUser = state.users.find((u) => u.id === peerId);
+      const peerName = peerUser?.name || (isViewerSender ? stored.recipientName : stored.senderName);
+      const peerCode = peerUser?.memberCode || (isViewerSender ? stored.recipientCode : stored.senderCode);
+      const peerRole = peerUser?.role || (isViewerSender ? stored.recipientRole : stored.senderRole);
+      const peerPhotoUrl =
+        peerUser?.photoUrl || (isViewerSender ? stored.recipientPhotoUrl : stored.senderPhotoUrl);
+
+      const decrypted = decryptPrivateMessage(stored);
+      const unreadIncrement = !isViewerSender && !stored.readAt ? 1 : 0;
+      totalUnread += unreadIncrement;
+
+      const existing = threadMap.get(peerId);
+      if (!existing) {
+        threadMap.set(peerId, {
+          peerId,
+          peerName,
+          peerCode,
+          peerRole,
+          peerPhotoUrl,
+          lastMessageBody: decrypted.body,
+          lastMessageAt: decrypted.createdAt,
+          lastMessageSenderId: decrypted.senderId,
+          unreadCount: unreadIncrement,
+        });
+      } else {
+        existing.unreadCount += unreadIncrement;
+        if (new Date(decrypted.createdAt).getTime() >= new Date(existing.lastMessageAt).getTime()) {
+          existing.lastMessageBody = decrypted.body;
+          existing.lastMessageAt = decrypted.createdAt;
+          existing.lastMessageSenderId = decrypted.senderId;
+        }
+      }
+    }
+
+    const threads = Array.from(threadMap.values()).sort(
+      (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+    );
+
+    res.json({ threads, totalUnread, directory });
+  } catch (err) {
+    console.error('Private message threads error:', err);
+    res.status(500).json({ error: 'Failed to load private message threads.' });
+  }
+});
+
+apiRouter.get('/messages/with/:peerId', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const peerId = String(req.params.peerId || '');
+    const viewer = req.authUser!;
+    if (!peerId || peerId === viewer.id) {
+      res.status(400).json({ error: 'Invalid conversation peer.' });
+      return;
+    }
+
+    let peerSummary: {
+      id: string;
+      name: string;
+      memberCode: string;
+      role: UserRole;
+      photoUrl?: string;
+    } | null = null;
+    let markedRead = false;
+    let conversationMessages: PrivateMessage[] = [];
+    const conversationId = makeConversationId(viewer.id, peerId);
+
+    const nextState = await updateVaultState((draft) => {
+      const peer = draft.users.find((u) => u.id === peerId);
+      if (!peer) return draft;
+      peerSummary = {
+        id: peer.id,
+        name: peer.name,
+        memberCode: peer.memberCode,
+        role: peer.role,
+        photoUrl: peer.photoUrl,
+      };
+
+      const readAt = new Date().toISOString();
+      draft.privateMessages = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+      draft.privateMessages.forEach((m) => {
+        if (
+          m.conversationId === conversationId &&
+          m.senderId === peerId &&
+          m.recipientId === viewer.id &&
+          !m.readAt
+        ) {
+          m.readAt = readAt;
+          markedRead = true;
+        }
+      });
+      return draft;
+    });
+
+    if (!peerSummary) {
+      res.status(404).json({ error: 'Member not found.' });
+      return;
+    }
+
+    conversationMessages = (nextState.privateMessages || [])
+      .filter((m) => m.conversationId === conversationId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .map(decryptPrivateMessage);
+
+    if (markedRead) {
+      sendRealtimeEventToUsers([viewer.id, peerId], 'dm:read', {
+        conversationId,
+        readerId: viewer.id,
+        peerId,
+      });
+    }
+
+    res.json({ peer: peerSummary, messages: conversationMessages });
+  } catch (err) {
+    console.error('Load conversation error:', err);
+    res.status(500).json({ error: 'Failed to load private conversation.' });
+  }
+});
+
+apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const peerId = String(req.params.peerId || '');
+    const viewer = req.authUser!;
+    const body = String(req.body?.body || '').trim();
+
+    if (!peerId || peerId === viewer.id) {
+      res.status(400).json({ error: 'Select another active cooperative member to message.' });
+      return;
+    }
+    if (!body || body.length > 3000) {
+      res.status(400).json({ error: 'Message must be between 1 and 3000 characters.' });
+      return;
+    }
+
+    let createdStored: StoredPrivateMessage | null = null;
+    await updateVaultState((draft) => {
+      const peer = draft.users.find((u) => u.id === peerId && u.status === 'active');
+      if (!peer) {
+        throw new Error('PEER_NOT_FOUND');
+      }
+
+      const conversationId = makeConversationId(viewer.id, peer.id);
+      createdStored = {
+        id: `dm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        conversationId,
+        senderId: viewer.id,
+        senderName: viewer.name,
+        senderCode: viewer.memberCode,
+        senderRole: viewer.role,
+        senderPhotoUrl: viewer.photoUrl,
+        recipientId: peer.id,
+        recipientName: peer.name,
+        recipientCode: peer.memberCode,
+        recipientRole: peer.role,
+        recipientPhotoUrl: peer.photoUrl,
+        encryptedBody: encryptSensitiveObject({ body }),
+        createdAt: new Date().toISOString(),
+      };
+
+      draft.privateMessages = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+      draft.privateMessages.push(createdStored);
+      return draft;
+    });
+
+    if (!createdStored) {
+      res.status(404).json({ error: 'Recipient not found.' });
+      return;
+    }
+
+    const hydrated = decryptPrivateMessage(createdStored);
+    sendRealtimeEventToUsers([viewer.id, peerId], 'dm:received', {
+      conversationId: hydrated.conversationId,
+      messageId: hydrated.id,
+      senderId: viewer.id,
+      recipientId: peerId,
+    });
+
+    res.status(201).json({ message: hydrated });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'PEER_NOT_FOUND') {
+      res.status(404).json({ error: 'Recipient member is inactive or not found.' });
+      return;
+    }
+    console.error('Send private message error:', err);
+    res.status(500).json({ error: 'Failed to send private message.' });
+  }
+});
+
+apiRouter.delete('/messages/:messageId', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { messageId } = req.params;
+    const viewer = req.authUser!;
+    let removedMsg: StoredPrivateMessage | null = null;
+
+    await updateVaultState((draft) => {
+      const list = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+      const idx = list.findIndex((m) => m.id === messageId);
+      if (idx === -1) return draft;
+      if (list[idx].senderId !== viewer.id) {
+        throw new Error('FORBIDDEN_DM_DELETE');
+      }
+      removedMsg = list[idx];
+      list.splice(idx, 1);
+      draft.privateMessages = list;
+      return draft;
+    });
+
+    if (!removedMsg) {
+      res.status(404).json({ error: 'Message not found.' });
+      return;
+    }
+
+    const target = removedMsg as StoredPrivateMessage;
+    sendRealtimeEventToUsers([target.senderId, target.recipientId], 'dm:deleted', {
+      conversationId: target.conversationId,
+      messageId: target.id,
+    });
+
+    res.json({ ok: true, messageId });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN_DM_DELETE') {
+      res.status(403).json({ error: 'You can only delete private messages you sent.' });
+      return;
+    }
+    console.error('Delete private message error:', err);
+    res.status(500).json({ error: 'Failed to delete private message.' });
+  }
+});
+

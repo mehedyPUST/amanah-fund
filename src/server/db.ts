@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { MongoClient, type Db } from 'mongodb';
 import type {
   AuditLogEntry,
+  CommunityPost,
   Contribution,
   EmailNotification,
   EncryptedEnvelope,
@@ -28,7 +29,26 @@ export interface StoredUser {
   joinedAt: string;
   phoneMasked?: string;
   photoUrl?: string;
+  communityMuted?: boolean;
   encryptedRegistrationDetails?: EncryptedEnvelope;
+}
+
+export interface StoredPrivateMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderCode: string;
+  senderRole: UserRole;
+  senderPhotoUrl?: string;
+  recipientId: string;
+  recipientName: string;
+  recipientCode: string;
+  recipientRole: UserRole;
+  recipientPhotoUrl?: string;
+  encryptedBody: EncryptedEnvelope;
+  createdAt: string;
+  readAt?: string;
 }
 
 export interface VaultState {
@@ -39,6 +59,8 @@ export interface VaultState {
   halalProjects: HalalProject[];
   emailNotifications: EmailNotification[];
   auditLogs: AuditLogEntry[];
+  communityPosts: CommunityPost[];
+  privateMessages: StoredPrivateMessage[];
 }
 
 const VAULT_DIR = path.resolve(process.cwd(), 'data');
@@ -118,6 +140,8 @@ function createSeedState(): VaultState {
     halalProjects: [],
     emailNotifications: [],
     auditLogs,
+    communityPosts: [],
+    privateMessages: [],
   };
 }
 
@@ -215,6 +239,12 @@ function normalizeVaultState(state: VaultState): VaultState {
   purgeLegacyFakeSeedData(state);
   state.emailNotifications = Array.isArray(state.emailNotifications)
     ? state.emailNotifications
+    : [];
+  state.communityPosts = Array.isArray(state.communityPosts)
+    ? state.communityPosts
+    : [];
+  state.privateMessages = Array.isArray(state.privateMessages)
+    ? state.privateMessages
     : [];
   const activeVoters = Math.max(1, state.users.filter((u) => u.status === 'active').length);
   const reqApprovals = Math.max(
@@ -368,16 +398,27 @@ export function getStorageEngine(): 'mongodb_atlas' | 'encrypted_local_vault' {
 export async function loadVaultState(): Promise<VaultState> {
   await initDatabase();
   if (mongoDb) {
-    const [users, configDoc, contributions, loans, halalProjects, emailNotifications, auditLogs] =
-      await Promise.all([
-        mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
-        mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
-        mongoDb.collection<Contribution>('contributions').find({}, { projection: { _id: 0 } }).sort({ submittedAt: -1 }).toArray(),
-        mongoDb.collection<LoanRequest>('loans').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
-        mongoDb.collection<HalalProject>('halalProjects').find({}, { projection: { _id: 0 } }).toArray(),
-        mongoDb.collection<EmailNotification>('emailNotifications').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-        mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
-      ]);
+    const [
+      users,
+      configDoc,
+      contributions,
+      loans,
+      halalProjects,
+      emailNotifications,
+      auditLogs,
+      communityPosts,
+      privateMessages,
+    ] = await Promise.all([
+      mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
+      mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
+      mongoDb.collection<Contribution>('contributions').find({}, { projection: { _id: 0 } }).sort({ submittedAt: -1 }).toArray(),
+      mongoDb.collection<LoanRequest>('loans').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+      mongoDb.collection<HalalProject>('halalProjects').find({}, { projection: { _id: 0 } }).toArray(),
+      mongoDb.collection<EmailNotification>('emailNotifications').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+      mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
+      mongoDb.collection<CommunityPost>('communityPosts').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+      mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
+    ]);
 
     return normalizeVaultState({
       users,
@@ -387,6 +428,8 @@ export async function loadVaultState(): Promise<VaultState> {
       halalProjects,
       emailNotifications,
       auditLogs,
+      communityPosts,
+      privateMessages,
     });
   }
   return readLocalVault();
@@ -426,6 +469,18 @@ export function updateVaultState(
           .collection('auditLogs')
           .deleteMany({})
           .then(() => (next.auditLogs.length ? mongoDb!.collection('auditLogs').insertMany(next.auditLogs) : null)),
+        mongoDb
+          .collection('communityPosts')
+          .deleteMany({})
+          .then(() =>
+            next.communityPosts.length ? mongoDb!.collection('communityPosts').insertMany(next.communityPosts) : null
+          ),
+        mongoDb
+          .collection('privateMessages')
+          .deleteMany({})
+          .then(() =>
+            next.privateMessages.length ? mongoDb!.collection('privateMessages').insertMany(next.privateMessages) : null
+          ),
       ]);
     } else {
       writeLocalVault(next);

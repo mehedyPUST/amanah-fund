@@ -180,6 +180,7 @@ export function sanitizeUser(user: StoredUser): PublicUser {
     phoneMasked: user.phoneMasked,
     photoUrl: user.photoUrl,
     authProvider,
+    communityMuted: Boolean(user.communityMuted),
   };
 }
 

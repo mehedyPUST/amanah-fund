@@ -11,6 +11,7 @@ import {
   Download,
   HandCoins,
   KeyRound,
+  MessageSquare,
   Pause,
   Play,
   RefreshCw,
@@ -56,6 +57,8 @@ const USER_APPROVAL_ACTIONS = new Set([
   'MEMBER_RBAC_UPDATED',
   'MEMBER_PROFILE_UPDATED',
   'AUTH_LOGIN',
+  'COMMUNITY_MEMBER_MUTED',
+  'COMMUNITY_MEMBER_UNMUTED',
 ]);
 
 const REJECTION_ACTIONS = new Set([
@@ -66,6 +69,10 @@ const REJECTION_ACTIONS = new Set([
   'LOAN_QUORUM_REJECTED',
   'CONTRIBUTION_REJECTED',
   'REPAYMENT_REJECTED',
+  'COMMUNITY_POST_DELETED_BY_ADMIN',
+  'COMMUNITY_COMMENT_DELETED_BY_ADMIN',
+  'COMMUNITY_POST_HIDE',
+  'COMMUNITY_MEMBER_MUTED',
 ]);
 
 const LOAN_STATUS_ACTIONS = new Set([
@@ -203,6 +210,22 @@ function getAuditVisualMeta(action: string) {
       tone: 'text-slate-700 dark:text-slate-300',
       iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
       Icon: KeyRound,
+    };
+  }
+  if (action.startsWith('COMMUNITY_')) {
+    const isModerationRemoval =
+      action.includes('DELETED_BY_ADMIN') ||
+      action === 'COMMUNITY_POST_HIDE' ||
+      action === 'COMMUNITY_MEMBER_MUTED';
+    return {
+      label: isModerationRemoval ? 'Community Moderation' : 'Community Activity',
+      tone: isModerationRemoval
+        ? 'text-red-700 dark:text-red-400'
+        : 'text-emerald-700 dark:text-emerald-400',
+      iconBg: isModerationRemoval
+        ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+        : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
+      Icon: MessageSquare,
     };
   }
   return {
@@ -376,6 +399,7 @@ export function AdminAuditLog({
       'investment:voted',
       'notification:created',
       'sheet:synced',
+      'community:updated',
     ];
     liveEvents.forEach((evtName) => {
       es.addEventListener(evtName, scheduleSilentSync);

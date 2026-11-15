@@ -15,6 +15,7 @@ import {
   History,
   LogOut,
   Menu,
+  MessageSquare,
   Moon,
   RefreshCw,
   Settings,
@@ -31,6 +32,7 @@ import Skeleton from 'react-loading-skeleton';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LoansView } from './LoansView.tsx';
@@ -70,6 +72,7 @@ const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
   { id: 'ballot', label: 'Ballot', Icon: Vote, group: 'member' },
   { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
+  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
 ];
 
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
@@ -105,6 +108,7 @@ export function DashboardShell() {
   const [loanModalOpen, setLoanModalOpen] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
+  const [unreadDmCount, setUnreadDmCount] = useState(0);
   const autoSyncBusyRef = useRef(false);
 
   useEffect(() => {
@@ -116,18 +120,20 @@ export function DashboardShell() {
   const refreshWorkspace = useCallback(async (silent = false): Promise<DashboardOverview | null> => {
     if (!silent) setDataLoading(true);
     try {
-      const [ovRes, cRes, lRes, hRes, nRes] = await Promise.all([
+      const [ovRes, cRes, lRes, hRes, nRes, dmRes] = await Promise.all([
         api.getDashboard(),
         api.getContributions(),
         api.getLoans(),
         api.getHalalProjects(),
         api.getNotifications(),
+        api.getPrivateThreads().catch(() => ({ threads: [], totalUnread: 0, directory: [] })),
       ]);
       setOverview(ovRes);
       setContributions(cRes.contributions);
       setLoans(lRes.loans);
       setHalalProjects(hRes.projects);
       setNotifications(nRes.notifications);
+      setUnreadDmCount(dmRes.totalUnread);
       return ovRes;
     } catch (err) {
       console.error('Workspace sync error:', err);
@@ -190,6 +196,9 @@ export function DashboardShell() {
     es.addEventListener('notification:created', handleSync);
     es.addEventListener('members:updated', handleSync);
     es.addEventListener('sheet:synced', handleSync);
+    es.addEventListener('dm:received', handleSync);
+    es.addEventListener('dm:read', handleSync);
+    es.addEventListener('dm:deleted', handleSync);
 
     const timer = window.setInterval(() => {
       void refreshWorkspace(true);
@@ -317,6 +326,9 @@ export function DashboardShell() {
     }
     if (sectionId === 'notification') {
       return overview.treasury.unreadNotificationsCount;
+    }
+    if (sectionId === 'community') {
+      return unreadDmCount;
     }
     if (sectionId === 'member-registry' && user.role === 'admin') {
       return overview.treasury.pendingMembersCount;
@@ -490,7 +502,7 @@ export function DashboardShell() {
 
       {/* GRID 3 */}
       <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:w-[260px] lg:flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)]">
-        <nav className="flex-1 px-3 py-5 overflow-y-auto" aria-label="Primary">
+        <nav className="flex-1 px-3 py-5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
 
@@ -906,6 +918,17 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && contributions.length === 0 && loans.length === 0}
                     onNavigate={(sec) => navigateToPage(sec, false)}
+                  />
+                </section>
+              )}
+
+              {activeSection === 'community' && (
+                <section id="community" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Community" />
+                  <CommunityView
+                    user={user}
+                    onUnreadDmChange={setUnreadDmCount}
+                    onRefreshWorkspace={handleRefreshWithAutoSync}
                   />
                 </section>
               )}

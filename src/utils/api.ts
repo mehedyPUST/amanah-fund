@@ -1,6 +1,10 @@
 import type {
   AuditLogEntry,
+  CommunityCategory,
+  CommunityPost,
+  CommunityReactionType,
   Contribution,
+  ConversationThreadSummary,
   DashboardOverview,
   EligibilityCheck,
   EmailNotification,
@@ -8,6 +12,7 @@ import type {
   HalalProject,
   LoanRequest,
   MemberSummary,
+  PrivateMessage,
   PublicUser,
   UserRole,
   UserStatus,
@@ -331,4 +336,113 @@ export const api = {
       },
       body: JSON.stringify({ notificationIds }),
     }),
+
+  // Community Forum & Moderation
+  getCommunityPosts: () => apiRequest<{ posts: CommunityPost[] }>('/api/community/posts'),
+  createCommunityPost: (payload: {
+    category: CommunityCategory;
+    title: string;
+    content: string;
+    imageUrl?: string;
+  }) =>
+    apiRequest<{ post: CommunityPost }>('/api/community/posts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateCommunityPost: (
+    id: string,
+    payload: {
+      category?: CommunityCategory;
+      title?: string;
+      content?: string;
+      imageUrl?: string;
+    }
+  ) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  deleteCommunityPost: (id: string, reason?: string) =>
+    apiRequest<{ ok: boolean; id: string }>(`/api/community/posts/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reason }),
+    }),
+  reactCommunityPost: (id: string, type: CommunityReactionType) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${id}/react`, {
+      method: 'POST',
+      body: JSON.stringify({ type }),
+    }),
+  addCommunityComment: (postId: string, content: string) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
+  updateCommunityComment: (postId: string, commentId: string, content: string) =>
+    apiRequest<{ post: CommunityPost }>(
+      `/api/community/posts/${postId}/comments/${commentId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ content }),
+      }
+    ),
+  deleteCommunityComment: (postId: string, commentId: string, reason?: string) =>
+    apiRequest<{ post: CommunityPost }>(
+      `/api/community/posts/${postId}/comments/${commentId}`,
+      {
+        method: 'DELETE',
+        body: JSON.stringify({ reason }),
+      }
+    ),
+  moderateCommunityPost: (
+    postId: string,
+    action: 'pin' | 'unpin' | 'lock' | 'unlock' | 'hide' | 'restore',
+    reason?: string
+  ) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${postId}/moderate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, reason }),
+    }),
+  toggleCommunityMuteMember: (userId: string, muted: boolean, reason?: string) =>
+    apiRequest<{ ok: boolean; userId: string; targetName: string; muted: boolean }>(
+      `/api/community/members/${userId}/mute`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ muted, reason }),
+      }
+    ),
+
+  // Private Messaging
+  getPrivateThreads: () =>
+    apiRequest<{
+      threads: ConversationThreadSummary[];
+      totalUnread: number;
+      directory: Array<{
+        id: string;
+        name: string;
+        role: UserRole;
+        memberCode: string;
+        photoUrl?: string;
+      }>;
+    }>('/api/messages/threads'),
+  getPrivateConversation: (peerId: string) =>
+    apiRequest<{
+      peer: {
+        id: string;
+        name: string;
+        memberCode: string;
+        role: UserRole;
+        photoUrl?: string;
+      };
+      messages: PrivateMessage[];
+    }>(`/api/messages/with/${peerId}`),
+  sendPrivateMessage: (peerId: string, body: string) =>
+    apiRequest<{ message: PrivateMessage }>(`/api/messages/with/${peerId}`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }),
+  deletePrivateMessage: (messageId: string) =>
+    apiRequest<{ ok: boolean; messageId: string }>(`/api/messages/${messageId}`, {
+      method: 'DELETE',
+    }),
 };
+
