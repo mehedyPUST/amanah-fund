@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Lock, ShieldCheck, X, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
+import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
 import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 
@@ -21,7 +22,7 @@ export function RequestQardHasanModal({
   open,
   onClose,
   user,
-  eligibility,
+  eligibility: eligibilityProp,
   config,
   availableLiquidity,
   onSubmitted,
@@ -29,6 +30,25 @@ export function RequestQardHasanModal({
   const ccy = config?.currency || 'BDT';
   const maxLoanAmount = config?.maxLoanAmount || 75000;
   const maxInstallmentMonths = config?.maxInstallmentMonths || 12;
+
+  const [fetchedEligibility, setFetchedEligibility] = useState<EligibilityCheck | null>(null);
+  const effectiveEligibility = eligibilityProp ?? fetchedEligibility;
+
+  useEffect(() => {
+    if (!open || eligibilityProp || user.role === 'admin') return;
+    let cancelled = false;
+    api
+      .getEligibility()
+      .then((res) => {
+        if (!cancelled) setFetchedEligibility(res.eligibility);
+      })
+      .catch(() => {
+        // Handled cleanly inside RequestQardHasanLoanForm
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, eligibilityProp, user.role]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +76,6 @@ export function RequestQardHasanModal({
           aria-modal="true"
           aria-labelledby="request-qard-hasan-modal-title"
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -67,7 +86,6 @@ export function RequestQardHasanModal({
             aria-hidden="true"
           />
 
-          {/* Modal Panel */}
           <motion.div
             initial={{ opacity: 0, scale: 0.97, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -75,7 +93,6 @@ export function RequestQardHasanModal({
             transition={{ duration: 0.18 }}
             className="relative z-10 w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
           >
-            {/* Secure Header */}
             <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/80 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
@@ -113,9 +130,7 @@ export function RequestQardHasanModal({
               </button>
             </div>
 
-            {/* Scrollable Body */}
             <div className="px-5 sm:px-6 py-5 overflow-y-auto space-y-4">
-              {/* Live Standing & Pool Strip */}
               <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
                 <div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -130,14 +145,14 @@ export function RequestQardHasanModal({
                     Annual Quota Standing
                   </div>
                   <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                    {eligibility
-                      ? `${eligibility.loansUsedThisYear} / ${eligibility.maxLoansPerYear} used`
+                    {effectiveEligibility
+                      ? `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
                       : 'Checking…'}
                   </div>
                 </div>
               </div>
 
-              {eligibility && !eligibility.eligible && (
+              {effectiveEligibility && !effectiveEligibility.eligible && (
                 <div
                   role="alert"
                   className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-1"
@@ -147,13 +162,13 @@ export function RequestQardHasanModal({
                     <span>Loan Eligibility Locked</span>
                   </div>
                   <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
-                    {eligibility.reasons[0] ||
+                    {effectiveEligibility.reasons[0] ||
                       'Your account does not currently meet the cooperative loan eligibility rules.'}
                   </p>
                 </div>
               )}
 
-              {eligibility?.eligible && (
+              {effectiveEligibility?.eligible && (
                 <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>
@@ -164,7 +179,7 @@ export function RequestQardHasanModal({
 
               <RequestQardHasanLoanForm
                 user={user}
-                eligibility={eligibility}
+                eligibility={effectiveEligibility}
                 config={config}
                 availableLiquidity={availableLiquidity}
                 variant="modal"

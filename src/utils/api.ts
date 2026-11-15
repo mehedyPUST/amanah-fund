@@ -13,6 +13,7 @@ import type {
   FundConfig,
   HalalProject,
   LoanRequest,
+  ManagerCycleSchedule,
   MemberPublicProfile,
   MemberSummary,
   NotificationPreferences,
@@ -279,9 +280,10 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ decision, reviewNote }),
     }),
-  disburseLoan: (id: string) =>
+  disburseLoan: (id: string, payload?: { transactionNumber?: string }) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/disburse`, {
       method: 'POST',
+      body: JSON.stringify(payload || {}),
     }),
   submitInstallmentRepayment: (
     loanId: string,
@@ -370,6 +372,7 @@ export const api = {
     apiRequest<{ profile: MemberPublicProfile }>(
       `/api/members/${encodeURIComponent(memberId)}/profile`
     ),
+  getManagerCycle: () => apiRequest<{ schedule: ManagerCycleSchedule }>('/api/manager-cycle'),
   getPendingRegistrations: () =>
     apiRequest<{ registrations: MemberSummary[] }>('/api/admin/registrations/pending'),
   getMembers: () => apiRequest<{ members: MemberSummary[] }>('/api/admin/members'),

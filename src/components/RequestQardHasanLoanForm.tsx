@@ -2,9 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
-  AlertCircle,
   Calendar,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Lock,
@@ -26,6 +24,8 @@ import {
   formatMoney,
   formatShortDate,
 } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { ProviderSelect } from './ProviderSelect.tsx';
 
 interface RequestQardHasanLoanFormProps {
   user: PublicUser;
@@ -37,9 +37,26 @@ interface RequestQardHasanLoanFormProps {
   onSubmitted: (loan: LoanRequest) => Promise<void> | void;
 }
 
+type LoanModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald';
+      title: string;
+      description: string;
+      details: ActionModalDetailItem[];
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'red' | 'amber';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      closeParentOnDone?: boolean;
+    };
+
 export function RequestQardHasanLoanForm({
   user,
-  eligibility,
+  eligibility: eligibilityProp,
   config,
   availableLiquidity,
   variant = 'card',
@@ -49,6 +66,31 @@ export function RequestQardHasanLoanForm({
   const ccy = config?.currency || 'BDT';
   const maxLoanAmount = config?.maxLoanAmount || 75000;
   const maxInstallmentMonths = config?.maxInstallmentMonths || 12;
+
+  const [localEligibility, setLocalEligibility] = useState<EligibilityCheck | null>(null);
+  const [eligibilityChecking, setEligibilityChecking] = useState(false);
+
+  const eligibility = eligibilityProp ?? localEligibility;
+
+  useEffect(() => {
+    if (eligibilityProp || user.role === 'admin' || user.status !== 'active') return;
+    let cancelled = false;
+    setEligibilityChecking(true);
+    api
+      .getEligibility()
+      .then((res) => {
+        if (!cancelled) setLocalEligibility(res.eligibility);
+      })
+      .catch(() => {
+        // Leave null if offline
+      })
+      .finally(() => {
+        if (!cancelled) setEligibilityChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eligibilityProp, user.role, user.status]);
 
   const isVerifiedMember = user.status === 'active';
   const canSubmit = isVerifiedMember && Boolean(eligibility?.eligible);
@@ -87,7 +129,10 @@ export function RequestQardHasanLoanForm({
       .getActiveMembers()
       .then((res) => {
         if (!cancelled) {
-          setActiveMembers(res.members.filter((m) => m.id !== user.id));
+          // Admin is never a guarantor or participant in cooperative loans
+          setActiveMembers(
+            res.members.filter((m) => m.id !== user.id && m.role !== 'admin')
+          );
         }
       })
       .catch(() => {
@@ -99,8 +144,7 @@ export function RequestQardHasanLoanForm({
   }, [isVerifiedMember, user.id]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [createdLoan, setCreatedLoan] = useState<LoanRequest | null>(null);
+  const [modal, setModal] = useState<LoanModalState | null>(null);
 
   const parsedAmount = Math.max(0, Number(amount) || 0);
   const parsedMonths = Math.min(
@@ -152,43 +196,93 @@ export function RequestQardHasanLoanForm({
     ).slice(0, 4);
   }, [maxInstallmentMonths]);
 
-  async function handleSubmit(e: FormEvent) {
+  function openErrorModal(title: string, description: string) {
+    setModal({
+      mode: 'notice',
+      tone: 'red',
+      title,
+      description,
+    });
+  }
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
-    setCreatedLoan(null);
 
     if (!isVerifiedMember) {
-      setError('Only administrator-verified active members can request a Qard Hasan loan.');
+      openErrorModal(
+        'Verification Required',
+        'Only administrator-verified active members can request a Qard Hasan loan.'
+      );
       return;
     }
     if (!eligibility?.eligible) {
-      setError(
+      openErrorModal(
+        'Eligibility Requirements Not Met',
         eligibility?.reasons?.[0] ||
           'You do not currently meet the cooperative loan eligibility criteria.'
       );
       return;
     }
     if (parsedAmount < 100 || parsedAmount > maxLoanAmount) {
-      setError(
+      openErrorModal(
+        'Invalid Requested Amount',
         `Requested amount must be between ${formatMoney(100, ccy)} and ${formatMoney(maxLoanAmount, ccy)}.`
       );
       return;
     }
     if (!purpose.trim() || !disbursementAccount.trim() || !provider.trim()) {
-      setError('Please complete the loan purpose and payout account details.');
+      openErrorModal(
+        'Missing Required Fields',
+        'Please complete the loan purpose, bank/MFS provider, and payout account number.'
+      );
       return;
     }
     if (!agreedToTerms) {
-      setError('Please confirm the 0% interest Qard Hasan terms and repayment commitment.');
+      openErrorModal(
+        'Commitment Required',
+        'Please confirm the 0% interest Qard Hasan terms and repayment commitment.'
+      );
       return;
     }
     if (needsGuarantors && selectedGuarantorIds.length < effectiveRequiredGuarantors) {
-      setError(
-        `Loans above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
+      openErrorModal(
+        'Guarantors Required',
+        `Requests above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
       );
       return;
     }
 
+    const guarantorNames = activeMembers
+      .filter((m) => selectedGuarantorIds.includes(m.id))
+      .map((m) => `${m.name} (${m.memberCode})`)
+      .join(', ');
+
+    const details: ActionModalDetailItem[] = [
+      { label: 'Requested Amount', value: formatMoney(parsedAmount, ccy) },
+      { label: 'Repayment Plan', value: `${parsedMonths} months · 0% interest` },
+      { label: 'Monthly Installment', value: formatMoney(monthlyInstallmentPreview, ccy) },
+      {
+        label: 'Payout Channel',
+        value: `${channel === 'mfs' ? 'MFS Wallet' : 'Bank Transfer'} · ${provider}`,
+      },
+      { label: 'Payout Account', value: disbursementAccount.trim() },
+      { label: 'Purpose', value: purpose.trim() },
+    ];
+    if (guarantorNames) {
+      details.push({ label: 'Co-Sign Guarantors', value: guarantorNames });
+    }
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Confirm Qard Hasan Loan Placement',
+      description:
+        'Review your encrypted Qard Hasan application summary before submitting it to the cooperative workflow.',
+      details,
+    });
+  }
+
+  async function executeLoanSubmission() {
     setSubmitting(true);
     try {
       const res = await api.requestLoan({
@@ -201,16 +295,41 @@ export function RequestQardHasanLoanForm({
         disbursementAccount: disbursementAccount.trim(),
         guarantorIds: needsGuarantors ? selectedGuarantorIds : undefined,
       });
-      setCreatedLoan(res.loan);
+      const created = res.loan;
       setPurpose('');
       setEmergencyContext('');
       setDisbursementAccount('');
       setSelectedGuarantorIds([]);
       setAgreedToTerms(false);
       setShowSchedulePreview(false);
-      await onSubmitted(res.loan);
+      await onSubmitted(created);
+      setModal({
+        mode: 'notice',
+        tone: 'emerald',
+        title:
+          created.status === 'pending_guarantor'
+            ? `Awaiting Guarantor Co-Signature (${created.id})`
+            : `Qard Hasan Request Submitted (${created.id})`,
+        description:
+          created.status === 'pending_guarantor'
+            ? 'Your payout details are AES-256-GCM encrypted. Selected guarantor member(s) must co-sign before Manager review and 2/3 secret ballot voting.'
+            : 'Your payout details are AES-256-GCM encrypted and routed to the Manager Desk for 2/3 secret ballot initiation.',
+        details: [
+          { label: 'Application ID', value: created.id },
+          { label: 'Principal', value: formatMoney(created.amount, ccy) },
+          {
+            label: 'Schedule',
+            value: `${created.installmentMonths} × ${formatMoney(created.monthlyInstallment, ccy)}`,
+          },
+          { label: 'Payout Provider', value: `${created.channel.toUpperCase()} · ${created.provider}` },
+        ],
+        closeParentOnDone: variant === 'modal' && Boolean(onClose),
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save Qard Hasan loan request.');
+      openErrorModal(
+        'Could Not Place Qard Hasan Request',
+        err instanceof Error ? err.message : 'An unexpected error occurred while saving your request.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -250,52 +369,7 @@ export function RequestQardHasanLoanForm({
         </div>
       )}
 
-      {error && (
-        <div
-          role="alert"
-          className="p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-start gap-2"
-        >
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {createdLoan && (
-        <div
-          role="status"
-          className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-2"
-        >
-          <div className="font-semibold flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            <span>
-              {createdLoan.status === 'pending_guarantor'
-                ? `Awaiting Guarantor Co-Signature (${createdLoan.id})`
-                : `Submitted for Review & 2/3 Anonymized Ballot (${createdLoan.id})`}
-            </span>
-          </div>
-          <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">
-            Requested {formatMoney(createdLoan.amount, ccy)} across {createdLoan.installmentMonths}{' '}
-            monthly installments of {formatMoney(createdLoan.monthlyInstallment, ccy)}.{' '}
-            {createdLoan.status === 'pending_guarantor'
-              ? 'Selected guarantor member(s) must co-sign before the 2/3 ballot opens.'
-              : 'Administrators and active voters have been notified.'}
-          </p>
-          {onClose && (
-            <div className="pt-1 flex justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-3 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer"
-              >
-                Done
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Requested Amount */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <label
@@ -347,7 +421,6 @@ export function RequestQardHasanLoanForm({
           )}
         </div>
 
-        {/* Purpose */}
         <div>
           <label
             htmlFor={`qard-loan-purpose-${variant}`}
@@ -367,7 +440,6 @@ export function RequestQardHasanLoanForm({
           />
         </div>
 
-        {/* Preferred Repayment Timeline */}
         <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between gap-2">
             <label
@@ -474,8 +546,7 @@ export function RequestQardHasanLoanForm({
           </div>
         </div>
 
-        {/* Payout Channel & Account */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label
               htmlFor={`qard-loan-channel-${variant}`}
@@ -494,8 +565,8 @@ export function RequestQardHasanLoanForm({
               }}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
             >
-              <option value="mfs">MFS (Wallet)</option>
-              <option value="bank">Bank Transfer</option>
+              <option value="mfs">MFS (Mobile Wallet)</option>
+              <option value="bank">Bangladesh Bank Transfer</option>
             </select>
           </div>
           <div>
@@ -503,21 +574,18 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-provider-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Provider
+              {channel === 'mfs' ? 'MFS Wallet Provider' : 'Bangladesh Bank'}
             </label>
-            <select
+            <ProviderSelect
               id={`qard-loan-provider-${variant}`}
-              disabled={!canSubmit}
+              options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
               value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
-            >
-              {(channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS).map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+              onChange={setProvider}
+              disabled={!canSubmit}
+              placeholder={
+                channel === 'mfs' ? 'Search MFS wallet…' : 'Search all 61 BD banks…'
+              }
+            />
           </div>
         </div>
 
@@ -642,15 +710,36 @@ export function RequestQardHasanLoanForm({
             <span>
               {!isVerifiedMember
                 ? 'Member Account Verification Required'
-                : !eligibility?.eligible
-                  ? 'Eligibility Requirements Not Met'
-                  : submitting
-                    ? 'Encrypting & Submitting…'
-                    : 'Submit Secure Qard Hasan Request'}
+                : eligibilityChecking && !eligibility
+                  ? 'Checking Eligibility…'
+                  : !eligibility?.eligible
+                    ? 'Eligibility Requirements Not Met'
+                    : submitting
+                      ? 'Encrypting & Submitting…'
+                      : 'Review & Submit Qard Hasan Request'}
             </span>
           </button>
         </div>
       </form>
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? 'Confirm & Submit Request' : 'Done'}
+        busy={submitting}
+        onConfirm={modal?.mode === 'confirm' ? executeLoanSubmission : undefined}
+        onClose={() => {
+          const shouldCloseParent = modal?.mode === 'notice' && modal.closeParentOnDone;
+          setModal(null);
+          if (shouldCloseParent && onClose) {
+            onClose();
+          }
+        }}
+      />
     </section>
   );
 }

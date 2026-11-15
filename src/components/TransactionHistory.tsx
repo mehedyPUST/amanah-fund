@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
+  ArrowDownRight,
   ArrowRight,
   CalendarRange,
   ChevronDown,
@@ -47,10 +48,11 @@ interface TransactionHistoryProps {
   loading: boolean;
   compact?: boolean;
   onNavigate?: (tab: TransactionTabTarget) => void;
+  onViewMemberProfile?: (memberId: string) => void;
 }
 
-type TransactionCategory = 'contribution' | 'loan_repayment';
-type TypeFilter = 'all' | 'contribution' | 'loan_repayment';
+type TransactionCategory = 'contribution' | 'loan_repayment' | 'loan_disbursement';
+type TypeFilter = 'all' | 'contribution' | 'loan_repayment' | 'loan_disbursement';
 type StatusFilter = 'all' | 'completed' | 'pending' | 'scheduled' | 'attention';
 
 interface LedgerRow {
@@ -85,7 +87,6 @@ interface LedgerRow {
   batchGroupId?: string;
 }
 
-
 export function TransactionHistory({
   contributions,
   loans,
@@ -95,6 +96,7 @@ export function TransactionHistory({
   loading,
   compact = false,
   onNavigate,
+  onViewMemberProfile,
 }: TransactionHistoryProps) {
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
@@ -167,6 +169,40 @@ export function TransactionHistory({
     const scopedActiveLoans = scopedRepayableLoans.filter((l) => l.status === 'active');
 
     scopedRepayableLoans.forEach((loan) => {
+      if (loan.disbursementSignature) {
+        const disbursedAt = loan.disbursementSignature.signedAt;
+        const txRef = loan.disbursementSignature.transactionNumber || loan.id;
+        rows.push({
+          id: `tx-disburse-${loan.id}`,
+          category: 'loan_disbursement',
+          memberId: loan.borrowerId,
+          memberName: loan.borrowerName,
+          memberCode: loan.borrowerCode,
+          sortDate: disbursedAt,
+          monthKey: disbursedAt.slice(0, 7),
+          displayDate: formatDateTime(disbursedAt),
+          periodLabel: formatShortDate(disbursedAt),
+          title: `Qard Hasan Disbursement · ${loan.id}`,
+          subtitle:
+            effectiveScope === 'all'
+              ? `${loan.borrowerName} (${loan.borrowerCode}) · ${loan.purpose}`
+              : loan.purpose,
+          channelLabel: loan.channel.toUpperCase(),
+          providerName: loan.provider,
+          maskedReference: txRef,
+          status: loan.status === 'repaid' ? 'repaid' : 'disbursed',
+          statusBucket: 'completed',
+          amount: loan.amount,
+          directionLabel: 'Disbursement',
+          loanId: loan.id,
+          loanRemainingBalance: loan.remainingBalance,
+          decryptedReference: txRef,
+          decryptedSenderAccount: loan.decryptedPayoutAccount,
+          reviewerOrVerifier: loan.disbursementSignature.signedByName,
+          entryHash: loan.entryHash,
+        });
+      }
+
       loan.installments.forEach((inst) => {
         const statusBucket: LedgerRow['statusBucket'] =
           inst.status === 'paid'
@@ -226,6 +262,7 @@ export function TransactionHistory({
   const counts = useMemo(() => {
     const contribCount = allRows.filter((r) => r.category === 'contribution').length;
     const repayCount = allRows.filter((r) => r.category === 'loan_repayment').length;
+    const disburseCount = allRows.filter((r) => r.category === 'loan_disbursement').length;
 
     const approvedContribTotal = allRows
       .filter((r) => r.category === 'contribution' && r.status === 'approved')
@@ -243,6 +280,7 @@ export function TransactionHistory({
       total: allRows.length,
       contribCount,
       repayCount,
+      disburseCount,
       approvedContribTotal,
       paidRepayCount: paidRepayRows.length,
       paidRepayTotal,
@@ -276,11 +314,12 @@ export function TransactionHistory({
         if (row.monthKey < activeStartMonth || row.monthKey > activeEndMonth) return false;
       }
       if (q) {
+        const txNo = (row.decryptedReference || row.maskedReference).toLowerCase();
         return (
           row.title.toLowerCase().includes(q) ||
           row.subtitle.toLowerCase().includes(q) ||
           row.providerName.toLowerCase().includes(q) ||
-          row.maskedReference.toLowerCase().includes(q) ||
+          txNo.includes(q) ||
           row.periodLabel.toLowerCase().includes(q) ||
           row.memberName.toLowerCase().includes(q) ||
           (row.loanId || '').toLowerCase().includes(q)
@@ -301,8 +340,8 @@ export function TransactionHistory({
       'Billing / Due Period',
       'Date',
       'Channel',
-      'Provider',
-      'Reference',
+      'Bank / Provider',
+      'Transaction Number',
       'Status',
       `Amount (${ccy})`,
     ];
@@ -359,7 +398,6 @@ export function TransactionHistory({
       aria-label="Member Transaction History"
       className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
-      {/* Header Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -367,12 +405,12 @@ export function TransactionHistory({
             <span>General Treasury Ledger</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Transaction History · Contributions & Loan Repayments
+            Transaction History · Contributions, Disbursements &amp; Repayments
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {effectiveScope === 'mine'
-              ? `Unified record of ${user.name}'s (${user.memberCode}) monthly Bank/MFS contributions and Qard Hasan repayments`
-              : 'Cooperative-wide view of member monthly contributions and Qard Hasan loan repayments'}
+              ? `Unified record of ${user.name}'s (${user.memberCode}) Bank/MFS deposits, Qard Hasan disbursements, and repayments`
+              : 'Cooperative-wide ledger of all Bank/MFS contributions, Qard Hasan disbursements, and loan repayments'}
           </p>
         </div>
 
@@ -451,7 +489,6 @@ export function TransactionHistory({
         </div>
       </div>
 
-      {/* 4-Column Summary Strip (Single Elevation, Hairline Dividers) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-3.5 border-y border-slate-100 dark:border-slate-800">
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -503,15 +540,15 @@ export function TransactionHistory({
         </div>
       </div>
 
-      {/* Filter & Search Toolbar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
             {(
               [
                 { id: 'all', label: `All (${counts.total})` },
                 { id: 'contribution', label: `Contributions (${counts.contribCount})` },
-                { id: 'loan_repayment', label: `Loan Repayments (${counts.repayCount})` },
+                { id: 'loan_disbursement', label: `Disbursements (${counts.disburseCount})` },
+                { id: 'loan_repayment', label: `Repayments (${counts.repayCount})` },
               ] as const
             ).map((tab) => (
               <button
@@ -536,7 +573,7 @@ export function TransactionHistory({
             className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
           >
             <option value="all">All Statuses</option>
-            <option value="completed">Approved / Paid</option>
+            <option value="completed">Approved / Paid / Disbursed</option>
             <option value="pending">Pending Verification</option>
             <option value="scheduled">Scheduled Installments</option>
             <option value="attention">Rejected / Overdue</option>
@@ -552,13 +589,12 @@ export function TransactionHistory({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search month, provider, loan ID, ref…"
+            placeholder="Search month, bank, loan ID, Tx#…"
             className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
           />
         </div>
       </div>
 
-      {/* Month Sliding Filter */}
       {!compact && availableMonths.length > 0 && (
         <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -645,7 +681,6 @@ export function TransactionHistory({
         </div>
       )}
 
-      {/* Data Table / Empty / Loading States */}
       {loading ? (
         <div className="space-y-2.5">
           {[1, 2, 3, 4].map((i) => (
@@ -707,9 +742,9 @@ export function TransactionHistory({
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                <th className="py-2.5 px-4 font-medium">Date & Period</th>
+                <th className="py-2.5 px-4 font-medium">Date &amp; Period</th>
                 <th className="py-2.5 px-4 font-medium">Transaction</th>
-                <th className="py-2.5 px-4 font-medium">Channel & Reference</th>
+                <th className="py-2.5 px-4 font-medium">Bank / MFS &amp; Transaction No.</th>
                 <th className="py-2.5 px-4 font-medium">Status</th>
                 <th className="py-2.5 px-4 font-medium text-right">Amount</th>
                 <th className="py-2.5 px-4 font-medium text-right">Details</th>
@@ -726,6 +761,7 @@ export function TransactionHistory({
                     isExpanded={isExpanded}
                     onToggle={() => setExpandedId(isExpanded ? null : row.id)}
                     onNavigate={onNavigate}
+                    onViewMemberProfile={onViewMemberProfile}
                   />
                 );
               })}
@@ -759,13 +795,16 @@ function FragmentRow({
   isExpanded,
   onToggle,
   onNavigate,
+  onViewMemberProfile,
 }: {
   row: LedgerRow;
   currency: FundConfig['currency'];
   isExpanded: boolean;
   onToggle: () => void;
   onNavigate?: (tab: TransactionTabTarget) => void;
+  onViewMemberProfile?: (memberId: string) => void;
 }) {
+  const txNo = row.decryptedReference || row.maskedReference;
   return (
     <>
       <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
@@ -782,13 +821,26 @@ function FragmentRow({
           <div className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
             {row.category === 'contribution' ? (
               <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+            ) : row.category === 'loan_disbursement' ? (
+              <ArrowDownRight className="w-3.5 h-3.5 text-teal-600 shrink-0" aria-hidden="true" />
             ) : (
               <HandCoins className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
             )}
             <span>{row.title}</span>
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-            {row.directionLabel} · {row.subtitle}
+            {row.directionLabel} ·{' '}
+            {onViewMemberProfile ? (
+              <button
+                type="button"
+                onClick={() => onViewMemberProfile(row.memberId)}
+                className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+              >
+                {row.subtitle}
+              </button>
+            ) : (
+              row.subtitle
+            )}
           </div>
         </td>
 
@@ -797,7 +849,7 @@ function FragmentRow({
             {row.channelLabel} · {row.providerName}
           </div>
           <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Ref {row.maskedReference}
+            Tx #{txNo}
           </div>
         </td>
 
@@ -812,9 +864,12 @@ function FragmentRow({
                 ? 'text-red-700 dark:text-red-400'
                 : row.status === 'scheduled'
                   ? 'text-slate-600 dark:text-slate-300'
-                  : 'text-emerald-700 dark:text-emerald-400'
+                  : row.category === 'loan_disbursement'
+                    ? 'text-teal-700 dark:text-teal-400'
+                    : 'text-emerald-700 dark:text-emerald-400'
             }`}
           >
+            {row.category === 'loan_disbursement' ? '−' : ''}
             {formatMoney(row.amount, currency)}
           </div>
           {row.category === 'loan_repayment' && row.loanRemainingBalance !== undefined && (
@@ -847,19 +902,21 @@ function FragmentRow({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                 <div>
-                  <span className="text-slate-400 dark:text-slate-500">Sender Account: </span>
+                  <span className="text-slate-400 dark:text-slate-500">
+                    {row.category === 'loan_disbursement' ? 'Payout Account: ' : 'Sender Account: '}
+                  </span>
                   <span className="text-slate-800 dark:text-slate-200">
                     {row.decryptedSenderAccount || 'Encrypted / Not yet submitted'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 dark:text-slate-500">Reference / TrxID: </span>
-                  <span className="text-slate-800 dark:text-slate-200">
-                    {row.decryptedReference || row.maskedReference}
-                  </span>
+                  <span className="text-slate-400 dark:text-slate-500">Transaction Number: </span>
+                  <span className="text-slate-800 dark:text-slate-200">{txNo}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 dark:text-slate-500">Verified By: </span>
+                  <span className="text-slate-400 dark:text-slate-500">
+                    {row.category === 'loan_disbursement' ? 'Disbursed By: ' : 'Verified By: '}
+                  </span>
                   <span className="text-slate-800 dark:text-slate-200">
                     {row.reviewerOrVerifier || 'Pending'}
                   </span>

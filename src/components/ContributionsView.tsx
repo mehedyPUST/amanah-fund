@@ -13,7 +13,9 @@ import {
   formatMoney,
   shortHash,
 } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
+import { ProviderSelect } from './ProviderSelect.tsx';
 import { StatusText } from './StatusText.tsx';
 
 function shiftBillingMonth(baseMonth: string, offset: number): string {
@@ -34,12 +36,35 @@ function matchProviderOption(extracted: string, channel: 'bank' | 'mfs'): string
   return exactOrPartial || list[0];
 }
 
+type ContributionModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      inputMultiline?: boolean;
+      run: (inputValue: string) => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
+
 interface ContributionsViewProps {
   contributions: Contribution[];
   config: FundConfig | null;
   user: PublicUser;
   loading: boolean;
   initialBillingMonth?: string | null;
+  onViewMemberProfile?: (memberId: string) => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -49,6 +74,7 @@ export function ContributionsView({
   user,
   loading,
   initialBillingMonth,
+  onViewMemberProfile,
   onRefresh,
 }: ContributionsViewProps) {
   const ccy = config?.currency || 'BDT';
@@ -99,21 +125,41 @@ export function ContributionsView({
   const depositFormRef = useRef<HTMLElement | null>(null);
   const senderInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<ContributionModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [reviewNote, setReviewNote] = useState('');
+
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal(inputValue: string) {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
+    try {
+      await modal.run(inputValue);
+    } catch (err) {
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setModalBusy(false);
+    }
+  }
 
   async function handleReceiptUploadAndScan(file: File) {
     setScanningReceipt(true);
     setReceiptNotice(null);
-    setFeedback(null);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
         api.uploadImage(file, `contrib-receipt-${Date.now()}`),
@@ -140,13 +186,14 @@ export function ContributionsView({
         );
       } else if (uploadRes.status === 'fulfilled') {
         setReceiptNotice(
-          'Receipt screenshot attached. Verify transfer fields manually before submitting.'
+          'Receipt screenshot attached. Verify Transaction Number and sender account manually.'
         );
       } else {
-        setFeedback({
-          type: 'error',
-          text: 'Could not upload receipt image. Please check file size (<8 MB) and try again.',
-        });
+        showNotice(
+          'red',
+          'Receipt Upload Failed',
+          'Could not upload receipt image. Please check file size (<8 MB) and try again.'
+        );
       }
     } finally {
       setScanningReceipt(false);
@@ -160,75 +207,134 @@ export function ContributionsView({
     );
   }
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setFeedback(null);
-    setSubmitting(true);
-    try {
-      await api.submitContribution({
-        billingMonth,
-        billingMonths: effectiveBillingMonths.length > 1 ? effectiveBillingMonths : undefined,
-        amount: Number(amount),
-        channel,
-        providerName,
-        senderAccount,
-        referenceId,
-        notes,
-        receiptPhotoUrl: receiptPhotoUrl || undefined,
-        receiptAiSummary: receiptAiResult?.summary || undefined,
-      });
-      setSenderAccount('');
-      setReferenceId('');
-      setNotes('');
-      setReceiptPhotoUrl('');
-      setReceiptAiResult(null);
-      setReceiptNotice(null);
-      setAdvanceMode(false);
-      setAdvanceMonths([billingMonth]);
-      amountEditedRef.current = false;
-      setFeedback({
-        type: 'success',
-        text:
-          effectiveBillingMonths.length > 1
-            ? `${effectiveBillingMonths.length}-month advance contribution batch submitted and encrypted with AES-256-GCM. Awaiting manager verification.`
-            : 'Contribution request submitted and encrypted with AES-256-GCM. Awaiting manager verification.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to submit contribution.',
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleReview(id: string, decision: 'approved' | 'rejected') {
-    if (decision === 'rejected' && !reviewNote.trim()) {
-      setFeedback({
-        type: 'error',
-        text: 'Please enter a correction message explaining why this contribution is denied before rejecting.',
-      });
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      showNotice('red', 'Invalid Amount', 'Please enter a valid positive contribution amount.');
       return;
     }
-    setReviewingId(id);
-    setFeedback(null);
-    try {
-      await api.reviewContribution(id, decision, reviewNote.trim() || undefined);
-      setReviewNote('');
-      setFeedback({
-        type: 'success',
-        text: `Contribution ${decision === 'approved' ? 'approved and added to treasury liquidity' : 'denied with correction note sent to member'}.`,
+    if (!senderAccount.trim() || !referenceId.trim()) {
+      showNotice(
+        'red',
+        'Missing Transfer Proof',
+        'Please enter both your sender account/mobile number and the Transaction Number.'
+      );
+      return;
+    }
+
+    const monthsLabel =
+      effectiveBillingMonths.length > 1
+        ? effectiveBillingMonths.map(formatBillingMonth).join(', ')
+        : formatBillingMonth(billingMonth);
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Confirm Contribution Deposit Submission',
+      description:
+        'Verify your payment details before encrypting with AES-256-GCM and routing to the Manager Desk for approval.',
+      details: [
+        { label: 'Billing Month(s)', value: monthsLabel },
+        { label: 'Total Deposit', value: formatMoney(numericAmount, ccy) },
+        { label: 'Channel & Provider', value: `${channel.toUpperCase()} · ${providerName}` },
+        { label: 'Sender Account', value: senderAccount.trim() },
+        { label: 'Transaction Number', value: referenceId.trim() },
+      ],
+      confirmLabel: 'Submit Contribution',
+      run: async () => {
+        const countMonths = effectiveBillingMonths.length;
+        await api.submitContribution({
+          billingMonth,
+          billingMonths: countMonths > 1 ? effectiveBillingMonths : undefined,
+          amount: numericAmount,
+          channel,
+          providerName,
+          senderAccount: senderAccount.trim(),
+          referenceId: referenceId.trim(),
+          notes: notes.trim(),
+          receiptPhotoUrl: receiptPhotoUrl || undefined,
+          receiptAiSummary: receiptAiResult?.summary || undefined,
+        });
+        setSenderAccount('');
+        setReferenceId('');
+        setNotes('');
+        setReceiptPhotoUrl('');
+        setReceiptAiResult(null);
+        setReceiptNotice(null);
+        setAdvanceMode(false);
+        setAdvanceMonths([billingMonth]);
+        amountEditedRef.current = false;
+        await onRefresh();
+        showNotice(
+          'emerald',
+          countMonths > 1
+            ? `${countMonths}-Month Advance Contribution Submitted`
+            : 'Contribution Request Submitted',
+          'Your deposit reference is AES-256-GCM encrypted and awaiting Manager approval. Fund balance updates upon approval.'
+        );
+      },
+    });
+  }
+
+  function confirmReview(item: Contribution, decision: 'approved' | 'rejected') {
+    const txNo = item.decryptedDetails?.referenceId || item.maskedReference;
+    if (decision === 'approved') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Approve Contribution (${item.memberName})`,
+        description:
+          'Approving verifies the Transaction Number and adds this deposit directly to the cooperative fund balance.',
+        details: [
+          { label: 'Member', value: `${item.memberName} (${item.memberCode})` },
+          { label: 'Month', value: formatBillingMonth(item.billingMonth) },
+          { label: 'Amount', value: formatMoney(item.amount, ccy) },
+          { label: 'Provider', value: `${item.channel.toUpperCase()} · ${item.providerName}` },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        inputLabel: 'Optional Approval Remark',
+        inputPlaceholder: 'Verified bank/MFS transfer…',
+        inputRequired: false,
+        confirmLabel: 'Approve & Credit Balance',
+        run: async (note) => {
+          await api.reviewContribution(item.id, 'approved', note || undefined);
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Contribution Approved',
+            `${item.memberName}'s deposit (${formatMoney(item.amount, ccy)} · Tx #${txNo}) has been approved and added to treasury liquidity.`
+          );
+        },
       });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review contribution.',
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Deny Contribution (${item.memberName})`,
+        description:
+          'Provide a mandatory correction message explaining why this contribution request is denied so the member can fix and resubmit.',
+        details: [
+          { label: 'Member', value: `${item.memberName} (${item.memberCode})` },
+          { label: 'Month', value: formatBillingMonth(item.billingMonth) },
+          { label: 'Amount', value: formatMoney(item.amount, ccy) },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        inputLabel: 'Correction Message for Member',
+        inputPlaceholder: 'e.g. Transaction Number does not match bank statement…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Deny & Send Correction Note',
+        run: async (note) => {
+          await api.reviewContribution(item.id, 'rejected', note);
+          await onRefresh();
+          showNotice(
+            'amber',
+            'Contribution Denied',
+            `Correction message sent to ${item.memberName} (${item.memberCode}).`
+          );
+        },
       });
-    } finally {
-      setReviewingId(null);
     }
   }
 
@@ -244,10 +350,11 @@ export function ContributionsView({
       item.decryptedDetails?.notes ||
         `Resubmitted correction for ${formatBillingMonth(item.billingMonth)}`
     );
-    setFeedback({
-      type: 'success',
-      text: `Loaded denied deposit (${formatBillingMonth(item.billingMonth)}) into the form. Verify your TrxID / slip and re-submit.`,
-    });
+    showNotice(
+      'slate',
+      'Form Pre-Filled for Correction',
+      `Loaded denied deposit (${formatBillingMonth(item.billingMonth)}) into the form. Verify your Transaction Number and receipt slip, then resubmit.`
+    );
     depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     window.setTimeout(() => senderInputRef.current?.focus(), 250);
   }
@@ -280,11 +387,13 @@ export function ContributionsView({
     if (filter !== 'all' && c.status !== filter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
+      const txNo = (c.decryptedDetails?.referenceId || c.maskedReference).toLowerCase();
       return (
         c.memberName.toLowerCase().includes(q) ||
         c.memberCode.toLowerCase().includes(q) ||
         c.providerName.toLowerCase().includes(q) ||
-        c.billingMonth.includes(q)
+        c.billingMonth.includes(q) ||
+        txNo.includes(q)
       );
     }
     return true;
@@ -308,7 +417,6 @@ export function ContributionsView({
         />
       )}
 
-      {/* Own Summary & Other Members Summary */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {!isAdmin && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-xs">
@@ -355,302 +463,281 @@ export function ContributionsView({
         </div>
       </section>
 
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Submit Contribution Form (Members & Managers only — Admin is not a contributor) */}
         {!isAdmin && (
           <section
             ref={depositFormRef}
             className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
           >
-          <div className="mb-4">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Submit Capital Deposit
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Pay via Bank or MFS and submit your TrxID for Manager approval. Account numbers and
-              references are encrypted at rest.
-            </p>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                Submit Capital Deposit
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Pay via Bangladesh Bank or MFS and submit your Transaction Number for Manager approval. Details are AES-256-GCM encrypted at rest.
+              </p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Receipt Screenshot Upload + Gemini AI Scan */}
-            <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                  <span>Bank / MFS Slip Proof (Optional AI Scan)</span>
-                </span>
-                {receiptPhotoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReceiptPhotoUrl('');
-                      setReceiptAiResult(null);
-                      setReceiptNotice(null);
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                    <span>Bank / MFS Slip Proof (Optional AI Scan)</span>
+                  </span>
+                  {receiptPhotoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReceiptPhotoUrl('');
+                        setReceiptAiResult(null);
+                        setReceiptNotice(null);
+                      }}
+                      className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                  <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                  <span>
+                    {scanningReceipt
+                      ? 'Uploading & Scanning Slip with Gemini AI…'
+                      : receiptPhotoUrl
+                        ? 'Replace Receipt Screenshot'
+                        : 'Upload Slip & Auto-Fill Transaction #'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={scanningReceipt}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleReceiptUploadAndScan(file);
+                      e.currentTarget.value = '';
                     }}
-                    className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
+                  />
+                </label>
+
+                {receiptNotice && (
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                    {receiptNotice}
+                  </p>
+                )}
+                {receiptPhotoUrl && (
+                  <a
+                    href={receiptPhotoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
                   >
-                    Clear
-                  </button>
+                    <span>View Attached Slip Image</span>
+                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                  </a>
                 )}
               </div>
 
-              <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
-                <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                <span>
-                  {scanningReceipt
-                    ? 'Uploading & Scanning Slip with Gemini AI…'
-                    : receiptPhotoUrl
-                      ? 'Replace Receipt Screenshot'
-                      : 'Upload Slip & Auto-Fill TrxID'}
-                </span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  disabled={scanningReceipt}
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleReceiptUploadAndScan(file);
-                    e.currentTarget.value = '';
-                  }}
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Primary Month
+                  </label>
+                  <input
+                    type="month"
+                    required
+                    value={billingMonth}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setBillingMonth(next);
+                      if (!advanceMode) {
+                        setAdvanceMonths([next]);
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                  />
+                </div>
 
-              {receiptNotice && (
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                  {receiptNotice}
-                </p>
-              )}
-              {receiptPhotoUrl && (
-                <a
-                  href={receiptPhotoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
-                >
-                  <span>View Attached Slip Image</span>
-                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                </a>
-              )}
-            </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {effectiveBillingMonths.length > 1
+                      ? `Total (${effectiveBillingMonths.length} mo, ${ccy})`
+                      : `Amount (${ccy})`}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={amount}
+                    onChange={(e) => {
+                      amountEditedRef.current = true;
+                      setAmount(e.target.value);
+                    }}
+                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                  />
+                </div>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={advanceMode}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setAdvanceMode(checked);
+                      if (!checked) {
+                        setAdvanceMonths([billingMonth]);
+                      } else {
+                        setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
+                      }
+                    }}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
+                  />
+                  <span>Pay multiple months in advance (single transfer)</span>
+                </label>
+
+                {advanceMode && (
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {upcomingMonthOptions.map((m) => {
+                        const active = effectiveBillingMonths.includes(m);
+                        const isPrimary = m === billingMonth;
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            disabled={isPrimary}
+                            onClick={() => toggleAdvanceMonth(m)}
+                            className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
+                              active
+                                ? 'bg-emerald-600 text-white font-medium'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-400'
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                      {effectiveBillingMonths.length} month(s) selected ·{' '}
+                      {formatMoney(
+                        Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
+                        ccy
+                      )}
+                      /mo split evenly
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Payment Channel
+                </label>
+                <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChannel('mfs');
+                      setProviderName(MFS_PROVIDERS[0]);
+                    }}
+                    className={`py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      channel === 'mfs'
+                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    MFS (Mobile Wallet)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChannel('bank');
+                      setProviderName(BANK_PROVIDERS[0]);
+                    }}
+                    className={`py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      channel === 'bank'
+                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    BD Bank Transfer
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Primary Month
+                  {channel === 'mfs' ? 'MFS Wallet Provider' : 'Bangladesh Bank Name'}
+                </label>
+                <ProviderSelect
+                  options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
+                  value={providerName}
+                  onChange={setProviderName}
+                  placeholder={
+                    channel === 'mfs' ? 'Search MFS wallet…' : 'Search all 61 BD banks…'
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {channel === 'mfs' ? 'Sender Mobile Number' : 'Sender Account / Routing Ref'}
                 </label>
                 <input
-                  type="month"
+                  ref={senderInputRef}
+                  type="text"
                   required
-                  value={billingMonth}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setBillingMonth(next);
-                    if (!advanceMode) {
-                      setAdvanceMonths([next]);
-                    }
-                  }}
+                  value={senderAccount}
+                  onChange={(e) => setSenderAccount(e.target.value)}
+                  placeholder={channel === 'mfs' ? '017XX-XXXXXX' : '2050-XXXX-XXXX'}
                   className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {effectiveBillingMonths.length > 1
-                    ? `Total (${effectiveBillingMonths.length} mo, ${ccy})`
-                    : `Amount (${ccy})`}
+                  Transaction Number ({channel === 'mfs' ? 'MFS TrxID' : 'Bank Ref / Slip No.'})
                 </label>
                 <input
-                  type="number"
-                  min={1}
+                  type="text"
                   required
-                  value={amount}
-                  onChange={(e) => {
-                    amountEditedRef.current = true;
-                    setAmount(e.target.value);
-                  }}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                  value={referenceId}
+                  onChange={(e) => setReferenceId(e.target.value)}
+                  placeholder={channel === 'mfs' ? 'e.g. BKX9984120A' : 'e.g. IBBL-BEFTN-8821'}
+                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
-            </div>
 
-            {/* Multi-Month Advance Contribution Selector */}
-            <div className="space-y-2">
-              <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Optional Note
+                </label>
                 <input
-                  type="checkbox"
-                  checked={advanceMode}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setAdvanceMode(checked);
-                    if (!checked) {
-                      setAdvanceMonths([billingMonth]);
-                    } else {
-                      setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
-                    }
-                  }}
-                  className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Branch or transfer remark"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
-                <span>Pay multiple months in advance (single transfer)</span>
-              </label>
-
-              {advanceMode && (
-                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {upcomingMonthOptions.map((m) => {
-                      const active = effectiveBillingMonths.includes(m);
-                      const isPrimary = m === billingMonth;
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          disabled={isPrimary}
-                          onClick={() => toggleAdvanceMonth(m)}
-                          className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
-                            active
-                              ? 'bg-emerald-600 text-white font-medium'
-                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-400'
-                          }`}
-                        >
-                          {m}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                    {effectiveBillingMonths.length} month(s) selected ·{' '}
-                    {formatMoney(
-                      Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
-                      ccy
-                    )}
-                    /mo split evenly
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                Payment Channel
-              </label>
-              <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setChannel('mfs');
-                    setProviderName(MFS_PROVIDERS[0]);
-                  }}
-                  className={`py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                    channel === 'mfs'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  MFS (Mobile Wallet)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setChannel('bank');
-                    setProviderName(BANK_PROVIDERS[0]);
-                  }}
-                  className={`py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                    channel === 'bank'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Bank Transfer
-                </button>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {channel === 'mfs' ? 'MFS Provider' : 'Bank Name'}
-              </label>
-              <select
-                value={providerName}
-                onChange={(e) => setProviderName(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              <button
+                type="submit"
+                disabled={modalBusy}
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
-                {(channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS).map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {channel === 'mfs' ? 'Sender Mobile Number' : 'Sender Account / Routing Ref'}
-              </label>
-              <input
-                ref={senderInputRef}
-                type="text"
-                required
-                value={senderAccount}
-                onChange={(e) => setSenderAccount(e.target.value)}
-                placeholder={channel === 'mfs' ? '017XX-XXXXXX' : '2050-XXXX-XXXX'}
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {channel === 'mfs' ? 'MFS TrxID' : 'Bank Reference / Slip Number'}
-              </label>
-              <input
-                type="text"
-                required
-                value={referenceId}
-                onChange={(e) => setReferenceId(e.target.value)}
-                placeholder={channel === 'mfs' ? 'e.g. BKX9984120A' : 'e.g. IBBL-BEFTN-8821'}
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Optional Note
-              </label>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Branch or transfer remark"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Lock className="w-4 h-4" aria-hidden="true" />
-              <span>{submitting ? 'Encrypting & Submitting…' : 'Submit for Manager Approval'}</span>
-            </button>
-          </form>
-        </section>
+                <Lock className="w-4 h-4" aria-hidden="true" />
+                <span>Review &amp; Submit Contribution</span>
+              </button>
+            </form>
+          </section>
         )}
 
-        {/* Encrypted Ledger & Manager Approval Queue */}
         <section
           className={`${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
@@ -659,10 +746,12 @@ export function ContributionsView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {isReviewer ? 'Cooperative Contribution Ledger & Approval Queue' : 'Monthly Contribution Requests & History'}
+                {isReviewer
+                  ? 'Cooperative Contribution Ledger & Approval Queue'
+                  : 'Monthly Contribution Requests & History'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Inspect active requests, denied requests with Manager correction messages, and approved contribution history
+                Inspect active requests, Transaction Numbers, denied requests with Manager correction messages, and approved history
               </p>
             </div>
 
@@ -676,7 +765,7 @@ export function ContributionsView({
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search member or bank…"
+                  placeholder="Search member, bank, Tx#…"
                   className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
@@ -707,18 +796,6 @@ export function ContributionsView({
             </div>
           </div>
 
-          {isReviewer && filtered.some((c) => c.status === 'pending') && (
-            <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
-              <input
-                type="text"
-                value={reviewNote}
-                onChange={(e) => setReviewNote(e.target.value)}
-                placeholder="Correction note (optional when approving · REQUIRED when denying a request)…"
-                className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-          )}
-
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
@@ -736,7 +813,7 @@ export function ContributionsView({
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <th className="py-2.5 pr-4">Member</th>
                     <th className="py-2.5 pr-4">Month</th>
-                    <th className="py-2.5 pr-4">Channel & Ref</th>
+                    <th className="py-2.5 pr-4">Bank / MFS &amp; Transaction No.</th>
                     <th className="py-2.5 pr-4 text-right">Amount</th>
                     <th className="py-2.5 pr-4">Status</th>
                     <th className="py-2.5 text-right">Actions</th>
@@ -745,14 +822,26 @@ export function ContributionsView({
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                   {filtered.map((item) => {
                     const isExpanded = expandedId === item.id;
+                    const txNumber =
+                      item.decryptedDetails?.referenceId || item.maskedReference;
                     return (
                       <tr key={item.id} className="group hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
                         <td colSpan={6} className="p-0">
                           <div className="grid grid-cols-12 items-center py-3 gap-2">
                             <div className="col-span-12 sm:col-span-3 pr-2">
-                              <div className="font-medium text-slate-900 dark:text-white truncate">
-                                {item.memberName}
-                              </div>
+                              {onViewMemberProfile ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onViewMemberProfile(item.userId)}
+                                  className="font-medium text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate block text-left cursor-pointer"
+                                >
+                                  {item.memberName}
+                                </button>
+                              ) : (
+                                <div className="font-medium text-slate-900 dark:text-white truncate">
+                                  {item.memberName}
+                                </div>
+                              )}
                               <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                 {item.memberCode}
                               </div>
@@ -768,8 +857,9 @@ export function ContributionsView({
                               </span>
                               <span aria-hidden="true"> · </span>
                               <span className="uppercase">{item.channel}</span>
-                              <span aria-hidden="true"> · </span>
-                              <span className="font-mono">{item.maskedReference}</span>
+                              <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                Tx #{txNumber}
+                              </div>
                             </div>
 
                             <div className="col-span-4 sm:col-span-1 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
@@ -786,17 +876,17 @@ export function ContributionsView({
                                   <button
                                     type="button"
                                     title="Approve contribution"
-                                    disabled={reviewingId === item.id}
-                                    onClick={() => handleReview(item.id, 'approved')}
+                                    disabled={modalBusy}
+                                    onClick={() => confirmReview(item, 'approved')}
                                     className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
                                   >
                                     <Check className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     type="button"
-                                    title="Reject contribution"
-                                    disabled={reviewingId === item.id}
-                                    onClick={() => handleReview(item.id, 'rejected')}
+                                    title="Deny with correction note"
+                                    disabled={modalBusy}
+                                    onClick={() => confirmReview(item, 'rejected')}
                                     className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
                                   >
                                     <X className="w-3.5 h-3.5" />
@@ -816,7 +906,9 @@ export function ContributionsView({
                           {item.status === 'rejected' && (
                             <div className="mb-2.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-2 text-xs">
                               <div className="text-red-800 dark:text-red-300">
-                                <span className="font-semibold">Denied by {item.reviewerName || 'Manager'}:</span>{' '}
+                                <span className="font-semibold">
+                                  Denied by {item.reviewerName || 'Manager'}:
+                                </span>{' '}
                                 <span>{item.reviewNote || 'Correction requested by manager.'}</span>
                               </div>
                               {!isAdmin && item.userId === user.id && (
@@ -836,7 +928,7 @@ export function ContributionsView({
                               <div className="flex flex-wrap items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
                                 <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                                   <Shield className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                                  <span>Authorized Decrypted Payload & Ciphertext Envelope</span>
+                                  <span>Authorized Decrypted Payload &amp; Ciphertext Envelope</span>
                                 </span>
                                 <span className="font-mono">
                                   Submitted {formatDateTime(item.submittedAt)}
@@ -846,7 +938,7 @@ export function ContributionsView({
                               {item.decryptedDetails ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
                                   <div>
-                                    <span className="text-slate-500 block">Reference / TrxID</span>
+                                    <span className="text-slate-500 block">Transaction Number</span>
                                     <span className="text-slate-900 dark:text-white">
                                       {item.decryptedDetails.referenceId}
                                     </span>
@@ -916,6 +1008,25 @@ export function ContributionsView({
           )}
         </section>
       </div>
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

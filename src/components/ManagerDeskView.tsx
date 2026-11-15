@@ -2,13 +2,17 @@
 
 import { useState, type FormEvent } from 'react';
 import {
+  AlertTriangle,
   CalendarPlus,
   Check,
   CheckCircle2,
   ClipboardCheck,
+  CreditCard,
   ExternalLink,
   Eye,
+  HandCoins,
   Plus,
+  Search,
   ShieldCheck,
   Trash2,
   UserCheck,
@@ -27,7 +31,37 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
+
+type ManagerDeskTab =
+  | 'contributions'
+  | 'qard-hasan'
+  | 'installments'
+  | 'ballots'
+  | 'meetings-profiles';
+
+type DeskModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      inputMultiline?: boolean;
+      run: (inputValue: string) => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
 
 interface ManagerDeskViewProps {
   user: PublicUser;
@@ -39,6 +73,7 @@ interface ManagerDeskViewProps {
   polls: DecisionPoll[];
   meetings: CoopMeeting[];
   profileChangeRequests: ProfileChangeRequest[];
+  onViewMemberProfile?: (memberId: string) => void;
   onRefresh: () => Promise<void>;
 }
 
@@ -52,18 +87,14 @@ export function ManagerDeskView({
   polls,
   meetings,
   profileChangeRequests,
+  onViewMemberProfile,
   onRefresh,
 }: ManagerDeskViewProps) {
   const ccy = config?.currency || 'BDT';
-  const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
-
-  // Per-item correction notes for contributions, installments, profile requests
-  const [contribNotes, setContribNotes] = useState<Record<string, string>>({});
-  const [installmentNotes, setInstallmentNotes] = useState<Record<string, string>>({});
-  const [profileNotes, setProfileNotes] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<ManagerDeskTab>('contributions');
+  const [contribSearch, setContribSearch] = useState('');
+  const [modal, setModal] = useState<DeskModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   // Create Decision Poll state
   const [pollTitle, setPollTitle] = useState('');
@@ -79,6 +110,19 @@ export function ManagerDeskView({
   const [meetingAgenda, setMeetingAgenda] = useState('');
 
   const pendingContributions = contributions.filter((c) => c.status === 'pending');
+  const filteredPendingContributions = pendingContributions.filter((c) => {
+    const q = contribSearch.trim().toLowerCase();
+    if (!q) return true;
+    const txNo = (c.decryptedDetails?.referenceId || c.maskedReference).toLowerCase();
+    return (
+      c.memberName.toLowerCase().includes(q) ||
+      c.memberCode.toLowerCase().includes(q) ||
+      c.providerName.toLowerCase().includes(q) ||
+      txNo.includes(q) ||
+      c.billingMonth.includes(q)
+    );
+  });
+
   const pendingReviewLoans = loans.filter((l) => l.status === 'pending_manager_review');
   const pendingDisbursementLoans = loans.filter(
     (l) => l.status === 'approved_pending_disbursement'
@@ -94,1017 +138,1353 @@ export function ManagerDeskView({
   const pendingProfileRequests = profileChangeRequests.filter(
     (r) => r.status === 'pending' && (user.role === 'admin' || r.userId !== user.id)
   );
+  const scheduledMeetings = meetings.filter((m) => m.status === 'scheduled');
 
-  async function handleContributionDecision(id: string, decision: 'approved' | 'rejected') {
-    const note = (contribNotes[id] || '').trim();
-    if (decision === 'rejected' && !note) {
-      setFeedback({
-        type: 'error',
-        text: 'Please enter a correction message explaining why this contribution is denied.',
-      });
-      return;
-    }
-    setBusyKey(`contrib-${id}`);
-    setFeedback(null);
+  const qardHasanActionCount =
+    pendingReviewLoans.length + pendingDisbursementLoans.length + votingLoans.length;
+  const ballotsCount = votingLoans.length + openPolls.length + openProjects.length;
+  const meetingsProfilesCount = scheduledMeetings.length + pendingProfileRequests.length;
+
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal(inputValue: string) {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
     try {
-      await api.reviewContribution(id, decision, note || undefined);
-      setContribNotes((prev) => ({ ...prev, [id]: '' }));
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approved'
-            ? 'Contribution approved and added to fund balance.'
-            : 'Contribution denied with correction message sent to member.',
-      });
-      await onRefresh();
+      await modal.run(inputValue);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review contribution.',
-      });
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
     } finally {
-      setBusyKey(null);
+      setModalBusy(false);
     }
   }
 
-  async function handleInstallmentDecision(
-    loanId: string,
+  function confirmContributionDecision(c: Contribution, decision: 'approved' | 'rejected') {
+    const txNo = c.decryptedDetails?.referenceId || c.maskedReference;
+    if (decision === 'approved') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Approve Contribution (${c.memberName})`,
+        description:
+          'Approving verifies the Transaction Number and adds this deposit immediately to the central fund balance.',
+        details: [
+          { label: 'Member', value: `${c.memberName} (${c.memberCode})` },
+          { label: 'Billing Month', value: formatBillingMonth(c.billingMonth) },
+          { label: 'Amount', value: formatMoney(c.amount, ccy) },
+          { label: 'Channel & Bank/MFS', value: `${c.channel.toUpperCase()} · ${c.providerName}` },
+          { label: 'Transaction Number', value: txNo },
+          { label: 'Sender Account', value: c.decryptedDetails?.senderAccount || '—' },
+        ],
+        inputLabel: 'Optional Verification Remark',
+        inputPlaceholder: 'Verified against treasury statement…',
+        inputRequired: false,
+        confirmLabel: 'Approve & Credit Balance',
+        run: async (note) => {
+          await api.reviewContribution(c.id, 'approved', note || undefined);
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Contribution Approved',
+            `${formatMoney(c.amount, ccy)} from ${c.memberName} (Tx #${txNo}) has been credited to the cooperative fund balance.`
+          );
+        },
+      });
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Deny Contribution (${c.memberName})`,
+        description:
+          'Enter a clear correction message so the member knows what to fix before resubmitting.',
+        details: [
+          { label: 'Member', value: `${c.memberName} (${c.memberCode})` },
+          { label: 'Amount', value: formatMoney(c.amount, ccy) },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        inputLabel: 'Mandatory Correction Note',
+        inputPlaceholder: 'e.g. Transaction Number did not appear on bank statement…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Deny & Notify Member',
+        run: async (note) => {
+          await api.reviewContribution(c.id, 'rejected', note);
+          await onRefresh();
+          showNotice(
+            'amber',
+            'Contribution Denied',
+            `Correction message sent to ${c.memberName} (${c.memberCode}).`
+          );
+        },
+      });
+    }
+  }
+
+  function confirmInitiateLoanVote(loan: LoanRequest) {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Initiate 2/3 Secret Ballot (${loan.id})`,
+      description:
+        'Opening the Opinion Ballot notifies all eligible cooperative members to vote privately. Votes remain confidential until revealed.',
+      details: [
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+        { label: 'Repayment Plan', value: `${loan.installmentMonths} months · 0% interest` },
+        { label: 'Purpose', value: loan.purpose },
+      ],
+      confirmLabel: 'Open Secret 2/3 Ballot',
+      run: async () => {
+        await api.initiateLoanVote(loan.id);
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Opinion Ballot Opened',
+          `Secret voting is now live for ${loan.id}. Active members have been notified.`
+        );
+      },
+    });
+  }
+
+  function confirmDeclineLoanReview(loan: LoanRequest) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: `Decline Qard Hasan Application (${loan.id})`,
+      description:
+        'Declining stops this request during Manager pre-vote review and notifies the borrower with your note.',
+      details: [
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Requested Amount', value: formatMoney(loan.amount, ccy) },
+      ],
+      inputLabel: 'Reason for Declining',
+      inputPlaceholder: 'Explain why this request was declined…',
+      inputRequired: true,
+      inputMultiline: true,
+      confirmLabel: 'Decline Request',
+      run: async (note) => {
+        await api.adminReviewLoan(loan.id, 'reject', note);
+        await onRefresh();
+        showNotice(
+          'amber',
+          'Qard Hasan Request Declined',
+          `Application ${loan.id} was declined and ${loan.borrowerName} has been notified.`
+        );
+      },
+    });
+  }
+
+  function confirmDisbursement(loan: LoanRequest) {
+    const insufficient = loan.amount > availableLiquidity;
+    setModal({
+      mode: 'confirm',
+      tone: insufficient ? 'amber' : 'emerald',
+      title: `Confirm Qard Hasan Disbursement (${loan.id})`,
+      description: insufficient
+        ? `Warning: Requested amount (${formatMoney(loan.amount, ccy)}) exceeds current available balance (${formatMoney(availableLiquidity, ccy)}). Confirming will verify if treasury allows payout.`
+        : `Disbursing transfers ${formatMoney(loan.amount, ccy)} to the borrower's encrypted account and immediately deducts it from the central fund balance.`,
+      details: [
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Disbursement Amount', value: formatMoney(loan.amount, ccy) },
+        { label: 'Current Fund Balance', value: formatMoney(availableLiquidity, ccy) },
+        {
+          label: 'Payout Destination',
+          value: loan.decryptedSensitiveNotes
+            ? `${loan.decryptedSensitiveNotes.channel.toUpperCase()} · ${loan.decryptedSensitiveNotes.provider} (${loan.decryptedSensitiveNotes.disbursementAccount})`
+            : `${loan.channel.toUpperCase()} · ${loan.provider}`,
+        },
+      ],
+      inputLabel: 'Disbursement Transaction Number (TrxID / Bank Ref)',
+      inputPlaceholder: 'Enter bank reference or MFS TrxID for audit ledger…',
+      inputRequired: false,
+      confirmLabel: 'Confirm Disbursement & Deduct Balance',
+      run: async (txNo) => {
+        await api.disburseLoan(loan.id, txNo ? { transactionNumber: txNo } : undefined);
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Qard Hasan Disbursed',
+          `${formatMoney(loan.amount, ccy)} deducted from central fund balance for ${loan.id}${txNo ? ` (Tx #${txNo})` : ''}. Borrower notified.`
+        );
+      },
+    });
+  }
+
+  function confirmInstallmentDecision(
+    loan: LoanRequest,
     installmentNumber: number,
     decision: 'approve' | 'reject'
   ) {
-    const key = `${loanId}#${installmentNumber}`;
-    const note = (installmentNotes[key] || '').trim();
-    if (decision === 'reject' && !note) {
-      setFeedback({
-        type: 'error',
-        text: 'Please enter a correction note before denying an installment payment.',
+    const inst = loan.installments.find((i) => i.installmentNumber === installmentNumber);
+    const txNo = inst?.decryptedReceipt?.referenceId || inst?.maskedReference || '—';
+    if (decision === 'approve') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Accept Installment #${installmentNumber} (${loan.id})`,
+        description:
+          'Accepting verifies the repayment Transaction Number, lowers the borrower’s remaining balance, and restores funds to treasury liquidity.',
+        details: [
+          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: 'Installment Amount', value: formatMoney(inst?.amount || 0, ccy) },
+          { label: 'Provider', value: inst?.repaymentProvider || '—' },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        confirmLabel: 'Accept & Restore Balance',
+        run: async () => {
+          await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Installment Accepted',
+            `Installment #${installmentNumber} for ${loan.id} (Tx #${txNo}) verified and restored to fund balance.`
+          );
+        },
       });
-      return;
-    }
-    setBusyKey(`inst-${key}`);
-    setFeedback(null);
-    try {
-      await api.verifyInstallmentRepayment(loanId, installmentNumber, decision, note || undefined);
-      setInstallmentNotes((prev) => ({ ...prev, [key]: '' }));
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approve'
-            ? `Installment #${installmentNumber} verified and restored to fund balance.`
-            : `Installment #${installmentNumber} denied with correction note sent to borrower.`,
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Deny Installment #${installmentNumber} (${loan.id})`,
+        description:
+          'Provide a required correction note explaining what the borrower must fix before resubmitting.',
+        details: [
+          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        inputLabel: 'Mandatory Correction Note',
+        inputPlaceholder: 'e.g. TrxID not received or amount mismatch…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Deny & Send Correction Note',
+        run: async (note) => {
+          await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
+          await onRefresh();
+          showNotice(
+            'amber',
+            'Installment Denied',
+            `Correction note sent to ${loan.borrowerName} for Installment #${installmentNumber}.`
+          );
+        },
       });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to verify installment.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleInitiateLoanVote(loanId: string) {
-    setBusyKey(`init-${loanId}`);
-    setFeedback(null);
-    try {
-      await api.initiateLoanVote(loanId);
-      setFeedback({
-        type: 'success',
-        text: `Secret Opinion Ballot vote initiated for ${loanId}. Members have been notified.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not initiate Qard Hasan vote.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleDeclineLoanReview(loanId: string) {
-    setBusyKey(`decl-${loanId}`);
-    setFeedback(null);
-    try {
-      await api.adminReviewLoan(loanId, 'reject', 'Declined during Manager pre-vote review.');
-      setFeedback({
-        type: 'success',
-        text: `Qard Hasan request ${loanId} declined and borrower notified.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not decline loan request.',
-      });
-    } finally {
-      setBusyKey(null);
     }
   }
 
-  async function handleConfirmDisbursement(loanId: string) {
-    setBusyKey(`disb-${loanId}`);
-    setFeedback(null);
-    try {
-      await api.disburseLoan(loanId);
-      setFeedback({
-        type: 'success',
-        text: `Qard Hasan ${loanId} confirmed and disbursed. Principal deducted from central fund balance and borrower notified.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not confirm disbursement.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
+  function confirmRevealBallot(
+    type: 'loan' | 'poll' | 'project',
+    id: string,
+    title: string,
+    castCount: number
+  ) {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Stop Voting & Reveal Results?',
+      description:
+        'Stopping the ballot closes voting permanently and publishes the aggregate tally to all cooperative members.',
+      details: [
+        { label: 'Ballot Item', value: title },
+        { label: 'Secret Ballots Cast', value: String(castCount) },
+      ],
+      confirmLabel: 'Stop & Reveal Result',
+      run: async () => {
+        if (type === 'loan') await api.revealLoanVote(id);
+        else if (type === 'poll') await api.revealPoll(id);
+        else await api.revealHalalProjectVote(id);
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Vote Result Revealed',
+          `Voting has closed for "${title}". Final results are now visible to all members.`
+        );
+      },
+    });
   }
 
-  async function handleRevealLoanVote(loanId: string) {
-    setBusyKey(`rev-loan-${loanId}`);
-    setFeedback(null);
-    try {
-      await api.revealLoanVote(loanId);
-      setFeedback({
-        type: 'success',
-        text: `Voting stopped and results revealed for Qard Hasan ${loanId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal Qard Hasan vote results.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleRevealProjectVote(projectId: string) {
-    setBusyKey(`rev-proj-${projectId}`);
-    setFeedback(null);
-    try {
-      await api.revealHalalProjectVote(projectId);
-      setFeedback({
-        type: 'success',
-        text: `Voting stopped and results revealed for investment proposal ${projectId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal investment vote results.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleRevealPoll(pollId: string) {
-    setBusyKey(`rev-poll-${pollId}`);
-    setFeedback(null);
-    try {
-      await api.revealPoll(pollId);
-      setFeedback({
-        type: 'success',
-        text: 'Decision poll stopped and results revealed to all members.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reveal poll results.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleCreatePoll(e: FormEvent) {
+  function handleCreatePoll(e: FormEvent) {
     e.preventDefault();
     const cleanedOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
     if (cleanedOptions.length < 2) {
-      setFeedback({ type: 'error', text: 'Provide at least 2 poll options.' });
+      showNotice('red', 'Invalid Poll Options', 'Please provide at least 2 distinct poll options.');
       return;
     }
-    setBusyKey('create-poll');
-    setFeedback(null);
-    try {
-      await api.createPoll({
-        title: pollTitle.trim(),
-        description: pollDesc.trim() || undefined,
-        category: pollCategory,
-        options: cleanedOptions,
-        closesAt: pollClosesAt || undefined,
-      });
-      setPollTitle('');
-      setPollDesc('');
-      setPollOptions(['Approve', 'Decline']);
-      setPollClosesAt('');
-      setFeedback({
-        type: 'success',
-        text: 'Decision vote initiated. Members have been notified to cast secret ballots.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not initiate decision poll.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Launch Secret Decision Vote?',
+      description:
+        'Publishing opens an anonymized ballot and dispatches notifications to all active members.',
+      details: [
+        { label: 'Question / Title', value: pollTitle.trim() },
+        { label: 'Category', value: pollCategory },
+        { label: 'Options', value: cleanedOptions.join(' · ') },
+      ],
+      confirmLabel: 'Launch Decision Vote',
+      run: async () => {
+        await api.createPoll({
+          title: pollTitle.trim(),
+          description: pollDesc.trim() || undefined,
+          category: pollCategory,
+          options: cleanedOptions,
+          closesAt: pollClosesAt || undefined,
+        });
+        setPollTitle('');
+        setPollDesc('');
+        setPollOptions(['Approve', 'Decline']);
+        setPollClosesAt('');
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Decision Poll Opened',
+          'Members have been notified and can now cast their secret ballots in Opinion Ballot.'
+        );
+      },
+    });
   }
 
-  async function handleScheduleMeeting(e: FormEvent) {
+  function handleScheduleMeeting(e: FormEvent) {
     e.preventDefault();
-    setBusyKey('create-meeting');
-    setFeedback(null);
-    try {
-      await api.createMeeting({
-        title: meetingTitle.trim(),
-        agenda: meetingAgenda.trim() || undefined,
-        scheduledFor: meetingWhen.trim(),
-        locationOrLink: meetingWhere.trim(),
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Schedule Cooperative Meeting?',
+      description:
+        'Scheduling creates a meeting notice on member dashboards and notifications.',
+      details: [
+        { label: 'Title', value: meetingTitle.trim() },
+        { label: 'Date & Time', value: formatDateTime(meetingWhen.trim()) },
+        { label: 'Location / Link', value: meetingWhere.trim() },
+      ],
+      confirmLabel: 'Schedule & Notify Members',
+      run: async () => {
+        await api.createMeeting({
+          title: meetingTitle.trim(),
+          agenda: meetingAgenda.trim() || undefined,
+          scheduledFor: meetingWhen.trim(),
+          locationOrLink: meetingWhere.trim(),
+        });
+        setMeetingTitle('');
+        setMeetingWhen('');
+        setMeetingWhere('');
+        setMeetingAgenda('');
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Meeting Scheduled',
+          'Cooperative meeting notice dispatched to all active members.'
+        );
+      },
+    });
+  }
+
+  function confirmMeetingStatus(m: CoopMeeting, status: CoopMeeting['status']) {
+    setModal({
+      mode: 'confirm',
+      tone: status === 'cancelled' ? 'red' : 'emerald',
+      title:
+        status === 'completed'
+          ? `Mark Meeting Completed?`
+          : `Cancel Scheduled Meeting?`,
+      description: `Update status of "${m.title}" (${formatDateTime(m.scheduledFor)}).`,
+      confirmLabel: status === 'completed' ? 'Mark Completed' : 'Cancel Meeting',
+      run: async () => {
+        await api.updateMeetingStatus(m.id, status);
+        await onRefresh();
+        showNotice(
+          status === 'completed' ? 'emerald' : 'amber',
+          'Meeting Status Updated',
+          `"${m.title}" marked as ${status}.`
+        );
+      },
+    });
+  }
+
+  function confirmProfileReqReview(req: ProfileChangeRequest, decision: 'approved' | 'rejected') {
+    const changesSummary = Object.entries(req.requestedChanges)
+      .filter(([, v]) => Boolean(v))
+      .map(([k, v]) => `${k}: ${String(v)}`)
+      .join(' | ');
+
+    if (decision === 'approved') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Approve Profile Update (${req.memberName})`,
+        description: 'Applying immediately updates the member’s profile record.',
+        details: [
+          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
+          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+        ],
+        confirmLabel: 'Approve Profile Update',
+        run: async () => {
+          await api.reviewProfileChangeRequest(req.id, 'approved');
+          await onRefresh();
+          showNotice(
+            'emerald',
+            'Profile Update Approved',
+            `${req.memberName}'s profile changes have been applied.`
+          );
+        },
       });
-      setMeetingTitle('');
-      setMeetingWhen('');
-      setMeetingWhere('');
-      setMeetingAgenda('');
-      setFeedback({
-        type: 'success',
-        text: 'Cooperative meeting scheduled and notice dispatched to all active members.',
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Decline Profile Update (${req.memberName})`,
+        description: 'Provide a reason explaining why this profile modification request is declined.',
+        details: [
+          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
+          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+        ],
+        inputLabel: 'Reason for Declining',
+        inputPlaceholder: 'Explain why this update could not be approved…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Decline Request',
+        run: async (note) => {
+          await api.reviewProfileChangeRequest(req.id, 'rejected', note);
+          await onRefresh();
+          showNotice(
+            'amber',
+            'Profile Update Declined',
+            `Declined profile modification request from ${req.memberName}.`
+          );
+        },
       });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not schedule meeting.',
-      });
-    } finally {
-      setBusyKey(null);
     }
   }
 
-  async function handleMeetingStatus(id: string, status: CoopMeeting['status']) {
-    setBusyKey(`mtg-${id}`);
-    setFeedback(null);
-    try {
-      await api.updateMeetingStatus(id, status);
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update meeting status.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function handleProfileReqReview(id: string, decision: 'approved' | 'rejected') {
-    const note = (profileNotes[id] || '').trim();
-    if (decision === 'rejected' && !note) {
-      setFeedback({
-        type: 'error',
-        text: 'Please provide a reason when declining a profile update request.',
-      });
-      return;
-    }
-    setBusyKey(`prof-${id}`);
-    setFeedback(null);
-    try {
-      await api.reviewProfileChangeRequest(id, decision, note || undefined);
-      setProfileNotes((prev) => ({ ...prev, [id]: '' }));
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approved'
-            ? 'Member profile update approved and applied.'
-            : 'Profile update request declined.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review profile change request.',
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }
+  const tabs: Array<{
+    id: ManagerDeskTab;
+    label: string;
+    count: number;
+    Icon: typeof CreditCard;
+  }> = [
+    { id: 'contributions', label: 'Contributions', count: pendingContributions.length, Icon: CreditCard },
+    { id: 'qard-hasan', label: 'Qard Hasan', count: qardHasanActionCount, Icon: HandCoins },
+    { id: 'installments', label: 'Installments', count: pendingInstallments.length, Icon: ShieldCheck },
+    { id: 'ballots', label: 'Votes & Reveals', count: ballotsCount, Icon: Vote },
+    { id: 'meetings-profiles', label: 'Meetings & Profiles', count: meetingsProfilesCount, Icon: CalendarPlus },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Manager Governance Header */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Manager Governance &amp; Treasury Verification Desk</span>
-          </div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Approvals, Secret Ballot Control, Meeting Scheduler &amp; Fund Disbursements
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Verify Bank/MFS contributions and Hasan installments, initiate or reveal Opinion Ballots,
-            confirm Qard Hasan fund deductions, and schedule cooperative meetings.
-          </p>
-        </div>
-        <div className="text-xs font-mono shrink-0 px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-          Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
-        </div>
-      </section>
-
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
-      {/* 1. Contribution Verification Queue */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Pending Monthly Contributions ({pendingContributions.length})
-            </h3>
+      {/* Manager Desk Header + Interactive Queue KPI Cards */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Manager Governance &amp; Treasury Verification Desk</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
+              Approvals, Qard Hasan Workflow, Secret Ballots &amp; Cooperative Notices
+            </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Inspect decrypted transfer details and approve to credit the fund balance, or deny with a
-              correction note.
+              Fund balance changes when you approve contributions/installments or confirm Qard Hasan disbursements. Every action opens a verification confirmation modal.
             </p>
           </div>
+          <div className="text-xs font-mono shrink-0 px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+            Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
+          </div>
         </div>
 
-        {pendingContributions.length === 0 ? (
-          <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-            All submitted contributions have been processed.
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-            {pendingContributions.map((c) => (
-              <div key={c.id} className="p-4 space-y-3">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                  <div className="space-y-1 text-xs">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      {c.memberName} ({c.memberCode}) ·{' '}
-                      <span className="font-mono text-emerald-700 dark:text-emerald-400">
-                        {formatMoney(c.amount, ccy)}
-                      </span>{' '}
-                      · <span className="font-mono">{formatBillingMonth(c.billingMonth)}</span>
-                    </div>
-                    <div className="text-slate-600 dark:text-slate-400 font-mono">
-                      {c.channel.toUpperCase()} · {c.providerName} · TrxID:{' '}
-                      {c.decryptedDetails?.referenceId || c.maskedReference} · Sender:{' '}
-                      {c.decryptedDetails?.senderAccount || '—'}
-                    </div>
-                    {c.decryptedDetails?.notes && (
-                      <div className="text-slate-500 dark:text-slate-400">
-                        Member note: {c.decryptedDetails.notes}
-                      </div>
-                    )}
-                    {c.receiptPhotoUrl && (
-                      <a
-                        href={c.receiptPhotoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
-                      >
-                        <span>Inspect Attached Receipt Slip</span>
-                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-                    <input
-                      type="text"
-                      value={contribNotes[c.id] || ''}
-                      onChange={(e) =>
-                        setContribNotes((prev) => ({ ...prev, [c.id]: e.target.value }))
-                      }
-                      placeholder="Correction note (required to deny)…"
-                      className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 min-w-[220px]"
-                    />
-                    <button
-                      type="button"
-                      disabled={busyKey === `contrib-${c.id}`}
-                      onClick={() => void handleContributionDecision(c.id, 'approved')}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyKey === `contrib-${c.id}`}
-                      onClick={() => void handleContributionDecision(c.id, 'rejected')}
-                      className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Deny</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 2. Qard Hasan Applications & Disbursements */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Qard Hasan Initiation &amp; Disbursement Confirmation (
-            {pendingReviewLoans.length + pendingDisbursementLoans.length})
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Initiate 2/3 member voting on reviewed requests, and confirm approved Qard Hasan loans to
-            deduct from the central fund balance.
-          </p>
-        </div>
-
-        {pendingReviewLoans.length === 0 && pendingDisbursementLoans.length === 0 ? (
-          <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-            No Qard Hasan applications awaiting Manager vote initiation or disbursement confirmation.
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-            {pendingReviewLoans.map((loan) => (
-              <div
-                key={loan.id}
-                className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+        {/* Clickable Queue Counters */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            const Icon = tab.Icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  active
+                    ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 hover:border-emerald-300'
+                }`}
               >
-                <div className="space-y-1 text-xs">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                      {loan.id}
-                    </span>
-                    <StatusText status={loan.status} />
-                  </div>
-                  <div className="font-semibold text-slate-900 dark:text-white text-sm">
-                    {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
-                    <span className="font-mono">{formatMoney(loan.amount, ccy)}</span> (
-                    {loan.installmentMonths} months)
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    disabled={busyKey === `init-${loan.id}`}
-                    onClick={() => void handleInitiateLoanVote(loan.id)}
-                    className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span
+                    className={`font-medium truncate ${
+                      active
+                        ? 'text-emerald-800 dark:text-emerald-300'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
                   >
-                    <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Initiate Vote</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyKey === `decl-${loan.id}`}
-                    onClick={() => void handleDeclineLoanReview(loan.id)}
-                    className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {pendingDisbursementLoans.map((loan) => (
-              <div
-                key={loan.id}
-                className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-emerald-50/35 dark:bg-emerald-950/10"
-              >
-                <div className="space-y-1 text-xs">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                      {loan.id}
-                    </span>
-                    <StatusText status={loan.status} />
-                  </div>
-                  <div className="font-semibold text-slate-900 dark:text-white text-sm">
-                    {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
-                    <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
-                  </div>
-                  {loan.decryptedSensitiveNotes && (
-                    <div className="font-mono text-slate-600 dark:text-slate-400">
-                      Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
-                      {loan.decryptedSensitiveNotes.provider} ·{' '}
-                      {loan.decryptedSensitiveNotes.disbursementAccount}
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  disabled={busyKey === `disb-${loan.id}`}
-                  onClick={() => void handleConfirmDisbursement(loan.id)}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Confirm Disbursement &amp; Deduct Balance</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 3. Pending Hasan Installment Verifications */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Qard Hasan Installment Verification Queue ({pendingInstallments.length})
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Accept verified installment receipts to restore central balance, or deny with a mandatory
-            correction note.
-          </p>
-        </div>
-
-        {pendingInstallments.length === 0 ? (
-          <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-            No Qard Hasan installment receipts awaiting verification.
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-            {pendingInstallments.map(({ loan, inst }) => {
-              const key = `${loan.id}#${inst.installmentNumber}`;
-              return (
-                <div
-                  key={key}
-                  className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
-                >
-                  <div className="space-y-1 text-xs">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      {loan.borrowerName} ({loan.borrowerCode}) · {loan.id} Installment #
-                      {inst.installmentNumber} ·{' '}
-                      <span className="font-mono text-emerald-700 dark:text-emerald-400">
-                        {formatMoney(inst.amount, ccy)}
-                      </span>
-                    </div>
-                    <div className="font-mono text-slate-600 dark:text-slate-400">
-                      {inst.repaymentChannel?.toUpperCase()} · {inst.repaymentProvider} · Ref:{' '}
-                      {inst.decryptedReceipt?.referenceId || inst.maskedReference}
-                    </div>
-                    {inst.receiptPhotoUrl && (
-                      <a
-                        href={inst.receiptPhotoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
-                      >
-                        <span>View Repayment Slip</span>
-                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-                    <input
-                      type="text"
-                      value={installmentNotes[key] || ''}
-                      onChange={(e) =>
-                        setInstallmentNotes((prev) => ({ ...prev, [key]: e.target.value }))
-                      }
-                      placeholder="Correction note (required to deny)…"
-                      className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 min-w-[210px]"
-                    />
-                    <button
-                      type="button"
-                      disabled={busyKey === `inst-${key}`}
-                      onClick={() =>
-                        void handleInstallmentDecision(loan.id, inst.installmentNumber, 'approve')
-                      }
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Accept</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyKey === `inst-${key}`}
-                      onClick={() =>
-                        void handleInstallmentDecision(loan.id, inst.installmentNumber, 'reject')
-                      }
-                      className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Deny</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* 4. Initiate Decision Vote + Active Secret Ballots to Reveal */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Initiate Decision Poll</span>
-          </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Open Secret Member Vote for Cooperative Decision
-          </h3>
-
-          <form onSubmit={handleCreatePoll} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Decision Question / Title
-              </label>
-              <input
-                type="text"
-                required
-                minLength={3}
-                value={pollTitle}
-                onChange={(e) => setPollTitle(e.target.value)}
-                placeholder="e.g. Increase annual emergency cap?"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Category
-                </label>
-                <select
-                  value={pollCategory}
-                  onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                >
-                  <option value="general">General Decision</option>
-                  <option value="policy">Policy / Rules</option>
-                  <option value="project">Venture / Project</option>
-                  <option value="qard_hasan">Qard Hasan Policy</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Target Close Date (Optional)
-                </label>
-                <input
-                  type="date"
-                  value={pollClosesAt}
-                  onChange={(e) => setPollClosesAt(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Context / Description
-              </label>
-              <textarea
-                rows={2}
-                value={pollDesc}
-                onChange={(e) => setPollDesc(e.target.value)}
-                placeholder="Explain the cooperative decision or options..."
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300">
-                <span>Ballot Options ({pollOptions.length}/6)</span>
-                {pollOptions.length < 6 && (
-                  <button
-                    type="button"
-                    onClick={() => setPollOptions((prev) => [...prev, ''])}
-                    className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Plus className="w-3 h-3" aria-hidden="true" />
-                    <span>Add Option</span>
-                  </button>
-                )}
-              </div>
-              {pollOptions.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={opt}
-                    onChange={(e) =>
-                      setPollOptions((prev) =>
-                        prev.map((item, i) => (i === idx ? e.target.value : item))
-                      )
-                    }
-                    placeholder={`Option ${idx + 1}`}
-                    className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    {tab.label}
+                  </span>
+                  <Icon
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      active ? 'text-emerald-600' : 'text-slate-400'
+                    }`}
+                    aria-hidden="true"
                   />
-                  {pollOptions.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPollOptions((prev) => prev.filter((_, i) => i !== idx))
-                      }
-                      className="p-1.5 rounded text-slate-400 hover:text-red-600 cursor-pointer"
-                      aria-label="Remove option"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                  )}
                 </div>
-              ))}
+                <div className="mt-1.5 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                  {tab.count}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* TAB 1: Pending Monthly Contributions */}
+      {activeTab === 'contributions' && (
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Pending Monthly Contributions ({pendingContributions.length})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Verify Transaction Number &amp; receipt slip before approving to credit the fund balance, or deny with a mandatory correction message.
+              </p>
             </div>
-
-            <button
-              type="submit"
-              disabled={busyKey === 'create-poll'}
-              className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-            >
-              {busyKey === 'create-poll' ? 'Opening Secret Vote…' : 'Launch Decision Vote'}
-            </button>
-          </form>
-        </section>
-
-        {/* Ongoing Secret Votes -> Stop & Reveal */}
-        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Ongoing Secret Ballots ({votingLoans.length + openPolls.length + openProjects.length})
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Individual votes remain strictly private. Click &ldquo;Stop &amp; Reveal Result&rdquo;
-              when ready to close voting and publish aggregate results to members.
-            </p>
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={contribSearch}
+                onChange={(e) => setContribSearch(e.target.value)}
+                placeholder="Search member, bank, Tx#…"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
           </div>
 
-          {votingLoans.length + openPolls.length + openProjects.length === 0 ? (
-            <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-              No active ballots currently running.
+          {filteredPendingContributions.length === 0 ? (
+            <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
+              {pendingContributions.length === 0
+                ? 'All submitted contributions have been processed.'
+                : 'No pending contributions match your search.'}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-              {votingLoans.map((loan) => (
-                <div
-                  key={loan.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="text-xs space-y-1">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      Qard Hasan · {loan.borrowerName} ({loan.id}) ·{' '}
-                      <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
-                    </div>
-                    <div className="text-slate-500 dark:text-slate-400 font-mono">
-                      Poll Ongoing · {loan.totalVotesCast ?? loan.votes.length} ballot(s) cast (secret
-                      until revealed)
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={busyKey === `rev-loan-${loan.id}`}
-                    onClick={() => void handleRevealLoanVote(loan.id)}
-                    className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+              {filteredPendingContributions.map((c) => {
+                const txNo = c.decryptedDetails?.referenceId || c.maskedReference;
+                return (
+                  <div
+                    key={c.id}
+                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                   >
-                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Stop &amp; Reveal Result</span>
-                  </button>
-                </div>
-              ))}
+                    <div className="space-y-1 text-xs min-w-0">
+                      <div className="font-semibold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5">
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(c.userId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {c.memberName}
+                          </button>
+                        ) : (
+                          <span>{c.memberName}</span>
+                        )}
+                        <span className="font-mono text-slate-500">({c.memberCode})</span>
+                        <span>·</span>
+                        <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                          {formatMoney(c.amount, ccy)}
+                        </span>
+                        <span>·</span>
+                        <span className="font-mono">{formatBillingMonth(c.billingMonth)}</span>
+                      </div>
+                      <div className="text-slate-600 dark:text-slate-400 font-mono">
+                        {c.channel.toUpperCase()} · {c.providerName} · Tx #{txNo} · Sender:{' '}
+                        {c.decryptedDetails?.senderAccount || '—'}
+                      </div>
+                      {c.decryptedDetails?.notes && (
+                        <div className="text-slate-500 dark:text-slate-400">
+                          Member note: {c.decryptedDetails.notes}
+                        </div>
+                      )}
+                      {c.receiptPhotoUrl && (
+                        <a
+                          href={c.receiptPhotoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+                        >
+                          <span>Inspect Attached Receipt Slip</span>
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
 
-              {openPolls.map((poll) => (
-                <div
-                  key={poll.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="text-xs space-y-1">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      Decision Poll · {poll.title}
-                    </div>
-                    <div className="text-slate-500 dark:text-slate-400 font-mono">
-                      Poll Ongoing · {poll.totalVotesCast ?? poll.votes.length} ballot(s) cast
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={busyKey === `rev-poll-${poll.id}`}
-                    onClick={() => void handleRevealPoll(poll.id)}
-                    className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Stop &amp; Reveal Result</span>
-                  </button>
-                </div>
-              ))}
-
-              {openProjects.map((proj) => (
-                <div
-                  key={proj.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="text-xs space-y-1">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      Venture Proposal · {proj.title} ({formatMoney(proj.targetAllocation, ccy)})
-                    </div>
-                    <div className="text-slate-500 dark:text-slate-400 font-mono">
-                      Poll Ongoing · {proj.totalVotesCast ?? proj.votes.length} ballot(s) cast
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmContributionDecision(c, 'approved')}
+                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Approve</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmContributionDecision(c, 'rejected')}
+                        className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Deny with Note</span>
+                      </button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    disabled={busyKey === `rev-proj-${proj.id}`}
-                    onClick={() => void handleRevealProjectVote(proj.id)}
-                    className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Stop &amp; Reveal Result</span>
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
-      </div>
+      )}
 
-      {/* 5. Schedule Cooperative Meeting & Pending Profile Updates */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Meeting Scheduler</span>
-          </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Schedule Cooperative Meeting
-          </h3>
-
-          <form onSubmit={handleScheduleMeeting} className="space-y-3">
-            <input
-              type="text"
-              required
-              value={meetingTitle}
-              onChange={(e) => setMeetingTitle(e.target.value)}
-              placeholder="Meeting title (e.g. Monthly Shariah & Treasury Review)"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                type="datetime-local"
-                required
-                value={meetingWhen}
-                onChange={(e) => setMeetingWhen(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
-              <input
-                type="text"
-                required
-                value={meetingWhere}
-                onChange={(e) => setMeetingWhere(e.target.value)}
-                placeholder="Room / Google Meet / Zoom link"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
+      {/* TAB 2: Qard Hasan 3-Stage Workflow */}
+      {activeTab === 'qard-hasan' && (
+        <div className="space-y-6">
+          {/* Stage 1: Awaiting Vote Initiation */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Stage 1 · Applications Awaiting Vote Initiation ({pendingReviewLoans.length})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Inspect payout account &amp; purpose, then open the secret 2/3 Opinion Ballot or decline.
+              </p>
             </div>
-            <textarea
-              rows={2}
-              value={meetingAgenda}
-              onChange={(e) => setMeetingAgenda(e.target.value)}
-              placeholder="Meeting agenda & discussion points…"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            <button
-              type="submit"
-              disabled={busyKey === 'create-meeting'}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-            >
-              {busyKey === 'create-meeting'
-                ? 'Scheduling & Notifying Members…'
-                : 'Schedule Meeting & Notify All Members'}
-            </button>
-          </form>
 
-          {meetings.length > 0 && (
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Scheduled Meetings ({meetings.length})
+            {pendingReviewLoans.length === 0 ? (
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+                No Qard Hasan requests awaiting vote initiation.
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
-                {meetings.slice(0, 5).map((m) => (
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {pendingReviewLoans.map((loan) => (
                   <div
-                    key={m.id}
-                    className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    key={loan.id}
+                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                   >
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="truncate">{m.title}</span>
-                        <StatusText status={m.status} />
+                    <div className="space-y-1 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                          {loan.id}
+                        </span>
+                        <StatusText status={loan.status} />
                       </div>
-                      <div className="font-mono text-slate-500 dark:text-slate-400">
-                        {formatDateTime(m.scheduledFor)} · {m.locationOrLink}
+                      <div className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(loan.borrowerId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {loan.borrowerName}
+                          </button>
+                        ) : (
+                          loan.borrowerName
+                        )}{' '}
+                        ({loan.borrowerCode}) ·{' '}
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span> (
+                        {loan.installmentMonths} months)
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
+                      {loan.decryptedSensitiveNotes && (
+                        <div className="font-mono text-slate-500 dark:text-slate-400">
+                          Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
+                          {loan.decryptedSensitiveNotes.provider} ·{' '}
+                          {loan.decryptedSensitiveNotes.disbursementAccount}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmInitiateLoanVote(loan)}
+                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Vote className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Initiate 2/3 Vote</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmDeclineLoanReview(loan)}
+                        className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Stage 2: Ongoing Ballots */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Stage 2 · Ongoing Secret Qard Hasan Ballots ({votingLoans.length})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Individual votes remain confidential. Stop &amp; reveal when voting closes to tally quorum.
+              </p>
+            </div>
+
+            {votingLoans.length === 0 ? (
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+                No Qard Hasan applications currently in active voting.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {votingLoans.map((loan) => (
+                  <div
+                    key={loan.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        {loan.id} · {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 font-mono">
+                        Poll Ongoing · {loan.totalVotesCast ?? loan.votes.length} of{' '}
+                        {loan.totalEligibleVoters} ballot(s) cast secretly
                       </div>
                     </div>
-                    {m.status === 'scheduled' && (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          disabled={busyKey === `mtg-${m.id}`}
-                          onClick={() => void handleMeetingStatus(m.id, 'completed')}
-                          className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 cursor-pointer"
-                        >
-                          Done
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busyKey === `mtg-${m.id}`}
-                          onClick={() => void handleMeetingStatus(m.id, 'cancelled')}
-                          className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 cursor-pointer"
-                        >
-                          Cancel
-                        </button>
+                    <button
+                      type="button"
+                      disabled={modalBusy}
+                      onClick={() =>
+                        confirmRevealBallot(
+                          'loan',
+                          loan.id,
+                          `Qard Hasan ${loan.id} (${loan.borrowerName})`,
+                          loan.totalVotesCast ?? loan.votes.length
+                        )
+                      }
+                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Stop &amp; Reveal Result</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Stage 3: Approved Awaiting Disbursement Confirmation */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Stage 3 · Approved &amp; Awaiting Disbursement ({pendingDisbursementLoans.length})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Confirm payout and record the Transaction Number to deduct principal from the central fund balance.
+              </p>
+            </div>
+
+            {pendingDisbursementLoans.length === 0 ? (
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+                No approved Qard Hasan loans waiting for disbursement confirmation.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {pendingDisbursementLoans.map((loan) => {
+                  const shortLiquidity = loan.amount > availableLiquidity;
+                  return (
+                    <div
+                      key={loan.id}
+                      className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-emerald-50/30 dark:bg-emerald-950/10"
+                    >
+                      <div className="space-y-1 text-xs">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                            {loan.id}
+                          </span>
+                          <StatusText status={loan.status} />
+                          {shortLiquidity && (
+                            <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
+                              <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>Exceeds current balance</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-semibold text-slate-900 dark:text-white text-sm">
+                          {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                          <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
+                        </div>
+                        {loan.decryptedSensitiveNotes && (
+                          <div className="font-mono text-slate-600 dark:text-slate-400">
+                            Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
+                            {loan.decryptedSensitiveNotes.provider} ·{' '}
+                            {loan.decryptedSensitiveNotes.disbursementAccount}
+                          </div>
+                        )}
                       </div>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmDisbursement(loan)}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Confirm Disbursement &amp; Deduct Balance</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* TAB 3: Pending Hasan Installments */}
+      {activeTab === 'installments' && (
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Qard Hasan Installment Verification Queue ({pendingInstallments.length})
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Accept verified installment Transaction Numbers to restore central balance, or deny with a mandatory correction note.
+            </p>
+          </div>
+
+          {pendingInstallments.length === 0 ? (
+            <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
+              No Qard Hasan installment receipts awaiting verification.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              {pendingInstallments.map(({ loan, inst }) => {
+                const key = `${loan.id}#${inst.installmentNumber}`;
+                const txNo = inst.decryptedReceipt?.referenceId || inst.maskedReference;
+                return (
+                  <div
+                    key={key}
+                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1 text-xs">
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(loan.borrowerId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {loan.borrowerName}
+                          </button>
+                        ) : (
+                          loan.borrowerName
+                        )}{' '}
+                        ({loan.borrowerCode}) · {loan.id} Installment #{inst.installmentNumber} ·{' '}
+                        <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                          {formatMoney(inst.amount, ccy)}
+                        </span>
+                      </div>
+                      <div className="font-mono text-slate-600 dark:text-slate-400">
+                        {inst.repaymentChannel?.toUpperCase()} · {inst.repaymentProvider} · Tx #{txNo}
+                      </div>
+                      {inst.receiptPhotoUrl && (
+                        <a
+                          href={inst.receiptPhotoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+                        >
+                          <span>View Repayment Slip</span>
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() =>
+                          confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
+                        }
+                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Accept</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() =>
+                          confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
+                        }
+                        className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Deny with Note</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* TAB 4: Decision Polls & Secret Ballots */}
+      {activeTab === 'ballots' && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Initiate Decision Poll</span>
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Open Secret Member Vote for Cooperative Decision
+            </h3>
+
+            <form onSubmit={handleCreatePoll} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Decision Question / Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={3}
+                  value={pollTitle}
+                  onChange={(e) => setPollTitle(e.target.value)}
+                  placeholder="e.g. Increase annual emergency cap?"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={pollCategory}
+                    onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  >
+                    <option value="general">General Decision</option>
+                    <option value="policy">Policy / Rules</option>
+                    <option value="project">Venture / Project</option>
+                    <option value="qard_hasan">Qard Hasan Policy</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Target Close Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={pollClosesAt}
+                    onChange={(e) => setPollClosesAt(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Context / Description
+                </label>
+                <textarea
+                  rows={2}
+                  value={pollDesc}
+                  onChange={(e) => setPollDesc(e.target.value)}
+                  placeholder="Explain the cooperative decision or options..."
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <span>Ballot Options ({pollOptions.length}/6)</span>
+                  {pollOptions.length < 6 && (
+                    <button
+                      type="button"
+                      onClick={() => setPollOptions((prev) => [...prev, ''])}
+                      className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" aria-hidden="true" />
+                      <span>Add Option</span>
+                    </button>
+                  )}
+                </div>
+                {pollOptions.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={opt}
+                      onChange={(e) =>
+                        setPollOptions((prev) =>
+                          prev.map((item, i) => (i === idx ? e.target.value : item))
+                        )
+                      }
+                      placeholder={`Option ${idx + 1}`}
+                      className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                    {pollOptions.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPollOptions((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="p-1.5 rounded text-slate-400 hover:text-red-600 cursor-pointer"
+                        aria-label="Remove option"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </section>
 
-        {/* Pending Profile Update Approvals */}
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Profile Update Requests</span>
-          </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Pending Member Profile Change Requests ({pendingProfileRequests.length})
-          </h3>
+              <button
+                type="submit"
+                disabled={modalBusy}
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+              >
+                Review &amp; Launch Decision Vote
+              </button>
+            </form>
+          </section>
 
-          {pendingProfileRequests.length === 0 ? (
-            <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-              No pending profile modification requests awaiting approval.
+          <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Ongoing Secret Ballots ({ballotsCount})
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Individual votes remain strictly private. Click &ldquo;Stop &amp; Reveal Result&rdquo; when ready to close voting and publish aggregate results to members.
+              </p>
             </div>
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
-              {pendingProfileRequests.map((req) => (
-                <div key={req.id} className="p-4 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {req.memberName} ({req.memberCode}) ·{' '}
-                      <span className="capitalize font-normal text-slate-500">{req.memberRole}</span>
-                    </span>
-                    <span className="font-mono text-slate-400">
-                      {formatShortDate(req.requestedAt)}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
-                    {Object.entries(req.requestedChanges).map(([k, v]) =>
-                      v ? (
-                        <div key={k}>
-                          <span className="text-slate-400">{k}:</span> {String(v)}
-                        </div>
-                      ) : null
-                    )}
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <input
-                      type="text"
-                      value={profileNotes[req.id] || ''}
-                      onChange={(e) =>
-                        setProfileNotes((prev) => ({ ...prev, [req.id]: e.target.value }))
+
+            {ballotsCount === 0 ? (
+              <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                No active ballots currently running.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {votingLoans.map((loan) => (
+                  <div
+                    key={loan.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        Qard Hasan · {loan.borrowerName} ({loan.id}) ·{' '}
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 font-mono">
+                        Poll Ongoing · {loan.totalVotesCast ?? loan.votes.length} ballot(s) cast (secret until revealed)
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={modalBusy}
+                      onClick={() =>
+                        confirmRevealBallot(
+                          'loan',
+                          loan.id,
+                          `Qard Hasan ${loan.id}`,
+                          loan.totalVotesCast ?? loan.votes.length
+                        )
                       }
-                      placeholder="Note (required to decline)…"
-                      className="flex-1 px-2.5 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                    />
-                    <button
-                      type="button"
-                      disabled={busyKey === `prof-${req.id}`}
-                      onClick={() => void handleProfileReqReview(req.id, 'approved')}
-                      className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyKey === `prof-${req.id}`}
-                      onClick={() => void handleProfileReqReview(req.id, 'rejected')}
-                      className="px-3 py-1.5 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Decline</span>
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Stop &amp; Reveal Result</span>
                     </button>
                   </div>
-                </div>
-              ))}
+                ))}
+
+                {openPolls.map((poll) => (
+                  <div
+                    key={poll.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        Decision Poll · {poll.title}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 font-mono">
+                        Poll Ongoing · {poll.totalVotesCast ?? poll.votes.length} ballot(s) cast
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={modalBusy}
+                      onClick={() =>
+                        confirmRevealBallot(
+                          'poll',
+                          poll.id,
+                          poll.title,
+                          poll.totalVotesCast ?? poll.votes.length
+                        )
+                      }
+                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Stop &amp; Reveal Result</span>
+                    </button>
+                  </div>
+                ))}
+
+                {openProjects.map((proj) => (
+                  <div
+                    key={proj.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        Venture Proposal · {proj.title} ({formatMoney(proj.targetAllocation, ccy)})
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 font-mono">
+                        Poll Ongoing · {proj.totalVotesCast ?? proj.votes.length} ballot(s) cast
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={modalBusy}
+                      onClick={() =>
+                        confirmRevealBallot(
+                          'project',
+                          proj.id,
+                          proj.title,
+                          proj.totalVotesCast ?? proj.votes.length
+                        )
+                      }
+                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Stop &amp; Reveal Result</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* TAB 5: Meetings & Profile Change Requests */}
+      {activeTab === 'meetings-profiles' && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Meeting Scheduler</span>
             </div>
-          )}
-        </section>
-      </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Schedule Cooperative Meeting
+            </h3>
+
+            <form onSubmit={handleScheduleMeeting} className="space-y-3">
+              <input
+                type="text"
+                required
+                value={meetingTitle}
+                onChange={(e) => setMeetingTitle(e.target.value)}
+                placeholder="Meeting title (e.g. Monthly Shariah & Treasury Review)"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="datetime-local"
+                  required
+                  value={meetingWhen}
+                  onChange={(e) => setMeetingWhen(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+                <input
+                  type="text"
+                  required
+                  value={meetingWhere}
+                  onChange={(e) => setMeetingWhere(e.target.value)}
+                  placeholder="Room / Google Meet / Zoom link"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+              <textarea
+                rows={2}
+                value={meetingAgenda}
+                onChange={(e) => setMeetingAgenda(e.target.value)}
+                placeholder="Meeting agenda & discussion points…"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+              <button
+                type="submit"
+                disabled={modalBusy}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+              >
+                Schedule Meeting &amp; Notify All Members
+              </button>
+            </form>
+
+            {meetings.length > 0 && (
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Scheduled Meetings ({meetings.length})
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+                  {meetings.slice(0, 8).map((m) => (
+                    <div
+                      key={m.id}
+                      className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span className="truncate">{m.title}</span>
+                          <StatusText status={m.status} />
+                        </div>
+                        <div className="font-mono text-slate-500 dark:text-slate-400">
+                          {formatDateTime(m.scheduledFor)} · {m.locationOrLink}
+                        </div>
+                      </div>
+                      {m.status === 'scheduled' && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmMeetingStatus(m, 'completed')}
+                            className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 cursor-pointer"
+                          >
+                            Done
+                          </button>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmMeetingStatus(m, 'cancelled')}
+                            className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Profile Update Requests</span>
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Pending Member Profile Change Requests ({pendingProfileRequests.length})
+            </h3>
+
+            {pendingProfileRequests.length === 0 ? (
+              <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                No pending profile modification requests awaiting approval.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+                {pendingProfileRequests.map((req) => (
+                  <div key={req.id} className="p-4 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {onViewMemberProfile ? (
+                          <button
+                            type="button"
+                            onClick={() => onViewMemberProfile(req.userId)}
+                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            {req.memberName}
+                          </button>
+                        ) : (
+                          req.memberName
+                        )}{' '}
+                        ({req.memberCode}) ·{' '}
+                        <span className="capitalize font-normal text-slate-500">
+                          {req.memberRole}
+                        </span>
+                      </span>
+                      <span className="font-mono text-slate-400">
+                        {formatShortDate(req.requestedAt)}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
+                      {Object.entries(req.requestedChanges).map(([k, v]) =>
+                        v ? (
+                          <div key={k}>
+                            <span className="text-slate-400">{k}:</span> {String(v)}
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmProfileReqReview(req, 'approved')}
+                        className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Approve</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={() => confirmProfileReqReview(req, 'rejected')}
+                        className="px-3 py-1.5 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Decline</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

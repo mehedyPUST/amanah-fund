@@ -12,6 +12,8 @@ import type {
   LeaderboardEntry,
   LoanRequest,
   LoanSensitiveDetails,
+  ManagerCycleSchedule,
+  ManagerCycleSlot,
   MemberPublicProfile,
   MemberSummary,
   MonthClearanceEntry,
@@ -214,40 +216,43 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
   const beforeMaturityDate = now <= maturity;
 
-  const reasons: string[] = [];
+  const blockingReasons: string[] = [];
+  const passingReasons: string[] = [];
   if (!noActiveLoan && activeOrPendingLoan) {
-    reasons.push(
+    blockingReasons.push(
       `Existing loan (${activeOrPendingLoan.id}) is currently "${activeOrPendingLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`
     );
   } else {
-    reasons.push('No active or pending Qard Hasan loan.');
+    passingReasons.push('No active or pending Qard Hasan loan.');
   }
 
   if (!noOverdueInstallments) {
-    reasons.push(
+    blockingReasons.push(
       `${overdueCount} overdue installment(s) detected. Settle overdue repayments before requesting new financing.`
     );
   } else {
-    reasons.push('Zero overdue loan installments.');
+    passingReasons.push('Zero overdue loan installments.');
   }
 
   if (!quotaAvailable) {
-    reasons.push(
+    blockingReasons.push(
       `Annual limit reached: ${loansUsedThisYear} of ${maxLoansPerYear} permitted loans used in ${currentYear}.`
     );
   } else {
-    reasons.push(
+    passingReasons.push(
       `Annual quota available: ${loansUsedThisYear} of ${maxLoansPerYear} loans used in ${currentYear}.`
     );
   }
 
   if (!beforeMaturityDate) {
-    reasons.push(
+    blockingReasons.push(
       `Fund reached maturity (${state.fundConfig.maturityDate}) and has transitioned to Halal project investment phase.`
     );
   } else {
-    reasons.push(`Qard Hasan lending window active until ${state.fundConfig.maturityDate}.`);
+    passingReasons.push(`Qard Hasan lending window active until ${state.fundConfig.maturityDate}.`);
   }
+
+  const reasons = [...blockingReasons, ...passingReasons];
 
   return {
     noActiveLoan,
@@ -1361,4 +1366,131 @@ export function buildGoogleSheetsBlueprint(state: VaultState): SheetTabBlueprint
     { sheetName: 'Email_Notifications', rows: notificationRows },
   ];
 }
+
+function addUtcMonthsKeepingDay(dateStr: string, monthsToAdd: number): Date {
+  const [yStr, mStr, dStr] = dateStr.split('-');
+  const y = Number(yStr) || 2026;
+  const m = (Number(mStr) || 1) - 1;
+  const d = Number(dStr) || 1;
+  const targetMonthTotal = m + monthsToAdd;
+  const targetYear = y + Math.floor(targetMonthTotal / 12);
+  const targetMonth = ((targetMonthTotal % 12) + 12) % 12;
+  const daysInTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(targetYear, targetMonth, Math.min(d, daysInTargetMonth)));
+}
+
+export function buildManagerCycleSchedule(
+  state: VaultState,
+  referenceDate = new Date()
+): ManagerCycleSchedule {
+  const cycleMonths = Math.max(
+    1,
+    Math.min(36, Math.round(Number(state.fundConfig.managerCycleMonths) || 3))
+  );
+  const rawStart = state.fundConfig.managerCycleStartDate || '2026-01-01';
+  const cycleStartDate = /^\d{4}-\d{2}-\d{2}$/.test(rawStart) ? rawStart : '2026-01-01';
+
+  const eligibleMembers = state.users
+    .filter((u) => u.status === 'active' && u.role !== 'admin')
+    .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.memberCode.localeCompare(b.memberCode));
+
+  const activeDesignatedManagers = eligibleMembers
+    .filter((u) => u.role === 'manager')
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      memberCode: u.memberCode,
+      photoUrl: u.photoUrl,
+    }));
+
+  if (eligibleMembers.length === 0) {
+    return {
+      cycleMonths,
+      cycleStartDate,
+      eligibleMembersCount: 0,
+      currentCycleNumber: null,
+      currentSlot: null,
+      nextSlot: null,
+      activeDesignatedManagers,
+      slots: [],
+    };
+  }
+
+  const refDateOnly = new Date(
+    Date.UTC(
+      referenceDate.getUTCFullYear(),
+      referenceDate.getUTCMonth(),
+      referenceDate.getUTCDate()
+    )
+  );
+  const startDateObj = addUtcMonthsKeepingDay(cycleStartDate, 0);
+
+  let currentIdx = -1;
+  if (refDateOnly >= startDateObj) {
+    const roughMonths =
+      (refDateOnly.getUTCFullYear() - startDateObj.getUTCFullYear()) * 12 +
+      (refDateOnly.getUTCMonth() - startDateObj.getUTCMonth());
+    let candidate = Math.max(0, Math.floor(roughMonths / cycleMonths));
+    while (addUtcMonthsKeepingDay(cycleStartDate, (candidate + 1) * cycleMonths) <= refDateOnly) {
+      candidate += 1;
+    }
+    while (candidate > 0 && addUtcMonthsKeepingDay(cycleStartDate, candidate * cycleMonths) > refDateOnly) {
+      candidate -= 1;
+    }
+    currentIdx = candidate;
+  }
+
+  const upcomingTargetCount = Math.max(eligibleMembers.length * 2, currentIdx + eligibleMembers.length + 2);
+  const totalSlots = Math.min(60, Math.max(eligibleMembers.length, upcomingTargetCount));
+  const windowStart = Math.max(0, currentIdx - Math.min(eligibleMembers.length, 4));
+
+  const slots: ManagerCycleSlot[] = [];
+  for (let i = windowStart; i < totalSlots; i += 1) {
+    const member = eligibleMembers[i % eligibleMembers.length];
+    const slotStart = addUtcMonthsKeepingDay(cycleStartDate, i * cycleMonths);
+    const nextSlotStart = addUtcMonthsKeepingDay(cycleStartDate, (i + 1) * cycleMonths);
+    const slotEnd = new Date(nextSlotStart.getTime() - 24 * 60 * 60 * 1000);
+
+    const status: ManagerCycleSlot['status'] =
+      currentIdx < 0
+        ? i === 0
+          ? 'upcoming'
+          : 'upcoming'
+        : i < currentIdx
+          ? 'completed'
+          : i === currentIdx
+            ? 'current'
+            : 'upcoming';
+
+    slots.push({
+      cycleNumber: i + 1,
+      memberId: member.id,
+      memberName: member.name,
+      memberCode: member.memberCode,
+      currentRole: member.role,
+      photoUrl: member.photoUrl,
+      startDate: slotStart.toISOString().slice(0, 10),
+      endDate: slotEnd.toISOString().slice(0, 10),
+      status,
+    });
+  }
+
+  const currentSlot = slots.find((s) => s.status === 'current') || null;
+  const nextSlot =
+    currentSlot
+      ? slots.find((s) => s.cycleNumber === currentSlot.cycleNumber + 1) || null
+      : slots[0] || null;
+
+  return {
+    cycleMonths,
+    cycleStartDate,
+    eligibleMembersCount: eligibleMembers.length,
+    currentCycleNumber: currentSlot ? currentSlot.cycleNumber : null,
+    currentSlot,
+    nextSlot,
+    activeDesignatedManagers,
+    slots,
+  };
+}
+
 

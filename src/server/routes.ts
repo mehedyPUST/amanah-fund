@@ -45,6 +45,7 @@ import {
   applyOverdueChecksToState,
   buildDashboardOverview,
   buildGoogleSheetsBlueprint,
+  buildManagerCycleSchedule,
   buildMemberPublicProfile,
   buildMemberSummaries,
   computeRequiredApprovals,
@@ -1803,7 +1804,9 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
 
       const guarantorThreshold = draft.fundConfig.guarantorThresholdAmount ?? 40000;
       const requiredGuarantors = draft.fundConfig.requiredGuarantorsCount ?? 1;
-      const otherActiveMembers = draft.users.filter((u) => u.status === 'active' && u.id !== viewer.id);
+      const otherActiveMembers = draft.users.filter(
+        (u) => u.status === 'active' && u.role !== 'admin' && u.id !== viewer.id
+      );
       const needsGuarantor =
         amount > guarantorThreshold && requiredGuarantors > 0 && otherActiveMembers.length > 0;
 
@@ -2562,6 +2565,7 @@ apiRouter.post(
       if (!(await assertStepUpTotp(req, res))) return;
       const { id } = req.params;
       const viewer = req.authUser!;
+      const transactionNumber = String(req.body?.transactionNumber || '').trim();
       let updatedLoan: LoanRequest | null = null;
 
       await updateVaultState((draft) => {
@@ -2590,7 +2594,9 @@ apiRouter.post(
             amount: loan.amount,
             signedBy: viewer.id,
             signedAt,
+            transactionNumber: transactionNumber || undefined,
           }),
+          ...(transactionNumber ? { transactionNumber } : {}),
         };
 
         loan.installments = loan.installments.map((inst, idx) => ({
@@ -2606,7 +2612,7 @@ apiRouter.post(
             recipientName: borrower.name,
             recipientUserId: borrower.id,
             subject: `Qard Hasan Disbursed: ${loan.id}`,
-            body: `Assalamu Alaikum ${borrower.name}, ${viewer.name} completed multi-sig treasury disbursement of ${loan.amount} ${draft.fundConfig.currency} for ${loan.id}. Your ${loan.installmentMonths}-month 0% repayment schedule is now active.`,
+            body: `Assalamu Alaikum ${borrower.name}, ${viewer.name} completed multi-sig treasury disbursement of ${loan.amount} ${draft.fundConfig.currency} for ${loan.id}.${transactionNumber ? ` Transaction Number: ${transactionNumber}.` : ''} Your ${loan.installmentMonths}-month 0% repayment schedule is now active.`,
             relatedId: loan.id,
           });
         }
@@ -2618,11 +2624,12 @@ apiRouter.post(
           action: 'LOAN_DISBURSED',
           resourceType: 'loan',
           resourceId: loan.id,
-          summary: `${viewer.name} executed multi-sig Qard Hasan disbursement of ${loan.amount} to ${loan.borrowerName}`,
+          summary: `${viewer.name} executed multi-sig Qard Hasan disbursement of ${loan.amount} to ${loan.borrowerName}${transactionNumber ? ` (Tx #${transactionNumber})` : ''}`,
           payload: {
             loanId: loan.id,
             borrowerId: loan.borrowerId,
             amount: loan.amount,
+            transactionNumber: transactionNumber || undefined,
             signatureHash: loan.disbursementSignature.signatureHash,
           },
         });
@@ -3671,6 +3678,17 @@ apiRouter.get('/members/:id/profile', requireAuth, async (req: AuthenticatedRequ
   }
 });
 
+apiRouter.get('/manager-cycle', requireAuth, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const schedule = buildManagerCycleSchedule(state);
+    res.json({ schedule });
+  } catch (err) {
+    console.error('Manager cycle error:', err);
+    res.status(500).json({ error: 'Failed to build manager rotation schedule.' });
+  }
+});
+
 apiRouter.get(
   '/admin/registrations/pending',
   requireAuth,
@@ -4129,6 +4147,7 @@ apiRouter.patch(
       const maxInstallmentMonths = Number(body.maxInstallmentMonths);
       const guarantorThresholdAmount = Number(body.guarantorThresholdAmount);
       const requiredGuarantorsCount = Number(body.requiredGuarantorsCount);
+      const managerCycleMonths = Number(body.managerCycleMonths);
 
       if (
         body.maxLoansPerYear !== undefined &&
@@ -4189,6 +4208,29 @@ apiRouter.patch(
         const parsedDate = Date.parse(`${body.maturityDate}T00:00:00Z`);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(body.maturityDate) || Number.isNaN(parsedDate)) {
           res.status(400).json({ error: 'Maturity date must be a valid YYYY-MM-DD date.' });
+          return;
+        }
+      }
+      if (
+        body.managerCycleMonths !== undefined &&
+        (!Number.isInteger(managerCycleMonths) ||
+          managerCycleMonths < 1 ||
+          managerCycleMonths > 36)
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Manager cycle duration must be an integer between 1 and 36 months.' });
+        return;
+      }
+      if (body.managerCycleStartDate !== undefined) {
+        const parsedStart = Date.parse(`${body.managerCycleStartDate}T00:00:00Z`);
+        if (
+          !/^\d{4}-\d{2}-\d{2}$/.test(body.managerCycleStartDate) ||
+          Number.isNaN(parsedStart)
+        ) {
+          res
+            .status(400)
+            .json({ error: 'Manager cycle start date must be a valid YYYY-MM-DD date.' });
           return;
         }
       }
@@ -4260,6 +4302,26 @@ apiRouter.patch(
           changes.maturityDate = { from: cfg.maturityDate, to: body.maturityDate };
           cfg.maturityDate = body.maturityDate;
         }
+        if (
+          body.managerCycleMonths !== undefined &&
+          managerCycleMonths !== cfg.managerCycleMonths
+        ) {
+          changes.managerCycleMonths = {
+            from: cfg.managerCycleMonths ?? 3,
+            to: managerCycleMonths,
+          };
+          cfg.managerCycleMonths = managerCycleMonths;
+        }
+        if (
+          body.managerCycleStartDate !== undefined &&
+          body.managerCycleStartDate !== cfg.managerCycleStartDate
+        ) {
+          changes.managerCycleStartDate = {
+            from: cfg.managerCycleStartDate ?? '2026-01-01',
+            to: body.managerCycleStartDate,
+          };
+          cfg.managerCycleStartDate = body.managerCycleStartDate;
+        }
         if (typeof body.halalInvestmentThesis === 'string' && body.halalInvestmentThesis.trim()) {
           const nextThesis = body.halalInvestmentThesis.trim();
           if (nextThesis !== cfg.halalInvestmentThesis) {
@@ -4292,10 +4354,12 @@ apiRouter.patch(
           action: 'FUND_POLICY_UPDATED',
           resourceType: 'config',
           resourceId: cfg.id,
-          summary: `${viewer.name} updated cooperative policy (max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate})`,
+          summary: `${viewer.name} updated cooperative policy (max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate}, manager cycle ${cfg.managerCycleMonths ?? 3}m)`,
           payload: {
             maxLoansPerYear: cfg.maxLoansPerYear,
             maturityDate: cfg.maturityDate,
+            managerCycleMonths: cfg.managerCycleMonths ?? 3,
+            managerCycleStartDate: cfg.managerCycleStartDate ?? '2026-01-01',
             monthlyContributionAmount: cfg.monthlyContributionAmount,
             maxLoanAmount: cfg.maxLoanAmount,
             guarantorThresholdAmount: cfg.guarantorThresholdAmount,

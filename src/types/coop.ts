@@ -17,7 +17,9 @@ export type DashboardSectionId =
   | 'system-audit-logs'
   | 'member-registry'
   | 'site-settings'
-  | 'member-profile';
+  | 'member-profile'
+  | 'manager-cycle'
+  | 'members';
 
 export interface EncryptedEnvelope {
   iv: string;
@@ -103,6 +105,8 @@ export interface FundConfig {
   voteThresholdNumerator: number;
   voteThresholdDenominator: number;
   maturityDate: string; // YYYY-MM-DD
+  managerCycleMonths?: number;
+  managerCycleStartDate?: string; // YYYY-MM-DD
   halalInvestmentThesis: string;
   googleSheetId?: string;
   googleSheetUrl?: string;
@@ -270,6 +274,7 @@ export interface LoanRequest {
     signedByRole: UserRole;
     signedAt: string;
     signatureHash: string;
+    transactionNumber?: string;
   };
   installments: InstallmentItem[];
   totalRepaid: number;
@@ -761,4 +766,32 @@ export interface MemberPublicProfile {
   about: MemberPublicProfileAbout;
   fundSummary: MemberPublicProfileFundSummary;
   communityPosts: CommunityPost[];
+}
+
+export interface ManagerCycleSlot {
+  cycleNumber: number;
+  memberId: string;
+  memberName: string;
+  memberCode: string;
+  currentRole: UserRole;
+  photoUrl?: string;
+  startDate: string;
+  endDate: string;
+  status: 'completed' | 'current' | 'upcoming';
+}
+
+export interface ManagerCycleSchedule {
+  cycleMonths: number;
+  cycleStartDate: string;
+  eligibleMembersCount: number;
+  currentCycleNumber: number | null;
+  currentSlot: ManagerCycleSlot | null;
+  nextSlot: ManagerCycleSlot | null;
+  activeDesignatedManagers: Array<{
+    id: string;
+    name: string;
+    memberCode: string;
+    photoUrl?: string;
+  }>;
+  slots: ManagerCycleSlot[];
 }

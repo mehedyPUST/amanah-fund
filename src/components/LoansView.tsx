@@ -24,6 +24,8 @@ import {
   formatMoney,
   formatShortDate,
 } from '../utils/format.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { ProviderSelect } from './ProviderSelect.tsx';
 import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -35,8 +37,31 @@ interface LoansViewProps {
   user: PublicUser;
   loading: boolean;
   onOpenLoanModal?: () => void;
+  onViewMemberProfile?: (memberId: string) => void;
   onRefresh: () => Promise<void>;
 }
+
+type LoanActionModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      inputMultiline?: boolean;
+      run: (inputValue: string) => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red' | 'slate';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+    };
 
 export function LoansView({
   loans,
@@ -46,45 +71,62 @@ export function LoansView({
   user,
   loading,
   onOpenLoanModal,
+  onViewMemberProfile,
   onRefresh,
 }: LoansViewProps) {
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<LoanActionModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   const [scope, setScope] = useState<'mine' | 'all'>(isAdmin ? 'all' : 'mine');
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 
-  // Installment payment form state
   const [payingInstallment, setPayingInstallment] = useState<{
     loanId: string;
     installmentNumber: number;
+    amount: number;
   } | null>(null);
-  const [rejectingInstallment, setRejectingInstallment] = useState<{
-    loanId: string;
-    installmentNumber: number;
-  } | null>(null);
-  const [installmentRejectNote, setInstallmentRejectNote] = useState('');
   const [repayChannel, setRepayChannel] = useState<'bank' | 'mfs'>('mfs');
   const [repayProvider, setRepayProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [repayAccount, setRepayAccount] = useState('');
   const [repayRef, setRepayRef] = useState('');
   const [repayReceiptUrl, setRepayReceiptUrl] = useState('');
   const [scanningRepaySlip, setScanningRepaySlip] = useState(false);
-  const [repayBusy, setRepayBusy] = useState(false);
-  const [guarantorBusyId, setGuarantorBusyId] = useState<string | null>(null);
+
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleMonths, setRescheduleMonths] = useState('6');
   const [rescheduleReason, setRescheduleReason] = useState('');
-  const [rescheduleBusy, setRescheduleBusy] = useState(false);
+
+  function showNotice(
+    tone: 'emerald' | 'amber' | 'red' | 'slate',
+    title: string,
+    description: string,
+    details?: ActionModalDetailItem[]
+  ) {
+    setModal({ mode: 'notice', tone, title, description, details });
+  }
+
+  async function runConfirmedModal(inputValue: string) {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
+    try {
+      await modal.run(inputValue);
+    } catch (err) {
+      showNotice(
+        'red',
+        'Action Could Not Be Completed',
+        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setModalBusy(false);
+    }
+  }
 
   async function handleRepaySlipScan(file: File) {
     setScanningRepaySlip(true);
-    setFeedback(null);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
         api.uploadImage(file, `repay-receipt-${Date.now()}`),
@@ -104,191 +146,262 @@ export function LoansView({
         setRepayProvider(matched);
         if (ext.referenceId) setRepayRef(ext.referenceId);
         if (ext.senderAccount) setRepayAccount(ext.senderAccount);
-        setFeedback({
-          type: 'success',
-          text: `Gemini AI parsed slip (${ext.confidence}): ${ext.summary}`,
-        });
+        showNotice(
+          'emerald',
+          'Receipt Slip Scanned',
+          `Gemini AI parsed slip (${ext.confidence} confidence): ${ext.summary}`
+        );
       } else if (uploadRes.status === 'fulfilled') {
-        setFeedback({
-          type: 'success',
-          text: 'Receipt image attached. Verify TrxID and sender account before submitting.',
-        });
+        showNotice(
+          'slate',
+          'Receipt Image Attached',
+          'Please verify the Transaction Number and sender account before submitting.'
+        );
+      } else {
+        showNotice(
+          'red',
+          'Receipt Upload Failed',
+          'Could not upload receipt image. Please check file size (<8 MB) and try again.'
+        );
       }
     } finally {
       setScanningRepaySlip(false);
     }
   }
 
-  async function handleSubmitRepayment(e: FormEvent) {
+  function handleSubmitRepayment(e: FormEvent) {
     e.preventDefault();
     if (!payingInstallment) return;
-    setRepayBusy(true);
-    setFeedback(null);
-    try {
-      await api.submitInstallmentRepayment(
-        payingInstallment.loanId,
-        payingInstallment.installmentNumber,
-        {
-          channel: repayChannel,
-          providerName: repayProvider,
-          senderAccount: repayAccount,
-          referenceId: repayRef,
-          receiptPhotoUrl: repayReceiptUrl || undefined,
-        }
+    const target = payingInstallment;
+    if (!repayAccount.trim() || !repayRef.trim()) {
+      showNotice(
+        'red',
+        'Missing Repayment Details',
+        'Please provide both your sender account/wallet number and the Transaction Number.'
       );
-      setPayingInstallment(null);
-      setRepayAccount('');
-      setRepayRef('');
-      setRepayReceiptUrl('');
-      setFeedback({
-        type: 'success',
-        text: 'Installment repayment receipt encrypted and submitted for Manager verification.',
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to submit installment repayment.',
-      });
-    } finally {
-      setRepayBusy(false);
-    }
-  }
-
-  async function handleGuarantorRespond(loanId: string, decision: 'accept' | 'decline') {
-    setGuarantorBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.respondAsGuarantor(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'accept'
-            ? `Co-signed guarantor pledge for ${loanId}.`
-            : `Declined guarantor pledge for ${loanId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to record guarantor response.',
-      });
-    } finally {
-      setGuarantorBusyId(null);
-    }
-  }
-
-  async function handleRequestReschedule(loanId: string, e: FormEvent) {
-    e.preventDefault();
-    setRescheduleBusy(true);
-    setFeedback(null);
-    try {
-      await api.requestLoanReschedule(loanId, {
-        requestedMonths: Number(rescheduleMonths),
-        reason: rescheduleReason,
-      });
-      setRescheduleOpen(false);
-      setRescheduleReason('');
-      setFeedback({
-        type: 'success',
-        text: `Rescheduling request for ${loanId} submitted for Manager/Admin review.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Could not submit rescheduling request.',
-      });
-    } finally {
-      setRescheduleBusy(false);
-    }
-  }
-
-  async function handleReviewReschedule(loanId: string, decision: 'approve' | 'reject') {
-    setRescheduleBusy(true);
-    setFeedback(null);
-    try {
-      await api.reviewLoanReschedule(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approve'
-            ? `Approved rescheduling for ${loanId}. Remaining installments regenerated.`
-            : `Declined rescheduling request for ${loanId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review rescheduling request.',
-      });
-    } finally {
-      setRescheduleBusy(false);
-    }
-  }
-
-  async function handleVerifyInstallment(
-    loanId: string,
-    installmentNumber: number,
-    decision: 'approve' | 'reject',
-    note?: string
-  ) {
-    if (decision === 'reject' && !note?.trim()) {
-      setFeedback({
-        type: 'error',
-        text: 'Please provide a correction note explaining why this installment proof is denied.',
-      });
       return;
     }
-    setRepayBusy(true);
-    setFeedback(null);
-    try {
-      await api.verifyInstallmentRepayment(
-        loanId,
-        installmentNumber,
-        decision,
-        note?.trim() || undefined
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Confirm Installment #${target.installmentNumber} Repayment`,
+      description:
+        'Verify your transfer details before encrypting and submitting to the Manager Desk for fund balance reconciliation.',
+      details: [
+        { label: 'Loan ID', value: target.loanId },
+        { label: 'Installment', value: `#${target.installmentNumber} · ${formatMoney(target.amount, ccy)}` },
+        { label: 'Channel & Provider', value: `${repayChannel.toUpperCase()} · ${repayProvider}` },
+        { label: 'Sender Account', value: repayAccount.trim() },
+        { label: 'Transaction Number', value: repayRef.trim() },
+      ],
+      confirmLabel: 'Submit Repayment Proof',
+      run: async () => {
+        await api.submitInstallmentRepayment(target.loanId, target.installmentNumber, {
+          channel: repayChannel,
+          providerName: repayProvider,
+          senderAccount: repayAccount.trim(),
+          referenceId: repayRef.trim(),
+          receiptPhotoUrl: repayReceiptUrl || undefined,
+        });
+        setPayingInstallment(null);
+        setRepayAccount('');
+        setRepayRef('');
+        setRepayReceiptUrl('');
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Installment Repayment Submitted',
+          'Your repayment proof is AES-256-GCM encrypted and awaiting Manager verification.'
+        );
+      },
+    });
+  }
+
+  function confirmGuarantorRespond(loan: LoanRequest, decision: 'accept' | 'decline') {
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'accept' ? 'emerald' : 'red',
+      title:
+        decision === 'accept'
+          ? `Co-Sign Guarantor Pledge (${loan.id})`
+          : `Decline Guarantor Pledge (${loan.id})`,
+      description:
+        decision === 'accept'
+          ? `Confirm co-signing ${loan.borrowerName}'s Qard Hasan request for ${formatMoney(loan.amount, ccy)}. Once co-signed, it advances to Manager review.`
+          : `Confirm declining to act as guarantor for ${loan.borrowerName}'s Qard Hasan request.`,
+      details: [
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+        { label: 'Purpose', value: loan.purpose },
+      ],
+      confirmLabel: decision === 'accept' ? 'Confirm Co-Sign' : 'Confirm Decline',
+      run: async () => {
+        await api.respondAsGuarantor(loan.id, decision);
+        await onRefresh();
+        showNotice(
+          decision === 'accept' ? 'emerald' : 'amber',
+          decision === 'accept' ? 'Guarantor Pledge Co-Signed' : 'Guarantor Pledge Declined',
+          decision === 'accept'
+            ? `Co-signed guarantor pledge for ${loan.id}.`
+            : `Declined guarantor pledge for ${loan.id}.`
+        );
+      },
+    });
+  }
+
+  function handleRequestReschedule(loanId: string, e: FormEvent) {
+    e.preventDefault();
+    const months = Number(rescheduleMonths);
+    const reason = rescheduleReason.trim();
+    if (!reason || reason.length < 6) {
+      showNotice(
+        'red',
+        'Reason Too Short',
+        'Please enter a clear reason (at least 6 characters) for extending the repayment timeline.'
       );
-      setRejectingInstallment(null);
-      setInstallmentRejectNote('');
-      setFeedback({
-        type: 'success',
-        text:
+      return;
+    }
+
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: `Confirm Reschedule Request (${loanId})`,
+      description:
+        'Submit a 0% fee installment rescheduling request to the Manager/Admin for approval.',
+      details: [
+        { label: 'Loan ID', value: loanId },
+        { label: 'Requested Remaining Months', value: `${months} months` },
+        { label: 'Reason', value: reason },
+      ],
+      confirmLabel: 'Submit Reschedule Request',
+      run: async () => {
+        await api.requestLoanReschedule(loanId, {
+          requestedMonths: months,
+          reason,
+        });
+        setRescheduleOpen(false);
+        setRescheduleReason('');
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Reschedule Request Submitted',
+          `Rescheduling request for ${loanId} submitted for Manager/Admin review.`
+        );
+      },
+    });
+  }
+
+  function confirmReviewReschedule(loanId: string, decision: 'approve' | 'reject') {
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'approve' ? 'emerald' : 'red',
+      title:
+        decision === 'approve'
+          ? `Approve Rescheduling (${loanId})`
+          : `Decline Rescheduling (${loanId})`,
+      description:
+        decision === 'approve'
+          ? 'Approving will regenerate all remaining unpaid installments evenly at 0% interest.'
+          : 'Declining will keep the borrower on the current installment schedule.',
+      confirmLabel: decision === 'approve' ? 'Approve Reschedule' : 'Decline Reschedule',
+      run: async () => {
+        await api.reviewLoanReschedule(loanId, decision);
+        await onRefresh();
+        showNotice(
+          decision === 'approve' ? 'emerald' : 'amber',
+          decision === 'approve' ? 'Schedule Rescheduled' : 'Reschedule Declined',
           decision === 'approve'
-            ? `Installment #${installmentNumber} verified and credited to principal balance.`
-            : `Installment #${installmentNumber} denied with correction note sent to borrower.`,
+            ? `Approved rescheduling for ${loanId}. Remaining installments regenerated.`
+            : `Declined rescheduling request for ${loanId}.`
+        );
+      },
+    });
+  }
+
+  function confirmVerifyInstallment(
+    loan: LoanRequest,
+    installmentNumber: number,
+    decision: 'approve' | 'reject'
+  ) {
+    const inst = loan.installments.find((i) => i.installmentNumber === installmentNumber);
+    const txNo = inst?.decryptedReceipt?.referenceId || inst?.maskedReference || '—';
+    if (decision === 'approve') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Accept Installment #${installmentNumber} Payment`,
+        description:
+          'Confirm verifying this installment receipt. Approving updates the borrower’s remaining balance and increases the cooperative liquid fund balance.',
+        details: [
+          { label: 'Loan & Borrower', value: `${loan.id} · ${loan.borrowerName}` },
+          { label: 'Installment Amount', value: formatMoney(inst?.amount || 0, ccy) },
+          { label: 'Provider', value: inst?.repaymentProvider || '—' },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        confirmLabel: 'Accept & Credit Balance',
+        run: async () => {
+          await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
+          await onRefresh();
+          showNotice(
+            'emerald',
+            `Installment #${installmentNumber} Verified`,
+            `Installment #${installmentNumber} (${txNo}) verified and credited to principal & treasury balance.`
+          );
+        },
       });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to verify installment.',
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Deny Installment #${installmentNumber} Receipt`,
+        description:
+          'Provide a clear correction message explaining what the borrower must fix (e.g., Transaction Number mismatch or unclear receipt slip).',
+        details: [
+          { label: 'Loan & Borrower', value: `${loan.id} · ${loan.borrowerName}` },
+          { label: 'Transaction Number', value: txNo },
+        ],
+        inputLabel: 'Correction Note for Borrower',
+        inputPlaceholder: 'Explain the issue so the member can correct and resubmit…',
+        inputRequired: true,
+        inputMultiline: true,
+        confirmLabel: 'Deny & Send Correction Note',
+        run: async (note) => {
+          await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
+          await onRefresh();
+          showNotice(
+            'amber',
+            `Installment #${installmentNumber} Denied`,
+            `Installment #${installmentNumber} was denied with your correction note sent to ${loan.borrowerName}.`
+          );
+        },
       });
-    } finally {
-      setRepayBusy(false);
     }
   }
 
-  const [voteBusyId, setVoteBusyId] = useState<string | null>(null);
-
-  async function handleQuickLoanVote(loanId: string, decision: 'upvote' | 'downvote') {
-    setVoteBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.voteLoan(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text: `Your secret ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} ballot was recorded for ${loanId}.`,
-      });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to cast loan vote.',
-      });
-    } finally {
-      setVoteBusyId(null);
-    }
+  function confirmQuickLoanVote(loan: LoanRequest, decision: 'upvote' | 'downvote') {
+    setModal({
+      mode: 'confirm',
+      tone: decision === 'upvote' ? 'emerald' : 'red',
+      title: `Confirm Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} (${loan.id})`,
+      description:
+        'Your ballot is confidential — other members only see that the poll is ongoing until the Manager reveals the final result.',
+      details: [
+        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: 'Requested Amount', value: formatMoney(loan.amount, ccy) },
+        { label: 'Purpose', value: loan.purpose },
+      ],
+      confirmLabel: decision === 'upvote' ? 'Cast Secret Upvote' : 'Cast Secret Downvote',
+      run: async () => {
+        await api.voteLoan(loan.id, decision);
+        await onRefresh();
+        showNotice(
+          'emerald',
+          'Secret Ballot Recorded',
+          `Your ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} ballot was recorded securely for ${loan.id}.`
+        );
+      },
+    });
   }
 
   const myGuarantorRequests = loans.filter(
@@ -301,7 +414,6 @@ export function LoansView({
   const activeSelectedLoan =
     visibleLoans.find((l) => l.id === selectedLoanId) || visibleLoans[0] || null;
 
-  // Top summary card computations: remaining yearly quota + active loan request status
   const currentYear = new Date().getFullYear();
   const maxLoansPerYear = eligibility?.maxLoansPerYear ?? config?.maxLoansPerYear ?? 3;
   const usedLoansThisYear = eligibility?.loansUsedThisYear ?? 0;
@@ -379,7 +491,6 @@ export function LoansView({
 
   return (
     <div className="space-y-6">
-      {/* Pending Guarantor Co-Sign Action Card */}
       {myGuarantorRequests.length > 0 && (
         <section className="bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
@@ -407,16 +518,16 @@ export function LoansView({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    disabled={guarantorBusyId === loan.id}
-                    onClick={() => void handleGuarantorRespond(loan.id, 'accept')}
+                    disabled={modalBusy}
+                    onClick={() => confirmGuarantorRespond(loan, 'accept')}
                     className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
                     Accept Co-Sign
                   </button>
                   <button
                     type="button"
-                    disabled={guarantorBusyId === loan.id}
-                    onClick={() => void handleGuarantorRespond(loan.id, 'decline')}
+                    disabled={modalBusy}
+                    onClick={() => confirmGuarantorRespond(loan, 'decline')}
                     className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
                     Decline
@@ -428,20 +539,6 @@ export function LoansView({
         </section>
       )}
 
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
-      {/* Top Summary Card: Remaining Yearly Quota & Active Loan Status (Members & Managers only) */}
       {!isAdmin && (
         <section
           aria-label="Member Loan Quota and Active Request Summary"
@@ -454,7 +551,6 @@ export function LoansView({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x md:divide-slate-100 dark:md:divide-slate-800">
-              {/* Left: Remaining Yearly Quota */}
               <div className="space-y-2.5 md:pr-4">
                 <div className="flex items-baseline justify-between gap-2">
                   <div>
@@ -500,7 +596,6 @@ export function LoansView({
                 </div>
               </div>
 
-              {/* Right: Active Loan Request Status */}
               <div className="space-y-2.5 md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -549,7 +644,6 @@ export function LoansView({
         </section>
       )}
 
-      {/* Eligibility Engine Summary (Members & Managers only) */}
       {!isAdmin && (
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -691,7 +785,6 @@ export function LoansView({
           </div>
         )}
 
-        {/* Repayment Schedule & Loan Portfolio */}
         <section
           className={`${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
@@ -703,7 +796,7 @@ export function LoansView({
                 Loan Portfolio &amp; Repayment Schedules
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Track scheduled monthly installments, remaining balances, and payment verifications
+                Track scheduled monthly installments, Transaction Numbers, remaining balances, and payment verifications
               </p>
             </div>
 
@@ -753,7 +846,7 @@ export function LoansView({
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <th className="py-2.5 px-4">Loan ID & Borrower</th>
+                      <th className="py-2.5 px-4">Loan ID &amp; Borrower</th>
                       <th className="py-2.5 px-4 text-right">Principal</th>
                       <th className="py-2.5 px-4 text-right">Repaid</th>
                       <th className="py-2.5 px-4 text-right">Remaining</th>
@@ -774,8 +867,21 @@ export function LoansView({
                           }`}
                         >
                           <td className="py-3 px-4">
-                            <div className="font-medium text-slate-900 dark:text-white">
-                              {loan.borrowerName}{' '}
+                            <div className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                              {onViewMemberProfile ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewMemberProfile(loan.borrowerId);
+                                  }}
+                                  className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                                >
+                                  {loan.borrowerName}
+                                </button>
+                              ) : (
+                                <span>{loan.borrowerName}</span>
+                              )}
                               <span className="font-mono text-xs text-slate-500">
                                 · {loan.borrowerCode}
                               </span>
@@ -812,14 +918,18 @@ export function LoansView({
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {activeSelectedLoan.installmentMonths} monthly installments at{' '}
-                        {formatMoney(activeSelectedLoan.monthlyInstallment, ccy)}/mo (0% interest)
+                        {formatMoney(activeSelectedLoan.monthlyInstallment, ccy)}/mo (0% interest) ·{' '}
+                        {activeSelectedLoan.channel.toUpperCase()} · {activeSelectedLoan.provider}
                       </p>
                     </div>
                     {activeSelectedLoan.disbursementSignature && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                      <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
                         <span>
                           Disbursed by {activeSelectedLoan.disbursementSignature.signedByName}
+                          {activeSelectedLoan.disbursementSignature.transactionNumber
+                            ? ` · Tx #${activeSelectedLoan.disbursementSignature.transactionNumber}`
+                            : ''}
                         </span>
                       </span>
                     )}
@@ -881,8 +991,8 @@ export function LoansView({
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
-                              disabled={voteBusyId === activeSelectedLoan.id}
-                              onClick={() => void handleQuickLoanVote(activeSelectedLoan.id, 'upvote')}
+                              disabled={modalBusy}
+                              onClick={() => confirmQuickLoanVote(activeSelectedLoan, 'upvote')}
                               className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
@@ -890,10 +1000,8 @@ export function LoansView({
                             </button>
                             <button
                               type="button"
-                              disabled={voteBusyId === activeSelectedLoan.id}
-                              onClick={() =>
-                                void handleQuickLoanVote(activeSelectedLoan.id, 'downvote')
-                              }
+                              disabled={modalBusy}
+                              onClick={() => confirmQuickLoanVote(activeSelectedLoan, 'downvote')}
                               className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
@@ -974,9 +1082,9 @@ export function LoansView({
                             <div className="flex items-center gap-2 shrink-0">
                               <button
                                 type="button"
-                                disabled={rescheduleBusy}
+                                disabled={modalBusy}
                                 onClick={() =>
-                                  void handleReviewReschedule(activeSelectedLoan.id, 'approve')
+                                  confirmReviewReschedule(activeSelectedLoan.id, 'approve')
                                 }
                                 className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                               >
@@ -984,9 +1092,9 @@ export function LoansView({
                               </button>
                               <button
                                 type="button"
-                                disabled={rescheduleBusy}
+                                disabled={modalBusy}
                                 onClick={() =>
-                                  void handleReviewReschedule(activeSelectedLoan.id, 'reject')
+                                  confirmReviewReschedule(activeSelectedLoan.id, 'reject')
                                 }
                                 className="px-2.5 py-1 rounded border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
                               >
@@ -999,7 +1107,7 @@ export function LoansView({
 
                       {rescheduleOpen && (
                         <form
-                          onSubmit={(e) => void handleRequestReschedule(activeSelectedLoan.id, e)}
+                          onSubmit={(e) => handleRequestReschedule(activeSelectedLoan.id, e)}
                           className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1"
                         >
                           <div className="sm:col-span-3">
@@ -1028,10 +1136,10 @@ export function LoansView({
                           <div className="sm:col-span-3">
                             <button
                               type="submit"
-                              disabled={rescheduleBusy}
+                              disabled={modalBusy}
                               className="w-full py-1.5 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                             >
-                              {rescheduleBusy ? 'Submitting…' : 'Submit Request'}
+                              Submit Request
                             </button>
                           </div>
                         </form>
@@ -1046,7 +1154,8 @@ export function LoansView({
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                          Submit Repayment Proof for Installment #{payingInstallment.installmentNumber}
+                          Submit Repayment Proof for Installment #{payingInstallment.installmentNumber} (
+                          {formatMoney(payingInstallment.amount, ccy)})
                         </span>
                         <div className="flex items-center gap-3">
                           <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 cursor-pointer">
@@ -1075,46 +1184,64 @@ export function LoansView({
                           </button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <select
-                          value={repayChannel}
-                          onChange={(e) => {
-                            const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
-                            setRepayChannel(ch);
-                            setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
-                          }}
-                          className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                        >
-                          <option value="mfs">MFS</option>
-                          <option value="bank">Bank</option>
-                        </select>
-                        <select
-                          value={repayProvider}
-                          onChange={(e) => setRepayProvider(e.target.value)}
-                          className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                        >
-                          {(repayChannel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS).map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          required
-                          value={repayAccount}
-                          onChange={(e) => setRepayAccount(e.target.value)}
-                          placeholder="Sender Acct / Phone"
-                          className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                        />
-                        <input
-                          type="text"
-                          required
-                          value={repayRef}
-                          onChange={(e) => setRepayRef(e.target.value)}
-                          placeholder="TrxID / Slip Ref"
-                          className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Channel
+                          </label>
+                          <select
+                            value={repayChannel}
+                            onChange={(e) => {
+                              const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
+                              setRepayChannel(ch);
+                              setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                          >
+                            <option value="mfs">MFS Wallet</option>
+                            <option value="bank">BD Bank</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            {repayChannel === 'mfs' ? 'MFS Wallet' : 'Bangladesh Bank'}
+                          </label>
+                          <ProviderSelect
+                            compact
+                            options={repayChannel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
+                            value={repayProvider}
+                            onChange={setRepayProvider}
+                            placeholder={
+                              repayChannel === 'mfs' ? 'Search MFS…' : 'Search 61 BD banks…'
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Sender Acct / Mobile
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={repayAccount}
+                            onChange={(e) => setRepayAccount(e.target.value)}
+                            placeholder="017XX-XXXXXX / Acct #"
+                            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Transaction Number
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={repayRef}
+                            onChange={(e) => setRepayRef(e.target.value)}
+                            placeholder="TrxID / Bank Ref No."
+                            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         {repayReceiptUrl ? (
@@ -1133,56 +1260,10 @@ export function LoansView({
                         )}
                         <button
                           type="submit"
-                          disabled={repayBusy}
+                          disabled={modalBusy}
                           className="px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                         >
-                          {repayBusy ? 'Encrypting…' : 'Submit Installment Receipt'}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  {rejectingInstallment && rejectingInstallment.loanId === activeSelectedLoan.id && (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void handleVerifyInstallment(
-                          rejectingInstallment.loanId,
-                          rejectingInstallment.installmentNumber,
-                          'reject',
-                          installmentRejectNote
-                        );
-                      }}
-                      className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/25 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
-                    >
-                      <span className="text-xs font-semibold text-red-800 dark:text-red-300 shrink-0">
-                        Deny Installment #{rejectingInstallment.installmentNumber}:
-                      </span>
-                      <input
-                        type="text"
-                        required
-                        value={installmentRejectNote}
-                        onChange={(e) => setInstallmentRejectNote(e.target.value)}
-                        placeholder="Required correction message for borrower (e.g. TrxID mismatch)…"
-                        className="flex-1 px-3 py-1.5 text-xs rounded-md border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-950"
-                      />
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="submit"
-                          disabled={repayBusy}
-                          className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                        >
-                          Confirm Deny
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRejectingInstallment(null);
-                            setInstallmentRejectNote('');
-                          }}
-                          className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
-                        >
-                          Cancel
+                          Review &amp; Submit Installment Receipt
                         </button>
                       </div>
                     </form>
@@ -1195,7 +1276,7 @@ export function LoansView({
                           <th className="py-2 px-3">#</th>
                           <th className="py-2 px-3">Due Date</th>
                           <th className="py-2 px-3 text-right">Amount</th>
-                          <th className="py-2 px-3">Receipt</th>
+                          <th className="py-2 px-3">Bank / MFS &amp; Transaction Number</th>
                           <th className="py-2 px-3">Status</th>
                           <th className="py-2 px-3 text-right">Action</th>
                         </tr>
@@ -1209,6 +1290,8 @@ export function LoansView({
                             (activeSelectedLoan.borrowerId === user.id || user.role === 'manager');
                           const canVerify =
                             isStaff && inst.status === 'pending_verification';
+                          const txNumber =
+                            inst.decryptedReceipt?.referenceId || inst.maskedReference;
 
                           return (
                             <tr key={inst.installmentNumber}>
@@ -1224,10 +1307,12 @@ export function LoansView({
                               <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">
                                 {inst.repaymentProvider ? (
                                   <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="font-mono">
-                                      {inst.repaymentProvider} ·{' '}
-                                      {inst.decryptedReceipt?.referenceId || inst.maskedReference}
-                                    </span>
+                                    <span>{inst.repaymentProvider}</span>
+                                    {txNumber && (
+                                      <span className="font-mono font-medium text-slate-900 dark:text-slate-200">
+                                        · Tx #{txNumber}
+                                      </span>
+                                    )}
                                     {inst.receiptPhotoUrl && (
                                       <a
                                         href={inst.receiptPhotoUrl}
@@ -1260,6 +1345,7 @@ export function LoansView({
                                       setPayingInstallment({
                                         loanId: activeSelectedLoan.id,
                                         installmentNumber: inst.installmentNumber,
+                                        amount: inst.amount,
                                       })
                                     }
                                     className="px-2.5 py-1 rounded border border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium cursor-pointer"
@@ -1271,10 +1357,10 @@ export function LoansView({
                                   <div className="inline-flex items-center gap-1">
                                     <button
                                       type="button"
-                                      disabled={repayBusy}
+                                      disabled={modalBusy}
                                       onClick={() =>
-                                        void handleVerifyInstallment(
-                                          activeSelectedLoan.id,
+                                        confirmVerifyInstallment(
+                                          activeSelectedLoan,
                                           inst.installmentNumber,
                                           'approve'
                                         )
@@ -1286,14 +1372,14 @@ export function LoansView({
                                     </button>
                                     <button
                                       type="button"
-                                      disabled={repayBusy}
-                                      onClick={() => {
-                                        setRejectingInstallment({
-                                          loanId: activeSelectedLoan.id,
-                                          installmentNumber: inst.installmentNumber,
-                                        });
-                                        setInstallmentRejectNote('');
-                                      }}
+                                      disabled={modalBusy}
+                                      onClick={() =>
+                                        confirmVerifyInstallment(
+                                          activeSelectedLoan,
+                                          inst.installmentNumber,
+                                          'reject'
+                                        )
+                                      }
                                       className="p-1 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 cursor-pointer"
                                       title="Deny payment with correction note"
                                     >
@@ -1319,6 +1405,25 @@ export function LoansView({
           )}
         </section>
       </div>
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
+      />
     </div>
   );
 }

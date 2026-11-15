@@ -113,6 +113,8 @@ function createSeedState(): VaultState {
     voteThresholdNumerator: 2,
     voteThresholdDenominator: 3,
     maturityDate: '2028-12-31',
+    managerCycleMonths: 3,
+    managerCycleStartDate: '2026-01-01',
     halalInvestmentThesis:
       'Upon reaching the pre-specified maturity date, accumulated cooperative capital transitions from Qard Hasan liquidity into Shariah-screened Mudarabah SME agriculture, healthcare equipment Murabahah, and clean-energy Musharakah ventures.',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -276,6 +278,12 @@ function normalizeVaultState(state: VaultState): VaultState {
     }
     if (state.fundConfig.requiredGuarantorsCount === undefined) {
       state.fundConfig.requiredGuarantorsCount = 1;
+    }
+    if (state.fundConfig.managerCycleMonths === undefined) {
+      state.fundConfig.managerCycleMonths = 3;
+    }
+    if (!state.fundConfig.managerCycleStartDate) {
+      state.fundConfig.managerCycleStartDate = '2026-01-01';
     }
   }
   const activeVoters = Math.max(1, state.users.filter((u) => u.status === 'active').length);

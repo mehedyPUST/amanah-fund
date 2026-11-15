@@ -17,8 +17,9 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney } from '../utils/format.ts';
+import { formatMoney, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 
@@ -35,6 +36,27 @@ interface AdminSiteSettingsViewProps {
   onDisconnectGoogle: () => Promise<void>;
   onRefresh: () => Promise<void>;
 }
+
+type SettingsModalState =
+  | {
+      mode: 'confirm';
+      tone: 'emerald' | 'red';
+      title: string;
+      description: string;
+      details?: ActionModalDetailItem[];
+      confirmLabel: string;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      inputMultiline?: boolean;
+      run: (inputValue: string) => Promise<void>;
+    }
+  | {
+      mode: 'notice';
+      tone: 'emerald' | 'amber' | 'red';
+      title: string;
+      description: string;
+    };
 
 export function AdminSiteSettingsView({
   overview,
@@ -68,14 +90,17 @@ export function AdminSiteSettingsView({
   const [requiredGuarantorsCount, setRequiredGuarantorsCount] = useState(
     String(config?.requiredGuarantorsCount ?? 1)
   );
+  const [managerCycleMonths, setManagerCycleMonths] = useState(
+    String(config?.managerCycleMonths ?? 3)
+  );
+  const [managerCycleStartDate, setManagerCycleStartDate] = useState(
+    config?.managerCycleStartDate || '2026-01-01'
+  );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
-  const [savingPolicy, setSavingPolicy] = useState(false);
-  const [loanReviewBusyId, setLoanReviewBusyId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [modal, setModal] = useState<SettingsModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -87,63 +112,135 @@ export function AdminSiteSettingsView({
       setMaxInstallmentMonths(String(config.maxInstallmentMonths));
       setGuarantorThresholdAmount(String(config.guarantorThresholdAmount ?? 40000));
       setRequiredGuarantorsCount(String(config.requiredGuarantorsCount ?? 1));
+      setManagerCycleMonths(String(config.managerCycleMonths ?? 3));
+      setManagerCycleStartDate(config.managerCycleStartDate || '2026-01-01');
       setCurrency(config.currency);
       setHalalThesis(config.halalInvestmentThesis);
     }
   }, [config]);
 
-  async function handleSavePolicy(e: FormEvent) {
-    e.preventDefault();
-    setSavingPolicy(true);
-    setFeedback(null);
+  async function runConfirmedModal(inputValue: string) {
+    if (!modal || modal.mode !== 'confirm') return;
+    setModalBusy(true);
     try {
-      await api.updateConfig({
-        fundName,
-        maxLoansPerYear: Number(maxLoansPerYear),
-        maturityDate,
-        monthlyContributionAmount: Number(monthlyContributionAmount),
-        maxLoanAmount: Number(maxLoanAmount),
-        maxInstallmentMonths: Number(maxInstallmentMonths),
-        guarantorThresholdAmount: Number(guarantorThresholdAmount),
-        requiredGuarantorsCount: Number(requiredGuarantorsCount),
-        currency,
-        halalInvestmentThesis: halalThesis,
-      });
-      setFeedback({
-        type: 'success',
-        text: `Site & project policy saved (${fundName}, max ${maxLoansPerYear} loans/yr, guarantor threshold ${guarantorThresholdAmount} ${currency}).`,
-      });
-      await onRefresh();
+      await modal.run(inputValue);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to save site settings.',
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Save Failed',
+        description: err instanceof Error ? err.message : 'An unexpected error occurred.',
       });
     } finally {
-      setSavingPolicy(false);
+      setModalBusy(false);
     }
   }
 
-  async function handleAdminLoanReview(loanId: string, decision: 'approve' | 'reject') {
-    setLoanReviewBusyId(loanId);
-    setFeedback(null);
-    try {
-      await api.adminReviewLoan(loanId, decision);
-      setFeedback({
-        type: 'success',
-        text:
-          decision === 'approve'
-            ? `Qard Hasan loan ${loanId} approved for treasury disbursement.`
-            : `Qard Hasan loan ${loanId} declined during administrative review.`,
+  function handleSavePolicy(e: FormEvent) {
+    e.preventDefault();
+    const cycleMonthsNum = Math.floor(Number(managerCycleMonths));
+    if (!Number.isFinite(cycleMonthsNum) || cycleMonthsNum < 1 || cycleMonthsNum > 36) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Manager Cycle Duration',
+        description: 'Manager rotation interval must be between 1 and 36 months.',
       });
-      await onRefresh();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to review loan request.',
+      return;
+    }
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Confirm Cooperative Site Settings Update',
+      description:
+        'Saving immediately updates cooperative treasury limits, Manager cycle rotation, and member loan eligibility rules.',
+      details: [
+        { label: 'Cooperative Name', value: fundName.trim() },
+        { label: 'Currency & Monthly Target', value: `${monthlyContributionAmount} ${currency}` },
+        { label: 'Max Loan & Annual Quota', value: `${maxLoanAmount} ${currency} · ${maxLoansPerYear}/yr` },
+        { label: 'Manager Cycle Interval', value: `Every ${cycleMonthsNum} Month(s)` },
+        { label: 'Cycle Anchor Date', value: formatShortDate(managerCycleStartDate) },
+        { label: 'Maturity Date', value: formatShortDate(maturityDate) },
+      ],
+      confirmLabel: 'Save Site Settings',
+      run: async () => {
+        await api.updateConfig({
+          fundName,
+          maxLoansPerYear: Number(maxLoansPerYear),
+          maturityDate,
+          monthlyContributionAmount: Number(monthlyContributionAmount),
+          maxLoanAmount: Number(maxLoanAmount),
+          maxInstallmentMonths: Number(maxInstallmentMonths),
+          guarantorThresholdAmount: Number(guarantorThresholdAmount),
+          requiredGuarantorsCount: Number(requiredGuarantorsCount),
+          managerCycleMonths: cycleMonthsNum,
+          managerCycleStartDate,
+          currency,
+          halalInvestmentThesis: halalThesis,
+        });
+        await onRefresh();
+        setModal({
+          mode: 'notice',
+          tone: 'emerald',
+          title: 'Site Settings Saved',
+          description: `Policy updated (${fundName}, ${cycleMonthsNum}-month manager cycle, max ${maxLoansPerYear} loans/yr, guarantor threshold ${guarantorThresholdAmount} ${currency}).`,
+        });
+      },
+    });
+  }
+
+  function confirmAdminLoanReview(loan: LoanRequest, decision: 'approve' | 'reject') {
+    if (decision === 'approve') {
+      setModal({
+        mode: 'confirm',
+        tone: 'emerald',
+        title: `Approve Qard Hasan Loan (${loan.id})`,
+        description:
+          'Approving moves this application to the approved disbursement stage on the Manager Desk.',
+        details: [
+          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+          { label: 'Purpose', value: loan.purpose },
+        ],
+        confirmLabel: 'Approve for Disbursement',
+        run: async () => {
+          await api.adminReviewLoan(loan.id, 'approve');
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Qard Hasan Approved',
+            description: `Qard Hasan loan ${loan.id} approved for treasury disbursement.`,
+          });
+        },
       });
-    } finally {
-      setLoanReviewBusyId(null);
+    } else {
+      setModal({
+        mode: 'confirm',
+        tone: 'red',
+        title: `Decline Qard Hasan Loan (${loan.id})`,
+        description: 'Enter a note explaining why this loan request is declined.',
+        details: [
+          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+        ],
+        inputLabel: 'Administrative Note',
+        inputPlaceholder: 'Reason for declining loan request…',
+        inputRequired: false,
+        inputMultiline: true,
+        confirmLabel: 'Decline Request',
+        run: async (note) => {
+          await api.adminReviewLoan(loan.id, 'reject', note || undefined);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'amber',
+            title: 'Qard Hasan Declined',
+            description: `Qard Hasan loan ${loan.id} declined during administrative review.`,
+          });
+        },
+      });
     }
   }
 
@@ -168,36 +265,20 @@ export function AdminSiteSettingsView({
               Site Settings &amp; Cooperative Project Parameters
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Configure cooperative treasury thresholds, maturity timeline, Google Sheets sync,
-              regulatory CSV exports, and Halal project investment proposals.
+              Configure cooperative treasury thresholds, Manager rotation cycle duration, maturity timeline, Google Sheets sync, regulatory CSV exports, and Halal project proposals.
             </p>
           </div>
         </div>
       </section>
 
-      {feedback && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-lg border text-xs font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
-          }`}
-        >
-          {feedback.text}
-        </div>
-      )}
-
-      {/* Project & Treasury Policy Settings (Admin) */}
       {isAdmin && (
         <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Project Policy, Contribution Target &amp; Loan Caps
+              Project Policy, Manager Cycle, Contribution Target &amp; Loan Caps
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Changes persist across the cooperative ledger and immediately update member loan
-              eligibility and contribution targets.
+              Changes persist across the cooperative ledger and immediately update member loan eligibility, contribution targets, and Manager rotation terms.
             </p>
           </div>
 
@@ -332,6 +413,52 @@ export function AdminSiteSettingsView({
                   className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Manager Rotation Cycle (Months)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {[3, 6, 12].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setManagerCycleMonths(String(preset))}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer ${
+                          Number(managerCycleMonths) === preset
+                            ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                            : 'border-slate-200 dark:border-slate-700 text-slate-500'
+                        }`}
+                      >
+                        {preset}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={36}
+                  required
+                  value={managerCycleMonths}
+                  onChange={(e) => setManagerCycleMonths(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Manager Cycle Start Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={managerCycleStartDate}
+                  onChange={(e) => setManagerCycleStartDate(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
             </div>
 
             <div>
@@ -349,17 +476,16 @@ export function AdminSiteSettingsView({
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={savingPolicy}
+                disabled={modalBusy}
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50"
               >
-                {savingPolicy ? 'Saving Settings…' : 'Save Site Settings'}
+                Review &amp; Save Site Settings
               </button>
             </div>
           </form>
         </section>
       )}
 
-      {/* Administrative Qard Hasan Loan Review Queue */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -420,8 +546,8 @@ export function AdminSiteSettingsView({
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      disabled={loanReviewBusyId === loan.id}
-                      onClick={() => void handleAdminLoanReview(loan.id, 'reject')}
+                      disabled={modalBusy}
+                      onClick={() => confirmAdminLoanReview(loan, 'reject')}
                       className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
@@ -429,8 +555,8 @@ export function AdminSiteSettingsView({
                     </button>
                     <button
                       type="button"
-                      disabled={loanReviewBusyId === loan.id}
-                      onClick={() => void handleAdminLoanReview(loan.id, 'approve')}
+                      disabled={modalBusy}
+                      onClick={() => confirmAdminLoanReview(loan, 'approve')}
                       className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -444,7 +570,6 @@ export function AdminSiteSettingsView({
         )}
       </section>
 
-      {/* Google Sheets Blueprint Sync */}
       <GoogleSheetSyncCard
         config={config}
         workspace={workspace}
@@ -454,7 +579,6 @@ export function AdminSiteSettingsView({
         onSynced={onRefresh}
       />
 
-      {/* Automated Regulatory & Compliance Reports */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
@@ -462,8 +586,7 @@ export function AdminSiteSettingsView({
               Automated Regulatory &amp; Compliance Exports
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Download cryptographically hashed CSV ledgers for Shariah review and annual member
-              assemblies.
+              Download cryptographically hashed CSV ledgers for Shariah review and annual member assemblies.
             </p>
           </div>
           <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
@@ -491,13 +614,31 @@ export function AdminSiteSettingsView({
         </div>
       </section>
 
-      {/* Post-Maturity Halal Investment Project Proposals */}
       <HalalProjectsView
         projects={projects}
         overview={overview}
         user={user}
         loading={loading}
         onRefresh={onRefresh}
+      />
+
+      <ActionModal
+        open={Boolean(modal)}
+        mode={modal?.mode || 'notice'}
+        tone={modal?.tone || 'emerald'}
+        title={modal?.title || ''}
+        description={modal?.description || ''}
+        details={modal?.details}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        busy={modalBusy}
+        onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
+        onClose={() => {
+          if (!modalBusy) setModal(null);
+        }}
       />
     </div>
   );
