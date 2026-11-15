@@ -47,7 +47,7 @@ async function startServer() {
 
   app.listen(port, '0.0.0.0', () => {
     console.log(
-      `Amanah Co-op Treasury (Next.js + Express) listening on http://0.0.0.0:${port} [${dev ? 'dev' : 'prod'}]`
+      `Amanah Co-op Treasury (Next.js + Express) listening on http://0.0.0.0:${port} (Local: http://localhost:${port}) [${dev ? 'dev' : 'prod'}]`
     );
   });
 }
