@@ -32,7 +32,8 @@ URL-synced (`?page=<sectionId>`) multi-page workspace with `AnimatePresence` tra
   - **Community (`community`)**: Registered-member discussion feed with category filters, image uploads, **Interactive Multi/Single-Choice Polls**, **`@mention` Autocomplete & Notifications**, multi-reactions, threaded comments, and **AES-256-GCM encrypted 1-on-1 Private Messages** with live read timestamps.
 
 - **Administrator & Staff Pages**:
-  - **Site Activity (`site-activity`)**: Live SSE-streamed audit trail with action/resource/search filters, Pause/Resume live stream toggle, and real-time **SHA-256 hash-chain verification** (`chainValid`).
+  - **Site Activity (`site-activity`)**: Live SSE-streamed activity feed covering member and system telemetry with action/role/search filters, Pause/Resume live stream toggle, and SHA-256 hash-chain status.
+  - **System Audit Logs (`system-audit-logs`)**: Dedicated immutable governance ledger tracking timestamped administrative actions (user approvals, RBAC/status updates, site setting modifications with before/after field diffs, financial authorizations, and moderation actions), per-block SHA-256 verification (`Verify Chain Integrity`), date-range/actor filters, and CSV/JSON proof exports.
   - **Member Registry (`member-registry`)**: Combined KYC Onboarding Queue (inspect portraits, signed agreements, NID, and addresses), active directory, and full RBAC management (`admin`, `manager`, `member`, create, edit, approve, suspend, delete).
   - **Site Settings (`site-settings`)**: Fund policy editor (fund name, currency, monthly contribution target, annual loan quota, loan cap, max installment months, guarantor threshold & required co-signers, maturity date, Halal thesis), **Post-Maturity Halal Ventures & Pro-Rata Profit Distribution Engine**, **7-Tab Google Sheets Treasury Sync**, and automated CSV compliance exports.
 
@@ -45,7 +46,7 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 - **Single-Origin Express + Next.js 16 Monolith**: Shares origin on port `3000`, enforces security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`), and protects `/api/auth`, `/api/upload`, and `/api/gemini` with sliding-window rate limiters.
 - **Step-Up Two-Factor Authentication (TOTP)**: Optional RFC 6238 authenticator verification (`X-TOTP-Code`) enforced on sensitive disbursements, policy changes, and admin member actions.
 - **AES-256-GCM Field Encryption**: Sensitive KYC details, Bank/MFS transaction IDs, loan payout accounts, TOTP secrets, audit payloads, and 1-on-1 private direct message bodies are encrypted at rest.
-- **SHA-256 Hash-Chained Audit Log**: Every mutating operation appends a cryptographic entry linking `prevHash -> entryHash`.
+- **SHA-256 Hash-Chained Audit Log**: Every mutating operation appends an immutable, non-editable cryptographic entry linking `prevHash -> entryHash` with per-block SHA-256 verification and before/after diffs for administrative changes.
 - **Automated Overdue Scheduler**: Background sweep checks active loan installment deadlines on startup and hourly intervals, marking past-due items `overdue` and dispatching single-send reminder alerts.
 - **Dual Persistence Engine**: Connects to **MongoDB Atlas** (`amanah_coop`) with startup indexes and atomic `bulkWrite`/`deleteMany` sync when `MONGODB_URI` is configured, or falls back seamlessly to an encrypted local JSON vault (`data/amanah-coop-vault.json`) serialized via a promise write queue.
 
@@ -102,6 +103,7 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 │   │   ├── NotificationsView.tsx          # Alerts outbox, sound preferences & Gmail dispatch
 │   │   ├── MemberProfile.tsx              # Encrypted KYC viewer/editor, TOTP 2FA & alert controls
 │   │   ├── AdminAuditLog.tsx              # Live SSE Site Activity & hash-chain verification
+│   │   ├── SystemAuditLogsView.tsx        # Immutable admin audit log ledger, before/after diffs & JSON/CSV proofs
 │   │   ├── MemberRegistrySection.tsx      # Unified Member Registry & KYC inspection
 │   │   ├── PendingRegistrationsView.tsx   # Admin Onboarding Queue for KYC verification
 │   │   ├── ActiveMembersView.tsx          # Active member directory
@@ -146,6 +148,24 @@ FIREBASE_PROJECT_ID=  # Optional override for firebase-applet-config.json projec
 ```
 
 > **Security Note**: Always set strong, unique values for `JWT_SECRET` and `ENCRYPTION_KEY` in production environments rather than relying on development fallbacks.
+
+---
+
+## Export Policy
+
+Amanah provides transparent, self-service and assisted record exports so every cooperative member can obtain an accurate summary of their contributions, Qard Hasan loan repayments, and cooperative equity for personal accounting, Zakat calculation, or external verification.
+
+### 1. Member Self-Service Exports (Personal Records)
+Active authenticated members can download their personal financial records anytime from **Dashboard -> Transaction History**:
+- **CSV Ledger Summary (`Export CSV`)**: Downloads a UTF-8 spreadsheet (`amanah-transactions-YYYY-MM-DD.csv`) scoped to your current filters (type, status, and search query). Columns include transaction type, member code/name, description, billing or due period, submission/verification timestamp, payment channel/provider, reference ID, status, and amount.
+- **PDF Financial Statement (`Download PDF Statement`)**: Generates an itemized A4 statement summarizing your approved monthly contributions, active loan balance, verified installment repayments, and chronological ledger entries.
+- **Annual Zakat & Equity Statement (`Zakat & Equity PDF`)**: Generates an annual cooperative equity summary showing paid-in contributions, distributed post-maturity Halal profit dividends, outstanding Qard Hasan liabilities, net cooperative equity, and an indicative `2.5%` Zakat reference calculation.
+
+### 2. Assisted Record Requests (Offline, Pending, or Historical Archives)
+If a member cannot access the self-service dashboard (for example, following account suspension, archive/exit reconciliation, or when requesting a certified cooperative-wide reconciliation excerpt):
+1. **Submit a Request**: Send a formal request to a Cooperative Administrator via an in-app **Direct Message** (from **Community -> Private Messages**, if active) or through the cooperative's registered administrative email, specifying your **Member Code** (e.g., `AC-002`), requested date range, and preferred format (`CSV` or `PDF Statement`).
+2. **Identity & Privacy Verification**: Administrators verify the requester's identity against the encrypted KYC record in **Member Registry** before fulfilling any off-portal export. Sensitive payment references (`TrxID` and sender accounts) are decrypted exclusively for the verified record owner or authorized staff, and anonymized 2/3 ballot identities are never disclosed in any export.
+3. **Auditability**: Every administrative ledger export (`/api/reports/export`) is permanently recorded with the administrator's identity and timestamp in the immutable **System Audit Logs** (`REPORT_EXPORTED`).
 
 ---
 

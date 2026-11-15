@@ -12,6 +12,7 @@ export type DashboardSectionId =
   | 'transaction-history'
   | 'community'
   | 'site-activity'
+  | 'system-audit-logs'
   | 'member-registry'
   | 'site-settings';
 
@@ -375,6 +376,8 @@ export interface AuditLogEntry {
   decryptedPayload?: Record<string, unknown>;
   prevHash: string;
   entryHash: string;
+  hashVerified?: boolean;
+  chainLinkVerified?: boolean;
 }
 
 export interface MonthlyCashflowPoint {

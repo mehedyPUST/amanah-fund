@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  appendAuditLog,
   applyOverdueChecksToState,
   buildDashboardOverview,
   computeRequiredApprovals,
@@ -393,3 +394,59 @@ describe('Community @mention extraction', () => {
     expect(mentioned.map((m) => m.id)).toEqual(['u-2', 'u-3']);
   });
 });
+
+describe('System Audit Logs immutability & hash chaining', () => {
+  it('appends timestamped, AES-256-GCM encrypted, SHA-256 hash-chained administrative actions', () => {
+    const state = makeBaseState();
+    const adminUser: PublicUser = {
+      id: 'u-1',
+      name: 'Amina Rahman',
+      email: 'amina@amanahcoop.org',
+      role: 'admin',
+      memberCode: 'AC-001',
+      status: 'active',
+      joinedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    appendAuditLog(state, {
+      actor: adminUser,
+      action: 'MEMBER_SIGNUP_APPROVED',
+      resourceType: 'auth',
+      resourceId: 'u-pending',
+      summary: 'Amina Rahman approved Pending User (AC-004)',
+      payload: {
+        targetUserId: 'u-pending',
+        changes: { status: { from: 'pending_approval', to: 'active' } },
+      },
+    });
+
+    appendAuditLog(state, {
+      actor: adminUser,
+      action: 'FUND_POLICY_UPDATED',
+      resourceType: 'config',
+      resourceId: 'default-config',
+      summary: 'Amina Rahman updated cooperative policy',
+      payload: {
+        changes: { maxLoansPerYear: { from: 3, to: 4 } },
+      },
+    });
+
+    expect(state.auditLogs).toHaveLength(2);
+    const [latest, older] = state.auditLogs;
+    expect(latest.prevHash).toBe(older.entryHash);
+    expect(latest.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+    const decryptedLatest = decryptSensitiveObject<Record<string, unknown>>(latest.encryptedPayload);
+    const recomputedHash = computeSha256Hash({
+      id: latest.id,
+      timestamp: latest.timestamp,
+      actorId: latest.actorId,
+      action: latest.action,
+      resourceId: latest.resourceId,
+      prevHash: latest.prevHash,
+      payload: decryptedLatest,
+    });
+    expect(recomputedHash).toBe(latest.entryHash);
+  });
+});
+

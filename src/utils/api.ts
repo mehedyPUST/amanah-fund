@@ -381,7 +381,12 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
-  getAuditLogs: () => apiRequest<{ logs: AuditLogEntry[]; chainValid: boolean }>('/api/audit-logs'),
+  getAuditLogs: () =>
+    apiRequest<{
+      logs: AuditLogEntry[];
+      chainValid: boolean;
+      integrity?: { totalEntries: number; verifiedEntries: number; brokenLinks: string[] };
+    }>('/api/audit-logs'),
 
   getNotifications: () =>
     apiRequest<{ notifications: EmailNotification[] }>('/api/notifications'),

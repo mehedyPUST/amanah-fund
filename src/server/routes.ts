@@ -3274,25 +3274,38 @@ apiRouter.patch(
         if (!user) return draft;
         found = true;
 
+        const prevName = user.name;
+        const prevEmail = user.email;
+        const prevStatus = user.status;
+        const prevRole = user.role;
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
+
         if (email && email !== user.email.toLowerCase()) {
           if (draft.users.some((u) => u.id !== id && u.email.toLowerCase() === email)) {
             throw new Error('EMAIL_IN_USE');
           }
+          changes.email = { from: prevEmail, to: email };
           user.email = email;
         }
-        if (name) {
+        if (name && name !== prevName) {
+          changes.name = { from: prevName, to: name };
           user.name = name;
         }
         if (newPassword && newPassword.length >= 6) {
           user.passwordHash = bcrypt.hashSync(newPassword, 10);
+          changes.password = { from: '[redacted]', to: '[updated]' };
         }
 
-        const prevStatus = user.status;
-        const prevRole = user.role;
-        if (role && ['admin', 'manager', 'member'].includes(role)) {
+        if (role && ['admin', 'manager', 'member'].includes(role) && role !== prevRole) {
+          changes.role = { from: prevRole, to: role };
           user.role = role;
         }
-        if (status && ['pending_approval', 'active', 'suspended'].includes(status)) {
+        if (
+          status &&
+          ['pending_approval', 'active', 'suspended'].includes(status) &&
+          status !== prevStatus
+        ) {
+          changes.status = { from: prevStatus, to: status };
           user.status = status;
         }
 
@@ -3323,14 +3336,36 @@ apiRouter.patch(
               // ignore corrupted envelope
             }
           }
-          if (mobile !== undefined) {
+          if (mobile !== undefined && mobile !== details.mobile) {
+            changes.mobile = {
+              from: maskReference(details.mobile || ''),
+              to: maskReference(mobile),
+            };
             details.mobile = mobile;
             user.phoneMasked = mobile ? maskReference(mobile) : undefined;
           }
-          if (occupation !== undefined) details.occupation = occupation;
-          if (companyOrganization !== undefined) details.companyOrganization = companyOrganization;
-          if (presentAddress !== undefined) details.presentAddress = presentAddress;
-          if (permanentAddress !== undefined) details.permanentAddress = permanentAddress;
+          if (occupation !== undefined && occupation !== details.occupation) {
+            changes.occupation = { from: details.occupation, to: occupation };
+            details.occupation = occupation;
+          }
+          if (
+            companyOrganization !== undefined &&
+            companyOrganization !== details.companyOrganization
+          ) {
+            changes.companyOrganization = {
+              from: details.companyOrganization,
+              to: companyOrganization,
+            };
+            details.companyOrganization = companyOrganization;
+          }
+          if (presentAddress !== undefined && presentAddress !== details.presentAddress) {
+            changes.presentAddress = { from: '[updated]', to: presentAddress };
+            details.presentAddress = presentAddress;
+          }
+          if (permanentAddress !== undefined && permanentAddress !== details.permanentAddress) {
+            changes.permanentAddress = { from: '[updated]', to: permanentAddress };
+            details.permanentAddress = permanentAddress;
+          }
           user.encryptedRegistrationDetails = encryptSensitiveObject(details);
         }
 
@@ -3363,10 +3398,13 @@ apiRouter.patch(
           summary: `${viewer.name} updated ${user.name} (${user.memberCode}) -> role: ${user.role}, status: ${user.status}`,
           payload: {
             targetUserId: user.id,
+            targetMemberCode: user.memberCode,
+            targetName: user.name,
             previousRole: prevRole,
             role: user.role,
             previousStatus: prevStatus,
             status: user.status,
+            ...(Object.keys(changes).length > 0 ? { changes } : {}),
           },
         });
 
@@ -3552,41 +3590,90 @@ apiRouter.patch(
 
       const nextState = await updateVaultState((draft) => {
         const cfg = draft.fundConfig;
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
+
         if (typeof body.fundName === 'string' && body.fundName.trim()) {
-          cfg.fundName = body.fundName.trim();
+          const nextName = body.fundName.trim();
+          if (nextName !== cfg.fundName) {
+            changes.fundName = { from: cfg.fundName, to: nextName };
+            cfg.fundName = nextName;
+          }
         }
-        if (body.currency) {
+        if (body.currency && body.currency !== cfg.currency) {
+          changes.currency = { from: cfg.currency, to: body.currency };
           cfg.currency = body.currency;
         }
-        if (body.monthlyContributionAmount !== undefined) {
+        if (
+          body.monthlyContributionAmount !== undefined &&
+          monthlyContributionAmount !== cfg.monthlyContributionAmount
+        ) {
+          changes.monthlyContributionAmount = {
+            from: cfg.monthlyContributionAmount,
+            to: monthlyContributionAmount,
+          };
           cfg.monthlyContributionAmount = monthlyContributionAmount;
         }
-        if (body.maxLoansPerYear !== undefined) {
+        if (body.maxLoansPerYear !== undefined && maxLoansPerYear !== cfg.maxLoansPerYear) {
+          changes.maxLoansPerYear = { from: cfg.maxLoansPerYear, to: maxLoansPerYear };
           cfg.maxLoansPerYear = maxLoansPerYear;
         }
-        if (body.maxLoanAmount !== undefined) {
+        if (body.maxLoanAmount !== undefined && maxLoanAmount !== cfg.maxLoanAmount) {
+          changes.maxLoanAmount = { from: cfg.maxLoanAmount, to: maxLoanAmount };
           cfg.maxLoanAmount = maxLoanAmount;
         }
-        if (body.maxInstallmentMonths !== undefined) {
+        if (
+          body.maxInstallmentMonths !== undefined &&
+          maxInstallmentMonths !== cfg.maxInstallmentMonths
+        ) {
+          changes.maxInstallmentMonths = {
+            from: cfg.maxInstallmentMonths,
+            to: maxInstallmentMonths,
+          };
           cfg.maxInstallmentMonths = maxInstallmentMonths;
         }
-        if (body.guarantorThresholdAmount !== undefined) {
+        if (
+          body.guarantorThresholdAmount !== undefined &&
+          guarantorThresholdAmount !== cfg.guarantorThresholdAmount
+        ) {
+          changes.guarantorThresholdAmount = {
+            from: cfg.guarantorThresholdAmount ?? 40000,
+            to: guarantorThresholdAmount,
+          };
           cfg.guarantorThresholdAmount = guarantorThresholdAmount;
         }
-        if (body.requiredGuarantorsCount !== undefined) {
+        if (
+          body.requiredGuarantorsCount !== undefined &&
+          requiredGuarantorsCount !== cfg.requiredGuarantorsCount
+        ) {
+          changes.requiredGuarantorsCount = {
+            from: cfg.requiredGuarantorsCount ?? 1,
+            to: requiredGuarantorsCount,
+          };
           cfg.requiredGuarantorsCount = requiredGuarantorsCount;
         }
-        if (body.maturityDate !== undefined) {
+        if (body.maturityDate !== undefined && body.maturityDate !== cfg.maturityDate) {
+          changes.maturityDate = { from: cfg.maturityDate, to: body.maturityDate };
           cfg.maturityDate = body.maturityDate;
         }
         if (typeof body.halalInvestmentThesis === 'string' && body.halalInvestmentThesis.trim()) {
-          cfg.halalInvestmentThesis = body.halalInvestmentThesis.trim();
+          const nextThesis = body.halalInvestmentThesis.trim();
+          if (nextThesis !== cfg.halalInvestmentThesis) {
+            changes.halalInvestmentThesis = {
+              from: cfg.halalInvestmentThesis,
+              to: nextThesis,
+            };
+            cfg.halalInvestmentThesis = nextThesis;
+          }
         }
-        if (typeof body.autoSyncSheet === 'boolean') {
+        if (typeof body.autoSyncSheet === 'boolean' && body.autoSyncSheet !== cfg.autoSyncSheet) {
+          changes.autoSyncSheet = { from: Boolean(cfg.autoSyncSheet), to: body.autoSyncSheet };
           cfg.autoSyncSheet = body.autoSyncSheet;
         }
         if (typeof body.googleSheetId === 'string') {
           const trimmedId = body.googleSheetId.trim();
+          if ((trimmedId || undefined) !== cfg.googleSheetId) {
+            changes.googleSheetId = { from: cfg.googleSheetId || null, to: trimmedId || null };
+          }
           cfg.googleSheetId = trimmedId || undefined;
           if (!trimmedId) {
             cfg.googleSheetUrl = undefined;
@@ -3610,6 +3697,7 @@ apiRouter.patch(
             requiredGuarantorsCount: cfg.requiredGuarantorsCount,
             currency: cfg.currency,
             autoSyncSheet: cfg.autoSyncSheet,
+            ...(Object.keys(changes).length > 0 ? { changes } : {}),
           },
         });
 
@@ -4114,13 +4202,43 @@ apiRouter.get(
   async (_req, res) => {
     try {
       const state = await loadVaultState();
-      const logs = state.auditLogs.map((entry) => {
+      const rawLogs = state.auditLogs;
+      const brokenLinks: string[] = [];
+
+      const logs = rawLogs.map((entry, idx) => {
         let decryptedPayload: Record<string, unknown> | undefined;
         try {
           decryptedPayload = decryptSensitiveObject<Record<string, unknown>>(entry.encryptedPayload);
         } catch {
           decryptedPayload = undefined;
         }
+
+        const expectedHash =
+          entry.id === 'audit-001' && decryptedPayload
+            ? computeSha256Hash({ index: 1, ...decryptedPayload })
+            : decryptedPayload
+              ? computeSha256Hash({
+                  id: entry.id,
+                  timestamp: entry.timestamp,
+                  actorId: entry.actorId,
+                  action: entry.action,
+                  resourceId: entry.resourceId,
+                  prevHash: entry.prevHash,
+                  payload: decryptedPayload,
+                })
+              : null;
+
+        const hashVerified = Boolean(expectedHash && expectedHash === entry.entryHash);
+        const chainLinkVerified =
+          idx < rawLogs.length - 1
+            ? entry.prevHash === rawLogs[idx + 1].entryHash
+            : entry.prevHash === '0000000000000000000000000000000000000000000000000000000000000000' ||
+              Boolean(entry.prevHash);
+
+        if (!hashVerified || !chainLinkVerified) {
+          brokenLinks.push(entry.id);
+        }
+
         if (entry.action === 'LOAN_VOTE_CAST' || entry.action === 'INVESTMENT_VOTE_CAST') {
           return {
             ...entry,
@@ -4131,21 +4249,30 @@ apiRouter.get(
               ? entry.summary
               : `Anonymized ballot recorded (${entry.resourceId})`,
             decryptedPayload,
+            hashVerified,
+            chainLinkVerified,
           };
         }
-        return { ...entry, decryptedPayload };
+        return {
+          ...entry,
+          decryptedPayload,
+          hashVerified,
+          chainLinkVerified,
+        };
       });
 
-      // Verify sequential hash chain links
-      let chainValid = true;
-      for (let i = 0; i < logs.length - 1; i++) {
-        if (logs[i].prevHash !== logs[i + 1].entryHash) {
-          chainValid = false;
-          break;
-        }
-      }
+      const chainValid = brokenLinks.length === 0;
+      const verifiedEntries = logs.filter((l) => l.hashVerified && l.chainLinkVerified).length;
 
-      res.json({ logs, chainValid });
+      res.json({
+        logs,
+        chainValid,
+        integrity: {
+          totalEntries: logs.length,
+          verifiedEntries,
+          brokenLinks,
+        },
+      });
     } catch (err) {
       console.error('Audit logs error:', err);
       res.status(500).json({ error: 'Failed to load audit logs.' });
@@ -4260,9 +4387,67 @@ apiRouter.get(
         ];
         csv = rows.map((r) => r.map(escapeCsvCell).join(',')).join('\n');
       } else {
+        const scope = String(req.query?.scope || 'all');
+        const adminOnlyActions = new Set([
+          'FUND_CONFIG_INITIALIZED',
+          'FUND_POLICY_UPDATED',
+          'MEMBER_SIGNUP_APPROVED',
+          'MEMBER_SIGNUP_REJECTED',
+          'MEMBER_CREATED_BY_ADMIN',
+          'MEMBER_SUSPENDED',
+          'MEMBER_REACTIVATED',
+          'MEMBER_REMOVED_BY_ADMIN',
+          'MEMBER_RBAC_UPDATED',
+          'CONTRIBUTION_APPROVED',
+          'CONTRIBUTION_REJECTED',
+          'LOAN_ADMIN_APPROVED',
+          'LOAN_ADMIN_REJECTED',
+          'LOAN_DISBURSED',
+          'LOAN_RESCHEDULE_APPROVED',
+          'LOAN_RESCHEDULE_REJECTED',
+          'REPAYMENT_VERIFIED',
+          'REPAYMENT_REJECTED',
+          'HALAL_PROJECT_PROPOSED',
+          'HALAL_PROJECT_CREATED',
+          'HALAL_PROFIT_DISTRIBUTED',
+          'COMMUNITY_POST_DELETED_BY_ADMIN',
+          'COMMUNITY_COMMENT_DELETED_BY_ADMIN',
+          'COMMUNITY_POST_PIN',
+          'COMMUNITY_POST_UNPIN',
+          'COMMUNITY_POST_LOCK',
+          'COMMUNITY_POST_UNLOCK',
+          'COMMUNITY_POST_HIDE',
+          'COMMUNITY_POST_RESTORE',
+          'COMMUNITY_MEMBER_MUTED',
+          'COMMUNITY_MEMBER_UNMUTED',
+          'GOOGLE_SHEET_SYNCED',
+          'GMAIL_NOTIFICATIONS_DISPATCHED',
+          'REMINDER_BATCH_GENERATED',
+          'REPORT_EXPORTED',
+        ]);
+        const targetLogs =
+          scope === 'admin'
+            ? state.auditLogs.filter(
+                (a) =>
+                  a.actorRole === 'admin' ||
+                  a.actorRole === 'manager' ||
+                  adminOnlyActions.has(a.action)
+              )
+            : state.auditLogs;
         const rows = [
-          ['Audit ID', 'Timestamp', 'Actor', 'Role', 'Action', 'Resource', 'Summary', 'Entry Hash'],
-          ...state.auditLogs.map((a) => {
+          [
+            'Audit ID',
+            'Timestamp',
+            'Actor',
+            'Role',
+            'Action',
+            'Resource Type',
+            'Resource ID',
+            'Summary',
+            'Previous Hash',
+            'Entry SHA-256 Hash',
+          ],
+          ...targetLogs.map((a) => {
             const isVote = a.action === 'LOAN_VOTE_CAST' || a.action === 'INVESTMENT_VOTE_CAST';
             return [
               a.id,
@@ -4270,16 +4455,21 @@ apiRouter.get(
               isVote ? 'Anonymized Verified Member' : a.actorName,
               isVote ? 'member' : a.actorRole,
               a.action,
+              a.resourceType,
               a.resourceId,
               isVote && !a.summary.includes('anonymized')
                 ? `Anonymized ballot recorded (${a.resourceId})`
                 : a.summary,
+              a.prevHash,
               a.entryHash,
             ];
           }),
         ];
         csv = rows.map((r) => r.map(escapeCsvCell).join(',')).join('\n');
-        filename = `amanah-audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+        filename =
+          scope === 'admin'
+            ? `amanah-system-audit-logs-${new Date().toISOString().slice(0, 10)}.csv`
+            : `amanah-audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
       }
 
       await updateVaultState((draft) => {

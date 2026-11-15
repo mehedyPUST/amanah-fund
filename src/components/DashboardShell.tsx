@@ -42,6 +42,7 @@ import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
+import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import type {
@@ -77,6 +78,7 @@ const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
 
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
+  { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
   { id: 'member-registry', label: 'Member Registry', Icon: Users, group: 'admin' },
   { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
 ];
@@ -988,6 +990,13 @@ export function DashboardShell() {
                 <section id="site-activity" className="space-y-4">
                   <SectionEyebrow label="Admin · Site Activity" />
                   <AdminAuditLog user={user} />
+                </section>
+              )}
+
+              {isStaff && activeSection === 'system-audit-logs' && (
+                <section id="system-audit-logs" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Admin · System Audit Logs" />
+                  <SystemAuditLogsView user={user} />
                 </section>
               )}
 
