@@ -26,7 +26,6 @@ import {
   formatMoney,
   formatShortDate,
 } from '../utils/format.ts';
-import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ProviderSelect } from './ProviderSelect.tsx';
 
 interface RequestQardHasanLoanFormProps {
@@ -50,24 +49,10 @@ type LoanSubmitPayload = {
   guarantorIds?: string[];
 };
 
-type LoanModalState =
-  | {
-      mode: 'confirm';
-      tone: 'emerald';
-      title: string;
-      description: string;
-      details: ActionModalDetailItem[];
-      /** Frozen snapshot used for the real API call so confirmation cannot drift from live form state */
-      payload: LoanSubmitPayload;
-    }
-  | {
-      mode: 'notice';
-      tone: 'emerald' | 'red' | 'amber';
-      title: string;
-      description: string;
-      details?: ActionModalDetailItem[];
-      closeParentOnDone?: boolean;
-    };
+/** Inline banner state — no nested ActionModal (nested portals were breaking submit). */
+type FormFeedback =
+  | { kind: 'error'; title: string; message: string }
+  | { kind: 'success'; title: string; message: string; loanId: string };
 
 export function RequestQardHasanLoanForm({
   user,
@@ -140,8 +125,7 @@ export function RequestQardHasanLoanForm({
 
   const amountEditedRef = useRef(false);
   const monthsEditedRef = useRef(false);
-  /** Holds the exact payload the user confirmed so the API call cannot drift from the modal summary */
-  const pendingLoanPayloadRef = useRef<LoanSubmitPayload | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!config) return;
@@ -193,7 +177,7 @@ export function RequestQardHasanLoanForm({
   }, [isVerifiedMember, user.id, membersRetryKey]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [modal, setModal] = useState<LoanModalState | null>(null);
+  const [feedback, setFeedback] = useState<FormFeedback | null>(null);
 
   const rawAmount = Number(amount);
   const parsedAmount = Number.isFinite(rawAmount)
@@ -253,27 +237,26 @@ export function RequestQardHasanLoanForm({
     ).slice(0, 4);
   }, [maxInstallmentMonths]);
 
-  function openErrorModal(title: string, description: string) {
-    setModal({
-      mode: 'notice',
-      tone: 'red',
-      title,
-      description,
-    });
+  function showError(title: string, message: string) {
+    setFeedback({ kind: 'error', title, message });
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    e.stopPropagation();
+    if (submittingRef.current) return;
+
+    setFeedback(null);
 
     if (!isVerifiedMember) {
-      openErrorModal(
+      showError(
         'Verification Required',
         'Only administrator-verified active members can request a Qard Hasan loan.'
       );
       return;
     }
     if (!eligibility?.eligible) {
-      openErrorModal(
+      showError(
         'Eligibility Requirements Not Met',
         eligibility?.reasons?.[0] ||
           eligibilityError ||
@@ -282,7 +265,7 @@ export function RequestQardHasanLoanForm({
       return;
     }
     if (!Number.isFinite(rawAmount) || parsedAmount < 100 || parsedAmount > maxLoanAmount) {
-      openErrorModal(
+      showError(
         'Invalid Requested Amount',
         `Requested amount must be between ${formatMoney(100, ccy)} and ${formatMoney(maxLoanAmount, ccy)}.`
       );
@@ -293,14 +276,14 @@ export function RequestQardHasanLoanForm({
       rawMonths < 1 ||
       rawMonths > maxInstallmentMonths
     ) {
-      openErrorModal(
+      showError(
         'Invalid Repayment Duration',
         `Repayment duration must be a whole number between 1 and ${maxInstallmentMonths} months.`
       );
       return;
     }
     if (!purpose.trim() || !disbursementAccount.trim() || !provider.trim()) {
-      openErrorModal(
+      showError(
         'Missing Required Fields',
         'Please complete the loan purpose, bank/MFS provider, and payout account number.'
       );
@@ -308,21 +291,21 @@ export function RequestQardHasanLoanForm({
     }
     if (exceedsGuarantorThreshold) {
       if (membersLoading) {
-        openErrorModal(
+        showError(
           'Loading Guarantor Directory',
           'Please wait a moment while active cooperative members load so you can select co-signing guarantor(s).'
         );
         return;
       }
       if (membersError) {
-        openErrorModal(
+        showError(
           'Guarantor Directory Unavailable',
           `${membersError} Please retry loading the member list before submitting a request above ${formatMoney(guarantorThreshold, ccy)}.`
         );
         return;
       }
       if (needsGuarantors && validSelectedGuarantorIds.length < effectiveRequiredGuarantors) {
-        openErrorModal(
+        showError(
           'Guarantors Required',
           `Requests above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
         );
@@ -331,31 +314,11 @@ export function RequestQardHasanLoanForm({
     }
     if (!agreedToTerms) {
       setTermsHighlight(true);
-      openErrorModal(
+      showError(
         'Commitment Required',
         'Please confirm the 0% interest Qard Hasan terms and repayment commitment checkbox before submitting.'
       );
       return;
-    }
-
-    const guarantorNames = activeMembers
-      .filter((m) => validSelectedGuarantorIds.includes(m.id))
-      .map((m) => `${m.name} (${m.memberCode})`)
-      .join(', ');
-
-    const details: ActionModalDetailItem[] = [
-      { label: 'Requested Amount', value: formatMoney(parsedAmount, ccy) },
-      { label: 'Repayment Plan', value: `${rawMonths} months · 0% interest` },
-      { label: 'Monthly Installment', value: formatMoney(monthlyInstallmentPreview, ccy) },
-      {
-        label: 'Payout Channel',
-        value: `${channel === 'mfs' ? 'MFS Wallet' : 'Bank Transfer'} · ${provider}`,
-      },
-      { label: 'Payout Account', value: disbursementAccount.trim() },
-      { label: 'Purpose', value: purpose.trim() },
-    ];
-    if (guarantorNames) {
-      details.push({ label: 'Co-Sign Guarantors', value: guarantorNames });
     }
 
     const payload: LoanSubmitPayload = {
@@ -369,40 +332,10 @@ export function RequestQardHasanLoanForm({
       guarantorIds: needsGuarantors ? [...validSelectedGuarantorIds] : undefined,
     };
 
-    pendingLoanPayloadRef.current = payload;
-
-    setModal({
-      mode: 'confirm',
-      tone: 'emerald',
-      title: 'Confirm Qard Hasan Loan Placement',
-      description:
-        'Review your encrypted Qard Hasan application summary before submitting it to the cooperative workflow.',
-      details,
-      payload,
-    });
-  }
-
-  const modalRef = useRef(modal);
-  modalRef.current = modal;
-
-  const executeLoanSubmission = useCallback(async () => {
-    // Prefer the frozen ref; fall back to payload stored on the confirm modal state
-    // so a parent re-render cannot lose the confirmed application.
-    const currentModal = modalRef.current;
-    const fromRef = pendingLoanPayloadRef.current;
-    const fromModal = currentModal?.mode === 'confirm' ? currentModal.payload : null;
-    const payload = fromRef || fromModal;
-    if (!payload) {
-      openErrorModal(
-        'Could Not Place Qard Hasan Request',
-        'Confirmation data was lost. Please close this dialog and submit the form again.'
-      );
-      return;
-    }
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const res = await api.requestLoan(payload);
-      pendingLoanPayloadRef.current = null;
       const created = res.loan;
       setPurpose('');
       setEmergencyContext('');
@@ -412,60 +345,35 @@ export function RequestQardHasanLoanForm({
       setTermsHighlight(false);
       setShowSchedulePreview(false);
 
-      // Success UI first — loan is already saved. Clear busy immediately so the
-      // success notice is dismissible; parent refresh must not keep the dialog
-      // stuck on "Processing…" or turn a successful placement into an error.
-      setModal({
-        mode: 'notice',
-        tone: 'emerald',
+      setFeedback({
+        kind: 'success',
         title: `Qard Hasan Request Submitted (${created.id})`,
-        description:
+        message:
           'Your payout details are AES-256-GCM encrypted. The application is now in Manager Desk — a manager will initiate the 2/3 secret ballot. Track status on your dashboard as an active request.',
-        details: [
-          { label: 'Application ID', value: created.id },
-          { label: 'Status', value: 'Pending Manager Review' },
-          { label: 'Principal', value: formatMoney(created.amount, ccy) },
-          {
-            label: 'Schedule',
-            value: `${created.installmentMonths} × ${formatMoney(created.monthlyInstallment, ccy)}`,
-          },
-          {
-            label: 'Payout Provider',
-            value: `${(created.decryptedSensitiveNotes?.channel || payload.channel).toUpperCase()} · ${created.decryptedSensitiveNotes?.provider || payload.provider}`,
-          },
-        ],
-        closeParentOnDone: variant === 'modal' && Boolean(onClose),
+        loanId: created.id,
       });
-      setSubmitting(false);
 
       try {
         await onSubmitted(created);
       } catch (refreshErr) {
         console.error('Loan created but dashboard refresh failed:', refreshErr);
       }
+
+      // In the header modal variant, close the parent after a successful placement
+      // so the member lands on the refreshed Qard Hasan list.
+      if (variant === 'modal' && onClose) {
+        window.setTimeout(() => onClose(), 1200);
+      }
     } catch (err) {
-      openErrorModal(
+      showError(
         'Could Not Place Qard Hasan Request',
         err instanceof Error ? err.message : 'An unexpected error occurred while saving your request.'
       );
+    } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [ccy, variant, onClose, onSubmitted]);
-
-  // Stable close handler so ActionModal Escape listener does not re-bind every render.
-  const handleActionModalClose = useCallback(() => {
-    const current = modalRef.current;
-    if (current?.mode === 'confirm') {
-      pendingLoanPayloadRef.current = null;
-    }
-    const shouldCloseParent = current?.mode === 'notice' && current.closeParentOnDone;
-    setModal(null);
-    if (shouldCloseParent && onClose) {
-      // Defer parent close so this ActionModal can finish its own exit
-      // without being unmounted mid-animation by the parent portal.
-      Promise.resolve().then(() => onClose());
-    }
-  }, [onClose]);
+  }
 
   const wrapperClass =
     variant === 'modal'
@@ -518,6 +426,35 @@ export function RequestQardHasanLoanForm({
             <RefreshCw className="w-3 h-3" aria-hidden="true" />
             <span>Retry</span>
           </button>
+        </div>
+      )}
+
+      {feedback?.kind === 'error' && (
+        <div
+          role="alert"
+          className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-xs text-red-900 dark:text-red-200 space-y-1"
+        >
+          <div className="font-semibold flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" aria-hidden="true" />
+            <span>{feedback.title}</span>
+          </div>
+          <p className="text-red-800 dark:text-red-300 leading-relaxed">{feedback.message}</p>
+        </div>
+      )}
+
+      {feedback?.kind === 'success' && (
+        <div
+          role="status"
+          className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/80 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-1"
+        >
+          <div className="font-semibold flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+            <span>{feedback.title}</span>
+          </div>
+          <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">{feedback.message}</p>
+          <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
+            Application ID · {feedback.loanId}
+          </p>
         </div>
       )}
 
@@ -927,24 +864,11 @@ export function RequestQardHasanLoanForm({
                       ? 'Eligibility Requirements Not Met'
                       : submitting
                         ? 'Encrypting & Submitting…'
-                        : 'Review & Submit Qard Hasan Request'}
+                        : 'Submit Qard Hasan Request'}
             </span>
           </button>
         </div>
       </form>
-
-      <ActionModal
-        open={Boolean(modal)}
-        mode={modal?.mode || 'notice'}
-        tone={modal?.tone || 'emerald'}
-        title={modal?.title || ''}
-        description={modal?.description || ''}
-        details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? 'Confirm & Submit Request' : 'Done'}
-        busy={submitting}
-        onConfirm={modal?.mode === 'confirm' ? executeLoanSubmission : undefined}
-        onClose={handleActionModalClose}
-      />
     </section>
   );
 }
