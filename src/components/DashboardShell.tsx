@@ -1284,8 +1284,48 @@ export function DashboardShell() {
           eligibility={overview?.personal.eligibility || null}
           config={overview?.config || null}
           availableLiquidity={overview?.treasury.availableLiquidity || 0}
-          onSubmitted={async () => {
-            await handleRefreshWithAutoSync();
+          onSubmitted={async (createdLoan) => {
+            // Show the new request immediately on the member dashboard
+            // (Overview + Qard Hasan list) before the full workspace refresh.
+            setLoans((prev) => {
+              if (prev.some((l) => l.id === createdLoan.id)) return prev;
+              return [createdLoan, ...prev];
+            });
+            setOverview((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                personal: {
+                  ...prev.personal,
+                  eligibility: {
+                    ...prev.personal.eligibility,
+                    eligible: false,
+                    noActiveLoan: false,
+                    activeLoanId: createdLoan.id,
+                    reasons: [
+                      `Existing loan (${createdLoan.id}) is currently "${createdLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`,
+                      ...(prev.personal.eligibility.reasons || []).filter(
+                        (r) => !r.startsWith('Existing loan')
+                      ),
+                    ],
+                  },
+                },
+                treasury: {
+                  ...prev.treasury,
+                  pendingLoansReviewCount:
+                    createdLoan.status === 'pending_manager_review'
+                      ? (prev.treasury.pendingLoansReviewCount || 0) + 1
+                      : prev.treasury.pendingLoansReviewCount,
+                },
+              };
+            });
+            // Prefer Qard Hasan section so the member sees their active request
+            navigateToPage('quard-hasan');
+            try {
+              await handleRefreshWithAutoSync();
+            } catch (err) {
+              console.error('Post-loan workspace refresh failed:', err);
+            }
           }}
         />
       )}

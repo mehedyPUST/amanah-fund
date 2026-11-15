@@ -778,8 +778,15 @@ export function LoansView({
               config={config}
               availableLiquidity={availableLiquidity}
               onSubmitted={async (loan) => {
+                // Select the new request immediately so it appears in the
+                // member's portfolio list while the parent refreshes.
                 setSelectedLoanId(loan.id);
-                await onRefresh();
+                setScope('mine');
+                try {
+                  await onRefresh();
+                } catch (err) {
+                  console.error('Loan created; portfolio refresh failed:', err);
+                }
               }}
             />
           </div>

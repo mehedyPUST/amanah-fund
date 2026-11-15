@@ -207,7 +207,7 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
     expect(data.loan.monthlyInstallment).toBe(1000);
   });
 
-  it('enforces co-signing guarantor selection above threshold and creates pending_guarantor status when provided', async () => {
+  it('enforces co-signing guarantor selection above threshold and queues request in Manager Desk', async () => {
     const missingGuarantorRes = await fetch(`${baseUrl}/api/loans`, {
       method: 'POST',
       headers: authHeaders('u-member-1'),
@@ -238,7 +238,8 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
 
     expect(validRes.status).toBe(201);
     const data = (await validRes.json()) as { loan: LoanRequest };
-    expect(data.loan.status).toBe('pending_guarantor');
+    // Always lands in Manager Desk Stage 1 so managers can initiate voting
+    expect(data.loan.status).toBe('pending_manager_review');
     expect(data.loan.guarantors).toHaveLength(1);
     expect(data.loan.guarantors?.[0].memberId).toBe('u-member-2');
     expect(data.loan.guarantors?.[0].status).toBe('pending');

@@ -403,20 +403,18 @@ export function RequestQardHasanLoanForm({
       setAgreedToTerms(false);
       setTermsHighlight(false);
       setShowSchedulePreview(false);
-      await onSubmitted(created);
+
+      // Success UI first — loan is already saved. Parent refresh must not
+      // turn a successful placement into an error dialog.
       setModal({
         mode: 'notice',
         tone: 'emerald',
-        title:
-          created.status === 'pending_guarantor'
-            ? `Awaiting Guarantor Co-Signature (${created.id})`
-            : `Qard Hasan Request Submitted (${created.id})`,
+        title: `Qard Hasan Request Submitted (${created.id})`,
         description:
-          created.status === 'pending_guarantor'
-            ? 'Your payout details are AES-256-GCM encrypted. Selected guarantor member(s) must co-sign before Manager review and 2/3 secret ballot voting.'
-            : 'Your payout details are AES-256-GCM encrypted and routed to the Manager Desk for 2/3 secret ballot initiation.',
+          'Your payout details are AES-256-GCM encrypted. The application is now in Manager Desk — a manager will initiate the 2/3 secret ballot. Track status on your dashboard as an active request.',
         details: [
           { label: 'Application ID', value: created.id },
+          { label: 'Status', value: 'Pending Manager Review' },
           { label: 'Principal', value: formatMoney(created.amount, ccy) },
           {
             label: 'Schedule',
@@ -429,6 +427,12 @@ export function RequestQardHasanLoanForm({
         ],
         closeParentOnDone: variant === 'modal' && Boolean(onClose),
       });
+
+      try {
+        await onSubmitted(created);
+      } catch (refreshErr) {
+        console.error('Loan created but dashboard refresh failed:', refreshErr);
+      }
     } catch (err) {
       openErrorModal(
         'Could Not Place Qard Hasan Request',

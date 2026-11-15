@@ -1877,6 +1877,10 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         };
       });
 
+      // Always route to Manager Desk (pending_manager_review) so managers can
+      // see and initiate 2/3 voting. Guarantors (if any) are notified in parallel
+      // and remain attached to the loan for transparency — they no longer block
+      // the request from appearing in Stage 1 of Manager Desk.
       createdLoan = {
         id,
         borrowerId: viewer.id,
@@ -1887,7 +1891,7 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         monthlyInstallment: Math.round((amount / installmentMonths) * 100) / 100,
         purpose,
         encryptedSensitiveNotes,
-        status: needsGuarantor ? 'pending_guarantor' : 'pending_manager_review',
+        status: 'pending_manager_review',
         guarantors: resolvedGuarantors.length > 0 ? resolvedGuarantors : undefined,
         eligibilitySnapshot: eligibility,
         votes: [],
@@ -1919,36 +1923,38 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
               recipientName: gUser.name,
               recipientUserId: gUser.id,
               subject: `Guarantor Co-Sign Request: ${viewer.name} (${id})`,
-              body: `${viewer.name} (${viewer.memberCode}) requested a high-value Qard Hasan loan of ${amount} ${currency} (${installmentMonths} months) for "${purpose}" and nominated you as cooperative guarantor. Accept or decline in the Qard Hasan tab before Manager review & 2/3 member voting begins.`,
+              body: `${viewer.name} (${viewer.memberCode}) requested a high-value Qard Hasan loan of ${amount} ${currency} (${installmentMonths} months) for "${purpose}" and nominated you as cooperative guarantor. Please review and accept/decline in the Qard Hasan tab. The application is already in Manager Desk for vote initiation.`,
               relatedId: id,
             });
           }
         });
-      } else {
-        const managersAndAdmins = draft.users.filter(
-          (u) => u.status === 'active' && (u.role === 'manager' || u.role === 'admin')
-        );
-        managersAndAdmins.forEach((staff) => {
-          queueEmailNotification(draft, {
-            type: 'loan_vote_requested',
-            recipientEmail: staff.email,
-            recipientName: staff.name,
-            recipientUserId: staff.id,
-            subject: `New Qard Hasan Application (Initiate Vote Needed): ${viewer.name} (${id})`,
-            body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan application (${installmentMonths} months) for "${purpose}". Review application details in Manager Desk to initiate the 2/3 member ballot.`,
-            relatedId: id,
-          });
-        });
       }
+
+      const managersAndAdmins = draft.users.filter(
+        (u) => u.status === 'active' && (u.role === 'manager' || u.role === 'admin')
+      );
+      managersAndAdmins.forEach((staff) => {
+        queueEmailNotification(draft, {
+          type: 'loan_vote_requested',
+          recipientEmail: staff.email,
+          recipientName: staff.name,
+          recipientUserId: staff.id,
+          subject: `New Qard Hasan Application (Initiate Vote Needed): ${viewer.name} (${id})`,
+          body: `${viewer.name} (${viewer.memberCode}) submitted a ${amount} ${currency} Qard Hasan loan application (${installmentMonths} months) for "${purpose}".${
+            needsGuarantor
+              ? ` Guarantor co-signers were also nominated (${resolvedGuarantors.length}).`
+              : ''
+          } Review application details in Manager Desk → Qard Hasan → Stage 1 to initiate the 2/3 member ballot.`,
+          relatedId: id,
+        });
+      });
 
       appendAuditLog(draft, {
         actor: viewer,
         action: 'LOAN_REQUEST_CREATED',
         resourceType: 'loan',
         resourceId: id,
-        summary: needsGuarantor
-          ? `${viewer.name} submitted a ${amount} Qard Hasan request awaiting guarantor co-signature`
-          : `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) awaiting Manager review to initiate vote`,
+        summary: `${viewer.name} submitted a ${amount} Qard Hasan request (${installmentMonths} monthly installments) — queued in Manager Desk for vote initiation`,
         payload: {
           loanId: id,
           amount,
@@ -1969,15 +1975,13 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       borrowerCode: viewer.memberCode,
       amount,
       currency,
+      status: createdLoan.status,
       requiredApprovals: createdLoan.requiredApprovals,
       totalEligibleVoters: createdLoan.totalEligibleVoters,
       purpose,
     });
     broadcastRealtimeEvent('notification:created', {
-      type:
-        createdLoan.status === 'pending_guarantor'
-          ? 'loan_guarantor_requested'
-          : 'loan_vote_requested',
+      type: 'loan_vote_requested',
       loanId: createdLoan.id,
     });
     broadcastRealtimeEvent('audit:updated', {
