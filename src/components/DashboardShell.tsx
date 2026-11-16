@@ -271,6 +271,7 @@ export function DashboardShell() {
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
   const autoSyncBusyRef = useRef(false);
+  const mainScrollRef = useRef<HTMLDivElement | null>(null);
   const soundEnabledRef = useRef(false);
   soundEnabledRef.current = Boolean(user?.notificationPreferences?.soundEnabled);
 
@@ -449,7 +450,7 @@ export function DashboardShell() {
         }
       }
       if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
     [visibleNav]
@@ -552,7 +553,7 @@ export function DashboardShell() {
           url.searchParams.set('memberId', memberId);
           window.history.pushState({ page: 'member-profile', memberId }, '', url);
         }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
     [activeSection]
@@ -616,15 +617,15 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] px-4 items-center gap-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+      <div className="h-dvh overflow-hidden w-full bg-slate-50 dark:bg-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
           <Skeleton width={32} height={32} borderRadius={8} />
           <div className="space-y-1 flex-1">
             <Skeleton width={80} height={14} />
             <Skeleton width={100} height={10} />
           </div>
         </div>
-        <div className="lg:col-start-2 lg:row-start-1 h-[60px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -633,7 +634,7 @@ export function DashboardShell() {
             <Skeleton width={140} height={34} borderRadius={8} />
           </div>
         </div>
-        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5">
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5">
           <div className="space-y-2">
             {Array.from({ length: 10 }).map((_, idx) => (
               <Skeleton key={idx} height={34} borderRadius={8} />
@@ -645,7 +646,7 @@ export function DashboardShell() {
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="lg:col-start-2 lg:row-start-2 flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 space-y-3">
+        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 space-y-3">
           <Skeleton height={82} borderRadius={12} />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
@@ -791,9 +792,9 @@ export function DashboardShell() {
        Grid 3 (Bottom-Left, 252px x 1fr): Dashboard Sidebar
        Grid 4 (Bottom-Right, 1fr x 1fr): Multi-Page Dashboard Contents
     */
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+    <div className="h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] px-4 items-center justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs sticky top-2.5 z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
@@ -810,7 +811,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-2 lg:top-2.5 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -889,8 +890,8 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs lg:sticky lg:top-[80px] lg:h-[calc(100vh-90px)]">
-        <nav className="flex-1 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+        <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
 
@@ -978,9 +979,13 @@ export function DashboardShell() {
         )}
       </AnimatePresence>
 
-      {/* GRID 4: Multi-Page Dashboard Content */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 w-full flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 lg:p-4">
-        <div className="w-full flex-1 space-y-3.5">
+      {/* GRID 4: Multi-Page Dashboard Content (Fixed container below navbar with internal scroll) */}
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden">
+        <div
+          ref={mainScrollRef}
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3.5 sm:p-4 lg:p-4"
+        >
+          <div className="w-full space-y-3.5">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
@@ -1472,6 +1477,7 @@ export function DashboardShell() {
               )}
             </motion.div>
           </AnimatePresence>
+          </div>
         </div>
       </main>
 
