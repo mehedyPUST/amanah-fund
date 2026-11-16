@@ -1,21 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Moon, Shield, Sun } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
 
 export function Footer() {
-  const pathname = usePathname();
-  const { user, authChecking, darkMode, toggleDarkMode } = useCoopSession();
-
-  function scrollIfHome(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
-    if (pathname === '/') {
-      e.preventDefault();
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.replaceState(null, '', id === 'overview' ? '/' : `#${id}`);
-    }
-  }
+  const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
     <footer className="max-w-7xl mx-auto w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-2xs">
@@ -37,33 +27,28 @@ export function Footer() {
 
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Portal Sections
+              Portal Pages
             </h3>
             <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>
                 <Link
-                  href="/#overview"
-                  onClick={(e) => scrollIfHome(e, 'overview')}
+                  href="/"
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
                   Overview
                 </Link>
               </li>
-              {!authChecking && user && user.status === 'active' && (
-                <li>
-                  <Link
-                    href="/#notice-board"
-                    onClick={(e) => scrollIfHome(e, 'notice-board')}
-                    className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-                  >
-                    Notice Board
-                  </Link>
-                </li>
-              )}
               <li>
                 <Link
-                  href="/#architecture"
-                  onClick={(e) => scrollIfHome(e, 'architecture')}
+                  href="/community"
+                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
+                >
+                  Community Hub
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about"
                   className="hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors"
                 >
                   Security &amp; Architecture
@@ -71,8 +56,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#how-it-works"
-                  onClick={(e) => scrollIfHome(e, 'how-it-works')}
+                  href="/how-it-works"
                   className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
                 >
                   How It Works
@@ -80,8 +64,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#governance-charter"
-                  onClick={(e) => scrollIfHome(e, 'governance-charter')}
+                  href="/rules"
                   className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                 >
                   Governance Charter

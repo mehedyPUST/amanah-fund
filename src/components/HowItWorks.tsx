@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   ArrowRight,
   Building2,
@@ -203,7 +202,6 @@ const ROLE_GUIDES: RoleGuide[] = [
 ];
 
 export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
-  const pathname = usePathname();
   const { user } = useCoopSession();
   const [activeRole, setActiveRole] = useState<RoleGuideKey>('member');
 
@@ -320,16 +318,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
-              href="/#governance-charter"
-              onClick={(e) => {
-                if (pathname === '/') {
-                  e.preventDefault();
-                  document
-                    .getElementById('governance-charter')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  window.history.replaceState(null, '', '#governance-charter');
-                }
-              }}
+              href="/rules"
               className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-amber-300 dark:hover:border-amber-700 transition-colors whitespace-nowrap"
             >
               Read Charter

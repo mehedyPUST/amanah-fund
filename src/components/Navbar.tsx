@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, LayoutDashboard, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
@@ -8,21 +8,18 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 
-type HomeSectionId =
-  | 'overview'
-  | 'notice-board'
-  | 'community'
-  | 'lifecycle'
-  | 'architecture'
-  | 'how-it-works'
-  | 'governance-charter';
-
 interface PublicNavItem {
-  id?: HomeSectionId;
   href: string;
-  altPath?: string;
   label: string;
 }
+
+const NAV_LINKS: PublicNavItem[] = [
+  { href: '/', label: 'Overview' },
+  { href: '/community', label: 'Community' },
+  { href: '/about', label: 'Architecture' },
+  { href: '/how-it-works', label: 'How It Works' },
+  { href: '/rules', label: 'Charter' },
+];
 
 export function Navbar() {
   const pathname = usePathname();
@@ -30,133 +27,12 @@ export function Navbar() {
   const { user, authChecking, logout, darkMode, toggleDarkMode } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [activeHomeSection, setActiveHomeSection] = useState<HomeSectionId>('overview');
-  const manualScrollLockUntilRef = useRef(0);
 
   const isAuthenticated = !authChecking && Boolean(user);
-  const isActiveMember = isAuthenticated && user?.status === 'active';
 
-  const navLinks: PublicNavItem[] = [
-    { id: 'overview', href: '/#overview', label: 'Overview' },
-    ...(isActiveMember
-      ? [{ id: 'notice-board' as const, href: '/#notice-board', label: 'Notices' }]
-      : []),
-    { id: 'community', href: '/#community', label: 'Community' },
-    { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
-    { id: 'how-it-works', href: '/#how-it-works', label: 'How It Works' },
-    {
-      id: 'governance-charter',
-      href: '/#governance-charter',
-      altPath: '/rules',
-      label: 'Charter',
-    },
-  ];
-
-  const scrollToHomeSection = useCallback((sectionId: HomeSectionId, closeDrawer = false) => {
-    setActiveHomeSection(sectionId);
-    manualScrollLockUntilRef.current = Date.now() + 750;
-    if (closeDrawer) {
-      setMobileOpen(false);
-    }
-    const target = document.getElementById(sectionId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.replaceState(null, '', `#${sectionId}`);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (pathname !== '/') return;
-    const hash = window.location.hash.replace('#', '') as HomeSectionId;
-    if (
-      hash === 'overview' ||
-      hash === 'notice-board' ||
-      hash === 'community' ||
-      hash === 'lifecycle' ||
-      hash === 'architecture' ||
-      hash === 'how-it-works' ||
-      hash === 'governance-charter'
-    ) {
-      const timer = window.setTimeout(() => {
-        scrollToHomeSection(hash, false);
-      }, 60);
-      return () => window.clearTimeout(timer);
-    }
-  }, [pathname, scrollToHomeSection]);
-
-  useEffect(() => {
-    if (pathname !== '/') return;
-    const sectionIds: HomeSectionId[] = [
-      'overview',
-      'notice-board',
-      'community',
-      'lifecycle',
-      'architecture',
-      'how-it-works',
-      'governance-charter',
-    ];
-    let rafId = 0;
-
-    const updateActiveOnScroll = () => {
-      if (Date.now() < manualScrollLockUntilRef.current) return;
-
-      const atBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
-      if (atBottom) {
-        setActiveHomeSection('governance-charter');
-        return;
-      }
-
-      const thresholdY = 128;
-      let currentId: HomeSectionId = 'overview';
-      for (const id of sectionIds) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        if (el.getBoundingClientRect().top <= thresholdY) {
-          currentId = id;
-        }
-      }
-      setActiveHomeSection(currentId);
-    };
-
-    const onScroll = () => {
-      if (rafId) window.cancelAnimationFrame(rafId);
-      rafId = window.requestAnimationFrame(updateActiveOnScroll);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    updateActiveOnScroll();
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, [pathname]);
-
-  function isLinkActive(link: PublicNavItem): boolean {
-    if (pathname === '/') {
-      if (link.id === 'architecture' && activeHomeSection === 'lifecycle') {
-        return true;
-      }
-      return link.id === activeHomeSection;
-    }
-    if (link.altPath && pathname === link.altPath) {
-      return true;
-    }
-    return pathname === link.href;
-  }
-
-  function handleNavClick(
-    e: MouseEvent<HTMLAnchorElement>,
-    link: PublicNavItem,
-    isMobile = false
-  ) {
-    if (link.id && pathname === '/') {
-      e.preventDefault();
-      scrollToHomeSection(link.id, isMobile);
-    } else if (isMobile) {
-      setMobileOpen(false);
-    }
+  function isLinkActive(href: string): boolean {
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   async function handleSignOut() {
@@ -171,16 +47,11 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-2 sm:top-2.5 z-40 max-w-7xl mx-auto w-full">
-      <div className="h-[56px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full bg-slate-50 dark:bg-slate-950 px-2 sm:px-2.5 pt-2 sm:pt-2.5 pb-1">
+      <div className="max-w-7xl mx-auto w-full h-[56px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
         <Link
-          href="/#overview"
-          onClick={(e) => {
-            if (pathname === '/') {
-              e.preventDefault();
-              scrollToHomeSection('overview', true);
-            }
-          }}
+          href="/"
+          onClick={() => setMobileOpen(false)}
           className="flex items-center gap-2.5 shrink-0 group"
         >
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105">
@@ -197,13 +68,13 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-0.5 lg:gap-1" aria-label="Primary navigation">
-          {navLinks.map((link) => {
-            const active = isLinkActive(link);
+          {NAV_LINKS.map((link) => {
+            const active = isLinkActive(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={(e) => handleNavClick(e, link, false)}
+                aria-current={active ? 'page' : undefined}
                 className={`relative px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-[13px] font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-emerald-700 dark:text-emerald-400'
@@ -300,15 +171,15 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
+            className="md:hidden max-w-7xl mx-auto mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
           >
-            {navLinks.map((link) => {
-              const active = isLinkActive(link);
+            {NAV_LINKS.map((link) => {
+              const active = isLinkActive(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={(e) => handleNavClick(e, link, true)}
+                  onClick={() => setMobileOpen(false)}
                   className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     active
                       ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'

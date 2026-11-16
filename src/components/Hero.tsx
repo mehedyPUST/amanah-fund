@@ -130,13 +130,12 @@ export function Hero({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => scrollToSection('how-it-works')}
-                className="px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-700 dark:hover:text-teal-400 transition-colors whitespace-nowrap cursor-pointer"
+              <Link
+                href="/how-it-works"
+                className="px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-700 dark:hover:text-teal-400 transition-colors whitespace-nowrap"
               >
                 How It Works
-              </button>
+              </Link>
             </div>
           </div>
 
