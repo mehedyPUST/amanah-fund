@@ -4380,7 +4380,7 @@ apiRouter.delete(
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!(await assertStepUpTotp(req, res))) return;
-      const { id } = req.params;
+      const id = String(req.params.id || '');
       const viewer = req.authUser!;
       if (id === viewer.id) {
         res.status(400).json({ error: 'Administrators cannot delete their own active account.' });
@@ -6192,7 +6192,8 @@ apiRouter.delete(
   requireAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { postId, commentId } = req.params;
+      const postId = String(req.params.postId || '');
+      const commentId = String(req.params.commentId || '');
       const viewer = req.authUser!;
       const reason = String(req.body?.reason || req.query?.reason || '').trim();
       let updatedPost: CommunityPost | null = null;

@@ -12,6 +12,7 @@ import {
   Vote,
   X,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { DashboardOverview, HalalProject, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -249,19 +250,24 @@ export function HalalProjectsView({
   const totalTarget = projects.reduce((s, p) => s + p.targetAllocation, 0);
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {/* Maturity Transition Summary */}
-      <section className="bg-gradient-to-br from-amber-50/65 via-white to-white dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-gradient-to-br from-amber-50/75 via-white to-teal-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-teal-950/15 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
-              <Calendar className="w-4 h-4" aria-hidden="true" />
+              <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>
                 Pre-Specified Maturity Date: {formatShortDate(overview?.config.maturityDate)}
               </span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Halal Ventures & 2/3 Member Voting
+              Halal Ventures &amp; 2/3 Member Voting
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {overview?.config.halalInvestmentThesis}
@@ -269,15 +275,15 @@ export function HalalProjectsView({
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800">
+            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-emerald-200/70 dark:border-emerald-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Current Pool</div>
               <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800">
+            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-amber-200/70 dark:border-amber-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Pipeline Target</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-600 dark:text-amber-400">
+              <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -300,15 +306,29 @@ export function HalalProjectsView({
                 A placement is approved when at least two-thirds (2/3) of active members vote Yes
               </p>
             </div>
-            <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400">
+            <span className="text-xs font-mono text-indigo-700 dark:text-indigo-400">
               Live 2/3 Majority Tallies
             </span>
           </div>
 
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} height={130} />
+                <div
+                  key={i}
+                  className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3"
+                >
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton width={210} height={14} />
+                      <Skeleton width="55%" height={20} />
+                      <Skeleton width="90%" height={14} />
+                    </div>
+                    <div className="md:w-64 shrink-0">
+                      <Skeleton height={74} />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : projects.length === 0 ? (
@@ -387,15 +407,18 @@ export function HalalProjectsView({
                           </span>
                         </div>
                         <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-300 ${
+                          <motion.div
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                            className={`h-full rounded-full ${
                               proj.votingStatus === 'approved'
-                                ? 'bg-gradient-to-r from-emerald-600 to-emerald-500'
+                                ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
                                 : proj.votingStatus === 'rejected'
-                                  ? 'bg-red-600'
+                                  ? 'bg-rose-600'
                                   : 'bg-gradient-to-r from-amber-500 to-amber-400'
                             }`}
-                            style={{ width: `${progressPct}%` }}
+                            style={{ width: `${progressPct}%`, originX: 0 }}
                           />
                         </div>
                         <div className="flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -415,8 +438,8 @@ export function HalalProjectsView({
                           <ShieldCheck
                             className={`w-4 h-4 ${
                               proj.votingStatus === 'approved'
-                                ? 'text-emerald-600'
-                                : 'text-red-600'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-rose-600 dark:text-rose-400'
                             }`}
                             aria-hidden="true"
                           />
@@ -424,7 +447,7 @@ export function HalalProjectsView({
                             className={
                               proj.votingStatus === 'approved'
                                 ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-red-700 dark:text-red-400'
+                                : 'text-rose-700 dark:text-rose-400'
                             }
                           >
                             {proj.votingStatus === 'approved'
@@ -434,7 +457,7 @@ export function HalalProjectsView({
                         </div>
                       ) : myVote ? (
                         <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                          <Vote className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                          <Vote className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
                           <span>
                             You voted <strong className="uppercase">{myVote.decision}</strong> on{' '}
                             {formatDateTime(myVote.castAt)} (Sig: {shortHash(myVote.signatureHash)})
@@ -452,14 +475,14 @@ export function HalalProjectsView({
                               }))
                             }
                             placeholder="Optional vote note…"
-                            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                           />
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'yes')}
-                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote Yes</span>
@@ -468,7 +491,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'no')}
-                              className="px-3.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote No</span>
@@ -491,53 +514,63 @@ export function HalalProjectsView({
                       </button>
                     </div>
 
-                    {isExpanded && (
-                      <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {proj.votes.length === 0 ? (
-                          <div className="text-xs text-slate-500">No votes cast yet.</div>
-                        ) : (
-                          proj.votes.map((v) => {
-                            const isSelf = Boolean(v.isSelf || v.voterId === user.id);
-                            return (
-                              <div
-                                key={v.voterId}
-                                className={`p-2.5 rounded-lg border text-xs flex items-start justify-between gap-2 ${
-                                  isSelf
-                                    ? 'bg-emerald-50/50 dark:bg-emerald-950/25 border-emerald-300 dark:border-emerald-800/70'
-                                    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'
-                                }`}
-                              >
-                                <div className="min-w-0">
-                                  <div className="font-medium text-slate-900 dark:text-white">
-                                    {v.voterName}{' '}
-                                    <span className="text-slate-500 font-normal">
-                                      · {isSelf ? 'Your Ballot' : 'Anonymized'}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.22 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {proj.votes.length === 0 ? (
+                              <div className="text-xs text-slate-500">No votes cast yet.</div>
+                            ) : (
+                              proj.votes.map((v) => {
+                                const isSelf = Boolean(v.isSelf || v.voterId === user.id);
+                                return (
+                                  <div
+                                    key={v.voterId}
+                                    className={`p-2.5 rounded-lg border text-xs flex items-start justify-between gap-2 ${
+                                      isSelf
+                                        ? 'bg-emerald-50/50 dark:bg-emerald-950/25 border-emerald-300 dark:border-emerald-800/70'
+                                        : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'
+                                    }`}
+                                  >
+                                    <div className="min-w-0">
+                                      <div className="font-medium text-slate-900 dark:text-white">
+                                        {v.voterName}{' '}
+                                        <span className="text-slate-500 font-normal">
+                                          · {isSelf ? 'Your Ballot' : 'Anonymized'}
+                                        </span>
+                                      </div>
+                                      {v.comment && (
+                                        <p className="text-slate-600 dark:text-slate-400 mt-0.5 truncate">
+                                          “{v.comment}”
+                                        </p>
+                                      )}
+                                      <div className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        Sig {shortHash(v.signatureHash)}
+                                      </div>
+                                    </div>
+                                    <span
+                                      className={`font-semibold uppercase text-[11px] shrink-0 ${
+                                        v.decision === 'yes'
+                                          ? 'text-emerald-700 dark:text-emerald-400'
+                                          : 'text-rose-700 dark:text-rose-400'
+                                      }`}
+                                    >
+                                      {v.decision}
                                     </span>
                                   </div>
-                                {v.comment && (
-                                  <p className="text-slate-600 dark:text-slate-400 mt-0.5 truncate">
-                                    “{v.comment}”
-                                  </p>
-                                )}
-                                <div className="font-mono text-[10px] text-slate-400 mt-0.5">
-                                  Sig {shortHash(v.signatureHash)}
-                                </div>
-                              </div>
-                              <span
-                                className={`font-semibold uppercase text-[11px] shrink-0 ${
-                                  v.decision === 'yes'
-                                    ? 'text-emerald-700 dark:text-emerald-400'
-                                    : 'text-red-700 dark:text-red-400'
-                                }`}
-                              >
-                                  {v.decision}
-                                </span>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
+                                );
+                              })
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Profit & Dividend Distributions */}
                     {(proj.votingStatus === 'approved' || proj.status !== 'proposed') && (
@@ -557,7 +590,7 @@ export function HalalProjectsView({
                                   distFormProjectId === proj.id ? null : proj.id
                                 )
                               }
-                              className="px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
+                              className="px-3 py-1 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
                             >
                               {distFormProjectId === proj.id
                                 ? 'Cancel'
@@ -566,63 +599,69 @@ export function HalalProjectsView({
                           )}
                         </div>
 
-                        {isStaff && distFormProjectId === proj.id && (
-                          <form
-                            onSubmit={(e) => handleDistributeProfit(e, proj)}
-                            className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"
-                          >
-                            <div>
-                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                Period Label
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                minLength={2}
-                                value={distPeriodLabel}
-                                onChange={(e) => setDistPeriodLabel(e.target.value)}
-                                placeholder="e.g. FY2026 Q2"
-                                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                Realized Profit ({ccy})
-                              </label>
-                              <input
-                                type="number"
-                                min={1}
-                                step="any"
-                                required
-                                value={distRealizedProfit}
-                                onChange={(e) => setDistRealizedProfit(e.target.value)}
-                                placeholder="e.g. 25000"
-                                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                Co-op Share (%)
-                              </label>
-                              <input
-                                type="number"
-                                min={1}
-                                max={100}
-                                required
-                                value={distCoopSharePct}
-                                onChange={(e) => setDistCoopSharePct(e.target.value)}
-                                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
-                              />
-                            </div>
-                            <button
-                              type="submit"
-                              disabled={distBusy}
-                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
+                        <AnimatePresence initial={false}>
+                          {isStaff && distFormProjectId === proj.id && (
+                            <motion.form
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.22 }}
+                              onSubmit={(e) => handleDistributeProfit(e, proj)}
+                              className="p-3.5 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end overflow-hidden"
                             >
-                              {distBusy ? 'Distributing…' : 'Distribute Pro-Rata'}
-                            </button>
-                          </form>
-                        )}
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Period Label
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  minLength={2}
+                                  value={distPeriodLabel}
+                                  onChange={(e) => setDistPeriodLabel(e.target.value)}
+                                  placeholder="e.g. FY2026 Q2"
+                                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Realized Profit ({ccy})
+                                </label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  step="any"
+                                  required
+                                  value={distRealizedProfit}
+                                  onChange={(e) => setDistRealizedProfit(e.target.value)}
+                                  placeholder="e.g. 25000"
+                                  className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Co-op Share (%)
+                                </label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={100}
+                                  required
+                                  value={distCoopSharePct}
+                                  onChange={(e) => setDistCoopSharePct(e.target.value)}
+                                  className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                />
+                              </div>
+                              <button
+                                type="submit"
+                                disabled={distBusy}
+                                className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
+                              >
+                                {distBusy ? 'Distributing…' : 'Distribute Pro-Rata'}
+                              </button>
+                            </motion.form>
+                          )}
+                        </AnimatePresence>
 
                         {(proj.distributions || []).length > 0 && (
                           <div className="space-y-2">
@@ -828,7 +867,7 @@ export function HalalProjectsView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Proposal…' : 'Open for 2/3 Member Vote'}</span>
@@ -836,7 +875,7 @@ export function HalalProjectsView({
             </form>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
               <span>Requires 2/3 member Yes votes for approval.</span>
             </div>
           </section>
@@ -857,6 +896,6 @@ export function HalalProjectsView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

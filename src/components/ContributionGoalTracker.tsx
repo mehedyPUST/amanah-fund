@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertCircle,
   ArrowRight,
@@ -287,15 +288,20 @@ export function ContributionGoalTracker({
   ).padStart(2, '0')}`;
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
       aria-labelledby="contribution-goal-tracker-heading"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
     >
       {/* Top Header & Year / Goal Controls */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Target className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </span>
             <span>Annual Savings Goal Tracker</span>
           </div>
           <h3
@@ -317,7 +323,7 @@ export function ContributionGoalTracker({
             {customGoal !== null && (
               <>
                 <span aria-hidden="true"> · </span>
-                <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                <span className="text-indigo-700 dark:text-indigo-400 font-medium">
                   Custom goal active
                 </span>
               </>
@@ -330,22 +336,32 @@ export function ContributionGoalTracker({
             <div
               role="group"
               aria-label="Select tracking year"
-              className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg"
+              className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
             >
-              {availableYears.map((yr) => (
-                <button
-                  key={yr}
-                  type="button"
-                  onClick={() => setSelectedYear(yr)}
-                  className={`px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                    selectedYear === yr
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {yr}
-                </button>
-              ))}
+              {availableYears.map((yr) => {
+                const active = selectedYear === yr;
+                return (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => setSelectedYear(yr)}
+                    className={`relative px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      active
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="goal-tracker-year-pill"
+                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
+                      />
+                    )}
+                    <span className="relative z-10">{yr}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -356,9 +372,9 @@ export function ContributionGoalTracker({
               setGoalInput(String(yearlyGoal));
               setGoalError(null);
             }}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
           >
-            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+            <Pencil className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
             <span>{editingGoal ? 'Close Editor' : 'Edit Yearly Goal'}</span>
           </button>
 
@@ -366,7 +382,7 @@ export function ContributionGoalTracker({
             <button
               type="button"
               onClick={() => onSubmitContribution(currentBillingMonth)}
-              className="group px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+              className="group px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>Deposit Month</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -506,61 +522,67 @@ export function ContributionGoalTracker({
       </div>
 
       {/* Inline Custom Yearly Goal Editor */}
-      {editingGoal && (
-        <form
-          onSubmit={handleSaveGoal}
-          className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-end justify-between gap-3"
-        >
-          <div className="space-y-1 flex-1 max-w-sm">
-            <label
-              htmlFor="yearly-savings-goal-input"
-              className="block text-xs font-medium text-slate-700 dark:text-slate-300"
-            >
-              Personal {selectedYear} Yearly Savings Goal ({ccy})
-            </label>
-            <input
-              id="yearly-savings-goal-input"
-              type="number"
-              min={100}
-              step={100}
-              required
-              value={goalInput}
-              onChange={(e) => setGoalInput(e.target.value)}
-              className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-            />
-            {goalError && (
-              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{goalError}</p>
-            )}
-          </div>
+      <AnimatePresence initial={false}>
+        {editingGoal && (
+          <motion.form
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            onSubmit={handleSaveGoal}
+            className="overflow-hidden pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-end justify-between gap-3"
+          >
+            <div className="space-y-1 flex-1 max-w-sm">
+              <label
+                htmlFor="yearly-savings-goal-input"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+              >
+                Personal {selectedYear} Yearly Savings Goal ({ccy})
+              </label>
+              <input
+                id="yearly-savings-goal-input"
+                type="number"
+                min={100}
+                step={100}
+                required
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+              {goalError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{goalError}</p>
+              )}
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
-            >
-              Save Goal
-            </button>
-            {customGoal !== null && (
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
+              >
+                Save Goal
+              </button>
+              {customGoal !== null && (
+                <button
+                  type="button"
+                  onClick={handleResetGoal}
+                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Reset to 12× ({formatMoney(defaultYearlyGoal, ccy)})</span>
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleResetGoal}
-                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                onClick={() => setEditingGoal(false)}
+                aria-label="Cancel editing yearly goal"
+                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Reset to 12× ({formatMoney(defaultYearlyGoal, ccy)})</span>
+                <X className="w-4 h-4" />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setEditingGoal(false)}
-              aria-label="Cancel editing yearly goal"
-              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
-      )}
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
 
       {/* 4-Column Annual Goal Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -578,7 +600,7 @@ export function ContributionGoalTracker({
 
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Yearly Savings Goal</div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {formatMoney(yearlyGoal, ccy)}
           </div>
           <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -602,7 +624,7 @@ export function ContributionGoalTracker({
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {trackerData.surplusAmount > 0 ? 'Goal Exceeded By' : 'Remaining to Goal'}
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {trackerData.surplusAmount > 0
               ? `+${formatMoney(trackerData.surplusAmount, ccy)}`
               : formatMoney(trackerData.remainingToGoal, ccy)}
@@ -639,14 +661,20 @@ export function ContributionGoalTracker({
           aria-valuemax={yearlyGoal}
           className="relative w-full h-3.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex"
         >
-          <div
-            className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 transition-all duration-300"
-            style={{ width: `${trackerData.approvedPct}%` }}
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400"
+            style={{ width: `${trackerData.approvedPct}%`, originX: 0 }}
           />
           {trackerData.pendingPct > 0 && (
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
-              style={{ width: `${trackerData.pendingPct}%` }}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-400"
+              style={{ width: `${trackerData.pendingPct}%`, originX: 0 }}
             />
           )}
 
@@ -830,7 +858,7 @@ export function ContributionGoalTracker({
       <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
             <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
               Your Contribution Payment History ({personalPaymentHistory.length})
             </h4>
@@ -851,7 +879,7 @@ export function ContributionGoalTracker({
                 <tr>
                   <th className="py-2 px-3 font-medium">Billing Month</th>
                   <th className="py-2 px-3 font-medium">Submitted</th>
-                  <th className="py-2 px-3 font-medium">Channel & Ref</th>
+                  <th className="py-2 px-3 font-medium">Channel &amp; Ref</th>
                   <th className="py-2 px-3 font-medium">Status</th>
                   <th className="py-2 px-3 font-medium text-right">Amount</th>
                   <th className="py-2 px-3 font-medium">Verification Note</th>
@@ -900,6 +928,6 @@ export function ContributionGoalTracker({
           </div>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 }

@@ -17,7 +17,8 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
@@ -460,17 +461,51 @@ export function SignUpForm() {
     }
   }
 
+  if (authChecking || user) {
+    return (
+      <div className="bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+            <div className="space-y-2 flex-1">
+              <Skeleton width={240} height={14} />
+              <Skeleton width={280} height={30} />
+              <Skeleton width="88%" height={16} />
+            </div>
+            <Skeleton width={135} height={18} />
+          </div>
+          <Skeleton height={76} borderRadius={12} />
+          <Skeleton height={68} borderRadius={12} />
+          <div className="space-y-4">
+            <Skeleton width={190} height={14} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <Skeleton width={110} height={12} />
+                  <Skeleton height={42} borderRadius={8} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Skeleton width={180} height={14} />
+            <Skeleton height={160} borderRadius={12} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <ShieldCheck className="w-4 h-4" aria-hidden="true" />
               <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
             </div>
@@ -489,121 +524,133 @@ export function SignUpForm() {
           </Link>
         </div>
 
-        {successMessage ? (
-          <div className="p-6 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 space-y-4">
-            <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
-              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
-              <div className="space-y-1">
-                <h2 className="text-base font-semibold">Application Submitted for Review</h2>
-                <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                  {successMessage}
-                </p>
+        <AnimatePresence mode="wait">
+          {successMessage ? (
+            <motion.div
+              key="signup-success"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="p-6 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 space-y-4"
+            >
+              <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
+                <div className="space-y-1">
+                  <h2 className="text-base font-semibold">Application Submitted for Review</h2>
+                  <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                    {successMessage}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <Link
-                href="/login"
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
-              >
-                <span>Go to Sign In</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </Link>
-              <button
-                type="button"
-                onClick={() => setSuccessMessage(null)}
-                className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer"
-              >
-                Submit Another Application
-              </button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-7">
-            <div className="p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                  Constitution Charter (§4–§6 · VISION-36: Jan 2027 – Dec 2036)
-                </p>
-                <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
-                  Maximum 20 members/shares total (intake closes July 2027; late joiners settle prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo, and a ৳200 non-refundable management fee.
-                </p>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <Link
+                  href="/login"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <span>Go to Sign In</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setSuccessMessage(null)}
+                  className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap"
+                >
+                  Submit Another Application
+                </button>
               </div>
-              <a
-                href="/assets/aistudio/Savings__Investment_and_Interest-Free_Loan_Fund_Cooperative_Society_Update_1_98df82ac.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
-              >
-                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Constitution PDF</span>
-              </a>
-            </div>
+            </motion.div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-7">
+              <div className="p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                    Constitution Charter (§4–§6 · VISION-36: Jan 2027 – Dec 2036)
+                  </p>
+                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+                    Maximum 20 members/shares total (intake closes July 2027; late joiners settle prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo, and a ৳200 non-refundable management fee.
+                  </p>
+                </div>
+                <a
+                  href="/assets/aistudio/Savings__Investment_and_Interest-Free_Loan_Fund_Cooperative_Society_Update_1_98df82ac.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
+                >
+                  <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Constitution PDF</span>
+                </a>
+              </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300 leading-relaxed"
-              >
-                {error}
-              </div>
-            )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    role="alert"
+                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Google Identity Prefill / Verification Banner */}
-            {googleOnboarding ? (
-              <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2
-                    className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
-                    aria-hidden="true"
-                  />
+              {/* Google Identity Prefill / Verification Banner */}
+              {googleOnboarding ? (
+                <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/70 dark:bg-teal-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2
+                      className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-teal-900 dark:text-teal-200">
+                        Google Identity Verified · {googleOnboarding.googleProfile.email}
+                      </p>
+                      <p className="text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">
+                        Complete the required cooperative KYC fields below. Once an administrator approves your application, you can sign in directly with Google.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearGoogleOnboarding}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 text-xs font-medium text-teal-800 dark:text-teal-200 hover:bg-teal-100/70 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                  >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Use Email Instead</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-teal-200/70 dark:border-teal-900/40 bg-teal-50/35 dark:bg-teal-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                      Google Identity Verified · {googleOnboarding.googleProfile.email}
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                      Applying with a Google account?
                     </p>
-                    <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
-                      Complete the required cooperative KYC fields below. Once an administrator approves your application, you can sign in directly with Google.
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Verify your Google email first to pre-fill your identity and skip creating a password—you will still complete KYC verification below.
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleStartGoogleOnboarding}
+                    disabled={googleVerifying || submitting}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-xs font-medium text-slate-800 dark:text-slate-100 shadow-2xs transition-colors cursor-pointer disabled:opacity-60 shrink-0 whitespace-nowrap"
+                  >
+                    {googleVerifying ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" aria-hidden="true" />
+                    ) : (
+                      <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                    )}
+                    <span>{googleVerifying ? 'Verifying…' : 'Continue with Google'}</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleClearGoogleOnboarding}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                >
-                  <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Use Email Instead</span>
-                </button>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Applying with a Google account?
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Verify your Google email first to pre-fill your identity and skip creating a password—you will still complete KYC verification below.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleStartGoogleOnboarding}
-                  disabled={googleVerifying || submitting}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-100 shadow-2xs transition-colors cursor-pointer disabled:opacity-60 shrink-0 whitespace-nowrap"
-                >
-                  {googleVerifying ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" aria-hidden="true" />
-                  ) : (
-                    <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  )}
-                  <span>{googleVerifying ? 'Verifying…' : 'Continue with Google'}</span>
-                </button>
-              </div>
-            )}
+              )}
 
             {/* Section 1: Identity & Credentials */}
             <div className="space-y-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Personal &amp; Account Information
+              <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                01. Personal &amp; Account Information
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -717,8 +764,8 @@ export function SignUpForm() {
 
             {/* Section 2: Reference & Employment */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Reference &amp; Employment
+              <h2 className="text-xs font-semibold tracking-wide text-teal-700 dark:text-teal-400">
+                02. Reference &amp; Employment
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
@@ -776,8 +823,8 @@ export function SignUpForm() {
             {/* Section 3: Addresses */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Residential Addresses
+                <h2 className="text-xs font-semibold tracking-wide text-cyan-700 dark:text-cyan-400">
+                  03. Residential Addresses
                 </h2>
                 <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
                   <input
@@ -826,9 +873,9 @@ export function SignUpForm() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                    <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Nominee Information
+                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                    <h2 className="text-xs font-semibold tracking-wide text-indigo-700 dark:text-indigo-400">
+                      04. Nominee Information
                     </h2>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -840,7 +887,7 @@ export function SignUpForm() {
                   {nominees.length > 1 && (
                     <>
                       <span
-                        className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-md border ${
+                        className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-md border tabular-nums ${
                           Math.abs(totalNomineeShare - 100) <= 0.05
                             ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
                             : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
@@ -861,7 +908,7 @@ export function SignUpForm() {
                     type="button"
                     onClick={handleAddNominee}
                     disabled={nominees.length >= 10}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-800 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Add Another Nominee</span>
@@ -880,22 +927,28 @@ export function SignUpForm() {
               </datalist>
 
               <div className="space-y-4">
-                {nominees.map((nominee, idx) => (
-                  <div
-                    key={nominee.id}
-                    className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 space-y-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                          {nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee'}
-                        </span>
-                        <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400">
-                          {nominees.length === 1
-                            ? '100% Share'
-                            : `${nominee.sharePercentage || 0}% Share`}
-                        </span>
-                      </div>
+                <AnimatePresence initial={false}>
+                  {nominees.map((nominee, idx) => (
+                    <motion.div
+                      key={nominee.id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="p-4 sm:p-5 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 bg-indigo-50/25 dark:bg-slate-950/60 space-y-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 dark:border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                            {nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee'}
+                          </span>
+                          <span className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+                            {nominees.length === 1
+                              ? '100% Share'
+                              : `${nominee.sharePercentage || 0}% Share`}
+                          </span>
+                        </div>
 
                       {nominees.length > 1 && (
                         <button
@@ -1153,16 +1206,17 @@ export function SignUpForm() {
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
 
             {/* Section 5: ImgBB API Photo & Agreement Uploads */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Identity Photo &amp; Agreement Paper (ImgBB Upload)
+                <h2 className="text-xs font-semibold tracking-wide text-amber-700 dark:text-amber-400">
+                  05. Identity Photo &amp; Agreement Paper (ImgBB Upload)
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Images are uploaded securely via our ImgBB API gateway and visible to the Administrator during verification.
@@ -1301,7 +1355,7 @@ export function SignUpForm() {
                 disabled={
                   submitting || photoUploading || agreementUploading || anyNomineePhotoUploading
                 }
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0"
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>
@@ -1309,6 +1363,7 @@ export function SignUpForm() {
             </div>
           </form>
         )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   Area,
   Bar,
@@ -64,7 +65,7 @@ function CollectionGoalTooltip({ active, payload, label, currency }: GoalTooltip
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : point.attainmentPct >= 60
                   ? 'text-amber-700 dark:text-amber-400'
-                  : 'text-red-700 dark:text-red-400'
+                  : 'text-rose-700 dark:text-rose-400'
             }`}
           >
             {point.attainmentPct}% of goal
@@ -218,7 +219,10 @@ export function ManagerCollectionGoalChart({
   }, [visibleSeries, treasury?.thisMonthContributionCollected, monthlyTarget]);
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
       aria-label="Monthly Collection Progress vs Target Goals"
       className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5"
     >
@@ -226,8 +230,10 @@ export function ManagerCollectionGoalChart({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                <Target className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              </span>
               <span>Treasury Collection Analytics</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -249,20 +255,30 @@ export function ManagerCollectionGoalChart({
                   { id: 'monthly', label: 'Monthly' },
                   { id: 'cumulative', label: 'Cumulative' },
                 ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setMode(tab.id)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                    mode === tab.id
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              ).map((tab) => {
+                const active = mode === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMode(tab.id)}
+                    className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      active
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="mgr-collection-mode-pill"
+                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs ring-1 ring-teal-500/20"
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <div
@@ -276,83 +292,105 @@ export function ManagerCollectionGoalChart({
                   { id: '12m', label: '12M' },
                   { id: 'all', label: 'All' },
                 ] as const
-              ).map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setRange(r.id)}
-                  className={`px-2 py-1 rounded-md text-xs font-mono font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                    range === r.id
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
+              ).map((r) => {
+                const active = range === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setRange(r.id)}
+                    className={`relative px-2 py-1 rounded-md text-xs font-mono font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      active
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="mgr-collection-range-pill"
+                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs ring-1 ring-indigo-500/20"
+                      />
+                    )}
+                    <span className="relative z-10">{r.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Summary Metrics Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Current Month Progress
-            </div>
-            <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-              {formatMoney(summary.currentMonthCollected, ccy)}
-            </div>
-            <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-              {summary.currentMonthPct}% of target
-            </div>
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <Skeleton width="70%" height={11} />
+                <Skeleton width="80%" height={20} />
+                <Skeleton width="55%" height={10} />
+              </div>
+            ))}
           </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Current Month Progress
+              </div>
+              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                {formatMoney(summary.currentMonthCollected, ccy)}
+              </div>
+              <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                {summary.currentMonthPct}% of target
+              </div>
+            </div>
 
-          <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Monthly Goal Target
+            <div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Monthly Goal Target
+              </div>
+              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+                {formatMoney(monthlyTarget, ccy)}
+              </div>
+              <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                {treasury?.thisMonthClearanceClearedMembers ?? 0}/
+                {treasury?.thisMonthClearanceTotalMembers ??
+                  treasury?.contributingMembersCount ??
+                  0}{' '}
+                members cleared
+              </div>
             </div>
-            <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {formatMoney(monthlyTarget, ccy)}
-            </div>
-            <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-              {treasury?.thisMonthClearanceClearedMembers ?? 0}/
-              {treasury?.thisMonthClearanceTotalMembers ??
-                treasury?.contributingMembersCount ??
-                0}{' '}
-              members cleared
-            </div>
-          </div>
 
-          <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Period Goal Attainment
+            <div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Period Goal Attainment
+              </div>
+              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+                {summary.windowAttainmentPct}%
+              </div>
+              <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                {summary.monthsMetCount} of {visibleSeries.length} months met
+              </div>
             </div>
-            <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {summary.windowAttainmentPct}%
-            </div>
-            <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-              {summary.monthsMetCount} of {visibleSeries.length} months met
-            </div>
-          </div>
 
-          <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Pending in Period
-            </div>
-            <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
-              {formatMoney(summary.windowPending, ccy)}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Awaiting manager check
+            <div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Pending in Period
+              </div>
+              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+                {formatMoney(summary.windowPending, ccy)}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Awaiting manager check
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Recharts Canvas */}
       {loading ? (
-        <Skeleton height={270} />
+        <Skeleton height={270} borderRadius={10} />
       ) : (
         <div className="h-72 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -409,14 +447,14 @@ export function ManagerCollectionGoalChart({
                     type="monotone"
                     dataKey="targetGoal"
                     name="Cooperative Target Goal"
-                    stroke="#0f766e"
+                    stroke="#6366f1"
                     strokeWidth={2}
                     strokeDasharray="5 4"
                     dot={false}
                   />
                   <ReferenceLine
                     y={monthlyTarget}
-                    stroke="#0f766e"
+                    stroke="#6366f1"
                     strokeOpacity={0.35}
                     strokeDasharray="3 3"
                   />
@@ -435,10 +473,10 @@ export function ManagerCollectionGoalChart({
                     type="monotone"
                     dataKey="cumulativeTarget"
                     name="Cumulative Target Goal"
-                    stroke="#d97706"
+                    stroke="#6366f1"
                     strokeWidth={2}
                     strokeDasharray="5 4"
-                    dot={{ r: 3, fill: '#d97706' }}
+                    dot={{ r: 3, fill: '#6366f1' }}
                   />
                 </>
               )}
@@ -446,6 +484,6 @@ export function ManagerCollectionGoalChart({
           </ResponsiveContainer>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }

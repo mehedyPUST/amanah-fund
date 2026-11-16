@@ -14,6 +14,7 @@ import {
   UserCheck,
   XCircle,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { AuditLogEntry } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -80,12 +81,12 @@ function classifyAction(action: string): {
           ? 'Contribution Denied'
           : 'Contribution Submitted',
       toneClass: isRejected
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : isApproved
           ? 'text-emerald-700 dark:text-emerald-400'
           : 'text-amber-700 dark:text-amber-400',
       iconBgClass: isRejected
-        ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60'
         : isApproved
           ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
           : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
@@ -112,14 +113,14 @@ function classifyAction(action: string): {
                 ? 'Loan Request Approved'
                 : 'Loan Workflow Update',
       toneClass: isRejected
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : isPositive
-          ? 'text-emerald-700 dark:text-emerald-400'
+          ? 'text-teal-700 dark:text-teal-400'
           : 'text-amber-700 dark:text-amber-400',
       iconBgClass: isRejected
-        ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60'
         : isPositive
-          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
+          ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60'
           : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: isRejected ? XCircle : HandCoins,
     };
@@ -136,12 +137,12 @@ function classifyAction(action: string): {
           ? 'Repayment Verified'
           : 'Installment Submitted',
       toneClass: isRejected
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : isVerified
           ? 'text-emerald-700 dark:text-emerald-400'
           : 'text-amber-700 dark:text-amber-400',
       iconBgClass: isRejected
-        ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60'
         : isVerified
           ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
           : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
@@ -153,8 +154,8 @@ function classifyAction(action: string): {
     return {
       category: 'members',
       label: action.includes('PROFILE') ? 'Profile Change Activity' : 'Membership Activity',
-      toneClass: 'text-teal-700 dark:text-teal-400',
-      iconBgClass: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
+      toneClass: 'text-indigo-700 dark:text-indigo-400',
+      iconBgClass: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60',
       Icon: UserCheck,
     };
   }
@@ -163,8 +164,8 @@ function classifyAction(action: string): {
     return {
       category: 'other',
       label: 'Community Event',
-      toneClass: 'text-slate-700 dark:text-slate-300',
-      iconBgClass: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+      toneClass: 'text-teal-700 dark:text-teal-400',
+      iconBgClass: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
       Icon: MessageSquare,
     };
   }
@@ -287,7 +288,10 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
   const visibleLogs = filteredLogs.slice(0, limit);
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22 }}
       aria-label="Member Audit Log"
       className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4"
     >
@@ -295,15 +299,15 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <ScrollText className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Oversight Feed</span>
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
               <span
                 className={`font-mono text-[11px] ${
                   chainValid
-                    ? 'text-emerald-700 dark:text-emerald-400'
-                    : 'text-red-700 dark:text-red-400'
+                    ? 'text-indigo-700 dark:text-indigo-400'
+                    : 'text-rose-700 dark:text-rose-400'
                 }`}
               >
                 {chainValid ? 'SHA-256 Verified' : 'Integrity Check'}
@@ -348,14 +352,23 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
                   setFilter(tab.id);
                   setLimit(12);
                 }}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1 ${
+                className={`relative px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1 ${
                   active
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                    ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <span>{tab.label}</span>
-                <span className="font-mono tabular-nums text-[11px] opacity-75">{tab.count}</span>
+                {active && (
+                  <motion.span
+                    layoutId="member-audit-filter-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 bg-white dark:bg-slate-800 rounded-md shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+                <span className="relative z-10 font-mono tabular-nums text-[11px] opacity-75">
+                  {tab.count}
+                </span>
               </button>
             );
           })}
@@ -372,17 +385,28 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter by member, loan ID, or action…"
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
           />
         </div>
 
         {/* Log Stream */}
         {loading && logs.length === 0 ? (
-          <Skeleton height={240} />
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 flex items-start gap-2.5">
+                <Skeleton width={28} height={28} borderRadius={6} />
+                <div className="flex-1 space-y-1">
+                  <Skeleton width="55%" height={12} />
+                  <Skeleton width="88%" height={14} />
+                  <Skeleton width="45%" height={11} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : error ? (
           <div
             role="alert"
-            className="p-4 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
+            className="p-4 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
           >
             {error}
           </div>
@@ -466,6 +490,6 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
           </button>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { BarChart3 } from 'lucide-react';
+import { motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
   DashboardOverview,
@@ -34,9 +36,14 @@ export function StatisticsView({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.22 }}
+        className="bg-gradient-to-r from-teal-50/75 via-white to-indigo-50/45 dark:from-teal-950/30 dark:via-slate-900 dark:to-indigo-950/25 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+      >
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Treasury Analytics &amp; Cashflow Telemetry</span>
           </div>
@@ -52,12 +59,18 @@ export function StatisticsView({
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
           <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
             Pool Liquidity:{' '}
-            <strong className="text-slate-900 dark:text-white">
-              {overview ? `${overview.treasury.availableLiquidity.toLocaleString()} ${ccy}` : '—'}
+            <strong className="text-indigo-700 dark:text-indigo-300">
+              {loading && !overview ? (
+                <Skeleton width={90} height={14} inline />
+              ) : overview ? (
+                `${overview.treasury.availableLiquidity.toLocaleString()} ${ccy}`
+              ) : (
+                '—'
+              )}
             </strong>
           </span>
         </div>
-      </div>
+      </motion.div>
 
       <MonthlyFinancialSnapshot
         contributions={contributions}

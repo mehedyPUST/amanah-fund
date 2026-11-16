@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Bell, Check, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowRight, Bell, Check, CheckCircle2, Clock, Vote } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import type {
   Contribution,
   DashboardOverview,
@@ -28,7 +29,7 @@ interface HeaderNotificationBellProps {
 interface BellAlertItem {
   id: string;
   notificationId?: string;
-  kind: 'approved_loan' | 'contribution_reminder' | 'general';
+  kind: 'approved_loan' | 'contribution_reminder' | 'governance' | 'general';
   title: string;
   detail: string;
   timestampLabel: string;
@@ -133,7 +134,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: 'general',
+          kind: 'governance',
           title: 'Meeting Scheduled',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -143,7 +144,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: 'general',
+          kind: 'governance',
           title: 'Guarantor Co-Sign Request',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -158,7 +159,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: isManagerReviewNotice ? 'approved_loan' : 'general',
+          kind: isManagerReviewNotice ? 'approved_loan' : 'governance',
           title: isManagerReviewNotice ? 'Qard Hasan Application Ready for Review' : 'Opinion Ballot Open',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -169,7 +170,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: 'general',
+          kind: 'governance',
           title: 'Community Update',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -179,7 +180,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: 'general',
+          kind: 'governance',
           title: 'Profile Update Review Needed',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -189,7 +190,7 @@ export function HeaderNotificationBell({
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
-          kind: 'general',
+          kind: 'governance',
           title: 'Profile Update Decision',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
@@ -339,117 +340,128 @@ export function HeaderNotificationBell({
         )}
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Treasury alerts and reminders"
-          className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl z-50 overflow-hidden"
-        >
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-            <div>
-              <h2 className="text-xs font-semibold text-slate-900 dark:text-white">
-                Notifications & Reminders
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Approved loans and pending contribution alerts
-              </p>
-            </div>
-            {badgeCount > 0 && (
-              <span className="font-mono text-xs tabular-nums font-semibold text-amber-700 dark:text-amber-400">
-                {badgeCount} active
-              </span>
-            )}
-          </div>
-
-          {alerts.length === 0 ? (
-            <div className="p-6 text-center space-y-1.5">
-              <CheckCircle2
-                className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mx-auto"
-                aria-hidden="true"
-              />
-              <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                All caught up
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-label="Treasury alerts and reminders"
+            className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl z-50 overflow-hidden"
+          >
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-xs font-semibold text-slate-900 dark:text-white">
+                  Notifications &amp; Reminders
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Approved loans, ballots, and contribution alerts
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                No new approved loan notices or pending contribution reminders right now.
-              </p>
+              {badgeCount > 0 && (
+                <span className="font-mono text-xs tabular-nums font-semibold text-amber-700 dark:text-amber-400">
+                  {badgeCount} active
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-              {alerts.map((alert) => {
-                const isLoan = alert.kind === 'approved_loan';
-                return (
-                  <div
-                    key={alert.id}
-                    className="p-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors flex items-start justify-between gap-2.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => void handleAlertClick(alert)}
-                      className="flex items-start gap-3 text-left min-w-0 flex-1 cursor-pointer"
+
+            {alerts.length === 0 ? (
+              <div className="p-6 text-center space-y-1.5">
+                <CheckCircle2
+                  className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mx-auto"
+                  aria-hidden="true"
+                />
+                <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                  All caught up
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  No new approved loan notices or pending contribution reminders right now.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                {alerts.map((alert) => {
+                  const isLoan = alert.kind === 'approved_loan';
+                  const isGovernance = alert.kind === 'governance';
+                  return (
+                    <div
+                      key={alert.id}
+                      className="p-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors flex items-start justify-between gap-2.5"
                     >
-                      <div
-                        className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
-                          isLoan
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-700 dark:text-amber-400'
-                        }`}
-                      >
-                        {isLoan ? (
-                          <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                        ) : (
-                          <Clock className="w-4 h-4" aria-hidden="true" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                          {alert.title}
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
-                          {alert.detail}
-                        </p>
-                        <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-                          {alert.timestampLabel}
-                        </div>
-                      </div>
-                    </button>
-
-                    {alert.notificationId && (
                       <button
                         type="button"
-                        onClick={() => void onMarkRead(alert.notificationId!)}
-                        title="Mark notification as read"
-                        aria-label="Mark notification as read"
-                        className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 cursor-pointer"
+                        onClick={() => void handleAlertClick(alert)}
+                        className="flex items-start gap-3 text-left min-w-0 flex-1 cursor-pointer"
                       >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                        <div
+                          className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
+                            isLoan
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
+                              : isGovernance
+                                ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/80 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-400'
+                                : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-700 dark:text-amber-400'
+                          }`}
+                        >
+                          {isLoan ? (
+                            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                          ) : isGovernance ? (
+                            <Vote className="w-4 h-4" aria-hidden="true" />
+                          ) : (
+                            <Clock className="w-4 h-4" aria-hidden="true" />
+                          )}
+                        </div>
 
-          <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-              {unreadInboxCount} unread in inbox
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onNavigate('notification');
-              }}
-              className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
-            >
-              <span>Open Inbox</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      )}
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                            {alert.title}
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
+                            {alert.detail}
+                          </p>
+                          <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                            {alert.timestampLabel}
+                          </div>
+                        </div>
+                      </button>
+
+                      {alert.notificationId && (
+                        <button
+                          type="button"
+                          onClick={() => void onMarkRead(alert.notificationId!)}
+                          title="Mark notification as read"
+                          aria-label="Mark notification as read"
+                          className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 cursor-pointer"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                {unreadInboxCount} unread in inbox
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onNavigate('notification');
+                }}
+                className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+              >
+                <span>Open Inbox</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

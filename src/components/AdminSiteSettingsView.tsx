@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import {
   CheckCircle2,
   Download,
@@ -275,11 +277,16 @@ export function AdminSiteSettingsView({
   );
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Settings className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Admin Governance · Project Configuration</span>
             </div>
@@ -304,6 +311,16 @@ export function AdminSiteSettingsView({
             </p>
           </div>
 
+          {loading && !config ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 9 }).map((_, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <Skeleton width={120} height={12} />
+                  <Skeleton height={38} borderRadius={8} />
+                </div>
+              ))}
+            </div>
+          ) : (
           <form onSubmit={handleSavePolicy} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -447,10 +464,10 @@ export function AdminSiteSettingsView({
                         key={preset}
                         type="button"
                         onClick={() => setManagerCycleMonths(String(preset))}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer ${
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
                           Number(managerCycleMonths) === preset
-                            ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                            : 'border-slate-200 dark:border-slate-700 text-slate-500'
+                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                            : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
                         }`}
                       >
                         {preset}m
@@ -572,19 +589,20 @@ export function AdminSiteSettingsView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
               >
                 Review &amp; Save Site Settings
               </button>
             </div>
           </form>
+          )}
         </section>
       )}
 
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <HandCoins className="w-4 h-4" aria-hidden="true" />
               <span>Administrative Qard Hasan Review</span>
             </div>
@@ -643,7 +661,7 @@ export function AdminSiteSettingsView({
                       type="button"
                       disabled={modalBusy}
                       onClick={() => confirmAdminLoanReview(loan, 'reject')}
-                      className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Decline</span>
@@ -652,7 +670,7 @@ export function AdminSiteSettingsView({
                       type="button"
                       disabled={modalBusy}
                       onClick={() => confirmAdminLoanReview(loan, 'approve')}
-                      className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Approve for Disbursement</span>
@@ -684,7 +702,7 @@ export function AdminSiteSettingsView({
               Download cryptographically hashed CSV ledgers for Shariah review and annual member assemblies.
             </p>
           </div>
-          <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
+          <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -700,10 +718,10 @@ export function AdminSiteSettingsView({
               key={rep.id}
               type="button"
               onClick={() => downloadCsvReport(rep.id)}
-              className="px-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+              className="px-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
             >
               <span>{rep.label}</span>
-              <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+              <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
             </button>
           ))}
         </div>
@@ -735,6 +753,6 @@ export function AdminSiteSettingsView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { motion } from 'motion/react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type {
@@ -85,28 +86,40 @@ export function MonthlyFinancialSnapshot({
     return (
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <Skeleton width={220} height={20} />
-          <Skeleton width={120} height={20} />
+          <div className="space-y-1.5">
+            <Skeleton width={210} height={14} />
+            <Skeleton width={190} height={22} />
+          </div>
+          <Skeleton width={140} height={18} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Skeleton height={64} />
-          <Skeleton height={64} />
-          <Skeleton height={64} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <Skeleton width="60%" height={12} />
+              <Skeleton width="75%" height={26} />
+              <Skeleton width="50%" height={12} />
+            </div>
+          ))}
         </div>
-        <Skeleton height={12} />
+        <Skeleton height={12} borderRadius={999} />
       </section>
     );
   }
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
       aria-labelledby="monthly-financial-snapshot-heading"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <CalendarDays className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
+              <CalendarDays className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </span>
             <span>Current Month Cash Position · {snapshot.monthLabel}</span>
           </div>
           <h3
@@ -179,21 +192,23 @@ export function MonthlyFinancialSnapshot({
             {snapshot.awaitingDisbursementAmount > 0 && (
               <>
                 <span aria-hidden="true"> · </span>
-                <span>{formatMoney(snapshot.awaitingDisbursementAmount, ccy)} awaiting release</span>
+                <span className="text-teal-700 dark:text-teal-400">
+                  {formatMoney(snapshot.awaitingDisbursementAmount, ccy)} awaiting release
+                </span>
               </>
             )}
           </div>
         </div>
 
         <div className="space-y-1.5 md:border-l md:border-slate-100 dark:md:border-slate-800 md:pl-5">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
             Net Monthly Position
           </div>
           <div
             className={`text-2xl font-bold font-mono tabular-nums ${
               snapshot.netMonthlyFlow >= 0
                 ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-amber-700 dark:text-amber-400'
+                : 'text-rose-700 dark:text-rose-400'
             }`}
           >
             {snapshot.netMonthlyFlow >= 0 ? '+' : '−'}
@@ -242,18 +257,24 @@ export function MonthlyFinancialSnapshot({
         >
           {snapshot.totalVolume > 0 && (
             <>
-              <div
-                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-500 transition-all duration-300"
-                style={{ width: `${snapshot.contribSharePct}%` }}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                style={{ width: `${snapshot.contribSharePct}%`, originX: 0 }}
+                className="h-full bg-gradient-to-r from-emerald-600 to-teal-500"
               />
-              <div
-                className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
-                style={{ width: `${snapshot.loanSharePct}%` }}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                style={{ width: `${snapshot.loanSharePct}%`, originX: 0 }}
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-400"
               />
             </>
           )}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

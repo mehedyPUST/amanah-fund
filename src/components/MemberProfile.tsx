@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -424,8 +425,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             shortLabel: 'Suspended',
             description: 'This membership account is currently suspended. Contact an administrator.',
             Icon: AlertCircle,
-            toneClass: 'text-red-700 dark:text-red-400',
-            boxClass: 'bg-red-50/80 dark:bg-red-950/30 border-red-200 dark:border-red-900/60',
+            toneClass: 'text-rose-700 dark:text-rose-400',
+            boxClass: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60',
           };
 
   const StatusIcon = statusMeta.Icon;
@@ -451,7 +452,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {/* Membership Status & Identity Summary */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -472,15 +478,15 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 />
               </a>
             ) : (
-              <div className="w-16 h-16 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center text-base font-bold text-emerald-700 dark:text-emerald-400 shrink-0">
+              <div className="w-16 h-16 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 flex items-center justify-center text-base font-bold text-indigo-700 dark:text-indigo-400 shrink-0">
                 {profile.name.slice(0, 2).toUpperCase()}
               </div>
             )}
 
             <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <UserIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Member Profile & Verification Status</span>
+                <span>Member Profile &amp; Verification Status</span>
               </div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
                 {profile.name}
@@ -795,7 +801,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
               >
                 <Save className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{saving ? 'Saving Profile…' : 'Save Contact Information'}</span>
@@ -809,7 +815,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Instant Security Credential Update</span>
             </div>
@@ -892,7 +898,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <KeyRound className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>Step-Up Two-Factor Authentication (TOTP)</span>
               </div>
@@ -915,98 +921,120 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             </span>
           </div>
 
-          {profile.totpEnabled ? (
-            <form onSubmit={handleDisable2fa} className="space-y-3 pt-1">
-              <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/60 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
-                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>
-                  2FA is active. Enter your current 6-digit code below only if you need to disable
-                  step-up verification.
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  required
-                  value={totpCodeInput}
-                  onChange={(e) => setTotpCodeInput(e.target.value)}
-                  placeholder="6-digit code"
-                  className="w-40 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-                <button
-                  type="submit"
-                  disabled={totpBusy}
-                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                >
-                  {totpBusy ? 'Disabling…' : 'Disable 2FA'}
-                </button>
-              </div>
-            </form>
-          ) : !totpSetupData ? (
-            <button
-              type="button"
-              disabled={totpBusy}
-              onClick={() => void handleStart2faSetup()}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-            >
-              <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
-            </button>
-          ) : (
-            <form onSubmit={handleEnable2fa} className="space-y-4 pt-1">
-              <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <img
-                  src={totpSetupData.qrDataUrl}
-                  alt="2FA Authenticator QR Code"
-                  referrerPolicy="no-referrer"
-                  className="w-32 h-32 rounded-lg border border-slate-200 dark:border-slate-700 bg-white p-1 shrink-0"
-                />
-                <div className="space-y-2 text-xs min-w-0">
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                    Scan this QR code in Google Authenticator, Authy, or 1Password, or enter the
-                    Base32 setup key manually:
-                  </p>
-                  <div className="font-mono text-[11px] px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white break-all select-all">
-                    {totpSetupData.secret}
+          <AnimatePresence mode="wait" initial={false}>
+            {profile.totpEnabled ? (
+              <motion.form
+                key="totp-enabled"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handleDisable2fa}
+                className="space-y-3 pt-1"
+              >
+                <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/60 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
+                  <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>
+                    2FA is active. Enter your current 6-digit code below only if you need to disable
+                    step-up verification.
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    maxLength={6}
+                    required
+                    value={totpCodeInput}
+                    onChange={(e) => setTotpCodeInput(e.target.value)}
+                    placeholder="6-digit code"
+                    className="w-40 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                  <button
+                    type="submit"
+                    disabled={totpBusy}
+                    className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    {totpBusy ? 'Disabling…' : 'Disable 2FA'}
+                  </button>
+                </div>
+              </motion.form>
+            ) : !totpSetupData ? (
+              <motion.button
+                key="totp-start"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                type="button"
+                disabled={totpBusy}
+                onClick={() => void handleStart2faSetup()}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
+              </motion.button>
+            ) : (
+              <motion.form
+                key="totp-verify"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22 }}
+                onSubmit={handleEnable2fa}
+                className="space-y-4 pt-1"
+              >
+                <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/60">
+                  <img
+                    src={totpSetupData.qrDataUrl}
+                    alt="2FA Authenticator QR Code"
+                    referrerPolicy="no-referrer"
+                    className="w-32 h-32 rounded-lg border border-slate-200 dark:border-slate-700 bg-white p-1 shrink-0"
+                  />
+                  <div className="space-y-2 text-xs min-w-0">
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      Scan this QR code in Google Authenticator, Authy, or 1Password, or enter the
+                      Base32 setup key manually:
+                    </p>
+                    <div className="font-mono text-[11px] px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white break-all select-all">
+                      {totpSetupData.secret}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  required
-                  value={totpCodeInput}
-                  onChange={(e) => setTotpCodeInput(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  className="w-44 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-                <button
-                  type="submit"
-                  disabled={totpBusy}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                >
-                  {totpBusy ? 'Verifying…' : 'Verify & Activate 2FA'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTotpSetupData(null);
-                    setTotpCodeInput('');
-                  }}
-                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    maxLength={6}
+                    required
+                    value={totpCodeInput}
+                    onChange={(e) => setTotpCodeInput(e.target.value)}
+                    placeholder="Enter 6-digit code"
+                    className="w-44 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                  <button
+                    type="submit"
+                    disabled={totpBusy}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    {totpBusy ? 'Verifying…' : 'Verify & Activate 2FA'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTotpSetupData(null);
+                      setTotpCodeInput('');
+                    }}
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </section>
 
         <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
@@ -1101,6 +1129,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

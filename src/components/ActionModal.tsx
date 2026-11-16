@@ -21,7 +21,7 @@ export interface ActionModalDetailItem {
 export interface ActionModalProps {
   open: boolean;
   mode: 'confirm' | 'notice';
-  tone?: 'emerald' | 'amber' | 'red' | 'slate';
+  tone?: 'emerald' | 'amber' | 'red' | 'slate' | 'indigo' | 'teal';
   title: string;
   description: string;
   details?: ActionModalDetailItem[];
@@ -137,19 +137,27 @@ export function ActionModal({
 
   const iconBoxClass =
     tone === 'red'
-      ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400'
       : tone === 'amber'
         ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400'
-        : tone === 'slate'
-          ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-          : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400';
+        : tone === 'indigo'
+          ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400'
+          : tone === 'teal'
+            ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400'
+            : tone === 'slate'
+              ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400';
 
   const confirmBtnClass =
     tone === 'red'
-      ? 'bg-red-600 hover:bg-red-700 text-white'
+      ? 'bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white'
       : tone === 'amber'
-        ? 'bg-amber-600 hover:bg-amber-700 text-white'
-        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white';
+        ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white'
+        : tone === 'indigo'
+          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white'
+          : tone === 'teal'
+            ? 'bg-gradient-to-r from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 text-white'
+            : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   CalendarClock,
   Check,
@@ -574,15 +575,18 @@ export function LoansView({
                   aria-valuemax={maxLoansPerYear}
                   className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
                 >
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    className={`h-full rounded-full ${
                       remainingYearlyQuota === 0
-                        ? 'bg-red-600'
+                        ? 'bg-rose-600'
                         : remainingYearlyQuota === 1
                           ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                          : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
+                          : 'bg-gradient-to-r from-indigo-600 to-teal-500'
                     }`}
-                    style={{ width: `${quotaRemainingPct}%` }}
+                    style={{ width: `${quotaRemainingPct}%`, originX: 0 }}
                   />
                 </div>
 
@@ -592,7 +596,9 @@ export function LoansView({
                       ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
                       : `Annual limit of ${maxLoansPerYear} loans reached`}
                   </span>
-                  <span className="font-mono tabular-nums">{quotaRemainingPct}% left</span>
+                  <span className="font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+                    {quotaRemainingPct}% left
+                  </span>
                 </div>
               </div>
 
@@ -626,16 +632,21 @@ export function LoansView({
                   aria-valuemax={100}
                   className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
                 >
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${loanBarColorClass}`}
-                    style={{ width: `${loanProgressPct}%` }}
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    className={`h-full rounded-full ${loanBarColorClass}`}
+                    style={{ width: `${loanProgressPct}%`, originX: 0 }}
                   />
                 </div>
 
                 <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span className="truncate">{loanProgressCaption}</span>
                   {myActiveOrPendingLoan && (
-                    <span className="font-mono tabular-nums shrink-0">{loanProgressPct}%</span>
+                    <span className="font-mono tabular-nums shrink-0 text-teal-700 dark:text-teal-400">
+                      {loanProgressPct}%
+                    </span>
                   )}
                 </div>
 
@@ -723,7 +734,7 @@ export function LoansView({
                 <button
                   type="button"
                   onClick={onOpenLoanModal}
-                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
                   Open Request Modal
                 </button>
@@ -856,37 +867,61 @@ export function LoansView({
             </div>
 
             {!isAdmin && (
-              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setScope('mine')}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                    scope === 'mine'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  My Loans
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScope('all')}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                    scope === 'all'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  All Cooperative Loans
-                </button>
+              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+                {(
+                  [
+                    { id: 'mine', label: 'My Loans' },
+                    { id: 'all', label: 'All Cooperative Loans' },
+                  ] as const
+                ).map((tab) => {
+                  const active = scope === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setScope(tab.id)}
+                      className={`relative px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                        active
+                          ? 'text-slate-900 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="loans-scope-pill"
+                          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                        />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} height={60} />
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-12 items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-800/80"
+                >
+                  <div className="col-span-5 space-y-1">
+                    <Skeleton width="70%" height={14} />
+                    <Skeleton width="50%" height={11} />
+                  </div>
+                  <div className="col-span-2">
+                    <Skeleton width="80%" height={14} />
+                  </div>
+                  <div className="col-span-2">
+                    <Skeleton width="80%" height={14} />
+                  </div>
+                  <div className="col-span-3 flex justify-end">
+                    <Skeleton width={76} height={22} borderRadius={6} />
+                  </div>
+                </div>
               ))}
             </div>
           ) : visibleLoans.length === 0 ? (
@@ -1037,9 +1072,16 @@ export function LoansView({
                             )}
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-600 transition-all"
-                              style={{ width: `${pct}%` }}
+                            <motion.div
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: 1 }}
+                              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                              className={`h-full rounded-full ${
+                                revealed || isAdmin
+                                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
+                                  : 'bg-gradient-to-r from-amber-500 to-indigo-500'
+                              }`}
+                              style={{ width: `${pct}%`, originX: 0 }}
                             />
                           </div>
                         </div>
@@ -1168,171 +1210,183 @@ export function LoansView({
                         </div>
                       )}
 
-                      {rescheduleOpen && (
-                        <form
-                          onSubmit={(e) => handleRequestReschedule(activeSelectedLoan.id, e)}
-                          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1"
-                        >
-                          <div className="sm:col-span-3">
-                            <input
-                              type="number"
-                              min={1}
-                              max={36}
-                              required
-                              value={rescheduleMonths}
-                              onChange={(e) => setRescheduleMonths(e.target.value)}
-                              placeholder="Months (1-36)"
-                              className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                            />
-                          </div>
-                          <div className="sm:col-span-6">
-                            <input
-                              type="text"
-                              required
-                              minLength={6}
-                              value={rescheduleReason}
-                              onChange={(e) => setRescheduleReason(e.target.value)}
-                              placeholder="Reason for adjusting remaining installment months…"
-                              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                            />
-                          </div>
-                          <div className="sm:col-span-3">
-                            <button
-                              type="submit"
-                              disabled={modalBusy}
-                              className="w-full py-1.5 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                            >
-                              Submit Request
-                            </button>
-                          </div>
-                        </form>
-                      )}
+                      <AnimatePresence initial={false}>
+                        {rescheduleOpen && (
+                          <motion.form
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onSubmit={(e) => handleRequestReschedule(activeSelectedLoan.id, e)}
+                            className="overflow-hidden grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1"
+                          >
+                            <div className="sm:col-span-3">
+                              <input
+                                type="number"
+                                min={1}
+                                max={36}
+                                required
+                                value={rescheduleMonths}
+                                onChange={(e) => setRescheduleMonths(e.target.value)}
+                                placeholder="Months (1-36)"
+                                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              />
+                            </div>
+                            <div className="sm:col-span-6">
+                              <input
+                                type="text"
+                                required
+                                minLength={6}
+                                value={rescheduleReason}
+                                onChange={(e) => setRescheduleReason(e.target.value)}
+                                placeholder="Reason for adjusting remaining installment months…"
+                                className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <button
+                                type="submit"
+                                disabled={modalBusy}
+                                className="w-full py-1.5 px-3 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                              >
+                                Submit Request
+                              </button>
+                            </div>
+                          </motion.form>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
 
-                  {payingInstallment && payingInstallment.loanId === activeSelectedLoan.id && (
-                    <form
-                      onSubmit={handleSubmitRepayment}
-                      className="p-4 rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                          Submit Repayment Proof for Installment #{payingInstallment.installmentNumber} (
-                          {formatMoney(payingInstallment.amount, ccy)})
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 cursor-pointer">
-                            <Sparkles className="w-3 h-3" aria-hidden="true" />
-                            <span>
-                              {scanningRepaySlip ? 'Scanning…' : 'Scan Slip (AI)'}
-                            </span>
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp"
-                              disabled={scanningRepaySlip}
-                              className="hidden"
+                  <AnimatePresence initial={false}>
+                    {payingInstallment && payingInstallment.loanId === activeSelectedLoan.id && (
+                      <motion.form
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2 }}
+                        onSubmit={handleSubmitRepayment}
+                        className="p-4 rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/40 dark:bg-teal-950/20 space-y-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                            Submit Repayment Proof for Installment #{payingInstallment.installmentNumber} (
+                            {formatMoney(payingInstallment.amount, ccy)})
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-teal-700 dark:text-teal-400 cursor-pointer">
+                              <Sparkles className="w-3 h-3" aria-hidden="true" />
+                              <span>
+                                {scanningRepaySlip ? 'Scanning…' : 'Scan Slip (AI)'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                disabled={scanningRepaySlip}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) void handleRepaySlipScan(file);
+                                  e.currentTarget.value = '';
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setPayingInstallment(null)}
+                              className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                              Channel
+                            </label>
+                            <select
+                              value={repayChannel}
                               onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) void handleRepaySlipScan(file);
-                                e.currentTarget.value = '';
+                                const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
+                                setRepayChannel(ch);
+                                setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
                               }}
+                              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                            >
+                              <option value="mfs">MFS Wallet</option>
+                              <option value="bank">BD Bank</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                              {repayChannel === 'mfs' ? 'MFS Wallet' : 'Bangladesh Bank'}
+                            </label>
+                            <ProviderSelect
+                              compact
+                              options={repayChannel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
+                              value={repayProvider}
+                              onChange={setRepayProvider}
+                              placeholder={
+                                repayChannel === 'mfs'
+                                  ? 'Search MFS…'
+                                  : `Search ${BANK_PROVIDERS.length} BD banks…`
+                              }
                             />
-                          </label>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                              Sender Acct / Mobile
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={repayAccount}
+                              onChange={(e) => setRepayAccount(e.target.value)}
+                              placeholder="017XX-XXXXXX / Acct #"
+                              className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                              Transaction Number
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={repayRef}
+                              onChange={(e) => setRepayRef(e.target.value)}
+                              placeholder="TrxID / Bank Ref No."
+                              className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          {repayReceiptUrl ? (
+                            <a
+                              href={repayReceiptUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] text-teal-700 dark:text-teal-400 hover:underline"
+                            >
+                              <FileImage className="w-3 h-3" aria-hidden="true" />
+                              <span>Slip attached</span>
+                              <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                            </a>
+                          ) : (
+                            <span />
+                          )}
                           <button
-                            type="button"
-                            onClick={() => setPayingInstallment(null)}
-                            className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                            type="submit"
+                            disabled={modalBusy}
+                            className="px-4 py-1.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                           >
-                            Cancel
+                            Review &amp; Submit Installment Receipt
                           </button>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Channel
-                          </label>
-                          <select
-                            value={repayChannel}
-                            onChange={(e) => {
-                              const ch = e.target.value === 'bank' ? 'bank' : 'mfs';
-                              setRepayChannel(ch);
-                              setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
-                            }}
-                            className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                          >
-                            <option value="mfs">MFS Wallet</option>
-                            <option value="bank">BD Bank</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            {repayChannel === 'mfs' ? 'MFS Wallet' : 'Bangladesh Bank'}
-                          </label>
-                          <ProviderSelect
-                            compact
-                            options={repayChannel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
-                            value={repayProvider}
-                            onChange={setRepayProvider}
-                            placeholder={
-                              repayChannel === 'mfs'
-                                ? 'Search MFS…'
-                                : `Search ${BANK_PROVIDERS.length} BD banks…`
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Sender Acct / Mobile
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={repayAccount}
-                            onChange={(e) => setRepayAccount(e.target.value)}
-                            placeholder="017XX-XXXXXX / Acct #"
-                            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Transaction Number
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={repayRef}
-                            onChange={(e) => setRepayRef(e.target.value)}
-                            placeholder="TrxID / Bank Ref No."
-                            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        {repayReceiptUrl ? (
-                          <a
-                            href={repayReceiptUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-400 hover:underline"
-                          >
-                            <FileImage className="w-3 h-3" aria-hidden="true" />
-                            <span>Slip attached</span>
-                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                          </a>
-                        ) : (
-                          <span />
-                        )}
-                        <button
-                          type="submit"
-                          disabled={modalBusy}
-                          className="px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-                        >
-                          Review &amp; Submit Installment Receipt
-                        </button>
-                      </div>
-                    </form>
-                  )}
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
 
                   <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
                     <table className="w-full text-left border-collapse text-xs">

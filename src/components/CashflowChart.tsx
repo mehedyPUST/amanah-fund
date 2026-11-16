@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'motion/react';
 import type { FundConfig, MonthlyCashflowPoint } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
 
@@ -30,7 +31,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-5 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400">
           <span className="inline-flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" aria-hidden="true" />
             <span>Monthly Contributions</span>
@@ -46,12 +47,27 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
         </div>
 
         {hoveredIdx !== null && recent[hoveredIdx] && (
-          <div className="text-xs font-mono tabular-nums text-slate-700 dark:text-slate-200">
-            {formatBillingMonth(recent[hoveredIdx].month)} · Inflow{' '}
-            {formatMoney(recent[hoveredIdx].contributions, currency)} · Disbursed{' '}
-            {formatMoney(recent[hoveredIdx].disbursed, currency)} · Repaid{' '}
-            {formatMoney(recent[hoveredIdx].repaid, currency)}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: -2 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs font-mono tabular-nums text-slate-700 dark:text-slate-200"
+          >
+            <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+              {formatBillingMonth(recent[hoveredIdx].month)}
+            </span>
+            <span aria-hidden="true"> · </span>
+            <span className="text-emerald-700 dark:text-emerald-400">
+              Inflow {formatMoney(recent[hoveredIdx].contributions, currency)}
+            </span>
+            <span aria-hidden="true"> · </span>
+            <span className="text-amber-700 dark:text-amber-400">
+              Disbursed {formatMoney(recent[hoveredIdx].disbursed, currency)}
+            </span>
+            <span aria-hidden="true"> · </span>
+            <span className="text-teal-700 dark:text-teal-400">
+              Repaid {formatMoney(recent[hoveredIdx].repaid, currency)}
+            </span>
+          </motion.div>
         )}
       </div>
 
@@ -116,32 +132,44 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   rx={4}
                   className={
                     hoveredIdx === idx
-                      ? 'fill-slate-100/80 dark:fill-slate-800/40'
+                      ? 'fill-indigo-50/70 dark:fill-indigo-950/35'
                       : 'fill-transparent'
                   }
                 />
-                <rect
+                <motion.rect
                   x={centerX - barW * 1.6}
                   y={chartHeight - h1}
                   width={barW}
                   height={Math.max(point.contributions > 0 ? 3 : 0, h1)}
                   rx={2}
-                  className="fill-emerald-600 transition-opacity"
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.35, delay: idx * 0.04 }}
+                  style={{ transformOrigin: `${centerX - barW * 1.1}px ${chartHeight}px` }}
+                  className="fill-emerald-600 dark:fill-emerald-500 transition-opacity"
                 />
-                <rect
+                <motion.rect
                   x={centerX - barW * 0.45}
                   y={chartHeight - h2}
                   width={barW}
                   height={Math.max(point.disbursed > 0 ? 3 : 0, h2)}
                   rx={2}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.35, delay: idx * 0.04 + 0.04 }}
+                  style={{ transformOrigin: `${centerX}px ${chartHeight}px` }}
                   className="fill-amber-500 transition-opacity"
                 />
-                <rect
+                <motion.rect
                   x={centerX + barW * 0.7}
                   y={chartHeight - h3}
                   width={barW}
                   height={Math.max(point.repaid > 0 ? 3 : 0, h3)}
                   rx={2}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.35, delay: idx * 0.04 + 0.08 }}
+                  style={{ transformOrigin: `${centerX + barW * 1.2}px ${chartHeight}px` }}
                   className="fill-teal-600 dark:fill-teal-400 transition-opacity"
                 />
                 <text

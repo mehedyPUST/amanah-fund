@@ -45,7 +45,7 @@ async function startServer() {
   });
 
   // Delegate all Next.js App Router pages, assets, and RSC requests to Next.js
-  app.all('*', (req, res) => {
+  app.all(/.*/, (req, res) => {
     return handle(req, res);
   });
 

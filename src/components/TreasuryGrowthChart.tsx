@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   Area,
   Bar,
@@ -132,7 +133,6 @@ export function TreasuryGrowthChart({
       return buckets.get(ym)!;
     };
 
-    // Baseline from server monthlySeries
     monthlySeries.forEach((pt) => {
       const b = ensureBucket(pt.month);
       b.approvedContributions = pt.contributions;
@@ -140,7 +140,6 @@ export function TreasuryGrowthChart({
       b.repaid = pt.repaid;
     });
 
-    // Enrich with raw contribution records when present (adds pending + member-specific breakdown)
     if (contributions.length > 0) {
       buckets.forEach((b) => {
         b.approvedContributions = 0;
@@ -161,7 +160,6 @@ export function TreasuryGrowthChart({
       });
     }
 
-    // Recompute exact loan deductions & repayments when loans list is loaded
     if (loans.length > 0) {
       buckets.forEach((b) => {
         b.loanOutflow = 0;
@@ -242,12 +240,19 @@ export function TreasuryGrowthChart({
   }, [fullSeries, centralBalance]);
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
+    >
       {/* Header & Interactive Chart Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <TrendingUp className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </span>
             <span>Treasury Growth & Contribution Analytics</span>
           </div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -263,7 +268,7 @@ export function TreasuryGrowthChart({
           <div
             role="group"
             aria-label="Chart dataset view"
-            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg"
+            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
           >
             {(
               [
@@ -271,26 +276,36 @@ export function TreasuryGrowthChart({
                 { id: 'contributions', label: 'Contributions' },
                 { id: 'treasury', label: 'Treasury Growth' },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setViewMode(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  viewMode === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = viewMode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setViewMode(tab.id)}
+                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="treasury-view-mode-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div
             role="group"
             aria-label="Chart timeframe"
-            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg"
+            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
           >
             {(
               [
@@ -298,77 +313,99 @@ export function TreasuryGrowthChart({
                 { id: '12m', label: '12M' },
                 { id: 'all', label: 'All' },
               ] as const
-            ).map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRange(r.id)}
-                className={`px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  range === r.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
+            ).map((r) => {
+              const active = range === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRange(r.id)}
+                  className={`relative px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="treasury-range-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                    />
+                  )}
+                  <span className="relative z-10">{r.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {/* Summary Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Net Treasury Balance</div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-            {formatMoney(metrics.latestTreasury, currency)}
-          </div>
-          <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {metrics.treasuryGrowthDelta >= 0 ? '+' : ''}
-            {formatMoney(metrics.treasuryGrowthDelta, currency)} last period
-          </div>
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <Skeleton width="65%" height={12} />
+              <Skeleton width="80%" height={22} />
+              <Skeleton width="55%" height={11} />
+            </div>
+          ))}
         </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Net Treasury Balance</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+              {formatMoney(metrics.latestTreasury, currency)}
+            </div>
+            <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+              {metrics.treasuryGrowthDelta >= 0 ? '+' : ''}
+              {formatMoney(metrics.treasuryGrowthDelta, currency)} last period
+            </div>
+          </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Latest Month ({metrics.latestMonthLabel})
+          <div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Latest Month ({metrics.latestMonthLabel})
+            </div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+              {formatMoney(metrics.latestMonthContrib, currency)}
+            </div>
+            <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+              {metrics.contribDeltaPct !== null
+                ? `${metrics.contribDeltaPct >= 0 ? '+' : ''}${metrics.contribDeltaPct}% vs prior month`
+                : 'Monthly inflow'}
+            </div>
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(metrics.latestMonthContrib, currency)}
-          </div>
-          <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {metrics.contribDeltaPct !== null
-              ? `${metrics.contribDeltaPct >= 0 ? '+' : ''}${metrics.contribDeltaPct}% vs prior month`
-              : 'Monthly inflow'}
-          </div>
-        </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Cumulative Pool Growth</div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(metrics.totalPool, currency)}
+          <div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Cumulative Pool Growth</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+              {formatMoney(metrics.totalPool, currency)}
+            </div>
+            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+              All-time approved deposits
+            </div>
           </div>
-          <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-            All-time approved deposits
-          </div>
-        </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Your Approved Deposits</div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(metrics.memberTotal, currency)}
-          </div>
-          <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {metrics.totalPool > 0
-              ? `${Math.round((metrics.memberTotal / metrics.totalPool) * 100)}% of fund pool`
-              : 'Member equity share'}
+          <div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Your Approved Deposits</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+              {formatMoney(metrics.memberTotal, currency)}
+            </div>
+            <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+              {metrics.totalPool > 0
+                ? `${Math.round((metrics.memberTotal / metrics.totalPool) * 100)}% of fund pool`
+                : 'Member equity share'}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Recharts Canvas */}
       {loading ? (
-        <Skeleton height={272} />
+        <Skeleton height={272} borderRadius={10} />
       ) : visibleSeries.length === 0 ? (
         <div className="h-64 flex flex-col items-center justify-center text-center px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
           <div className="space-y-1">
@@ -384,7 +421,7 @@ export function TreasuryGrowthChart({
             <button
               type="button"
               onClick={onSubmitContribution}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
             >
               <span>Submit First Contribution</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -404,8 +441,8 @@ export function TreasuryGrowthChart({
                   <stop offset="95%" stopColor="#059669" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="contribPoolAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0.01} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
 
@@ -444,9 +481,9 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Contributions"
-                    stroke="#0d9488"
+                    stroke="#6366f1"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#0d9488' }}
+                    dot={{ r: 3, fill: '#6366f1' }}
                     activeDot={{ r: 5 }}
                   />
                   <Bar
@@ -459,7 +496,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="repaid"
                     name="Repayments Returned"
-                    fill="#d97706"
+                    fill="#0d9488"
                     radius={[4, 4, 0, 0]}
                     barSize={12}
                   />
@@ -478,7 +515,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="myContributions"
                     name="Your Approved Monthly"
-                    fill="#0d9488"
+                    fill="#6366f1"
                     radius={[4, 4, 0, 0]}
                     barSize={16}
                   />
@@ -506,7 +543,7 @@ export function TreasuryGrowthChart({
                     type="monotone"
                     dataKey="cumulativePool"
                     name="Cumulative Pool Equity"
-                    stroke="#0d9488"
+                    stroke="#6366f1"
                     strokeWidth={2}
                     fill="url(#contribPoolAreaGrad)"
                   />
@@ -520,7 +557,7 @@ export function TreasuryGrowthChart({
                   <Bar
                     dataKey="repaid"
                     name="Repayments Returned"
-                    fill="#14b8a6"
+                    fill="#0d9488"
                     radius={[4, 4, 0, 0]}
                     barSize={14}
                   />
@@ -530,6 +567,6 @@ export function TreasuryGrowthChart({
           </ResponsiveContainer>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }

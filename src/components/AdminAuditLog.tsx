@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Pause,
   Play,
+  Radio,
   RefreshCw,
   ScrollText,
   Search,
@@ -24,6 +25,7 @@ import {
   UserX,
   XCircle,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { AuditLogEntry, PublicUser, UserRole } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -125,8 +127,8 @@ function getAuditVisualMeta(action: string) {
   ) {
     return {
       label: 'Member Declined / Access Revoked',
-      tone: 'text-red-700 dark:text-red-400',
-      iconBg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60',
+      tone: 'text-rose-700 dark:text-rose-400',
+      iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
       Icon: UserX,
     };
   }
@@ -138,8 +140,8 @@ function getAuditVisualMeta(action: string) {
   ) {
     return {
       label: 'Rejected Request',
-      tone: 'text-red-700 dark:text-red-400',
-      iconBg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60',
+      tone: 'text-rose-700 dark:text-rose-400',
+      iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
       Icon: XCircle,
     };
   }
@@ -207,8 +209,8 @@ function getAuditVisualMeta(action: string) {
   if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED' || action === 'MEMBER_PROFILE_UPDATED') {
     return {
       label: 'Security & Member Access',
-      tone: 'text-slate-700 dark:text-slate-300',
-      iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+      tone: 'text-indigo-700 dark:text-indigo-400',
+      iconBg: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60',
       Icon: KeyRound,
     };
   }
@@ -220,10 +222,10 @@ function getAuditVisualMeta(action: string) {
     return {
       label: isModerationRemoval ? 'Community Moderation' : 'Community Activity',
       tone: isModerationRemoval
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
       iconBg: isModerationRemoval
-        ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60'
         : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: MessageSquare,
     };
@@ -488,23 +490,28 @@ export function AdminAuditLog({
   const hasMoreLogs = filteredLogs.length > visibleLimit;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24 }}
+      className="space-y-6"
+    >
       {/* KPI Summary Strip */}
       {!compactHeader && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Site Events</span>
-              <ScrollText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              <ScrollText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {loading && logs.length === 0 ? '—' : metrics.total}
+              {loading && logs.length === 0 ? <Skeleton width={48} height={28} /> : metrics.total}
             </div>
             <div
               className={`text-xs font-medium inline-flex items-center gap-1 ${
                 chainValid
-                  ? 'text-emerald-700 dark:text-emerald-400'
-                  : 'text-red-700 dark:text-red-400'
+                  ? 'text-indigo-700 dark:text-indigo-400'
+                  : 'text-rose-700 dark:text-rose-400'
               }`}
             >
               {chainValid ? (
@@ -522,7 +529,11 @@ export function AdminAuditLog({
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {loading && logs.length === 0 ? '—' : metrics.loanStatusEvents}
+              {loading && logs.length === 0 ? (
+                <Skeleton width={48} height={28} />
+              ) : (
+                metrics.loanStatusEvents
+              )}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               Applications, 2/3 ballots, reviews &amp; payouts
@@ -535,7 +546,11 @@ export function AdminAuditLog({
               <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {loading && logs.length === 0 ? '—' : metrics.contributionEvents}
+              {loading && logs.length === 0 ? (
+                <Skeleton width={48} height={28} />
+              ) : (
+                metrics.contributionEvents
+              )}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               Monthly Bank/MFS deposits &amp; installments
@@ -548,9 +563,11 @@ export function AdminAuditLog({
               <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             </div>
             <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-              {loading && logs.length === 0
-                ? '—'
-                : metrics.systemSettingsEvents + metrics.userEvents}
+              {loading && logs.length === 0 ? (
+                <Skeleton width={48} height={28} />
+              ) : (
+                metrics.systemSettingsEvents + metrics.userEvents
+              )}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {metrics.systemSettingsEvents} policy/sync · {metrics.userEvents} member events
@@ -565,7 +582,7 @@ export function AdminAuditLog({
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                 <span>Real-Time Site Activity Feed</span>
               </h2>
 
@@ -579,16 +596,7 @@ export function AdminAuditLog({
                       : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    streamPaused
-                      ? 'bg-amber-500'
-                      : streamStatus === 'live'
-                        ? 'bg-emerald-500 animate-pulse'
-                        : 'bg-slate-400'
-                  }`}
-                  aria-hidden="true"
-                />
+                <Radio className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>
                   {streamPaused
                     ? 'Stream Paused'
@@ -607,8 +615,8 @@ export function AdminAuditLog({
               <span
                 className={`inline-flex items-center gap-1 text-xs font-medium ${
                   chainValid
-                    ? 'text-emerald-700 dark:text-emerald-400'
-                    : 'text-red-700 dark:text-red-400'
+                    ? 'text-indigo-700 dark:text-indigo-400'
+                    : 'text-rose-700 dark:text-rose-400'
                 }`}
               >
                 {chainValid ? (
@@ -674,7 +682,7 @@ export function AdminAuditLog({
             <button
               type="button"
               onClick={() => window.location.assign('/api/reports/export?type=audit')}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Export Audit CSV</span>
@@ -722,23 +730,33 @@ export function AdminAuditLog({
                 { id: 'user_access', label: `Member Registry (${metrics.userEvents})` },
                 { id: 'rejections', label: `Rejections (${metrics.rejectedEvents})` },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setCategoryFilter(tab.id);
-                  setVisibleLimit(25);
-                }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  categoryFilter === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = categoryFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter(tab.id);
+                    setVisibleLimit(25);
+                  }}
+                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="audit-category-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -770,7 +788,7 @@ export function AdminAuditLog({
                   setVisibleLimit(25);
                 }}
                 placeholder="Search actor, action, ID, summary…"
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
           </div>
@@ -778,7 +796,21 @@ export function AdminAuditLog({
 
         {/* Live Site Activity Stream */}
         {loading && logs.length === 0 ? (
-          <Skeleton height={220} />
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-4 flex items-start justify-between gap-3 bg-white dark:bg-slate-900">
+                <div className="flex items-start gap-3 flex-1">
+                  <Skeleton width={36} height={36} borderRadius={8} />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton width="45%" height={14} />
+                    <Skeleton width="82%" height={16} />
+                    <Skeleton width="55%" height={12} />
+                  </div>
+                </div>
+                <Skeleton width={130} height={30} borderRadius={8} />
+              </div>
+            ))}
+          </div>
         ) : filteredLogs.length === 0 ? (
           <div className="p-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 text-center space-y-1.5">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
@@ -801,7 +833,7 @@ export function AdminAuditLog({
                   key={entry.id}
                   className={`p-4 transition-colors space-y-3 ${
                     isJustArrived
-                      ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-l-2 border-l-emerald-500'
+                      ? 'bg-emerald-50/60 dark:bg-emerald-950/25 ring-1 ring-inset ring-emerald-500/30'
                       : 'bg-white dark:bg-slate-900 hover:bg-slate-50/60 dark:hover:bg-slate-900/70'
                   }`}
                 >
@@ -871,49 +903,57 @@ export function AdminAuditLog({
                     </button>
                   </div>
 
-                  {isOpen && (
-                    <div className="ml-0 sm:ml-12 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2.5 text-[11px]">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-slate-600 dark:text-slate-400 break-all">
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500">Audit ID:</span>{' '}
-                          {entry.id}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.16 }}
+                        className="ml-0 sm:ml-12 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2.5 text-[11px]"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-slate-600 dark:text-slate-400 break-all">
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500">Audit ID:</span>{' '}
+                            {entry.id}
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500">Prev Hash:</span>{' '}
+                            {shortHash(entry.prevHash)}
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-indigo-600 dark:text-indigo-400">Entry SHA-256:</span>{' '}
+                            {entry.entryHash}
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-indigo-600 dark:text-indigo-400">
+                              AES-256-GCM Ciphertext:
+                            </span>{' '}
+                            {entry.encryptedPayload.ciphertext.slice(0, 72)}…
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500">Prev Hash:</span>{' '}
-                          {shortHash(entry.prevHash)}
-                        </div>
-                        <div className="md:col-span-2">
-                          <span className="text-slate-400 dark:text-slate-500">Entry SHA-256:</span>{' '}
-                          {entry.entryHash}
-                        </div>
-                        <div className="md:col-span-2">
-                          <span className="text-slate-400 dark:text-slate-500">
-                            AES-256-GCM Ciphertext:
-                          </span>{' '}
-                          {entry.encryptedPayload.ciphertext.slice(0, 72)}…
-                        </div>
-                      </div>
 
-                      {entry.decryptedPayload && (
-                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                          <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 mb-1.5">
-                            Decrypted Audit Metadata
+                        {entry.decryptedPayload && (
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-400 mb-1.5">
+                              Decrypted Audit Metadata
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
+                              {Object.entries(entry.decryptedPayload).map(([k, v]) => (
+                                <div
+                                  key={k}
+                                  className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 break-all"
+                                >
+                                  <span className="text-slate-500 dark:text-slate-400">{k}:</span>{' '}
+                                  <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
-                            {Object.entries(entry.decryptedPayload).map(([k, v]) => (
-                              <div
-                                key={k}
-                                className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 break-all"
-                              >
-                                <span className="text-slate-500 dark:text-slate-400">{k}:</span>{' '}
-                                <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
@@ -948,6 +988,6 @@ export function AdminAuditLog({
           </div>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 }

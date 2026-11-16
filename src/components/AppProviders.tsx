@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { ShieldCheck, X } from 'lucide-react';
-import { MotionConfig } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
 import { api, registerTotpChallengeHandler } from '../utils/api.ts';
@@ -200,70 +200,85 @@ export function AppProviders({ children }: { children: ReactNode }) {
         handleDisconnectGoogle,
       }}
     >
-      <MotionConfig reducedMotion="user">
+      <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <SkeletonTheme
           baseColor={darkMode ? '#1e293b' : '#e2e8f0'}
           highlightColor={darkMode ? '#334155' : '#f8fafc'}
+          borderRadius={8}
         >
           {children}
-          {totpPrompt && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-              <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-lg">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                    <ShieldCheck className="w-5 h-5 shrink-0" />
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Two-Factor Step-Up Required
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={cancelTotpPrompt}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    aria-label="Cancel 2FA challenge"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {totpPrompt.message}
-                </p>
-                <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      6-Digit Authenticator Code
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      autoFocus
-                      value={totpCodeInput}
-                      onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="000000"
-                      className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center justify-end gap-2">
+          <AnimatePresence>
+            {totpPrompt && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.16 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-full max-w-sm rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-5 shadow-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                      <ShieldCheck className="w-5 h-5 shrink-0" />
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        Two-Factor Step-Up Required
+                      </h3>
+                    </div>
                     <button
                       type="button"
                       onClick={cancelTotpPrompt}
-                      className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      aria-label="Cancel 2FA challenge"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={totpCodeInput.length !== 6}
-                      className="rounded-md bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      Verify &amp; Continue
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                </form>
-              </div>
-            </div>
-          )}
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {totpPrompt.message}
+                  </p>
+                  <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        6-Digit Authenticator Code
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        autoFocus
+                        value={totpCodeInput}
+                        onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="000000"
+                        className="w-full rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/30 dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={cancelTotpPrompt}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={totpCodeInput.length !== 6}
+                        className="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-50 cursor-pointer whitespace-nowrap shadow-2xs"
+                      >
+                        Verify &amp; Continue
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </SkeletonTheme>
       </MotionConfig>
     </CoopSessionContext.Provider>

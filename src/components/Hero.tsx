@@ -27,9 +27,9 @@ const HIGHLIGHTS = [
     detail:
       'Applicant KYC records, Bank/MFS transaction IDs, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
     cardStyle:
-      'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
+      'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70',
     iconBg:
-      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
+      'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200/70 dark:ring-indigo-800/50',
   },
   {
     Icon: Sheet,
@@ -69,8 +69,8 @@ const METRICS = [
   {
     value: '20 · 10m',
     label: 'Max Shares · Max Repay',
-    cardHover: 'hover:border-teal-300 dark:hover:border-teal-700/70',
-    valueColor: 'text-teal-700 dark:text-teal-400',
+    cardHover: 'hover:border-indigo-300 dark:hover:border-indigo-700/70',
+    valueColor: 'text-indigo-700 dark:text-indigo-400',
   },
 ];
 
@@ -86,18 +86,23 @@ export function Hero() {
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {/* Split Architectural Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+    <div className="relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-clip">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-emerald-50/70 via-teal-50/30 to-transparent dark:from-emerald-950/25 dark:via-indigo-950/10 dark:to-transparent"
+      />
+
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.28 }}
             className="lg:col-span-6 space-y-6"
           >
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Savings, Investment &amp; Interest-Free Loan Fund · VISION-36 (2027–2036)
+              Savings, Investment &amp; Interest-Free Loan Fund ·{' '}
+              <span className="text-teal-700 dark:text-teal-400">VISION-36 (2027–2036)</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
@@ -111,7 +116,7 @@ export function Hero() {
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2"
+                className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2 whitespace-nowrap"
               >
                 <span>{user ? 'Enter Member Portal' : 'Apply for Membership'}</span>
                 <ArrowRight
@@ -123,7 +128,7 @@ export function Hero() {
               {!user && (
                 <Link
                   href="/login"
-                  className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200"
+                  className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200 whitespace-nowrap"
                 >
                   Member Sign In
                 </Link>
@@ -132,17 +137,19 @@ export function Hero() {
               <Link
                 href="/#governance-charter"
                 onClick={(e) => handleSectionLink(e, 'governance-charter')}
-                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
               >
                 Governance Charter
               </Link>
             </div>
 
-            {/* Clean Institutional Metrics Row */}
             <div className="grid grid-cols-3 gap-3 pt-4">
-              {METRICS.map((metric) => (
-                <div
+              {METRICS.map((metric, idx) => (
+                <motion.div
                   key={metric.label}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.24, delay: 0.08 * idx }}
                   className={`p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${metric.cardHover}`}
                 >
                   <div
@@ -153,7 +160,7 @@ export function Hero() {
                   <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                     {metric.label}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -161,10 +168,10 @@ export function Hero() {
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.32 }}
             className="lg:col-span-6"
           >
-            <div className="p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/50 dark:from-emerald-950/25 dark:via-slate-900 dark:to-teal-950/20 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 aspect-[16/10]">
                 <img
                   src={HERO_IMAGE_URL}
@@ -178,24 +185,33 @@ export function Hero() {
         </div>
       </section>
 
-      {/* Core Capabilities Grid */}
       <section className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 space-y-10">
-          <div className="max-w-2xl space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.25 }}
+            className="max-w-2xl space-y-2"
+          >
+            <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
               Platform Architecture
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               Built for Financial Integrity and Cooperative Accountability
             </h2>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {HIGHLIGHTS.map((item) => {
+            {HIGHLIGHTS.map((item, idx) => {
               const Icon = item.Icon;
               return (
-                <div
+                <motion.div
                   key={item.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ duration: 0.24, delay: idx * 0.06 }}
                   className={`p-5 rounded-xl border space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${item.cardStyle}`}
                 >
                   <div
@@ -209,18 +225,23 @@ export function Hero() {
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                     {item.detail}
                   </p>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Dual-Phase Fund Lifecycle & Halal Asset Transition */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-5">
-            <div className="p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all duration-200">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.28 }}
+            className="lg:col-span-5"
+          >
+            <div className="p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-amber-50/50 via-white to-teal-50/50 dark:from-amber-950/20 dark:via-slate-900 dark:to-teal-950/20 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 aspect-[4/3]">
                 <img
                   src={INVESTMENT_IMAGE_URL}
@@ -230,9 +251,15 @@ export function Hero() {
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-7 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.28 }}
+            className="lg:col-span-7 space-y-6"
+          >
             <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                 Two-Stage Capital Lifecycle
@@ -243,9 +270,9 @@ export function Hero() {
             </div>
 
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 flex items-start gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CheckCircle2
-                  className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                  className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5"
                   aria-hidden="true"
                 />
                 <div className="space-y-1">
@@ -278,13 +305,13 @@ export function Hero() {
               <Link
                 href="/#architecture"
                 onClick={(e) => handleSectionLink(e, 'architecture')}
-                className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 transition-all duration-200"
+                className="px-4 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-white dark:bg-slate-900 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 transition-all duration-200 whitespace-nowrap"
               >
                 Security &amp; Architecture
               </Link>
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+                className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
               >
                 <span>{user ? 'Open Member Portal' : 'Submit Membership Application'}</span>
                 <ArrowRight
@@ -293,7 +320,7 @@ export function Hero() {
                 />
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>

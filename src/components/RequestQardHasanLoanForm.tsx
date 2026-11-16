@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   Calendar,
@@ -11,6 +12,7 @@ import {
   ShieldCheck,
   UserCheck,
 } from 'lucide-react';
+import Skeleton from 'react-loading-skeleton';
 import type {
   ActiveMemberDirectoryItem,
   EligibilityCheck,
@@ -418,70 +420,84 @@ export function RequestQardHasanLoanForm({
         </div>
       )}
 
-      {eligibilityError && !eligibility && (
-        <div
-          role="alert"
-          className="p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-center justify-between gap-3"
-        >
-          <span className="inline-flex items-center gap-1.5 min-w-0">
-            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{eligibilityError}</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setEligibilityRetryKey((k) => k + 1)}
-            className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
+      <AnimatePresence initial={false}>
+        {eligibilityError && !eligibility && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            role="alert"
+            className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300 flex items-center justify-between gap-3"
           >
-            <RefreshCw className="w-3 h-3" aria-hidden="true" />
-            <span>Retry</span>
-          </button>
-        </div>
-      )}
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">{eligibilityError}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setEligibilityRetryKey((k) => k + 1)}
+              className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3" aria-hidden="true" />
+              <span>Retry</span>
+            </button>
+          </motion.div>
+        )}
 
-      {feedback?.kind === 'error' && (
-        <div
-          role="alert"
-          className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-xs text-red-900 dark:text-red-200 space-y-1"
-        >
-          <div className="font-semibold flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" aria-hidden="true" />
-            <span>{feedback.title}</span>
-          </div>
-          <p className="text-red-800 dark:text-red-300 leading-relaxed">{feedback.message}</p>
-        </div>
-      )}
+        {feedback?.kind === 'error' && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            role="alert"
+            className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/30 text-xs text-rose-900 dark:text-rose-200 space-y-1"
+          >
+            <div className="font-semibold flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
+              <span>{feedback.title}</span>
+            </div>
+            <p className="text-rose-800 dark:text-rose-300 leading-relaxed">{feedback.message}</p>
+          </motion.div>
+        )}
 
-      {feedback?.kind === 'success' && (
-        <div
-          role="status"
-          className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/80 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-1"
-        >
-          <div className="font-semibold flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            <span>{feedback.title}</span>
-          </div>
-          <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">{feedback.message}</p>
-          <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
-            Application ID · {feedback.loanId}
-          </p>
-        </div>
-      )}
+        {feedback?.kind === 'success' && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            role="status"
+            className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/80 dark:bg-emerald-950/30 text-xs text-emerald-900 dark:text-emerald-200 space-y-1"
+          >
+            <div className="font-semibold flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+              <span>{feedback.title}</span>
+            </div>
+            <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">{feedback.message}</p>
+            <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
+              Application ID · {feedback.loanId}
+            </p>
+          </motion.div>
+        )}
 
-      {variant === 'card' && eligibility && !eligibility.eligible && (
-        <div
-          role="alert"
-          className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-1"
-        >
-          <div className="font-semibold flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
-            <span>Loan Placement Locked</span>
-          </div>
-          <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-            {eligibility.reasons[0] ||
-              'Your account does not currently meet the cooperative loan eligibility rules.'}
-          </p>
-        </div>
-      )}
+        {variant === 'card' && eligibility && !eligibility.eligible && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            role="alert"
+            className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-1"
+          >
+            <div className="font-semibold flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
+              <span>Loan Placement Locked</span>
+            </div>
+            <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+              {eligibility.reasons[0] ||
+                'Your account does not currently meet the cooperative loan eligibility rules.'}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div className="space-y-2">
@@ -651,20 +667,28 @@ export function RequestQardHasanLoanForm({
               </button>
             )}
 
-            {showSchedulePreview && schedulePreview.length > 0 && (
-              <div className="pt-2 space-y-1 max-h-40 overflow-y-auto divide-y divide-slate-200/70 dark:divide-slate-800 font-mono text-[11px] tabular-nums">
-                {schedulePreview.map((item) => (
-                  <div key={item.installmentNumber} className="py-1 flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      #{item.installmentNumber} · {formatShortDate(item.dueDate)}
-                    </span>
-                    <span className="font-medium text-slate-800 dark:text-slate-200">
-                      {formatMoney(item.amount, ccy)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {showSchedulePreview && schedulePreview.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden pt-2 space-y-1 max-h-40 overflow-y-auto divide-y divide-slate-200/70 dark:divide-slate-800 font-mono text-[11px] tabular-nums"
+                >
+                  {schedulePreview.map((item) => (
+                    <div key={item.installmentNumber} className="py-1 flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        #{item.installmentNumber} · {formatShortDate(item.dueDate)}
+                      </span>
+                      <span className="font-medium text-indigo-700 dark:text-indigo-300">
+                        {formatMoney(item.amount, ccy)}
+                      </span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -771,11 +795,12 @@ export function RequestQardHasanLoanForm({
               active member co-signer(s) before opening for 2/3 ballot voting.
             </p>
             {membersLoading ? (
-              <div className="px-3 py-2.5 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950 text-[11px] text-slate-500 dark:text-slate-400">
-                Loading active member directory…
+              <div className="p-2.5 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950 space-y-1.5">
+                <Skeleton height={22} borderRadius={6} />
+                <Skeleton height={22} borderRadius={6} />
               </div>
             ) : membersError ? (
-              <div className="px-3 py-2.5 rounded border border-red-200 dark:border-red-900/60 bg-white dark:bg-slate-950 flex items-center justify-between gap-2 text-[11px] text-red-700 dark:text-red-400">
+              <div className="px-3 py-2.5 rounded border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-950 flex items-center justify-between gap-2 text-[11px] text-rose-700 dark:text-rose-400">
                 <span className="truncate">{membersError}</span>
                 <button
                   type="button"
@@ -807,7 +832,7 @@ export function RequestQardHasanLoanForm({
                                 : [...prev, member.id]
                             )
                           }
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500/30"
                         />
                         <span className="font-medium text-slate-900 dark:text-white truncate">
                           {member.name}
@@ -827,7 +852,7 @@ export function RequestQardHasanLoanForm({
         <label
           className={`flex items-start gap-2.5 p-3 rounded-lg border transition-colors cursor-pointer ${
             termsHighlight && !agreedToTerms
-              ? 'border-red-400 dark:border-red-700 bg-red-50/70 dark:bg-red-950/30'
+              ? 'border-rose-400 dark:border-rose-700 bg-rose-50/70 dark:bg-rose-950/30'
               : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
           }`}
         >
@@ -859,7 +884,7 @@ export function RequestQardHasanLoanForm({
           <button
             type="submit"
             disabled={!canAttemptSubmit}
-            className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   CheckCircle2,
   ExternalLink,
@@ -218,18 +219,23 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
       {/* Header & Controls */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Admin-Only Access Verification</span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Pending User Registrations{' '}
-              <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
+              <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400">
                 ({registrations.length})
               </span>
             </h2>
@@ -251,7 +257,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search name, NID, address…"
                 aria-label="Search pending registrations"
-                className="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-56 sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                className="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-56 sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
 
@@ -408,7 +414,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy || modalBusy}
                       onClick={() => confirmReject(applicant)}
-                      className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -420,7 +426,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy || modalBusy}
                       onClick={() => confirmApprove(applicant)}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -594,6 +600,6 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

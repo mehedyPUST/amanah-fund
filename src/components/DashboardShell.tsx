@@ -117,6 +117,69 @@ const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
 ];
 
+type SectionAccentTone = 'emerald' | 'teal' | 'amber' | 'indigo';
+
+const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
+  'fund-overview': 'emerald',
+  'monthly-contribution': 'emerald',
+  'my-amanah': 'emerald',
+  'quard-hasan': 'teal',
+  statistics: 'teal',
+  'transaction-history': 'teal',
+  ballot: 'amber',
+  notification: 'amber',
+  'manager-cycle': 'amber',
+  'manager-desk': 'amber',
+  'my-profile': 'indigo',
+  members: 'indigo',
+  'member-profile': 'indigo',
+  community: 'indigo',
+  'member-registry': 'indigo',
+  'site-settings': 'indigo',
+  'site-activity': 'indigo',
+  'system-audit-logs': 'indigo',
+};
+
+const SIDEBAR_TONE_STYLES: Record<
+  SectionAccentTone,
+  {
+    pillBg: string;
+    activeText: string;
+    activeIcon: string;
+    underline: string;
+    eyebrowText: string;
+  }
+> = {
+  emerald: {
+    pillBg: 'bg-emerald-50/90 dark:bg-emerald-950/45 border border-emerald-200/70 dark:border-emerald-900/60',
+    activeText: 'text-emerald-800 dark:text-emerald-300 font-semibold',
+    activeIcon: 'text-emerald-600 dark:text-emerald-400',
+    underline: 'decoration-emerald-600 dark:decoration-emerald-400',
+    eyebrowText: 'text-emerald-700 dark:text-emerald-400',
+  },
+  teal: {
+    pillBg: 'bg-teal-50/90 dark:bg-teal-950/45 border border-teal-200/70 dark:border-teal-900/60',
+    activeText: 'text-teal-800 dark:text-teal-300 font-semibold',
+    activeIcon: 'text-teal-600 dark:text-teal-400',
+    underline: 'decoration-teal-600 dark:decoration-teal-400',
+    eyebrowText: 'text-teal-700 dark:text-teal-400',
+  },
+  amber: {
+    pillBg: 'bg-amber-50/90 dark:bg-amber-950/45 border border-amber-200/70 dark:border-amber-900/60',
+    activeText: 'text-amber-800 dark:text-amber-300 font-semibold',
+    activeIcon: 'text-amber-600 dark:text-amber-400',
+    underline: 'decoration-amber-600 dark:decoration-amber-400',
+    eyebrowText: 'text-amber-700 dark:text-amber-400',
+  },
+  indigo: {
+    pillBg: 'bg-indigo-50/90 dark:bg-indigo-950/45 border border-indigo-200/70 dark:border-indigo-900/60',
+    activeText: 'text-indigo-800 dark:text-indigo-300 font-semibold',
+    activeIcon: 'text-indigo-600 dark:text-indigo-400',
+    underline: 'decoration-indigo-600 dark:decoration-indigo-400',
+    eyebrowText: 'text-indigo-700 dark:text-indigo-400',
+  },
+};
+
 function playSubtleAlertChime() {
   if (typeof window === 'undefined') return;
   try {
@@ -547,19 +610,54 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 space-y-6">
-        <Skeleton height={44} width={280} />
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} height={110} />
-          ))}
+      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center gap-3 bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800">
+          <Skeleton width={32} height={32} borderRadius={8} />
+          <div className="space-y-1 flex-1">
+            <Skeleton width={80} height={14} />
+            <Skeleton width={100} height={10} />
+          </div>
         </div>
-        <Skeleton height={280} />
+        <div className="lg:col-start-2 lg:row-start-1 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4">
+          <Skeleton width={190} height={20} />
+          <div className="flex items-center gap-2">
+            <Skeleton width={76} height={32} borderRadius={8} />
+            <Skeleton width={32} height={32} borderRadius={8} />
+            <Skeleton width={32} height={32} borderRadius={8} />
+            <Skeleton width={140} height={34} borderRadius={8} />
+          </div>
+        </div>
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:w-[260px] lg:flex-col justify-between bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4">
+          <div className="space-y-2.5">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <Skeleton key={idx} height={34} borderRadius={8} />
+            ))}
+          </div>
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
+            <Skeleton width="75%" height={16} />
+            <Skeleton width="60%" height={12} />
+            <Skeleton height={34} borderRadius={8} />
+          </div>
+        </aside>
+        <main className="lg:col-start-2 lg:row-start-2 p-4 sm:p-6 space-y-6">
+          <Skeleton height={86} borderRadius={12} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} height={116} borderRadius={12} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Skeleton height={240} borderRadius={12} />
+            <Skeleton height={240} borderRadius={12} />
+          </div>
+          <Skeleton height={260} borderRadius={12} />
+        </main>
       </div>
     );
   }
 
   const activeNavMeta = visibleNav.find((n) => n.id === activeSection) || visibleNav[0];
+  const activeTone = SIDEBAR_TONE_STYLES[SECTION_TONE_MAP[activeSection] || 'emerald'];
 
   const pendingBadgeCount = (sectionId: DashboardSectionId): number => {
     if (!overview) return 0;
@@ -605,36 +703,38 @@ export function DashboardShell() {
     const Icon = item.Icon;
     const active = activeSection === item.id;
     const count = pendingBadgeCount(item.id);
+    const toneStyle = SIDEBAR_TONE_STYLES[SECTION_TONE_MAP[item.id] || 'emerald'];
     return (
       <button
         key={item.id}
         type="button"
         onClick={() => navigateToPage(item.id, isMobile)}
         aria-current={active ? 'page' : undefined}
-        className={`group w-full px-3 py-2 text-sm flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${active
-          ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white'
+        className={`relative group w-full px-3 py-2 text-sm rounded-lg flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${active
+          ? toneStyle.activeText
+          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/40'
           }`}
       >
-        <span className="flex items-center gap-3 min-w-0">
+        {active && (
+          <motion.span
+            layoutId={isMobile ? 'sidebar-active-mobile' : 'sidebar-active-desktop'}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className={`absolute inset-0 rounded-lg ${toneStyle.pillBg}`}
+            aria-hidden="true"
+          />
+        )}
+        <span className="relative z-10 flex items-center gap-3 min-w-0">
           <Icon
             className={`w-4 h-4 shrink-0 transition-colors ${active
-              ? 'text-emerald-600 dark:text-emerald-400'
+              ? toneStyle.activeIcon
               : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200'
               }`}
             aria-hidden="true"
           />
-          <span
-            className={`truncate ${active
-              ? 'underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4'
-              : 'group-hover:underline group-hover:decoration-slate-300 dark:group-hover:decoration-slate-700 group-hover:underline-offset-4'
-              }`}
-          >
-            {item.label}
-          </span>
+          <span className="truncate">{item.label}</span>
         </span>
         {count > 0 && (
-          <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
+          <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
             {count}
           </span>
         )}
@@ -686,14 +786,14 @@ export function DashboardShell() {
       {/* GRID 1 */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               Amanah
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            <div className="text-[11px] text-teal-700 dark:text-teal-400 font-medium truncate">
               Member Portal
             </div>
           </div>
@@ -707,7 +807,7 @@ export function DashboardShell() {
             type="button"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Open navigation"
-            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -716,7 +816,9 @@ export function DashboardShell() {
               Amanah
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
-            <h1 className="font-semibold text-slate-900 dark:text-white truncate underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4">
+            <h1
+              className={`font-semibold text-slate-900 dark:text-white truncate underline decoration-2 ${activeTone.underline} underline-offset-4`}
+            >
               {activeSection === 'member-profile'
                 ? 'Member Profile'
                 : activeNavMeta?.label || 'Amanah Overview'}
@@ -728,7 +830,7 @@ export function DashboardShell() {
           <Link
             href="/"
             title="Public Website"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 whitespace-nowrap"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all duration-200 whitespace-nowrap"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Home</span>
@@ -754,9 +856,9 @@ export function DashboardShell() {
             onClick={() => void refreshWorkspace(false)}
             title="Refresh live balances"
             aria-label="Refresh live balances"
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 hover:text-teal-700 dark:hover:text-teal-300 transition-all duration-200 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin text-teal-600 dark:text-teal-400' : ''}`} />
           </button>
 
           <button
@@ -766,7 +868,11 @@ export function DashboardShell() {
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
           >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {darkMode ? (
+              <Sun className="w-4 h-4 text-amber-500" />
+            ) : (
+              <Moon className="w-4 h-4 text-indigo-600" />
+            )}
           </button>
 
           {!isAdmin && (
@@ -774,7 +880,7 @@ export function DashboardShell() {
               type="button"
               disabled={loanGateChecking}
               onClick={() => void openLoanRequestModal()}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-wait"
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-wait"
             >
               {loanGateChecking ? 'Checking Eligibility…' : 'Request Qard Hasan'}
             </button>
@@ -1087,12 +1193,12 @@ export function DashboardShell() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.16 }}
+              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
               className="w-full"
             >
               {activeSection === 'fund-overview' && (
                 <section id="fund-overview" className="space-y-4">
-                  <SectionEyebrow label="Amanah Overview" />
+                  <SectionEyebrow label="Amanah Overview" tone="emerald" />
                   <OverviewView
                     overview={overview}
                     contributions={contributions}
@@ -1110,7 +1216,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'monthly-contribution' && (
                 <section id="monthly-contribution" className="space-y-4">
-                  <SectionEyebrow label="Monthly Contribution" />
+                  <SectionEyebrow label="Monthly Contribution" tone="emerald" />
                   <ContributionsView
                     contributions={contributions}
                     config={overview?.config || null}
@@ -1125,7 +1231,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
-                  <SectionEyebrow label="Quard Hasan" />
+                  <SectionEyebrow label="Quard Hasan" tone="teal" />
                   <LoansView
                     loans={loans}
                     eligibility={overview?.personal.eligibility || null}
@@ -1142,7 +1248,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'my-amanah' && (
                 <section id="my-amanah" className="space-y-4">
-                  <SectionEyebrow label="My Amanah" />
+                  <SectionEyebrow label="My Amanah" tone="emerald" />
                   <MyAmanahView
                     overview={overview}
                     loans={loans}
@@ -1156,14 +1262,14 @@ export function DashboardShell() {
 
               {activeSection === 'my-profile' && (
                 <section id="my-profile" className="space-y-4">
-                  <SectionEyebrow label="My Profile" />
+                  <SectionEyebrow label="My Profile" tone="indigo" />
                   <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
                 </section>
               )}
 
               {activeSection === 'notification' && (
                 <section id="notification" className="space-y-4">
-                  <SectionEyebrow label="Notification" />
+                  <SectionEyebrow label="Notification" tone="amber" />
                   <NotificationsView
                     user={user}
                     workspace={workspace}
@@ -1180,7 +1286,7 @@ export function DashboardShell() {
 
               {activeSection === 'statistics' && (
                 <section id="statistics" className="space-y-4">
-                  <SectionEyebrow label="Statistics" />
+                  <SectionEyebrow label="Statistics" tone="teal" />
                   <StatisticsView
                     overview={overview}
                     contributions={contributions}
@@ -1194,7 +1300,7 @@ export function DashboardShell() {
 
               {activeSection === 'ballot' && (
                 <section id="ballot" className="space-y-4">
-                  <SectionEyebrow label="Opinion Ballot" />
+                  <SectionEyebrow label="Opinion Ballot" tone="amber" />
                   <VotingView
                     loans={loans}
                     projects={halalProjects}
@@ -1210,7 +1316,7 @@ export function DashboardShell() {
 
               {activeSection === 'transaction-history' && (
                 <section id="transaction-history" className="space-y-4">
-                  <SectionEyebrow label="Transaction History" />
+                  <SectionEyebrow label="Transaction History" tone="teal" />
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
@@ -1226,7 +1332,7 @@ export function DashboardShell() {
 
               {activeSection === 'members' && (
                 <section id="members" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Directory" />
+                  <SectionEyebrow label="Member Directory" tone="indigo" />
                   <ActiveMembersView
                     user={user}
                     config={overview?.config || null}
@@ -1237,7 +1343,7 @@ export function DashboardShell() {
 
               {activeSection === 'manager-cycle' && (
                 <section id="manager-cycle" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Manager Rotation Cycle" />
+                  <SectionEyebrow label="Manager Rotation Cycle" tone="amber" />
                   <ManagerCycleView
                     user={user}
                     config={overview?.config || null}
@@ -1250,7 +1356,7 @@ export function DashboardShell() {
 
               {activeSection === 'community' && (
                 <section id="community" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Community" />
+                  <SectionEyebrow label="Community" tone="indigo" />
                   <CommunityView
                     user={user}
                     currency={overview?.config.currency}
@@ -1265,7 +1371,7 @@ export function DashboardShell() {
 
               {activeSection === 'member-profile' && viewingMemberId && (
                 <section id="member-profile" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Profile" />
+                  <SectionEyebrow label="Member Profile" tone="indigo" />
                   <MemberPublicProfileView
                     memberId={viewingMemberId}
                     currentUser={user}
@@ -1284,6 +1390,7 @@ export function DashboardShell() {
                 <section id="manager-desk" className="space-y-4 pb-8">
                   <SectionEyebrow
                     label={isAdmin ? 'Governance Desk' : 'Manager · Manager Desk'}
+                    tone="amber"
                   />
                   <ManagerDeskView
                     user={user}
@@ -1307,14 +1414,14 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
-                  <SectionEyebrow label="Admin · Site Activity" />
+                  <SectionEyebrow label="Admin · Site Activity" tone="indigo" />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
               {isAdmin && activeSection === 'system-audit-logs' && (
                 <section id="system-audit-logs" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · System Audit Logs" />
+                  <SectionEyebrow label="Admin · System Audit Logs" tone="indigo" />
                   <SystemAuditLogsView user={user} />
                 </section>
               )}
@@ -1327,6 +1434,7 @@ export function DashboardShell() {
                         ? 'Admin · User & Role Management'
                         : 'Manager · Member Updates & Directory'
                     }
+                    tone="indigo"
                   />
                   <MemberRegistrySection
                     user={user}
@@ -1339,7 +1447,7 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · Site Settings" />
+                  <SectionEyebrow label="Admin · Site Settings" tone="indigo" />
                   <AdminSiteSettingsView
                     overview={overview}
                     config={overview?.config || null}
@@ -1498,12 +1606,17 @@ export function DashboardShell() {
   );
 }
 
-function SectionEyebrow({ label }: { label: string }) {
+function SectionEyebrow({
+  label,
+  tone = 'emerald',
+}: {
+  label: string;
+  tone?: SectionAccentTone;
+}) {
+  const toneClass = SIDEBAR_TONE_STYLES[tone]?.eyebrowText || SIDEBAR_TONE_STYLES.emerald.eyebrowText;
   return (
     <div className="flex items-center gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-        {label}
-      </h2>
+      <h2 className={`text-xs font-semibold tracking-wide ${toneClass}`}>{label}</h2>
       <div className="h-px flex-1 bg-slate-200/80 dark:bg-slate-800/80" aria-hidden="true" />
     </div>
   );

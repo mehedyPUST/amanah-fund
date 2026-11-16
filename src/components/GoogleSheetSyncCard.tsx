@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { ExternalLink, RefreshCw, Sheet } from 'lucide-react';
+import { motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import type { FundConfig } from '../types/coop.ts';
 import { api, type SheetTabBlueprint } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
@@ -161,10 +163,15 @@ export function GoogleSheetSyncCard({
   }
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+    >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Sheet className="w-4 h-4" aria-hidden="true" />
             <span>Google Sheets Blueprint Auto-Sync</span>
           </div>
@@ -198,22 +205,30 @@ export function GoogleSheetSyncCard({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loadingBlueprint ? (
-              <tr>
-                <td colSpan={3} className="py-4 px-4 text-slate-400">
-                  Building blueprint schema…
-                </td>
-              </tr>
+              [1, 2, 3, 4].map((i) => (
+                <tr key={i}>
+                  <td className="py-2.5 px-4">
+                    <Skeleton width={110} height={14} />
+                  </td>
+                  <td className="py-2.5 px-4">
+                    <Skeleton width="80%" height={14} />
+                  </td>
+                  <td className="py-2.5 px-4 text-right">
+                    <Skeleton width={68} height={14} />
+                  </td>
+                </tr>
+              ))
             ) : (
               blueprint.map((tab) => (
-                <tr key={tab.sheetName}>
-                  <td className="py-2.5 px-4 font-mono font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                <tr key={tab.sheetName} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                  <td className="py-2.5 px-4 font-mono font-semibold text-indigo-700 dark:text-indigo-400 whitespace-nowrap">
                     {tab.sheetName}
                   </td>
                   <td className="py-2.5 px-4 text-slate-600 dark:text-slate-400">
                     {(tab.rows[0] || []).slice(0, 5).join(' · ')}
                     {(tab.rows[0] || []).length > 5 ? ' …' : ''}
                   </td>
-                  <td className="py-2.5 px-4 text-right font-mono tabular-nums text-slate-900 dark:text-white">
+                  <td className="py-2.5 px-4 text-right font-mono tabular-nums text-teal-700 dark:text-teal-400">
                     {Math.max(0, tab.rows.length - 1)} records
                   </td>
                 </tr>
@@ -278,7 +293,7 @@ export function GoogleSheetSyncCard({
             type="button"
             disabled={!workspace.connected || syncing}
             onClick={() => requestSync(!config?.googleSheetId)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
             <span>{config?.googleSheetId ? 'Sync Blueprint Now' : 'Create & Sync Google Sheet'}</span>
@@ -311,6 +326,6 @@ export function GoogleSheetSyncCard({
           if (!modalBusy && !syncing) setModal(null);
         }}
       />
-    </section>
+    </motion.section>
   );
 }

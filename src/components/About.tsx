@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
+import { motion } from 'motion/react';
 
 const PILLARS = [
   {
@@ -31,9 +32,9 @@ const PILLARS = [
     description:
       'Personal KYC fields, Bank/MFS transaction IDs, and disbursement contexts are encrypted at rest with AES-256-GCM and linked in a sequential SHA-256 hash chain.',
     cardStyle:
-      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70',
     iconClass:
-      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
+      'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200/70 dark:ring-indigo-800/50',
   },
   {
     Icon: Vote,
@@ -51,9 +52,9 @@ const PILLARS = [
     description:
       'Tracks monthly ৳5,000 savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs a 7-tab Google Sheets ledger.',
     cardStyle:
-      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700/70',
     iconClass:
-      'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
+      'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-400 ring-1 ring-cyan-200/70 dark:ring-cyan-800/50',
   },
 ];
 
@@ -64,8 +65,14 @@ export function About({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
-        <div className="max-w-3xl space-y-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.25 }}
+          className="max-w-3xl space-y-4"
+        >
+          <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
             Security &amp; Architecture · Term 2027–2036
           </div>
           <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
@@ -74,14 +81,18 @@ export function About({ embedded = false }: { embedded?: boolean }) {
           <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
             Built for the Savings, Investment and Interest-Free Loan Fund Cooperative Society so 20 members can pool ৳5,000 monthly savings without interest, extend 0% Qard Hasan relief, and deploy capital into Shariah-vetted land, schools, and community ventures.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PILLARS.map((pillar) => {
+          {PILLARS.map((pillar, idx) => {
             const Icon = pillar.Icon;
             return (
-              <div
+              <motion.div
                 key={pillar.title}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.24, delay: idx * 0.05 }}
                 className={`border rounded-xl p-6 space-y-3 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${pillar.cardStyle}`}
               >
                 <div
@@ -95,12 +106,18 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   {pillar.description}
                 </p>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50/75 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.25 }}
+          className="bg-gradient-to-br from-emerald-50/80 via-teal-50/40 to-indigo-50/40 dark:from-emerald-950/35 dark:via-slate-900 dark:to-indigo-950/20 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md"
+        >
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Ready to inspect the governance charter or apply for membership?
@@ -120,13 +137,13 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                     ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
               }}
-              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 transition-all duration-200"
+              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 whitespace-nowrap"
             >
               Governance Charter
             </Link>
             <Link
               href="/signup"
-              className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+              className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
             >
               <span>Apply for Membership</span>
               <ArrowRight
@@ -135,7 +152,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
               />
             </Link>
           </div>
-        </div>
+        </motion.div>
       </section>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   GitCommitHorizontal,
   ListTree,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ManagerCycleSchedule, ManagerCycleSlot } from '../types/coop.ts';
 import { formatShortDate } from '../utils/format.ts';
 
@@ -232,7 +233,7 @@ export function ManagerRotationTimeline({
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <GitCommitHorizontal className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Chronological Stewardship Timeline</span>
           </div>
@@ -260,14 +261,21 @@ export function ManagerRotationTimeline({
                   type="button"
                   aria-selected={active}
                   onClick={() => setFilter(tab.id)}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                      ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <span>{tab.label}</span>
-                  <span className="font-mono tabular-nums text-[11px] opacity-75">
+                  {active && (
+                    <motion.span
+                      layoutId="rotation-filter-pill"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                  <span className="relative z-10 font-mono tabular-nums text-[11px] opacity-75">
                     {tab.count}
                   </span>
                 </button>
@@ -280,26 +288,40 @@ export function ManagerRotationTimeline({
             <button
               type="button"
               onClick={() => setLayout('track')}
-              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'track'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                  ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Track</span>
+              {layout === 'track' && (
+                <motion.span
+                  layoutId="rotation-layout-pill"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                />
+              )}
+              <Columns3 className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
+              <span className="relative z-10">Track</span>
             </button>
             <button
               type="button"
               onClick={() => setLayout('vertical')}
-              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'vertical'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                  ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <ListTree className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Chronology</span>
+              {layout === 'vertical' && (
+                <motion.span
+                  layoutId="rotation-layout-pill"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                />
+              )}
+              <ListTree className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
+              <span className="relative z-10">Chronology</span>
             </button>
           </div>
         </div>
@@ -342,9 +364,12 @@ export function ManagerRotationTimeline({
               aria-valuemax={100}
               aria-label="Current manager tenure progress"
             >
-              <div
-                className="h-full rounded-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-300"
-                style={{ width: `${currentTenureMeta.progressPct}%` }}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500"
+                style={{ width: `${currentTenureMeta.progressPct}%`, originX: 0 }}
               />
             </div>
           </div>
@@ -567,9 +592,12 @@ export function ManagerRotationTimeline({
                             {slot.status === 'current' && (
                               <div className="pt-1">
                                 <div className="h-1 w-full rounded-full bg-emerald-100 dark:bg-emerald-950 overflow-hidden">
-                                  <div
-                                    className="h-full bg-emerald-600 dark:bg-emerald-500 rounded-full"
-                                    style={{ width: `${meta.progressPct}%` }}
+                                  <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                    className="h-full bg-gradient-to-r from-emerald-600 to-teal-500 rounded-full"
+                                    style={{ width: `${meta.progressPct}%`, originX: 0 }}
                                   />
                                 </div>
                               </div>

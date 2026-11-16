@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, Bell, Calendar, Check, Mail, Send, Volume2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   CoopMeeting,
@@ -304,10 +305,15 @@ export function NotificationsView({
   const upcomingMeetings = meetings.filter((m) => m.status === 'scheduled');
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {upcomingMeetings.length > 0 && (
-        <section className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-5 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+        <section className="bg-teal-50/75 dark:bg-teal-950/25 border border-teal-200 dark:border-teal-900/60 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-teal-800 dark:text-teal-300">
             <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Upcoming Cooperative Meetings Scheduled by Manager ({upcomingMeetings.length})</span>
           </div>
@@ -332,12 +338,12 @@ export function NotificationsView({
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <Mail className="w-4 h-4" aria-hidden="true" />
-              <span>Email Outbox & Automated Treasury Notifications</span>
+              <span>Email Outbox &amp; Automated Treasury Notifications</span>
             </div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Contribution, Loan Acceptance, Repayment & Monthly Reminder Notices
+              Contribution, Loan Acceptance, Repayment &amp; Monthly Reminder Notices
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
               Automatic alerts generated for manager contribution placement reviews, contribution
@@ -356,7 +362,7 @@ export function NotificationsView({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800">
             {(
               [
                 { id: 'all', label: `All (${notifications.length})` },
@@ -366,20 +372,30 @@ export function NotificationsView({
                   label: `Sent via Gmail (${notifications.filter((n) => n.deliveryStatus === 'sent_via_gmail').length})`,
                 },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilterType(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                  filterType === tab.id
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = filterType === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilterType(tab.id)}
+                  className={`relative px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                    active
+                      ? 'text-white'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="notif-status-pill"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {isStaff && (
@@ -411,7 +427,7 @@ export function NotificationsView({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 pt-1">
           {(
             [
               { id: 'all', label: 'All Topics' },
@@ -421,20 +437,30 @@ export function NotificationsView({
               { id: 'meetings', label: 'Meeting Notices' },
               { id: 'community_profile', label: 'Members & Community' },
             ] as const
-          ).map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setCategoryFilter(cat.id)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                categoryFilter === cat.id
-                  ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+          ).map((cat) => {
+            const active = categoryFilter === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setCategoryFilter(cat.id)}
+                className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                  active
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="notif-topic-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -442,11 +468,13 @@ export function NotificationsView({
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
-            <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
             <span>Notification &amp; In-App Sound Preferences</span>
           </div>
           {savingPrefs && (
-            <span className="text-[11px] font-mono text-slate-400">Saving…</span>
+            <span className="text-[11px] font-mono text-indigo-500 dark:text-indigo-400">
+              Saving…
+            </span>
           )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
@@ -461,14 +489,14 @@ export function NotificationsView({
           ).map((item) => (
             <label
               key={item.key}
-              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
             >
               <span className="font-medium truncate">{item.label}</span>
               <input
                 type="checkbox"
                 checked={Boolean(prefs[item.key])}
                 onChange={() => void handleTogglePreference(item.key)}
-                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
               />
             </label>
           ))}
@@ -478,8 +506,14 @@ export function NotificationsView({
       {/* Notification List */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-5">
-            <Skeleton height={160} />
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-5 space-y-2">
+                <Skeleton width={220} height={12} />
+                <Skeleton width="55%" height={18} />
+                <Skeleton width="85%" height={14} />
+              </div>
+            ))}
           </div>
         ) : visibleNotifications.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
@@ -663,6 +697,6 @@ export function NotificationsView({
           if (!modalBusy && !sendingGmail && !generatingReminders) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

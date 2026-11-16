@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import {
   AlertTriangle,
   CalendarClock,
@@ -623,21 +625,75 @@ export function ManagerDeskView({
     label: string;
     count: number;
     Icon: typeof CreditCard;
+    activeClass: string;
+    activeTextClass: string;
+    activeIconClass: string;
+    hoverClass: string;
   }> = [
-    { id: 'contributions', label: 'Contributions', count: pendingContributions.length, Icon: CreditCard },
-    { id: 'qard-hasan', label: 'Qard Hasan', count: qardHasanActionCount, Icon: HandCoins },
-    { id: 'installments', label: 'Installments', count: pendingInstallments.length, Icon: ShieldCheck },
-    { id: 'ballots', label: 'Votes & Reveals', count: ballotsCount, Icon: Vote },
-    { id: 'meetings-profiles', label: 'Meetings & Profiles', count: meetingsProfilesCount, Icon: CalendarPlus },
+    {
+      id: 'contributions',
+      label: 'Contributions',
+      count: pendingContributions.length,
+      Icon: CreditCard,
+      activeClass: 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/35 shadow-xs',
+      activeTextClass: 'text-emerald-800 dark:text-emerald-300',
+      activeIconClass: 'text-emerald-600 dark:text-emerald-400',
+      hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-800',
+    },
+    {
+      id: 'qard-hasan',
+      label: 'Qard Hasan',
+      count: qardHasanActionCount,
+      Icon: HandCoins,
+      activeClass: 'border-teal-600 bg-teal-50/80 dark:bg-teal-950/35 shadow-xs',
+      activeTextClass: 'text-teal-800 dark:text-teal-300',
+      activeIconClass: 'text-teal-600 dark:text-teal-400',
+      hoverClass: 'hover:border-teal-300 dark:hover:border-teal-800',
+    },
+    {
+      id: 'installments',
+      label: 'Installments',
+      count: pendingInstallments.length,
+      Icon: ShieldCheck,
+      activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
+      activeTextClass: 'text-indigo-800 dark:text-indigo-300',
+      activeIconClass: 'text-indigo-600 dark:text-indigo-400',
+      hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
+    },
+    {
+      id: 'ballots',
+      label: 'Votes & Reveals',
+      count: ballotsCount,
+      Icon: Vote,
+      activeClass: 'border-amber-600 bg-amber-50/80 dark:bg-amber-950/35 shadow-xs',
+      activeTextClass: 'text-amber-800 dark:text-amber-300',
+      activeIconClass: 'text-amber-600 dark:text-amber-400',
+      hoverClass: 'hover:border-amber-300 dark:hover:border-amber-800',
+    },
+    {
+      id: 'meetings-profiles',
+      label: 'Meetings & Profiles',
+      count: meetingsProfilesCount,
+      Icon: CalendarPlus,
+      activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
+      activeTextClass: 'text-indigo-800 dark:text-indigo-300',
+      activeIconClass: 'text-indigo-600 dark:text-indigo-400',
+      hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
+    },
   ];
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
       {/* Manager Desk Header + Interactive Queue KPI Cards */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Manager Governance &amp; Treasury Verification Desk</span>
             </div>
@@ -653,13 +709,13 @@ export function ManagerDeskView({
               <button
                 type="button"
                 onClick={onOpenManagerCycle}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
               >
-                <CalendarClock className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                <CalendarClock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>Rotation Timeline</span>
               </button>
             )}
-            <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+            <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/35 dark:to-teal-950/35 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
               Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
             </div>
           </div>
@@ -678,31 +734,29 @@ export function ManagerDeskView({
                   hasUserSelectedTabRef.current = true;
                   setActiveTab(tab.id);
                 }}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.99] ${
                   active
-                    ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 shadow-xs'
-                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 hover:border-emerald-300'
+                    ? tab.activeClass
+                    : `border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 ${tab.hoverClass}`
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span
                     className={`font-medium truncate ${
-                      active
-                        ? 'text-emerald-800 dark:text-emerald-300'
-                        : 'text-slate-600 dark:text-slate-400'
+                      active ? tab.activeTextClass : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {tab.label}
                   </span>
                   <Icon
                     className={`w-3.5 h-3.5 shrink-0 ${
-                      active ? 'text-emerald-600' : 'text-slate-400'
+                      active ? tab.activeIconClass : 'text-slate-400'
                     }`}
                     aria-hidden="true"
                   />
                 </div>
                 <div className="mt-1.5 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-                  {tab.count}
+                  {loading ? <Skeleton width={32} height={24} /> : tab.count}
                 </div>
               </button>
             );
@@ -710,9 +764,17 @@ export function ManagerDeskView({
         </div>
       </section>
 
+      <AnimatePresence mode="wait">
       {/* TAB 1: Pending Monthly Contributions */}
       {activeTab === 'contributions' && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <motion.section
+          key="tab-contributions"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -737,7 +799,25 @@ export function ManagerDeskView({
             </div>
           </div>
 
-          {filteredPendingContributions.length === 0 ? (
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((row) => (
+                <div
+                  key={row}
+                  className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton width={260} height={14} />
+                    <Skeleton width={340} height={12} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton width={90} height={32} borderRadius={8} />
+                    <Skeleton width={116} height={32} borderRadius={8} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredPendingContributions.length === 0 ? (
             <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
               {pendingContributions.length === 0
                 ? 'All submitted contributions have been processed.'
@@ -750,7 +830,7 @@ export function ManagerDeskView({
                 return (
                   <div
                     key={c.id}
-                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-emerald-50/20 dark:hover:bg-slate-800/30 transition-colors"
                   >
                     <div className="space-y-1 text-xs min-w-0">
                       <div className="font-semibold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5">
@@ -771,7 +851,9 @@ export function ManagerDeskView({
                           {formatMoney(c.amount, ccy)}
                         </span>
                         <span>·</span>
-                        <span className="font-mono">{formatBillingMonth(c.billingMonth)}</span>
+                        <span className="font-mono text-indigo-700 dark:text-indigo-400">
+                          {formatBillingMonth(c.billingMonth)}
+                        </span>
                       </div>
                       <div className="text-slate-600 dark:text-slate-400 font-mono">
                         {c.channel.toUpperCase()} · {c.providerName} · Tx #{txNo} · Sender:{' '}
@@ -787,7 +869,7 @@ export function ManagerDeskView({
                           href={c.receiptPhotoUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+                          className="inline-flex items-center gap-1 text-teal-700 dark:text-teal-400 hover:underline font-medium"
                         >
                           <span>Inspect Attached Receipt Slip</span>
                           <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -802,7 +884,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'approved')}
-                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Approve</span>
@@ -811,7 +893,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'rejected')}
-                            className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Deny with Note</span>
@@ -828,12 +910,19 @@ export function ManagerDeskView({
               })}
             </div>
           )}
-        </section>
+        </motion.section>
       )}
 
       {/* TAB 2: Qard Hasan 3-Stage Workflow */}
       {activeTab === 'qard-hasan' && (
-        <div className="space-y-6">
+        <motion.div
+          key="tab-qard-hasan"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="space-y-6"
+        >
           {/* Stage 1: Awaiting Vote Initiation */}
           <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div>
@@ -895,7 +984,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmInitiateLoanVote(loan)}
-                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <Vote className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Initiate 2/3 Vote</span>
@@ -904,7 +993,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmDeclineLoanReview(loan)}
-                            className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                            className="px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             Decline
                           </button>
@@ -1134,12 +1223,19 @@ export function ManagerDeskView({
               </div>
             )}
           </section>
-        </div>
+        </motion.div>
       )}
 
       {/* TAB 3: Pending Hasan Installments */}
       {activeTab === 'installments' && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <motion.section
+          key="tab-installments"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+        >
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Qard Hasan Installment Verification Queue ({pendingInstallments.length})
@@ -1206,7 +1302,7 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
                             }
-                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Accept</span>
@@ -1217,7 +1313,7 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
                             }
-                            className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Deny with Note</span>
@@ -1234,14 +1330,21 @@ export function ManagerDeskView({
               })}
             </div>
           )}
-        </section>
+        </motion.section>
       )}
 
       {/* TAB 4: Decision Polls & Secret Ballots */}
       {activeTab === 'ballots' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <motion.div
+          key="tab-ballots"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
+        >
           <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Initiate Decision Poll</span>
             </div>
@@ -1352,7 +1455,7 @@ export function ManagerDeskView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-all active:scale-[0.99]"
               >
                 Review &amp; Launch Decision Vote
               </button>
@@ -1474,14 +1577,21 @@ export function ManagerDeskView({
               </div>
             )}
           </section>
-        </div>
+        </motion.div>
       )}
 
       {/* TAB 5: Meetings & Profile Change Requests */}
       {activeTab === 'meetings-profiles' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <motion.div
+          key="tab-meetings-profiles"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
+        >
           <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Meeting Scheduler</span>
             </div>
@@ -1579,7 +1689,7 @@ export function ManagerDeskView({
           </section>
 
           <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Profile Update Requests</span>
             </div>
@@ -1631,7 +1741,7 @@ export function ManagerDeskView({
                         type="button"
                         disabled={modalBusy}
                         onClick={() => confirmProfileReqReview(req, 'approved')}
-                        className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Approve</span>
@@ -1640,7 +1750,7 @@ export function ManagerDeskView({
                         type="button"
                         disabled={modalBusy}
                         onClick={() => confirmProfileReqReview(req, 'rejected')}
-                        className="px-3 py-1.5 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         <X className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Decline</span>
@@ -1651,8 +1761,9 @@ export function ManagerDeskView({
               </div>
             )}
           </section>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Manager Oversight: Monthly Collection Progress vs Goals + Member Audit Log */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
@@ -1688,6 +1799,6 @@ export function ManagerDeskView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

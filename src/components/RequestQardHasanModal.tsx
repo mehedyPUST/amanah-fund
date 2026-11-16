@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Lock, ShieldCheck, X, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
@@ -123,11 +124,11 @@ export function RequestQardHasanModal({
             onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
           >
-            <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/80 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/85 via-teal-50/45 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
               <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-teal-700 dark:text-teal-400">
                   <span className="inline-flex items-center gap-1">
-                    <Lock className="w-3 h-3" aria-hidden="true" />
+                    <Lock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                     <span>AES-256-GCM Encrypted</span>
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
@@ -161,7 +162,7 @@ export function RequestQardHasanModal({
             </div>
 
             <div className="px-5 sm:px-6 py-5 overflow-y-auto space-y-4">
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
+              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
                 <div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Available Liquid Pool
@@ -174,19 +175,19 @@ export function RequestQardHasanModal({
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Annual Quota Standing
                   </div>
-                  <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                  <div className="mt-0.5 font-mono font-semibold tabular-nums text-indigo-700 dark:text-indigo-400">
                     {effectiveEligibility ? (
                       `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
                     ) : eligibilityError ? (
                       <button
                         type="button"
                         onClick={() => setEligibilityAttempt((c) => c + 1)}
-                        className="text-red-600 dark:text-red-400 underline cursor-pointer"
+                        className="text-rose-600 dark:text-rose-400 underline cursor-pointer"
                       >
                         Retry check
                       </button>
                     ) : (
-                      'Checking…'
+                      <Skeleton width={72} height={16} />
                     )}
                   </div>
                 </div>

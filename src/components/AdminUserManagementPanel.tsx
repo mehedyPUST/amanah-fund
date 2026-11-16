@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   CheckCircle2,
   Eye,
@@ -384,7 +385,7 @@ export function AdminUserManagementPanel({
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Administrator User Management</span>
           </div>
@@ -401,7 +402,7 @@ export function AdminUserManagementPanel({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add New User</span>
@@ -414,31 +415,31 @@ export function AdminUserManagementPanel({
         <div>
           <div className="text-slate-500 dark:text-slate-400">Total Accounts</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {stats.total}
+            {loading ? <Skeleton width={36} /> : stats.total}
           </div>
         </div>
         <div>
           <div className="text-slate-500 dark:text-slate-400">Active Verified</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-            {stats.active}
+            {loading ? <Skeleton width={36} /> : stats.active}
           </div>
         </div>
         <div>
           <div className="text-slate-500 dark:text-slate-400">Pending Approval</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
-            {stats.pending}
+            {loading ? <Skeleton width={36} /> : stats.pending}
           </div>
         </div>
         <div>
           <div className="text-slate-500 dark:text-slate-400">Suspended</div>
-          <div className="mt-1 text-base font-bold font-mono tabular-nums text-red-700 dark:text-red-400">
-            {stats.suspended}
+          <div className="mt-1 text-base font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
+            {loading ? <Skeleton width={36} /> : stats.suspended}
           </div>
         </div>
         <div>
           <div className="text-slate-500 dark:text-slate-400">Admins & Managers</div>
-          <div className="mt-1 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {stats.staff}
+          <div className="mt-1 text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+            {loading ? <Skeleton width={36} /> : stats.staff}
           </div>
         </div>
       </div>
@@ -454,20 +455,30 @@ export function AdminUserManagementPanel({
                 { id: 'pending_approval', label: 'Pending' },
                 { id: 'suspended', label: 'Suspended' },
               ] as const
-            ).map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setStatusFilter(s.id)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  statusFilter === s.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
+            ).map((s) => {
+              const active = statusFilter === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setStatusFilter(s.id)}
+                  className={`relative px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-indigo-700 dark:text-indigo-300'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="admin-user-status-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{s.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <select
@@ -494,14 +505,36 @@ export function AdminUserManagementPanel({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter name, email, code…"
             aria-label="Search users"
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
           />
         </div>
       </div>
 
       {/* Directory Table */}
       {loading ? (
-        <Skeleton height={180} />
+        <div className="border border-slate-200 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
+          {[1, 2, 3, 4, 5].map((row) => (
+            <div key={row} className="p-3.5 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 space-y-1">
+                <Skeleton width={130} height={14} />
+                <Skeleton width={200} height={11} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton width={76} height={24} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton width={80} height={14} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton width={68} height={14} />
+              </div>
+              <div className="col-span-2 flex justify-end gap-1.5">
+                <Skeleton width={52} height={24} />
+                <Skeleton width={52} height={24} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : filteredMembers.length === 0 ? (
         <div className="p-6 text-center rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           No user accounts match the active filter criteria.
@@ -587,7 +620,7 @@ export function AdminUserManagementPanel({
                               type="button"
                               onClick={() => onInspectMember(m)}
                               title="Inspect KYC details"
-                              className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                             >
                               <Eye className="w-3 h-3" aria-hidden="true" />
                               <span>KYC</span>
@@ -623,7 +656,7 @@ export function AdminUserManagementPanel({
                                 }}
                                 className={`px-2.5 py-1 rounded border font-medium cursor-pointer disabled:opacity-50 transition-all duration-200 ${
                                   m.status === 'active'
-                                    ? 'border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white'
+                                    ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white'
                                     : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
                                 }`}
                               >
@@ -640,7 +673,7 @@ export function AdminUserManagementPanel({
                                 onClick={() => requestDeleteUser(m)}
                                 title="Delete user account"
                                 aria-label={`Delete ${m.name}`}
-                                className="p-1.5 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
+                                className="p-1.5 rounded border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
                               >
                                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                               </button>
@@ -662,14 +695,24 @@ export function AdminUserManagementPanel({
       )}
 
       {/* Modal: Add New User */}
+      <AnimatePresence>
       {createOpen && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           role="dialog"
           aria-modal="true"
           aria-labelledby="admin-create-user-title"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+          >
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h4
@@ -834,19 +877,30 @@ export function AdminUserManagementPanel({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Modal: Edit Existing User */}
+      <AnimatePresence>
       {editingMember && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           role="dialog"
           aria-modal="true"
           aria-labelledby="admin-edit-user-title"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+          >
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h4
@@ -1026,9 +1080,10 @@ export function AdminUserManagementPanel({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
       <ActionModal
         open={modal !== null}
         mode={modal?.mode || 'notice'}

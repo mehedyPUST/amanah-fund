@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { BarChart3 } from 'lucide-react';
 import {
   Area,
   Bar,
@@ -119,16 +121,13 @@ export function AuditTrendsCharts({
       return monthBuckets.get(ym)!;
     };
 
-    // Seed from overview monthlySeries first so server-aggregated baseline months appear
     monthlySeries.forEach((pt) => {
       const b = ensureBucket(pt.month);
       b.monthlyContributions = Math.max(b.monthlyContributions, pt.contributions);
       b.monthlyRepaid = Math.max(b.monthlyRepaid, pt.repaid);
     });
 
-    // Aggregate direct contribution entries (approved vs pending)
     if (contributions.length > 0) {
-      // Recompute contribution buckets cleanly from raw contributions when available
       monthBuckets.forEach((b) => {
         b.monthlyContributions = 0;
         b.pendingContributions = 0;
@@ -144,14 +143,12 @@ export function AuditTrendsCharts({
       });
     }
 
-    // Aggregate Qard Hasan loan volume over time (non-rejected loans anchored by disbursement or request month)
     loans.forEach((loan) => {
       if (loan.status === 'rejected') return;
       const ym = (loan.disbursedAt || loan.approvedAt || loan.requestedAt).slice(0, 7);
       ensureBucket(ym).monthlyLoanVolume += loan.amount;
     });
 
-    // Recompute exact monthlyRepaid from paid installments if loans are present
     if (loans.length > 0) {
       monthBuckets.forEach((b) => {
         b.monthlyRepaid = 0;
@@ -197,77 +194,108 @@ export function AuditTrendsCharts({
   }, [chartData]);
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
+    >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <BarChart3 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </span>
+            <span>Time-Series Audit Telemetry</span>
+          </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Audit Analytics: Contribution Trends & Loan Volume Over Time
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Time-series Recharts audit view comparing monthly contribution inflows, cumulative
-            treasury growth, and Qard Hasan loan volume
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Comparing monthly contribution inflows, cumulative treasury growth, and Qard Hasan loan volume
           </p>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-fit shrink-0">
           {(
             [
               { id: 'both', label: 'Combined View' },
               { id: 'contributions', label: 'Contributions' },
               { id: 'loans', label: 'Loan Volume' },
             ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setChartView(tab.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                chartView === tab.id
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ).map((tab) => {
+            const active = chartView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setChartView(tab.id)}
+                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  active
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="audit-trends-tab-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Audit Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 border-t border-slate-100 dark:border-slate-800">
-        <div className="pt-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Cumulative Approved Contributions
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <Skeleton width="65%" height={12} />
+              <Skeleton width="55%" height={24} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Cumulative Approved Contributions
+            </div>
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+              {formatMoney(totals.totalApprovedContrib, currency)}
+            </div>
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-            {formatMoney(totals.totalApprovedContrib, currency)}
+          <div className="pt-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Cumulative Qard Hasan Loan Volume
+            </div>
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+              {formatMoney(totals.totalLoanVol, currency)}
+            </div>
+          </div>
+          <div className="pt-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Verified Repayments vs Volume
+            </div>
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+              {formatMoney(totals.totalRepaid, currency)}{' '}
+              <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                ({totals.recoveryPct}%)
+              </span>
+            </div>
           </div>
         </div>
-        <div className="pt-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Cumulative Qard Hasan Loan Volume
-          </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
-            {formatMoney(totals.totalLoanVol, currency)}
-          </div>
-        </div>
-        <div className="pt-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Verified Repayments vs Volume
-          </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(totals.totalRepaid, currency)}{' '}
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              ({totals.recoveryPct}%)
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <Skeleton height={270} />
-          <Skeleton height={270} />
+          <Skeleton height={270} borderRadius={10} />
+          <Skeleton height={270} borderRadius={10} />
         </div>
       ) : chartData.length === 0 ? (
         <div className="h-60 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
@@ -397,7 +425,7 @@ export function AuditTrendsCharts({
                     <Bar
                       dataKey="monthlyRepaid"
                       name="Monthly Repaid"
-                      fill="#10b981"
+                      fill="#0d9488"
                       radius={[4, 4, 0, 0]}
                       barSize={18}
                     />
@@ -405,9 +433,9 @@ export function AuditTrendsCharts({
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
                       name="Cumulative Loan Volume"
-                      stroke="#0d9488"
+                      stroke="#6366f1"
                       strokeWidth={2}
-                      dot={{ r: 3, fill: '#0d9488' }}
+                      dot={{ r: 3, fill: '#6366f1' }}
                       activeDot={{ r: 5 }}
                     />
                   </ComposedChart>
@@ -417,6 +445,6 @@ export function AuditTrendsCharts({
           )}
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }

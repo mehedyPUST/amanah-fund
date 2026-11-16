@@ -10,6 +10,7 @@ import {
   HandCoins,
   ShieldCheck,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   DashboardSectionId,
@@ -115,9 +116,20 @@ export function RepaymentSchedule({
   if (loading) {
     return (
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
-        <Skeleton width="55%" height={18} />
-        <Skeleton height={84} />
-        <Skeleton height={160} />
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <Skeleton width={170} height={12} />
+            <Skeleton width={190} height={20} />
+          </div>
+          <Skeleton width={140} height={28} borderRadius={8} />
+        </div>
+        <Skeleton height={100} borderRadius={12} />
+        <Skeleton height={44} borderRadius={8} />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} height={44} borderRadius={8} />
+          ))}
+        </div>
       </section>
     );
   }
@@ -151,7 +163,7 @@ export function RepaymentSchedule({
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarClock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>0% Interest · Revolving Principal</span>
             </div>
@@ -163,61 +175,74 @@ export function RepaymentSchedule({
           <div className="flex flex-wrap items-center gap-2">
             {isStaff && allActiveLoans.length > 0 && (
               <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScope('mine');
-                    setSelectedLoanId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                    scope === 'mine'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  My Loan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScope('all');
-                    setSelectedLoanId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                    scope === 'all'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  All Active ({allActiveLoans.length})
-                </button>
+                {(
+                  [
+                    { id: 'mine', label: 'My Loan' },
+                    { id: 'all', label: `All Active (${allActiveLoans.length})` },
+                  ] as const
+                ).map((tab) => {
+                  const active = scope === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setScope(tab.id);
+                        setSelectedLoanId(null);
+                      }}
+                      className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        active
+                          ? 'text-slate-900 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="repayment-scope-pill"
+                          transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             {activeLoan && (
               <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setViewFilter('upcoming')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                    viewFilter === 'upcoming'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Upcoming
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewFilter('all')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                    viewFilter === 'all'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  All ({totalCount})
-                </button>
+                {(
+                  [
+                    { id: 'upcoming', label: 'Upcoming' },
+                    { id: 'all', label: `All (${totalCount})` },
+                  ] as const
+                ).map((tab) => {
+                  const active = viewFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setViewFilter(tab.id)}
+                      className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        active
+                          ? 'text-slate-900 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="repayment-view-pill"
+                          transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

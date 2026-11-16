@@ -14,6 +14,7 @@ import {
   History,
   Search,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
@@ -394,13 +395,16 @@ export function TransactionHistory({
   }
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
       aria-label="Member Transaction History"
       className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <History className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>General Treasury Ledger</span>
           </div>
@@ -417,28 +421,35 @@ export function TransactionHistory({
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           {!compact && isStaff && !isAdmin && (
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setScope('mine')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  scope === 'mine'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                My Transactions
-              </button>
-              <button
-                type="button"
-                onClick={() => setScope('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  scope === 'all'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                All Members
-              </button>
+              {(
+                [
+                  { id: 'mine', label: 'My Transactions' },
+                  { id: 'all', label: 'All Members' },
+                ] as const
+              ).map((item) => {
+                const active = scope === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setScope(item.id)}
+                    className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      active
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="tx-scope-pill"
+                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      />
+                    )}
+                    <span className="relative z-10">{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -446,9 +457,9 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
+              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+              <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
               <span>Export CSV</span>
             </button>
           )}
@@ -458,7 +469,7 @@ export function TransactionHistory({
               <button
                 type="button"
                 onClick={handleDownloadPdf}
-                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Download PDF Statement</span>
@@ -506,7 +517,7 @@ export function TransactionHistory({
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Active Loan Repayments Paid
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {formatMoney(counts.paidRepayTotal, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -519,7 +530,7 @@ export function TransactionHistory({
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Active Loan Remaining
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {formatMoney(counts.activeLoanRemaining, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -550,20 +561,30 @@ export function TransactionHistory({
                 { id: 'loan_disbursement', label: `Disbursements (${counts.disburseCount})` },
                 { id: 'loan_repayment', label: `Repayments (${counts.repayCount})` },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setTypeFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  typeFilter === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = typeFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setTypeFilter(tab.id)}
+                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="tx-type-pill"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <select
@@ -682,9 +703,22 @@ export function TransactionHistory({
       )}
 
       {loading ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 border border-slate-200 dark:border-slate-800 rounded-lg p-3">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} height={48} />
+            <div key={i} className="grid grid-cols-12 gap-3 items-center py-2">
+              <div className="col-span-3">
+                <Skeleton height={18} />
+              </div>
+              <div className="col-span-4">
+                <Skeleton height={18} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton height={18} />
+              </div>
+              <div className="col-span-3">
+                <Skeleton height={18} />
+              </div>
+            </div>
           ))}
         </div>
       ) : displayedRows.length === 0 ? (
@@ -785,7 +819,7 @@ export function TransactionHistory({
           </button>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }
 
@@ -861,7 +895,7 @@ function FragmentRow({
           <div
             className={`font-mono font-semibold tabular-nums ${
               row.status === 'rejected' || row.status === 'overdue'
-                ? 'text-red-700 dark:text-red-400'
+                ? 'text-rose-700 dark:text-rose-400'
                 : row.status === 'scheduled'
                   ? 'text-slate-600 dark:text-slate-300'
                   : row.category === 'loan_disbursement'

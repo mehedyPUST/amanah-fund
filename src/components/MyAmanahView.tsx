@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -41,12 +42,37 @@ export function MyAmanahView({
   if (loading || !overview) {
     return (
       <div className="space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2 flex-1">
+            <Skeleton width={200} height={14} />
+            <Skeleton width={260} height={24} />
+            <Skeleton width="70%" height={12} />
+          </div>
+          <div className="flex gap-2.5">
+            <Skeleton width={136} height={36} borderRadius={8} />
+            <Skeleton width={150} height={36} borderRadius={8} />
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} height={116} borderRadius={12} />
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2.5"
+            >
+              <Skeleton width="55%" height={12} />
+              <Skeleton width="75%" height={28} />
+              <Skeleton width="65%" height={12} />
+            </div>
           ))}
         </div>
-        <Skeleton height={240} borderRadius={12} />
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="xl:col-span-7">
+            <Skeleton height={270} borderRadius={12} />
+          </div>
+          <div className="xl:col-span-5">
+            <Skeleton height={270} borderRadius={12} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -74,16 +100,23 @@ export function MyAmanahView({
   const hasActiveOrPending = !eligibility.noActiveLoan;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24 }}
+      className="space-y-6"
+    >
       {/* Identity & Eligibility Status Banner */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <Wallet className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <Wallet className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </span>
             <span>My Amanah · Personal Treasury Standing</span>
           </div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {user.name} · <span className="font-mono text-sm">{user.memberCode}</span>
+            {user.name} · <span className="font-mono text-sm text-indigo-700 dark:text-indigo-300">{user.memberCode}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Complete snapshot of your deposits, contribution dues, active Qard Hasan installments,
@@ -95,16 +128,16 @@ export function MyAmanahView({
           <button
             type="button"
             onClick={() => onNavigate('monthly-contribution')}
-            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            <CreditCard className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+            <CreditCard className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             <span>Make Contribution</span>
           </button>
           {onOpenLoanModal && isEligible && (
             <button
               type="button"
               onClick={onOpenLoanModal}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
             >
               <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Apply for Qard Hasan</span>
@@ -116,7 +149,7 @@ export function MyAmanahView({
       {/* Primary KPI Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Total Contribution */}
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white rounded-xl p-5 shadow-sm">
+        <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white rounded-xl p-5 shadow-sm">
           <div className="text-xs font-medium text-emerald-100">Total Contribution</div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums">
             {formatMoney(personal.totalContributed, ccy)}
@@ -131,8 +164,8 @@ export function MyAmanahView({
         </div>
 
         {/* Last Contribution */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs hover:border-teal-300 dark:hover:border-teal-800/70 transition-colors">
+          <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
             Last Contribution
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -154,13 +187,19 @@ export function MyAmanahView({
 
         {/* Due Contribution */}
         <div
-          className={`rounded-xl p-5 border shadow-xs ${
+          className={`rounded-xl p-5 border shadow-xs transition-colors ${
             personal.dueContributionAmount > 0
               ? 'bg-amber-50/70 dark:bg-amber-950/25 border-amber-200 dark:border-amber-900/60'
               : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800'
           }`}
         >
-          <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+          <div
+            className={`text-xs font-medium ${
+              personal.dueContributionAmount > 0
+                ? 'text-amber-800 dark:text-amber-300'
+                : 'text-emerald-700 dark:text-emerald-400'
+            }`}
+          >
             Due Contribution
           </div>
           <div
@@ -180,9 +219,9 @@ export function MyAmanahView({
         </div>
 
         {/* Next Contribution Deadline */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800/70 transition-colors">
+          <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             <span>Next Contribution Deadline</span>
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -210,7 +249,7 @@ export function MyAmanahView({
             <button
               type="button"
               onClick={() => onNavigate('quard-hasan')}
-              className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <span>Manage Repayments</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -248,7 +287,7 @@ export function MyAmanahView({
             </div>
 
             <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-teal-700 dark:text-teal-400 font-medium">
                 Last Hasan Installment
               </div>
               <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -266,7 +305,7 @@ export function MyAmanahView({
             <div
               className={`p-4 rounded-lg border ${
                 personal.missedInstallmentsCount > 0
-                  ? 'border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/25'
+                  ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/25'
                   : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
               }`}
             >
@@ -274,7 +313,7 @@ export function MyAmanahView({
               <div
                 className={`mt-1.5 text-lg font-bold font-mono tabular-nums ${
                   personal.missedInstallmentsCount > 0
-                    ? 'text-red-700 dark:text-red-400'
+                    ? 'text-rose-700 dark:text-rose-400'
                     : 'text-emerald-700 dark:text-emerald-400'
                 }`}
               >
@@ -290,7 +329,7 @@ export function MyAmanahView({
             </div>
 
             <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-indigo-700 dark:text-indigo-400 font-medium">
                 Next Qard Hasan Deadline
               </div>
               <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -316,12 +355,12 @@ export function MyAmanahView({
                 </p>
               </div>
               {isEligible ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Eligible</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs font-semibold text-red-700 dark:text-red-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-700 dark:text-rose-400 shrink-0">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Not Eligible</span>
                 </span>
@@ -355,7 +394,7 @@ export function MyAmanahView({
                   className={`font-semibold ${
                     eligibility.noActiveLoan
                       ? 'text-emerald-700 dark:text-emerald-400'
-                      : 'text-red-700 dark:text-red-400'
+                      : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
                   {eligibility.noActiveLoan ? 'None (Clear)' : eligibility.activeLoanId || 'Present'}
@@ -366,8 +405,8 @@ export function MyAmanahView({
                 <dd
                   className={`font-mono font-semibold ${
                     eligibility.quotaAvailable
-                      ? 'text-slate-900 dark:text-white'
-                      : 'text-red-700 dark:text-red-400'
+                      ? 'text-indigo-700 dark:text-indigo-300'
+                      : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
                   {eligibility.loansUsedThisYear} / {eligibility.maxLoansPerYear} used
@@ -379,7 +418,7 @@ export function MyAmanahView({
                   className={`font-semibold ${
                     eligibility.noOverdueInstallments
                       ? 'text-emerald-700 dark:text-emerald-400'
-                      : 'text-red-700 dark:text-red-400'
+                      : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
                   {eligibility.noOverdueInstallments
@@ -398,19 +437,19 @@ export function MyAmanahView({
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
               <span>0% Riba · Mudarabah/Qard Hasan</span>
             </span>
             <button
               type="button"
               onClick={() => onNavigate('quard-hasan')}
-              className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+              className="font-medium text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
             >
               Open Quard Hasan →
             </button>
           </div>
         </section>
       </div>
-    </div>
+    </motion.div>
   );
 }

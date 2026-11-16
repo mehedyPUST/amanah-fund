@@ -21,6 +21,7 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { AuditLogEntry, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -107,7 +108,7 @@ function getAdminActionMeta(action: string) {
     return {
       categoryLabel: 'User Approval',
       tone: isRejected
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
       Icon: isRejected ? UserX : UserCheck,
     };
@@ -123,17 +124,16 @@ function getAdminActionMeta(action: string) {
     const isRevoke = action === 'MEMBER_SUSPENDED' || action === 'MEMBER_REMOVED_BY_ADMIN';
     return {
       categoryLabel: 'Member Governance',
-      tone: isRevoke ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400',
+      tone: isRevoke ? 'text-rose-700 dark:text-rose-400' : 'text-indigo-700 dark:text-indigo-400',
       Icon: isRevoke ? UserX : KeyRound,
     };
   }
   if (FINANCIAL_REVIEW_ACTIONS.has(action)) {
-    const isRejected =
-      action.endsWith('_REJECTED');
+    const isRejected = action.endsWith('_REJECTED');
     return {
       categoryLabel: 'Financial Authorization',
       tone: isRejected
-        ? 'text-red-700 dark:text-red-400'
+        ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
       Icon: HandCoins,
     };
@@ -147,7 +147,7 @@ function getAdminActionMeta(action: string) {
   }
   return {
     categoryLabel: 'System Dispatch & Export',
-    tone: 'text-slate-700 dark:text-slate-300',
+    tone: 'text-indigo-700 dark:text-indigo-400',
     Icon: ScrollText,
   };
 }
@@ -427,22 +427,27 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
     Boolean(searchQuery.trim());
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24 }}
+      className="space-y-6"
+    >
       {/* 4-Column Summary KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Immutable Admin Records</span>
-            <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
           </div>
           <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {loading && allLogs.length === 0 ? '—' : metrics.total}
+            {loading && allLogs.length === 0 ? <Skeleton width={48} height={28} /> : metrics.total}
           </div>
           <div
             className={`text-xs font-medium inline-flex items-center gap-1.5 ${
               chainValid
-                ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-red-700 dark:text-red-400'
+                ? 'text-indigo-700 dark:text-indigo-400'
+                : 'text-rose-700 dark:text-rose-400'
             }`}
           >
             {chainValid ? (
@@ -458,43 +463,51 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>User Approvals &amp; Registry</span>
             <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {loading && allLogs.length === 0
-              ? '—'
-              : metrics.userApprovals + metrics.memberGovernance}
+            {loading && allLogs.length === 0 ? (
+              <Skeleton width={48} height={28} />
+            ) : (
+              metrics.userApprovals + metrics.memberGovernance
+            )}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {metrics.userApprovals} onboarding · {metrics.memberGovernance} RBAC/status
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Setting Modifications</span>
             <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
           </div>
           <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {loading && allLogs.length === 0 ? '—' : metrics.settingChanges}
+            {loading && allLogs.length === 0 ? (
+              <Skeleton width={48} height={28} />
+            ) : (
+              metrics.settingChanges
+            )}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Policy quotas, maturity &amp; guarantor rules
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Financial &amp; Moderation</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
           </div>
           <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {loading && allLogs.length === 0
-              ? '—'
-              : metrics.financialReviews + metrics.moderationSync}
+            {loading && allLogs.length === 0 ? (
+              <Skeleton width={48} height={28} />
+            ) : (
+              metrics.financialReviews + metrics.moderationSync
+            )}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {metrics.financialReviews} treasury · {metrics.moderationSync} sync/mod
@@ -503,11 +516,11 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       </div>
 
       {/* Main Immutable Audit Ledger Panel */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1.5">
+              <span className="font-semibold text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Append-Only Cryptographic Ledger</span>
               </span>
@@ -533,7 +546,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${loading || verifying ? 'animate-spin' : ''}`}
+                className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loading || verifying ? 'animate-spin' : ''}`}
                 aria-hidden="true"
               />
               <span>{verifying ? 'Verifying Chain…' : 'Verify Chain Integrity'}</span>
@@ -543,16 +556,16 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               type="button"
               onClick={handleExportImmutableJson}
               disabled={filteredLogs.length === 0}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
-              <FileJson className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+              <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
               <span>Export JSON Proof</span>
             </button>
 
             <button
               type="button"
               onClick={() => window.location.assign('/api/reports/export?type=audit&scope=admin')}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Export Admin CSV</span>
@@ -614,23 +627,33 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 },
                 { id: 'moderation_sync', label: `Moderation & Sync (${metrics.moderationSync})` },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setCategoryFilter(tab.id);
-                  setVisibleLimit(30);
-                }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  categoryFilter === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = categoryFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter(tab.id);
+                    setVisibleLimit(30);
+                  }}
+                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="system-audit-category-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -718,7 +741,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setVisibleLimit(30);
                   }}
                   placeholder="Actor, setting, member ID, hash…"
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                 />
               </div>
             </div>
@@ -727,10 +750,31 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
         {/* High-Density Immutable Audit Table */}
         {loading && allLogs.length === 0 ? (
-          <div className="space-y-2.5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} height={46} />
-            ))}
+          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+                  <th className="py-2.5 px-4 font-medium">Timestamp</th>
+                  <th className="py-2.5 px-4 font-medium">Action &amp; Category</th>
+                  <th className="py-2.5 px-4 font-medium">Administrator</th>
+                  <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
+                  <th className="py-2.5 px-4 font-medium">Immutable Proof</th>
+                  <th className="py-2.5 px-4 font-medium text-right">Record</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <tr key={i}>
+                    <td className="py-3 px-4"><Skeleton width={110} height={16} /></td>
+                    <td className="py-3 px-4"><Skeleton width={130} height={16} /></td>
+                    <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
+                    <td className="py-3 px-4"><Skeleton width={220} height={16} /></td>
+                    <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
+                    <td className="py-3 px-4 text-right"><Skeleton width={64} height={26} borderRadius={6} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
@@ -821,7 +865,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           </div>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 }
 
@@ -894,8 +938,8 @@ function AdminAuditTableRow({
           <div
             className={`font-mono text-[11px] font-medium inline-flex items-center gap-1 ${
               verified
-                ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-red-700 dark:text-red-400'
+                ? 'text-indigo-700 dark:text-indigo-400'
+                : 'text-rose-700 dark:text-rose-400'
             }`}
           >
             {verified ? (
@@ -915,7 +959,7 @@ function AdminAuditTableRow({
             type="button"
             onClick={onToggle}
             aria-expanded={isOpen}
-            className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>{isOpen ? 'Hide' : 'Inspect'}</span>
             {isOpen ? (
@@ -927,89 +971,99 @@ function AdminAuditTableRow({
         </td>
       </tr>
 
-      {isOpen && (
-        <tr className="bg-slate-50/75 dark:bg-slate-950/60">
-          <td colSpan={6} className="px-4 py-4 text-xs space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 break-all">
-              <div>
-                <span className="text-slate-400 dark:text-slate-500">Audit Record ID: </span>
-                <span className="text-slate-800 dark:text-slate-200">{entry.id}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500">Previous Block Hash: </span>
-                <span className="text-slate-800 dark:text-slate-200">{entry.prevHash}</span>
-              </div>
-              <div className="md:col-span-2">
-                <span className="text-slate-400 dark:text-slate-500">SHA-256 Entry Hash: </span>
-                <span className="text-slate-800 dark:text-slate-200">{entry.entryHash}</span>
-              </div>
-              <div className="md:col-span-2">
-                <span className="text-slate-400 dark:text-slate-500">
-                  AES-256-GCM Ciphertext ({entry.encryptedPayload.keyVersion}):{' '}
-                </span>
-                <span className="text-slate-700 dark:text-slate-300">
-                  {entry.encryptedPayload.ciphertext.slice(0, 84)}…
-                </span>
-              </div>
-            </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <tr className="bg-slate-50/75 dark:bg-slate-950/60">
+            <td colSpan={6} className="p-0">
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16 }}
+                className="px-4 py-4 text-xs space-y-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 break-all">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500">Audit Record ID: </span>
+                    <span className="text-slate-800 dark:text-slate-200">{entry.id}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500">Previous Block Hash: </span>
+                    <span className="text-slate-800 dark:text-slate-200">{entry.prevHash}</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="text-indigo-600 dark:text-indigo-400">SHA-256 Entry Hash: </span>
+                    <span className="text-slate-800 dark:text-slate-200">{entry.entryHash}</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="text-indigo-600 dark:text-indigo-400">
+                      AES-256-GCM Ciphertext ({entry.encryptedPayload.keyVersion}):{' '}
+                    </span>
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {entry.encryptedPayload.ciphertext.slice(0, 84)}…
+                    </span>
+                  </div>
+                </div>
 
-            {diffs.length > 0 && (
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Modified Fields (Before vs. After)
-                </div>
-                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
-                  <table className="w-full text-left border-collapse text-[11px] font-mono">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                        <th className="py-1.5 px-3 font-medium">Field</th>
-                        <th className="py-1.5 px-3 font-medium">Previous Value</th>
-                        <th className="py-1.5 px-3 font-medium">New Value</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {diffs.map((d) => (
-                        <tr key={d.field}>
-                          <td className="py-1.5 px-3 text-slate-700 dark:text-slate-300 font-medium">
-                            {d.field}
-                          </td>
-                          <td className="py-1.5 px-3 text-red-700 dark:text-red-400 break-all">
-                            {formatDiffValue(d.from)}
-                          </td>
-                          <td className="py-1.5 px-3 text-emerald-700 dark:text-emerald-400 break-all">
-                            {formatDiffValue(d.to)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+                {diffs.length > 0 && (
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      Modified Fields (Before vs. After)
+                    </div>
+                    <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                      <table className="w-full text-left border-collapse text-[11px] font-mono">
+                        <thead>
+                          <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                            <th className="py-1.5 px-3 font-medium">Field</th>
+                            <th className="py-1.5 px-3 font-medium">Previous Value</th>
+                            <th className="py-1.5 px-3 font-medium">New Value</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {diffs.map((d) => (
+                            <tr key={d.field}>
+                              <td className="py-1.5 px-3 text-slate-700 dark:text-slate-300 font-medium">
+                                {d.field}
+                              </td>
+                              <td className="py-1.5 px-3 text-rose-700 dark:text-rose-400 break-all">
+                                {formatDiffValue(d.from)}
+                              </td>
+                              <td className="py-1.5 px-3 text-emerald-700 dark:text-emerald-400 break-all">
+                                {formatDiffValue(d.to)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
-            {entry.decryptedPayload && (
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                  Decrypted Payload Envelope
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                  {Object.entries(entry.decryptedPayload)
-                    .filter(([k]) => k !== 'changes')
-                    .map(([k, v]) => (
-                      <div
-                        key={k}
-                        className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 break-all"
-                      >
-                        <span className="text-slate-500 dark:text-slate-400">{k}: </span>
-                        <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-          </td>
-        </tr>
-      )}
+                {entry.decryptedPayload && (
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400">
+                      Decrypted Payload Envelope
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                      {Object.entries(entry.decryptedPayload)
+                        .filter(([k]) => k !== 'changes')
+                        .map(([k, v]) => (
+                          <div
+                            key={k}
+                            className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 break-all"
+                          >
+                            <span className="text-slate-500 dark:text-slate-400">{k}: </span>
+                            <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </td>
+          </tr>
+        )}
+      </AnimatePresence>
     </>
   );
 }

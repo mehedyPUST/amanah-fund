@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Globe, Loader2, Lock, ShieldCheck } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
 import { api } from '../utils/api.ts';
 import {
   GOOGLE_ONBOARDING_STORAGE_KEY,
@@ -75,16 +76,36 @@ export function SignInForm() {
 
   const isBusy = loading || googleLoading;
 
+  if (authChecking) {
+    return (
+      <div className="bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+        <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="space-y-2">
+            <Skeleton width={210} height={14} />
+            <Skeleton width="70%" height={28} />
+            <Skeleton width="100%" height={14} count={2} />
+          </div>
+          <Skeleton height={42} borderRadius={8} />
+          <div className="space-y-4">
+            <Skeleton height={42} borderRadius={8} />
+            <Skeleton height={42} borderRadius={8} />
+            <Skeleton height={42} borderRadius={8} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.22 }}
         className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
       >
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-400">
             <ShieldCheck className="w-4 h-4" aria-hidden="true" />
             <span>Encrypted Member Portal · HttpOnly JWT</span>
           </div>
@@ -96,26 +117,31 @@ export function SignInForm() {
           </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-xs text-red-700 dark:text-red-300 leading-relaxed"
-          >
-            {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              role="alert"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="space-y-4">
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isBusy}
-            className="w-full py-2.5 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 text-slate-800 dark:text-slate-100 text-sm font-medium shadow-2xs transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-teal-50/60 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 disabled:opacity-60 text-slate-800 dark:text-slate-100 text-sm font-medium shadow-2xs transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer"
           >
             {googleLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" aria-hidden="true" />
+              <Loader2 className="w-4 h-4 animate-spin text-teal-600" aria-hidden="true" />
             ) : (
-              <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             )}
             <span>{googleLoading ? 'Verifying with Google…' : 'Continue with Google'}</span>
           </button>
@@ -171,7 +197,7 @@ export function SignInForm() {
           <button
             type="submit"
             disabled={isBusy}
-            className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             <Lock className="w-4 h-4" aria-hidden="true" />
             <span>{loading ? 'Signing In…' : 'Sign In to Portal'}</span>

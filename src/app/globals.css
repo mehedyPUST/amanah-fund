@@ -20,6 +20,25 @@
   font-variant-numeric: tabular-nums;
 }
 
+.react-loading-skeleton {
+  --base-color: #e2e8f0;
+  --highlight-color: #f8fafc;
+}
+
+html.dark .react-loading-skeleton {
+  --base-color: #1e293b;
+  --highlight-color: #334155;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(5, 150, 105, 0.5);
+  outline-offset: 2px;
+}
+
 /* Modern, classy scrollbars (Light & Dark Mode) */
 :root {
   scrollbar-width: thin;

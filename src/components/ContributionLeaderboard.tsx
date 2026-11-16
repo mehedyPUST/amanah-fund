@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ArrowRight, Award, CheckCircle2, Flame, Trophy } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { DashboardSectionId, FundConfig, LeaderboardEntry } from '../types/coop.ts';
 import { formatMoney } from '../utils/format.ts';
@@ -94,9 +95,31 @@ export function ContributionLeaderboard({
   if (loading) {
     return (
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
-        <Skeleton width="55%" height={18} />
-        <Skeleton height={56} />
-        <Skeleton height={160} />
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <Skeleton width={180} height={12} />
+            <Skeleton width={200} height={20} />
+          </div>
+          <Skeleton width={190} height={28} borderRadius={8} />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 flex-1">
+                  <Skeleton width={24} height={24} borderRadius={6} />
+                  <Skeleton width={32} height={32} borderRadius={8} />
+                  <div className="space-y-1 flex-1">
+                    <Skeleton width="45%" height={13} />
+                    <Skeleton width="35%" height={10} />
+                  </div>
+                </div>
+                <Skeleton width={70} height={16} />
+              </div>
+              <Skeleton height={6} borderRadius={999} />
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
@@ -123,32 +146,38 @@ export function ContributionLeaderboard({
             aria-label="Leaderboard ranking mode"
             className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'top'}
-              onClick={() => setMode('top')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                mode === 'top'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              Top Contributors
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'consistent'}
-              onClick={() => setMode('consistent')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                mode === 'consistent'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              Consistent Payers
-            </button>
+            {(
+              [
+                { id: 'top', label: 'Top Contributors' },
+                { id: 'consistent', label: 'Consistent Payers' },
+              ] as const
+            ).map((tab) => {
+              const active = mode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setMode(tab.id)}
+                  className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="leaderboard-mode-pill"
+                      transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -197,9 +226,9 @@ export function ContributionLeaderboard({
                           rank === 1
                             ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                             : rank === 2
-                              ? 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
+                              ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300'
                               : rank === 3
-                                ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-300'
+                                ? 'bg-teal-100 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300'
                                 : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
@@ -284,15 +313,20 @@ export function ContributionLeaderboard({
 
                   {/* Proportional Progress Bar */}
                   <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      className={`h-full rounded-full ${
                         rank === 1
-                          ? 'bg-amber-500'
-                          : entry.isSelf
-                            ? 'bg-emerald-600'
-                            : 'bg-emerald-500/80 dark:bg-emerald-500/70'
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                          : rank === 2
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500'
+                            : entry.isSelf
+                              ? 'bg-emerald-600'
+                              : 'bg-gradient-to-r from-emerald-500 to-teal-500'
                       }`}
-                      style={{ width: `${Math.max(4, Math.min(100, barPct))}%` }}
+                      style={{ originX: 0, width: `${Math.max(4, Math.min(100, barPct))}%` }}
                     />
                   </div>
                 </div>

@@ -11,6 +11,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { FundConfig, ManagerCycleSchedule, ManagerCycleSlot, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -186,12 +187,17 @@ export function ManagerCycleView({
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {/* Header Banner */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarClock className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Cyclic Cooperative Stewardship</span>
             </div>
@@ -206,14 +212,14 @@ export function ManagerCycleView({
 
           {schedule && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0 text-xs">
-              <div className="px-3.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">Turn Duration</div>
+              <div className="px-3.5 py-2 rounded-lg bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50">
+                <div className="text-[11px] text-teal-700 dark:text-teal-400">Turn Duration</div>
                 <div className="font-mono font-semibold text-slate-900 dark:text-white mt-0.5">
                   {schedule.cycleMonths} Month{schedule.cycleMonths === 1 ? '' : 's'}
                 </div>
               </div>
-              <div className="px-3.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">Cycle Anchor</div>
+              <div className="px-3.5 py-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/50">
+                <div className="text-[11px] text-indigo-700 dark:text-indigo-400">Cycle Anchor</div>
                 <div className="font-mono font-semibold text-slate-900 dark:text-white mt-0.5">
                   {formatShortDate(schedule.cycleStartDate)}
                 </div>
@@ -298,7 +304,7 @@ export function ManagerCycleView({
             <button
               type="submit"
               disabled={modalBusy}
-              className="py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               Update Rotation Interval
             </button>
@@ -583,6 +589,6 @@ export function ManagerCycleView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   Users,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { ActiveMemberDirectoryItem, FundConfig, PublicUser, UserRole } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -158,12 +159,17 @@ export function ActiveMembersView({
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {/* Header & Summary Strip */}
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Authenticated Member Directory</span>
             </div>
@@ -224,7 +230,7 @@ export function ActiveMembersView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Total Contributed</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(stats.totalPool, ccy)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -234,7 +240,7 @@ export function ActiveMembersView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Approved Deposits</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
               {stats.totalApprovedDeposits}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -244,7 +250,7 @@ export function ActiveMembersView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Average Membership</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
               {stats.avgMonths} mo{stats.avgMonths === 1 ? '' : 's'}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -262,26 +268,36 @@ export function ActiveMembersView({
               { id: 'manager', label: 'Managers' },
               { id: 'member', label: 'Members' },
             ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setRoleFilter(tab.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                roleFilter === tab.id
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ).map((tab) => {
+            const active = roleFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setRoleFilter(tab.id)}
+                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  active
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="active-members-role-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
+            className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
           >
             {error}
           </div>
@@ -291,8 +307,25 @@ export function ActiveMembersView({
       {/* Member Directory Table / Empty / Loading States */}
       {loading ? (
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} height={58} />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="grid grid-cols-12 gap-4 items-center py-2">
+              <div className="col-span-4 flex items-center gap-3">
+                <Skeleton width={40} height={40} borderRadius={8} />
+                <div className="flex-1 space-y-1">
+                  <Skeleton width="70%" height={14} />
+                  <Skeleton width="45%" height={12} />
+                </div>
+              </div>
+              <div className="col-span-4">
+                <Skeleton height={16} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton height={16} />
+              </div>
+              <div className="col-span-2">
+                <Skeleton height={16} />
+              </div>
+            </div>
           ))}
         </section>
       ) : filteredMembers.length === 0 ? (
@@ -431,7 +464,7 @@ export function ActiveMembersView({
                           <button
                             type="button"
                             onClick={() => onViewMemberProfile(m.id)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <UserIcon className="w-3 h-3" aria-hidden="true" />
                             <span>View Profile</span>
@@ -446,6 +479,6 @@ export function ActiveMembersView({
           </div>
         </section>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { isTopModal, registerTopModal } from '../utils/modalLock.ts';
 
@@ -138,74 +139,80 @@ export function ProviderSelect({
       </button>
 
       {mounted &&
-        open &&
-        coords &&
         createPortal(
-          <div
-            ref={dropdownRef}
-            style={{
-              position: 'fixed',
-              left: coords.left,
-              width: coords.width,
-              ...(coords.top !== undefined ? { top: coords.top } : {}),
-              ...(coords.bottom !== undefined ? { bottom: coords.bottom } : {}),
-            }}
-            className="z-[65] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl overflow-hidden"
-          >
-            <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
-              <Search
-                className="w-3.5 h-3.5 text-slate-400 absolute left-4.5 top-1/2 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <input
-                ref={searchRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={placeholder}
-                className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-            <ul
-              role="listbox"
-              style={{ maxHeight: coords.maxListHeight }}
-              className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/70 text-xs"
-            >
-              {filtered.length === 0 ? (
-                <li className="px-3 py-3 text-slate-500 dark:text-slate-400 text-center">
-                  No bank or wallet matched &ldquo;{query}&rdquo;
-                </li>
-              ) : (
-                filtered.map((opt) => {
-                  const selected = opt === value;
-                  return (
-                    <li key={opt}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={selected}
-                        onClick={() => {
-                          onChange(opt);
-                          setOpen(false);
-                          setQuery('');
-                        }}
-                        className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                          selected
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-medium'
-                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900'
-                        }`}
-                      >
-                        <span className="truncate">{opt}</span>
-                        {selected && (
-                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
-                        )}
-                      </button>
+          <AnimatePresence>
+            {open && coords && (
+              <motion.div
+                ref={dropdownRef}
+                initial={{ opacity: 0, y: coords.bottom !== undefined ? 4 : -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: coords.bottom !== undefined ? 4 : -4, scale: 0.98 }}
+                transition={{ duration: 0.16 }}
+                style={{
+                  position: 'fixed',
+                  left: coords.left,
+                  width: coords.width,
+                  ...(coords.top !== undefined ? { top: coords.top } : {}),
+                  ...(coords.bottom !== undefined ? { bottom: coords.bottom } : {}),
+                }}
+                className="z-[65] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl overflow-hidden"
+              >
+                <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
+                  <Search
+                    className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 absolute left-4.5 top-1/2 -translate-y-1/2"
+                    aria-hidden="true"
+                  />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                  />
+                </div>
+                <ul
+                  role="listbox"
+                  style={{ maxHeight: coords.maxListHeight }}
+                  className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/70 text-xs"
+                >
+                  {filtered.length === 0 ? (
+                    <li className="px-3 py-3 text-slate-500 dark:text-slate-400 text-center">
+                      No bank or wallet matched &ldquo;{query}&rdquo;
                     </li>
-                  );
-                })
-              )}
-            </ul>
-          </div>,
+                  ) : (
+                    filtered.map((opt) => {
+                      const selected = opt === value;
+                      return (
+                        <li key={opt}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            onClick={() => {
+                              onChange(opt);
+                              setOpen(false);
+                              setQuery('');
+                            }}
+                            className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                              selected
+                                ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-medium'
+                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900'
+                            }`}
+                          >
+                            <span className="truncate">{opt}</span>
+                            {selected && (
+                              <Check className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>,
           document.body
         )}
     </div>

@@ -28,6 +28,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   CommunityPost,
@@ -270,7 +271,12 @@ export function MemberPublicProfileView({
   const showPosts = activeTab === 'all' || activeTab === 'posts';
 
   return (
-    <div className="space-y-6 pb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6 pb-8"
+    >
       {/* Top Action Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
@@ -400,22 +406,32 @@ export function MemberPublicProfileView({
                 { id: 'about', label: 'About' },
                 { id: 'fund', label: 'Fund Summary' },
               ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ).map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="member-public-profile-pill"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -433,7 +449,7 @@ export function MemberPublicProfileView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Cooperative Net Equity</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(fundSummary.cooperativeEquity, ccy)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -445,7 +461,7 @@ export function MemberPublicProfileView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Consistency &amp; Streak</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400 flex items-center gap-2">
               <span>{fundSummary.consistencyScore}%</span>
               {fundSummary.currentStreakMonths > 0 && (
                 <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
@@ -462,7 +478,7 @@ export function MemberPublicProfileView({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Community Activity</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
               {about.postsCount} {about.postsCount === 1 ? 'Post' : 'Posts'}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -641,7 +657,7 @@ export function MemberPublicProfileView({
               } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
             >
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                   <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Verified Member Profile</span>
                 </div>
@@ -744,8 +760,8 @@ export function MemberPublicProfileView({
                 )}
               </dl>
 
-              <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-3.5 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-400">
-                <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <div className="rounded-lg border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 p-3.5 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-400">
+                <Lock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                 <span>
                   Sensitive KYC documents (NID, date of birth, permanent address, signed agreement)
                   and private payment references remain AES-256-GCM encrypted and restricted to the
@@ -937,9 +953,12 @@ export function MemberPublicProfileView({
                                     </span>
                                   </div>
                                   <div className="mt-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                    <div
-                                      className="h-full rounded-full bg-emerald-600 transition-all duration-300"
-                                      style={{ width: `${pct}%` }}
+                                    <motion.div
+                                      initial={{ scaleX: 0 }}
+                                      animate={{ scaleX: 1 }}
+                                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                      className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-teal-500"
+                                      style={{ width: `${pct}%`, originX: 0 }}
                                     />
                                   </div>
                                 </button>
@@ -1080,6 +1099,6 @@ export function MemberPublicProfileView({
           )}
         </section>
       )}
-    </div>
+    </motion.div>
   );
 }

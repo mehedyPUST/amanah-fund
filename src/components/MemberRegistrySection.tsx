@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { CheckCircle2, ClipboardCheck, Users, X, XCircle } from 'lucide-react';
 import type {
   FundConfig,
@@ -242,10 +243,15 @@ export function MemberRegistrySection({
   const pendingProfileRequests = profileRequests.filter((r) => r.status === 'pending');
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Admin Governance · Member Lifecycle</span>
           </div>
@@ -259,37 +265,52 @@ export function MemberRegistrySection({
         </div>
 
         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit shrink-0">
-          <button
-            type="button"
-            onClick={() => setSubTab('manage')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-              subTab === 'manage'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Approvals &amp; User Control
-          </button>
-          <button
-            type="button"
-            onClick={() => setSubTab('directory')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-              subTab === 'directory'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Verified Member Directory
-          </button>
+          {(
+            [
+              { id: 'manage', label: 'Approvals & User Control' },
+              { id: 'directory', label: 'Verified Member Directory' },
+            ] as const
+          ).map((tab) => {
+            const active = subTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSubTab(tab.id)}
+                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  active
+                    ? 'text-indigo-700 dark:text-indigo-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="registry-subtab-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
+      <AnimatePresence mode="wait">
       {subTab === 'manage' ? (
-        <div className="space-y-6">
+        <motion.div
+          key="registry-manage"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+          className="space-y-6"
+        >
           {pendingProfileRequests.length > 0 && (
-            <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <section className="bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
               <div>
-                <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                   <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Admin &amp; Manager Approval Queue</span>
                 </div>
@@ -326,7 +347,7 @@ export function MemberRegistrySection({
                           type="button"
                           disabled={profileBusyId === req.id || modalBusy}
                           onClick={() => confirmProfileChangeReview(req, 'rejected')}
-                          className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white cursor-pointer disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                         >
                           Decline
                         </button>
@@ -334,7 +355,7 @@ export function MemberRegistrySection({
                           type="button"
                           disabled={profileBusyId === req.id || modalBusy}
                           onClick={() => confirmProfileChangeReview(req, 'approved')}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                         >
                           Approve Update
                         </button>
@@ -368,24 +389,43 @@ export function MemberRegistrySection({
               }}
             />
           )}
-        </div>
+        </motion.div>
       ) : (
-        <ActiveMembersView
-          user={user}
-          config={config}
-          onViewMemberProfile={onViewMemberProfile}
-        />
+        <motion.div
+          key="registry-directory"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+        >
+          <ActiveMembersView
+            user={user}
+            config={config}
+            onViewMemberProfile={onViewMemberProfile}
+          />
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}
+      <AnimatePresence>
       {inspectingMember && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           role="dialog"
           aria-modal="true"
           aria-labelledby="registry-member-modal-title"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+          >
             <div className="sticky top-0 bg-white dark:bg-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
               <div>
                 <h3
@@ -544,7 +584,7 @@ export function MemberRegistrySection({
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmDeclinePendingMember(inspectingMember)}
-                    className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Decline Application</span>
@@ -553,7 +593,7 @@ export function MemberRegistrySection({
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmApprovePendingMember(inspectingMember)}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Approve Signup</span>
@@ -568,9 +608,10 @@ export function MemberRegistrySection({
                 Close
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <ActionModal
         open={Boolean(modal)}
@@ -590,6 +631,6 @@ export function MemberRegistrySection({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

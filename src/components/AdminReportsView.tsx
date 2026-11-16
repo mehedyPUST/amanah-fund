@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   CheckCircle2,
   Download,
@@ -311,10 +312,15 @@ export function AdminReportsView({
   const pendingReviewLoans = loans.filter((l) => l.status === 'pending_vote');
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl px-4 py-3 shadow-xs">
-        <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+        <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
           Admin Panel Workspace
         </div>
         <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
@@ -325,20 +331,30 @@ export function AdminReportsView({
               { id: 'analytics', label: 'Loans & Analytics' },
               { id: 'policy', label: 'Policy & Audit Logs' },
             ] as const
-          ).map((sec) => (
-            <button
-              key={sec.id}
-              type="button"
-              onClick={() => setAdminSection(sec.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                adminSection === sec.id
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {sec.label}
-            </button>
-          ))}
+          ).map((sec) => {
+            const active = adminSection === sec.id;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => setAdminSection(sec.id)}
+                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  active
+                    ? 'text-indigo-700 dark:text-indigo-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="admin-reports-section-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{sec.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -409,7 +425,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => setInspectingMember(pm)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>View Details</span>
@@ -417,7 +433,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => confirmDeclinePending(pm)}
-                        className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                        className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Decline</span>
@@ -425,7 +441,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => confirmApproveMember(pm)}
-                        className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                        className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Approve Signup</span>
@@ -444,7 +460,7 @@ export function AdminReportsView({
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <HandCoins className="w-4 h-4" aria-hidden="true" />
               <span>Administrative Qard Hasan Review</span>
             </div>
@@ -509,7 +525,7 @@ export function AdminReportsView({
                           type="button"
                           disabled={loanReviewBusyId === loan.id}
                           onClick={() => confirmAdminLoanReview(loan, 'reject')}
-                          className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                          className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                         >
                           <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Decline</span>
@@ -518,7 +534,7 @@ export function AdminReportsView({
                           type="button"
                           disabled={loanReviewBusyId === loan.id}
                           onClick={() => confirmAdminLoanReview(loan, 'approve')}
-                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Approve for Disbursement</span>
@@ -573,7 +589,7 @@ export function AdminReportsView({
                   general meetings
                 </p>
               </div>
-              <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
+              <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -589,10 +605,10 @@ export function AdminReportsView({
                   key={rep.id}
                   type="button"
                   onClick={() => downloadCsvReport(rep.id)}
-                  className="px-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                  className="px-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
                 >
                   <span>{rep.label}</span>
-                  <Download className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                  <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
                 </button>
               ))}
             </div>
@@ -741,14 +757,24 @@ export function AdminReportsView({
       )}
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}
+      <AnimatePresence>
       {inspectingMember && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           role="dialog"
           aria-modal="true"
           aria-labelledby="member-reg-modal-title"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+          >
             <div className="sticky top-0 bg-white dark:bg-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
               <div>
                 <h3
@@ -907,7 +933,7 @@ export function AdminReportsView({
                   <button
                     type="button"
                     onClick={() => confirmDeclinePending(inspectingMember)}
-                    className="px-3.5 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Decline Application</span>
@@ -915,7 +941,7 @@ export function AdminReportsView({
                   <button
                     type="button"
                     onClick={() => confirmApproveMember(inspectingMember)}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Approve Signup</span>
@@ -930,9 +956,10 @@ export function AdminReportsView({
                 Close
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <ActionModal
         open={modal !== null}
@@ -959,6 +986,6 @@ export function AdminReportsView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

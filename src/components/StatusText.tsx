@@ -97,27 +97,27 @@ const STATUS_MAP: Record<
   },
   scheduled: {
     label: 'Scheduled',
-    colorClass: 'text-slate-600 dark:text-slate-400',
+    colorClass: 'text-indigo-700 dark:text-indigo-400',
     Icon: Clock,
   },
   proposed: {
     label: 'Proposed',
-    colorClass: 'text-slate-600 dark:text-slate-400',
+    colorClass: 'text-indigo-700 dark:text-indigo-400',
     Icon: Clock,
   },
   rejected: {
     label: 'Rejected',
-    colorClass: 'text-red-700 dark:text-red-400',
+    colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: XCircle,
   },
   suspended: {
     label: 'Suspended',
-    colorClass: 'text-red-700 dark:text-red-400',
+    colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: AlertCircle,
   },
   overdue: {
     label: 'Overdue',
-    colorClass: 'text-red-700 dark:text-red-400',
+    colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: AlertCircle,
   },
 };

@@ -78,12 +78,52 @@ const REACTION_OPTIONS: Array<{
   type: CommunityReactionType;
   label: string;
   Icon: typeof ThumbsUp;
+  activeClass: string;
 }> = [
-  { type: 'like', label: 'Like', Icon: ThumbsUp },
-  { type: 'support', label: 'Support', Icon: HeartHandshake },
-  { type: 'celebrate', label: 'Celebrate', Icon: Award },
-  { type: 'helpful', label: 'Helpful', Icon: Lightbulb },
+  {
+    type: 'like',
+    label: 'Like',
+    Icon: ThumbsUp,
+    activeClass:
+      'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300',
+  },
+  {
+    type: 'support',
+    label: 'Support',
+    Icon: HeartHandshake,
+    activeClass:
+      'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300',
+  },
+  {
+    type: 'celebrate',
+    label: 'Celebrate',
+    Icon: Award,
+    activeClass:
+      'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300',
+  },
+  {
+    type: 'helpful',
+    label: 'Helpful',
+    Icon: Lightbulb,
+    activeClass:
+      'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300',
+  },
 ];
+
+function getTopicToneClass(category: CommunityCategory): string {
+  switch (category) {
+    case 'Qard Hasan':
+      return 'text-teal-700 dark:text-teal-400';
+    case 'Halal Ventures':
+      return 'text-amber-700 dark:text-amber-400';
+    case 'Help & Support':
+      return 'text-indigo-700 dark:text-indigo-400';
+    case 'Announcements':
+    case 'General':
+    default:
+      return 'text-emerald-700 dark:text-emerald-400';
+  }
+}
 
 function AvatarBadge({
   name,
@@ -880,15 +920,24 @@ export function CommunityView({
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24 }}
+      className="space-y-6"
+    >
       {/* Top Toolbar: Mode Switch + Primary Action */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
+            <Users className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Verified Member Network · AES-256-GCM Direct Chat</span>
+          </div>
           <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
             Amanah Member Community
           </h2>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Verified cooperative forum for member discussions, reactions, and AES-256-GCM encrypted
+            Verified cooperative forum for member discussions, polls, reactions, and encrypted
             private messaging.
           </p>
         </div>
@@ -899,59 +948,66 @@ export function CommunityView({
             aria-label="Community views"
             className="inline-flex items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'feed'}
-              onClick={() => setActiveTab('feed')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
-                activeTab === 'feed'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Discussion Feed</span>
-              <span className="font-mono tabular-nums text-[11px] text-slate-500 dark:text-slate-400">
-                {posts.filter((p) => p.status === 'active').length}
-              </span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'messages'}
-              onClick={() => setActiveTab('messages')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
-                activeTab === 'messages'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Private Messages</span>
-              {totalUnread > 0 && (
-                <span className="font-mono tabular-nums text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                  {totalUnread}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'members'}
-              onClick={() => setActiveTab('members')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
-                activeTab === 'members'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Members</span>
-              <span className="font-mono tabular-nums text-[11px] text-slate-500 dark:text-slate-400">
-                {activeMembersList.length > 0 ? activeMembersList.length : directory.length + 1}
-              </span>
-            </button>
+            {(
+              [
+                {
+                  id: 'feed',
+                  label: 'Discussion Feed',
+                  Icon: MessageSquare,
+                  badge: posts.filter((p) => p.status === 'active').length,
+                  badgeClass: 'text-slate-500 dark:text-slate-400',
+                },
+                {
+                  id: 'messages',
+                  label: 'Private Messages',
+                  Icon: Mail,
+                  badge: totalUnread > 0 ? totalUnread : null,
+                  badgeClass: 'font-semibold text-indigo-700 dark:text-indigo-400',
+                },
+                {
+                  id: 'members',
+                  label: 'Members',
+                  Icon: Users,
+                  badge:
+                    activeMembersList.length > 0
+                      ? activeMembersList.length
+                      : directory.length + 1,
+                  badgeClass: 'text-slate-500 dark:text-slate-400',
+                },
+              ] as const
+            ).map((tab) => {
+              const active = activeTab === tab.id;
+              const Icon = tab.Icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="community-main-tab-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                    />
+                  )}
+                  <Icon className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
+                  <span className="relative z-10">{tab.label}</span>
+                  {tab.badge !== null && (
+                    <span className={`relative z-10 font-mono tabular-nums text-[11px] ${tab.badgeClass}`}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {activeTab === 'feed' && !user.communityMuted && (
@@ -960,7 +1016,7 @@ export function CommunityView({
               onClick={() => {
                 setComposerOpen((prev) => !prev);
               }}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
               <span>{composerOpen ? 'Close Composer' : 'New Post'}</span>
@@ -969,9 +1025,17 @@ export function CommunityView({
         </div>
       </div>
 
-      {/* FEED TAB */}
-      {activeTab === 'feed' && (
-        <div className="space-y-5">
+      <AnimatePresence mode="wait">
+        {/* FEED TAB */}
+        {activeTab === 'feed' && (
+          <motion.div
+            key="tab-feed"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+            className="space-y-5"
+          >
           {user.communityMuted && (
             <div
               role="status"
@@ -1102,16 +1166,16 @@ export function CommunityView({
 
                 {/* Optional Poll Builder */}
                 {pollEnabled && (
-                  <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-3">
+                  <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
                         <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Community Poll</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setPollEnabled(false)}
-                        className="text-xs text-slate-500 hover:text-red-600 cursor-pointer"
+                        className="text-xs text-slate-500 hover:text-rose-600 cursor-pointer"
                       >
                         Remove Poll
                       </button>
@@ -1144,7 +1208,7 @@ export function CommunityView({
                                 setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                               }
                               aria-label="Remove option"
-                              className="p-1.5 text-slate-400 hover:text-red-600 cursor-pointer"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1157,7 +1221,7 @@ export function CommunityView({
                         <button
                           type="button"
                           onClick={() => setPollOptions((prev) => [...prev, ''])}
-                          className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          className="text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Add Option</span>
@@ -1170,7 +1234,7 @@ export function CommunityView({
                           type="checkbox"
                           checked={pollAllowMultiple}
                           onChange={(e) => setPollAllowMultiple(e.target.checked)}
-                          className="rounded border-slate-300 text-emerald-600"
+                          className="rounded border-slate-300 text-indigo-600"
                         />
                         <span>Allow multiple choices</span>
                       </label>
@@ -1200,7 +1264,7 @@ export function CommunityView({
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
-                      <ImagePlus className="w-3.5 h-3.5" />
+                      <ImagePlus className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                       <span>{uploadingImage ? 'Uploading...' : 'Attach Image'}</span>
                       <input
                         type="file"
@@ -1218,9 +1282,9 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => setPollEnabled(true)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 cursor-pointer transition-colors"
                       >
-                        <BarChart2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <BarChart2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                         <span>Attach Poll</span>
                       </button>
                     )}
@@ -1237,7 +1301,7 @@ export function CommunityView({
                     <button
                       type="submit"
                       disabled={creatingPost || uploadingImage}
-                      className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors"
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
                     >
                       {creatingPost ? 'Publishing...' : 'Publish Post'}
                     </button>
@@ -1262,9 +1326,9 @@ export function CommunityView({
                   key={item.id}
                   type="button"
                   onClick={() => setFeedCategory(item.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
                       : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
@@ -1294,10 +1358,22 @@ export function CommunityView({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3"
                 >
-                  <Skeleton height={24} width={220} />
-                  <Skeleton height={64} className="mt-3" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton width={36} height={36} borderRadius={8} />
+                    <div className="space-y-1 flex-1">
+                      <Skeleton width={160} height={14} />
+                      <Skeleton width={210} height={12} />
+                    </div>
+                  </div>
+                  <Skeleton width="65%" height={18} />
+                  <Skeleton count={2} height={14} />
+                  <div className="flex gap-2 pt-2">
+                    <Skeleton width={68} height={28} borderRadius={8} />
+                    <Skeleton width={76} height={28} borderRadius={8} />
+                    <Skeleton width={82} height={28} borderRadius={8} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -1395,7 +1471,7 @@ export function CommunityView({
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                            <span className={`font-medium ${getTopicToneClass(post.category)}`}>
                               {post.category}
                             </span>
                             <span aria-hidden="true">·</span>
@@ -1600,7 +1676,7 @@ export function CommunityView({
                             type="button"
                             disabled={moderationBusyId === post.id}
                             onClick={() => requestDeletePost(post)}
-                            className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3 h-3" />
                             <span>Delete</span>
@@ -1699,7 +1775,7 @@ export function CommunityView({
                           />
                         )}
                         {post.poll && (
-                          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3">
+                          <div className="p-4 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-950/20 space-y-3">
                             {(() => {
                               const poll = post.poll!;
                               const totalVotes = poll.options.reduce(
@@ -1717,7 +1793,7 @@ export function CommunityView({
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                                       <BarChart2
-                                        className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
+                                        className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"
                                         aria-hidden="true"
                                       />
                                       <span>{poll.question}</span>
@@ -1759,22 +1835,25 @@ export function CommunityView({
                                           }}
                                           className={`relative w-full text-left rounded-lg border px-3 py-2 text-xs overflow-hidden transition-colors cursor-pointer ${
                                             isSelected
-                                              ? 'border-emerald-400 dark:border-emerald-700 bg-white dark:bg-slate-900'
-                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-300'
+                                              ? 'border-indigo-400 dark:border-indigo-700 bg-white dark:bg-slate-900'
+                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-300 dark:hover:border-indigo-700'
                                           }`}
                                         >
-                                          <div
-                                            className={`absolute inset-y-0 left-0 transition-all duration-300 ${
+                                          <motion.div
+                                            initial={false}
+                                            animate={{ scaleX: pct / 100 }}
+                                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                                            style={{ transformOrigin: '0% 50%' }}
+                                            className={`absolute inset-0 ${
                                               isSelected
-                                                ? 'bg-emerald-500/15 dark:bg-emerald-500/20'
+                                                ? 'bg-gradient-to-r from-indigo-500/20 to-teal-500/15 dark:from-indigo-500/25 dark:to-teal-500/20'
                                                 : 'bg-slate-200/45 dark:bg-slate-800/45'
                                             }`}
-                                            style={{ width: `${pct}%` }}
                                           />
                                           <div className="relative flex items-center justify-between gap-2">
                                             <span className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
                                               {isSelected && (
-                                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                                <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                                               )}
                                               <span>{opt.text}</span>
                                             </span>
@@ -1795,7 +1874,7 @@ export function CommunityView({
                                           votingPollId === post.id || draftMultiIds.length === 0
                                         }
                                         onClick={() => void handleVotePoll(post.id, draftMultiIds)}
-                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer"
+                                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors"
                                       >
                                         {votingPollId === post.id
                                           ? 'Saving Vote…'
@@ -1820,7 +1899,7 @@ export function CommunityView({
                     {/* Reactions Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {REACTION_OPTIONS.map(({ type, label, Icon }) => {
+                        {REACTION_OPTIONS.map(({ type, label, Icon, activeClass }) => {
                           const count = post.reactions.filter((r) => r.type === type).length;
                           const active = myReaction === type;
                           return (
@@ -1831,7 +1910,7 @@ export function CommunityView({
                               aria-pressed={active}
                               className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                 active
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                                  ? activeClass
                                   : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                               }`}
                             >
@@ -2074,42 +2153,55 @@ export function CommunityView({
               })}
             </div>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {/* PRIVATE MESSAGES TAB */}
-      {activeTab === 'messages' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh]">
-          {/* Left Pane: Threads + Active Member Directory */}
-          <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col min-h-0 max-h-72 lg:max-h-none">
-            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Direct Conversations
-                </span>
-                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                  {directory.length} active
-                </span>
-              </div>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="search"
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Find member by name or code..."
-                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto scrollbar-subtle divide-y divide-slate-100 dark:divide-slate-800/80">
-              {threadsLoading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} height={48} />
-                  ))}
+        {/* PRIVATE MESSAGES TAB */}
+        {activeTab === 'messages' && (
+          <motion.div
+            key="tab-messages"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh] shadow-xs"
+          >
+            {/* Left Pane: Threads + Active Member Directory */}
+            <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col min-h-0 max-h-72 lg:max-h-none">
+              <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Direct Conversations
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {directory.length} active
+                  </span>
                 </div>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="search"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Find member by name or code..."
+                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                  />
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto scrollbar-subtle divide-y divide-slate-100 dark:divide-slate-800/80">
+                {threadsLoading ? (
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <Skeleton width={28} height={28} borderRadius={8} />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton width="65%" height={12} />
+                          <Skeleton width="85%" height={10} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
               ) : (
                 <>
                   {filteredThreads.length > 0 && (
@@ -2217,7 +2309,7 @@ export function CommunityView({
           <div className="flex flex-col min-h-0">
             {!selectedPeerId || !selectedPeer ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
-                <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
                   <Shield className="w-5 h-5" />
                 </div>
                 <div className="space-y-1 max-w-sm">
@@ -2261,14 +2353,14 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => onViewMemberProfile(selectedPeer.id)}
-                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
-                        <User className="w-3 h-3" aria-hidden="true" />
+                        <User className="w-3 h-3 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                         <span>View Profile</span>
                       </button>
                     )}
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
-                      <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 shrink-0">
+                      <Lock className="w-3 h-3" />
                       AES-256-GCM
                     </span>
                   </div>
@@ -2301,7 +2393,7 @@ export function CommunityView({
                           <div
                             className={`max-w-[82%] sm:max-w-[70%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                               mine
-                                ? 'bg-emerald-600 text-white'
+                                ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-xs'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
                             }`}
                           >
@@ -2360,7 +2452,7 @@ export function CommunityView({
                   <button
                     type="submit"
                     disabled={!messageInput.trim() || sendingMessage}
-                    className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-45 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
                   >
                     <Send className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{sendingMessage ? 'Sending...' : 'Send'}</span>
@@ -2369,12 +2461,19 @@ export function CommunityView({
               </>
             )}
           </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {/* MEMBERS DIRECTORY TAB */}
-      {activeTab === 'members' && (
-        <div className="space-y-5">
+        {/* MEMBERS DIRECTORY TAB */}
+        {activeTab === 'members' && (
+          <motion.div
+            key="tab-members"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+            className="space-y-5"
+          >
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -2395,7 +2494,7 @@ export function CommunityView({
                 value={directorySearch}
                 onChange={(e) => setDirectorySearch(e.target.value)}
                 placeholder="Search name, code, occupation..."
-                className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
           </div>
@@ -2405,9 +2504,19 @@ export function CommunityView({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4"
                 >
-                  <Skeleton height={86} />
+                  <div className="flex items-start gap-3">
+                    <Skeleton width={36} height={36} borderRadius={8} />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton width="65%" height={15} />
+                      <Skeleton width="80%" height={12} />
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <Skeleton width={90} height={24} />
+                    <Skeleton width={110} height={30} borderRadius={8} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -2500,7 +2609,7 @@ export function CommunityView({
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(member.id)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all"
                             >
                               <User className="w-3 h-3" aria-hidden="true" />
                               <span>View Profile</span>
@@ -2514,8 +2623,9 @@ export function CommunityView({
               </div>
             );
           })()}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ActionModal
         open={modal !== null}
         mode={modal?.mode || 'notice'}
@@ -2544,6 +2654,6 @@ export function CommunityView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

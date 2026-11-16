@@ -16,6 +16,7 @@ import {
   Vote,
   X,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   DecisionPoll,
@@ -638,14 +639,18 @@ export function VotingView({
   const showPolls = categoryFilter === 'all' || categoryFilter === 'polls';
 
   return (
-    <div className="space-y-6">
-
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28 }}
+      className="space-y-6"
+    >
       {isAdmin && (
         <div
           role="note"
-          className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5"
+          className="p-3.5 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/25 text-xs text-indigo-900 dark:text-indigo-200 flex items-center gap-2.5"
         >
-          <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+          <Lock className="w-4 h-4 text-indigo-700 dark:text-indigo-400 shrink-0" aria-hidden="true" />
           <span>
             <strong>Administrator Ballot Audit View:</strong> Only Administrators can inspect
             individual member votes in the confidential audit ledger. Admins do not cast member
@@ -685,7 +690,7 @@ export function VotingView({
               <button
                 type="button"
                 onClick={() => setShowCreatePoll((v) => !v)}
-                className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{showCreatePoll ? 'Close Poll Form' : 'Initiate Decision Poll'}</span>
@@ -700,29 +705,44 @@ export function VotingView({
                   { id: 'polls', label: `Decision Polls (${openPolls.length})` },
                   { id: 'investments', label: `Investments (${openProjects.length})` },
                 ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setCategoryFilter(tab.id)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                    categoryFilter === tab.id
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              ).map((tab) => {
+                const active = categoryFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCategoryFilter(tab.id)}
+                    className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      active
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="voting-category-pill"
+                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {isStaff && showCreatePoll && (
-          <form
-            onSubmit={handleCreatePoll}
-            className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
+        <AnimatePresence initial={false}>
+          {isStaff && showCreatePoll && (
+            <motion.form
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.24 }}
+              onSubmit={handleCreatePoll}
+              className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden"
+            >
             <div>
               <label
                 htmlFor="poll-title"
@@ -828,8 +848,9 @@ export function VotingView({
                 {creatingPoll ? 'Launching…' : 'Launch Secret Poll'}
               </button>
             </div>
-          </form>
-        )}
+            </motion.form>
+          )}
+        </AnimatePresence>
       </section>
 
       {!isAdmin && guarantorPendingForMe.length > 0 && (
@@ -880,7 +901,21 @@ export function VotingView({
       {loading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <Skeleton key={i} height={180} />
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4"
+            >
+              <div className="flex flex-col lg:flex-row justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <Skeleton width={220} height={14} />
+                  <Skeleton width="55%" height={22} />
+                  <Skeleton width="85%" height={14} />
+                </div>
+                <div className="lg:w-80 shrink-0">
+                  <Skeleton height={110} />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : (
@@ -1047,16 +1082,19 @@ export function VotingView({
                                 </span>
                               </div>
                               <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                <div
-                                  className="h-full bg-emerald-600 transition-all duration-300"
-                                  style={{ width: `${progressPct}%` }}
+                                <motion.div
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500"
+                                  style={{ width: `${progressPct}%`, originX: 0 }}
                                 />
                               </div>
                               <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums">
                                 <span className="text-emerald-700 dark:text-emerald-400">
                                   Upvotes: {approveCount}
                                 </span>
-                                <span className="text-red-700 dark:text-red-400">
+                                <span className="text-rose-700 dark:text-rose-400">
                                   Downvotes: {rejectCount}
                                 </span>
                                 <span className="text-slate-500 dark:text-slate-400">
@@ -1081,9 +1119,12 @@ export function VotingView({
                                 </span>
                               </div>
                               <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                <div
-                                  className="h-full bg-amber-500 transition-all duration-300"
-                                  style={{ width: `${castProgressPct}%` }}
+                                <motion.div
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-indigo-500"
+                                  style={{ width: `${castProgressPct}%`, originX: 0 }}
                                 />
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -1233,7 +1274,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!canCastBallot || busyId === loan.id}
                                   onClick={() => void handleLoanVote(loan.id, 'upvote')}
-                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{myVote ? 'Change to Upvote' : 'Upvote'}</span>
@@ -1242,7 +1283,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!canCastBallot || busyId === loan.id}
                                   onClick={() => void handleLoanVote(loan.id, 'downvote')}
-                                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{myVote ? 'Change to Downvote' : 'Downvote'}</span>
@@ -1413,9 +1454,12 @@ export function VotingView({
                                   </span>
                                 </div>
                                 <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                  <div
-                                    className="h-full bg-emerald-600"
-                                    style={{ width: `${pct}%` }}
+                                  <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                    className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-teal-500"
+                                    style={{ width: `${pct}%`, originX: 0 }}
                                   />
                                 </div>
                               </div>
@@ -1619,9 +1663,12 @@ export function VotingView({
                                 </span>
                               </div>
                               <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                <div
-                                  className="h-full bg-emerald-600 transition-all duration-300"
-                                  style={{ width: `${progressPct}%` }}
+                                <motion.div
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500"
+                                  style={{ width: `${progressPct}%`, originX: 0 }}
                                 />
                               </div>
                               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
@@ -1893,6 +1940,6 @@ export function VotingView({
           if (!modalBusy) setModal(null);
         }}
       />
-    </div>
+    </motion.div>
   );
 }
