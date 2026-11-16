@@ -16,6 +16,7 @@ import type {
   CoopMeeting,
   CoopNotice,
   DecisionPoll,
+  EmailTemplateCollection,
   FundConfig,
   HalalProject,
   InstallmentItem,
@@ -72,7 +73,9 @@ import {
 } from './crypto.ts';
 import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVaultState } from './db.ts';
 import {
+  buildEmailTemplatePreview,
   isSmtpConfigured,
+  sendEmail,
   sendMonthlyPdfSummaryEmail,
   sendPasswordResetAdminAlertEmail,
   sendRegistrationApprovedEmail,
@@ -99,12 +102,23 @@ import {
 } from './realtime.ts';
 import { buildOtpAuthUri, generateTotpSecret, verifyTotpCode } from './totp.ts';
 import { normalizeAndValidatePostLinks } from '../utils/communityLinks.ts';
+import {
+  isValidEmailTemplateKey,
+  mergeEmailTemplateCollections,
+} from '../utils/emailTemplates.ts';
 
 function dispatchTransactionEmails(items: TransactionEmailSummaryInput[]): void {
   if (items.length === 0) return;
-  void Promise.allSettled(items.map((item) => sendTransactionSummaryEmail(item))).catch((err) => {
-    console.warn('[EmailService] Background transaction summary dispatch error:', err);
-  });
+  void loadVaultState()
+    .then((state) => {
+      const templateOverrides = state.fundConfig?.emailTemplates;
+      return Promise.allSettled(
+        items.map((item) => sendTransactionSummaryEmail(item, templateOverrides))
+      );
+    })
+    .catch((err) => {
+      console.warn('[EmailService] Background transaction summary dispatch error:', err);
+    });
 }
 
 function extractGoogleBearerToken(req: AuthenticatedRequest): string | null {
@@ -329,12 +343,14 @@ apiRouter.post('/auth/forgot-password', authRateLimiter, async (req, res) => {
     let matchedUser: StoredUser | null = null;
     let adminRecipients: string[] = [];
     let fundName = 'Amanah Cooperative Treasury';
+    let emailTemplates: EmailTemplateCollection | undefined;
 
     await updateVaultState((draft) => {
       draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
         ? draft.passwordResetRequests
         : [];
       fundName = draft.fundConfig.fundName;
+      emailTemplates = draft.fundConfig.emailTemplates;
       const target = draft.users.find((u) => u.email.toLowerCase() === email);
       if (!target) return draft;
       matchedUser = target;
@@ -406,6 +422,7 @@ apiRouter.post('/auth/forgot-password', authRateLimiter, async (req, res) => {
         memberEmail: target.email,
         reason: reason || undefined,
         fundName,
+        templateOverrides: emailTemplates,
       }).catch((err) => {
         console.warn('[EmailService] Admin alert dispatch error:', err);
       });
@@ -774,6 +791,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         mobile,
         referenceMemberName,
         fundName: nextRegisterState.fundConfig?.fundName || fundNameForAlert,
+        templateOverrides: nextRegisterState.fundConfig?.emailTemplates,
       }).catch((err) => {
         console.warn('[EmailService] Admin registration alert dispatch failed:', err);
       });
@@ -4752,6 +4770,7 @@ apiRouter.patch(
               memberCode: targetInfo.memberCode,
               adminName: viewer.name,
               fundName: nextState.fundConfig.fundName,
+              templateOverrides: nextState.fundConfig.emailTemplates,
             }),
             new Promise<{ sent: false; reason: string }>((resolve) =>
               setTimeout(() => resolve({ sent: false, reason: 'SMTP_TIMEOUT' }), 6000)
@@ -4954,12 +4973,14 @@ apiRouter.post(
 
       let targetUser: StoredUser | null = null;
       let fundName = 'Amanah Cooperative Treasury';
+      let emailTemplates: EmailTemplateCollection | undefined;
 
       await updateVaultState((draft) => {
         draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
           ? draft.passwordResetRequests
           : [];
         fundName = draft.fundConfig.fundName;
+        emailTemplates = draft.fundConfig.emailTemplates;
         const user = draft.users.find((u) => u.id === targetId);
         if (!user) return draft;
         targetUser = user;
@@ -4981,6 +5002,7 @@ apiRouter.post(
         tempPassword: generatedTemp,
         adminName: viewer.name,
         fundName,
+        templateOverrides: emailTemplates,
       });
 
       const nextState = await updateVaultState((draft) => {
@@ -5344,6 +5366,21 @@ apiRouter.patch(
           }
           cfg.monthlyReportAutoEmail = body.monthlyReportAutoEmail;
         }
+        if (body.emailTemplates !== undefined) {
+          const prevJson = JSON.stringify(cfg.emailTemplates || {});
+          const mergedTemplates = mergeEmailTemplateCollections(
+            cfg.emailTemplates,
+            body.emailTemplates
+          );
+          const nextJson = JSON.stringify(mergedTemplates || {});
+          if (prevJson !== nextJson) {
+            changes.emailTemplates = {
+              from: Object.keys(cfg.emailTemplates || {}),
+              to: Object.keys(mergedTemplates || {}),
+            };
+          }
+          cfg.emailTemplates = mergedTemplates;
+        }
         cfg.updatedAt = new Date().toISOString();
         cfg.updatedBy = viewer.name;
 
@@ -5384,6 +5421,64 @@ apiRouter.patch(
     } catch (err) {
       console.error('Update config error:', err);
       res.status(500).json({ error: 'Failed to update fund configuration.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/email-templates/test',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const viewer = req.authUser!;
+      const rawKey = String(req.body?.templateKey || '').trim();
+      if (!isValidEmailTemplateKey(rawKey)) {
+        res.status(400).json({ error: 'Invalid email template key.' });
+        return;
+      }
+
+      const recipientEmail =
+        String(req.body?.recipientEmail || viewer.email || '').trim().toLowerCase();
+      if (!recipientEmail || !recipientEmail.includes('@')) {
+        res.status(400).json({ error: 'Please provide a valid recipient email address.' });
+        return;
+      }
+
+      const state = await loadVaultState();
+      const overrides = req.body?.template
+        ? mergeEmailTemplateCollections(state.fundConfig.emailTemplates, {
+            [rawKey]: req.body.template,
+          })
+        : state.fundConfig.emailTemplates;
+
+      const preview = buildEmailTemplatePreview({
+        key: rawKey,
+        templateOverrides: overrides,
+        fundName: state.fundConfig.fundName,
+        currency: state.fundConfig.currency,
+      });
+
+      const testSubject = `[TEST] ${preview.subject}`;
+      const result = await sendEmail({
+        to: recipientEmail,
+        subject: testSubject,
+        text: preview.text,
+        html: preview.html,
+      });
+
+      res.json({
+        ok: true,
+        sent: result.sent,
+        smtpConfigured: isSmtpConfigured(),
+        recipientEmail,
+        subject: testSubject,
+        reason: result.reason,
+      });
+    } catch (err) {
+      console.error('Test email template dispatch error:', err);
+      res.status(500).json({ error: 'Failed to dispatch test email.' });
     }
   }
 );
@@ -8210,6 +8305,7 @@ async function dispatchMonthlyPdfReport(options: {
     monthlyCollected: summary.monthContributionsCollected,
     activeLoanTotal: summary.activeQardHasanTotal,
     pdfBuffer: buffer,
+    templateOverrides: state.fundConfig?.emailTemplates,
   });
 
   if (emailStats.sentCount > 0 || !options.isAutomated) {

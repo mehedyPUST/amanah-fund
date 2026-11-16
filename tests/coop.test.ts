@@ -32,6 +32,7 @@ import {
   verifyTotpCode,
 } from '../src/server/totp.ts';
 import {
+  buildEmailTemplatePreview,
   buildTransactionSummaryEmailPayload,
   isSmtpConfigured,
   normalizeSmtpPass,
@@ -47,6 +48,12 @@ import {
   normalizeAndValidatePostLinks,
   parseTextWithLinks,
 } from '../src/utils/communityLinks.ts';
+import {
+  EMAIL_TEMPLATE_KEYS,
+  mergeEmailTemplateCollections,
+  resolveEmailTemplate,
+  sanitizeEmailHeaderColor,
+} from '../src/utils/emailTemplates.ts';
 import { BANK_PROVIDERS } from '../src/utils/format.ts';
 import type { LoanRequest, PublicUser } from '../src/types/coop.ts';
 
@@ -1161,6 +1168,68 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     expect(welcomeRes.sent).toBe(false);
     expect(welcomeRes.reason).toBe('SMTP_NOT_CONFIGURED');
   });
+
+  it('resolves, merges, resets, and applies custom Nodemailer email formats safely across templates', () => {
+    expect(EMAIL_TEMPLATE_KEYS).toHaveLength(6);
+    expect(sanitizeEmailHeaderColor('red; background:url(x)', '#059669')).toBe('#059669');
+    expect(sanitizeEmailHeaderColor('#4F46E5', '#059669')).toBe('#4f46e5');
+
+    const merged = mergeEmailTemplateCollections(undefined, {
+      transactionSummary: {
+        subject: 'Receipt {{referenceId}} ({{amount}})',
+        greeting: 'Salam {{recipientName}}!',
+        introBody: 'Ledger notice: {{summaryText}}',
+        footerNote: 'Custom cooperative footer note.',
+        headerColor: '#4f46e5',
+      },
+    });
+    expect(merged?.transactionSummary?.headerColor).toBe('#4f46e5');
+
+    const resolved = resolveEmailTemplate('transactionSummary', merged);
+    expect(resolved.subject).toBe('Receipt {{referenceId}} ({{amount}})');
+
+    const customPayload = buildTransactionSummaryEmailPayload(
+      {
+        to: 'bilal@amanahcoop.org',
+        recipientName: 'Bilal <Admin>',
+        fundName: 'Amanah Cooperative',
+        currency: 'BDT',
+        eventTitle: 'Contribution Verified',
+        transactionType: 'Deposit',
+        referenceId: 'TXN-901',
+        amount: 7500,
+        statusLabel: 'Approved',
+        summaryText: 'Deposit credited cleanly.',
+      },
+      merged
+    );
+
+    expect(customPayload.subject).toBe('Receipt TXN-901 (7,500 BDT)');
+    expect(customPayload.text).toContain('Salam Bilal <Admin>!');
+    expect(customPayload.text).toContain('Custom cooperative footer note.');
+    expect(customPayload.html).toContain('#4f46e5');
+    expect(customPayload.html).toContain('Bilal &lt;Admin&gt;');
+    expect(customPayload.html).not.toContain('Bilal <Admin>');
+
+    const previewAll = EMAIL_TEMPLATE_KEYS.map((key) =>
+      buildEmailTemplatePreview({
+        key,
+        templateOverrides: merged,
+        fundName: 'Amanah Cooperative',
+        currency: 'BDT',
+      })
+    );
+    expect(previewAll.every((p) => p.subject.length > 0 && p.html.includes('Amanah Cooperative'))).toBe(
+      true
+    );
+
+    // Passing null for a template key resets it cleanly back to default
+    const afterReset = mergeEmailTemplateCollections(merged, {
+      transactionSummary: null,
+    });
+    expect(afterReset).toBeUndefined();
+  });
 });
+
 
 

@@ -108,6 +108,26 @@ export interface ActiveMemberDirectoryItem {
   monthlyTarget: number;
 }
 
+export type EmailTemplateKey =
+  | 'transactionSummary'
+  | 'registrationApproved'
+  | 'registrationPendingAdmin'
+  | 'tempPassword'
+  | 'passwordResetAdminAlert'
+  | 'monthlyPdfSummary';
+
+export interface EmailTemplateFormat {
+  subject: string;
+  greeting: string;
+  introBody: string;
+  footerNote: string;
+  headerColor: string;
+}
+
+export type EmailTemplateCollection = Partial<
+  Record<EmailTemplateKey, Partial<EmailTemplateFormat>>
+>;
+
 export interface FundConfig {
   id: string;
   fundName: string;
@@ -140,6 +160,7 @@ export interface FundConfig {
   autoSyncSheet?: boolean;
   lastMonthlyPdfSentMonth?: string;
   monthlyReportAutoEmail?: boolean;
+  emailTemplates?: EmailTemplateCollection;
   updatedAt: string;
   updatedBy: string;
 }

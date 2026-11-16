@@ -162,9 +162,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
-        // Optional SW registration when browser restricts scope
-      });
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+        .then((reg) => {
+          reg.update().catch(() => {});
+        })
+        .catch(() => {
+          // Optional SW registration when browser restricts scope
+        });
     }
   }, []);
 

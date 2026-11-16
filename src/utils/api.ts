@@ -13,6 +13,9 @@ import type {
   DecisionPoll,
   EligibilityCheck,
   EmailNotification,
+  EmailTemplateCollection,
+  EmailTemplateFormat,
+  EmailTemplateKey,
   FundConfig,
   HalalProject,
   LoanRequest,
@@ -526,9 +529,32 @@ export const api = {
     apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
       method: 'DELETE',
     }),
-  updateConfig: (payload: Partial<FundConfig>) =>
+  updateConfig: (
+    payload: Omit<Partial<FundConfig>, 'emailTemplates'> & {
+      emailTemplates?:
+        | EmailTemplateCollection
+        | Partial<Record<EmailTemplateKey, Partial<EmailTemplateFormat> | null>>
+        | null;
+    }
+  ) =>
     apiRequest<{ config: FundConfig }>('/api/admin/config', {
       method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  sendTestTemplateEmail: (payload: {
+    templateKey: EmailTemplateKey;
+    template?: Partial<EmailTemplateFormat>;
+    recipientEmail?: string;
+  }) =>
+    apiRequest<{
+      ok: boolean;
+      sent: boolean;
+      smtpConfigured: boolean;
+      recipientEmail: string;
+      subject: string;
+      reason?: string;
+    }>('/api/admin/email-templates/test', {
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
   getAuditLogs: () =>

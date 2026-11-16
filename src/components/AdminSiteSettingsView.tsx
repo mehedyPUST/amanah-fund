@@ -28,6 +28,7 @@ import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 
@@ -872,6 +873,14 @@ export function AdminSiteSettingsView({
             </div>
           )}
         </section>
+      )}
+
+      {isAdmin && (
+        <AdminEmailTemplatesEditor
+          config={config}
+          adminEmail={user.email}
+          onRefresh={onRefresh}
+        />
       )}
 
       <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">

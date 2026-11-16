@@ -1,5 +1,11 @@
-const CACHE_NAME = 'amanah-pwa-v1';
-const APP_SHELL_URLS = ['/', '/manifest.webmanifest', '/pwa-192x192.png', '/pwa-512x512.png', '/apple-touch-icon.png'];
+const CACHE_NAME = 'amanah-pwa-v2';
+const APP_SHELL_URLS = [
+  '/',
+  '/manifest.webmanifest',
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/apple-touch-icon.png',
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -28,7 +34,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache live API data, SSE streams, or Next.js HMR dev endpoints
+  // Never intercept or cache live API data, SSE streams, or Next.js HMR dev endpoints
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/_next/webpack') ||
@@ -48,7 +54,19 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+        .catch(() =>
+          caches
+            .match(request)
+            .then((cached) => cached || caches.match('/'))
+            .then(
+              (fallback) =>
+                fallback ||
+                new Response('Offline — please reconnect to load Amanah.', {
+                  status: 503,
+                  headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                })
+            )
+        )
     );
     return;
   }
@@ -56,7 +74,7 @@ self.addEventListener('fetch', (event) => {
   // Static assets: stale-while-revalidate for fast shell loads
   if (
     url.pathname.startsWith('/_next/static/') ||
-    /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?|css|js)$/.test(url.pathname)
+    /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?|css|js|webmanifest)$/.test(url.pathname)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -68,7 +86,14 @@ self.addEventListener('fetch', (event) => {
             }
             return res;
           })
-          .catch(() => cached);
+          .catch(
+            () =>
+              cached ||
+              new Response('', {
+                status: 504,
+                statusText: 'Offline',
+              })
+          );
         return cached || networkFetch;
       })
     );
