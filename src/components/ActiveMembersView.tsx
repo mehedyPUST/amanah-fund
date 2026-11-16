@@ -149,8 +149,7 @@ export function ActiveMembersView({
               Authentication Required
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              The Active Members directory contains verified member contact information and is
-              accessible only to authenticated cooperative members.
+              Sign in to view the cooperative member directory.
             </p>
           </div>
         </div>
@@ -179,10 +178,6 @@ export function ActiveMembersView({
                 ({stats.totalActive})
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Verified cooperative members with contact details, membership tenure, and contribution
-              totals
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">

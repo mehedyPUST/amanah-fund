@@ -215,17 +215,11 @@ export function RecentTransactions({
           >
             Recent Transactions
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Your latest monthly contributions and Qard Hasan loan payments
-            {counts.pendingCount > 0 && (
-              <>
-                <span aria-hidden="true"> · </span>
-                <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
-                  {counts.pendingCount} awaiting verification
-                </span>
-              </>
-            )}
-          </p>
+          {counts.pendingCount > 0 && (
+            <p className="text-xs font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
+              {counts.pendingCount} awaiting verification
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">

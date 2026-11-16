@@ -240,9 +240,6 @@ export function ManagerRotationTimeline({
           <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
             Historical, Current &amp; Future Manager Timeline
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Track completed tenures, the active manager window, and upcoming cyclic rotations with expected start and end dates.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">

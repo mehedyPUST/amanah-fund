@@ -258,10 +258,6 @@ export function TreasuryGrowthChart({
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Monthly Contribution Trends & Treasury Growth
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Track monthly cooperative inflows, personal deposits, and net central treasury growth
-            over time
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -411,10 +407,6 @@ export function TreasuryGrowthChart({
           <div className="space-y-1">
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
               No monthly contribution or treasury growth recorded yet
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
-              Once monthly deposits are submitted and verified, this chart will plot contribution
-              trends alongside cumulative treasury balance growth.
             </p>
           </div>
           {onSubmitContribution && (

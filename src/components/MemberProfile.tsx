@@ -534,9 +534,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Registration Credentials
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Verified KYC identity details recorded during cooperative onboarding
-            </p>
           </div>
 
           <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -642,11 +639,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Update Contact Information
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {user.role === 'admin'
-                ? 'Keep your administrator profile details up to date. Encrypted via AES-256-GCM.'
-                : 'Profile edits require Admin or Manager approval before taking effect (password changes apply immediately).'}
-            </p>
+            {user.role !== 'admin' && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Edits require Admin or Manager approval.
+              </p>
+            )}
           </div>
 
           {(() => {
@@ -847,10 +844,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
               Change Password (No Approval Needed)
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Updating your password takes effect immediately without requiring Admin or Manager
-              approval.
-            </p>
           </div>
         </div>
 
@@ -930,10 +923,6 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
                 Authenticator App Protection
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Protects high-privilege treasury disbursements, policy edits, and member management
-                with a 6-digit authenticator code.
-              </p>
             </div>
             <span
               className={`text-xs font-mono font-semibold shrink-0 ${

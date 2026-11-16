@@ -178,11 +178,6 @@ export function GoogleSheetSyncCard({
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Live Cooperative Treasury Spreadsheet Blueprint
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-            Mirrors the live website database across 7 structured Google Sheets tabs: Fund Summary,
-            Members, Contributions, Loans, Installments, Investment Placements, and Email
-            Notifications.
-          </p>
         </div>
 
         <GoogleSignInButton

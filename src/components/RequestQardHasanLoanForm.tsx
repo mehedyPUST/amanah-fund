@@ -742,7 +742,7 @@ export function RequestQardHasanLoanForm({
             htmlFor={`qard-loan-account-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Payout Account / Wallet Number (AES-256-GCM Encrypted)
+            Payout Account / Wallet Number
           </label>
           <input
             id={`qard-loan-account-${variant}`}
@@ -761,7 +761,7 @@ export function RequestQardHasanLoanForm({
             htmlFor={`qard-loan-context-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Confidential Review Notes (Encrypted for Admin &amp; Treasury)
+            Confidential Review Notes
           </label>
           <textarea
             id={`qard-loan-context-${variant}`}
@@ -769,7 +769,7 @@ export function RequestQardHasanLoanForm({
             disabled={fieldsLocked}
             value={emergencyContext}
             onChange={(e) => setEmergencyContext(e.target.value)}
-            placeholder="Optional supporting context for administrative review (encrypted at rest)"
+            placeholder="Optional supporting context"
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
@@ -787,12 +787,12 @@ export function RequestQardHasanLoanForm({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-              Requests exceeding {formatMoney(guarantorThreshold, ccy)} require{' '}
+            <p className="text-[11px] text-amber-800 dark:text-amber-300">
+              Select{' '}
               {membersLoading || membersError
                 ? requiredGuarantorsCount
                 : effectiveRequiredGuarantors}{' '}
-              active member co-signer(s) before opening for 2/3 ballot voting.
+              co-signer(s) for requests over {formatMoney(guarantorThreshold, ccy)}.
             </p>
             {membersLoading ? (
               <div className="p-2.5 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950 space-y-1.5">
@@ -867,7 +867,7 @@ export function RequestQardHasanLoanForm({
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
           />
           <span className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-            I confirm this is a <strong className="text-slate-800 dark:text-slate-200">0% interest Qard Hasan</strong> request, verify that my encrypted payout details are accurate, and commit to completing the {parsedMonths}-month repayment timeline upon 2/3 member approval.
+            I confirm this is a <strong className="text-slate-800 dark:text-slate-200">0% Qard Hasan</strong> request and commit to the {parsedMonths}-month repayment schedule.
           </span>
         </label>
 

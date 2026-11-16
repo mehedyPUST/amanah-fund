@@ -112,8 +112,8 @@ export function SignInForm() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Sign In to Treasury
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Only administrator-approved members can sign in and access cooperative funds or 2/3 voting.
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Approved members only.
           </p>
         </div>
 
@@ -204,7 +204,7 @@ export function SignInForm() {
           </button>
         </form>
 
-        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center justify-between gap-2">
             <span>Applying as a new member?</span>
             <Link
@@ -215,9 +215,6 @@ export function SignInForm() {
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
-          <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-            First registration on an empty cooperative becomes the administrator. Later members require admin approval.
-          </p>
         </div>
       </motion.div>
     </div>

@@ -258,10 +258,6 @@ export function MemberRegistrySection({
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Member Registry ({members.length} accounts · {pendingCount} pending approval)
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Approve or decline new member applications, edit profiles, adjust RBAC roles, block or
-            suspend accounts, reactivate members, and inspect active member records.
-          </p>
         </div>
 
         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit shrink-0">

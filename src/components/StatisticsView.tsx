@@ -50,10 +50,6 @@ export function StatisticsView({
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Statistics &amp; Fund Performance
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Monthly cash position, treasury growth trajectory, contribution ratios, and Qard Hasan
-            lending velocity.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">

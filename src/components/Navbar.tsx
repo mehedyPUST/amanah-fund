@@ -7,7 +7,12 @@ import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
 
-type HomeSectionId = 'overview' | 'architecture' | 'governance-charter' | 'community';
+type HomeSectionId =
+  | 'overview'
+  | 'architecture'
+  | 'how-it-works'
+  | 'governance-charter'
+  | 'community';
 
 interface PublicNavItem {
   id?: HomeSectionId;
@@ -30,11 +35,12 @@ export function Navbar() {
   const publicNavLinks: PublicNavItem[] = [
     { id: 'overview', href: '/#overview', label: 'Overview' },
     { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
+    { id: 'how-it-works', href: '/#how-it-works', label: 'How It Works' },
     {
       id: 'governance-charter',
       href: '/#governance-charter',
       altPath: '/rules',
-      label: 'Governance Charter',
+      label: 'Charter',
     },
     { id: 'community', href: '/#community', label: 'Community' },
   ];
@@ -62,6 +68,7 @@ export function Navbar() {
     if (
       hash === 'overview' ||
       hash === 'architecture' ||
+      hash === 'how-it-works' ||
       hash === 'governance-charter' ||
       hash === 'community'
     ) {
@@ -77,6 +84,7 @@ export function Navbar() {
     const sectionIds: HomeSectionId[] = [
       'overview',
       'architecture',
+      'how-it-works',
       'governance-charter',
       'community',
     ];

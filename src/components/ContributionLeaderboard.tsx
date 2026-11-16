@@ -188,10 +188,6 @@ export function ContributionLeaderboard({
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                 No Approved Contributions Yet
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Once monthly Bank or MFS contributions are verified by a manager, top contributors
-                and consecutive monthly streaks will appear here.
-              </p>
             </div>
             <button
               type="button"

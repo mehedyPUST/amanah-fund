@@ -316,9 +316,6 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Member Audit Log
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Recent contribution submissions, Qard Hasan loan requests, repayments, and profile updates.
-            </p>
           </div>
 
           <button

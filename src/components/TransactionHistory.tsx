@@ -411,11 +411,6 @@ export function TransactionHistory({
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Transaction History · Contributions, Disbursements &amp; Repayments
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {effectiveScope === 'mine'
-              ? `Unified record of ${user.name}'s (${user.memberCode}) Bank/MFS deposits, Qard Hasan disbursements, and repayments`
-              : 'Cooperative-wide ledger of all Bank/MFS contributions, Qard Hasan disbursements, and loan repayments'}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">

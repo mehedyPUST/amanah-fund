@@ -30,7 +30,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Member-owned interest-free Qard Hasan lending cooperative transitioning to Shariah-screened Halal real-economy investments upon maturity.
+              Interest-free Qard Hasan lending &amp; Halal real-economy cooperative.
             </p>
           </div>
 
@@ -55,6 +55,15 @@ export function Footer() {
                   className="hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors"
                 >
                   Security &amp; Architecture
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/#how-it-works"
+                  onClick={(e) => scrollIfHome(e, 'how-it-works')}
+                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
+                >
+                  How It Works
                 </Link>
               </li>
               <li>
@@ -102,9 +111,6 @@ export function Footer() {
             <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
               Member Access
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Verified members submit monthly Bank or MFS contributions and vote on Qard Hasan requests.
-            </p>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={user ? '/dashboard' : '/login'}

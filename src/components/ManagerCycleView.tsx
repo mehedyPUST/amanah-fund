@@ -205,8 +205,7 @@ export function ManagerCycleView({
               Manager Rotation Cycle Schedule
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-              Every active cooperative member rotates through the Manager Desk in deterministic joining order
-              (excluding system Admin). Duration is configurable by Admin ({schedule ? `${schedule.cycleMonths} month${schedule.cycleMonths === 1 ? '' : 's'}` : '3 months'} per turn).
+              Active members rotate through Manager stewardship in joining order ({schedule ? `${schedule.cycleMonths} month${schedule.cycleMonths === 1 ? '' : 's'}` : '3 months'} per turn).
             </p>
           </div>
 
@@ -243,9 +242,6 @@ export function ManagerCycleView({
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Admin Cycle Duration Configuration
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Adjust how many months each member serves as Manager (e.g., 3 months, 6 months, 12 months, or custom).
-              </p>
             </div>
             <div className="flex items-center gap-1.5">
               {[3, 6, 12].map((preset) => (

@@ -532,10 +532,6 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               System Audit Logs · Administrative Actions &amp; Setting History
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Timestamped, non-editable records of user approvals, RBAC modifications, policy
-              updates, treasury disbursements, and moderation actions.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -783,10 +779,6 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 ? 'No administrative audit records recorded yet.'
                 : 'No administrative audit entries match your current filters.'}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Every user approval, role update, site setting modification, and financial
-              authorization appends a tamper-evident SHA-256 record here automatically.
-            </p>
             {hasActiveFilters && (
               <button
                 type="button"

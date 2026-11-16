@@ -211,9 +211,6 @@ export function AuditTrendsCharts({
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Audit Analytics: Contribution Trends & Loan Volume Over Time
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Comparing monthly contribution inflows, cumulative treasury growth, and Qard Hasan loan volume
-          </p>
         </div>
 
         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-fit shrink-0">

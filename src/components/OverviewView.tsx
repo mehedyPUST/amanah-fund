@@ -421,9 +421,6 @@ export function OverviewView({
                 ? 'New Member Application Pending Approval'
                 : 'New Member Applications Pending Approval'}
             </div>
-            <p className="text-xs text-amber-800 dark:text-amber-300">
-              Pending applicants cannot sign in until verified and activated in Member Registry.
-            </p>
           </div>
           <button
             type="button"
@@ -447,9 +444,6 @@ export function OverviewView({
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Maximum Qard Hasan Loans Per Member Per Year
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Default is 3 loans/year. Changes persist to the database and immediately enforce member loan eligibility across the platform.
-              </p>
             </div>
 
             <form
@@ -680,9 +674,6 @@ export function OverviewView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Active Quard Hasan Members
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Current borrowers with Main Principal / Remaining Due balance
-              </p>
             </div>
             <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
               {treasury.activeBorrowers.length} active
@@ -756,9 +747,6 @@ export function OverviewView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 This Month Member Clearance ({treasury.thisMonthKey})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Contributing members cleared for the current monthly cycle (Admin excluded)
-              </p>
             </div>
             <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
               {treasury.thisMonthClearanceClearedMembers}/{treasury.thisMonthClearanceTotalMembers}
@@ -833,9 +821,6 @@ export function OverviewView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Platform Oversight &amp; Configuration
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Administrators do not submit monthly contributions or take Qard Hasan loans. Use Site Settings to update cooperative policy variables, User &amp; Role Management to assign Managers/Members, and Opinion Ballot to audit individual votes.
-              </p>
               <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs pt-1">
                 <div className="py-2 flex items-center justify-between">
                   <dt className="text-slate-500 dark:text-slate-400">Pending Profile Edits</dt>

@@ -497,9 +497,6 @@ export function ContributionsView({
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                 Submit Capital Deposit
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Pay via Bangladesh Bank or MFS and submit your Transaction Number for Manager approval. Details are AES-256-GCM encrypted at rest.
-              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -808,9 +805,6 @@ export function ContributionsView({
                   ? 'Cooperative Contribution Ledger & Approval Queue'
                   : 'Monthly Contribution Requests & History'}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Inspect active requests, Transaction Numbers, denied requests with Manager correction messages, and approved history
-              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

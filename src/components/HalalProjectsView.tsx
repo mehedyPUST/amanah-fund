@@ -302,9 +302,6 @@ export function HalalProjectsView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Proposed & Approved Investment Placements
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                A placement is approved when at least two-thirds (2/3) of active members vote Yes
-              </p>
             </div>
             <span className="text-xs font-mono text-indigo-700 dark:text-indigo-400">
               Live 2/3 Majority Tallies
@@ -755,9 +752,6 @@ export function HalalProjectsView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Managers & Admins can propose Shariah-compliant ventures for 2/3 member voting.
-              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">

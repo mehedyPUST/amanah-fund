@@ -940,10 +940,6 @@ export function CommunityView({
           <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
             Amanah Member Community
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            Verified cooperative forum for member discussions, polls, reactions, and encrypted
-            private messaging.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -2320,10 +2316,8 @@ export function CommunityView({
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Encrypted Direct Messaging
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Select any registered member on the left to start a confidential conversation.
-                    Messages are encrypted at rest with AES-256-GCM and delivered in real time only
-                    to the two participants.
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Select a member on the left to start a private conversation.
                   </p>
                 </div>
               </div>
@@ -2483,10 +2477,6 @@ export function CommunityView({
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Verified Cooperative Members ({activeMembersList.length})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Select any member to view their profile, community posts, about details, and fund
-                summary.
-              </p>
             </div>
             <div className="relative w-full sm:w-72 shrink-0">
               <Search

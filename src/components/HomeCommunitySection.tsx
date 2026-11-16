@@ -66,9 +66,6 @@ export function HomeCommunitySection() {
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
               Cooperative Community Hub
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-              Connect with verified Amanah members through discussion threads, polls, member profiles, and encrypted direct messaging.
-            </p>
           </div>
 
           {!authChecking && user && user.status === 'active' && (
@@ -129,10 +126,10 @@ export function HomeCommunitySection() {
                     Registered Members Only
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                    Please Log In to Enter the Community
+                    Log In to Enter the Community
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    To protect member privacy, cooperative discussions, polls, member profiles, and encrypted direct messages are only visible to registered, logged-in Amanah members. Please log in with your verified account to enter the community.
+                    Discussions, polls, and direct messages are private to verified Amanah members.
                   </p>
                 </div>
               </div>

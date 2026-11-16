@@ -628,15 +628,11 @@ export function AdminAuditLog({
               </span>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Live cryptographic stream of new loan requests, contribution payments, system settings
-              updates, and member registry changes.
-              {lastSyncedAt && (
-                <span className="ml-1.5 font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                  Last synced {formatDateTime(lastSyncedAt)}
-                </span>
-              )}
-            </p>
+            {lastSyncedAt && (
+              <p className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                Last synced {formatDateTime(lastSyncedAt)}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">

@@ -662,8 +662,7 @@ export function LoansView({
                     myActiveOrPendingLoan.status === 'pending_guarantor') && (
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Only one pending application is allowed. Withdraw this request if you need to
-                        submit a new one.
+                        Withdraw to submit a new application.
                       </p>
                       <button
                         type="button"
@@ -717,9 +716,6 @@ export function LoansView({
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                 Automated Qard Hasan Eligibility Verification
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Zero-interest mutual loans require zero active loans, available annual quota, Manager vote initiation, and a 2/3 member ballot.
-              </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {eligibility && (
@@ -868,9 +864,6 @@ export function LoansView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Loan Portfolio &amp; Repayment Schedules
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Track scheduled monthly installments, Transaction Numbers, remaining balances, and payment verifications
-              </p>
             </div>
 
             {!isAdmin && (

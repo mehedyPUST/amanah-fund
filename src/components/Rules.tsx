@@ -195,7 +195,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             Savings, Investment &amp; Interest-Free Loan Fund Charter
           </HeadingTag>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-            Complete English translation of Articles 1–25 of the cooperative constitution, operating policies, and governance guidelines—enforced programmatically inside the Amanah ledger, 2/3 member voting engine, and Shura audit trail.
+            English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
           </p>
         </motion.div>
 
@@ -231,9 +231,6 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                       Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
                     </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Read or download the full signed constitution PDF published by cooperative administration and hosted securely on ImageKit.io.
-                    </p>
                     <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
                       {constitution?.constitutionUploadedAt
@@ -309,7 +306,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   Official Cooperative Constitution PDF
                 </h2>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  No constitution PDF has been published yet. Administrators can upload the official constitution PDF from Site Settings in the Admin panel to store it on ImageKit.io and make it available for preview and download here.
+                  No constitution PDF published yet. Admins can upload it from Site Settings.
                 </p>
               </div>
             </div>
@@ -355,10 +352,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Already an approved member or ready to apply under the 20-member charter?
-          </p>
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-4">
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/login"

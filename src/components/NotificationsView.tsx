@@ -345,10 +345,6 @@ export function NotificationsView({
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Contribution, Loan Acceptance, Repayment &amp; Monthly Reminder Notices
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-              Automatic alerts generated for manager contribution placement reviews, contribution
-              acceptance, 2/3 loan approvals, scheduled repayments, and monthly deposit reminders.
-            </p>
           </div>
 
           {isStaff && (

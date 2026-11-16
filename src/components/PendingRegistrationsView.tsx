@@ -239,10 +239,6 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 ({registrations.length})
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Review full applicant KYC credentials—National ID, residential addresses, occupation,
-              and member reference—before approving or rejecting cooperative access.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -310,10 +306,6 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             No Pending User Registrations
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Every submitted cooperative membership application has been reviewed. New sign-ups from
-            the registration page will appear here automatically for approval.
-          </p>
         </section>
       ) : filteredRegistrations.length === 0 ? (
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">

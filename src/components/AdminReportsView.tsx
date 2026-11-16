@@ -372,9 +372,6 @@ export function AdminReportsView({
               <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
                 New Registration Verification Queue ({pendingMembers.length})
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                New applicants cannot sign in until an administrator approves their membership.
-              </p>
             </div>
           </div>
 
@@ -469,9 +466,6 @@ export function AdminReportsView({
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
               Pending Loan Requests ({pendingReviewLoans.length})
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Review requested principal, purpose, repayment schedule, and encrypted payout account
-            </p>
           </div>
         </div>
 
@@ -586,10 +580,6 @@ export function AdminReportsView({
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                   Automated Regulatory & Compliance Reports
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Export cryptographically hashed CSV ledgers for external Shariah audit and member
-                  general meetings
-                </p>
               </div>
               <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
             </div>
@@ -625,10 +615,6 @@ export function AdminReportsView({
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Fund Policy & Annual Loan Quota
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Adjust the maximum Qard Hasan loans allowed per member per year (default 3), maturity
-              date, and contribution parameters
-            </p>
           </div>
 
           <form onSubmit={handleSavePolicy} className="space-y-4">

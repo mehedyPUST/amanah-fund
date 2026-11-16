@@ -118,10 +118,6 @@ export function MyAmanahView({
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {user.name} · <span className="font-mono text-sm text-indigo-700 dark:text-indigo-300">{user.memberCode}</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Complete snapshot of your deposits, contribution dues, active Qard Hasan installments,
-            deadlines, and financing eligibility.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -241,10 +237,6 @@ export function MyAmanahView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Active Qard Hasan &amp; Installment Standing
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Principal, remaining balance, last installment paid, missed installments, and next
-                repayment deadline.
-              </p>
             </div>
             <button
               type="button"

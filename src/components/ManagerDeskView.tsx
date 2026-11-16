@@ -700,9 +700,6 @@ export function ManagerDeskView({
             <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
               Approvals, Qard Hasan Workflow, Secret Ballots &amp; Cooperative Notices
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Fund balance changes when you approve contributions/installments or confirm Qard Hasan disbursements. Every action opens a verification confirmation modal.
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {onOpenManagerCycle && (
@@ -780,9 +777,6 @@ export function ManagerDeskView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Pending Monthly Contributions ({pendingContributions.length})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Verify Transaction Number &amp; receipt slip before approving to credit the fund balance, or deny with a mandatory correction message.
-              </p>
             </div>
             <div className="relative w-full sm:w-64">
               <Search
@@ -929,9 +923,6 @@ export function ManagerDeskView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 1 · Applications Awaiting Vote Initiation ({pendingReviewLoans.length})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Inspect payout account &amp; purpose, then open the secret 2/3 Opinion Ballot or decline.
-              </p>
             </div>
 
             {pendingReviewLoans.length === 0 ? (
@@ -1016,10 +1007,6 @@ export function ManagerDeskView({
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                   Awaiting Guarantor Co-Signature ({pendingGuarantorLoans.length})
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  High-value applications require co-signature acceptance from nominated cooperative
-                  guarantor(s) before Stage 1 vote initiation unlocks.
-                </p>
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
                 {pendingGuarantorLoans.map((loan) => (
@@ -1082,9 +1069,6 @@ export function ManagerDeskView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 2 · Ongoing Secret Qard Hasan Ballots ({votingLoans.length})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Individual votes remain confidential. Stop &amp; reveal when voting closes to tally quorum.
-              </p>
             </div>
 
             {votingLoans.length === 0 ? (
@@ -1148,9 +1132,6 @@ export function ManagerDeskView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 3 · Approved &amp; Awaiting Disbursement ({pendingDisbursementLoans.length})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Confirm payout and record the Transaction Number to deduct principal from the central fund balance.
-              </p>
             </div>
 
             {pendingDisbursementLoans.length === 0 ? (
@@ -1240,9 +1221,6 @@ export function ManagerDeskView({
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Qard Hasan Installment Verification Queue ({pendingInstallments.length})
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Accept verified installment Transaction Numbers to restore central balance, or deny with a mandatory correction note.
-            </p>
           </div>
 
           {pendingInstallments.length === 0 ? (
@@ -1467,9 +1445,6 @@ export function ManagerDeskView({
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Ongoing Secret Ballots ({ballotsCount})
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Individual votes remain strictly private. Click &ldquo;Stop &amp; Reveal Result&rdquo; when ready to close voting and publish aggregate results to members.
-              </p>
             </div>
 
             {ballotsCount === 0 ? (

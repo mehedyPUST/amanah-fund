@@ -392,10 +392,6 @@ export function AdminUserManagementPanel({
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Manage Users, Roles & Access Controls ({members.length})
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Provision accounts, edit contact details, assign RBAC roles, suspend or reactivate
-            access, and review member standing
-          </p>
         </div>
 
         {isAdmin && (
@@ -721,9 +717,6 @@ export function AdminUserManagementPanel({
                 >
                   Add New Cooperative User
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Provision a member, manager, or administrator directly from the admin panel
-                </p>
               </div>
               <button
                 type="button"
@@ -909,9 +902,6 @@ export function AdminUserManagementPanel({
                 >
                   Edit User · {editingMember.name} ({editingMember.memberCode})
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Update role, account status, contact details, or reset user password
-                </p>
               </div>
               <button
                 type="button"

@@ -678,10 +678,8 @@ export function VotingView({
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Opinion Ballot — Qard Hasan, Investment &amp; Decision Polls
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Secret cooperative ballots: members cannot view other members&apos; votes or live
-              results while a poll is ongoing. Only when the Manager stops &amp; reveals a vote do
-              final tallies become visible (Admins retain confidential ledger oversight).
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Secret ballots stay sealed until revealed by a manager.
             </p>
           </div>
 
@@ -1127,10 +1125,6 @@ export function VotingView({
                                   style={{ width: `${castProgressPct}%`, originX: 0 }}
                                 />
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Only the number of votes cast is visible. Approve/reject tallies
-                                stay sealed until a manager reveals the result.
-                              </p>
                             </div>
                           )}
 
@@ -1244,16 +1238,12 @@ export function VotingView({
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                               <Vote className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                               <span>
-                                Your current ballot:{' '}
+                                Your ballot:{' '}
                                 <strong className="uppercase">
                                   {myVote.decision === 'approve' ? 'Upvote' : 'Downvote'}
                                 </strong>{' '}
                                 · {formatDateTime(myVote.castAt)} (Sig:{' '}
-                                {shortHash(myVote.signatureHash)}). Other members cannot see your
-                                choice.
-                                {votingOpen
-                                  ? ' You may change it until the deadline.'
-                                  : ' Voting is closed for changes.'}
+                                {shortHash(myVote.signatureHash)})
                               </span>
                             </div>
                           )}
@@ -1293,8 +1283,7 @@ export function VotingView({
                           ) : (
                             !myVote && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
-                                The voting deadline has passed. Waiting for a manager to reveal
-                                results.
+                                Voting closed. Awaiting manager reveal.
                               </p>
                             )
                           )}

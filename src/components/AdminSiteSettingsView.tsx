@@ -400,9 +400,6 @@ export function AdminSiteSettingsView({
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Site Settings &amp; Cooperative Project Parameters
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Configure cooperative treasury thresholds, Manager rotation cycle duration, maturity timeline, Google Sheets sync, regulatory CSV exports, and Halal project proposals.
-            </p>
           </div>
         </div>
       </section>
@@ -413,9 +410,6 @@ export function AdminSiteSettingsView({
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Project Policy, Manager Cycle, Contribution Target &amp; Loan Caps
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Changes persist across the cooperative ledger and immediately update member loan eligibility, contribution targets, and Manager rotation terms.
-            </p>
           </div>
 
           {loading && !config ? (
@@ -718,7 +712,7 @@ export function AdminSiteSettingsView({
                 Official Cooperative Constitution PDF
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Upload or replace the cooperative constitution PDF from the admin dashboard. Files are automatically renamed semantically (e.g. cooperative-constitution-...) and published dynamically to the Charter Rules and Membership Sign-Up pages.
+                Automatically renamed semantically and published to Charter Rules &amp; Sign-Up.
               </p>
             </div>
           </div>
@@ -850,7 +844,7 @@ export function AdminSiteSettingsView({
             </div>
           ) : (
             <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
-              No Constitution PDF is currently uploaded. Select a PDF file above to publish it to the Charter Rules and Membership Application pages.
+              No Constitution PDF uploaded.
             </div>
           )}
         </section>
@@ -866,9 +860,6 @@ export function AdminSiteSettingsView({
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
               Pending Loan Requests ({pendingReviewLoans.length})
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Review requested principal, purpose, repayment schedule, and encrypted payout account.
-            </p>
           </div>
         </div>
 
@@ -955,9 +946,6 @@ export function AdminSiteSettingsView({
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Automated Regulatory &amp; Compliance Exports
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Download cryptographically hashed CSV ledgers for Shariah review and annual member assemblies.
-            </p>
           </div>
           <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
         </div>

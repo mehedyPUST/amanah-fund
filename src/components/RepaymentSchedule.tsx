@@ -277,10 +277,10 @@ export function RepaymentSchedule({
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                 No Active Repayment Deadlines
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {myRepaidCount > 0
-                  ? `Your account has zero remaining loan balance (${myRepaidCount} Qard Hasan ${myRepaidCount === 1 ? 'loan' : 'loans'} repaid in full).`
-                  : 'You currently have 0 remaining balance on Qard Hasan loans. Any active installment schedule will appear here automatically.'}
+                  ? `Zero balance · ${myRepaidCount} Qard Hasan ${myRepaidCount === 1 ? 'loan' : 'loans'} repaid.`
+                  : 'Zero remaining Qard Hasan balance.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">

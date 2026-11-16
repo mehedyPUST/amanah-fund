@@ -539,9 +539,6 @@ export function SignUpForm() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               Membership Application
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Complete all fields accurately. An administrator will review your profile, reference, and documents before activating sign-in access.
-            </p>
           </div>
           <Link
             href="/login"
@@ -589,12 +586,12 @@ export function SignUpForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-7">
               <div className="p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                    Constitution Charter (§4–§6 · VISION-36: Jan 2027 – Dec 2036)
+                    Constitution Charter (§4–§6 · VISION-36: 2027–2036)
                   </p>
-                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-                    Maximum 20 members/shares total (intake closes July 2027; late joiners settle prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo, and a ৳200 non-refundable management fee.
+                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
+                    Capped at 20 shares · ৳5,000/mo savings · ৳200 non-refundable admission fee.
                   </p>
                 </div>
                 {constitution?.constitutionPdfUrl ? (
@@ -645,8 +642,8 @@ export function SignUpForm() {
                       <p className="text-xs font-semibold text-teal-900 dark:text-teal-200">
                         Google Identity Verified · {googleOnboarding.googleProfile.email}
                       </p>
-                      <p className="text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">
-                        Complete the required cooperative KYC fields below. Once an administrator approves your application, you can sign in directly with Google.
+                      <p className="text-xs text-teal-800/90 dark:text-teal-300/90">
+                        Complete the KYC fields below for administrator approval.
                       </p>
                     </div>
                   </div>
@@ -666,7 +663,7 @@ export function SignUpForm() {
                       Applying with a Google account?
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Verify your Google email first to pre-fill your identity and skip creating a password—you will still complete KYC verification below.
+                      Pre-fill your verified Google email and skip setting a password.
                     </p>
                   </div>
                   <button
@@ -917,7 +914,7 @@ export function SignUpForm() {
                     </h2>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Provide details for one or more nominees. If adding multiple nominees, share percentages must total 100%. Photo is not needed for female nominees.
+                    Multiple nominees must total 100%. Photo optional for female nominees.
                   </p>
                 </div>
 
@@ -1254,11 +1251,8 @@ export function SignUpForm() {
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
                 <h2 className="text-xs font-semibold tracking-wide text-amber-700 dark:text-amber-400">
-                  05. Identity Photo &amp; Agreement Paper (ImageKit.io Storage)
+                  05. Identity Photo &amp; Agreement Paper
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Photos and PDF agreements are stored via our ImageKit.io media vault and visible to the Administrator during verification.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1407,10 +1401,7 @@ export function SignUpForm() {
               </div>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Your submission is encrypted with AES-256-GCM and locked pending Administrator approval.
-              </p>
+            <div className="pt-2 flex justify-end">
               <button
                 type="submit"
                 disabled={
