@@ -975,7 +975,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmInitiateLoanVote(loan)}
-                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             <Vote className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Initiate 2/3 Vote</span>
@@ -1433,7 +1433,7 @@ export function ManagerDeskView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-all active:scale-[0.99]"
+                className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
               >
                 Review &amp; Launch Decision Vote
               </button>

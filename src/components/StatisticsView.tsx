@@ -40,10 +40,10 @@ export function StatisticsView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-r from-teal-50/75 via-white/75 to-indigo-50/55 dark:from-teal-950/35 dark:via-slate-900/75 dark:to-indigo-950/35 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
       >
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Treasury Analytics &amp; Cashflow Telemetry</span>
           </div>
@@ -55,7 +55,7 @@ export function StatisticsView({
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
           <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
             Pool Liquidity:{' '}
-            <strong className="text-indigo-700 dark:text-indigo-300">
+            <strong className="text-emerald-700 dark:text-emerald-400">
               {loading && !overview ? (
                 <Skeleton width={90} height={14} inline />
               ) : overview ? (

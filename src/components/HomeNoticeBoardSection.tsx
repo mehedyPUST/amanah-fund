@@ -36,28 +36,28 @@ const PRIORITY_META: Record<
     label: 'Urgent',
     Icon: AlertTriangle,
     iconBox:
-      'bg-rose-100/80 dark:bg-rose-950/60 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
+      'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
     cardClass:
-      'bg-gradient-to-br from-rose-100/65 via-rose-50/30 to-white/75 dark:from-rose-950/45 dark:via-rose-950/15 dark:to-slate-900/75 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800',
+      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800',
   },
   important: {
     label: 'Important',
     Icon: Megaphone,
     iconBox:
-      'bg-orange-100/80 dark:bg-orange-950/60 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400',
-    labelClass: 'text-orange-700 dark:text-orange-400',
+      'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400',
+    labelClass: 'text-amber-700 dark:text-amber-400',
     cardClass:
-      'bg-gradient-to-br from-orange-100/65 via-orange-50/30 to-white/75 dark:from-orange-950/45 dark:via-orange-950/15 dark:to-slate-900/75 backdrop-blur-md border-orange-200/80 dark:border-orange-900/60 hover:border-orange-300 dark:hover:border-orange-800',
+      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60 hover:border-amber-300 dark:hover:border-amber-800',
   },
   normal: {
     label: 'Notice',
     Icon: Info,
     iconBox:
-      'bg-teal-100/80 dark:bg-teal-950/60 border-teal-200/80 dark:border-teal-900/60 text-teal-700 dark:text-teal-400',
-    labelClass: 'text-teal-700 dark:text-teal-400',
+      'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
+    labelClass: 'text-emerald-700 dark:text-emerald-400',
     cardClass:
-      'bg-gradient-to-br from-teal-100/65 via-teal-50/30 to-white/75 dark:from-teal-950/45 dark:via-teal-950/15 dark:to-slate-900/75 backdrop-blur-md border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
+      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-800/70',
   },
 };
 
@@ -271,17 +271,17 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-2 bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
-          : 'scroll-mt-2 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 backdrop-blur-sm text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-4 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100 space-y-5'
+          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-slate-950/60 backdrop-blur-sm text-slate-900 dark:text-slate-100'
       }
     >
-      <div className={embedded ? 'space-y-4' : 'w-full px-4 sm:px-6 py-10 sm:py-12 space-y-6'}>
+      <div className={embedded ? 'space-y-5' : 'w-full py-10 sm:py-12 space-y-6'}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               Members Only · Official Announcements
             </div>
-            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Cooperative Notice Board
             </h2>
           </div>
@@ -640,7 +640,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words text-justify">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words">
                       {notice.body}
                     </p>
                   </div>

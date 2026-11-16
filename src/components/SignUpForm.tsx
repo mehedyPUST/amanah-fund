@@ -446,17 +446,17 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="text-slate-900 dark:text-slate-100 px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div className="text-slate-900 dark:text-slate-100 py-4 sm:py-8">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-3xl w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white/75 to-white/75 dark:from-slate-900/75 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
+        className="max-w-4xl w-full mx-auto bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-6">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -465,7 +465,7 @@ export function SignUpForm() {
           </div>
           <Link
             href="/login"
-            className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline whitespace-nowrap shrink-0"
+            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline whitespace-nowrap shrink-0"
           >
             Already approved? Sign In →
           </Link>
@@ -508,12 +508,12 @@ export function SignUpForm() {
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-7">
-              <div className="p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                     Constitution Charter (§4–§6 · VISION-36: 2027–2036)
                   </p>
-                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 tabular-nums">
                     Capped at 20 shares · ৳5,000/mo savings · ৳200 non-refundable admission fee.
                   </p>
                 </div>
@@ -523,7 +523,7 @@ export function SignUpForm() {
                     target="_blank"
                     rel="noopener noreferrer"
                     download={constitution.constitutionPdfName || 'cooperative-constitution.pdf'}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Constitution PDF</span>
@@ -531,7 +531,7 @@ export function SignUpForm() {
                 ) : (
                   <Link
                     href="/rules"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Charter Rules</span>
@@ -646,8 +646,8 @@ export function SignUpForm() {
             </div>
 
             {/* Section 2: Reference & Employment */}
-            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <h2 className="text-xs font-semibold tracking-wide text-teal-700 dark:text-teal-400">
+            <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
+              <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
                 02. Reference &amp; Employment
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -704,9 +704,9 @@ export function SignUpForm() {
             </div>
 
             {/* Section 3: Addresses */}
-            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-xs font-semibold tracking-wide text-cyan-700 dark:text-cyan-400">
+                <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
                   03. Residential Addresses
                 </h2>
                 <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
@@ -752,12 +752,12 @@ export function SignUpForm() {
             </div>
 
             {/* Section 4: Nominee Information */}
-            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                    <h2 className="text-xs font-semibold tracking-wide text-indigo-700 dark:text-indigo-400">
+                    <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                    <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
                       04. Nominee Information
                     </h2>
                   </div>
@@ -791,7 +791,7 @@ export function SignUpForm() {
                     type="button"
                     onClick={handleAddNominee}
                     disabled={nominees.length >= 10}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-800 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Add Another Nominee</span>
@@ -819,14 +819,14 @@ export function SignUpForm() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="p-4 sm:p-5 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-slate-950/55 backdrop-blur-sm space-y-4"
+                      className="p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/55 space-y-4"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 dark:border-slate-800 pb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                             {nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee'}
                           </span>
-                          <span className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+                          <span className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                             {nominees.length === 1
                               ? '100% Share'
                               : `${nominee.sharePercentage || 0}% Share`}
@@ -1096,9 +1096,9 @@ export function SignUpForm() {
             </div>
 
             {/* Section 5: ImageKit.io Photo & Agreement PDF/Photo Uploads */}
-            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div>
-                <h2 className="text-xs font-semibold tracking-wide text-amber-700 dark:text-amber-400">
+                <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
                   05. Identity Photo &amp; Agreement Paper
                 </h2>
               </div>
@@ -1255,7 +1255,7 @@ export function SignUpForm() {
                 disabled={
                   submitting || photoUploading || agreementUploading || anyNomineePhotoUploading
                 }
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap"
+                className="px-6 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>

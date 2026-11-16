@@ -124,11 +124,11 @@ export function RequestQardHasanModal({
             onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-xl bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
           >
-            <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/85 via-teal-50/45 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-4 shrink-0">
               <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-teal-700 dark:text-teal-400">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                   <span className="inline-flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                     <span>AES-256-GCM Encrypted</span>
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
@@ -175,7 +175,7 @@ export function RequestQardHasanModal({
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Annual Quota Standing
                   </div>
-                  <div className="mt-0.5 font-mono font-semibold tabular-nums text-indigo-700 dark:text-indigo-400">
+                  <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                     {effectiveEligibility ? (
                       `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
                     ) : eligibilityError ? (

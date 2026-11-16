@@ -159,14 +159,14 @@ export function ActionModal({
 
   const confirmBtnClass =
     tone === 'red'
-      ? 'bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white'
+      ? 'bg-rose-600 hover:bg-rose-700 text-white'
       : tone === 'amber'
-        ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white'
+        ? 'bg-amber-600 hover:bg-amber-700 text-white'
         : tone === 'indigo'
-          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white'
+          ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
           : tone === 'teal'
-            ? 'bg-gradient-to-r from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 text-white'
-            : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white';
+            ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+            : 'bg-emerald-700 hover:bg-emerald-800 text-white';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -583,7 +583,7 @@ export function AdminUserManagementPanel({
                         req
                       )
                     }
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs transition-colors whitespace-nowrap shrink-0"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Reset &amp; Email Temp Password</span>

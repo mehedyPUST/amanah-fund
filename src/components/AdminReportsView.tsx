@@ -677,7 +677,7 @@ export function AdminReportsView({
                         },
                       });
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap"
+                    className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap shrink-0 transition-colors"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{emailingPdf ? 'Sending…' : 'Email PDF to Active Members'}</span>

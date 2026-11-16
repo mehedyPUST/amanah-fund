@@ -19,14 +19,12 @@ export function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Forgot password modal state
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotReason, setForgotReason] = useState('');
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
 
-  // Success / Notice modal state (circle-tick modal)
   const [noticeModal, setNoticeModal] = useState<{
     tone: 'emerald' | 'red';
     title: string;
@@ -111,17 +109,17 @@ export function SignInForm() {
 
   if (authChecking) {
     return (
-      <div className="px-2 sm:px-6 lg:px-8 py-8 sm:py-16">
-        <div className="max-w-md w-full mx-auto bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="space-y-2">
-            <Skeleton width={210} height={14} />
-            <Skeleton width="70%" height={28} />
-            <Skeleton width="100%" height={14} count={2} />
+      <div className="py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs">
+          <div className="lg:col-span-6 space-y-4">
+            <Skeleton width={200} height={14} />
+            <Skeleton width="75%" height={34} />
+            <Skeleton width="90%" height={16} count={2} />
           </div>
-          <div className="space-y-4">
-            <Skeleton height={42} borderRadius={8} />
-            <Skeleton height={42} borderRadius={8} />
-            <Skeleton height={42} borderRadius={8} />
+          <div className="lg:col-span-6 space-y-4">
+            <Skeleton height={44} borderRadius={8} />
+            <Skeleton height={44} borderRadius={8} />
+            <Skeleton height={44} borderRadius={8} />
           </div>
         </div>
       </div>
@@ -129,101 +127,135 @@ export function SignInForm() {
   }
 
   return (
-    <div className="text-slate-900 dark:text-slate-100 px-2 sm:px-6 lg:px-8 py-8 sm:py-16">
+    <div className="py-4 sm:py-8 text-slate-900 dark:text-slate-100">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.22 }}
-        className="max-w-md w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white/75 to-white/75 dark:from-slate-900/75 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
+        transition={{ duration: 0.2 }}
+        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-9 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
       >
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-400">
-            <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-            <span>Encrypted Member Portal · HttpOnly JWT</span>
+        {/* Left Institutional Context Column */}
+        <div className="lg:col-span-6 space-y-6">
+          <div className="space-y-2.5">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+              <span>Encrypted Member Portal · HttpOnly JWT</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
+              Sign in to the Amanah treasury portal
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
+              Access your personal cooperative equity ledger, monthly contribution receipts, Qard Hasan status, and anonymized 2/3 governance ballots.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Sign In to Treasury
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 text-left">
-            Approved members only. Sign in with your registered email and password.
-          </p>
+
+          <dl className="divide-y divide-slate-200/75 dark:divide-slate-800 border-t border-b border-slate-200/75 dark:border-slate-800 text-xs">
+            <div className="py-3 flex items-center justify-between gap-4">
+              <dt className="text-slate-500 dark:text-slate-400">Session Security</dt>
+              <dd className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                HttpOnly Cookie · 2FA TOTP Ready
+              </dd>
+            </div>
+            <div className="py-3 flex items-center justify-between gap-4">
+              <dt className="text-slate-500 dark:text-slate-400">Field Custody</dt>
+              <dd className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                AES-256-GCM · SHA-256 Audit Chain
+              </dd>
+            </div>
+            <div className="py-3 flex items-center justify-between gap-4">
+              <dt className="text-slate-500 dark:text-slate-400">Eligibility Gate</dt>
+              <dd className="font-medium text-emerald-700 dark:text-emerald-400">
+                Admin-verified active members
+              </dd>
+            </div>
+          </dl>
         </div>
 
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              role="alert"
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
-            >
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="signin-email"
-              className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
-            >
-              Email Address
-            </label>
-            <input
-              id="signin-email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@amanahcoop.org"
-              className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-            />
+        {/* Right Sign-In Form Column */}
+        <div className="lg:col-span-6 lg:border-l lg:border-slate-200/75 lg:dark:border-slate-800 lg:pl-10 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Member Credentials
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Sign in using your approved cooperative email and password.
+            </p>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                role="alert"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
               <label
-                htmlFor="signin-password"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                htmlFor="signin-email"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
               >
-                Password
+                Email Address
               </label>
-              <button
-                type="button"
-                onClick={handleOpenForgotModal}
-                className="text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer inline-flex items-center gap-1"
-              >
-                <KeyRound className="w-3 h-3" aria-hidden="true" />
-                <span>Forgot Password?</span>
-              </button>
+              <input
+                id="signin-email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@amanahcoop.org"
+                className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+              />
             </div>
-            <input
-              id="signin-password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-            />
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Lock className="w-4 h-4" aria-hidden="true" />
-            <span>{loading ? 'Signing In…' : 'Sign In to Portal'}</span>
-          </button>
-        </form>
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <label
+                  htmlFor="signin-password"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={handleOpenForgotModal}
+                  className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                >
+                  <KeyRound className="w-3 h-3" aria-hidden="true" />
+                  <span>Forgot Password?</span>
+                </button>
+              </div>
+              <input
+                id="signin-password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+              />
+            </div>
 
-        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center justify-between gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Lock className="w-4 h-4" aria-hidden="true" />
+              <span>{loading ? 'Signing In…' : 'Sign In to Portal'}</span>
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Applying as a new member?</span>
             <Link
               href="/signup"
@@ -236,7 +268,6 @@ export function SignInForm() {
         </div>
       </motion.div>
 
-      {/* Modal: Forgot Password Request to Admin */}
       <AnimatePresence>
         {forgotOpen && (
           <motion.div
@@ -253,11 +284,11 @@ export function SignInForm() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.16 }}
-              className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md p-6 shadow-2xl space-y-4"
+              className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 shadow-2xl space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <KeyRound className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <div>
@@ -267,7 +298,7 @@ export function SignInForm() {
                     >
                       Request Password Reset
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 text-left">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Submit a request to cooperative admins to generate and email a temporary password.
                     </p>
                   </div>
@@ -306,7 +337,7 @@ export function SignInForm() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="name@amanahcoop.org"
-                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
@@ -325,7 +356,7 @@ export function SignInForm() {
                     value={forgotReason}
                     onChange={(e) => setForgotReason(e.target.value)}
                     placeholder="e.g. Locked out of account or lost device credentials"
-                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
@@ -341,7 +372,7 @@ export function SignInForm() {
                   <button
                     type="submit"
                     disabled={forgotSubmitting}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 disabled:opacity-50 text-white font-medium shadow-xs cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-medium shadow-xs cursor-pointer"
                   >
                     {forgotSubmitting ? 'Submitting…' : 'Send Reset Request'}
                   </button>

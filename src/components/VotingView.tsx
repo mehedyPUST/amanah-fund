@@ -650,9 +650,9 @@ export function VotingView({
       {isAdmin && (
         <div
           role="note"
-          className="p-3.5 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/25 text-xs text-indigo-900 dark:text-indigo-200 flex items-center gap-2.5"
+          className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-xs"
         >
-          <Lock className="w-4 h-4 text-indigo-700 dark:text-indigo-400 shrink-0" aria-hidden="true" />
+          <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <span>
             <strong>Administrator Ballot Audit View:</strong> Only Administrators can inspect
             individual member votes in the confidential audit ledger. Admins do not cast member
@@ -690,7 +690,7 @@ export function VotingView({
               <button
                 type="button"
                 onClick={() => setShowCreatePoll((v) => !v)}
-                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
               >
                 <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{showCreatePoll ? 'Close Poll Form' : 'Initiate Decision Poll'}</span>
@@ -1144,7 +1144,7 @@ export function VotingView({
                                   initial={{ scaleX: 0 }}
                                   animate={{ scaleX: 1 }}
                                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-indigo-500"
+                                  className="h-full rounded-full bg-amber-500"
                                   style={{ width: `${castProgressPct}%`, originX: 0 }}
                                 />
                               </div>
@@ -1287,7 +1287,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!canCastBallot || busyId === loan.id}
                                   onClick={() => void handleLoanVote(loan.id, 'upvote')}
-                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{myVote ? 'Change to Upvote' : 'Upvote'}</span>
@@ -1470,7 +1470,7 @@ export function VotingView({
                                     initial={{ scaleX: 0 }}
                                     animate={{ scaleX: 1 }}
                                     transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-teal-500"
+                                    className="h-full rounded-full bg-emerald-600"
                                     style={{ width: `${pct}%`, originX: 0 }}
                                   />
                                 </div>

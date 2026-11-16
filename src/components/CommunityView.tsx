@@ -2195,8 +2195,8 @@ export function CommunityView({
                                           }}
                                           className={`relative w-full text-left rounded-lg border px-3 py-2 text-xs overflow-hidden transition-colors cursor-pointer ${
                                             isSelected
-                                              ? 'border-indigo-400 dark:border-indigo-700 bg-white dark:bg-slate-900'
-                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-300 dark:hover:border-indigo-700'
+                                              ? 'border-emerald-400 dark:border-emerald-700 bg-white dark:bg-slate-900'
+                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-300 dark:hover:border-emerald-700'
                                           }`}
                                         >
                                           <motion.div
@@ -2206,14 +2206,14 @@ export function CommunityView({
                                             style={{ transformOrigin: '0% 50%' }}
                                             className={`absolute inset-0 ${
                                               isSelected
-                                                ? 'bg-gradient-to-r from-indigo-500/20 to-teal-500/15 dark:from-indigo-500/25 dark:to-teal-500/20'
+                                                ? 'bg-emerald-500/15 dark:bg-emerald-500/20'
                                                 : 'bg-slate-200/45 dark:bg-slate-800/45'
                                             }`}
                                           />
                                           <div className="relative flex items-center justify-between gap-2">
                                             <span className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
                                               {isSelected && (
-                                                <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                                               )}
                                               <span>{opt.text}</span>
                                             </span>

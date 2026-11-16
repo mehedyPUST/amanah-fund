@@ -3,140 +3,122 @@
 import Link from 'next/link';
 import { Moon, Shield, Sun } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
+import { PWAInstallButton } from './PWAInstallButton.tsx';
 
 export function Footer() {
   const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
-    <footer className="w-full bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl shadow-2xs">
-      <div className="px-5 sm:px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="space-y-2.5">
+    <footer className="w-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs">
+      <div className="px-6 sm:px-8 py-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 ring-1 ring-emerald-500/20 text-white flex items-center justify-center shadow-xs">
+              <span className="w-7 h-7 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center">
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
                 Amanah
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
-              Interest-free Qard Hasan lending &amp; Halal real-economy cooperative.
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Encrypted 20-member cooperative fund for interest-free Qard Hasan lending and 2/3-voted Halal ventures.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
-              Portal Pages
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+              Cooperative Pages
             </h3>
-            <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
               <li>
-                <Link
-                  href="/"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-                >
+                <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   Overview
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/community"
-                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
-                >
+                <Link href="/community" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   Community Hub
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/about"
-                  className="hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
-                >
+                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   Security &amp; Architecture
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/how-it-works"
-                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
-                >
+                <Link href="/how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/rules"
-                  className="hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                >
+                <Link href="/rules" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   Governance Charter
                 </Link>
               </li>
             </ul>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-400">
-              Governance &amp; Security
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+              Custody &amp; Audit
             </h3>
-            <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-              <li>Admin-approved KYC &amp; membership</li>
-              <li>2/3 supermajority ballot threshold</li>
-              <li>AES-256-GCM field encryption</li>
+            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+              <li>Admin-verified KYC &amp; member cap</li>
+              <li>2/3 supermajority secret ballots</li>
+              <li>AES-256-GCM encrypted records</li>
               <li>SHA-256 hash-chained audit trail</li>
             </ul>
           </div>
 
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
-              Member Access
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+              Member Portal
             </h3>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={user ? '/dashboard' : '/login'}
-                className="inline-block px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 hover:from-emerald-800 hover:via-emerald-700 hover:to-emerald-600 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
               >
-                {user ? 'Dashboard' : 'Sign In'}
+                {user ? 'Open Dashboard' : 'Sign In'}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 whitespace-nowrap"
+                  className="inline-flex items-center px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
                 >
                   Join Amanah
                 </Link>
               )}
             </div>
+            <PWAInstallButton compact />
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
             © {new Date().getFullYear()} Amanah · 0% Interest · Shariah-Governed
           </span>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono hidden sm:inline text-teal-700/80 dark:text-teal-400/80">
-              HttpOnly JWT · Encrypted Ledger
-            </span>
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 cursor-pointer"
-            >
-              {darkMode ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-orange-500" aria-hidden="true" />
-                  <span>Light</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" aria-hidden="true" />
-                  <span>Dark</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            {darkMode ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+                <span>Light mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                <span>Dark mode</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </footer>

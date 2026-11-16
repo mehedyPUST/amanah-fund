@@ -623,8 +623,8 @@ export function LoansView({
                       remainingYearlyQuota === 0
                         ? 'bg-rose-600'
                         : remainingYearlyQuota === 1
-                          ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                          : 'bg-gradient-to-r from-indigo-600 to-teal-500'
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-600'
                     }`}
                     style={{ width: `${quotaRemainingPct}%`, originX: 0 }}
                   />
@@ -636,7 +636,7 @@ export function LoansView({
                       ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
                       : `Annual limit of ${maxLoansPerYear} loans reached`}
                   </span>
-                  <span className="font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                     {quotaRemainingPct}% left
                   </span>
                 </div>
@@ -1120,8 +1120,8 @@ export function LoansView({
                               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                               className={`h-full rounded-full ${
                                 revealed || isAdmin
-                                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
-                                  : 'bg-gradient-to-r from-amber-500 to-indigo-500'
+                                  ? 'bg-emerald-600'
+                                  : 'bg-amber-500'
                               }`}
                               style={{ width: `${pct}%`, originX: 0 }}
                             />

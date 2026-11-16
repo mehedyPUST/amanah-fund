@@ -198,7 +198,7 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-br from-emerald-50/75 via-teal-50/40 to-white/75 dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs transition-colors"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-1.5 max-w-3xl">
@@ -209,11 +209,11 @@ export function OverviewView({
                   : 'Phase 2 · Post-Maturity Halal Investment'}
               </span>
               <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+              <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
                 Target Maturity: {formatShortDate(config.maturityDate)}
               </span>
               <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-amber-600 dark:text-amber-400 font-medium">
+              <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
                 {daysUntilMaturity} days remaining
               </span>
             </div>
@@ -225,20 +225,20 @@ export function OverviewView({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => onNavigate('statistics')}
-              className="px-4 py-2 text-xs font-medium rounded-lg border border-indigo-200/90 dark:border-indigo-800/70 bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 transition-all duration-200 whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
             >
-              <BarChart3 className="w-3.5 h-3.5" aria-hidden="true" />
+              <BarChart3 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
               <span>Statistics</span>
             </button>
             {isAdmin ? (
               <button
                 type="button"
                 onClick={() => onNavigate('site-settings')}
-                className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
                 <span>Site Settings</span>
                 <ArrowRight
@@ -250,7 +250,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
                 <span>Monthly Contribution</span>
                 <ArrowRight
@@ -497,18 +497,18 @@ export function OverviewView({
       )}
 
       {/* 4-Column Amanah Treasury Headline KPI Strip */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.02 }}
-          className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-white border border-emerald-500/30 rounded-xl p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-emerald-700 dark:bg-emerald-800 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
             <span>Amanah Height (Total Raised)</span>
-            <Wallet className="w-4 h-4 text-emerald-100" aria-hidden="true" />
+            <Wallet className="w-4 h-4 text-emerald-100 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-white">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-emerald-100/90 tabular-nums">
@@ -521,13 +521,13 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.06 }}
-          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-400">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Current Balance</span>
-            <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -539,13 +539,13 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.1 }}
-          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-amber-600 dark:text-amber-400">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Quard Hasan Total Current</span>
-            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -559,13 +559,13 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.14 }}
-          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-400">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Repayments Returned (+)</span>
-            <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.totalRepaid, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -576,10 +576,10 @@ export function OverviewView({
         </motion.div>
       </section>
 
-      {/* This Month Treasury Pulse: Contribution, Due, Hasan Installment, Clearance */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+      {/* This Month Treasury Pulse */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Contribution ({treasury.thisMonthKey})</span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
@@ -589,7 +589,7 @@ export function OverviewView({
               / {formatMoney(treasury.thisMonthContributionTarget, ccy)}
             </span>
           </div>
-          <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -609,13 +609,13 @@ export function OverviewView({
                     : 0
                 }%`,
               }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+              className="h-full bg-emerald-600 rounded-full"
             />
           </div>
         </div>
 
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
-          <div className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Due (Remaining / Target)
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
@@ -631,9 +631,9 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
-          <div className="text-xs text-teal-700 dark:text-teal-400 font-medium">
-            This Month Hasan Installment (Collected / Need)
+        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+            This Month Hasan Installment
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
@@ -648,18 +648,18 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-400 font-medium">
+        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Clearance</span>
-            <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+            <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
-          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {treasury.thisMonthClearanceClearedMembers}{' '}
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
               / {treasury.thisMonthClearanceTotalMembers} cleared members
             </span>
           </div>
-          <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -676,7 +676,7 @@ export function OverviewView({
                     : 0
                 }%`,
               }}
-              className="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full"
+              className="h-full bg-emerald-600 rounded-full"
             />
           </div>
         </div>
@@ -684,7 +684,7 @@ export function OverviewView({
 
       {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -757,7 +757,7 @@ export function OverviewView({
           )}
         </section>
 
-        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -828,7 +828,7 @@ export function OverviewView({
       {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
         {isAdmin ? (
-          <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
+          <section className="xl:col-span-5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -863,7 +863,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('member-registry')}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Manage Users &amp; Roles</span>
@@ -871,7 +871,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('site-settings')}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Site Settings</span>
@@ -879,7 +879,7 @@ export function OverviewView({
             </div>
           </section>
         ) : (
-          <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs transition-colors">
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -975,7 +975,7 @@ export function OverviewView({
                 <button
                   type="button"
                   onClick={onOpenLoanModal}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Request Qard Hasan</span>
@@ -984,7 +984,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('my-amanah')}
-                className="group flex-1 py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                className="group flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Open My Amanah</span>
                 <ArrowRight
@@ -996,9 +996,9 @@ export function OverviewView({
           </section>
         )}
 
-        <section className="xl:col-span-7 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <section className="xl:col-span-7 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Active Governance &amp; Approval Queues
               </h3>
@@ -1007,7 +1007,7 @@ export function OverviewView({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 bg-slate-200/70 dark:bg-slate-800/70 gap-px">
               <button
                 type="button"
                 onClick={() =>
@@ -1015,7 +1015,7 @@ export function OverviewView({
                     ? onOpenManagerDeskTab('qard-hasan')
                     : onNavigate(isStaff ? 'manager-desk' : 'quard-hasan')
                 }
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="group text-left p-4 bg-white/95 dark:bg-slate-900/90 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>Pending Loan Reviews</span>
@@ -1024,11 +1024,11 @@ export function OverviewView({
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingLoansReviewCount}
                 </div>
-                <div className="mt-1 text-xs text-amber-700 dark:text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
                   {isStaff
                     ? pendingGuarantorLoansCount > 0
-                      ? `Initiate 2/3 ballot in Manager Desk → (+${pendingGuarantorLoansCount})`
-                      : 'Initiate 2/3 ballot in Manager Desk →'
+                      ? `Initiate 2/3 ballot → (+${pendingGuarantorLoansCount})`
+                      : 'Initiate 2/3 ballot →'
                     : 'Inspect Qard Hasan queue →'}
                 </div>
               </button>
@@ -1036,16 +1036,16 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('ballot')}
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="group text-left p-4 bg-white/95 dark:bg-slate-900/90 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors cursor-pointer"
               >
-                <div className="flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-400 font-medium">
+                <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>Open 2/3 Ballots</span>
-                  <Vote className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                  <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
                 </div>
-                <div className="mt-1 text-xs text-indigo-700 dark:text-indigo-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
                   Cast anonymized vote →
                 </div>
               </button>
@@ -1065,7 +1065,7 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="group text-left p-4 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>Pending Deposits</span>
@@ -1077,7 +1077,7 @@ export function OverviewView({
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingContributionsCount}
                 </div>
-                <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                   {isStaff ? 'Review in Manager Desk →' : 'View submission status →'}
                 </div>
               </button>
@@ -1091,20 +1091,20 @@ export function OverviewView({
                     onNavigate(isStaff ? 'manager-desk' : 'ballot');
                   }
                 }}
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="group text-left p-4 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors cursor-pointer"
               >
-                <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
+                <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>Awaiting Disbursement</span>
                   <ShieldCheck
-                    className="w-4 h-4 text-teal-600 dark:text-teal-400"
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
                   />
                 </div>
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingDisbursementsCount}
                 </div>
-                <div className="mt-1 text-xs text-teal-700 dark:text-teal-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {isStaff ? 'Confirm disbursement in Manager Desk →' : 'Multi-sig treasury release →'}
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                  {isStaff ? 'Confirm payout in Manager Desk →' : 'Multi-sig treasury release →'}
                 </div>
               </button>
 
@@ -1123,19 +1123,19 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-2"
+                className="group text-left p-4 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors cursor-pointer sm:col-span-2 lg:col-span-2"
               >
-                <div className="flex items-center justify-between text-xs text-cyan-700 dark:text-cyan-400 font-medium">
+                <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>Pending Repayments</span>
                   <CheckCircle2
-                    className="w-4 h-4 text-cyan-600 dark:text-cyan-400"
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
                   />
                 </div>
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingRepaymentsCount}
                 </div>
-                <div className="mt-1 text-xs text-cyan-700 dark:text-cyan-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                   {isStaff ? 'Verify installments in Manager Desk →' : 'Inspect installment receipts →'}
                 </div>
               </button>

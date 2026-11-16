@@ -121,28 +121,28 @@ const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
 ];
 
-type SectionAccentTone = 'emerald' | 'teal' | 'amber' | 'indigo';
+type SectionAccentTone = 'emerald' | 'amber';
 
 const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
   'fund-overview': 'emerald',
   'monthly-contribution': 'emerald',
   'my-amanah': 'emerald',
-  'quard-hasan': 'teal',
-  statistics: 'teal',
-  'transaction-history': 'teal',
+  'quard-hasan': 'emerald',
+  statistics: 'emerald',
+  'transaction-history': 'emerald',
   ballot: 'amber',
   notification: 'amber',
   'manager-cycle': 'amber',
   'manager-desk': 'amber',
-  'my-profile': 'indigo',
-  members: 'indigo',
-  'member-profile': 'indigo',
-  community: 'indigo',
-  'member-registry': 'indigo',
-  'site-settings': 'indigo',
+  'my-profile': 'emerald',
+  members: 'emerald',
+  'member-profile': 'emerald',
+  community: 'emerald',
+  'member-registry': 'emerald',
+  'site-settings': 'emerald',
   'email-queue': 'amber',
-  'site-activity': 'indigo',
-  'system-audit-logs': 'indigo',
+  'site-activity': 'emerald',
+  'system-audit-logs': 'emerald',
 };
 
 const SIDEBAR_TONE_STYLES: Record<
@@ -151,37 +151,20 @@ const SIDEBAR_TONE_STYLES: Record<
     pillBg: string;
     activeText: string;
     activeIcon: string;
-    underline: string;
     eyebrowText: string;
   }
 > = {
   emerald: {
-    pillBg: 'bg-emerald-50/90 dark:bg-emerald-950/45 border border-emerald-200/70 dark:border-emerald-900/60',
+    pillBg: 'bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-900/60',
     activeText: 'text-emerald-800 dark:text-emerald-300 font-semibold',
-    activeIcon: 'text-emerald-600 dark:text-emerald-400',
-    underline: 'decoration-emerald-600 dark:decoration-emerald-400',
+    activeIcon: 'text-emerald-700 dark:text-emerald-400',
     eyebrowText: 'text-emerald-700 dark:text-emerald-400',
   },
-  teal: {
-    pillBg: 'bg-teal-50/90 dark:bg-teal-950/45 border border-teal-200/70 dark:border-teal-900/60',
-    activeText: 'text-teal-800 dark:text-teal-300 font-semibold',
-    activeIcon: 'text-teal-600 dark:text-teal-400',
-    underline: 'decoration-teal-600 dark:decoration-teal-400',
-    eyebrowText: 'text-teal-700 dark:text-teal-400',
-  },
   amber: {
-    pillBg: 'bg-amber-50/90 dark:bg-amber-950/45 border border-amber-200/70 dark:border-amber-900/60',
+    pillBg: 'bg-amber-50/90 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-900/60',
     activeText: 'text-amber-800 dark:text-amber-300 font-semibold',
-    activeIcon: 'text-amber-600 dark:text-amber-400',
-    underline: 'decoration-amber-600 dark:decoration-amber-400',
+    activeIcon: 'text-amber-700 dark:text-amber-400',
     eyebrowText: 'text-amber-700 dark:text-amber-400',
-  },
-  indigo: {
-    pillBg: 'bg-indigo-50/90 dark:bg-indigo-950/45 border border-indigo-200/70 dark:border-indigo-900/60',
-    activeText: 'text-indigo-800 dark:text-indigo-300 font-semibold',
-    activeIcon: 'text-indigo-600 dark:text-indigo-400',
-    underline: 'decoration-indigo-600 dark:decoration-indigo-400',
-    eyebrowText: 'text-indigo-700 dark:text-indigo-400',
   },
 };
 
@@ -663,15 +646,15 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="h-dvh overflow-hidden w-full bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50/35 dark:from-slate-950 dark:via-emerald-950/20 dark:to-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+      <div className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
           <Skeleton width={32} height={32} borderRadius={8} />
           <div className="space-y-1 flex-1">
             <Skeleton width={80} height={14} />
             <Skeleton width={100} height={10} />
           </div>
         </div>
-        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -680,7 +663,7 @@ export function DashboardShell() {
             <Skeleton width={140} height={34} borderRadius={8} />
           </div>
         </div>
-        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5">
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5">
           <div className="space-y-2">
             {Array.from({ length: 10 }).map((_, idx) => (
               <Skeleton key={idx} height={34} borderRadius={8} />
@@ -692,7 +675,7 @@ export function DashboardShell() {
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/65 dark:bg-slate-900/65 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5 sm:p-4 space-y-3">
+        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-4 space-y-3">
           <Skeleton height={82} borderRadius={12} />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
@@ -710,7 +693,6 @@ export function DashboardShell() {
   }
 
   const activeNavMeta = visibleNav.find((n) => n.id === activeSection) || visibleNav[0];
-  const activeTone = SIDEBAR_TONE_STYLES[SECTION_TONE_MAP[activeSection] || 'emerald'];
 
   const pendingBadgeCount = (sectionId: DashboardSectionId): number => {
     if (!overview) return 0;
@@ -807,8 +789,8 @@ export function DashboardShell() {
         </div>
 
         {isManager && (
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
+            <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               Manager
             </div>
             <div className="space-y-0.5">
@@ -818,8 +800,8 @@ export function DashboardShell() {
         )}
 
         {isAdmin && (
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
+            <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               Admin
             </div>
             <div className="space-y-0.5">
@@ -832,24 +814,18 @@ export function DashboardShell() {
   }
 
   return (
-    /* Strict 4-Grid Dashboard Layout (Footer Strictly Hidden):
-       Grid 1 (Top-Left, 252px x 60px): Amanah Brand Header
-       Grid 2 (Top-Right, 1fr x 60px): Dashboard Nav
-       Grid 3 (Bottom-Left, 252px x 1fr): Dashboard Sidebar
-       Grid 4 (Bottom-Right, 1fr x 1fr): Multi-Page Dashboard Contents
-    */
-    <div className="h-dvh overflow-hidden bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50/35 dark:from-slate-950 dark:via-emerald-950/20 dark:to-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               Amanah
             </div>
-            <div className="text-[11px] text-teal-700 dark:text-teal-400 font-medium truncate">
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
               Member Portal
             </div>
           </div>
@@ -857,7 +833,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -872,9 +848,7 @@ export function DashboardShell() {
               Amanah
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
-            <h1
-              className={`font-semibold text-slate-900 dark:text-white truncate underline decoration-2 ${activeTone.underline} underline-offset-4`}
-            >
+            <h1 className="font-semibold text-slate-900 dark:text-white truncate">
               {activeSection === 'member-profile'
                 ? 'Member Profile'
                 : activeNavMeta?.label || 'Amanah Overview'}
@@ -886,7 +860,7 @@ export function DashboardShell() {
           <Link
             href="/"
             title="Public Website"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all duration-200 whitespace-nowrap"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Home</span>
@@ -912,9 +886,9 @@ export function DashboardShell() {
             onClick={() => void refreshWorkspace(false)}
             title="Refresh live balances"
             aria-label="Refresh live balances"
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 hover:text-teal-700 dark:hover:text-teal-300 transition-all duration-200 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin text-teal-600 dark:text-teal-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
           </button>
 
           <PWAInstallButton compact className="hidden sm:inline-flex" />
@@ -924,24 +898,24 @@ export function DashboardShell() {
             onClick={toggleDarkMode}
             title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-500" />
             ) : (
-              <Moon className="w-4 h-4 text-indigo-600" />
+              <Moon className="w-4 h-4 text-slate-600" />
             )}
           </button>
         </div>
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
         <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 space-y-3">
           <button
             type="button"
             onClick={() => navigateToPage('my-profile', false)}
@@ -1025,13 +999,13 @@ export function DashboardShell() {
         )}
       </AnimatePresence>
 
-      {/* GRID 4: Multi-Page Dashboard Content (Fixed container below navbar with internal scroll) */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/65 dark:bg-slate-900/65 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden">
+      {/* GRID 4: Multi-Page Dashboard Content */}
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden">
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3.5 sm:p-4 lg:p-4"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-4 sm:p-5"
         >
-          <div className="w-full space-y-3.5">
+          <div className="w-full space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
@@ -1280,7 +1254,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
-                  <SectionEyebrow label="Quard Hasan" tone="teal" />
+                  <SectionEyebrow label="Quard Hasan" tone="emerald" />
                   <LoansView
                     loans={loans}
                     eligibility={overview?.personal.eligibility || null}
@@ -1312,7 +1286,7 @@ export function DashboardShell() {
 
               {activeSection === 'my-profile' && (
                 <section id="my-profile" className="space-y-4">
-                  <SectionEyebrow label="My Profile" tone="indigo" />
+                  <SectionEyebrow label="My Profile" tone="emerald" />
                   <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
                 </section>
               )}
@@ -1336,7 +1310,7 @@ export function DashboardShell() {
 
               {activeSection === 'statistics' && (
                 <section id="statistics" className="space-y-4">
-                  <SectionEyebrow label="Statistics" tone="teal" />
+                  <SectionEyebrow label="Statistics" tone="emerald" />
                   <StatisticsView
                     overview={overview}
                     contributions={contributions}
@@ -1367,7 +1341,7 @@ export function DashboardShell() {
 
               {activeSection === 'transaction-history' && (
                 <section id="transaction-history" className="space-y-4">
-                  <SectionEyebrow label="Transaction History" tone="teal" />
+                  <SectionEyebrow label="Transaction History" tone="emerald" />
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
@@ -1383,7 +1357,7 @@ export function DashboardShell() {
 
               {activeSection === 'members' && (
                 <section id="members" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Directory" tone="indigo" />
+                  <SectionEyebrow label="Member Directory" tone="emerald" />
                   <ActiveMembersView
                     user={user}
                     config={overview?.config || null}
@@ -1407,7 +1381,7 @@ export function DashboardShell() {
 
               {activeSection === 'community' && (
                 <section id="community" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Community" tone="indigo" />
+                  <SectionEyebrow label="Community" tone="emerald" />
                   <CommunityView
                     user={user}
                     currency={overview?.config.currency}
@@ -1422,7 +1396,7 @@ export function DashboardShell() {
 
               {activeSection === 'member-profile' && viewingMemberId && (
                 <section id="member-profile" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Profile" tone="indigo" />
+                  <SectionEyebrow label="Member Profile" tone="emerald" />
                   <MemberPublicProfileView
                     memberId={viewingMemberId}
                     currentUser={user}
@@ -1465,14 +1439,14 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
-                  <SectionEyebrow label="Admin · Site Activity" tone="indigo" />
+                  <SectionEyebrow label="Admin · Site Activity" tone="emerald" />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
               {isAdmin && activeSection === 'system-audit-logs' && (
                 <section id="system-audit-logs" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · System Audit Logs" tone="indigo" />
+                  <SectionEyebrow label="Admin · System Audit Logs" tone="emerald" />
                   <SystemAuditLogsView user={user} />
                 </section>
               )}
@@ -1485,7 +1459,7 @@ export function DashboardShell() {
                         ? 'Admin · User & Role Management'
                         : 'Manager · Member Updates & Directory'
                     }
-                    tone="indigo"
+                    tone="emerald"
                   />
                   <MemberRegistrySection
                     user={user}
@@ -1498,7 +1472,7 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · Site Settings" tone="indigo" />
+                  <SectionEyebrow label="Admin · Site Settings" tone="emerald" />
                   <AdminSiteSettingsView
                     overview={overview}
                     config={overview?.config || null}

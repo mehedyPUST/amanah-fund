@@ -943,7 +943,7 @@ export function MemberPublicProfileView({
                                       initial={{ scaleX: 0 }}
                                       animate={{ scaleX: 1 }}
                                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                                      className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-teal-500"
+                                      className="h-full rounded-full bg-emerald-600"
                                       style={{ width: `${pct}%`, originX: 0 }}
                                     />
                                   </div>

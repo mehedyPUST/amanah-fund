@@ -983,7 +983,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 type="button"
                 disabled={totpBusy}
                 onClick={() => void handleStart2faSetup()}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
               >
                 <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
@@ -998,7 +998,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 onSubmit={handleEnable2fa}
                 className="space-y-4 pt-1"
               >
-                <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/60">
+                <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60">
                   <img
                     src={totpSetupData.qrDataUrl}
                     alt="2FA Authenticator QR Code"

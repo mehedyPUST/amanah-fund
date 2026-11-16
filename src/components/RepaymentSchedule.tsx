@@ -157,13 +157,13 @@ export function RepaymentSchedule({
   return (
     <section
       aria-label="Repayment Schedule"
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
     >
       <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <CalendarClock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>0% Interest · Revolving Principal</span>
             </div>

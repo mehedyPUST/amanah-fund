@@ -201,11 +201,11 @@ export function RecentTransactions({
   return (
     <section
       aria-labelledby="recent-transactions-heading"
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs transition-colors"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <History className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Personal Activity Feed</span>
           </div>
@@ -265,7 +265,7 @@ export function RecentTransactions({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="group px-3.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800/70 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-teal-800 dark:text-teal-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
+              className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
             >
               <span>Full General Ledger</span>
               <ArrowRight

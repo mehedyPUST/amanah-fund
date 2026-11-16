@@ -127,7 +127,7 @@ export function ContributionLeaderboard({
   return (
     <section
       aria-label="Contribution Leaderboard"
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -222,9 +222,9 @@ export function ContributionLeaderboard({
                           rank === 1
                             ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                             : rank === 2
-                              ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                               : rank === 3
-                                ? 'bg-teal-100 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300'
+                                ? 'bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
                                 : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
@@ -315,12 +315,10 @@ export function ContributionLeaderboard({
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                       className={`h-full rounded-full ${
                         rank === 1
-                          ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                          : rank === 2
-                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500'
-                            : entry.isSelf
-                              ? 'bg-emerald-600'
-                              : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                          ? 'bg-amber-500'
+                          : entry.isSelf
+                            ? 'bg-emerald-600'
+                            : 'bg-emerald-500/85'
                       }`}
                       style={{ originX: 0, width: `${Math.max(4, Math.min(100, barPct))}%` }}
                     />

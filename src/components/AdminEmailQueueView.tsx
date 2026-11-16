@@ -373,7 +373,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy || stats.pending + stats.retrying === 0}
               onClick={handleProcessDue}
-              className="px-3.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-800 dark:text-teal-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
             >
               <Play className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Process Pending Now</span>
@@ -382,7 +382,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy || attentionCount === 0}
               onClick={confirmRetryAll}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Retry All ({attentionCount})</span>
