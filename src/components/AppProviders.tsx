@@ -24,15 +24,6 @@ import {
   type WorkspaceSessionInfo,
 } from '../utils/googleWorkspace.ts';
 
-import {
-  DEFAULT_LANGUAGE,
-  LANGUAGE_STORAGE_KEY,
-  getTranslations,
-  isAppLanguage,
-  type AppLanguage,
-} from '../utils/i18n.ts';
-
-type Translations = ReturnType<typeof getTranslations>;
 
 interface CoopSessionContextValue {
   user: PublicUser | null;
@@ -42,10 +33,6 @@ interface CoopSessionContextValue {
   logout: () => Promise<void>;
   darkMode: boolean;
   toggleDarkMode: () => void;
-  language: AppLanguage;
-  setLanguage: (lang: AppLanguage) => void;
-  toggleLanguage: () => void;
-  t: Translations;
   workspace: WorkspaceSessionInfo;
   connectingGoogle: boolean;
   handleConnectGoogle: () => Promise<void>;
@@ -66,7 +53,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguageState] = useState<AppLanguage>(DEFAULT_LANGUAGE);
 
   const [workspace, setWorkspace] = useState<WorkspaceSessionInfo>(() =>
     getWorkspaceSessionInfo()
@@ -114,29 +100,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       (!saved && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
     setDarkMode(prefersDark);
     document.documentElement.classList.toggle('dark', prefersDark);
-
-    const savedLang = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    const initialLang: AppLanguage = isAppLanguage(savedLang) ? savedLang : DEFAULT_LANGUAGE;
-    setLanguageState(initialLang);
-    document.documentElement.lang = initialLang;
   }, []);
-
-  const setLanguage = useCallback((nextLang: AppLanguage) => {
-    setLanguageState(nextLang);
-    document.documentElement.lang = nextLang;
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLang);
-  }, []);
-
-  const toggleLanguage = useCallback(() => {
-    setLanguageState((prev) => {
-      const next: AppLanguage = prev === 'en' ? 'bn' : 'en';
-      document.documentElement.lang = next;
-      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
-
-  const t = getTranslations(language);
 
   const toggleDarkMode = useCallback(() => {
     setDarkMode((prev) => {
@@ -230,10 +194,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         logout,
         darkMode,
         toggleDarkMode,
-        language,
-        setLanguage,
-        toggleLanguage,
-        t,
         workspace,
         connectingGoogle,
         handleConnectGoogle,
@@ -253,14 +213,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
                   <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                     <ShieldCheck className="w-5 h-5 shrink-0" />
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {t.totp.title}
+                      Two-Factor Step-Up Required
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={cancelTotpPrompt}
                     className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    aria-label={t.totp.cancelAria}
+                    aria-label="Cancel 2FA challenge"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -271,7 +231,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {t.totp.codeLabel}
+                      6-Digit Authenticator Code
                     </label>
                     <input
                       type="text"
@@ -290,14 +250,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
                       onClick={cancelTotpPrompt}
                       className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
-                      {t.common.cancel}
+                      Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={totpCodeInput.length !== 6}
                       className="rounded-md bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      {t.totp.verifyContinue}
+                      Verify &amp; Continue
                     </button>
                   </div>
                 </form>

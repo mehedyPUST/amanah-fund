@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
-import { useCoopSession } from './AppProviders.tsx';
 
-const PILLAR_STYLES = [
+const PILLARS = [
   {
     Icon: ShieldCheck,
+    title: '20-Member Shura-Approved Onboarding',
+    description:
+      'Every applicant submits verified identity details (NID for member & nominee, photo, reference member, and ৳200 non-refundable fee) into a pending queue capped at 20 shares.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
     iconClass:
@@ -15,6 +17,9 @@ const PILLAR_STYLES = [
   },
   {
     Icon: Users,
+    title: '5-Member Shura & Savings Committees',
+    description:
+      'Separation of duties across Shura/Management (loan review & 15th-of-month updates), Savings Accounts Committee (joint custody & monthly bank statements), and Members.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
     iconClass:
@@ -22,6 +27,9 @@ const PILLAR_STYLES = [
   },
   {
     Icon: Lock,
+    title: 'AES-256-GCM & SHA-256 Audit Chain',
+    description:
+      'Personal KYC fields, Bank/MFS transaction IDs, and disbursement contexts are encrypted at rest with AES-256-GCM and linked in a sequential SHA-256 hash chain.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
     iconClass:
@@ -29,6 +37,9 @@ const PILLAR_STYLES = [
   },
   {
     Icon: Vote,
+    title: '2/3 Supermajority Consensus',
+    description:
+      'Every Qard Hasan loan and Halal investment placement requires affirmative votes from at least two-thirds of active members; amendments require 2/3 Shura + 1/2 member quorum.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
     iconClass:
@@ -36,6 +47,9 @@ const PILLAR_STYLES = [
   },
   {
     Icon: KeyRound,
+    title: 'VISION-36 & Sadaqah Late-Fee Ledger',
+    description:
+      'Tracks monthly ৳5,000 savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs a 7-tab Google Sheets ledger.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
     iconClass:
@@ -45,7 +59,6 @@ const PILLAR_STYLES = [
 
 export function About({ embedded = false }: { embedded?: boolean }) {
   const pathname = usePathname();
-  const { t } = useCoopSession();
   const HeadingTag = embedded ? 'h2' : 'h1';
 
   return (
@@ -53,27 +66,26 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
         <div className="max-w-3xl space-y-4">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            {t.about.eyebrow}
+            Security &amp; Architecture · Term 2027–2036
           </div>
           <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-            {t.about.headline}
+            Interest-free mutual relief today. VISION-36 Halal assets and Islamic schools by 2036.
           </HeadingTag>
           <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-            {t.about.description}
+            Built for the Savings, Investment and Interest-Free Loan Fund Cooperative Society so 20 members can pool ৳5,000 monthly savings without interest, extend 0% Qard Hasan relief, and deploy capital into Shariah-vetted land, schools, and community ventures.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {t.about.pillars.map((pillar, idx) => {
-            const style = PILLAR_STYLES[idx];
-            const Icon = style.Icon;
+          {PILLARS.map((pillar) => {
+            const Icon = pillar.Icon;
             return (
               <div
                 key={pillar.title}
-                className={`border rounded-xl p-6 space-y-3 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${style.cardStyle}`}
+                className={`border rounded-xl p-6 space-y-3 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${pillar.cardStyle}`}
               >
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${style.iconClass}`}
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${pillar.iconClass}`}
                 >
                   <Icon className="w-4 h-4" aria-hidden="true" />
                 </div>
@@ -91,10 +103,10 @@ export function About({ embedded = false }: { embedded?: boolean }) {
         <div className="bg-gradient-to-br from-emerald-50/75 via-white to-white dark:from-emerald-950/35 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:shadow-md">
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t.about.ctaTitle}
+              Ready to inspect the governance charter or apply for membership?
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              {t.about.ctaBody}
+              Review all eligibility criteria, repayment rules, and central balance accounting before submitting an application.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -110,13 +122,13 @@ export function About({ embedded = false }: { embedded?: boolean }) {
               }}
               className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 transition-all duration-200"
             >
-              {t.about.governanceCharter}
+              Governance Charter
             </Link>
             <Link
               href="/signup"
               className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
             >
-              <span>{t.about.applyMembership}</span>
+              <span>Apply for Membership</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"

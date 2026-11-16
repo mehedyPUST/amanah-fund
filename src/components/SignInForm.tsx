@@ -14,7 +14,7 @@ import { useCoopSession } from './AppProviders.tsx';
 
 export function SignInForm() {
   const router = useRouter();
-  const { user, authChecking, setUser, t } = useCoopSession();
+  const { user, authChecking, setUser } = useCoopSession();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +37,7 @@ export function SignInForm() {
       setUser(res.user);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.auth.signIn.signInFailed);
+      setError(err instanceof Error ? err.message : 'Sign-in failed.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export function SignInForm() {
       }
       router.push('/signup?mode=google');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.auth.signIn.googleFailed);
+      setError(err instanceof Error ? err.message : 'Google Sign-In failed.');
     } finally {
       setGoogleLoading(false);
     }
@@ -86,13 +86,13 @@ export function SignInForm() {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
             <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-            <span>{t.auth.signIn.badge}</span>
+            <span>Encrypted Member Portal · HttpOnly JWT</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {t.auth.signIn.title}
+            Sign In to Treasury
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            {t.auth.signIn.subtitle}
+            Only administrator-approved members can sign in and access cooperative funds or 2/3 voting.
           </p>
         </div>
 
@@ -117,13 +117,13 @@ export function SignInForm() {
             ) : (
               <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             )}
-            <span>{googleLoading ? t.auth.signIn.verifyingGoogle : t.auth.signIn.continueGoogle}</span>
+            <span>{googleLoading ? 'Verifying with Google…' : 'Continue with Google'}</span>
           </button>
 
           <div className="relative flex items-center py-1">
             <div className="grow border-t border-slate-200 dark:border-slate-800" />
             <span className="shrink-0 mx-3 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-              {t.auth.signIn.orEmail}
+              or sign in with email
             </span>
             <div className="grow border-t border-slate-200 dark:border-slate-800" />
           </div>
@@ -135,7 +135,7 @@ export function SignInForm() {
               htmlFor="signin-email"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
             >
-              {t.auth.signIn.emailLabel}
+              Email Address
             </label>
             <input
               id="signin-email"
@@ -144,7 +144,7 @@ export function SignInForm() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t.auth.signIn.emailPlaceholder}
+              placeholder="name@amanahcoop.org"
               className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
             />
           </div>
@@ -154,7 +154,7 @@ export function SignInForm() {
               htmlFor="signin-password"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
             >
-              {t.auth.signIn.passwordLabel}
+              Password
             </label>
             <input
               id="signin-password"
@@ -163,7 +163,7 @@ export function SignInForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={t.auth.signIn.passwordPlaceholder}
+              placeholder="Enter your password"
               className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
             />
           </div>
@@ -174,23 +174,23 @@ export function SignInForm() {
             className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             <Lock className="w-4 h-4" aria-hidden="true" />
-            <span>{loading ? t.auth.signIn.submitting : t.auth.signIn.submit}</span>
+            <span>{loading ? 'Signing In…' : 'Sign In to Portal'}</span>
           </button>
         </form>
 
         <div className="pt-5 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center justify-between gap-2">
-            <span>{t.auth.signIn.newMember}</span>
+            <span>Applying as a new member?</span>
             <Link
               href="/signup"
               className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
             >
-              <span>{t.auth.signIn.createApplication}</span>
+              <span>Create Application</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
           <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-            {t.auth.signIn.firstAdminNote}
+            First registration on an empty cooperative becomes the administrator. Later members require admin approval.
           </p>
         </div>
       </motion.div>
