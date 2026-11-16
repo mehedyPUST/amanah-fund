@@ -153,6 +153,8 @@ const CHARTER_SECTIONS: CharterSection[] = [
 
 export function Rules({ embedded = false }: { embedded?: boolean }) {
   const HeadingTag = embedded ? 'h2' : 'h1';
+  const PdfHeadingTag = embedded ? 'h3' : 'h2';
+  const ArticleHeadingTag = embedded ? 'h3' : 'h2';
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
@@ -179,32 +181,44 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const constitutionName = constitution?.constitutionPdfName || 'cooperative-constitution.pdf';
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
+    <div
+      className={
+        embedded
+          ? 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
+          : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-8 shadow-2xs text-slate-900 dark:text-slate-100 max-w-7xl mx-auto'
+      }
+    >
+      <section className="space-y-4">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.25 }}
-          className="space-y-3"
+          transition={{ duration: 0.22 }}
+          className="space-y-1.5"
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
             Official Constitution &amp; Bylaws · Term: Jan 2027 – Dec 2036 (VISION-36)
           </div>
-          <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <HeadingTag
+            className={
+              embedded
+                ? 'text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+                : 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+            }
+          >
             Savings, Investment &amp; Interest-Free Loan Fund Charter
           </HeadingTag>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
             English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
           </p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.25 }}
-          className="rounded-xl border border-indigo-200/90 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/75 via-white to-emerald-50/40 dark:from-indigo-950/35 dark:via-slate-900 dark:to-emerald-950/20 p-5 sm:p-6 space-y-4 shadow-xs"
+          transition={{ duration: 0.22 }}
+          className="rounded-xl border border-indigo-200/90 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/75 via-white to-emerald-50/40 dark:from-indigo-950/35 dark:via-slate-900 dark:to-emerald-950/20 p-4 sm:p-5 space-y-4 shadow-2xs"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -228,9 +242,9 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     <FileText className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <div className="space-y-1">
-                    <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                    <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                       Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
-                    </h2>
+                    </PdfHeadingTag>
                     <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
                       {constitution?.constitutionUploadedAt
@@ -240,11 +254,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setShowPdfPreview((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {showPdfPreview ? (
                       <>
@@ -262,7 +276,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     href={constitutionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Open PDF</span>
@@ -270,7 +284,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   <a
                     href={constitutionUrl}
                     download={constitutionName}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Download PDF</span>
@@ -290,7 +304,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     <iframe
                       src={constitutionUrl}
                       title="Savings, Investment and Interest-Free Loan Fund Cooperative Society Constitution PDF"
-                      className="w-full h-[560px]"
+                      className="w-full h-[540px]"
                     />
                   </motion.div>
                 )}
@@ -302,9 +316,9 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 <FileText className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="space-y-1">
-                <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                   Official Cooperative Constitution PDF
-                </h2>
+                </PdfHeadingTag>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   No constitution PDF published yet. Admins can upload it from Site Settings.
                 </p>
@@ -313,35 +327,35 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
           {CHARTER_SECTIONS.map((rule, idx) => (
             <motion.article
               key={rule.code}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.12 }}
-              transition={{ duration: 0.22, delay: idx * 0.04 }}
-              className={`border rounded-xl p-6 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${rule.cardClass}`}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.2, delay: idx * 0.03 }}
+              className={`border rounded-xl p-4 space-y-2.5 transition-colors bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/90 dark:border-slate-800 ${rule.cardClass.replace(/bg-white dark:bg-slate-900 /g, '')}`}
             >
-              <div className="flex flex-wrap items-baseline gap-3">
-                <span className={`font-mono text-xs sm:text-sm font-bold ${rule.codeClass}`}>
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <span className={`font-mono text-xs font-bold ${rule.codeClass}`}>
                   {rule.code}
                 </span>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <ArticleHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                   {rule.title}
-                </h2>
+                </ArticleHeadingTag>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 {rule.summary}
               </p>
-              <ul className="space-y-1.5 pt-1">
+              <ul className="space-y-1.5 pt-0.5">
                 {rule.points.map((pt) => (
                   <li
                     key={pt}
-                    className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                    className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed"
                   >
                     <CheckCircle2
-                      className={`w-4 h-4 shrink-0 mt-0.5 ${rule.iconClass}`}
+                      className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${rule.iconClass}`}
                       aria-hidden="true"
                     />
                     <span>{pt}</span>
@@ -352,17 +366,20 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 pt-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
-              className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-200 whitespace-nowrap"
+              className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-200 whitespace-nowrap"
             >
               Member Sign In
             </Link>
             <Link
               href="/signup"
-              className="group px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
+              className="group px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
             >
               <span>Apply for Membership</span>
               <ArrowRight

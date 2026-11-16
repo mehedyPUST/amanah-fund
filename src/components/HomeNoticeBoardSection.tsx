@@ -74,7 +74,7 @@ function formatRoleLabel(role: CoopNotice['authorRole']): string {
   return 'Member';
 }
 
-export function HomeNoticeBoardSection() {
+export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolean }) {
   const { user, authChecking } = useCoopSession();
   const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
   const canManage = isActiveMember && (user?.role === 'admin' || user?.role === 'manager');
@@ -266,15 +266,19 @@ export function HomeNoticeBoardSection() {
   return (
     <section
       id="notice-board"
-      className="scroll-mt-16 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+      className={
+        embedded
+          ? 'scroll-mt-20 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
+          : 'scroll-mt-20 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+      }
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
+      <div className={embedded ? 'space-y-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-6'}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+          <div className="space-y-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Members Only · Official Announcements
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Cooperative Notice Board
             </h2>
           </div>
@@ -496,25 +500,25 @@ export function HomeNoticeBoardSection() {
         </AnimatePresence>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3"
+                className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5"
               >
                 <div className="flex items-center gap-3">
                   <Skeleton width={36} height={36} borderRadius={10} />
                   <div className="flex-1 space-y-1.5">
                     <Skeleton width="45%" height={12} />
-                    <Skeleton width="75%" height={18} />
+                    <Skeleton width="75%" height={16} />
                   </div>
                 </div>
-                <Skeleton width="100%" height={14} count={2} />
+                <Skeleton width="100%" height={13} count={2} />
               </div>
             ))}
           </div>
         ) : filteredNotices.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-8 text-center space-y-2">
+          <div className="bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 text-center space-y-2">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {notices.length === 0
                 ? 'No official notices posted yet.'
@@ -532,7 +536,7 @@ export function HomeNoticeBoardSection() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {filteredNotices.map((notice, idx) => {
               const meta = PRIORITY_META[notice.priority] || PRIORITY_META.normal;
               const PriorityIcon = meta.Icon;
@@ -545,10 +549,10 @@ export function HomeNoticeBoardSection() {
               return (
                 <motion.article
                   key={notice.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(idx * 0.04, 0.2) }}
-                  className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-2xs transition-all duration-200 flex flex-col justify-between gap-4 ${meta.cardBorder}`}
+                  className={`bg-slate-50/70 dark:bg-slate-950/60 border rounded-xl p-4 transition-colors flex flex-col justify-between gap-3 ${meta.cardBorder}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">

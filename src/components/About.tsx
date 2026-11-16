@@ -60,44 +60,57 @@ export function About({ embedded = false }: { embedded?: boolean }) {
   const HeadingTag = embedded ? 'h2' : 'h1';
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
+    <div
+      className={
+        embedded
+          ? 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
+          : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-8 shadow-2xs text-slate-900 dark:text-slate-100 max-w-7xl mx-auto'
+      }
+    >
+      <section className="space-y-4">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.25 }}
-          className="max-w-3xl space-y-3"
+          transition={{ duration: 0.22 }}
+          className="max-w-3xl space-y-1.5"
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
             Security &amp; Architecture · Term 2027–2036
           </div>
-          <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
+          <HeadingTag
+            className={
+              embedded
+                ? 'text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+                : 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+            }
+          >
             Interest-free mutual relief today. VISION-36 Halal assets and Islamic schools by 2036.
           </HeadingTag>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-2.5">
           {PILLARS.map((pillar, idx) => {
             const Icon = pillar.Icon;
+            const spanClass = idx < 3 ? 'xl:col-span-2' : 'xl:col-span-3';
             return (
               <motion.div
                 key={pillar.title}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 8 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.15 }}
-                transition={{ duration: 0.24, delay: idx * 0.05 }}
-                className={`border rounded-xl p-6 space-y-3 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${pillar.cardStyle}`}
+                transition={{ duration: 0.2, delay: idx * 0.04 }}
+                className={`${spanClass} border rounded-xl p-4 space-y-2.5 transition-colors bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/90 dark:border-slate-800 ${pillar.cardStyle.replace(/bg-white dark:bg-slate-900 /g, '')}`}
               >
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${pillar.iconClass}`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${pillar.iconClass}`}
                 >
                   <Icon className="w-4 h-4" aria-hidden="true" />
                 </div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {pillar.title}
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {pillar.description}
                 </p>
               </motion.div>

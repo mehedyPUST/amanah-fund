@@ -211,18 +211,30 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
   const HeadingTag = embedded ? 'h2' : 'h1';
 
   return (
-    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-10">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+    <div
+      className={
+        embedded
+          ? 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
+          : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-8 shadow-2xs text-slate-900 dark:text-slate-100 max-w-7xl mx-auto'
+      }
+    >
+      <section className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="max-w-2xl space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
               <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span>How It Works</span>
             </div>
-            <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
+            <HeadingTag
+              className={
+                embedded
+                  ? 'text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+                  : 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+              }
+            >
               Simple Workflows for Every Cooperative Role
             </HeadingTag>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {currentGuide.headline}
             </p>
           </div>
@@ -230,7 +242,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           <div
             role="tablist"
             aria-label="Select cooperative role guide"
-            className="inline-flex flex-wrap items-center gap-1.5 p-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 self-start lg:self-auto"
+            className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 self-start lg:self-auto"
           >
             {ROLE_GUIDES.map((guide) => {
               const selected = guide.key === activeRole;
@@ -241,7 +253,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                   role="tab"
                   aria-selected={selected}
                   onClick={() => setActiveRole(guide.key)}
-                  className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                     selected
                       ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-900'
@@ -257,18 +269,18 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentGuide.key}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5"
           >
             {currentGuide.steps.map((step) => {
               const Icon = step.Icon;
               return (
                 <div
                   key={step.number}
-                  className={`rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 p-5 flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${step.borderHover}`}
+                  className={`rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex flex-col justify-between gap-3 transition-colors ${step.borderHover}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">

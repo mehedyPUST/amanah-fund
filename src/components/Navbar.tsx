@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
+import { ArrowRight, LayoutDashboard, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
@@ -12,6 +12,7 @@ type HomeSectionId =
   | 'overview'
   | 'notice-board'
   | 'community'
+  | 'lifecycle'
   | 'architecture'
   | 'how-it-works'
   | 'governance-charter';
@@ -34,7 +35,7 @@ export function Navbar() {
 
   const isAuthenticated = !authChecking && Boolean(user);
 
-  const publicNavLinks: PublicNavItem[] = [
+  const navLinks: PublicNavItem[] = [
     { id: 'overview', href: '/#overview', label: 'Overview' },
     { id: 'community', href: '/#community', label: 'Community' },
     { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
@@ -46,10 +47,6 @@ export function Navbar() {
       label: 'Charter',
     },
   ];
-
-  const navLinks: PublicNavItem[] = isAuthenticated
-    ? [...publicNavLinks, { href: '/dashboard', label: 'Dashboard' }]
-    : publicNavLinks;
 
   const scrollToHomeSection = useCallback((sectionId: HomeSectionId, closeDrawer = false) => {
     setActiveHomeSection(sectionId);
@@ -71,6 +68,7 @@ export function Navbar() {
       hash === 'overview' ||
       hash === 'notice-board' ||
       hash === 'community' ||
+      hash === 'lifecycle' ||
       hash === 'architecture' ||
       hash === 'how-it-works' ||
       hash === 'governance-charter'
@@ -88,6 +86,7 @@ export function Navbar() {
       'overview',
       'notice-board',
       'community',
+      'lifecycle',
       'architecture',
       'how-it-works',
       'governance-charter',
@@ -165,8 +164,8 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 h-16 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80">
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
+    <header className="sticky top-2 lg:top-2.5 z-40">
+      <div className="h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-6">
         <Link
           href="/#overview"
           onClick={(e) => {
@@ -177,29 +176,26 @@ export function Navbar() {
           }}
           className="flex items-center gap-2.5 shrink-0 group"
         >
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/30 text-white flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
-          <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+          <span className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0 transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
             Amanah
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1.5" aria-label="Primary navigation">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
           {navLinks.map((link) => {
             const active = isLinkActive(link);
-            const isPortal = link.href === '/dashboard';
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link, false)}
-                className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-emerald-700 dark:text-emerald-400'
-                    : isPortal
-                      ? 'text-teal-700 dark:text-teal-300 hover:bg-teal-50/80 dark:hover:bg-teal-950/40'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
                 }`}
               >
                 {active && (
@@ -211,64 +207,59 @@ export function Navbar() {
                   />
                 )}
                 <span>{link.label}</span>
-                {active && (
-                  <motion.span
-                    layoutId="public-navbar-active-line"
-                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-x-3 -bottom-[1px] h-0.5 bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-400 rounded-full"
-                    aria-hidden="true"
-                  />
-                )}
               </Link>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <PWAInstallButton compact className="hidden sm:inline-flex" />
+          <PWAInstallButton compact className="hidden xl:inline-flex" />
 
           <button
             type="button"
             onClick={toggleDarkMode}
             title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer shrink-0"
           >
             {darkMode ? (
-              <>
-                <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                <span className="hidden lg:inline">Light</span>
-              </>
+              <Sun className="w-4 h-4 text-amber-500" aria-hidden="true" />
             ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                <span className="hidden lg:inline">Dark</span>
-              </>
+              <Moon className="w-4 h-4 text-indigo-600" aria-hidden="true" />
             )}
           </button>
 
           {isAuthenticated ? (
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              disabled={signingOut}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-medium transition-all duration-200 hover:shadow-sm active:scale-[0.98] whitespace-nowrap cursor-pointer disabled:opacity-60"
-            >
-              <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
-            </button>
+            <>
+              <Link
+                href="/dashboard"
+                className="group hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Dashboard</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                disabled={signingOut}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-medium transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-60"
+              >
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+              </button>
+            </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 hover:shadow-xs whitespace-nowrap"
+                className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0"
               >
                 Sign In
               </Link>
               <Link
                 href="/signup"
                 title="Join Amanah"
-                className="group hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
+                className="group hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0"
               >
                 <span>Join Amanah</span>
                 <ArrowRight
@@ -293,11 +284,11 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-4 space-y-2 shadow-lg"
+            className="md:hidden mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
           >
             {navLinks.map((link) => {
               const active = isLinkActive(link);
@@ -306,10 +297,10 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link, true)}
-                  className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     active
                       ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   {link.label}
@@ -317,59 +308,48 @@ export function Navbar() {
               );
             })}
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <PWAInstallButton className="flex-1 justify-center py-2.5" />
+            <div className="pt-1 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              <PWAInstallButton className="w-full justify-center py-2.5" />
+
+              {isAuthenticated ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-sm font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void handleSignOut()}
+                    disabled={signingOut}
+                    className="w-full py-2.5 px-3 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    <LogOut className="w-4 h-4" aria-hidden="true" />
+                    <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-sm font-medium"
+                  >
+                    Join Amanah
+                  </Link>
+                </div>
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              className="w-full py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm font-medium flex items-center justify-between transition-colors cursor-pointer"
-            >
-              <span>Appearance</span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                {darkMode ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                    <span>Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                    <span>Dark Mode</span>
-                  </>
-                )}
-              </span>
-            </button>
-
-            {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                disabled={signingOut}
-                className="w-full py-2.5 px-4 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white text-rose-700 dark:text-rose-400 text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-60"
-              >
-                <LogOut className="w-4 h-4" aria-hidden="true" />
-                <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-900"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-sm font-medium"
-                >
-                  Join Amanah
-                </Link>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

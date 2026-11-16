@@ -51,19 +51,31 @@ const COMMUNITY_FEATURES = [
   },
 ];
 
-export function HomeCommunitySection() {
+export function HomeCommunitySection({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const { user, authChecking } = useCoopSession();
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="max-w-3xl space-y-3">
+    <div
+      className={
+        embedded
+          ? 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
+          : 'bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+      }
+    >
+      <div
+        className={
+          embedded
+            ? 'space-y-4'
+            : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-8'
+        }
+      >
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+          <div className="max-w-3xl space-y-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
               Member Community
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
               Cooperative Community Hub
             </h2>
           </div>
@@ -71,7 +83,7 @@ export function HomeCommunitySection() {
           {!authChecking && user && user.status === 'active' && (
             <Link
               href="/dashboard?page=community"
-              className="group shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-teal-200 dark:border-teal-800/70 bg-white dark:bg-slate-900 text-xs font-medium text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-all duration-200 whitespace-nowrap self-start md:self-auto"
+              className="group shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800/70 bg-white dark:bg-slate-900 text-xs font-medium text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-all duration-200 whitespace-nowrap self-start md:self-auto"
             >
               <span>Open Full Dashboard View</span>
               <ArrowRight
@@ -83,26 +95,26 @@ export function HomeCommunitySection() {
         </div>
 
         {authChecking ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 lg:p-10 space-y-8">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
-              <div className="flex items-start gap-4 flex-1 max-w-2xl">
-                <Skeleton width={48} height={48} borderRadius={12} />
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 sm:p-5 space-y-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3 flex-1 max-w-2xl">
+                <Skeleton width={44} height={44} borderRadius={10} />
                 <div className="flex-1 space-y-2">
-                  <Skeleton width={160} height={14} />
-                  <Skeleton width="70%" height={24} />
-                  <Skeleton width="90%" height={14} count={2} />
+                  <Skeleton width={150} height={12} />
+                  <Skeleton width="65%" height={20} />
+                  <Skeleton width="85%" height={13} />
                 </div>
               </div>
-              <div className="flex gap-3">
-                <Skeleton width={180} height={42} borderRadius={8} />
-                <Skeleton width={140} height={42} borderRadius={8} />
+              <div className="flex gap-2.5">
+                <Skeleton width={160} height={38} borderRadius={8} />
+                <Skeleton width={130} height={38} borderRadius={8} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+                <div key={i} className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-2">
                   <Skeleton width={32} height={32} borderRadius={8} />
-                  <Skeleton width="75%" height={16} />
+                  <Skeleton width="70%" height={14} />
                   <Skeleton width="100%" height={12} count={2} />
                 </div>
               ))}
@@ -110,11 +122,11 @@ export function HomeCommunitySection() {
           </div>
         ) : !user ? (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.25 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-sm space-y-8"
+            transition={{ duration: 0.22 }}
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 p-4 sm:p-5 space-y-5"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
               <div className="flex items-start gap-4 max-w-2xl">
@@ -154,17 +166,17 @@ export function HomeCommunitySection() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {COMMUNITY_FEATURES.map((item, idx) => {
                 const Icon = item.Icon;
                 return (
                   <motion.div
                     key={item.title}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.15 }}
-                    transition={{ duration: 0.22, delay: idx * 0.05 }}
-                    className={`p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${item.cardHover}`}
+                    transition={{ duration: 0.2, delay: idx * 0.04 }}
+                    className={`p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 transition-colors ${item.cardHover}`}
                   >
                     <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${item.iconClass}`}>
                       <Icon className="w-4 h-4" aria-hidden="true" />

@@ -17,10 +17,10 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="space-y-3">
+    <footer className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-2xs">
+      <div className="px-4 sm:px-6 py-6 sm:py-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/20 text-white flex items-center justify-center shadow-xs">
                 <Shield className="w-3.5 h-3.5" aria-hidden="true" />
@@ -34,11 +34,11 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Executive Links
+              Portal Sections
             </h3>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>
                 <Link
                   href="/#overview"
@@ -86,22 +86,14 @@ export function Footer() {
                   Governance Charter
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/signup"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-                >
-                  Membership Application
-                </Link>
-              </li>
             </ul>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
               Governance &amp; Security
             </h3>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>Admin-approved KYC &amp; membership</li>
               <li>2/3 supermajority ballot threshold</li>
               <li>AES-256-GCM field encryption</li>
@@ -109,21 +101,21 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
               Member Access
             </h3>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={user ? '/dashboard' : '/login'}
-                className="inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
+                className="inline-block px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
               >
                 {user ? 'Dashboard' : 'Sign In'}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-200 whitespace-nowrap"
+                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-200 whitespace-nowrap"
                 >
                   Join Amanah
                 </Link>
@@ -132,7 +124,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
             © {new Date().getFullYear()} Amanah · 0% Interest · Shariah-Governed
           </span>
@@ -146,7 +138,7 @@ export function Footer() {
               onClick={toggleDarkMode}
               title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
               aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
             >
               {darkMode ? (
                 <>
