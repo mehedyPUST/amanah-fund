@@ -957,3 +957,40 @@ export interface EmailQueueStats {
   sent: number;
 }
 
+export interface AdminSystemStatus {
+  storageEngine: 'mongodb_atlas' | 'encrypted_local_vault';
+  encryption: {
+    configured: boolean;
+    mode: 'custom_aes256' | 'jwt_derived' | 'dev_fallback';
+  };
+  smtp: {
+    configured: boolean;
+    host: string | null;
+    port: number;
+    secure: boolean;
+    from: string | null;
+    queueStats: EmailQueueStats;
+  };
+  mediaStorage: {
+    provider: 'imagekit' | 'imgbb' | 'local_vault';
+    folder: string | null;
+    urlEndpointConfigured: boolean;
+  };
+  geminiAi: {
+    configured: boolean;
+    model: string;
+  };
+  totals: {
+    activeMembers: number;
+    pendingMembers: number;
+    contributionsCount: number;
+    loansCount: number;
+    halalProjectsCount: number;
+    auditLogsCount: number;
+  };
+  runtime: {
+    nodeVersion: string;
+    uptimeSeconds: number;
+  };
+}
+

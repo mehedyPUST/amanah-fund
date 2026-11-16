@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, ExternalLink, RefreshCw, Sheet } from 'lucide-react';
+import { Download, ExternalLink, Link2, RefreshCw, Sheet, Unlink } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { FundConfig } from '../types/coop.ts';
@@ -31,6 +31,8 @@ export function GoogleSheetSyncCard({
   const [blueprint, setBlueprint] = useState<SheetTabBlueprint[]>([]);
   const [loadingBlueprint, setLoadingBlueprint] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [manualSheetInput, setManualSheetInput] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const [modal, setModal] = useState<
     | {
         mode: 'confirm';
@@ -162,6 +164,71 @@ export function GoogleSheetSyncCard({
     });
   }
 
+  function extractSheetId(raw: string): string {
+    const trimmed = raw.trim();
+    const urlMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return urlMatch ? urlMatch[1] : trimmed;
+  }
+
+  function handleRequestLinkSheet() {
+    const extracted = extractSheetId(manualSheetInput);
+    if (!extracted || !/^[a-zA-Z0-9-_]{12,}$/.test(extracted)) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Spreadsheet ID',
+        description:
+          'Enter a valid Google Spreadsheet ID or paste a full docs.google.com/spreadsheets/d/... URL.',
+      });
+      return;
+    }
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: 'Link Existing Google Spreadsheet?',
+      description:
+        'Future blueprint syncs will target this spreadsheet ID once you run a sync with your connected Google account.',
+      details: [{ label: 'Target Sheet ID', value: extracted }],
+      confirmLabel: 'Link Spreadsheet ID',
+      run: async () => {
+        await api.updateConfig({ googleSheetId: extracted });
+        setManualSheetInput('');
+        setShowLinkInput(false);
+        await onSynced();
+        setModal({
+          mode: 'notice',
+          tone: 'emerald',
+          title: 'Spreadsheet ID Linked',
+          description: `Linked Google Spreadsheet ${extracted} in cooperative settings.`,
+        });
+      },
+    });
+  }
+
+  function handleRequestUnlinkSheet() {
+    if (!config?.googleSheetId) return;
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Unlink Google Spreadsheet?',
+      description:
+        'This clears the linked Google Sheet ID from cooperative settings. Your Google Drive file itself will not be deleted.',
+      details: [{ label: 'Current Sheet ID', value: config.googleSheetId }],
+      confirmLabel: 'Unlink Sheet',
+      run: async () => {
+        await api.updateConfig({ googleSheetId: '' });
+        await onSynced();
+        setModal({
+          mode: 'notice',
+          tone: 'amber',
+          title: 'Spreadsheet Unlinked',
+          description: 'Cleared linked Google Spreadsheet ID from Site Settings.',
+        });
+      },
+    });
+  }
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -234,33 +301,58 @@ export function GoogleSheetSyncCard({
       </div>
 
       {/* Sync Status & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-        <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-          <div>
-            Linked Sheet:{' '}
-            {config?.googleSheetUrl ? (
-              <a
-                href={config.googleSheetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-2">
+              <span>Linked Sheet:</span>
+              {config?.googleSheetId ? (
+                <>
+                  {config.googleSheetUrl ? (
+                    <a
+                      href={config.googleSheetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+                    >
+                      <span className="font-mono">{config.googleSheetId}</span>
+                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                    </a>
+                  ) : (
+                    <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                      {config.googleSheetId}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRequestUnlinkSheet}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/60 text-[11px] font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                  >
+                    <Unlink className="w-3 h-3" aria-hidden="true" />
+                    <span>Unlink</span>
+                  </button>
+                </>
+              ) : (
+                <span className="text-slate-600 dark:text-slate-300">
+                  Not linked yet — create via Sync or bind an existing Sheet ID
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowLinkInput((v) => !v)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                <span className="font-mono">{config.googleSheetId}</span>
-                <ExternalLink className="w-3 h-3" aria-hidden="true" />
-              </a>
-            ) : (
-              <span className="text-slate-600 dark:text-slate-300">
-                Not created yet — click Sync to generate your linked spreadsheet
+                <Link2 className="w-3 h-3" aria-hidden="true" />
+                <span>{showLinkInput ? 'Cancel' : 'Set Sheet ID'}</span>
+              </button>
+            </div>
+            <div>
+              Last synced:{' '}
+              <span className="font-mono text-slate-700 dark:text-slate-300">
+                {config?.lastSheetSyncAt ? formatDateTime(config.lastSheetSyncAt) : 'Never'}
               </span>
-            )}
+            </div>
           </div>
-          <div>
-            Last synced:{' '}
-            <span className="font-mono text-slate-700 dark:text-slate-300">
-              {config?.lastSheetSyncAt ? formatDateTime(config.lastSheetSyncAt) : 'Never'}
-            </span>
-          </div>
-        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
@@ -303,6 +395,26 @@ export function GoogleSheetSyncCard({
             <span>{config?.googleSheetId ? 'Sync Blueprint Now' : 'Create & Sync Google Sheet'}</span>
           </button>
         </div>
+        </div>
+
+        {showLinkInput && (
+          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={manualSheetInput}
+              onChange={(e) => setManualSheetInput(e.target.value)}
+              placeholder="Paste Google Spreadsheet ID or docs.google.com/spreadsheets/d/..."
+              className="flex-1 px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            />
+            <button
+              type="button"
+              onClick={handleRequestLinkSheet}
+              className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+            >
+              Save Linked ID
+            </button>
+          </div>
+        )}
       </div>
 
       <ActionModal

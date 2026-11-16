@@ -25,6 +25,21 @@ function resolveEncryptionKey(): Buffer {
     .digest();
 }
 
+export function getEncryptionKeyStatus(): {
+  configured: boolean;
+  mode: 'custom_aes256' | 'jwt_derived' | 'dev_fallback';
+} {
+  const raw = process.env.ENCRYPTION_KEY;
+  if (raw && /^[0-9a-fA-F]{64}$/.test(raw)) {
+    return { configured: true, mode: 'custom_aes256' };
+  }
+  const seed = process.env.JWT_SECRET;
+  if (seed && seed.length >= 16) {
+    return { configured: true, mode: 'jwt_derived' };
+  }
+  return { configured: false, mode: 'dev_fallback' };
+}
+
 export function encryptSensitiveObject<T extends object>(payload: T): EncryptedEnvelope {
   const key = resolveEncryptionKey();
   const iv = crypto.randomBytes(12);

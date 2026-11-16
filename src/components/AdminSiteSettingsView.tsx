@@ -1,31 +1,49 @@
 'use client';
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import {
+  Activity,
+  AlertTriangle,
+  BellRing,
+  Briefcase,
   CheckCircle2,
+  ClipboardCheck,
+  Database,
   Download,
   ExternalLink,
   Eye,
   EyeOff,
+  FileArchive,
   FileSpreadsheet,
   FileText,
-  HandCoins,
+  HardDrive,
+  Lock,
+  Mail,
+  MailCheck,
+  RefreshCw,
+  RotateCcw,
+  Send,
+  Server,
   Settings,
+  ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
-  XCircle,
+  Vote,
 } from 'lucide-react';
 import type {
+  AdminSystemStatus,
   DashboardOverview,
+  DashboardSectionId,
   FundConfig,
   HalalProject,
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { formatDateTime, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
@@ -36,7 +54,7 @@ interface AdminSiteSettingsViewProps {
   overview: DashboardOverview | null;
   config: FundConfig | null;
   user: PublicUser;
-  loans: LoanRequest[];
+  loans?: LoanRequest[];
   projects: HalalProject[];
   loading: boolean;
   workspace: WorkspaceSessionInfo;
@@ -44,21 +62,20 @@ interface AdminSiteSettingsViewProps {
   onConnectGoogle: () => Promise<void>;
   onDisconnectGoogle: () => Promise<void>;
   onRefresh: () => Promise<void>;
+  onNavigateSection?: (section: DashboardSectionId) => void;
 }
+
+type SettingsTabId = 'policy' | 'charter' | 'email' | 'integrations' | 'ventures';
 
 type SettingsModalState =
   | {
       mode: 'confirm';
-      tone: 'emerald' | 'red';
+      tone: 'emerald' | 'amber' | 'red';
       title: string;
       description: string;
       details?: ActionModalDetailItem[];
       confirmLabel: string;
-      inputLabel?: string;
-      inputPlaceholder?: string;
-      inputRequired?: boolean;
-      inputMultiline?: boolean;
-      run: (inputValue: string) => Promise<void>;
+      run: () => Promise<void>;
     }
   | {
       mode: 'notice';
@@ -68,11 +85,19 @@ type SettingsModalState =
       details?: ActionModalDetailItem[];
     };
 
+function formatUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${Math.max(1, m)}m`;
+}
+
 export function AdminSiteSettingsView({
   overview,
   config,
   user,
-  loans,
   projects,
   loading,
   workspace,
@@ -80,19 +105,27 @@ export function AdminSiteSettingsView({
   onConnectGoogle,
   onDisconnectGoogle,
   onRefresh,
+  onNavigateSection,
 }: AdminSiteSettingsViewProps) {
   const isAdmin = user.role === 'admin';
   const ccy = config?.currency || 'BDT';
 
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('policy');
+
+  // Policy form fields
   const [fundName, setFundName] = useState(
     config?.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund'
   );
-  const [maxLoansPerYear, setMaxLoansPerYear] = useState(String(config?.maxLoansPerYear ?? 3));
+  const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [maturityDate, setMaturityDate] = useState(config?.maturityDate || '2036-12-31');
+  const [membershipIntakeDeadline, setMembershipIntakeDeadline] = useState(
+    config?.membershipIntakeDeadline || '2027-07-31'
+  );
   const [monthlyContributionAmount, setMonthlyContributionAmount] = useState(
     String(config?.monthlyContributionAmount ?? 5000)
   );
   const [maxLoanAmount, setMaxLoanAmount] = useState(String(config?.maxLoanAmount ?? 50000));
+  const [maxLoansPerYear, setMaxLoansPerYear] = useState(String(config?.maxLoansPerYear ?? 3));
   const [maxInstallmentMonths, setMaxInstallmentMonths] = useState(
     String(config?.maxInstallmentMonths ?? 10)
   );
@@ -111,58 +144,156 @@ export function AdminSiteSettingsView({
   const [requiredGuarantorsCount, setRequiredGuarantorsCount] = useState(
     String(config?.requiredGuarantorsCount ?? 1)
   );
+  const [voteThresholdNumerator, setVoteThresholdNumerator] = useState(
+    String(config?.voteThresholdNumerator ?? 2)
+  );
+  const [voteThresholdDenominator, setVoteThresholdDenominator] = useState(
+    String(config?.voteThresholdDenominator ?? 3)
+  );
   const [managerCycleMonths, setManagerCycleMonths] = useState(
     String(config?.managerCycleMonths ?? 3)
   );
   const [managerCycleStartDate, setManagerCycleStartDate] = useState(
     config?.managerCycleStartDate || '2027-01-01'
   );
-  const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [monthlyReportAutoEmail, setMonthlyReportAutoEmail] = useState<boolean>(
     config?.monthlyReportAutoEmail ?? true
   );
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
-  const [modal, setModal] = useState<SettingsModalState | null>(null);
-  const [modalBusy, setModalBusy] = useState(false);
+  // Charter & Compliance state
   const [constitutionTitle, setConstitutionTitle] = useState('Cooperative Charter 2027-2036');
   const [constitutionBusy, setConstitutionBusy] = useState(false);
   const [showConstitutionPreview, setShowConstitutionPreview] = useState(false);
   const constitutionFileInputRef = useRef<HTMLInputElement>(null);
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
+
+  // System Health Diagnostics state
+  const [systemStatus, setSystemStatus] = useState<AdminSystemStatus | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  const [modal, setModal] = useState<SettingsModalState | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
+
+  const syncFormFromConfig = useCallback((cfg: FundConfig) => {
+    setFundName(cfg.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund');
+    setCurrency(cfg.currency);
+    setMaturityDate(cfg.maturityDate);
+    setMembershipIntakeDeadline(cfg.membershipIntakeDeadline || '2027-07-31');
+    setMonthlyContributionAmount(String(cfg.monthlyContributionAmount));
+    setMaxLoanAmount(String(cfg.maxLoanAmount));
+    setMaxLoansPerYear(String(cfg.maxLoansPerYear));
+    setMaxInstallmentMonths(String(cfg.maxInstallmentMonths));
+    setLoanSavingsCapPct(String(cfg.loanSavingsCapPct ?? 75));
+    setMaxMembersCap(String(cfg.maxMembersCap ?? 20));
+    setMonthlyDueDay(String(cfg.monthlyDueDay ?? 10));
+    setLateFeeAmount(String(cfg.lateFeeAmount ?? 50));
+    setRegistrationFeeAmount(String(cfg.registrationFeeAmount ?? 200));
+    setGuarantorThresholdAmount(String(cfg.guarantorThresholdAmount ?? 40000));
+    setRequiredGuarantorsCount(String(cfg.requiredGuarantorsCount ?? 1));
+    setVoteThresholdNumerator(String(cfg.voteThresholdNumerator ?? 2));
+    setVoteThresholdDenominator(String(cfg.voteThresholdDenominator ?? 3));
+    setManagerCycleMonths(String(cfg.managerCycleMonths ?? 3));
+    setManagerCycleStartDate(cfg.managerCycleStartDate || '2027-01-01');
+    setMonthlyReportAutoEmail(cfg.monthlyReportAutoEmail ?? true);
+    setHalalThesis(cfg.halalInvestmentThesis);
+  }, []);
 
   useEffect(() => {
     if (config) {
-      setFundName(config.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund');
-      setMaxLoansPerYear(String(config.maxLoansPerYear));
-      setMaturityDate(config.maturityDate);
-      setMonthlyContributionAmount(String(config.monthlyContributionAmount));
-      setMaxLoanAmount(String(config.maxLoanAmount));
-      setMaxInstallmentMonths(String(config.maxInstallmentMonths));
-      setLoanSavingsCapPct(String(config.loanSavingsCapPct ?? 75));
-      setMaxMembersCap(String(config.maxMembersCap ?? 20));
-      setMonthlyDueDay(String(config.monthlyDueDay ?? 10));
-      setLateFeeAmount(String(config.lateFeeAmount ?? 50));
-      setRegistrationFeeAmount(String(config.registrationFeeAmount ?? 200));
-      setGuarantorThresholdAmount(String(config.guarantorThresholdAmount ?? 40000));
-      setRequiredGuarantorsCount(String(config.requiredGuarantorsCount ?? 1));
-      setManagerCycleMonths(String(config.managerCycleMonths ?? 3));
-      setManagerCycleStartDate(config.managerCycleStartDate || '2027-01-01');
-      setCurrency(config.currency);
-      setMonthlyReportAutoEmail(config.monthlyReportAutoEmail ?? true);
-      setHalalThesis(config.halalInvestmentThesis);
+      syncFormFromConfig(config);
     }
-  }, [config]);
+  }, [config, syncFormFromConfig]);
 
-  async function runConfirmedModal(inputValue: string) {
+  const fetchSystemStatus = useCallback(async () => {
+    if (!isAdmin) return;
+    setLoadingStatus(true);
+    try {
+      const status = await api.getAdminSystemStatus();
+      setSystemStatus(status);
+    } catch {
+      // Keep previous diagnostics snapshot if transient failure occurs
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    void fetchSystemStatus();
+  }, [fetchSystemStatus]);
+
+  const isDirty = useMemo(() => {
+    if (!config) return false;
+    return (
+      fundName.trim() !== (config.fundName || '').trim() ||
+      currency !== config.currency ||
+      maturityDate !== config.maturityDate ||
+      membershipIntakeDeadline !== (config.membershipIntakeDeadline || '2027-07-31') ||
+      Number(monthlyContributionAmount) !== config.monthlyContributionAmount ||
+      Number(maxLoanAmount) !== config.maxLoanAmount ||
+      Number(maxLoansPerYear) !== config.maxLoansPerYear ||
+      Number(maxInstallmentMonths) !== config.maxInstallmentMonths ||
+      Number(loanSavingsCapPct) !== (config.loanSavingsCapPct ?? 75) ||
+      Number(maxMembersCap) !== (config.maxMembersCap ?? 20) ||
+      Number(monthlyDueDay) !== (config.monthlyDueDay ?? 10) ||
+      Number(lateFeeAmount) !== (config.lateFeeAmount ?? 50) ||
+      Number(registrationFeeAmount) !== (config.registrationFeeAmount ?? 200) ||
+      Number(guarantorThresholdAmount) !== (config.guarantorThresholdAmount ?? 40000) ||
+      Number(requiredGuarantorsCount) !== (config.requiredGuarantorsCount ?? 1) ||
+      Number(voteThresholdNumerator) !== (config.voteThresholdNumerator ?? 2) ||
+      Number(voteThresholdDenominator) !== (config.voteThresholdDenominator ?? 3) ||
+      Number(managerCycleMonths) !== (config.managerCycleMonths ?? 3) ||
+      managerCycleStartDate !== (config.managerCycleStartDate || '2027-01-01') ||
+      monthlyReportAutoEmail !== (config.monthlyReportAutoEmail ?? true) ||
+      halalThesis.trim() !== (config.halalInvestmentThesis || '').trim()
+    );
+  }, [
+    config,
+    fundName,
+    currency,
+    maturityDate,
+    membershipIntakeDeadline,
+    monthlyContributionAmount,
+    maxLoanAmount,
+    maxLoansPerYear,
+    maxInstallmentMonths,
+    loanSavingsCapPct,
+    maxMembersCap,
+    monthlyDueDay,
+    lateFeeAmount,
+    registrationFeeAmount,
+    guarantorThresholdAmount,
+    requiredGuarantorsCount,
+    voteThresholdNumerator,
+    voteThresholdDenominator,
+    managerCycleMonths,
+    managerCycleStartDate,
+    monthlyReportAutoEmail,
+    halalThesis,
+  ]);
+
+  const activeMembersCount =
+    overview?.treasury.activeMembersCount ?? systemStatus?.totals.activeMembers ?? 0;
+  const previewQuorumNum = Math.max(1, Math.min(10, Math.floor(Number(voteThresholdNumerator) || 2)));
+  const previewQuorumDen = Math.max(
+    previewQuorumNum,
+    Math.min(10, Math.floor(Number(voteThresholdDenominator) || 3))
+  );
+  const previewRequiredVotes =
+    activeMembersCount > 0
+      ? Math.max(1, Math.ceil((activeMembersCount * previewQuorumNum) / previewQuorumDen))
+      : 1;
+
+  async function runConfirmedModal() {
     if (!modal || modal.mode !== 'confirm') return;
     setModalBusy(true);
     try {
-      await modal.run(inputValue);
+      await modal.run();
     } catch (err) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Save Failed',
+        title: 'Action Failed',
         description: err instanceof Error ? err.message : 'An unexpected error occurred.',
       });
     } finally {
@@ -173,6 +304,9 @@ export function AdminSiteSettingsView({
   function handleSavePolicy(e: FormEvent) {
     e.preventDefault();
     const cycleMonthsNum = Math.floor(Number(managerCycleMonths));
+    const quorumNum = Math.floor(Number(voteThresholdNumerator));
+    const quorumDen = Math.floor(Number(voteThresholdDenominator));
+
     if (!Number.isFinite(cycleMonthsNum) || cycleMonthsNum < 1 || cycleMonthsNum > 36) {
       setModal({
         mode: 'notice',
@@ -183,19 +317,43 @@ export function AdminSiteSettingsView({
       return;
     }
 
+    if (
+      !Number.isInteger(quorumNum) ||
+      !Number.isInteger(quorumDen) ||
+      quorumNum < 1 ||
+      quorumDen < 1 ||
+      quorumNum > quorumDen ||
+      quorumDen > 10
+    ) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Quorum Ratio',
+        description:
+          'Voting quorum numerator and denominator must be integers between 1 and 10, with numerator ≤ denominator.',
+      });
+      return;
+    }
+
     setModal({
       mode: 'confirm',
       tone: 'emerald',
       title: 'Confirm Cooperative Site Settings Update',
       description:
-        'Saving immediately updates cooperative treasury limits, Manager cycle rotation, and member loan eligibility rules.',
+        'Saving immediately updates cooperative treasury limits, Manager cycle rotation, quorum threshold, and member loan eligibility rules.',
       details: [
         { label: 'Cooperative Name', value: fundName.trim() },
         { label: 'Currency & Monthly Target', value: `${monthlyContributionAmount} ${currency}` },
-        { label: 'Max Loan & Annual Quota', value: `${maxLoanAmount} ${currency} · ${maxLoansPerYear}/yr` },
+        {
+          label: 'Max Loan & Annual Quota',
+          value: `${maxLoanAmount} ${currency} · ${maxLoansPerYear}/yr`,
+        },
+        {
+          label: 'Voting Quorum Rule',
+          value: `${quorumNum}/${quorumDen} (${previewRequiredVotes} of ${Math.max(1, activeMembersCount)} active members)`,
+        },
         { label: 'Manager Cycle Interval', value: `Every ${cycleMonthsNum} Month(s)` },
-        { label: 'Cycle Anchor Date', value: formatShortDate(managerCycleStartDate) },
-        { label: 'Maturity Date', value: formatShortDate(maturityDate) },
+        { label: 'Intake & Maturity Dates', value: `${formatShortDate(membershipIntakeDeadline)} → ${formatShortDate(maturityDate)}` },
         {
           label: 'Monthly PDF Auto-Email',
           value: monthlyReportAutoEmail ? 'Enabled' : 'Disabled',
@@ -205,10 +363,12 @@ export function AdminSiteSettingsView({
       run: async () => {
         await api.updateConfig({
           fundName,
-          maxLoansPerYear: Number(maxLoansPerYear),
+          currency,
           maturityDate,
+          membershipIntakeDeadline,
           monthlyContributionAmount: Number(monthlyContributionAmount),
           maxLoanAmount: Number(maxLoanAmount),
+          maxLoansPerYear: Number(maxLoansPerYear),
           maxInstallmentMonths: Number(maxInstallmentMonths),
           loanSavingsCapPct: Number(loanSavingsCapPct),
           maxMembersCap: Number(maxMembersCap),
@@ -217,79 +377,96 @@ export function AdminSiteSettingsView({
           registrationFeeAmount: Number(registrationFeeAmount),
           guarantorThresholdAmount: Number(guarantorThresholdAmount),
           requiredGuarantorsCount: Number(requiredGuarantorsCount),
+          voteThresholdNumerator: quorumNum,
+          voteThresholdDenominator: quorumDen,
           managerCycleMonths: cycleMonthsNum,
           managerCycleStartDate,
-          currency,
           monthlyReportAutoEmail,
           halalInvestmentThesis: halalThesis,
         });
-        await onRefresh();
+        await Promise.all([onRefresh(), fetchSystemStatus()]);
         setModal({
           mode: 'notice',
           tone: 'emerald',
           title: 'Site Settings Saved',
-          description: `Policy updated (${fundName}, ${cycleMonthsNum}-month manager cycle, max ${maxLoansPerYear} loans/yr, guarantor threshold ${guarantorThresholdAmount} ${currency}).`,
+          description: `Policy updated (${fundName.trim()}, ${quorumNum}/${quorumDen} quorum, ${cycleMonthsNum}-month manager cycle).`,
         });
       },
     });
   }
 
-  function confirmAdminLoanReview(loan: LoanRequest, decision: 'approve' | 'reject') {
-    if (decision === 'approve') {
-      setModal({
-        mode: 'confirm',
-        tone: 'emerald',
-        title: `Approve Qard Hasan Loan (${loan.id})`,
-        description:
-          'Approving moves this application to the approved disbursement stage on the Manager Desk.',
-        details: [
-          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-          { label: 'Amount', value: formatMoney(loan.amount, ccy) },
-          { label: 'Purpose', value: loan.purpose },
-        ],
-        confirmLabel: 'Approve for Disbursement',
-        run: async () => {
-          await api.adminReviewLoan(loan.id, 'approve');
-          await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: 'Qard Hasan Approved',
-            description: `Qard Hasan loan ${loan.id} approved for treasury disbursement.`,
-          });
-        },
-      });
-    } else {
-      setModal({
-        mode: 'confirm',
-        tone: 'red',
-        title: `Decline Qard Hasan Loan (${loan.id})`,
-        description: 'Enter a note explaining why this loan request is declined.',
-        details: [
-          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-          { label: 'Amount', value: formatMoney(loan.amount, ccy) },
-        ],
-        inputLabel: 'Administrative Note',
-        inputPlaceholder: 'Reason for declining loan request…',
-        inputRequired: false,
-        inputMultiline: true,
-        confirmLabel: 'Decline Request',
-        run: async (note) => {
-          await api.adminReviewLoan(loan.id, 'reject', note || undefined);
-          await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'amber',
-            title: 'Qard Hasan Declined',
-            description: `Qard Hasan loan ${loan.id} declined during administrative review.`,
-          });
-        },
-      });
-    }
-  }
-
   function downloadCsvReport(type: 'contributions' | 'loans' | 'members' | 'audit') {
     window.location.assign(`/api/reports/export?type=${type}`);
+  }
+
+  function handleDownloadMonthlyPdf() {
+    window.location.assign(api.getMonthlyPdfDownloadUrl(reportMonth));
+  }
+
+  function handleConfirmEmailMonthlyPdf() {
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Email Monthly PDF Summary (${reportMonth})`,
+      description:
+        'Generates the official monthly treasury & Amanah PDF statement and emails it to all active cooperative members via configured SMTP.',
+      details: [
+        { label: 'Billing Month', value: reportMonth },
+        { label: 'Active Recipients', value: `${activeMembersCount} member(s)` },
+        {
+          label: 'SMTP Status',
+          value: systemStatus?.smtp.configured
+            ? `Ready (${systemStatus.smtp.host})`
+            : 'SMTP not configured (will check server config)',
+        },
+      ],
+      confirmLabel: 'Send Monthly PDF Email',
+      run: async () => {
+        const res = await api.emailMonthlyPdfSummary(reportMonth);
+        await Promise.all([onRefresh(), fetchSystemStatus()]);
+        setModal({
+          mode: res.ok ? 'notice' : 'notice',
+          tone: res.ok ? 'emerald' : res.skipped ? 'amber' : 'red',
+          title: res.ok
+            ? 'Monthly PDF Dispatched'
+            : res.skipped
+              ? 'SMTP Delivery Skipped'
+              : 'PDF Email Completed with Issues',
+          description: res.ok
+            ? `Sent ${reportMonth} monthly PDF statement to ${res.sentCount} of ${res.totalRecipients ?? res.totalMembers} active member(s).`
+            : res.reason ||
+              `Sent ${res.sentCount}, failed ${res.failedCount}. Verify SMTP settings in Integrations & Health.`,
+        });
+      },
+    });
+  }
+
+  function handleConfirmSendReminders() {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: `Dispatch Payment Reminders (${reportMonth})`,
+      description:
+        'Queues in-app notifications and reminder records for members with unpaid contributions or due loan installments for the selected month.',
+      details: [
+        { label: 'Target Month', value: reportMonth },
+        { label: 'Due Day Rule', value: `Day ${config?.monthlyDueDay ?? 10} of month` },
+      ],
+      confirmLabel: 'Dispatch Reminders',
+      run: async () => {
+        const res = await api.sendReminders(reportMonth);
+        await onRefresh();
+        setModal({
+          mode: 'notice',
+          tone: 'emerald',
+          title: 'Billing Reminders Processed',
+          description:
+            res.createdCount > 0
+              ? `Created ${res.createdCount} reminder notification(s) for ${reportMonth}.`
+              : `All active members are already reminded or up to date for ${reportMonth}.`,
+        });
+      },
+    });
   }
 
   function handleConstitutionFileSelected(e: ChangeEvent<HTMLInputElement>) {
@@ -330,7 +507,7 @@ export function AdminSiteSettingsView({
         ? 'Replace Cooperative Constitution PDF'
         : 'Publish Cooperative Constitution PDF',
       description:
-        'The PDF will be automatically renamed semantically, stored in ImageKit.io media storage, and published immediately on the Rules Charter & Membership Application pages.',
+        'The PDF will be automatically renamed semantically, uploaded to governance media storage, and published immediately on the Charter Rules & Membership Application pages.',
       details: [
         { label: 'Selected File', value: file.name },
         { label: 'File Size', value: sizeLabel },
@@ -389,39 +566,128 @@ export function AdminSiteSettingsView({
     });
   }
 
-  const pendingReviewLoans = loans.filter(
-    (l) => l.status === 'pending_manager_review' || l.status === 'pending_vote'
-  );
+  const tabs: Array<{ id: SettingsTabId; label: string; Icon: typeof Settings; badge?: string | number }> = [
+    { id: 'policy', label: 'Policy & Limits', Icon: Settings, badge: isDirty ? 'Unsaved' : undefined },
+    { id: 'charter', label: 'Charter & Reports', Icon: FileText },
+    { id: 'email', label: 'Email & Templates', Icon: Mail },
+    { id: 'integrations', label: 'Integrations & Health', Icon: Server },
+    {
+      id: 'ventures',
+      label: 'Halal Ventures',
+      Icon: Briefcase,
+      badge: projects.length > 0 ? projects.length : undefined,
+    },
+  ];
+
+  const queueAttentionCount =
+    (systemStatus?.smtp.queueStats.pending ?? 0) +
+    (systemStatus?.smtp.queueStats.retrying ?? 0) +
+    (systemStatus?.smtp.queueStats.failed ?? 0);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="space-y-6"
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-4"
     >
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+      {/* Header & Quick Cross-Navigation */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Settings className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Admin Governance · Project Configuration</span>
+              <span>Admin Governance · Cooperative Configuration</span>
+              {config?.updatedAt && (
+                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  · Updated {formatDateTime(config.updatedAt)} by {config.updatedBy}
+                </span>
+              )}
             </div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Site Settings &amp; Cooperative Project Parameters
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white truncate">
+              {config?.fundName || 'Site Settings & Cooperative Project Parameters'}
             </h2>
           </div>
+
+          {onNavigateSection && (
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigateSection('manager-desk')}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                <span>Governance Desk</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('email-queue')}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                <span>Email Queue</span>
+                {queueAttentionCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono text-[10px]">
+                    {queueAttentionCount}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('site-activity')}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Activity className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                <span>Site Activity</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Tab Bar */}
+        <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative px-3.5 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  active
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="site-settings-tab-pill"
+                    transition={{ type: 'spring', bounce: 0.18, duration: 0.35 }}
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700 shadow-xs"
+                  />
+                )}
+                <tab.Icon className="w-3.5 h-3.5 relative z-10 shrink-0" aria-hidden="true" />
+                <span className="relative z-10">{tab.label}</span>
+                {tab.badge !== undefined && (
+                  <span
+                    className={`relative z-10 px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                      tab.badge === 'Unsaved'
+                        ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                        : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Project Policy, Manager Cycle, Contribution Target &amp; Loan Caps
-            </h3>
-          </div>
-
+      {/* TAB 1: POLICY & LIMITS */}
+      {isAdmin && activeTab === 'policy' && (
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
           {loading && !config ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 9 }).map((_, idx) => (
@@ -432,586 +698,954 @@ export function AdminSiteSettingsView({
               ))}
             </div>
           ) : (
-          <form onSubmit={handleSavePolicy} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Cooperative / Fund Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={fundName}
-                  onChange={(e) => setFundName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Currency
-                </label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as FundConfig['currency'])}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                >
-                  <option value="BDT">BDT (৳)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="MYR">MYR (RM)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Halal Maturity Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={maturityDate}
-                  onChange={(e) => setMaturityDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Monthly Target ({ccy})
-                </label>
-                <input
-                  type="number"
-                  min={100}
-                  required
-                  value={monthlyContributionAmount}
-                  onChange={(e) => setMonthlyContributionAmount(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Max Loan Cap ({ccy})
-                </label>
-                <input
-                  type="number"
-                  min={500}
-                  required
-                  value={maxLoanAmount}
-                  onChange={(e) => setMaxLoanAmount(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Loans / Year
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    required
-                    value={maxLoansPerYear}
-                    onChange={(e) => setMaxLoansPerYear(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  />
+            <form onSubmit={handleSavePolicy} className="space-y-5">
+              {/* Group 1: Identity, Timeline & Capacity */}
+              <div className="space-y-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    1. Cooperative Identity, Timeline &amp; Capacity
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Core branding, currency unit, intake cutoff, and maturity horizon.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Max Months
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={36}
-                    required
-                    value={maxInstallmentMonths}
-                    onChange={(e) => setMaxInstallmentMonths(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Guarantor Threshold ({ccy})
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  required
-                  value={guarantorThresholdAmount}
-                  onChange={(e) => setGuarantorThresholdAmount(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Cooperative / Fund Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={fundName}
+                      onChange={(e) => setFundName(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Required Co-Signers (Above Threshold)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={5}
-                  required
-                  value={requiredGuarantorsCount}
-                  onChange={(e) => setRequiredGuarantorsCount(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Treasury Currency
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value as FundConfig['currency'])}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    >
+                      <option value="BDT">BDT (৳)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="MYR">MYR (RM)</option>
+                      <option value="GBP">GBP (£)</option>
+                    </select>
+                  </div>
 
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Manager Rotation Cycle (Months)
-                  </label>
-                  <div className="flex items-center gap-1">
-                    {[3, 6, 12].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setManagerCycleMonths(String(preset))}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
-                          Number(managerCycleMonths) === preset
-                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
-                            : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
-                        }`}
-                      >
-                        {preset}m
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Membership Intake Deadline
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={membershipIntakeDeadline}
+                      onChange={(e) => setMembershipIntakeDeadline(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Halal Maturity Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={maturityDate}
+                      onChange={(e) => setMaturityDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Max Members / Shares Cap
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      required
+                      value={maxMembersCap}
+                      onChange={(e) => setMaxMembersCap(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Registration / Join Fee ({ccy})
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      required
+                      value={registrationFeeAmount}
+                      onChange={(e) => setRegistrationFeeAmount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
                   </div>
                 </div>
-                <input
-                  type="number"
-                  min={1}
-                  max={36}
-                  required
-                  value={managerCycleMonths}
-                  onChange={(e) => setManagerCycleMonths(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Manager Cycle Start Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={managerCycleStartDate}
-                  onChange={(e) => setManagerCycleStartDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Loan Savings Cap (% of Savings)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  required
-                  value={loanSavingsCapPct}
-                  onChange={(e) => setLoanSavingsCapPct(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Max Members / Shares Cap
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  required
-                  value={maxMembersCap}
-                  onChange={(e) => setMaxMembersCap(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Due Day
+                    Post-Maturity Halal Investment Mandate
                   </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={28}
-                    required
-                    value={monthlyDueDay}
-                    onChange={(e) => setMonthlyDueDay(e.target.value)}
-                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Late Fee
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    required
-                    value={lateFeeAmount}
-                    onChange={(e) => setLateFeeAmount(e.target.value)}
-                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Join Fee
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    required
-                    value={registrationFeeAmount}
-                    onChange={(e) => setRegistrationFeeAmount(e.target.value)}
-                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  <textarea
+                    rows={2}
+                    value={halalThesis}
+                    onChange={(e) => setHalalThesis(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Post-Maturity Halal Investment Mandate
-              </label>
-              <textarea
-                rows={2}
-                value={halalThesis}
-                onChange={(e) => setHalalThesis(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
-            </div>
+              {/* Group 2: Monthly Contributions & Reporting Schedule */}
+              <div className="space-y-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    2. Monthly Contributions, Due Date &amp; Auto-Statements
+                  </h3>
+                </div>
 
-            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <label className="inline-flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={monthlyReportAutoEmail}
-                  onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
-                />
-                <span>Automatically email monthly PDF fund summary at month rollover</span>
-              </label>
-              <span className="font-mono text-slate-500 dark:text-slate-400">
-                Last emailed month: {config?.lastMonthlyPdfSentMonth || 'None yet'}
-              </span>
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Monthly Target ({ccy})
+                    </label>
+                    <input
+                      type="number"
+                      min={100}
+                      required
+                      value={monthlyContributionAmount}
+                      onChange={(e) => setMonthlyContributionAmount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={modalBusy}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
-              >
-                Review &amp; Save Site Settings
-              </button>
-            </div>
-          </form>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Monthly Due Day (1–28)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={28}
+                      required
+                      value={monthlyDueDay}
+                      onChange={(e) => setMonthlyDueDay(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Late Payment Fee ({ccy})
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      required
+                      value={lateFeeAmount}
+                      onChange={(e) => setLateFeeAmount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <label className="inline-flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={monthlyReportAutoEmail}
+                      onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                    />
+                    <span>Automatically email monthly PDF fund summary at month rollover</span>
+                  </label>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">
+                    Last emailed: {config?.lastMonthlyPdfSentMonth || 'None yet'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Group 3: Qard Hasan Lending & Governance Voting */}
+              <div className="space-y-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    3. Qard Hasan Lending Limits &amp; Ballot Quorum
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Max Loan Cap ({ccy})
+                    </label>
+                    <input
+                      type="number"
+                      min={500}
+                      required
+                      value={maxLoanAmount}
+                      onChange={(e) => setMaxLoanAmount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Loans / Year
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        required
+                        value={maxLoansPerYear}
+                        onChange={(e) => setMaxLoansPerYear(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Max Months
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={36}
+                        required
+                        value={maxInstallmentMonths}
+                        onChange={(e) => setMaxInstallmentMonths(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Loan Savings Cap (% of Savings)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      required
+                      value={loanSavingsCapPct}
+                      onChange={(e) => setLoanSavingsCapPct(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Guarantor Threshold ({ccy})
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      required
+                      value={guarantorThresholdAmount}
+                      onChange={(e) => setGuarantorThresholdAmount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Required Co-Signers (Above Threshold)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={5}
+                      required
+                      value={requiredGuarantorsCount}
+                      onChange={(e) => setRequiredGuarantorsCount(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  {/* Voting Quorum Fraction */}
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Approval Quorum Ratio
+                      </label>
+                      <div className="flex items-center gap-1">
+                        {(
+                          [
+                            [1, 2],
+                            [2, 3],
+                            [3, 4],
+                          ] as const
+                        ).map(([num, den]) => (
+                          <button
+                            key={`${num}/${den}`}
+                            type="button"
+                            onClick={() => {
+                              setVoteThresholdNumerator(String(num));
+                              setVoteThresholdDenominator(String(den));
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
+                              Number(voteThresholdNumerator) === num &&
+                              Number(voteThresholdDenominator) === den
+                                ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-300'
+                            }`}
+                          >
+                            {num}/{den}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        required
+                        aria-label="Quorum numerator"
+                        value={voteThresholdNumerator}
+                        onChange={(e) => setVoteThresholdNumerator(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      />
+                      <span className="text-slate-400 font-mono text-sm">/</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        required
+                        aria-label="Quorum denominator"
+                        value={voteThresholdDenominator}
+                        onChange={(e) => setVoteThresholdDenominator(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+                  <Vote className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>
+                    With <strong className="font-mono">{previewQuorumNum}/{previewQuorumDen}</strong>{' '}
+                    quorum across <strong className="font-mono">{activeMembersCount}</strong> active
+                    member(s), ballots require{' '}
+                    <strong className="font-mono">{previewRequiredVotes}</strong> approval vote(s).
+                  </span>
+                </div>
+              </div>
+
+              {/* Group 4: Manager Rotation Cycle */}
+              <div className="space-y-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    4. Manager Rotation Schedule
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Manager Rotation Cycle (Months)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        {[3, 6, 12].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setManagerCycleMonths(String(preset))}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
+                              Number(managerCycleMonths) === preset
+                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
+                            }`}
+                          >
+                            {preset}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={36}
+                      required
+                      value={managerCycleMonths}
+                      onChange={(e) => setManagerCycleMonths(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Manager Cycle Anchor Start Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={managerCycleStartDate}
+                      onChange={(e) => setManagerCycleStartDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Save / Discard Footer */}
+              <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-xs">
+                  {isDirty ? (
+                    <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      <span>You have unsaved configuration changes</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+                      <span>All settings match the active cooperative policy</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {isDirty && config && (
+                    <button
+                      type="button"
+                      onClick={() => syncFormFromConfig(config)}
+                      className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Discard Changes</span>
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={modalBusy}
+                    className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                  >
+                    Review &amp; Save Site Settings
+                  </button>
+                </div>
+              </div>
+            </form>
           )}
         </section>
       )}
 
-      {isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+      {/* TAB 2: CHARTER, STATEMENTS & EXPORTS */}
+      {isAdmin && activeTab === 'charter' && (
+        <div className="space-y-4">
+          {/* Constitution PDF Section */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Charter Document · ImageKit.io Governance Storage</span>
+                <span>Charter Document · Cooperative Governance Storage</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Official Cooperative Constitution PDF
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Automatically renamed semantically and published to Charter Rules &amp; Sign-Up.
+                Automatically renamed semantically and published to the Charter Rules &amp; Sign-Up pages.
               </p>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
-            <div>
-              <label
-                htmlFor="constitution-semantic-title"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Document Title (Used for Semantic Filename)
-              </label>
-              <input
-                id="constitution-semantic-title"
-                type="text"
-                value={constitutionTitle}
-                onChange={(e) => setConstitutionTitle(e.target.value)}
-                placeholder="e.g. Cooperative Charter 2027-2036"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+              <div>
+                <label
+                  htmlFor="constitution-semantic-title"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Document Title (Used for Semantic Filename)
+                </label>
+                <input
+                  id="constitution-semantic-title"
+                  type="text"
+                  value={constitutionTitle}
+                  onChange={(e) => setConstitutionTitle(e.target.value)}
+                  placeholder="e.g. Cooperative Charter 2027-2036"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                ref={constitutionFileInputRef}
-                type="file"
-                accept="application/pdf,.pdf"
-                onChange={handleConstitutionFileSelected}
-                className="hidden"
-              />
-              <button
-                type="button"
-                disabled={constitutionBusy || modalBusy}
-                onClick={() => constitutionFileInputRef.current?.click()}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
-              >
-                <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>
-                  {config?.constitutionPdfUrl ? 'Upload Replacement PDF' : 'Upload Constitution PDF'}
-                </span>
-              </button>
-              {config?.constitutionPdfUrl && (
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={constitutionFileInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleConstitutionFileSelected}
+                  className="hidden"
+                />
                 <button
                   type="button"
                   disabled={constitutionBusy || modalBusy}
-                  onClick={confirmRemoveConstitutionPdf}
-                  className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                  onClick={() => constitutionFileInputRef.current?.click()}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
                 >
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Remove</span>
+                  <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>
+                    {config?.constitutionPdfUrl ? 'Upload Replacement PDF' : 'Upload Constitution PDF'}
+                  </span>
                 </button>
-              )}
-            </div>
-          </div>
-
-          {config?.constitutionPdfUrl ? (
-            <div className="rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-                    <span className="truncate font-mono">
-                      {config.constitutionPdfName || 'cooperative-constitution.pdf'}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-emerald-800/85 dark:text-emerald-300/85">
-                    {config.constitutionUploadedAt
-                      ? `Published ${formatShortDate(config.constitutionUploadedAt)}`
-                      : 'Published'}
-                    {config.constitutionUploadedBy ? ` by ${config.constitutionUploadedBy}` : ''}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {config?.constitutionPdfUrl && (
                   <button
                     type="button"
-                    onClick={() => setShowConstitutionPreview((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                    disabled={constitutionBusy || modalBusy}
+                    onClick={confirmRemoveConstitutionPdf}
+                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
-                    {showConstitutionPreview ? (
-                      <>
-                        <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Hide Preview</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Preview</span>
-                      </>
-                    )}
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Remove</span>
                   </button>
-                  <a
-                    href={config.constitutionPdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open</span>
-                  </a>
-                  <a
-                    href={config.constitutionPdfUrl}
-                    download={config.constitutionPdfName || 'cooperative-constitution.pdf'}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
-                  >
-                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Download</span>
-                  </a>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {showConstitutionPreview && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
-                  >
-                    <iframe
-                      src={config.constitutionPdfUrl}
-                      title="Uploaded Cooperative Constitution PDF Preview"
-                      className="w-full h-[460px]"
-                    />
-                  </motion.div>
                 )}
-              </AnimatePresence>
+              </div>
             </div>
-          ) : (
-            <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
-              No Constitution PDF uploaded.
-            </div>
-          )}
-        </section>
-      )}
 
-      {isAdmin && (
-        <AdminEmailTemplatesEditor
-          config={config}
-          adminEmail={user.email}
-          onRefresh={onRefresh}
-        />
-      )}
-
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
-              <HandCoins className="w-4 h-4" aria-hidden="true" />
-              <span>Administrative Qard Hasan Review</span>
-            </div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-              Pending Loan Requests ({pendingReviewLoans.length})
-            </h3>
-          </div>
-        </div>
-
-        {pendingReviewLoans.length === 0 ? (
-          <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
-            No pending Qard Hasan loan requests awaiting administrative review.
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-            {pendingReviewLoans.map((loan) => {
-              const approvals = loan.votes.filter((v) => v.decision === 'approve').length;
-              return (
-                <div
-                  key={loan.id}
-                  className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                        {loan.id}
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span>
-                        {loan.borrowerName} ({loan.borrowerCode})
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-mono">
-                        Votes {approvals}/{loan.requiredApprovals}
+            {config?.constitutionPdfUrl ? (
+              <div className="rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                      <span className="truncate font-mono">
+                        {config.constitutionPdfName || 'cooperative-constitution.pdf'}
                       </span>
                     </div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">
-                      {formatMoney(loan.amount, ccy)} · {loan.installmentMonths} monthly
-                      installments ({formatMoney(loan.monthlyInstallment, ccy)}/mo)
-                    </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300">{loan.purpose}</p>
-                    {loan.decryptedSensitiveNotes && (
-                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                        Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
-                        {loan.decryptedSensitiveNotes.provider} ·{' '}
-                        {loan.decryptedSensitiveNotes.disbursementAccount}
-                      </div>
-                    )}
+                    <p className="text-[11px] text-emerald-800/85 dark:text-emerald-300/85">
+                      {config.constitutionUploadedAt
+                        ? `Published ${formatShortDate(config.constitutionUploadedAt)}`
+                        : 'Published'}
+                      {config.constitutionUploadedBy ? ` by ${config.constitutionUploadedBy}` : ''}
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      disabled={modalBusy}
-                      onClick={() => confirmAdminLoanReview(loan, 'reject')}
-                      className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      onClick={() => setShowConstitutionPreview((v) => !v)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
                     >
-                      <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Decline</span>
+                      {showConstitutionPreview ? (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Hide Preview</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Preview</span>
+                        </>
+                      )}
                     </button>
-                    <button
-                      type="button"
-                      disabled={modalBusy}
-                      onClick={() => confirmAdminLoanReview(loan, 'approve')}
-                      className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                    <a
+                      href={config.constitutionPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Approve for Disbursement</span>
-                    </button>
+                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Open</span>
+                    </a>
+                    <a
+                      href={config.constitutionPdfUrl}
+                      download={config.constitutionPdfName || 'cooperative-constitution.pdf'}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
+                    >
+                      <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Download</span>
+                    </a>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
 
-      <GoogleSheetSyncCard
-        config={config}
-        workspace={workspace}
-        connectingGoogle={connectingGoogle}
-        onConnectGoogle={onConnectGoogle}
-        onDisconnectGoogle={onDisconnectGoogle}
-        onSynced={onRefresh}
-      />
+                <AnimatePresence>
+                  {showConstitutionPreview && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                    >
+                      <iframe
+                        src={config.constitutionPdfUrl}
+                        title="Uploaded Cooperative Constitution PDF Preview"
+                        className="w-full h-[460px]"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
+                No Constitution PDF uploaded.
+              </div>
+            )}
+          </section>
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Automated Regulatory &amp; Compliance Exports
-            </h3>
-          </div>
-          <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+          {/* Monthly Statements & Billing Reminders */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Monthly Summary Statements &amp; Billing Reminders
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Generate the monthly treasury PDF statement, email it to members, or dispatch contribution &amp; installment reminders.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <label htmlFor="report-month-picker" className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  Month:
+                </label>
+                <input
+                  id="report-month-picker"
+                  type="month"
+                  value={reportMonth}
+                  onChange={(e) => setReportMonth(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={handleDownloadMonthlyPdf}
+                className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
+              >
+                <span>Download Monthly PDF ({reportMonth})</span>
+                <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                disabled={modalBusy}
+                onClick={handleConfirmEmailMonthlyPdf}
+                className="px-4 py-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <span>Email PDF to Active Members</span>
+                <Send className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                disabled={modalBusy}
+                onClick={handleConfirmSendReminders}
+                className="px-4 py-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <span>Dispatch Billing Reminders</span>
+                <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+              </button>
+            </div>
+          </section>
+
+          {/* Regulatory CSV Exports & Full JSON Vault Backup */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Regulatory CSV Ledgers &amp; Treasury Vault Backup
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Export structured ledger spreadsheets or download a complete cooperative JSON backup.
+                </p>
+              </div>
+              <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {(
+                [
+                  { id: 'contributions', label: 'Contributions CSV' },
+                  { id: 'loans', label: 'Qard Hasan CSV' },
+                  { id: 'members', label: 'Member Standing CSV' },
+                  { id: 'audit', label: 'Audit Trail CSV' },
+                ] as const
+              ).map((rep) => (
+                <button
+                  key={rep.id}
+                  type="button"
+                  onClick={() => downloadCsvReport(rep.id)}
+                  className="px-3.5 py-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                >
+                  <span>{rep.label}</span>
+                  <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+                </button>
+              ))}
+
+              <a
+                href={api.getBackupJsonUrl()}
+                download
+                className="px-3.5 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
+              >
+                <span>Full JSON Backup</span>
+                <FileArchive className="w-4 h-4 shrink-0" aria-hidden="true" />
+              </a>
+            </div>
+          </section>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {(
-            [
-              { id: 'contributions', label: 'Contributions Ledger CSV' },
-              { id: 'loans', label: 'Qard Hasan Portfolio CSV' },
-              { id: 'members', label: 'Member Standing CSV' },
-              { id: 'audit', label: 'Encrypted Audit Trail CSV' },
-            ] as const
-          ).map((rep) => (
-            <button
-              key={rep.id}
-              type="button"
-              onClick={() => downloadCsvReport(rep.id)}
-              className="px-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
-            >
-              <span>{rep.label}</span>
-              <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
-            </button>
-          ))}
+      {/* TAB 3: EMAIL & TEMPLATES */}
+      {isAdmin && activeTab === 'email' && (
+        <div className="space-y-4">
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                <span>
+                  SMTP Delivery:{' '}
+                  {systemStatus?.smtp.configured
+                    ? `Active (${systemStatus.smtp.host}:${systemStatus.smtp.port})`
+                    : 'Not configured on server'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {systemStatus
+                  ? `Email queue: ${systemStatus.smtp.queueStats.sent} sent · ${systemStatus.smtp.queueStats.pending + systemStatus.smtp.queueStats.retrying} pending/retrying · ${systemStatus.smtp.queueStats.failed} failed`
+                  : 'Customize cooperative HTML email subjects, greetings, accent colors, and dispatch test emails.'}
+              </p>
+            </div>
+            {onNavigateSection && (
+              <button
+                type="button"
+                onClick={() => onNavigateSection('email-queue')}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                <span>Manage Email Queue</span>
+              </button>
+            )}
+          </section>
+
+          <AdminEmailTemplatesEditor
+            config={config}
+            adminEmail={user.email}
+            onRefresh={onRefresh}
+          />
         </div>
-      </section>
+      )}
 
-      <HalalProjectsView
-        projects={projects}
-        overview={overview}
-        user={user}
-        loading={loading}
-        onRefresh={onRefresh}
-      />
+      {/* TAB 4: INTEGRATIONS & SYSTEM HEALTH */}
+      {isAdmin && activeTab === 'integrations' && (
+        <div className="space-y-4">
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Runtime Integrations &amp; Security Health
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Live server readiness for database storage, AES-256-GCM encryption, SMTP mailer, media vault, and AI verification.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={loadingStatus}
+                onClick={() => void fetchSystemStatus()}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingStatus ? 'animate-spin' : ''}`} aria-hidden="true" />
+                <span>Refresh Status</span>
+              </button>
+            </div>
+
+            {!systemStatus ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} height={78} borderRadius={10} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Storage Engine */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                      <span>Primary Vault Storage</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      ONLINE
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {systemStatus.storageEngine === 'mongodb_atlas'
+                      ? 'MongoDB Atlas Cluster'
+                      : 'Encrypted Local JSON Vault'}
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {systemStatus.totals.contributionsCount} savings · {systemStatus.totals.loansCount} loans · {systemStatus.totals.auditLogsCount} audit logs
+                  </div>
+                </div>
+
+                {/* Encryption */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                      <span>AES-256-GCM Encryption</span>
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                        systemStatus.encryption.mode === 'custom_aes256'
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                          : systemStatus.encryption.mode === 'jwt_derived'
+                            ? 'bg-teal-500/10 text-teal-700 dark:text-teal-300'
+                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                      }`}
+                    >
+                      {systemStatus.encryption.mode === 'custom_aes256'
+                        ? 'DEDICATED KEY'
+                        : systemStatus.encryption.mode === 'jwt_derived'
+                          ? 'JWT DERIVED'
+                          : 'DEV FALLBACK'}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {systemStatus.encryption.configured
+                      ? 'Production Key Configured'
+                      : 'Set ENCRYPTION_KEY (64 hex)'}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Encrypts NID, nominee details, TOTP secrets &amp; DMs.
+                  </div>
+                </div>
+
+                {/* SMTP Email */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+                      <span>SMTP Mailer</span>
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                        systemStatus.smtp.configured
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                      }`}
+                    >
+                      {systemStatus.smtp.configured ? 'CONFIGURED' : 'UNCONFIGURED'}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                    {systemStatus.smtp.host
+                      ? `${systemStatus.smtp.host}:${systemStatus.smtp.port}`
+                      : 'No SMTP host configured'}
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                    Queue: {systemStatus.smtp.queueStats.sent} sent · {systemStatus.smtp.queueStats.failed} failed
+                  </div>
+                </div>
+
+                {/* Media Storage */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <HardDrive className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                      <span>KYC &amp; Charter Media</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+                      {systemStatus.mediaStorage.provider.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {systemStatus.mediaStorage.provider === 'imagekit'
+                      ? 'ImageKit.io CDN'
+                      : systemStatus.mediaStorage.provider === 'imgbb'
+                        ? 'ImgBB Image Host'
+                        : 'Local Fallback Storage'}
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {systemStatus.mediaStorage.folder
+                      ? `Folder: ${systemStatus.mediaStorage.folder}`
+                      : 'External CDN folder not set'}
+                  </div>
+                </div>
+
+                {/* Gemini Receipt AI */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                      <span>Receipt OCR &amp; AI Check</span>
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                        systemStatus.geminiAi.configured
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {systemStatus.geminiAi.configured ? 'READY' : 'OFF'}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {systemStatus.geminiAi.configured
+                      ? 'Receipt Extraction Active'
+                      : 'GEMINI_API_KEY Not Set'}
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    Model: {systemStatus.geminiAi.model}
+                  </div>
+                </div>
+
+                {/* Server Runtime */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+                      <span>Runtime &amp; Members</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-700 dark:text-teal-300">
+                      {systemStatus.runtime.nodeVersion}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {systemStatus.totals.activeMembers} Active · {systemStatus.totals.pendingMembers} Pending
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    Process uptime: {formatUptime(systemStatus.runtime.uptimeSeconds)}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <GoogleSheetSyncCard
+            config={config}
+            workspace={workspace}
+            connectingGoogle={connectingGoogle}
+            onConnectGoogle={onConnectGoogle}
+            onDisconnectGoogle={onDisconnectGoogle}
+            onSynced={onRefresh}
+          />
+        </div>
+      )}
+
+      {/* TAB 5: HALAL VENTURES */}
+      {isAdmin && activeTab === 'ventures' && (
+        <HalalProjectsView
+          projects={projects}
+          overview={overview}
+          user={user}
+          loading={loading}
+          onRefresh={onRefresh}
+        />
+      )}
 
       <ActionModal
         open={Boolean(modal)}
@@ -1021,10 +1655,6 @@ export function AdminSiteSettingsView({
         description={modal?.description || ''}
         details={modal?.details}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
-        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
-        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
-        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
-        inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

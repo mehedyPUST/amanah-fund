@@ -1,4 +1,5 @@
 import type {
+  AdminSystemStatus,
   AuditLogEntry,
   CommunityCategory,
   CommunityPost,
@@ -544,6 +545,8 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
+  getAdminSystemStatus: () =>
+    apiRequest<AdminSystemStatus>('/api/admin/system-status'),
   sendTestTemplateEmail: (payload: {
     templateKey: EmailTemplateKey;
     template?: Partial<EmailTemplateFormat>;

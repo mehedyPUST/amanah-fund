@@ -1459,6 +1459,7 @@ export function DashboardShell() {
                     onConnectGoogle={handleConnectGoogle}
                     onDisconnectGoogle={handleDisconnectGoogle}
                     onRefresh={handleRefreshWithAutoSync}
+                    onNavigateSection={(sectionId) => navigateToPage(sectionId, false)}
                   />
                 </section>
               )}

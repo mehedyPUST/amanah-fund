@@ -92,6 +92,23 @@ export function isSmtpConfigured(env: NodeJS.ProcessEnv = process.env): boolean 
   return Boolean(cfg.host);
 }
 
+export function getSmtpStatusSummary(env: NodeJS.ProcessEnv = process.env): {
+  configured: boolean;
+  host: string | null;
+  port: number;
+  secure: boolean;
+  from: string | null;
+} {
+  const cfg = getSmtpConfig(env);
+  return {
+    configured: Boolean(cfg.host),
+    host: cfg.host || null,
+    port: cfg.port,
+    secure: cfg.secure,
+    from: cfg.host ? cfg.from : null,
+  };
+}
+
 function getTransporter(): { transporter: Transporter; from: string } | null {
   const cfg = getSmtpConfig();
   if (!cfg.host) return null;

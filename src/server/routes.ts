@@ -69,11 +69,19 @@ import {
   computeSha256Hash,
   decryptSensitiveObject,
   encryptSensitiveObject,
+  getEncryptionKeyStatus,
   maskReference,
 } from './crypto.ts';
-import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVaultState } from './db.ts';
+import {
+  getStorageEngine,
+  loadVaultState,
+  type StoredPrivateMessage,
+  type StoredUser,
+  updateVaultState,
+} from './db.ts';
 import {
   buildEmailTemplatePreview,
+  getSmtpStatusSummary,
   isSmtpConfigured,
   sendEmail,
   sendMonthlyPdfSummaryEmail,
@@ -5099,6 +5107,8 @@ apiRouter.patch(
       const guarantorThresholdAmount = Number(body.guarantorThresholdAmount);
       const requiredGuarantorsCount = Number(body.requiredGuarantorsCount);
       const managerCycleMonths = Number(body.managerCycleMonths);
+      const voteThresholdNumerator = Number(body.voteThresholdNumerator);
+      const voteThresholdDenominator = Number(body.voteThresholdDenominator);
 
       if (
         body.maxLoansPerYear !== undefined &&
@@ -5161,6 +5171,50 @@ apiRouter.patch(
           res.status(400).json({ error: 'Maturity date must be a valid YYYY-MM-DD date.' });
           return;
         }
+      }
+      if (body.membershipIntakeDeadline !== undefined) {
+        const parsedIntake = Date.parse(`${body.membershipIntakeDeadline}T00:00:00Z`);
+        if (
+          !/^\d{4}-\d{2}-\d{2}$/.test(body.membershipIntakeDeadline) ||
+          Number.isNaN(parsedIntake)
+        ) {
+          res
+            .status(400)
+            .json({ error: 'Membership intake deadline must be a valid YYYY-MM-DD date.' });
+          return;
+        }
+      }
+      if (
+        body.voteThresholdNumerator !== undefined &&
+        (!Number.isInteger(voteThresholdNumerator) ||
+          voteThresholdNumerator < 1 ||
+          voteThresholdNumerator > 10)
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Vote quorum numerator must be an integer between 1 and 10.' });
+        return;
+      }
+      if (
+        body.voteThresholdDenominator !== undefined &&
+        (!Number.isInteger(voteThresholdDenominator) ||
+          voteThresholdDenominator < 1 ||
+          voteThresholdDenominator > 10)
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Vote quorum denominator must be an integer between 1 and 10.' });
+        return;
+      }
+      if (
+        body.voteThresholdNumerator !== undefined &&
+        body.voteThresholdDenominator !== undefined &&
+        voteThresholdNumerator > voteThresholdDenominator
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Vote quorum numerator cannot exceed the denominator.' });
+        return;
       }
       if (
         body.managerCycleMonths !== undefined &&
@@ -5354,6 +5408,35 @@ apiRouter.patch(
             cfg.membershipIntakeDeadline = body.membershipIntakeDeadline;
           }
         }
+        if (
+          body.voteThresholdNumerator !== undefined ||
+          body.voteThresholdDenominator !== undefined
+        ) {
+          const resolvedNum =
+            body.voteThresholdNumerator !== undefined
+              ? voteThresholdNumerator
+              : cfg.voteThresholdNumerator;
+          const resolvedDen =
+            body.voteThresholdDenominator !== undefined
+              ? voteThresholdDenominator
+              : cfg.voteThresholdDenominator;
+          if (resolvedNum <= resolvedDen) {
+            if (resolvedNum !== cfg.voteThresholdNumerator) {
+              changes.voteThresholdNumerator = {
+                from: cfg.voteThresholdNumerator,
+                to: resolvedNum,
+              };
+              cfg.voteThresholdNumerator = resolvedNum;
+            }
+            if (resolvedDen !== cfg.voteThresholdDenominator) {
+              changes.voteThresholdDenominator = {
+                from: cfg.voteThresholdDenominator,
+                to: resolvedDen,
+              };
+              cfg.voteThresholdDenominator = resolvedDen;
+            }
+          }
+        }
         if (typeof body.googleSheetId === 'string') {
           const trimmedId = body.googleSheetId.trim();
           if ((trimmedId || undefined) !== cfg.googleSheetId) {
@@ -5396,12 +5479,14 @@ apiRouter.patch(
           action: 'FUND_POLICY_UPDATED',
           resourceType: 'config',
           resourceId: cfg.id,
-          summary: `${viewer.name} updated cooperative policy (max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate}, manager cycle ${cfg.managerCycleMonths ?? 3}m)`,
+          summary: `${viewer.name} updated cooperative policy (max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate}, quorum ${cfg.voteThresholdNumerator}/${cfg.voteThresholdDenominator}, manager cycle ${cfg.managerCycleMonths ?? 3}m)`,
           payload: {
             maxLoansPerYear: cfg.maxLoansPerYear,
             maturityDate: cfg.maturityDate,
             managerCycleMonths: cfg.managerCycleMonths ?? 3,
             managerCycleStartDate: cfg.managerCycleStartDate ?? '2026-01-01',
+            voteThresholdNumerator: cfg.voteThresholdNumerator,
+            voteThresholdDenominator: cfg.voteThresholdDenominator,
             monthlyContributionAmount: cfg.monthlyContributionAmount,
             maxLoanAmount: cfg.maxLoanAmount,
             guarantorThresholdAmount: cfg.guarantorThresholdAmount,
@@ -5428,6 +5513,54 @@ apiRouter.patch(
     } catch (err) {
       console.error('Update config error:', err);
       res.status(500).json({ error: 'Failed to update fund configuration.' });
+    }
+  }
+);
+
+apiRouter.get(
+  '/admin/system-status',
+  requireAuth,
+  requireRole(['admin']),
+  async (_req: AuthenticatedRequest, res) => {
+    try {
+      const state = await loadVaultState();
+      const smtpSummary = getSmtpStatusSummary();
+      const queueStats = computeEmailQueueStats(state.emailQueue || []);
+      const imageKitCfg = getImageKitConfig();
+      const hasImgbb = Boolean(process.env.IMGBB_API_KEY?.trim());
+
+      res.json({
+        storageEngine: getStorageEngine(),
+        encryption: getEncryptionKeyStatus(),
+        smtp: {
+          ...smtpSummary,
+          queueStats,
+        },
+        mediaStorage: {
+          provider: imageKitCfg ? 'imagekit' : hasImgbb ? 'imgbb' : 'local_vault',
+          folder: imageKitCfg?.folder || null,
+          urlEndpointConfigured: Boolean(imageKitCfg?.urlEndpoint),
+        },
+        geminiAi: {
+          configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
+          model: 'gemini-4-hydrogen',
+        },
+        totals: {
+          activeMembers: state.users.filter((u) => u.status === 'active').length,
+          pendingMembers: state.users.filter((u) => u.status === 'pending_approval').length,
+          contributionsCount: state.contributions.length,
+          loansCount: state.loans.length,
+          halalProjectsCount: state.halalProjects.length,
+          auditLogsCount: state.auditLogs.length,
+        },
+        runtime: {
+          nodeVersion: process.version,
+          uptimeSeconds: Math.floor(process.uptime()),
+        },
+      });
+    } catch (err) {
+      console.error('Admin system status error:', err);
+      res.status(500).json({ error: 'Failed to load system diagnostics.' });
     }
   }
 );
