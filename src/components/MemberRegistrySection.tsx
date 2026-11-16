@@ -328,14 +328,14 @@ export function MemberRegistrySection({
                       <div className="space-y-1 text-xs">
                         <div className="font-semibold text-slate-900 dark:text-white">
                           {req.memberName} ({req.memberCode}) ·{' '}
-                          <span className="font-mono text-slate-500">
+                          <span className="font-mono text-slate-500 dark:text-slate-400">
                             {formatDateTime(req.requestedAt)}
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
                           {Object.entries(req.requestedChanges).map(([k, v]) => (
                             <div key={k}>
-                              <span className="font-mono text-slate-400">{k}:</span>{' '}
+                              <span className="font-mono text-slate-500 dark:text-slate-400">{k}:</span>{' '}
                               <span className="font-medium text-slate-900 dark:text-white">
                                 {String(v)}
                               </span>
@@ -445,7 +445,7 @@ export function MemberRegistrySection({
                 type="button"
                 onClick={() => setInspectingMember(null)}
                 aria-label="Close registration details"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -477,7 +477,7 @@ export function MemberRegistrySection({
                             />
                           </a>
                         ) : (
-                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
+                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                             No photo uploaded
                           </div>
                         )}
@@ -517,7 +517,7 @@ export function MemberRegistrySection({
                             </a>
                           )
                         ) : (
-                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
+                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                             Not provided (optional)
                           </div>
                         )}
@@ -582,7 +582,7 @@ export function MemberRegistrySection({
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500">
+                      <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                         No extended KYC registration payload stored for this account.
                       </div>
                     )}

@@ -747,7 +747,7 @@ export function ManagerDeskView({
                   </span>
                   <Icon
                     className={`w-3.5 h-3.5 shrink-0 ${
-                      active ? tab.activeIconClass : 'text-slate-400'
+                      active ? tab.activeIconClass : 'text-slate-400 dark:text-slate-500'
                     }`}
                     aria-hidden="true"
                   />
@@ -839,7 +839,7 @@ export function ManagerDeskView({
                         ) : (
                           <span>{c.memberName}</span>
                         )}
-                        <span className="font-mono text-slate-500">({c.memberCode})</span>
+                        <span className="font-mono text-slate-500 dark:text-slate-400">({c.memberCode})</span>
                         <span>·</span>
                         <span className="font-mono text-emerald-700 dark:text-emerald-400">
                           {formatMoney(c.amount, ccy)}
@@ -926,7 +926,7 @@ export function ManagerDeskView({
             </div>
 
             {pendingReviewLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 No Qard Hasan requests awaiting vote initiation.
               </div>
             ) : (
@@ -1072,7 +1072,7 @@ export function ManagerDeskView({
             </div>
 
             {votingLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 No Qard Hasan applications currently in active voting.
               </div>
             ) : (
@@ -1135,7 +1135,7 @@ export function ManagerDeskView({
             </div>
 
             {pendingDisbursementLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 No approved Qard Hasan loans waiting for disbursement confirmation.
               </div>
             ) : (
@@ -1420,7 +1420,7 @@ export function ManagerDeskView({
                         onClick={() =>
                           setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                         }
-                        className="p-1.5 rounded text-slate-400 hover:text-red-600 cursor-pointer"
+                        className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                         aria-label="Remove option"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1642,7 +1642,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmMeetingStatus(m, 'completed')}
-                            className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 cursor-pointer"
+                            className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
                           >
                             Done
                           </button>
@@ -1650,7 +1650,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmMeetingStatus(m, 'cancelled')}
-                            className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 cursor-pointer"
+                            className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1694,11 +1694,11 @@ export function ManagerDeskView({
                           req.memberName
                         )}{' '}
                         ({req.memberCode}) ·{' '}
-                        <span className="capitalize font-normal text-slate-500">
+                        <span className="capitalize font-normal text-slate-500 dark:text-slate-400">
                           {req.memberRole}
                         </span>
                       </span>
-                      <span className="font-mono text-slate-400">
+                      <span className="font-mono text-slate-500 dark:text-slate-400">
                         {formatShortDate(req.requestedAt)}
                       </span>
                     </div>
@@ -1706,7 +1706,7 @@ export function ManagerDeskView({
                       {Object.entries(req.requestedChanges).map(([k, v]) =>
                         v ? (
                           <div key={k}>
-                            <span className="text-slate-400">{k}:</span> {String(v)}
+                            <span className="text-slate-500 dark:text-slate-400">{k}:</span> {String(v)}
                           </div>
                         ) : null
                       )}

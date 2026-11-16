@@ -246,7 +246,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     <button
                       type="button"
                       onClick={cancelTotpPrompt}
-                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
                       aria-label="Cancel 2FA challenge"
                     >
                       <X className="w-4 h-4" />

@@ -2,6 +2,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @import "react-loading-skeleton/dist/skeleton.css";
 
+:root {
+  color-scheme: light;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.32) transparent;
+}
+
+html.dark {
+  color-scheme: dark;
+  scrollbar-color: rgba(148, 163, 184, 0.26) transparent;
+}
+
 @layer base {
   body {
     font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
@@ -18,6 +29,43 @@
 
   .font-mono {
     font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+  select,
+  textarea {
+    color: #0f172a;
+  }
+
+  html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+  html.dark select,
+  html.dark textarea {
+    color: #f1f5f9;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #64748b;
+  }
+
+  select option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  html.dark select option {
+    background-color: #0f172a;
+    color: #f1f5f9;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: #059669;
   }
 }
 
@@ -40,18 +88,8 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgba(5, 150, 105, 0.5);
+  outline: 2px solid rgba(16, 185, 129, 0.55);
   outline-offset: 2px;
-}
-
-/* Modern, classy scrollbars (Light & Dark Mode) */
-:root {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.32) transparent;
-}
-
-html.dark {
-  scrollbar-color: rgba(148, 163, 184, 0.26) transparent;
 }
 
 ::-webkit-scrollbar {

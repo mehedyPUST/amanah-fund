@@ -706,14 +706,14 @@ export function OverviewView({
                         className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
                       >
                         {b.borrowerName}{' '}
-                        <span className="font-mono font-normal text-slate-500">
+                        <span className="font-mono font-normal text-slate-500 dark:text-slate-400">
                           ({b.borrowerCode})
                         </span>
                       </button>
                     ) : (
                       <div className="font-semibold text-slate-900 dark:text-white">
                         {b.borrowerName}{' '}
-                        <span className="font-mono font-normal text-slate-500">
+                        <span className="font-mono font-normal text-slate-500 dark:text-slate-400">
                           ({b.borrowerCode})
                         </span>
                       </div>
@@ -733,7 +733,7 @@ export function OverviewView({
                   <div className="text-right font-mono tabular-nums shrink-0">
                     <div className="font-semibold text-slate-900 dark:text-white">
                       {formatMoney(b.mainAmount, ccy)}{' '}
-                      <span className="text-slate-400 font-normal">/</span>{' '}
+                      <span className="text-slate-400 dark:text-slate-600 font-normal">/</span>{' '}
                       <span className="text-amber-700 dark:text-amber-400">
                         {formatMoney(b.dueAmount, ccy)} due
                       </span>
@@ -779,7 +779,7 @@ export function OverviewView({
                         className="font-medium text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left truncate"
                       >
                         {entry.memberName}{' '}
-                        <span className="font-mono text-slate-500 font-normal">
+                        <span className="font-mono text-slate-500 dark:text-slate-400 font-normal">
                           ({entry.memberCode})
                         </span>
                       </button>

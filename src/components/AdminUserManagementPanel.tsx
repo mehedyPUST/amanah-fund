@@ -749,7 +749,7 @@ export function AdminUserManagementPanel({
                       <div className="font-medium text-slate-900 dark:text-white text-sm">
                         {m.name}
                       </div>
-                      <div className="font-mono text-slate-500">
+                      <div className="font-mono text-slate-500 dark:text-slate-400">
                         {m.memberCode} · {m.email} · Joined {formatShortDate(m.joinedAt)}
                       </div>
                     </td>
@@ -817,7 +817,7 @@ export function AdminUserManagementPanel({
                             disabled={isBusy}
                             onClick={() => openEditModal(m)}
                             title="Edit user details and permissions"
-                            className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                           >
                             <Pencil className="w-3 h-3" aria-hidden="true" />
                             <span>Edit</span>
@@ -886,7 +886,7 @@ export function AdminUserManagementPanel({
                           )}
 
                           {isSelf && (
-                            <span className="text-[11px] text-slate-400 px-1">Current Admin</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 px-1">Current Admin</span>
                           )}
                         </div>
                       </td>

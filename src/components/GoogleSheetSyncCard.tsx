@@ -360,7 +360,7 @@ export function GoogleSheetSyncCard({
               type="checkbox"
               checked={Boolean(config?.autoSyncSheet)}
               onChange={handleToggleAutoSync}
-              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+              className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
             />
             <span>Auto-sync on ledger changes (when Google connected)</span>
           </label>

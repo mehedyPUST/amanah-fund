@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { Target } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useCoopSession } from './AppProviders.tsx';
 import type { Contribution, DashboardOverview, FundConfig } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
 
@@ -124,9 +125,15 @@ export function ManagerCollectionGoalChart({
   treasury,
   loading = false,
 }: ManagerCollectionGoalChartProps) {
+  const { darkMode } = useCoopSession();
   const ccy = config?.currency || 'BDT';
   const [range, setRange] = useState<'6m' | '12m' | 'all'>('6m');
   const [mode, setMode] = useState<'monthly' | 'cumulative'>('monthly');
+  const axisFill = darkMode ? '#94a3b8' : '#475569';
+  const gridStroke = darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.16)';
+  const hoverCursor = {
+    fill: darkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.05)',
+  };
 
   const monthlyTarget = useMemo(() => {
     if (treasury?.thisMonthContributionTarget && treasury.thisMonthContributionTarget > 0) {
@@ -407,23 +414,32 @@ export function ManagerCollectionGoalChart({
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="rgba(148, 163, 184, 0.24)"
+                stroke={gridStroke}
               />
               <XAxis
                 dataKey="monthLabel"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: axisFill }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={formatAxisCompact}
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: axisFill }}
                 axisLine={false}
                 tickLine={false}
                 width={46}
               />
-              <Tooltip content={<CollectionGoalTooltip currency={ccy} />} />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+              <Tooltip
+                cursor={hoverCursor}
+                content={<CollectionGoalTooltip currency={ccy} />}
+              />
+              <Legend
+                wrapperStyle={{
+                  fontSize: '12px',
+                  paddingTop: '8px',
+                  color: darkMode ? '#cbd5e1' : '#334155',
+                }}
+              />
 
               {mode === 'monthly' ? (
                 <>

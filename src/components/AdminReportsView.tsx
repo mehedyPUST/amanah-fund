@@ -400,7 +400,7 @@ export function AdminReportsView({
                           src={avatar}
                           alt={`${pm.name} portrait`}
                           referrerPolicy="no-referrer"
-                          className="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100"
+                          className="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800"
                         />
                       ) : (
                         <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
@@ -410,7 +410,7 @@ export function AdminReportsView({
                       <div className="space-y-0.5 min-w-0">
                         <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {pm.name}{' '}
-                          <span className="font-mono text-xs text-slate-500">· {pm.memberCode}</span>
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">· {pm.memberCode}</span>
                         </div>
                         <div className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
                           {pm.email} · Mobile {reg?.mobile || pm.phoneMasked || '••••'} · Applied{' '}
@@ -927,7 +927,7 @@ export function AdminReportsView({
                             />
                           </a>
                         ) : (
-                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
+                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                             No photo uploaded
                           </div>
                         )}
@@ -967,7 +967,7 @@ export function AdminReportsView({
                             </a>
                           )
                         ) : (
-                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
+                          <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                             Not provided (optional)
                           </div>
                         )}
@@ -1032,7 +1032,7 @@ export function AdminReportsView({
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500">
+                      <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                         No extended KYC registration payload stored for this bootstrap account.
                       </div>
                     )}

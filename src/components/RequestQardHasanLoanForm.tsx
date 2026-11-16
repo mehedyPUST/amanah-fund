@@ -832,13 +832,13 @@ export function RequestQardHasanLoanForm({
                                 : [...prev, member.id]
                             )
                           }
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500/30"
+                          className="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-amber-600 focus:ring-amber-500/30"
                         />
                         <span className="font-medium text-slate-900 dark:text-white truncate">
                           {member.name}
                         </span>
                       </span>
-                      <span className="font-mono text-[11px] text-slate-500 shrink-0">
+                      <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                         {member.memberCode}
                       </span>
                     </label>
@@ -864,7 +864,7 @@ export function RequestQardHasanLoanForm({
               setAgreedToTerms(e.target.checked);
               if (e.target.checked) setTermsHighlight(false);
             }}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
           />
           <span className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
             I confirm this is a <strong className="text-slate-800 dark:text-slate-200">0% Qard Hasan</strong> request and commit to the {parsedMonths}-month repayment schedule.

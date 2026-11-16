@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useCoopSession } from './AppProviders.tsx';
 import type {
   Contribution,
   FundConfig,
@@ -105,8 +106,14 @@ export function TreasuryGrowthChart({
   loading = false,
   onSubmitContribution,
 }: TreasuryGrowthChartProps) {
+  const { darkMode } = useCoopSession();
   const [viewMode, setViewMode] = useState<'combined' | 'contributions' | 'treasury'>('combined');
   const [range, setRange] = useState<'6m' | '12m' | 'all'>('12m');
+  const axisFill = darkMode ? '#94a3b8' : '#475569';
+  const gridStroke = darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.16)';
+  const hoverCursor = {
+    fill: darkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.05)',
+  };
 
   const fullSeries = useMemo<TreasuryPoint[]>(() => {
     const buckets = new Map<
@@ -441,23 +448,32 @@ export function TreasuryGrowthChart({
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="rgba(148, 163, 184, 0.24)"
+                stroke={gridStroke}
               />
               <XAxis
                 dataKey="monthLabel"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: axisFill }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={formatAxisCompact}
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: axisFill }}
                 axisLine={false}
                 tickLine={false}
                 width={46}
               />
-              <Tooltip content={<TreasuryChartTooltip currency={currency} />} />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+              <Tooltip
+                cursor={hoverCursor}
+                content={<TreasuryChartTooltip currency={currency} />}
+              />
+              <Legend
+                wrapperStyle={{
+                  fontSize: '12px',
+                  paddingTop: '10px',
+                  color: darkMode ? '#cbd5e1' : '#334155',
+                }}
+              />
 
               {viewMode === 'combined' && (
                 <>

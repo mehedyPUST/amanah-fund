@@ -493,7 +493,7 @@ export function NotificationsView({
                 type="checkbox"
                 checked={Boolean(prefs[item.key])}
                 onChange={() => void handleTogglePreference(item.key)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
+                className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600 focus:ring-indigo-600"
               />
             </label>
           ))}

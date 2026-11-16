@@ -116,7 +116,7 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
                       alt={`${nominee.name} portrait`}
                       referrerPolicy="no-referrer"
                       onError={() => setBrokenPhotos((prev) => ({ ...prev, [idx]: true }))}
-                      className="w-8 h-8 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                      className="w-8 h-8 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                     />
                     <span>Open Nominee Photo</span>
                     <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -126,7 +126,7 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
                     Not required (Female nominee)
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-400">Not provided</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Not provided</span>
                 )}
               </div>
             </div>

@@ -1222,7 +1222,7 @@ export function VotingView({
                                           />
                                         )}
                                         <span className="truncate">{v.voterName}</span>
-                                        <span className="text-[10px] uppercase font-mono text-slate-400">
+                                        <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">
                                           ({v.voterRole})
                                         </span>
                                       </div>
@@ -1242,7 +1242,7 @@ export function VotingView({
                                       >
                                         {isUp ? 'Upvoted' : 'Downvoted'}
                                       </div>
-                                      <div className="font-mono text-[10px] text-slate-400">
+                                      <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
                                         {shortHash(v.signatureHash)}
                                       </div>
                                     </div>
@@ -1508,7 +1508,7 @@ export function VotingView({
                                       <span className="font-medium text-slate-900 dark:text-white">
                                         {v.voterName}
                                       </span>{' '}
-                                      <span className="text-[10px] font-mono text-slate-400">
+                                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                                         ({v.voterRole})
                                       </span>
                                     </div>
@@ -1837,7 +1837,7 @@ export function VotingView({
                           {(poll.voteResultRevealed || isAdmin) && (
                             <>
                               <span aria-hidden="true"> · </span>
-                              <span className="text-slate-500">
+                              <span className="text-slate-500 dark:text-slate-400">
                                 {poll.options
                                   .map((o) => `${o.label}: ${o.voteCount ?? 0}`)
                                   .join(' / ')}{' '}
@@ -1875,7 +1875,7 @@ export function VotingView({
                         {canSee && (
                           <>
                             <span aria-hidden="true"> · </span>
-                            <span className="text-slate-500">
+                            <span className="text-slate-500 dark:text-slate-400">
                               {yesVotes}/{proj.totalEligibleVoters} voted Yes
                             </span>
                           </>
@@ -1919,7 +1919,7 @@ export function VotingView({
                         {canSee && (
                           <>
                             <span aria-hidden="true"> · </span>
-                            <span className="text-slate-500">
+                            <span className="text-slate-500 dark:text-slate-400">
                               {approvals}/{loan.totalEligibleVoters} approved
                             </span>
                           </>

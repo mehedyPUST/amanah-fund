@@ -575,7 +575,7 @@ export function ContributionGoalTracker({
                 type="button"
                 onClick={() => setEditingGoal(false)}
                 aria-label="Cancel editing yearly goal"
-                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -902,7 +902,7 @@ export function ContributionGoalTracker({
                         {item.providerName}
                       </span>
                       <span aria-hidden="true"> · </span>
-                      <span className="uppercase text-slate-500">{item.channel}</span>
+                      <span className="uppercase text-slate-500 dark:text-slate-400">{item.channel}</span>
                       <span aria-hidden="true"> · </span>
                       <span className="font-mono text-slate-600 dark:text-slate-400">
                         {item.decryptedDetails?.referenceId || item.maskedReference}

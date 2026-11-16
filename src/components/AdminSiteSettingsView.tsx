@@ -868,7 +868,7 @@ export function AdminSiteSettingsView({
                       type="checkbox"
                       checked={monthlyReportAutoEmail}
                       onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                      className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                     />
                     <span>Automatically email monthly PDF fund summary at month rollover</span>
                   </label>
@@ -1001,7 +1001,7 @@ export function AdminSiteSettingsView({
                               Number(voteThresholdNumerator) === num &&
                               Number(voteThresholdDenominator) === den
                                 ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-emerald-300 dark:hover:border-emerald-700'
                             }`}
                           >
                             {num}/{den}
@@ -1020,7 +1020,7 @@ export function AdminSiteSettingsView({
                         onChange={(e) => setVoteThresholdNumerator(e.target.value)}
                         className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                       />
-                      <span className="text-slate-400 font-mono text-sm">/</span>
+                      <span className="text-slate-400 dark:text-slate-600 font-mono text-sm">/</span>
                       <input
                         type="number"
                         min={1}
@@ -1069,7 +1069,7 @@ export function AdminSiteSettingsView({
                             className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
                               Number(managerCycleMonths) === preset
                                 ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
-                                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700'
                             }`}
                           >
                             {preset}m

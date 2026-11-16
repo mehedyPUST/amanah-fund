@@ -946,7 +946,7 @@ export function DashboardShell() {
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
                   aria-label="Close navigation"
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>

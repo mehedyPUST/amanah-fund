@@ -542,7 +542,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           </span>
                         </a>
                       ) : (
-                        <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-center p-2 text-[11px] text-slate-400">
+                        <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-center p-2 text-[11px] text-slate-500 dark:text-slate-400">
                           No photo available
                         </div>
                       )}
@@ -588,8 +588,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           </a>
                         )
                       ) : (
-                        <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-2 text-[11px] text-slate-400 gap-1">
-                          <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                        <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-2 text-[11px] text-slate-500 dark:text-slate-400 gap-1">
+                          <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500" aria-hidden="true" />
                           <span>Optional (none)</span>
                         </div>
                       )}

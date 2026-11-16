@@ -413,7 +413,7 @@ export function SignUpForm() {
 
   if (authChecking || user) {
     return (
-      <div className="bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
             <div className="space-y-2 flex-1">
@@ -446,12 +446,12 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div className="text-slate-900 dark:text-slate-100 px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
+        className="max-w-3xl w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
           <div className="space-y-1.5">
@@ -714,7 +714,7 @@ export function SignUpForm() {
                     type="checkbox"
                     checked={sameAsPresent}
                     onChange={(e) => setSameAsPresent(e.target.checked)}
-                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                    className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                   />
                   <span>Permanent address same as present</span>
                 </label>
@@ -938,7 +938,7 @@ export function SignUpForm() {
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                           Nominee Mobile No.{' '}
-                          <span className="text-slate-400 font-normal">(If available)</span>
+                          <span className="text-slate-500 dark:text-slate-400 font-normal">(If available)</span>
                         </label>
                         <input
                           type="tel"
@@ -995,7 +995,7 @@ export function SignUpForm() {
                                   )
                                 );
                               }}
-                              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                              className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                             />
                             <span>Same as applicant present</span>
                           </label>
@@ -1042,7 +1042,7 @@ export function SignUpForm() {
                               src={nominee.photoUrl}
                               alt={`Nominee ${idx + 1} portrait`}
                               referrerPolicy="no-referrer"
-                              className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                              className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                             />
                             <div className="flex flex-col gap-1">
                               <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
@@ -1124,7 +1124,7 @@ export function SignUpForm() {
                         src={photoUrl}
                         alt="Uploaded member portrait"
                         referrerPolicy="no-referrer"
-                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                       />
                       <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
                         <span>{photoUploading ? 'Uploading…' : 'Replace Photo'}</span>
@@ -1163,7 +1163,7 @@ export function SignUpForm() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                       Agreement Paper (PDF or Photo){' '}
-                      <span className="text-slate-400 font-normal">(Optional)</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional)</span>
                     </span>
                     {agreementPhotoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
@@ -1190,7 +1190,7 @@ export function SignUpForm() {
                           src={agreementPhotoUrl}
                           alt="Uploaded agreement paper"
                           referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white shrink-0"
+                          className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
                         />
                       )}
                       <div className="flex flex-col gap-1">

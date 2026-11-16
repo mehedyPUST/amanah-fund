@@ -87,13 +87,13 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   x2={700}
                   y1={y}
                   y2={y}
-                  className="stroke-slate-200 dark:stroke-slate-800"
+                  className="stroke-slate-200/80 dark:stroke-slate-800/80"
                   strokeDasharray="3 3"
                 />
                 <text
                   x={0}
                   y={Math.max(10, y - 4)}
-                  className="fill-slate-400 dark:fill-slate-500 text-[10px] font-mono"
+                  className="fill-slate-500 dark:fill-slate-400 text-[10px] font-mono"
                 >
                   {formatMoney(Math.round(maxVal * tick), currency)}
                 </text>

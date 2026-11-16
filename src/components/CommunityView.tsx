@@ -1343,7 +1343,7 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => setPollEnabled(false)}
-                        className="text-xs text-slate-500 hover:text-rose-600 cursor-pointer"
+                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                       >
                         Remove Poll
                       </button>
@@ -1376,7 +1376,7 @@ export function CommunityView({
                                 setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                               }
                               aria-label="Remove option"
-                              className="p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer"
+                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1395,14 +1395,14 @@ export function CommunityView({
                           <span>Add Option</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-400">Max 6 options</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Max 6 options</span>
                       )}
                       <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={pollAllowMultiple}
                           onChange={(e) => setPollAllowMultiple(e.target.checked)}
-                          className="rounded border-slate-300 text-indigo-600"
+                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600"
                         />
                         <span>Allow multiple choices</span>
                       </label>
@@ -1431,7 +1431,7 @@ export function CommunityView({
                         <button
                           type="button"
                           onClick={() => setLinkBuilderOpen(false)}
-                          className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                          className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                         >
                           Hide
                         </button>
@@ -1463,7 +1463,7 @@ export function CommunityView({
                                 setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
                               }
                               aria-label="Remove link"
-                              className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer shrink-0"
+                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -2024,7 +2024,7 @@ export function CommunityView({
                                         )
                                       }
                                       aria-label="Remove link"
-                                      className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer shrink-0"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
                                     >
                                       <X className="w-3.5 h-3.5" />
                                     </button>
@@ -2333,7 +2333,7 @@ export function CommunityView({
                                         <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                                           ·
                                         </span>
-                                        <span className="text-slate-400">Edited</span>
+                                        <span className="text-slate-500 dark:text-slate-400">Edited</span>
                                       </>
                                     )}
                                   </div>
@@ -2351,7 +2351,7 @@ export function CommunityView({
                                             photoUrl: comment.authorPhotoUrl,
                                           })
                                         }
-                                        className="text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                                        className="text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                                       >
                                         Message
                                       </button>
@@ -2363,7 +2363,7 @@ export function CommunityView({
                                           setEditingCommentId(comment.id);
                                           setEditCommentText(comment.content);
                                         }}
-                                        className="text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                                        className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                                       >
                                         Edit
                                       </button>

@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import Skeleton from 'react-loading-skeleton';
+import { useCoopSession } from './AppProviders.tsx';
 import type {
   Contribution,
   FundConfig,
@@ -96,7 +97,18 @@ export function AuditTrendsCharts({
   currency,
   loading = false,
 }: AuditTrendsChartsProps) {
+  const { darkMode } = useCoopSession();
   const [chartView, setChartView] = useState<'both' | 'contributions' | 'loans'>('both');
+  const axisFill = darkMode ? '#94a3b8' : '#475569';
+  const gridStroke = darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.16)';
+  const hoverCursor = {
+    fill: darkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.05)',
+  };
+  const legendStyle = {
+    fontSize: '12px',
+    paddingTop: '8px',
+    color: darkMode ? '#cbd5e1' : '#334155',
+  };
 
   const chartData = useMemo<AuditChartPoint[]>(() => {
     const monthBuckets = new Map<
@@ -330,23 +342,26 @@ export function AuditTrendsCharts({
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
-                      stroke="rgba(148, 163, 184, 0.25)"
+                      stroke={gridStroke}
                     />
                     <XAxis
                       dataKey="monthLabel"
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
+                      tick={{ fontSize: 11, fill: axisFill }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatAxisCompact}
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
+                      tick={{ fontSize: 11, fill: axisFill }}
                       axisLine={false}
                       tickLine={false}
                       width={44}
                     />
-                    <Tooltip content={<AuditChartTooltip currency={currency} />} />
-                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                    <Tooltip
+                      cursor={hoverCursor}
+                      content={<AuditChartTooltip currency={currency} />}
+                    />
+                    <Legend wrapperStyle={legendStyle} />
                     <Area
                       type="monotone"
                       dataKey="cumulativeContributions"
@@ -395,23 +410,26 @@ export function AuditTrendsCharts({
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
-                      stroke="rgba(148, 163, 184, 0.25)"
+                      stroke={gridStroke}
                     />
                     <XAxis
                       dataKey="monthLabel"
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
+                      tick={{ fontSize: 11, fill: axisFill }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatAxisCompact}
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
+                      tick={{ fontSize: 11, fill: axisFill }}
                       axisLine={false}
                       tickLine={false}
                       width={44}
                     />
-                    <Tooltip content={<AuditChartTooltip currency={currency} />} />
-                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                    <Tooltip
+                      cursor={hoverCursor}
+                      content={<AuditChartTooltip currency={currency} />}
+                    />
+                    <Legend wrapperStyle={legendStyle} />
                     <Bar
                       dataKey="monthlyLoanVolume"
                       name="Monthly Loan Volume"

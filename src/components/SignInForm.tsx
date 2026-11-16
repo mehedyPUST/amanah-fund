@@ -111,7 +111,7 @@ export function SignInForm() {
 
   if (authChecking) {
     return (
-      <div className="bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+      <div className="px-2 sm:px-6 lg:px-8 py-8 sm:py-16">
         <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="space-y-2">
             <Skeleton width={210} height={14} />
@@ -129,12 +129,12 @@ export function SignInForm() {
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+    <div className="text-slate-900 dark:text-slate-100 px-2 sm:px-6 lg:px-8 py-8 sm:py-16">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
+        className="max-w-md w-full mx-auto bg-gradient-to-b from-slate-50/80 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
       >
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-400">
@@ -144,7 +144,7 @@ export function SignInForm() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Sign In to Treasury
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400 text-left">
             Approved members only. Sign in with your registered email and password.
           </p>
         </div>
@@ -179,7 +179,7 @@ export function SignInForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@amanahcoop.org"
-              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+              className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
             />
           </div>
 
@@ -208,7 +208,7 @@ export function SignInForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+              className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
             />
           </div>
 
@@ -267,7 +267,7 @@ export function SignInForm() {
                     >
                       Request Password Reset
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 text-left">
                       Submit a request to cooperative admins to generate and email a temporary password.
                     </p>
                   </div>
@@ -276,7 +276,7 @@ export function SignInForm() {
                   type="button"
                   onClick={() => !forgotSubmitting && setForgotOpen(false)}
                   aria-label="Close modal"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -306,7 +306,7 @@ export function SignInForm() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="name@amanahcoop.org"
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                   />
                 </div>
 
@@ -315,7 +315,8 @@ export function SignInForm() {
                     htmlFor="forgot-reason"
                     className="block font-medium text-slate-700 dark:text-slate-300 mb-1"
                   >
-                    Note for Admin <span className="text-slate-400 font-normal">(Optional)</span>
+                    Note for Admin{' '}
+                    <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <textarea
                     id="forgot-reason"
@@ -324,7 +325,7 @@ export function SignInForm() {
                     value={forgotReason}
                     onChange={(e) => setForgotReason(e.target.value)}
                     placeholder="e.g. Locked out of account or lost device credentials"
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                   />
                 </div>
 

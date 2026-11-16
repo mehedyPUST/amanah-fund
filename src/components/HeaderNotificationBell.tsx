@@ -442,7 +442,7 @@ export function HeaderNotificationBell({
                           onClick={() => void onMarkRead(alert.notificationId!)}
                           title="Mark notification as read"
                           aria-label="Mark notification as read"
-                          className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 cursor-pointer"
+                          className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 cursor-pointer"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>

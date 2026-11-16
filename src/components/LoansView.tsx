@@ -972,7 +972,7 @@ export function LoansView({
                               ) : (
                                 <span>{loan.borrowerName}</span>
                               )}
-                              <span className="font-mono text-xs text-slate-500">
+                              <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
                                 · {loan.borrowerCode}
                               </span>
                             </div>
@@ -1050,7 +1050,7 @@ export function LoansView({
                             <span className="font-semibold text-slate-900 dark:text-white">
                               {revealed || isAdmin ? '2/3 Member Vote' : 'Poll Ongoing (Secret Ballot)'}
                             </span>
-                            <span aria-hidden="true" className="text-slate-400">
+                            <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
                               ·
                             </span>
                             {revealed || isAdmin ? (
@@ -1058,7 +1058,7 @@ export function LoansView({
                                 <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                                   {upvotes}/{activeSelectedLoan.requiredApprovals} Upvotes
                                 </span>
-                                <span aria-hidden="true" className="text-slate-400">
+                                <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
                                   ·
                                 </span>
                                 <span className="font-mono tabular-nums text-red-700 dark:text-red-400">
@@ -1294,7 +1294,7 @@ export function LoansView({
                             <button
                               type="button"
                               onClick={() => setPayingInstallment(null)}
-                              className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -1509,7 +1509,7 @@ export function LoansView({
                                   </div>
                                 )}
                                 {!canPay && !canVerify && (
-                                  <span className="text-slate-400">
+                                  <span className="text-slate-500 dark:text-slate-400">
                                     {inst.verifierName ? `Verified by ${inst.verifierName}` : '—'}
                                   </span>
                                 )}

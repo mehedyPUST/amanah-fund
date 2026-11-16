@@ -67,7 +67,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1" aria-label="Primary navigation">
+        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 isolate" aria-label="Primary navigation">
           {NAV_LINKS.map((link) => {
             const active = isLinkActive(link.href);
             return (
@@ -77,7 +77,7 @@ export function Navbar() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-[13px] font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
                   active
-                    ? 'text-emerald-700 dark:text-emerald-400'
+                    ? 'text-emerald-800 dark:text-emerald-300 font-semibold'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
                 }`}
               >
@@ -85,11 +85,11 @@ export function Navbar() {
                   <motion.span
                     layoutId="public-navbar-active-bg"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 rounded-lg bg-emerald-50/95 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/60 -z-10"
+                    className="absolute inset-0 rounded-lg bg-emerald-50/95 dark:bg-emerald-950/55 border border-emerald-200/80 dark:border-emerald-800/70 z-0"
                     aria-hidden="true"
                   />
                 )}
-                <span>{link.label}</span>
+                <span className="relative z-10">{link.label}</span>
               </Link>
             );
           })}

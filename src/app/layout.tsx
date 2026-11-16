@@ -63,6 +63,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${plusJakarta.variable} ${publicSans.variable} ${jetBrainsMono.variable}`}
     >
       <body className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
+        <Script id="amanah-theme-init" strategy="beforeInteractive">
+          {`(function(){try{var saved=window.localStorage.getItem('amanah_theme');var prefersDark=saved==='dark'||(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(prefersDark){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`}
+        </Script>
         <Script id="amanah-pwa-prompt-capture" strategy="beforeInteractive">
           {`(function(){if(typeof window==='undefined')return;window.__amanahInstallPrompt=window.__amanahInstallPrompt||null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__amanahInstallPrompt=e;window.dispatchEvent(new CustomEvent('amanah:pwa-prompt-updated'));});window.addEventListener('appinstalled',function(){window.__amanahInstallPrompt=null;window.__amanahAppInstalled=true;window.dispatchEvent(new CustomEvent('amanah:pwa-prompt-updated'));});})();`}
         </Script>

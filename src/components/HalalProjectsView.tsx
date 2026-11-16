@@ -522,7 +522,7 @@ export function HalalProjectsView({
                         >
                           <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                             {proj.votes.length === 0 ? (
-                              <div className="text-xs text-slate-500">No votes cast yet.</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">No votes cast yet.</div>
                             ) : (
                               proj.votes.map((v) => {
                                 const isSelf = Boolean(v.isSelf || v.voterId === user.id);
@@ -538,7 +538,7 @@ export function HalalProjectsView({
                                     <div className="min-w-0">
                                       <div className="font-medium text-slate-900 dark:text-white">
                                         {v.voterName}{' '}
-                                        <span className="text-slate-500 font-normal">
+                                        <span className="text-slate-500 dark:text-slate-400 font-normal">
                                           · {isSelf ? 'Your Ballot' : 'Anonymized'}
                                         </span>
                                       </div>

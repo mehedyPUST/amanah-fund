@@ -108,7 +108,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                     <button
                       type="button"
                       onClick={() => setGuideMode(null)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
                       aria-label="Close install instructions"
                     >
                       <X className="w-4 h-4" />

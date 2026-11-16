@@ -1065,7 +1065,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 Customize real-time chimes and email digest categories.
               </p>
             </div>
-            {prefsBusy && <span className="text-[11px] font-mono text-slate-400">Saving…</span>}
+            {prefsBusy && <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">Saving…</span>}
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -1110,7 +1110,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   type="checkbox"
                   checked={Boolean(prefs[row.key])}
                   onChange={() => void handleTogglePref(row.key)}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600 shrink-0"
+                  className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600 shrink-0"
                 />
               </label>
             ))}

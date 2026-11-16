@@ -514,7 +514,7 @@ export function ContributionsView({
                         setReceiptAiResult(null);
                         setReceiptNotice(null);
                       }}
-                      className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
+                      className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                     >
                       Clear
                     </button>
@@ -622,7 +622,7 @@ export function ContributionsView({
                         setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
                       }
                     }}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
                   />
                   <span>Pay multiple months in advance (single transfer)</span>
                 </label>
@@ -1033,26 +1033,26 @@ export function ContributionsView({
                                 {item.decryptedDetails ? (
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
                                     <div>
-                                      <span className="text-slate-500 block">Transaction Number</span>
+                                      <span className="text-slate-500 dark:text-slate-400 block">Transaction Number</span>
                                       <span className="text-slate-900 dark:text-white">
                                         {item.decryptedDetails.referenceId}
                                       </span>
                                     </div>
                                     <div>
-                                      <span className="text-slate-500 block">Sender Account</span>
+                                      <span className="text-slate-500 dark:text-slate-400 block">Sender Account</span>
                                       <span className="text-slate-900 dark:text-white">
                                         {item.decryptedDetails.senderAccount}
                                       </span>
                                     </div>
                                     <div>
-                                      <span className="text-slate-500 block">Notes</span>
+                                      <span className="text-slate-500 dark:text-slate-400 block">Notes</span>
                                       <span className="text-slate-900 dark:text-white font-sans">
                                         {item.decryptedDetails.notes || '—'}
                                       </span>
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="text-slate-500 italic">
+                                  <div className="text-slate-500 dark:text-slate-400 italic">
                                     Decrypted details restricted to transaction owner, Manager, and Admin.
                                   </div>
                                 )}

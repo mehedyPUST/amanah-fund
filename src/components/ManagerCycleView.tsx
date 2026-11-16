@@ -364,7 +364,7 @@ export function ManagerCycleView({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">No active members in rotation pool yet.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">No active members in rotation pool yet.</p>
               )}
             </section>
 
@@ -412,7 +412,7 @@ export function ManagerCycleView({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">Additional members needed for next turn.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Additional members needed for next turn.</p>
               )}
             </section>
           </div>
@@ -467,7 +467,7 @@ export function ManagerCycleView({
             </div>
 
             {schedule.slots.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
                 No active members found in the cooperative rotation pool.
               </div>
             ) : (

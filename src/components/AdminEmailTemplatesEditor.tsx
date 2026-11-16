@@ -680,7 +680,7 @@ export function AdminEmailTemplatesEditor({
                 {plainTextPreview}
               </pre>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs text-slate-800">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs text-slate-800 dark:text-slate-200">
                 <div
                   className="px-5 py-4 text-white"
                   style={{
@@ -694,34 +694,34 @@ export function AdminEmailTemplatesEditor({
                 </div>
 
                 <div className="p-5 space-y-3 text-xs leading-relaxed">
-                  <div className="font-semibold text-slate-900 whitespace-pre-line">
+                  <div className="font-semibold text-slate-900 dark:text-white whitespace-pre-line">
                     {previewRendered.greeting}
                   </div>
-                  <p className="text-slate-700 whitespace-pre-line">{previewRendered.introBody}</p>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line">{previewRendered.introBody}</p>
 
                   {activeKey === 'transactionSummary' && (
-                    <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 text-[11px]">
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Transaction Type</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Transaction Type</span>
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.transactionType}
                         </span>
                       </div>
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Reference ID</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Reference ID</span>
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.referenceId}
                         </span>
                       </div>
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Amount</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Amount</span>
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.amount}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
-                        <span className="text-slate-500">Status</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                        <span className="text-slate-500 dark:text-slate-400">Status</span>
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.statusLabel}
                         </span>
                       </div>
@@ -729,44 +729,44 @@ export function AdminEmailTemplatesEditor({
                   )}
 
                   {activeKey === 'registrationApproved' && (
-                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
-                      <div className="text-[10px] uppercase tracking-wider text-emerald-800">
+                    <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 px-4 py-3">
+                      <div className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                         Assigned Member Code
                       </div>
-                      <div className="text-base font-mono font-bold text-emerald-950 mt-0.5">
+                      <div className="text-base font-mono font-bold text-emerald-950 dark:text-emerald-200 mt-0.5">
                         {previewSampleVars.memberCode}
                       </div>
                     </div>
                   )}
 
                   {activeKey === 'tempPassword' && (
-                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
-                      <div className="text-[10px] uppercase tracking-wider text-emerald-800">
+                    <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 px-4 py-3">
+                      <div className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                         Temporary Password
                       </div>
-                      <div className="text-base font-mono font-bold text-emerald-950 mt-0.5">
+                      <div className="text-base font-mono font-bold text-emerald-950 dark:text-emerald-200 mt-0.5">
                         {previewSampleVars.tempPassword}
                       </div>
                     </div>
                   )}
 
                   {activeKey === 'registrationPendingAdmin' && (
-                    <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 text-[11px]">
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Email</span>
-                        <span className="font-semibold text-slate-900">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Email</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.applicantEmail}
                         </span>
                       </div>
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Mobile</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Mobile</span>
+                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.mobile}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
-                        <span className="text-slate-500">Reference</span>
-                        <span className="font-semibold text-slate-900">
+                        <span className="text-slate-500 dark:text-slate-400">Reference</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.referenceMemberName}
                         </span>
                       </div>
@@ -775,7 +775,7 @@ export function AdminEmailTemplatesEditor({
 
                   {activeKey === 'passwordResetAdminAlert' && (
                     <div
-                      className="bg-slate-50 px-3 py-2 text-[11px] text-slate-700"
+                      className="bg-slate-50 dark:bg-slate-950 px-3 py-2 text-[11px] text-slate-700 dark:text-slate-300"
                       style={{ borderLeft: `3px solid ${headerTop}` }}
                     >
                       Note: {previewSampleVars.reason}
@@ -783,30 +783,30 @@ export function AdminEmailTemplatesEditor({
                   )}
 
                   {activeKey === 'monthlyPdfSummary' && (
-                    <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 text-[11px]">
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Amanah Height</span>
-                        <span className="font-mono font-bold text-slate-900">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Amanah Height</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.amanahHeight}
                         </span>
                       </div>
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Current Available Balance</span>
-                        <span className="font-mono font-bold text-slate-900">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Current Available Balance</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.currentBalance}
                         </span>
                       </div>
-                      <div className="flex justify-between px-3 py-2 border-b border-slate-200">
-                        <span className="text-slate-500">Active Qard Hasan Total</span>
-                        <span className="font-mono font-bold text-slate-900">
+                      <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400">Active Qard Hasan Total</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.activeLoanTotal}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
-                        <span className="text-slate-500">
+                        <span className="text-slate-500 dark:text-slate-400">
                           Month Collected ({previewSampleVars.monthKey})
                         </span>
-                        <span className="font-mono font-bold text-slate-900">
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.monthlyCollected}
                         </span>
                       </div>
@@ -814,7 +814,7 @@ export function AdminEmailTemplatesEditor({
                   )}
 
                   {previewRendered.footerNote && (
-                    <p className="text-[11px] text-slate-500 pt-1 whitespace-pre-line">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 whitespace-pre-line">
                       {previewRendered.footerNote}
                     </p>
                   )}

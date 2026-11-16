@@ -448,7 +448,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   >
                     Message
                   </label>
-                  <span className="font-mono text-slate-400">{body.length}/2000</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">{body.length}/2000</span>
                 </div>
                 <textarea
                   id="notice-body"
@@ -471,7 +471,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     checked={pinned}
                     disabled={submitting}
                     onChange={(e) => setPinned(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Pin notice to top of board</span>
                 </label>
