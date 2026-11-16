@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
-import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
+import type { ConstitutionDocumentInfo, NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
 import {
@@ -99,6 +99,7 @@ export function SignUpForm() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
   const [agreementUploading, setAgreementUploading] = useState(false);
+  const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,14 @@ export function SignUpForm() {
       })
       .catch(() => {
         // optional autocomplete list
+      });
+    api
+      .getConstitution()
+      .then((res) => {
+        if (active) setConstitution(res);
+      })
+      .catch(() => {
+        // optional constitution link
       });
     return () => {
       active = false;
@@ -295,8 +304,11 @@ export function SignUpForm() {
     else setAgreementUploading(true);
 
     try {
-      const label = `${target}-${Date.now()}`;
-      const res = await api.uploadFile(file, label);
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: target === 'photo' ? 'member-kyc-photo' : 'member-signed-agreement',
+        subject: name.trim() || email.trim() || 'applicant',
+      });
       if (target === 'photo') {
         setPhotoUrl(res.url);
       } else {
@@ -328,8 +340,12 @@ export function SignUpForm() {
     );
 
     try {
-      const label = `nominee-${index + 1}-${Date.now()}`;
-      const res = await api.uploadFile(file, label);
+      const nomineeName = nominees[index]?.name.trim();
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: 'nominee-kyc-photo',
+        subject: nomineeName || name.trim() || `nominee-${index + 1}`,
+      });
       setNominees((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, photoUrl: res.url, photoUploading: false } : item
@@ -581,15 +597,26 @@ export function SignUpForm() {
                     Maximum 20 members/shares total (intake closes July 2027; late joiners settle prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo, and a ৳200 non-refundable management fee.
                   </p>
                 </div>
-                <a
-                  href="/assets/aistudio/Savings__Investment_and_Interest-Free_Loan_Fund_Cooperative_Society_Update_1_98df82ac.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
-                >
-                  <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Constitution PDF</span>
-                </a>
+                {constitution?.constitutionPdfUrl ? (
+                  <a
+                    href={constitution.constitutionPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={constitution.constitutionPdfName || 'cooperative-constitution.pdf'}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
+                  >
+                    <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Constitution PDF</span>
+                  </a>
+                ) : (
+                  <Link
+                    href="/rules"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shrink-0 whitespace-nowrap"
+                  >
+                    <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Charter Rules</span>
+                  </Link>
+                )}
               </div>
 
               <AnimatePresence>

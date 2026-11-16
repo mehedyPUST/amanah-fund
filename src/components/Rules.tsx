@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Download, ExternalLink, Eye, EyeOff, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-
-const CONSTITUTION_PDF_PATH =
-  '/assets/aistudio/Savings__Investment_and_Interest-Free_Loan_Fund_Cooperative_Society_Update_1_98df82ac.pdf';
+import Skeleton from 'react-loading-skeleton';
+import type { ConstitutionDocumentInfo } from '../types/coop.ts';
+import { api } from '../utils/api.ts';
+import { formatShortDate } from '../utils/format.ts';
 
 const RULES = [
   {
@@ -104,6 +105,29 @@ const RULES = [
 export function Rules({ embedded = false }: { embedded?: boolean }) {
   const HeadingTag = embedded ? 'h2' : 'h1';
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
+  const [constitutionLoading, setConstitutionLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api
+      .getConstitution()
+      .then((res) => {
+        if (active) setConstitution(res);
+      })
+      .catch(() => {
+        if (active) setConstitution(null);
+      })
+      .finally(() => {
+        if (active) setConstitutionLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const constitutionUrl = constitution?.constitutionPdfUrl || null;
+  const constitutionName = constitution?.constitutionPdfName || 'cooperative-constitution.pdf';
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -133,76 +157,114 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           transition={{ duration: 0.25 }}
           className="rounded-xl border border-indigo-200/90 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/75 via-white to-emerald-50/40 dark:from-indigo-950/35 dark:via-slate-900 dark:to-emerald-950/20 p-5 sm:p-6 space-y-4 shadow-xs"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {constitutionLoading ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <Skeleton width={40} height={40} borderRadius={8} />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton width="65%" height={16} />
+                  <Skeleton width="90%" height={12} />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Skeleton width={98} height={34} borderRadius={8} />
+                <Skeleton width={98} height={34} borderRadius={8} />
+              </div>
+            </div>
+          ) : constitutionUrl ? (
+            <>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-800/60 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                      Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
+                    </h2>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Read or download the full cooperative constitution uploaded by cooperative administration.
+                    </p>
+                    <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      {constitutionName}
+                      {constitution?.constitutionUploadedAt
+                        ? ` · Updated ${formatShortDate(constitution.constitutionUploadedAt)}`
+                        : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowPdfPreview((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    {showPdfPreview ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Hide PDF</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Preview PDF</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={constitutionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors whitespace-nowrap"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Open PDF</span>
+                  </a>
+                  <a
+                    href={constitutionUrl}
+                    download={constitutionName}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap"
+                  >
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Download PDF</span>
+                  </a>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {showPdfPreview && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                  >
+                    <iframe
+                      src={constitutionUrl}
+                      title="Savings, Investment and Interest-Free Loan Fund Cooperative Society Constitution PDF"
+                      className="w-full h-[560px]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          ) : (
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-800/60 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800/60 flex items-center justify-center shrink-0">
                 <FileText className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="space-y-1">
                 <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                  Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
+                  Official Cooperative Constitution PDF
                 </h2>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Read or download the full Bengali constitution covering membership cap (20), ৳5,000 monthly savings, ৳50 Sadaqah late fees, Qard Hasan limits, and VISION-36.
+                  No constitution PDF has been published yet. Administrators can upload the signed cooperative constitution PDF from Site Settings in the Admin panel; once published, members and applicants can preview or download it directly here.
                 </p>
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowPdfPreview((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
-              >
-                {showPdfPreview ? (
-                  <>
-                    <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Hide PDF</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Preview PDF</span>
-                  </>
-                )}
-              </button>
-              <a
-                href={CONSTITUTION_PDF_PATH}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors whitespace-nowrap"
-              >
-                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Open PDF</span>
-              </a>
-              <a
-                href={CONSTITUTION_PDF_PATH}
-                download="Savings-Investment-Interest-Free-Loan-Fund-Constitution-2027-2036.pdf"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap"
-              >
-                <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Download PDF</span>
-              </a>
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {showPdfPreview && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.22 }}
-                className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
-              >
-                <iframe
-                  src={CONSTITUTION_PDF_PATH}
-                  title="Savings, Investment and Interest-Free Loan Fund Cooperative Society Constitution PDF"
-                  className="w-full h-[560px]"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          )}
         </motion.div>
 
         <div className="space-y-4">

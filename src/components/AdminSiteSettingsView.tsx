@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import {
   CheckCircle2,
   Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
   FileSpreadsheet,
+  FileText,
   HandCoins,
   Settings,
+  Trash2,
+  Upload,
   XCircle,
 } from 'lucide-react';
 import type {
@@ -115,6 +121,10 @@ export function AdminSiteSettingsView({
 
   const [modal, setModal] = useState<SettingsModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+  const [constitutionTitle, setConstitutionTitle] = useState('Cooperative Charter 2027-2036');
+  const [constitutionBusy, setConstitutionBusy] = useState(false);
+  const [showConstitutionPreview, setShowConstitutionPreview] = useState(false);
+  const constitutionFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (config) {
@@ -270,6 +280,103 @@ export function AdminSiteSettingsView({
 
   function downloadCsvReport(type: 'contributions' | 'loans' | 'members' | 'audit') {
     window.location.assign(`/api/reports/export?type=${type}`);
+  }
+
+  function handleConstitutionFileSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const isPdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid File Type',
+        description: 'Official Cooperative Constitution must be uploaded as a genuine PDF (.pdf) document.',
+      });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'File Too Large',
+        description: 'Constitution PDF must be smaller than 10 MB.',
+      });
+      return;
+    }
+
+    const sizeLabel =
+      file.size >= 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: config?.constitutionPdfUrl
+        ? 'Replace Cooperative Constitution PDF'
+        : 'Publish Cooperative Constitution PDF',
+      description:
+        'The PDF will be automatically renamed semantically, stored in ImageKit.io media storage, and published immediately on the Rules Charter & Membership Application pages.',
+      details: [
+        { label: 'Selected File', value: file.name },
+        { label: 'File Size', value: sizeLabel },
+        { label: 'Semantic Title', value: constitutionTitle.trim() || file.name },
+      ],
+      confirmLabel: 'Upload & Publish PDF',
+      run: async () => {
+        setConstitutionBusy(true);
+        try {
+          const uploaded = await api.uploadConstitutionPdf(
+            file,
+            constitutionTitle.trim() || file.name
+          );
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Constitution PDF Published',
+            description: `Saved as ${uploaded.constitutionPdfName} (${uploaded.provider}) and published to the Rules Charter & Sign-Up pages.`,
+          });
+        } finally {
+          setConstitutionBusy(false);
+        }
+      },
+    });
+  }
+
+  function confirmRemoveConstitutionPdf() {
+    if (!config?.constitutionPdfUrl) return;
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Remove Published Constitution PDF',
+      description:
+        'Removing this document unlinks the Constitution PDF from the public Charter Rules and Membership Application pages until a new PDF is uploaded.',
+      details: [
+        { label: 'Current File', value: config.constitutionPdfName || 'cooperative-constitution.pdf' },
+      ],
+      confirmLabel: 'Remove Constitution PDF',
+      run: async () => {
+        setConstitutionBusy(true);
+        try {
+          await api.removeConstitutionPdf();
+          setShowConstitutionPreview(false);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'amber',
+            title: 'Constitution PDF Removed',
+            description: 'The cooperative Constitution PDF link has been cleared from Site Settings.',
+          });
+        } finally {
+          setConstitutionBusy(false);
+        }
+      },
+    });
   }
 
   const pendingReviewLoans = loans.filter(
@@ -595,6 +702,156 @@ export function AdminSiteSettingsView({
               </button>
             </div>
           </form>
+          )}
+        </section>
+      )}
+
+      {isAdmin && (
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Charter Document · ImageKit.io Governance Storage</span>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Official Cooperative Constitution PDF
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Upload or replace the cooperative constitution PDF from the admin dashboard. Files are automatically renamed semantically (e.g. cooperative-constitution-...) and published dynamically to the Charter Rules and Membership Sign-Up pages.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+            <div>
+              <label
+                htmlFor="constitution-semantic-title"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Document Title (Used for Semantic Filename)
+              </label>
+              <input
+                id="constitution-semantic-title"
+                type="text"
+                value={constitutionTitle}
+                onChange={(e) => setConstitutionTitle(e.target.value)}
+                placeholder="e.g. Cooperative Charter 2027-2036"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={constitutionFileInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={handleConstitutionFileSelected}
+                className="hidden"
+              />
+              <button
+                type="button"
+                disabled={constitutionBusy || modalBusy}
+                onClick={() => constitutionFileInputRef.current?.click()}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+              >
+                <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>
+                  {config?.constitutionPdfUrl ? 'Upload Replacement PDF' : 'Upload Constitution PDF'}
+                </span>
+              </button>
+              {config?.constitutionPdfUrl && (
+                <button
+                  type="button"
+                  disabled={constitutionBusy || modalBusy}
+                  onClick={confirmRemoveConstitutionPdf}
+                  className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                >
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Remove</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {config?.constitutionPdfUrl ? (
+            <div className="rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                    <span className="truncate font-mono">
+                      {config.constitutionPdfName || 'cooperative-constitution.pdf'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800/85 dark:text-emerald-300/85">
+                    {config.constitutionUploadedAt
+                      ? `Published ${formatShortDate(config.constitutionUploadedAt)}`
+                      : 'Published'}
+                    {config.constitutionUploadedBy ? ` by ${config.constitutionUploadedBy}` : ''}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowConstitutionPreview((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                  >
+                    {showConstitutionPreview ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Hide Preview</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Preview</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={config.constitutionPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Open</span>
+                  </a>
+                  <a
+                    href={config.constitutionPdfUrl}
+                    download={config.constitutionPdfName || 'cooperative-constitution.pdf'}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
+                  >
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Download</span>
+                  </a>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {showConstitutionPreview && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                  >
+                    <iframe
+                      src={config.constitutionPdfUrl}
+                      title="Uploaded Cooperative Constitution PDF Preview"
+                      className="w-full h-[460px]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
+              No Constitution PDF is currently uploaded. Select a PDF file above to publish it to the Charter Rules and Membership Application pages.
+            </div>
           )}
         </section>
       )}

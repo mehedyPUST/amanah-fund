@@ -130,12 +130,34 @@ export interface FundConfig {
   managerCycleMonths?: number;
   managerCycleStartDate?: string; // YYYY-MM-DD
   halalInvestmentThesis: string;
+  constitutionPdfUrl?: string;
+  constitutionPdfName?: string;
+  constitutionUploadedAt?: string;
+  constitutionUploadedBy?: string;
   googleSheetId?: string;
   googleSheetUrl?: string;
   lastSheetSyncAt?: string;
   autoSyncSheet?: boolean;
   updatedAt: string;
   updatedBy: string;
+}
+
+export type UploadDocumentCategory =
+  | 'cooperative-constitution'
+  | 'member-kyc-photo'
+  | 'member-signed-agreement'
+  | 'nominee-kyc-photo'
+  | 'contribution-receipt'
+  | 'loan-repayment-slip'
+  | 'community-post-photo'
+  | 'document';
+
+export interface ConstitutionDocumentInfo {
+  constitutionPdfUrl: string | null;
+  constitutionPdfName: string | null;
+  constitutionUploadedAt: string | null;
+  constitutionUploadedBy: string | null;
+  fundName: string;
 }
 
 export interface ReceiptAiExtraction {

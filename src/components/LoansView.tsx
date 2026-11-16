@@ -131,7 +131,13 @@ export function LoansView({
     setScanningRepaySlip(true);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
-        api.uploadFile(file, `repay-receipt-${Date.now()}`),
+        api.uploadFile(file, {
+          name: file.name,
+          category: 'loan-repayment-slip',
+          subject: payingInstallment
+            ? `${user.memberCode}-${payingInstallment.loanId}-inst-${payingInstallment.installmentNumber}`
+            : user.memberCode,
+        }),
         api.verifyReceiptWithGemini(file),
       ]);
       if (uploadRes.status === 'fulfilled') {

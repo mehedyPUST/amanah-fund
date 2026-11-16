@@ -35,7 +35,7 @@ URL-synced (`?page=<sectionId>`) multi-page workspace with `AnimatePresence` tra
   - **Site Activity (`site-activity`)**: Live SSE-streamed activity feed covering member and system telemetry with action/role/search filters, Pause/Resume live stream toggle, and SHA-256 hash-chain status.
   - **System Audit Logs (`system-audit-logs`)**: Dedicated immutable governance ledger tracking timestamped administrative actions (user approvals, RBAC/status updates, site setting modifications with before/after field diffs, financial authorizations, and moderation actions), per-block SHA-256 verification (`Verify Chain Integrity`), date-range/actor filters, and CSV/JSON proof exports.
   - **Member Registry (`member-registry`)**: Combined KYC Onboarding Queue (inspect portraits, signed agreements, NID, and addresses), active directory, and full RBAC management (`admin`, `manager`, `member`, create, edit, approve, suspend, delete).
-  - **Site Settings (`site-settings`)**: Fund policy editor (fund name, currency, monthly contribution target, annual loan quota, loan cap, max installment months, guarantor threshold & required co-signers, maturity date, Halal thesis), **Post-Maturity Halal Ventures & Pro-Rata Profit Distribution Engine**, **7-Tab Google Sheets Treasury Sync**, and automated CSV compliance exports.
+  - **Site Settings (`site-settings`)**: Fund policy editor (fund name, currency, monthly contribution target, annual loan quota, loan cap, max installment months, guarantor threshold & required co-signers, maturity date, Halal thesis), **Official Cooperative Constitution PDF** upload/replace/preview/remove controls, **Post-Maturity Halal Ventures & Pro-Rata Profit Distribution Engine**, **7-Tab Google Sheets Treasury Sync**, and automated CSV compliance exports.
 
 ### 3. Central Fund Balance Accounting
 ```text
@@ -44,11 +44,11 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 
 ### 4. Security, Cryptography, Rate Limiting & Persistence
 - **Single-Origin Express + Next.js 16 Monolith**: Shares origin on port `3000`, enforces security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`), and protects `/api/auth`, `/api/upload`, and `/api/gemini` with sliding-window rate limiters.
-- **Step-Up Two-Factor Authentication (TOTP)**: Optional RFC 6238 authenticator verification (`X-TOTP-Code`) enforced on sensitive disbursements, policy changes, and admin member actions.
+- **Step-Up Two-Factor Authentication (TOTP)**: Optional RFC 6238 authenticator verification (`X-TOTP-Code`) enforced on sensitive disbursements, policy changes, constitution uploads, and admin member actions.
 - **AES-256-GCM Field Encryption**: Sensitive KYC details, Bank/MFS transaction IDs, loan payout accounts, TOTP secrets, audit payloads, and 1-on-1 private direct message bodies are encrypted at rest.
 - **SHA-256 Hash-Chained Audit Log**: Every mutating operation appends an immutable, non-editable cryptographic entry linking `prevHash -> entryHash` with per-block SHA-256 verification and before/after diffs for administrative changes.
 - **Automated Overdue Scheduler**: Background sweep checks active loan installment deadlines on startup and hourly intervals, marking past-due items `overdue` and dispatching single-send reminder alerts.
-- **ImageKit.io Cloud Media Storage (`/api/upload`, `/api/uploads/:filename`)**: Accepts both PDF documents (`application/pdf` with `%PDF-` header validation) and photos (`PNG`, `JPG`, `WEBP`, `GIF`) up to `10 MB`, uploading server-side via the ImageKit.io Upload API v1 (`IMAGEKIT_PRIVATE_KEY`, optional `IMAGEKIT_FOLDER`) with automatic local vault fallback when omitted.
+- **ImageKit.io Cloud Media Storage (`/api/upload`, `/api/admin/constitution`, `/api/uploads/:filename`)**: Accepts both PDF documents (`application/pdf` with `%PDF-` header validation) and photos (`PNG`, `JPG`, `WEBP`, `GIF`) up to `10 MB`, automatically renaming every upload to a clean semantic filename (e.g. `member-signed-agreement-bilal-hasan-YYYY-MM-DD-<hex>.pdf`, `contribution-receipt-ac-002-2026-11-YYYY-MM-DD-<hex>.png`, `cooperative-constitution-...pdf`) and organizing assets into semantic ImageKit.io subfolders (`governance`, `kyc`, `receipts`, `community`, `documents`) with automatic local vault fallback when omitted.
 - **Dual Persistence Engine**: Connects to **MongoDB Atlas** (`amanah_coop`) with startup indexes and atomic `bulkWrite`/`deleteMany` sync when `MONGODB_URI` is configured, or falls back seamlessly to an encrypted local JSON vault (`data/amanah-coop-vault.json`) serialized via a promise write queue.
 
 ---
@@ -219,4 +219,7 @@ Chronological summary of major engineering milestones across the **Amanah** coop
 7. **ImageKit.io Storage for User-Uploaded PDFs & Photos**
    - Migrated media storage to `src/server/imagekitStorage.ts` using ImageKit.io Upload API v1 (`IMAGEKIT_PRIVATE_KEY`, optional `IMAGEKIT_FOLDER`) with automatic local vault disk fallback.
    - Upgraded KYC Agreement Paper uploads, Contribution receipt uploads, Loan repayment slips, and Gemini AI receipt extraction to store and preview both **PDF documents** (`application/pdf` with `%PDF-` signature validation) and **photos** cleanly across `SignUpForm`, `MemberProfile`, `PendingRegistrationsView`, `MemberRegistrySection`, `AdminReportsView`, `ContributionsView`, `LoansView`, and `CommunityView`.
+8. **Dynamic Admin Constitution PDF & Semantic Document Naming**
+   - Removed all hardcoded physical PDF assets from the codebase and introduced dynamic cooperative Constitution PDF management (`GET /api/constitution`, `POST /api/admin/constitution`, `DELETE /api/admin/constitution`) inside `AdminSiteSettingsView`, dynamically reflected across `Rules` and `SignUpForm`.
+   - Added deterministic semantic filename generation (`buildSemanticFileName`) and ImageKit subfolder routing (`governance`, `kyc`, `receipts`, `community`, `documents`) for every uploaded PDF and photo across registration, contributions, loan repayments, community posts, and governance documents.
 

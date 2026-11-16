@@ -3,6 +3,7 @@ import type {
   CommunityCategory,
   CommunityPost,
   CommunityReactionType,
+  ConstitutionDocumentInfo,
   Contribution,
   ConversationThreadSummary,
   CoopMeeting,
@@ -22,6 +23,7 @@ import type {
   ProfileChangeRequest,
   PublicUser,
   ReceiptAiExtraction,
+  UploadDocumentCategory,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
@@ -160,42 +162,110 @@ export const api = {
     apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),
   uploadFile: async (
     file: File,
-    label?: string
-  ): Promise<{ url: string; provider: string; mimeType?: string; filename?: string }> => {
+    options?:
+      | string
+      | {
+          name?: string;
+          category?: UploadDocumentCategory;
+          subject?: string;
+        }
+  ): Promise<{
+    url: string;
+    provider: string;
+    fileId?: string;
+    mimeType?: string;
+    filename?: string;
+    originalName?: string;
+    category?: UploadDocumentCategory;
+  }> => {
     const fileBase64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
       reader.onerror = () => reject(new Error('Failed to read selected file.'));
       reader.readAsDataURL(file);
     });
-    return apiRequest<{ url: string; provider: string; mimeType?: string; filename?: string }>(
-      '/api/upload',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          fileBase64,
-          name: label || file.name,
-          mimeType: file.type || undefined,
-        }),
-      }
-    );
+    const opts = typeof options === 'string' ? { name: options } : options || {};
+    return apiRequest<{
+      url: string;
+      provider: string;
+      fileId?: string;
+      mimeType?: string;
+      filename?: string;
+      originalName?: string;
+      category?: UploadDocumentCategory;
+    }>('/api/upload', {
+      method: 'POST',
+      body: JSON.stringify({
+        fileBase64,
+        name: opts.name || file.name,
+        category: opts.category,
+        subject: opts.subject,
+        mimeType: file.type || undefined,
+      }),
+    });
   },
-  uploadImage: async (file: File, label?: string): Promise<{ url: string; provider: string }> => {
+  uploadImage: async (
+    file: File,
+    options?:
+      | string
+      | {
+          name?: string;
+          category?: UploadDocumentCategory;
+          subject?: string;
+        }
+  ): Promise<{ url: string; provider: string; filename?: string }> => {
     const fileBase64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
       reader.onerror = () => reject(new Error('Failed to read selected image file.'));
       reader.readAsDataURL(file);
     });
-    return apiRequest<{ url: string; provider: string }>('/api/upload', {
+    const opts = typeof options === 'string' ? { name: options } : options || {};
+    return apiRequest<{ url: string; provider: string; filename?: string }>('/api/upload', {
       method: 'POST',
       body: JSON.stringify({
         fileBase64,
-        name: label || file.name,
+        name: opts.name || file.name,
+        category: opts.category,
+        subject: opts.subject,
         mimeType: file.type || undefined,
       }),
     });
   },
+  getConstitution: () => apiRequest<ConstitutionDocumentInfo>('/api/constitution'),
+  uploadConstitutionPdf: async (
+    file: File,
+    title?: string
+  ): Promise<{
+    config: FundConfig;
+    constitutionPdfUrl: string;
+    constitutionPdfName: string;
+    provider: string;
+  }> => {
+    const fileBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected PDF file.'));
+      reader.readAsDataURL(file);
+    });
+    return apiRequest<{
+      config: FundConfig;
+      constitutionPdfUrl: string;
+      constitutionPdfName: string;
+      provider: string;
+    }>('/api/admin/constitution', {
+      method: 'POST',
+      body: JSON.stringify({
+        fileBase64,
+        name: file.name,
+        title: title?.trim() || file.name,
+      }),
+    });
+  },
+  removeConstitutionPdf: () =>
+    apiRequest<{ config: FundConfig }>('/api/admin/constitution', {
+      method: 'DELETE',
+    }),
   setup2fa: () =>
     apiRequest<{ secret: string; otpAuthUri: string; qrDataUrl: string }>('/api/auth/2fa/setup', {
       method: 'POST',

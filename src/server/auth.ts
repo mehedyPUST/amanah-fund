@@ -287,3 +287,23 @@ export function requireRole(allowedRoles: UserRole[]) {
     next();
   };
 }
+
+export async function resolveOptionalAuthUser(
+  req: AuthenticatedRequest
+): Promise<PublicUser | null> {
+  if (req.authUser) return req.authUser;
+  try {
+    const token = req.cookies?.[SESSION_COOKIE_NAME];
+    if (!token) return null;
+    const decoded = jwt.verify(token, getJwtSecret()) as { sub?: string };
+    if (!decoded?.sub) return null;
+    const state = await loadVaultState();
+    const user = state.users.find((u) => u.id === decoded.sub);
+    if (!user || user.status !== 'active') return null;
+    const sanitized = sanitizeUser(user);
+    req.authUser = sanitized;
+    return sanitized;
+  } catch {
+    return null;
+  }
+}

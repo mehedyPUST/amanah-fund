@@ -26,6 +26,7 @@ import type {
   ProfileChangeRequest,
   ProfitDistributionAllocation,
   ProfitDistributionRecord,
+  UploadDocumentCategory,
   UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
@@ -35,6 +36,7 @@ import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   requireAuth,
   requireRole,
+  resolveOptionalAuthUser,
   sanitizeUser,
   setAuthCookie,
   signAuthToken,
@@ -436,17 +438,47 @@ apiRouter.get('/uploads/:filename', (req, res) => {
   }
 });
 
+const ALLOWED_UPLOAD_CATEGORIES = new Set<UploadDocumentCategory>([
+  'cooperative-constitution',
+  'member-kyc-photo',
+  'member-signed-agreement',
+  'nominee-kyc-photo',
+  'contribution-receipt',
+  'loan-repayment-slip',
+  'community-post-photo',
+  'document',
+]);
+
 async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
   try {
     const rawData = String(req.body?.fileBase64 || req.body?.imageBase64 || '').trim();
     const rawName = String(req.body?.name || 'member-upload').replace(/[^a-zA-Z0-9._-]/g, '_');
     const fallbackMimeType = String(req.body?.mimeType || '').trim() || undefined;
+    const rawCategory = String(req.body?.category || '').trim() as UploadDocumentCategory;
+    const category: UploadDocumentCategory | undefined = ALLOWED_UPLOAD_CATEGORIES.has(rawCategory)
+      ? rawCategory
+      : undefined;
+
+    const optionalUser = await resolveOptionalAuthUser(req);
+    if (category === 'cooperative-constitution' && optionalUser?.role !== 'admin') {
+      res.status(403).json({
+        error: 'Only administrators can upload the official cooperative constitution PDF.',
+      });
+      return;
+    }
+
+    const explicitSubject = String(req.body?.subject || '').trim();
+    const subject =
+      explicitSubject ||
+      (optionalUser ? `${optionalUser.memberCode}-${optionalUser.name}` : undefined);
 
     let decoded: ReturnType<typeof validateAndDecodeUpload>;
     try {
       decoded = validateAndDecodeUpload({
         rawData,
         rawName,
+        category,
+        subject,
         fallbackMimeType,
       });
     } catch (validationErr) {
@@ -463,6 +495,7 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
         fileName: decoded.filename,
         base64Payload: decoded.base64Payload,
         mimeType: decoded.mimeType,
+        category: decoded.category,
         config: imagekitConfig,
       });
       res.json({
@@ -471,6 +504,8 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
         fileId: uploaded.fileId,
         mimeType: decoded.mimeType,
         filename: decoded.filename,
+        originalName: rawName,
+        category: decoded.category,
         sizeBytes: decoded.buffer.length,
       });
       return;
@@ -483,7 +518,7 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
         const formBody = new URLSearchParams();
         formBody.set('key', imgbbApiKey);
         formBody.set('image', decoded.base64Payload);
-        formBody.set('name', rawName);
+        formBody.set('name', decoded.filename);
 
         const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
           method: 'POST',
@@ -503,6 +538,8 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
             provider: 'imgbb',
             mimeType: decoded.mimeType,
             filename: decoded.filename,
+            originalName: rawName,
+            category: decoded.category,
             sizeBytes: decoded.buffer.length,
           });
           return;
@@ -516,7 +553,7 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
       }
     }
 
-    // 3. Graceful local vault disk fallback for both PDFs & photos when R2 credentials are omitted
+    // 3. Graceful local vault disk fallback for both PDFs & photos when ImageKit credentials are omitted
     if (!fs.existsSync(UPLOADS_DIR)) {
       fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
@@ -527,6 +564,8 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
       provider: 'local_vault',
       mimeType: decoded.mimeType,
       filename: decoded.filename,
+      originalName: rawName,
+      category: decoded.category,
       sizeBytes: decoded.buffer.length,
     });
   } catch (err) {
@@ -539,6 +578,23 @@ async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
 
 apiRouter.post('/upload', uploadRateLimiter, handleFileUpload);
 apiRouter.post('/upload/imgbb', uploadRateLimiter, handleFileUpload);
+
+apiRouter.get('/constitution', async (_req, res) => {
+  try {
+    const state = await loadVaultState();
+    const cfg = state.fundConfig;
+    res.json({
+      constitutionPdfUrl: cfg.constitutionPdfUrl || null,
+      constitutionPdfName: cfg.constitutionPdfName || null,
+      constitutionUploadedAt: cfg.constitutionUploadedAt || null,
+      constitutionUploadedBy: cfg.constitutionUploadedBy || null,
+      fundName: cfg.fundName,
+    });
+  } catch (err) {
+    console.error('Constitution fetch error:', err);
+    res.status(500).json({ error: 'Failed to load constitution document details.' });
+  }
+});
 
 apiRouter.get('/auth/references', async (_req, res) => {
   try {
@@ -4798,6 +4854,7 @@ apiRouter.patch(
 
       broadcastRealtimeEvent('config:updated', {
         maxLoansPerYear: nextState.fundConfig.maxLoansPerYear,
+        maturityDate: nextState.fundConfig.maturityDate,
       });
       broadcastRealtimeEvent('audit:updated', {
         action: 'FUND_POLICY_UPDATED',
@@ -4808,6 +4865,173 @@ apiRouter.patch(
     } catch (err) {
       console.error('Update config error:', err);
       res.status(500).json({ error: 'Failed to update fund configuration.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/constitution',
+  requireAuth,
+  requireRole(['admin']),
+  uploadRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const viewer = req.authUser!;
+      const rawData = String(req.body?.fileBase64 || req.body?.pdfBase64 || '').trim();
+      const rawTitle = String(
+        req.body?.title || req.body?.name || 'cooperative-constitution'
+      ).trim();
+
+      const currentState = await loadVaultState();
+      let decoded: ReturnType<typeof validateAndDecodeUpload>;
+      try {
+        decoded = validateAndDecodeUpload({
+          rawData,
+          rawName: rawTitle,
+          category: 'cooperative-constitution',
+          subject:
+            rawTitle !== 'cooperative-constitution'
+              ? rawTitle
+              : currentState.fundConfig.fundName,
+          fallbackMimeType: 'application/pdf',
+        });
+      } catch (validationErr) {
+        res.status(400).json({
+          error:
+            validationErr instanceof Error
+              ? validationErr.message
+              : 'Invalid Constitution PDF payload.',
+        });
+        return;
+      }
+
+      if (!decoded.isPdf) {
+        res.status(400).json({
+          error: 'Official Cooperative Constitution must be uploaded as a valid PDF document.',
+        });
+        return;
+      }
+
+      let storedUrl = '';
+      let provider: 'imagekit' | 'local_vault' = 'local_vault';
+      const imagekitConfig = getImageKitConfig();
+      if (imagekitConfig) {
+        const uploaded = await uploadToImageKit({
+          fileName: decoded.filename,
+          base64Payload: decoded.base64Payload,
+          mimeType: decoded.mimeType,
+          category: 'cooperative-constitution',
+          config: imagekitConfig,
+        });
+        storedUrl = uploaded.url;
+        provider = uploaded.provider;
+      } else {
+        if (!fs.existsSync(UPLOADS_DIR)) {
+          fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+        }
+        fs.writeFileSync(path.join(UPLOADS_DIR, decoded.filename), decoded.buffer);
+        storedUrl = `/api/uploads/${decoded.filename}`;
+      }
+
+      const uploadedAt = new Date().toISOString();
+      const nextState = await updateVaultState((draft) => {
+        const cfg = draft.fundConfig;
+        const previousName = cfg.constitutionPdfName || null;
+        cfg.constitutionPdfUrl = storedUrl;
+        cfg.constitutionPdfName = decoded.filename;
+        cfg.constitutionUploadedAt = uploadedAt;
+        cfg.constitutionUploadedBy = viewer.name;
+        cfg.updatedAt = uploadedAt;
+        cfg.updatedBy = viewer.name;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'CONSTITUTION_PDF_UPDATED',
+          resourceType: 'config',
+          resourceId: cfg.id,
+          summary: `${viewer.name} uploaded cooperative Constitution PDF (${decoded.filename})`,
+          payload: {
+            constitutionPdfName: decoded.filename,
+            constitutionPdfUrl: storedUrl,
+            provider,
+            sizeBytes: decoded.buffer.length,
+            previousConstitutionPdfName: previousName,
+          },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('config:updated', {
+        constitutionPdfUrl: storedUrl,
+        constitutionPdfName: decoded.filename,
+      });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'CONSTITUTION_PDF_UPDATED',
+        resourceType: 'config',
+        resourceId: nextState.fundConfig.id,
+      });
+
+      res.json({
+        config: nextState.fundConfig,
+        constitutionPdfUrl: storedUrl,
+        constitutionPdfName: decoded.filename,
+        provider,
+      });
+    } catch (err) {
+      console.error('Constitution upload error:', err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to upload Constitution PDF.',
+      });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/admin/constitution',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const viewer = req.authUser!;
+      const now = new Date().toISOString();
+
+      const nextState = await updateVaultState((draft) => {
+        const cfg = draft.fundConfig;
+        const previousName = cfg.constitutionPdfName || null;
+        cfg.constitutionPdfUrl = undefined;
+        cfg.constitutionPdfName = undefined;
+        cfg.constitutionUploadedAt = undefined;
+        cfg.constitutionUploadedBy = undefined;
+        cfg.updatedAt = now;
+        cfg.updatedBy = viewer.name;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'CONSTITUTION_PDF_REMOVED',
+          resourceType: 'config',
+          resourceId: cfg.id,
+          summary: `${viewer.name} removed the cooperative Constitution PDF (${previousName || 'unlisted'})`,
+          payload: { previousConstitutionPdfName: previousName },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('config:updated', {
+        constitutionPdfUrl: null,
+        constitutionPdfName: null,
+      });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'CONSTITUTION_PDF_REMOVED',
+        resourceType: 'config',
+        resourceId: nextState.fundConfig.id,
+      });
+
+      res.json({ config: nextState.fundConfig });
+    } catch (err) {
+      console.error('Constitution delete error:', err);
+      res.status(500).json({ error: 'Failed to remove Constitution PDF.' });
     }
   }
 );

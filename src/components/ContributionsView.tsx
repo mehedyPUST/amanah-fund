@@ -174,7 +174,11 @@ export function ContributionsView({
     setReceiptNotice(null);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
-        api.uploadFile(file, `contrib-receipt-${Date.now()}`),
+        api.uploadFile(file, {
+          name: file.name,
+          category: 'contribution-receipt',
+          subject: `${user.memberCode}-${billingMonth}`,
+        }),
         api.verifyReceiptWithGemini(file),
       ]);
 

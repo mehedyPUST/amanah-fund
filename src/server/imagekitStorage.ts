@@ -1,3 +1,6 @@
+import crypto from 'node:crypto';
+import type { UploadDocumentCategory } from '../types/coop.ts';
+
 export interface ImageKitConfig {
   privateKey: string;
   publicKey?: string;
@@ -22,6 +25,28 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/gif': 'gif',
 };
 
+const CATEGORY_DEFAULT_SLUG: Record<UploadDocumentCategory, string> = {
+  'cooperative-constitution': 'cooperative-constitution',
+  'member-kyc-photo': 'member-kyc-photo',
+  'member-signed-agreement': 'member-signed-agreement',
+  'nominee-kyc-photo': 'nominee-kyc-photo',
+  'contribution-receipt': 'contribution-receipt',
+  'loan-repayment-slip': 'loan-repayment-slip',
+  'community-post-photo': 'community-post-photo',
+  document: 'cooperative-document',
+};
+
+const CATEGORY_SUBFOLDER: Record<UploadDocumentCategory, string> = {
+  'cooperative-constitution': 'governance',
+  'member-kyc-photo': 'kyc',
+  'member-signed-agreement': 'kyc',
+  'nominee-kyc-photo': 'kyc',
+  'contribution-receipt': 'receipts',
+  'loan-repayment-slip': 'receipts',
+  'community-post-photo': 'community',
+  document: 'documents',
+};
+
 let warnedPartialImageKitConfig = false;
 
 export function normalizeImageKitFolder(rawFolder?: string): string {
@@ -31,6 +56,52 @@ export function normalizeImageKitFolder(rawFolder?: string): string {
     .replace(/\/+/g, '/')
     .replace(/^\/+|\/+$/g, '');
   return cleaned ? `/${cleaned}` : '/amanah';
+}
+
+export function buildImageKitTargetFolder(
+  baseFolder: string,
+  category?: UploadDocumentCategory
+): string {
+  const root = normalizeImageKitFolder(baseFolder);
+  if (!category) return root;
+  const sub = CATEGORY_SUBFOLDER[category] || 'documents';
+  return `${root}/${sub}`;
+}
+
+export function slugifySemanticSegment(value?: string, maxLength = 42): string {
+  if (!value) return '';
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\.[a-z0-9]{1,5}$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, maxLength)
+    .replace(/-$/g, '');
+}
+
+export function buildSemanticFileName(params: {
+  category?: UploadDocumentCategory;
+  subject?: string;
+  rawName?: string;
+  ext: string;
+  isPdf: boolean;
+  dateStr?: string;
+  uniqueSuffix?: string;
+}): string {
+  const categorySlug = params.category
+    ? CATEGORY_DEFAULT_SLUG[params.category]
+    : slugifySemanticSegment(params.rawName, 36) ||
+      (params.isPdf ? 'cooperative-document' : 'cooperative-photo');
+
+  const subjectSlug = slugifySemanticSegment(params.subject, 36);
+  const dateToken = params.dateStr || new Date().toISOString().slice(0, 10);
+  const suffix = params.uniqueSuffix || crypto.randomBytes(3).toString('hex');
+
+  const parts = [categorySlug, subjectSlug, dateToken, suffix].filter(Boolean);
+  return `${parts.join('-')}.${params.ext}`;
 }
 
 export function getImageKitConfig(
@@ -68,6 +139,7 @@ export async function uploadToImageKit(params: {
   fileName: string;
   base64Payload: string;
   mimeType: string;
+  category?: UploadDocumentCategory;
   config?: ImageKitConfig;
   fetchImpl?: typeof fetch;
 }): Promise<ImageKitUploadResult> {
@@ -76,10 +148,12 @@ export async function uploadToImageKit(params: {
     throw new Error('IMAGEKIT_PRIVATE_KEY is not configured in the server environment.');
   }
 
+  const targetFolder = buildImageKitTargetFolder(cfg.folder, params.category);
+
   const form = new FormData();
   form.set('file', `data:${params.mimeType};base64,${params.base64Payload}`);
   form.set('fileName', params.fileName);
-  form.set('folder', cfg.folder);
+  form.set('folder', targetFolder);
   form.set('useUniqueFileName', 'false');
 
   const fetcher = params.fetchImpl || fetch;
@@ -106,7 +180,7 @@ export async function uploadToImageKit(params: {
 
   return {
     fileId: payload.fileId || '',
-    filePath: payload.filePath || `${cfg.folder}/${params.fileName}`,
+    filePath: payload.filePath || `${targetFolder}/${params.fileName}`,
     url: payload.url,
     provider: 'imagekit',
     contentType: params.mimeType,
@@ -116,6 +190,8 @@ export async function uploadToImageKit(params: {
 export function validateAndDecodeUpload(params: {
   rawData: string;
   rawName?: string;
+  category?: UploadDocumentCategory;
+  subject?: string;
   fallbackMimeType?: string;
 }): {
   buffer: Buffer;
@@ -124,6 +200,7 @@ export function validateAndDecodeUpload(params: {
   ext: string;
   filename: string;
   isPdf: boolean;
+  category: UploadDocumentCategory;
 } {
   const trimmed = params.rawData.trim();
   if (!trimmed) {
@@ -164,14 +241,16 @@ export function validateAndDecodeUpload(params: {
     }
   }
 
-  const safePrefix = String(params.rawName || (isPdf ? 'doc' : 'photo'))
-    .replace(/[^a-zA-Z0-9_-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 32);
+  const category: UploadDocumentCategory =
+    params.category && CATEGORY_DEFAULT_SLUG[params.category] ? params.category : 'document';
 
-  const uniquePart = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const filename = `${safePrefix ? `${safePrefix}-` : ''}${uniquePart}.${ext}`;
+  const filename = buildSemanticFileName({
+    category: params.category,
+    subject: params.subject,
+    rawName: params.rawName,
+    ext,
+    isPdf,
+  });
 
   return {
     buffer,
@@ -180,5 +259,6 @@ export function validateAndDecodeUpload(params: {
     ext,
     filename,
     isPdf,
+    category,
   };
 }
