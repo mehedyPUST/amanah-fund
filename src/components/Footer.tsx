@@ -8,7 +8,7 @@ export function Footer() {
   const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
-    <footer className="w-full bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl shadow-2xs">
+    <footer className="w-full bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/50 dark:via-slate-900/90 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-2xs">
       <div className="px-5 sm:px-6 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="space-y-2.5">
@@ -26,7 +26,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
               Portal Pages
             </h3>
             <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
@@ -41,7 +41,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/community"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
                 >
                   Community Hub
                 </Link>
@@ -49,7 +49,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  className="hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
                 >
                   Security &amp; Architecture
                 </Link>
@@ -57,7 +57,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/how-it-works"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
                 >
                   How It Works
                 </Link>
@@ -65,7 +65,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/rules"
-                  className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  className="hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                 >
                   Governance Charter
                 </Link>
@@ -74,7 +74,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-400">
               Governance &amp; Security
             </h3>
             <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
@@ -86,7 +86,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
               Member Access
             </h3>
             <div className="flex flex-wrap items-center gap-2">
@@ -99,7 +99,7 @@ export function Footer() {
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-block px-3.5 py-2 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 whitespace-nowrap"
+                  className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 whitespace-nowrap"
                 >
                   Join Amanah
                 </Link>
@@ -108,13 +108,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-emerald-200/60 dark:border-emerald-900/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
             © {new Date().getFullYear()} Amanah · 0% Interest · Shariah-Governed
           </span>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono hidden sm:inline text-emerald-700/80 dark:text-emerald-400/80">
+            <span className="font-mono hidden sm:inline text-teal-700/80 dark:text-teal-400/80">
               HttpOnly JWT · Encrypted Ledger
             </span>
             <button
@@ -122,16 +122,16 @@ export function Footer() {
               onClick={toggleDarkMode}
               title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
               aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 cursor-pointer"
             >
               {darkMode ? (
                 <>
-                  <Sun className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                  <Sun className="w-3.5 h-3.5 text-orange-500" aria-hidden="true" />
                   <span>Light</span>
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+                  <Moon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" aria-hidden="true" />
                   <span>Dark</span>
                 </>
               )}

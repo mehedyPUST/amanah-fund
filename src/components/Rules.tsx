@@ -170,8 +170,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
     <div
       className={
         embedded
-          ? 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
-          : 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          ? 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          : 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
       }
     >
       <section className="space-y-4">
@@ -183,7 +183,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-3"
         >
           <div className="space-y-1.5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <div className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
               Official Constitution &amp; Bylaws · Term: Jan 2027 – Dec 2036 (VISION-36)
             </div>
             <HeadingTag
@@ -204,13 +204,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               <button
                 type="button"
                 onClick={toggleExpandAll}
-                className="px-3 py-1.5 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-white dark:bg-slate-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
               >
                 {allExpanded ? 'Collapse Clauses' : 'Expand All Articles'}
               </button>
               <Link
                 href="/rules"
-                className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors whitespace-nowrap"
+                className="px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800/70 bg-orange-50/70 dark:bg-orange-950/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40 text-xs font-medium text-orange-800 dark:text-orange-300 transition-colors whitespace-nowrap"
               >
                 Full Page
               </Link>
@@ -223,7 +223,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.22 }}
-          className="rounded-xl border border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900 p-4 sm:p-5 space-y-4 shadow-2xs"
+          className="rounded-xl border border-violet-200/90 dark:border-violet-900/60 bg-gradient-to-br from-violet-100/75 via-violet-50/40 to-white dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900 p-4 sm:p-5 space-y-4 shadow-2xs"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -243,7 +243,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             <>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800/60 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-400 ring-1 ring-violet-200 dark:ring-violet-800/60 flex items-center justify-center shrink-0">
                     <FileText className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <div className="space-y-1">
@@ -263,7 +263,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   <button
                     type="button"
                     onClick={() => setShowPdfPreview((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-white dark:bg-slate-900 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-violet-200/80 dark:border-violet-800/60 bg-white dark:bg-slate-900 hover:bg-violet-50/70 dark:hover:bg-violet-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {showPdfPreview ? (
                       <>
@@ -281,7 +281,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     href={constitutionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Open PDF</span>
@@ -304,7 +304,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.22 }}
-                    className="overflow-hidden rounded-lg border border-emerald-200/80 dark:border-emerald-900/50 bg-white dark:bg-slate-950"
+                    className="overflow-hidden rounded-lg border border-violet-200/80 dark:border-violet-900/50 bg-white dark:bg-slate-950"
                   >
                     <iframe
                       src={constitutionUrl}
@@ -317,7 +317,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             </>
           ) : (
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800/60 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-400 ring-1 ring-violet-200 dark:ring-violet-800/60 flex items-center justify-center shrink-0">
                 <FileText className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="space-y-1">
@@ -346,7 +346,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 className={`border rounded-xl p-4 space-y-2.5 transition-colors flex flex-col justify-between ${
                   isEven
                     ? 'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900 border-emerald-200/90 dark:border-emerald-800/60 hover:border-emerald-300 dark:hover:border-emerald-700'
-                    : 'bg-gradient-to-br from-slate-100/90 via-slate-50/50 to-white dark:from-slate-800/65 dark:via-slate-900/90 dark:to-slate-950 border-slate-200/90 dark:border-slate-700/70 hover:border-emerald-300 dark:hover:border-emerald-700/70'
+                    : 'bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900 border-violet-200/90 dark:border-violet-800/60 hover:border-violet-300 dark:hover:border-violet-700'
                 }`}
               >
                 <div className="space-y-2">
@@ -356,7 +356,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                         className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
                           isEven
                             ? 'bg-emerald-100/80 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
-                            : 'bg-slate-200/75 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300/70 dark:border-slate-700'
+                            : 'bg-violet-100/80 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300 border-violet-200/80 dark:border-violet-800/60'
                         }`}
                       >
                         {rule.code}
@@ -376,7 +376,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.18 }}
-                        className="space-y-1.5 pt-2 border-t border-emerald-200/60 dark:border-slate-800 overflow-hidden"
+                        className={`space-y-1.5 pt-2 border-t overflow-hidden ${
+                          isEven
+                            ? 'border-emerald-200/60 dark:border-emerald-900/40'
+                            : 'border-violet-200/60 dark:border-violet-900/40'
+                        }`}
                       >
                         {rule.points.map((pt, ptIdx) => {
                           const pointEven = ptIdx % 2 === 0;
@@ -385,14 +389,18 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                               key={pt}
                               className={`flex items-start gap-2 text-xs leading-relaxed rounded-lg px-2.5 py-2 border ${
                                 pointEven
-                                  ? 'bg-emerald-50/70 dark:bg-emerald-950/35 border-emerald-200/60 dark:border-emerald-900/40 text-slate-800 dark:text-slate-200'
+                                  ? isEven
+                                    ? 'bg-emerald-50/70 dark:bg-emerald-950/35 border-emerald-200/60 dark:border-emerald-900/40 text-slate-800 dark:text-slate-200'
+                                    : 'bg-violet-50/70 dark:bg-violet-950/35 border-violet-200/60 dark:border-violet-900/40 text-slate-800 dark:text-slate-200'
                                   : 'bg-white/85 dark:bg-slate-900/75 border-slate-200/70 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                               }`}
                             >
                               <CheckCircle2
                                 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
                                   pointEven
-                                    ? 'text-emerald-700 dark:text-emerald-400'
+                                    ? isEven
+                                      ? 'text-emerald-700 dark:text-emerald-400'
+                                      : 'text-violet-700 dark:text-violet-400'
                                     : 'text-slate-500 dark:text-slate-400'
                                 }`}
                                 aria-hidden="true"
@@ -412,7 +420,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       type="button"
                       onClick={() => toggleSectionCode(rule.code)}
                       aria-expanded={isOpen}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                      className={`inline-flex items-center gap-1 text-xs font-medium hover:underline cursor-pointer ${
+                        isEven
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-violet-700 dark:text-violet-400'
+                      }`}
                     >
                       <span>
                         {isOpen ? 'Hide Articles' : `Read ${rule.points.length} Articles`}
@@ -429,14 +441,14 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           })}
         </div>
 
-        <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-r from-emerald-50/75 via-emerald-50/25 to-white dark:from-emerald-950/35 dark:via-emerald-950/15 dark:to-slate-900 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-r from-slate-100/80 via-slate-50/40 to-white dark:from-slate-800/55 dark:via-slate-900/85 dark:to-slate-950 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-slate-600 dark:text-slate-400 text-justify">
             Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
           </p>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
-              className="px-3.5 py-2 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 whitespace-nowrap"
+              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 whitespace-nowrap"
             >
               Member Sign In
             </Link>
