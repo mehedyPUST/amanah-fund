@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
   Download,
   ExternalLink,
   Eye,
@@ -158,6 +159,26 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
+  const [expandedCodes, setExpandedCodes] = useState<Record<string, boolean>>({});
+
+  const allExpanded =
+    !embedded || CHARTER_SECTIONS.every((section) => Boolean(expandedCodes[section.code]));
+
+  function toggleSectionCode(code: string) {
+    setExpandedCodes((prev) => ({ ...prev, [code]: !prev[code] }));
+  }
+
+  function toggleExpandAll() {
+    if (allExpanded) {
+      setExpandedCodes({});
+    } else {
+      const next: Record<string, boolean> = {};
+      CHARTER_SECTIONS.forEach((s) => {
+        next[s.code] = true;
+      });
+      setExpandedCodes(next);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -194,23 +215,42 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.22 }}
-          className="space-y-1.5"
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-3"
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-            Official Constitution &amp; Bylaws · Term: Jan 2027 – Dec 2036 (VISION-36)
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              Official Constitution &amp; Bylaws · Term: Jan 2027 – Dec 2036 (VISION-36)
+            </div>
+            <HeadingTag
+              className={
+                embedded
+                  ? 'text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+                  : 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
+              }
+            >
+              Savings, Investment &amp; Interest-Free Loan Fund Charter
+            </HeadingTag>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+              English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
+            </p>
           </div>
-          <HeadingTag
-            className={
-              embedded
-                ? 'text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
-                : 'text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance'
-            }
-          >
-            Savings, Investment &amp; Interest-Free Loan Fund Charter
-          </HeadingTag>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-            English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
-          </p>
+          {embedded && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={toggleExpandAll}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {allExpanded ? 'Collapse Clauses' : 'Expand All Articles'}
+              </button>
+              <Link
+                href="/rules"
+                className="px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 dark:hover:bg-amber-900/40 text-xs font-medium text-amber-800 dark:text-amber-300 transition-colors whitespace-nowrap"
+              >
+                Full Page
+              </Link>
+            </div>
+          )}
         </motion.div>
 
         <motion.div
@@ -328,42 +368,78 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         </motion.div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-          {CHARTER_SECTIONS.map((rule, idx) => (
-            <motion.article
-              key={rule.code}
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.2, delay: idx * 0.03 }}
-              className={`border rounded-xl p-4 space-y-2.5 transition-colors bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/90 dark:border-slate-800 ${rule.cardClass.replace(/bg-white dark:bg-slate-900 /g, '')}`}
-            >
-              <div className="flex flex-wrap items-baseline gap-2.5">
-                <span className={`font-mono text-xs font-bold ${rule.codeClass}`}>
-                  {rule.code}
-                </span>
-                <ArticleHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                  {rule.title}
-                </ArticleHeadingTag>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {rule.summary}
-              </p>
-              <ul className="space-y-1.5 pt-0.5">
-                {rule.points.map((pt) => (
-                  <li
-                    key={pt}
-                    className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed"
-                  >
-                    <CheckCircle2
-                      className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${rule.iconClass}`}
-                      aria-hidden="true"
-                    />
-                    <span>{pt}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.article>
-          ))}
+          {CHARTER_SECTIONS.map((rule, idx) => {
+            const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
+            return (
+              <motion.article
+                key={rule.code}
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ duration: 0.2, delay: idx * 0.03 }}
+                className={`border rounded-xl p-4 space-y-2.5 transition-colors bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/90 dark:border-slate-800 flex flex-col justify-between ${rule.cardClass.replace(/bg-white dark:bg-slate-900 /g, '')}`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className={`font-mono text-xs font-bold ${rule.codeClass}`}>
+                        {rule.code}
+                      </span>
+                      <ArticleHeadingTag className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {rule.title}
+                      </ArticleHeadingTag>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {rule.summary}
+                  </p>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.ul
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="space-y-1.5 pt-1.5 border-t border-slate-200/80 dark:border-slate-800 overflow-hidden"
+                      >
+                        {rule.points.map((pt) => (
+                          <li
+                            key={pt}
+                            className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed"
+                          >
+                            <CheckCircle2
+                              className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${rule.iconClass}`}
+                              aria-hidden="true"
+                            />
+                            <span>{pt}</span>
+                          </li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {embedded && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionCode(rule.code)}
+                      aria-expanded={isOpen}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      <span>
+                        {isOpen ? 'Hide Articles' : `Read ${rule.points.length} Articles`}
+                      </span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+                )}
+              </motion.article>
+            );
+          })}
         </div>
 
         <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

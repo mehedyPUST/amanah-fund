@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import {
   Shield,
   ShieldCheck,
   Sun,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -35,8 +36,9 @@ export type HomeSectionId =
   | 'overview'
   | 'notice-board'
   | 'community'
-  | 'how-it-works'
+  | 'lifecycle'
   | 'architecture'
+  | 'how-it-works'
   | 'governance-charter';
 
 interface HomeNavItem {
@@ -76,13 +78,14 @@ const TONE_CLASSES: Record<
   },
 };
 
-function normalizeHashToSection(hash: string, isActiveMember: boolean): HomeSectionId | null {
+function parseSectionHash(hash: string, isActiveMember: boolean): HomeSectionId | null {
   const clean = hash.replace(/^#/, '');
   if (clean === 'overview') return 'overview';
   if (clean === 'notice-board' && isActiveMember) return 'notice-board';
   if (clean === 'community') return 'community';
+  if (clean === 'lifecycle') return 'lifecycle';
+  if (clean === 'architecture') return 'architecture';
   if (clean === 'how-it-works') return 'how-it-works';
-  if (clean === 'architecture' || clean === 'lifecycle') return 'architecture';
   if (clean === 'governance-charter' || clean === 'charter') return 'governance-charter';
   return null;
 }
@@ -95,6 +98,7 @@ export function HomeWorkspace() {
   const [activeSection, setActiveSection] = useState<HomeSectionId>('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const manualScrollLockUntilRef = useRef(0);
 
   const navItems: HomeNavItem[] = useMemo(() => {
     const items: HomeNavItem[] = [
@@ -110,43 +114,78 @@ export function HomeWorkspace() {
     }
     items.push(
       { id: 'community', label: 'Community Hub', Icon: MessageSquare, tone: 'teal' },
-      { id: 'how-it-works', label: 'How It Works', Icon: HelpCircle, tone: 'teal' },
+      { id: 'lifecycle', label: 'Capital Lifecycle', Icon: TrendingUp, tone: 'amber' },
       { id: 'architecture', label: 'Architecture', Icon: ShieldCheck, tone: 'indigo' },
+      { id: 'how-it-works', label: 'How It Works', Icon: HelpCircle, tone: 'teal' },
       { id: 'governance-charter', label: 'Charter (Art. 1–25)', Icon: ScrollText, tone: 'amber' }
     );
     return items;
   }, [isActiveMember]);
 
-  const navigateToSection = useCallback((sectionId: HomeSectionId, closeMobile = false) => {
+  const scrollToSection = useCallback((sectionId: HomeSectionId, closeMobile = false) => {
     setActiveSection(sectionId);
+    manualScrollLockUntilRef.current = Date.now() + 750;
     if (closeMobile) {
       setMobileNavOpen(false);
     }
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (typeof window !== 'undefined') {
-      const nextHash = sectionId === 'overview' ? '' : `#${sectionId}`;
-      window.history.replaceState(null, '', nextHash || '/');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const nextUrl = sectionId === 'overview' ? '/' : `#${sectionId}`;
+      window.history.replaceState(null, '', nextUrl);
     }
   }, []);
 
   useEffect(() => {
-    const syncFromHash = () => {
-      const parsed = normalizeHashToSection(window.location.hash, isActiveMember);
-      if (parsed) {
-        setActiveSection(parsed);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
-    syncFromHash();
-    window.addEventListener('hashchange', syncFromHash);
-    return () => window.removeEventListener('hashchange', syncFromHash);
-  }, [isActiveMember]);
+    const parsed = parseSectionHash(window.location.hash, isActiveMember);
+    if (parsed && parsed !== 'overview') {
+      const timer = window.setTimeout(() => {
+        scrollToSection(parsed, false);
+      }, 80);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isActiveMember, scrollToSection]);
 
   useEffect(() => {
-    if (activeSection === 'notice-board' && !isActiveMember && !authChecking) {
-      setActiveSection('overview');
-    }
-  }, [activeSection, isActiveMember, authChecking]);
+    const ids = navItems.map((n) => n.id);
+    let rafId = 0;
+
+    const updateActiveOnScroll = () => {
+      if (Date.now() < manualScrollLockUntilRef.current) return;
+
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
+      if (atBottom) {
+        setActiveSection('governance-charter');
+        return;
+      }
+
+      const thresholdY = 128;
+      let current: HomeSectionId = 'overview';
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= thresholdY) {
+          current = id;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    const onScroll = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(updateActiveOnScroll);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateActiveOnScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [navItems]);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -178,8 +217,8 @@ export function HomeWorkspace() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => navigateToSection(item.id, isMobile)}
-                  aria-current={active ? 'page' : undefined}
+                  onClick={() => scrollToSection(item.id, isMobile)}
+                  aria-current={active ? 'location' : undefined}
                   className={`relative group w-full px-3 py-2 text-sm rounded-lg flex items-center gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${
                     active
                       ? toneStyle.activeText
@@ -268,16 +307,16 @@ export function HomeWorkspace() {
   return (
     /* Exact 4-Grid Layout matching DashboardShell:
        Grid 1 (Top-Left, 252px x 60px): Brand Header
-       Grid 2 (Top-Right, 1fr x 60px): Top Bar
-       Grid 3 (Bottom-Left, 252px x 1fr): Sticky Sidebar
-       Grid 4 (Bottom-Right, 1fr): Active View Canvas + Footer
+       Grid 2 (Top-Right, 1fr x 60px): Breadcrumb + Utility Header
+       Grid 3 (Bottom-Left, 252px x 1fr): Sticky Section Scroll-Spy Sidebar
+       Grid 4 (Bottom-Right, 1fr): Full Scrolling Homepage Sections + Footer
     */
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
-      {/* GRID 1: Top-Left Brand Card (252px x 60px) */}
+      {/* GRID 1: Top-Left Brand Card */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] px-4 items-center justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs sticky top-2.5 z-30">
         <button
           type="button"
-          onClick={() => navigateToSection('overview')}
+          onClick={() => scrollToSection('overview')}
           className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer group"
         >
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105">
@@ -294,7 +333,7 @@ export function HomeWorkspace() {
         </button>
       </div>
 
-      {/* GRID 2: Top-Right Header Bar (1fr x 60px) */}
+      {/* GRID 2: Top-Right Bar */}
       <header className="lg:col-start-2 lg:row-start-1 h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-2 lg:top-2.5 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -311,11 +350,11 @@ export function HomeWorkspace() {
               Amanah
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
-            <h1
+            <span
               className={`font-semibold text-slate-900 dark:text-white truncate underline decoration-2 ${activeTone.underline} underline-offset-4`}
             >
               {activeMeta.label}
-            </h1>
+            </span>
           </div>
         </div>
 
@@ -378,7 +417,7 @@ export function HomeWorkspace() {
         </div>
       </header>
 
-      {/* GRID 3: Bottom-Left Sticky Sidebar (252px) */}
+      {/* GRID 3: Bottom-Left Sticky Navigation Rail */}
       <aside
         aria-label="Homepage sections"
         className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs lg:sticky lg:top-[80px] lg:h-[calc(100vh-90px)]"
@@ -515,41 +554,31 @@ export function HomeWorkspace() {
         )}
       </AnimatePresence>
 
-      {/* GRID 4: Main Content Workspace + Compact Footer */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 flex flex-col justify-between gap-2.5">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeSection}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className="min-w-0"
-          >
-            {activeSection === 'overview' && (
-              <Hero
-                includeLifecycle={false}
-                embedded
-                onNavigateSection={(target) => navigateToSection(target)}
-              />
-            )}
+      {/* GRID 4: Full Scrolling Homepage Sections + Footer */}
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 space-y-2.5">
+        <section id="overview" className="scroll-mt-20">
+          <Hero includeLifecycle={false} embedded />
+        </section>
 
-            {activeSection === 'notice-board' && <HomeNoticeBoardSection embedded />}
+        <HomeNoticeBoardSection embedded />
 
-            {activeSection === 'community' && <HomeCommunitySection embedded />}
+        <section id="community" className="scroll-mt-20">
+          <HomeCommunitySection embedded />
+        </section>
 
-            {activeSection === 'how-it-works' && <HowItWorks embedded />}
+        <HeroLifecycle embedded />
 
-            {activeSection === 'architecture' && (
-              <div className="space-y-2.5">
-                <About embedded />
-                <HeroLifecycle embedded />
-              </div>
-            )}
+        <section id="architecture" className="scroll-mt-20">
+          <About embedded />
+        </section>
 
-            {activeSection === 'governance-charter' && <Rules embedded />}
-          </motion.div>
-        </AnimatePresence>
+        <section id="how-it-works" className="scroll-mt-20">
+          <HowItWorks embedded />
+        </section>
+
+        <section id="governance-charter" className="scroll-mt-20">
+          <Rules embedded />
+        </section>
 
         <Footer />
       </main>
