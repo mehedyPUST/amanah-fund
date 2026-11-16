@@ -304,6 +304,28 @@ export function SignUpForm() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-7">
+            <div className="p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                  Constitution Charter (§4–§6 · VISION-36: Jan 2027 – Dec 2036)
+                </p>
+                <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
+                  Maximum 20 members/shares total (intake closes July 2027; late joiners settle
+                  prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo,
+                  and a ৳200 non-refundable management fee.
+                </p>
+              </div>
+              <a
+                href="/assets/aistudio/Savings__Investment_and_Interest-Free_Loan_Fund_Cooperative_Society_Update_1_98df82ac.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
+              >
+                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Constitution PDF</span>
+              </a>
+            </div>
+
             {error && (
               <div
                 role="alert"

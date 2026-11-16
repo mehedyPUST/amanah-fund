@@ -1855,11 +1855,23 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
         throw err;
       }
 
+      const effectiveMaxLoan = eligibility.effectiveMaxLoanAmount ?? draft.fundConfig.maxLoanAmount;
       if (amount > draft.fundConfig.maxLoanAmount) {
         throw new Error(`AMOUNT_EXCEEDS_MAX:${draft.fundConfig.maxLoanAmount}`);
       }
-      if (installmentMonths > draft.fundConfig.maxInstallmentMonths) {
-        throw new Error(`MONTHS_EXCEED_MAX:${draft.fundConfig.maxInstallmentMonths}`);
+      if (
+        typeof draft.fundConfig.loanSavingsCapPct === 'number' &&
+        draft.fundConfig.loanSavingsCapPct > 0 &&
+        amount > effectiveMaxLoan
+      ) {
+        throw new Error(
+          `AMOUNT_EXCEEDS_SAVINGS_CAP:${effectiveMaxLoan}:${draft.fundConfig.loanSavingsCapPct}`
+        );
+      }
+      const effectiveMaxMonths =
+        eligibility.effectiveMaxInstallmentMonths ?? draft.fundConfig.maxInstallmentMonths;
+      if (installmentMonths > effectiveMaxMonths) {
+        throw new Error(`MONTHS_EXCEED_MAX:${effectiveMaxMonths}`);
       }
 
       const guarantorThreshold = draft.fundConfig.guarantorThresholdAmount ?? 40000;
@@ -2044,6 +2056,13 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       if (err.message.startsWith('AMOUNT_EXCEEDS_MAX:')) {
         const cap = err.message.split(':')[1];
         res.status(400).json({ error: `Requested amount exceeds cooperative cap of ${cap}.` });
+        return;
+      }
+      if (err.message.startsWith('AMOUNT_EXCEEDS_SAVINGS_CAP:')) {
+        const [, cap, pct] = err.message.split(':');
+        res.status(400).json({
+          error: `Requested amount exceeds your ${pct}% savings borrowing limit (${cap}).`,
+        });
         return;
       }
       if (err.message.startsWith('MONTHS_EXCEED_MAX:')) {
@@ -4621,6 +4640,73 @@ apiRouter.patch(
         if (typeof body.autoSyncSheet === 'boolean' && body.autoSyncSheet !== cfg.autoSyncSheet) {
           changes.autoSyncSheet = { from: Boolean(cfg.autoSyncSheet), to: body.autoSyncSheet };
           cfg.autoSyncSheet = body.autoSyncSheet;
+        }
+        if (
+          body.maxMembersCap !== undefined &&
+          Number.isInteger(Number(body.maxMembersCap)) &&
+          Number(body.maxMembersCap) >= 1 &&
+          Number(body.maxMembersCap) <= 500
+        ) {
+          const nextVal = Number(body.maxMembersCap);
+          if (nextVal !== cfg.maxMembersCap) {
+            changes.maxMembersCap = { from: cfg.maxMembersCap ?? 20, to: nextVal };
+            cfg.maxMembersCap = nextVal;
+          }
+        }
+        if (
+          body.loanSavingsCapPct !== undefined &&
+          Number.isFinite(Number(body.loanSavingsCapPct)) &&
+          Number(body.loanSavingsCapPct) >= 0 &&
+          Number(body.loanSavingsCapPct) <= 100
+        ) {
+          const nextVal = Number(body.loanSavingsCapPct);
+          if (nextVal !== cfg.loanSavingsCapPct) {
+            changes.loanSavingsCapPct = { from: cfg.loanSavingsCapPct ?? 75, to: nextVal };
+            cfg.loanSavingsCapPct = nextVal;
+          }
+        }
+        if (
+          body.monthlyDueDay !== undefined &&
+          Number.isInteger(Number(body.monthlyDueDay)) &&
+          Number(body.monthlyDueDay) >= 1 &&
+          Number(body.monthlyDueDay) <= 28
+        ) {
+          const nextVal = Number(body.monthlyDueDay);
+          if (nextVal !== cfg.monthlyDueDay) {
+            changes.monthlyDueDay = { from: cfg.monthlyDueDay ?? 10, to: nextVal };
+            cfg.monthlyDueDay = nextVal;
+          }
+        }
+        if (
+          body.lateFeeAmount !== undefined &&
+          Number.isFinite(Number(body.lateFeeAmount)) &&
+          Number(body.lateFeeAmount) >= 0
+        ) {
+          const nextVal = Number(body.lateFeeAmount);
+          if (nextVal !== cfg.lateFeeAmount) {
+            changes.lateFeeAmount = { from: cfg.lateFeeAmount ?? 50, to: nextVal };
+            cfg.lateFeeAmount = nextVal;
+          }
+        }
+        if (
+          body.registrationFeeAmount !== undefined &&
+          Number.isFinite(Number(body.registrationFeeAmount)) &&
+          Number(body.registrationFeeAmount) >= 0
+        ) {
+          const nextVal = Number(body.registrationFeeAmount);
+          if (nextVal !== cfg.registrationFeeAmount) {
+            changes.registrationFeeAmount = { from: cfg.registrationFeeAmount ?? 200, to: nextVal };
+            cfg.registrationFeeAmount = nextVal;
+          }
+        }
+        if (typeof body.membershipIntakeDeadline === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.membershipIntakeDeadline)) {
+          if (body.membershipIntakeDeadline !== cfg.membershipIntakeDeadline) {
+            changes.membershipIntakeDeadline = {
+              from: cfg.membershipIntakeDeadline ?? '2027-07-31',
+              to: body.membershipIntakeDeadline,
+            };
+            cfg.membershipIntakeDeadline = body.membershipIntakeDeadline;
+          }
         }
         if (typeof body.googleSheetId === 'string') {
           const trimmedId = body.googleSheetId.trim();

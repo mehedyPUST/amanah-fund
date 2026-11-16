@@ -352,4 +352,41 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
     expect(mgrOvAfter.treasury.pendingLoansReviewCount).toBe(0);
     expect(mgrOvAfter.treasury.pendingVotesCount).toBe(1);
   });
+
+  it('enforces the 75% savings borrowing limit and 10-month cap when configured per constitution', async () => {
+    mockState.fundConfig.maxLoanAmount = 50000;
+    mockState.fundConfig.maxInstallmentMonths = 10;
+    mockState.fundConfig.loanSavingsCapPct = 75;
+
+    // u-member-1 has 60,000 approved savings => 75% cap = 45,000 (< 50,000)
+    const overSavingsCapRes = await fetch(`${baseUrl}/api/loans`, {
+      method: 'POST',
+      headers: authHeaders('u-member-1'),
+      body: JSON.stringify({
+        amount: 48000,
+        installmentMonths: 8,
+        purpose: 'Exceeds 75% savings limit',
+        channel: 'mfs',
+        provider: 'bKash',
+        disbursementAccount: '01711223344',
+        guarantorIds: ['u-member-2'],
+      }),
+    });
+    expect(overSavingsCapRes.status).toBe(400);
+
+    const withinCapRes = await fetch(`${baseUrl}/api/loans`, {
+      method: 'POST',
+      headers: authHeaders('u-member-1'),
+      body: JSON.stringify({
+        amount: 45000,
+        installmentMonths: 10,
+        purpose: 'Within 75% savings limit',
+        channel: 'mfs',
+        provider: 'bKash',
+        disbursementAccount: '01711223344',
+        guarantorIds: ['u-member-2'],
+      }),
+    });
+    expect(withinCapRes.status).toBe(201);
+  });
 });

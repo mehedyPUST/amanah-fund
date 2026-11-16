@@ -72,18 +72,18 @@ export function Hero() {
             className="lg:col-span-6 space-y-6"
           >
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Interest-Free Qard Hasan · Post-Maturity Halal Capital
+              Savings, Investment &amp; Interest-Free Loan Fund · VISION-36 (2027–2036)
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
-              Cooperative Treasury Governed by Transparency and 2/3 Consensus
+              Cooperative Treasury Governed by Shariah &amp; 2/3 Consensus
             </h1>
 
             <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-              Members pool monthly contributions via Bank or MFS into an audited central fund.
-              Until the pre-specified maturity date, capital sustains 0% interest Qard Hasan loans
-              for members; after maturity, the cooperative invests in Shariah-vetted real-economy
-              projects.
+              A 20-member cooperative pooling ৳5,000 monthly savings by the 10th of each month.
+              Ongoing capital sustains 0% interest Qard Hasan loans (up to ৳50,000 or 75% of
+              savings over 10 months) while advancing 2/3-approved Halal real-economy ventures
+              toward VISION-36.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -120,10 +120,10 @@ export function Hero() {
             <div className="grid grid-cols-3 gap-3 pt-4">
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:shadow-sm">
                 <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  0%
+                  0% · ৳50k
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Interest (Qard Hasan)
+                  Qard Hasan (or 75% Savings)
                 </div>
               </div>
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 dark:hover:border-amber-700/70 hover:shadow-sm">
@@ -131,15 +131,15 @@ export function Hero() {
                   2/3
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Approval Quorum
+                  Investment &amp; Loan Quorum
                 </div>
               </div>
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300 dark:hover:border-teal-700/70 hover:shadow-sm">
                 <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-teal-700 dark:text-teal-400">
-                  3 / yr
+                  20 · 10m
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Configurable Loan Cap
+                  Max Shares · Max Repay
                 </div>
               </div>
             </div>

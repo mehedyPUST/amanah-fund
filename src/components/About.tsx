@@ -7,18 +7,18 @@ import { ArrowRight, KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-rea
 const PILLARS = [
   {
     Icon: ShieldCheck,
-    title: 'Admin-Verified Membership',
+    title: '20-Member Shura-Approved Onboarding',
     description:
-      'Every applicant submits verified identity details (NID, photo, reference member, and addresses) into a pending queue. Only accounts vetted and activated by an Administrator can sign in.',
+      'Every applicant submits verified identity details (NID for member & nominee, photo, reference member, and ৳200 non-refundable fee) into a pending queue capped at 20 shares.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
     iconClass: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
   },
   {
     Icon: Users,
-    title: 'Granular Role-Based Access Control',
+    title: '5-Member Shura & Savings Committees',
     description:
-      'Strict separation of duties across Administrator (KYC approval, policy, annual loan cap), Treasury Manager (Bank/MFS reconciliation, disbursement), and Member (deposits, ballots, repayments).',
+      'Separation of duties across Shura/Management (loan review & 15th-of-month updates), Savings Accounts Committee (joint custody & monthly bank statements), and Members.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
     iconClass: 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
@@ -36,16 +36,16 @@ const PILLARS = [
     Icon: Vote,
     title: '2/3 Supermajority Consensus',
     description:
-      'Both Qard Hasan lending requests and post-maturity Halal investment placements require affirmative votes from at least two-thirds of active members.',
+      'Every Qard Hasan loan and Halal investment placement requires affirmative votes from at least two-thirds of active members; amendments require 2/3 Shura + 1/2 member quorum.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
     iconClass: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200/70 dark:ring-amber-800/50',
   },
   {
     Icon: KeyRound,
-    title: 'Automated Treasury & Workspace Sync',
+    title: 'VISION-36 & Sadaqah Late-Fee Ledger',
     description:
-      'Live central balance accounting tracks every contribution, loan approval deduction, and repayment return, with automated Google Sheets blueprint sync and Gmail notifications.',
+      'Tracks monthly ৳5,000 savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs a 7-tab Google Sheets ledger.',
     cardStyle:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
     iconClass: 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
@@ -61,16 +61,15 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">
         <div className="max-w-3xl space-y-4">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            Security &amp; Architecture
+            Security &amp; Architecture · Term 2027–2036
           </div>
           <HeadingTag className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-            Transparent mutual support before maturity. Real-economy Halal growth after maturity.
+            Interest-free mutual relief today. VISION-36 Halal assets and Islamic schools by 2036.
           </HeadingTag>
           <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-            Amanah was designed so a trusted community can pool monthly savings without
-            interest, extend interest-free Qard Hasan relief to fellow members through democratic 2/3
-            voting, and later deploy the matured capital into vetted Mudarabah, Musharakah, and
-            Murabahah enterprises.
+            Built for the Savings, Investment and Interest-Free Loan Fund Cooperative Society so 20
+            members can pool ৳5,000 monthly savings without interest, extend 0% Qard Hasan relief,
+            and deploy capital into Shariah-vetted land, schools, and community ventures.
           </p>
         </div>
 

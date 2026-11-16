@@ -64,8 +64,8 @@ export function RequestQardHasanLoanForm({
   onSubmitted,
 }: RequestQardHasanLoanFormProps) {
   const ccy = config?.currency || 'BDT';
-  const maxLoanAmount = config?.maxLoanAmount || 75000;
-  const maxInstallmentMonths = config?.maxInstallmentMonths || 12;
+  const configMaxLoanAmount = config?.maxLoanAmount || 50000;
+  const configMaxInstallmentMonths = config?.maxInstallmentMonths || 10;
 
   const [localEligibility, setLocalEligibility] = useState<EligibilityCheck | null>(null);
   const [eligibilityChecking, setEligibilityChecking] = useState(false);
@@ -73,6 +73,15 @@ export function RequestQardHasanLoanForm({
   const [eligibilityRetryKey, setEligibilityRetryKey] = useState(0);
 
   const eligibility = eligibilityProp ?? localEligibility;
+  const maxLoanAmount =
+    typeof eligibility?.effectiveMaxLoanAmount === 'number' && eligibility.effectiveMaxLoanAmount >= 100
+      ? Math.min(configMaxLoanAmount, eligibility.effectiveMaxLoanAmount)
+      : configMaxLoanAmount;
+  const maxInstallmentMonths =
+    typeof eligibility?.effectiveMaxInstallmentMonths === 'number' &&
+    eligibility.effectiveMaxInstallmentMonths >= 1
+      ? Math.min(configMaxInstallmentMonths, eligibility.effectiveMaxInstallmentMonths)
+      : configMaxInstallmentMonths;
 
   useEffect(() => {
     if (eligibilityProp || user.role === 'admin' || user.status !== 'active') return;
@@ -236,7 +245,7 @@ export function RequestQardHasanLoanForm({
   }, [maxLoanAmount]);
 
   const durationPresets = useMemo(() => {
-    const candidates = [3, 6, 9, 12, maxInstallmentMonths];
+    const candidates = [3, 6, 8, 10, maxInstallmentMonths];
     return Array.from(
       new Set(candidates.filter((m) => m >= 1 && m <= maxInstallmentMonths))
     ).slice(0, 4);
@@ -400,7 +409,8 @@ export function RequestQardHasanLoanForm({
           </h3>
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Max cap {formatMoney(maxLoanAmount, ccy)} · Liquid pool{' '}
+            Your limit {formatMoney(maxLoanAmount, ccy)}
+            {config?.loanSavingsCapPct ? ` (${config.loanSavingsCapPct}% savings / ${formatMoney(configMaxLoanAmount, ccy)} cap)` : ''} · Liquid pool{' '}
             <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
               {formatMoney(availableLiquidity, ccy)}
             </span>

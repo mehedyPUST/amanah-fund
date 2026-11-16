@@ -105,6 +105,12 @@ export interface FundConfig {
   voteThresholdNumerator: number;
   voteThresholdDenominator: number;
   maturityDate: string; // YYYY-MM-DD
+  maxMembersCap?: number;
+  membershipIntakeDeadline?: string; // YYYY-MM-DD
+  loanSavingsCapPct?: number;
+  monthlyDueDay?: number;
+  lateFeeAmount?: number;
+  registrationFeeAmount?: number;
   managerCycleMonths?: number;
   managerCycleStartDate?: string; // YYYY-MM-DD
   halalInvestmentThesis: string;
@@ -230,6 +236,9 @@ export interface EligibilityCheck {
   maxLoansPerYear: number;
   quotaAvailable: boolean;
   beforeMaturityDate: boolean;
+  memberTotalSavings?: number;
+  effectiveMaxLoanAmount?: number;
+  effectiveMaxInstallmentMonths?: number;
   eligible: boolean;
   reasons: string[];
 }

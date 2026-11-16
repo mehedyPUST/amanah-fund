@@ -75,15 +75,26 @@ export function AdminSiteSettingsView({
   const isAdmin = user.role === 'admin';
   const ccy = config?.currency || 'BDT';
 
-  const [fundName, setFundName] = useState(config?.fundName || 'Amanah');
+  const [fundName, setFundName] = useState(
+    config?.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund'
+  );
   const [maxLoansPerYear, setMaxLoansPerYear] = useState(String(config?.maxLoansPerYear ?? 3));
-  const [maturityDate, setMaturityDate] = useState(config?.maturityDate || '2028-12-31');
+  const [maturityDate, setMaturityDate] = useState(config?.maturityDate || '2036-12-31');
   const [monthlyContributionAmount, setMonthlyContributionAmount] = useState(
     String(config?.monthlyContributionAmount ?? 5000)
   );
-  const [maxLoanAmount, setMaxLoanAmount] = useState(String(config?.maxLoanAmount ?? 75000));
+  const [maxLoanAmount, setMaxLoanAmount] = useState(String(config?.maxLoanAmount ?? 50000));
   const [maxInstallmentMonths, setMaxInstallmentMonths] = useState(
-    String(config?.maxInstallmentMonths ?? 12)
+    String(config?.maxInstallmentMonths ?? 10)
+  );
+  const [loanSavingsCapPct, setLoanSavingsCapPct] = useState(
+    String(config?.loanSavingsCapPct ?? 75)
+  );
+  const [maxMembersCap, setMaxMembersCap] = useState(String(config?.maxMembersCap ?? 20));
+  const [monthlyDueDay, setMonthlyDueDay] = useState(String(config?.monthlyDueDay ?? 10));
+  const [lateFeeAmount, setLateFeeAmount] = useState(String(config?.lateFeeAmount ?? 50));
+  const [registrationFeeAmount, setRegistrationFeeAmount] = useState(
+    String(config?.registrationFeeAmount ?? 200)
   );
   const [guarantorThresholdAmount, setGuarantorThresholdAmount] = useState(
     String(config?.guarantorThresholdAmount ?? 40000)
@@ -95,7 +106,7 @@ export function AdminSiteSettingsView({
     String(config?.managerCycleMonths ?? 3)
   );
   const [managerCycleStartDate, setManagerCycleStartDate] = useState(
-    config?.managerCycleStartDate || '2026-01-01'
+    config?.managerCycleStartDate || '2027-01-01'
   );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
@@ -105,16 +116,21 @@ export function AdminSiteSettingsView({
 
   useEffect(() => {
     if (config) {
-      setFundName(config.fundName || 'Amanah');
+      setFundName(config.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund');
       setMaxLoansPerYear(String(config.maxLoansPerYear));
       setMaturityDate(config.maturityDate);
       setMonthlyContributionAmount(String(config.monthlyContributionAmount));
       setMaxLoanAmount(String(config.maxLoanAmount));
       setMaxInstallmentMonths(String(config.maxInstallmentMonths));
+      setLoanSavingsCapPct(String(config.loanSavingsCapPct ?? 75));
+      setMaxMembersCap(String(config.maxMembersCap ?? 20));
+      setMonthlyDueDay(String(config.monthlyDueDay ?? 10));
+      setLateFeeAmount(String(config.lateFeeAmount ?? 50));
+      setRegistrationFeeAmount(String(config.registrationFeeAmount ?? 200));
       setGuarantorThresholdAmount(String(config.guarantorThresholdAmount ?? 40000));
       setRequiredGuarantorsCount(String(config.requiredGuarantorsCount ?? 1));
       setManagerCycleMonths(String(config.managerCycleMonths ?? 3));
-      setManagerCycleStartDate(config.managerCycleStartDate || '2026-01-01');
+      setManagerCycleStartDate(config.managerCycleStartDate || '2027-01-01');
       setCurrency(config.currency);
       setHalalThesis(config.halalInvestmentThesis);
     }
@@ -173,6 +189,11 @@ export function AdminSiteSettingsView({
           monthlyContributionAmount: Number(monthlyContributionAmount),
           maxLoanAmount: Number(maxLoanAmount),
           maxInstallmentMonths: Number(maxInstallmentMonths),
+          loanSavingsCapPct: Number(loanSavingsCapPct),
+          maxMembersCap: Number(maxMembersCap),
+          monthlyDueDay: Number(monthlyDueDay),
+          lateFeeAmount: Number(lateFeeAmount),
+          registrationFeeAmount: Number(registrationFeeAmount),
           guarantorThresholdAmount: Number(guarantorThresholdAmount),
           requiredGuarantorsCount: Number(requiredGuarantorsCount),
           managerCycleMonths: cycleMonthsNum,
@@ -459,6 +480,79 @@ export function AdminSiteSettingsView({
                   onChange={(e) => setManagerCycleStartDate(e.target.value)}
                   className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Loan Savings Cap (% of Savings)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  required
+                  value={loanSavingsCapPct}
+                  onChange={(e) => setLoanSavingsCapPct(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Max Members / Shares Cap
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  required
+                  value={maxMembersCap}
+                  onChange={(e) => setMaxMembersCap(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Due Day
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={28}
+                    required
+                    value={monthlyDueDay}
+                    onChange={(e) => setMonthlyDueDay(e.target.value)}
+                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Late Fee
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    required
+                    value={lateFeeAmount}
+                    onChange={(e) => setLateFeeAmount(e.target.value)}
+                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Join Fee
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    required
+                    value={registrationFeeAmount}
+                    onChange={(e) => setRegistrationFeeAmount(e.target.value)}
+                    className="w-full px-2.5 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  />
+                </div>
               </div>
             </div>
 

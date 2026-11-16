@@ -216,6 +216,29 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
   const beforeMaturityDate = now <= maturity;
 
+  const memberTotalSavings = state.contributions
+    .filter((c) => c.userId === userId && c.status === 'approved')
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  const savingsCapPct = state.fundConfig.loanSavingsCapPct;
+  const savingsBasedCap =
+    typeof savingsCapPct === 'number' && savingsCapPct > 0
+      ? Math.floor((memberTotalSavings * savingsCapPct) / 100)
+      : state.fundConfig.maxLoanAmount;
+  const effectiveMaxLoanAmount = Math.max(
+    0,
+    Math.min(state.fundConfig.maxLoanAmount, savingsBasedCap)
+  );
+
+  const monthsRemainingUntilMaturity =
+    (maturity.getUTCFullYear() - now.getUTCFullYear()) * 12 +
+    (maturity.getUTCMonth() - now.getUTCMonth());
+  const effectiveMaxInstallmentMonths =
+    monthsRemainingUntilMaturity > 0 &&
+    monthsRemainingUntilMaturity < state.fundConfig.maxInstallmentMonths
+      ? monthsRemainingUntilMaturity
+      : state.fundConfig.maxInstallmentMonths;
+
   const blockingReasons: string[] = [];
   const passingReasons: string[] = [];
   if (!noActiveLoan && activeOrPendingLoan) {
@@ -252,7 +275,21 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
     passingReasons.push(`Qard Hasan lending window active until ${state.fundConfig.maturityDate}.`);
   }
 
+  if (typeof savingsCapPct === 'number' && savingsCapPct > 0) {
+    if (effectiveMaxLoanAmount < 100) {
+      blockingReasons.push(
+        `Approved savings (${memberTotalSavings}) yields ${savingsCapPct}% limit (${effectiveMaxLoanAmount}) below the minimum 100 loan threshold.`
+      );
+    } else {
+      passingReasons.push(
+        `Borrowing limit: up to ${effectiveMaxLoanAmount} (${savingsCapPct}% of approved savings or ${state.fundConfig.maxLoanAmount} cap, whichever is lower).`
+      );
+    }
+  }
+
   const reasons = [...blockingReasons, ...passingReasons];
+  const savingsCapOk =
+    !(typeof savingsCapPct === 'number' && savingsCapPct > 0) || effectiveMaxLoanAmount >= 100;
 
   return {
     noActiveLoan,
@@ -263,7 +300,15 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
     maxLoansPerYear,
     quotaAvailable,
     beforeMaturityDate,
-    eligible: noActiveLoan && noOverdueInstallments && quotaAvailable && beforeMaturityDate,
+    memberTotalSavings,
+    effectiveMaxLoanAmount,
+    effectiveMaxInstallmentMonths,
+    eligible:
+      noActiveLoan &&
+      noOverdueInstallments &&
+      quotaAvailable &&
+      beforeMaturityDate &&
+      savingsCapOk,
     reasons,
   };
 }
