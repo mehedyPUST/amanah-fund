@@ -268,11 +268,11 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-20 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
-          : 'scroll-mt-20 border-t border-emerald-200/70 dark:border-emerald-900/40 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-2 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
+          : 'scroll-mt-2 border-t border-emerald-200/70 dark:border-emerald-900/40 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
       }
     >
-      <div className={embedded ? 'space-y-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-6'}>
+      <div className={embedded ? 'space-y-4' : 'w-full px-4 sm:px-6 py-10 sm:py-12 space-y-6'}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div className="space-y-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">

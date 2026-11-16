@@ -59,7 +59,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
         className={
           embedded
             ? 'space-y-4'
-            : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-8'
+            : 'w-full px-4 sm:px-6 py-10 sm:py-12 space-y-6'
         }
       >
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">

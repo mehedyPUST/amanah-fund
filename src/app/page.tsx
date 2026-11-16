@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <PublicShell>
       <div className="space-y-2.5">
-        <section id="overview" className="scroll-mt-20">
+        <section id="overview" className="scroll-mt-2">
           <Hero includeLifecycle={false} embedded />
         </section>
 

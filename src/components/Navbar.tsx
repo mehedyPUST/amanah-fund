@@ -47,8 +47,8 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-slate-50 dark:bg-slate-950 px-2 sm:px-2.5 pt-2 sm:pt-2.5 pb-1">
-      <div className="max-w-7xl mx-auto w-full h-[56px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
+    <header className="relative shrink-0 z-40 w-full">
+      <div className="w-full h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
         <Link
           href="/"
           onClick={() => setMobileOpen(false)}
@@ -171,7 +171,7 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden max-w-7xl mx-auto mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
+            className="md:hidden absolute left-0 right-0 top-[68px] z-50 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
           >
             {NAV_LINKS.map((link) => {
               const active = isLinkActive(link.href);

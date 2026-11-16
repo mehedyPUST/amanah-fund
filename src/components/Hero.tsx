@@ -60,7 +60,7 @@ export function Hero({
   }
 
   return (
-    <div className={embedded ? 'space-y-2.5' : 'space-y-2.5 max-w-7xl mx-auto'}>
+    <div className="space-y-2.5 w-full">
       {/* Hero Banner Card */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
@@ -208,8 +208,8 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       id="lifecycle"
       className={
         embedded
-          ? 'scroll-mt-20 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs'
-          : 'scroll-mt-20 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-2xs'
+          ? 'scroll-mt-2 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs'
+          : 'scroll-mt-2 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-2xs'
       }
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">

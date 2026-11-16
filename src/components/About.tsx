@@ -43,8 +43,8 @@ export function About({ embedded = false }: { embedded?: boolean }) {
     <div
       className={
         embedded
-          ? 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
-          : 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-8 shadow-2xs text-slate-900 dark:text-slate-100 max-w-7xl mx-auto'
+          ? 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          : 'bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
       }
     >
       <section className="space-y-4">
