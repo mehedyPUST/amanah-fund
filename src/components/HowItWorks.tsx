@@ -325,7 +325,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               href={user ? '/dashboard' : '/signup'}
               className="group px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-all whitespace-nowrap"
             >
-              <span>{user ? 'Open Dashboard' : 'Apply Now'}</span>
+              <span>{user ? 'Dashboard' : 'Join Amanah'}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"

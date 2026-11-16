@@ -13,7 +13,6 @@ import {
   ClipboardCheck,
   CreditCard,
   HandCoins,
-  HelpCircle,
   History,
   Home,
   LogOut,
@@ -837,15 +836,6 @@ export function DashboardShell() {
             <span>Home</span>
           </Link>
 
-          <Link
-            href="/#how-it-works"
-            title="How It Works"
-            className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-teal-50/60 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 hover:text-teal-700 dark:hover:text-teal-300 transition-all duration-200 whitespace-nowrap"
-          >
-            <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>How It Works</span>
-          </Link>
-
           <HeaderNotificationBell
             user={user}
             overview={overview}
@@ -973,14 +963,6 @@ export function DashboardShell() {
                 >
                   <Home className="w-3.5 h-3.5" />
                   <span>Public Website</span>
-                </Link>
-                <Link
-                  href="/#how-it-works"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-teal-50/60 dark:hover:bg-teal-950/30 transition-colors flex items-center justify-center gap-2"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>How It Works</span>
                 </Link>
                 <button
                   type="button"

@@ -1,6 +1,5 @@
 import { About } from '../components/About.tsx';
-import { Hero } from '../components/Hero.tsx';
-import { HomeCommunitySection } from '../components/HomeCommunitySection.tsx';
+import { Hero, HeroLifecycle } from '../components/Hero.tsx';
 import { HomeNoticeBoardSection } from '../components/HomeNoticeBoardSection.tsx';
 import { HowItWorks } from '../components/HowItWorks.tsx';
 import { PublicShell } from '../components/PublicShell.tsx';
@@ -10,9 +9,10 @@ export default function HomePage() {
   return (
     <PublicShell>
       <section id="overview" className="scroll-mt-16">
-        <Hero />
+        <Hero includeLifecycle={false} />
       </section>
       <HomeNoticeBoardSection />
+      <HeroLifecycle />
       <section
         id="architecture"
         className="scroll-mt-16 border-t border-slate-200/80 dark:border-slate-800/80"
@@ -30,12 +30,6 @@ export default function HomePage() {
         className="scroll-mt-16 border-t border-slate-200/80 dark:border-slate-800/80"
       >
         <Rules embedded />
-      </section>
-      <section
-        id="community"
-        className="scroll-mt-16 border-t border-slate-200/80 dark:border-slate-800/80"
-      >
-        <HomeCommunitySection />
       </section>
     </PublicShell>
   );

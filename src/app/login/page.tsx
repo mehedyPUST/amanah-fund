@@ -3,7 +3,7 @@ import { PublicShell } from '../../components/PublicShell.tsx';
 import { SignInForm } from '../../components/SignInForm.tsx';
 
 export const metadata: Metadata = {
-  title: 'Member Sign In — Amanah',
+  title: 'Sign In — Amanah',
 };
 
 export default function LoginPage() {

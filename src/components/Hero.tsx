@@ -31,7 +31,7 @@ const METRICS = [
   },
 ];
 
-export function Hero() {
+export function Hero({ includeLifecycle = true }: { includeLifecycle?: boolean }) {
   const pathname = usePathname();
   const { user, authChecking } = useCoopSession();
 
@@ -75,7 +75,7 @@ export function Hero() {
                 href={user ? '/dashboard' : '/signup'}
                 className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2 whitespace-nowrap"
               >
-                <span>{user ? 'Enter Member Portal' : 'Apply for Membership'}</span>
+                <span>{user ? 'Dashboard' : 'Join Amanah'}</span>
                 <ArrowRight
                   className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -87,7 +87,7 @@ export function Hero() {
                   href="/login"
                   className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200 whitespace-nowrap"
                 >
-                  Member Sign In
+                  Sign In
                 </Link>
               )}
 
@@ -152,7 +152,14 @@ export function Hero() {
         </div>
       </section>
 
-      <section className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      {includeLifecycle && <HeroLifecycle />}
+    </div>
+  );
+}
+
+export function HeroLifecycle() {
+  return (
+    <section className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -223,6 +230,5 @@ export function Hero() {
           </motion.div>
         </div>
       </section>
-    </div>
   );
 }

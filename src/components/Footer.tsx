@@ -88,15 +88,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#community"
-                  onClick={(e) => scrollIfHome(e, 'community')}
-                  className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
-                >
-                  Community
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/signup"
                   className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 >
@@ -127,14 +118,14 @@ export function Footer() {
                 href={user ? '/dashboard' : '/login'}
                 className="inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
               >
-                {user ? 'Member Portal' : 'Member Sign In'}
+                {user ? 'Dashboard' : 'Sign In'}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
                   className="inline-block px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-200 whitespace-nowrap"
                 >
-                  Apply Now
+                  Join Amanah
                 </Link>
               )}
             </div>

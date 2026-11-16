@@ -12,8 +12,7 @@ type HomeSectionId =
   | 'notice-board'
   | 'architecture'
   | 'how-it-works'
-  | 'governance-charter'
-  | 'community';
+  | 'governance-charter';
 
 interface PublicNavItem {
   id?: HomeSectionId;
@@ -43,11 +42,10 @@ export function Navbar() {
       altPath: '/rules',
       label: 'Charter',
     },
-    { id: 'community', href: '/#community', label: 'Community' },
   ];
 
   const navLinks: PublicNavItem[] = isAuthenticated
-    ? [...publicNavLinks, { href: '/dashboard', label: 'Member Portal' }]
+    ? [...publicNavLinks, { href: '/dashboard', label: 'Dashboard' }]
     : publicNavLinks;
 
   const scrollToHomeSection = useCallback((sectionId: HomeSectionId, closeDrawer = false) => {
@@ -71,8 +69,7 @@ export function Navbar() {
       hash === 'notice-board' ||
       hash === 'architecture' ||
       hash === 'how-it-works' ||
-      hash === 'governance-charter' ||
-      hash === 'community'
+      hash === 'governance-charter'
     ) {
       const timer = window.setTimeout(() => {
         scrollToHomeSection(hash, false);
@@ -89,7 +86,6 @@ export function Navbar() {
       'architecture',
       'how-it-works',
       'governance-charter',
-      'community',
     ];
     let rafId = 0;
 
@@ -99,7 +95,7 @@ export function Navbar() {
       const atBottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
       if (atBottom) {
-        setActiveHomeSection('community');
+        setActiveHomeSection('governance-charter');
         return;
       }
 
@@ -260,14 +256,14 @@ export function Navbar() {
                 href="/login"
                 className="hidden sm:inline-flex items-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 hover:shadow-xs whitespace-nowrap"
               >
-                Member Sign In
+                Sign In
               </Link>
               <Link
                 href="/signup"
-                title="Apply for Membership"
+                title="Join Amanah"
                 className="group hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
               >
-                <span>Apply Now</span>
+                <span>Join Amanah</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -359,7 +355,7 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="block w-full text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-sm font-medium"
                 >
-                  Apply Now
+                  Join Amanah
                 </Link>
               </div>
             )}
