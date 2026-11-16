@@ -39,6 +39,10 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import {
+  CommunityPostLinksList,
+  FormattedCommunityText,
+} from './CommunityTextWithLinks.tsx';
 
 interface MemberPublicProfileViewProps {
   memberId: string;
@@ -880,25 +884,15 @@ export function MemberPublicProfileView({
                       <h4 className="text-base font-semibold text-slate-900 dark:text-white">
                         {post.title}
                       </h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                        {post.content}
-                      </p>
+                      <FormattedCommunityText
+                        text={post.content}
+                        className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                      />
 
-                      {post.imageUrl && (
-                        <a
-                          href={post.imageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block w-fit"
-                        >
-                          <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            referrerPolicy="no-referrer"
-                            className="max-h-80 rounded-lg border border-slate-200 dark:border-slate-700 object-contain bg-slate-50 dark:bg-slate-950"
-                          />
-                        </a>
-                      )}
+                      <CommunityPostLinksList
+                        links={post.links}
+                        legacyImageUrl={post.imageUrl}
+                      />
 
                       {poll && (
                         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 space-y-3">

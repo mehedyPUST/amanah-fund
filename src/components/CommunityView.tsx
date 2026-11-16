@@ -10,8 +10,8 @@ import {
   Eye,
   EyeOff,
   HeartHandshake,
-  ImagePlus,
   Lightbulb,
+  Link2,
   Lock,
   Mail,
   MessageSquare,
@@ -21,6 +21,7 @@ import {
   Search,
   Send,
   Shield,
+  Smile,
   ThumbsUp,
   Trash2,
   Unlock,
@@ -37,6 +38,8 @@ import type {
   ActiveMemberDirectoryItem,
   CommunityCategory,
   CommunityPost,
+  CommunityPostLink,
+  CommunityPostLinkKind,
   CommunityReactionType,
   ConversationThreadSummary,
   FundConfig,
@@ -45,8 +48,20 @@ import type {
   UserRole,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import {
+  getCommunityLinkHost,
+  getCommunityLinkKindLabel,
+  inferCommunityLinkKind,
+  MAX_COMMUNITY_POST_LINKS,
+  normalizeCommunityLinkUrl,
+} from '../utils/communityLinks.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import {
+  CommunityEmojiPicker,
+  CommunityPostLinksList,
+  FormattedCommunityText,
+} from './CommunityTextWithLinks.tsx';
 
 interface CommunityViewProps {
   user: PublicUser;
@@ -192,9 +207,14 @@ export function CommunityView({
   const [newCategory, setNewCategory] = useState<CommunityCategory>('General');
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [newLinks, setNewLinks] = useState<CommunityPostLink[]>([]);
+  const [linkBuilderOpen, setLinkBuilderOpen] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkLabel, setNewLinkLabel] = useState('');
+  const [newLinkKind, setNewLinkKind] = useState<'auto' | CommunityPostLinkKind>('auto');
+  const [newEmojiOpen, setNewEmojiOpen] = useState(false);
   const [creatingPost, setCreatingPost] = useState(false);
+  const postContentRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Poll Builder State
   const [pollEnabled, setPollEnabled] = useState(false);
@@ -216,13 +236,20 @@ export function CommunityView({
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editCategory, setEditCategory] = useState<CommunityCategory>('General');
-  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editLinks, setEditLinks] = useState<CommunityPostLink[]>([]);
+  const [editLinkBuilderOpen, setEditLinkBuilderOpen] = useState(false);
+  const [editLinkUrl, setEditLinkUrl] = useState('');
+  const [editLinkLabel, setEditLinkLabel] = useState('');
+  const [editLinkKind, setEditLinkKind] = useState<'auto' | CommunityPostLinkKind>('auto');
+  const [editEmojiOpen, setEditEmojiOpen] = useState(false);
   const [savingPostEdit, setSavingPostEdit] = useState(false);
+  const editContentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
 
   // Comments State
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [commentEmojiPostId, setCommentEmojiPostId] = useState<string | null>(null);
   const [submittingCommentPostId, setSubmittingCommentPostId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
@@ -470,33 +497,133 @@ export function CommunityView({
       .slice(0, 6);
   }
 
-  async function handleImagePick(file: File, target: 'new' | 'edit') {
-    setUploadingImage(true);
-    try {
-      const res = await api.uploadFile(file, {
-        name: file.name,
-        category: 'community-post-photo',
-        subject: `${user.memberCode}-${target === 'new' ? newCategory : editCategory}`,
-      });
-      if (target === 'new') {
-        setNewImageUrl(res.url);
-      } else {
-        setEditImageUrl(res.url);
+  function insertEmojiAtCursor(
+    emoji: string,
+    el: HTMLTextAreaElement | null,
+    currentValue: string,
+    updateFn: (next: string) => void
+  ) {
+    if (!el) {
+      updateFn(`${currentValue}${emoji}`);
+      return;
+    }
+    const start = el.selectionStart ?? currentValue.length;
+    const end = el.selectionEnd ?? currentValue.length;
+    const nextValue = `${currentValue.slice(0, start)}${emoji}${currentValue.slice(end)}`;
+    updateFn(nextValue);
+    window.requestAnimationFrame(() => {
+      el.focus();
+      const nextPos = start + emoji.length;
+      el.setSelectionRange(nextPos, nextPos);
+    });
+  }
+
+  function resolveDraftLinkAddition(
+    currentList: CommunityPostLink[],
+    rawUrl: string,
+    rawLabel: string,
+    selectedKind: 'auto' | CommunityPostLinkKind
+  ): { nextList: CommunityPostLink[]; error?: string } {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+      return { nextList: currentList };
+    }
+    if (currentList.length >= MAX_COMMUNITY_POST_LINKS) {
+      return {
+        nextList: currentList,
+        error: `You can attach up to ${MAX_COMMUNITY_POST_LINKS} links per post.`,
+      };
+    }
+    const parsed = normalizeCommunityLinkUrl(trimmed);
+    if (!parsed) {
+      return {
+        nextList: currentList,
+        error: 'Enter a valid http:// or https:// URL to share a photo, video, or web content.',
+      };
+    }
+    const finalUrl = parsed.toString();
+    if (currentList.some((item) => item.url === finalUrl)) {
+      return {
+        nextList: currentList,
+        error: 'This link has already been added to the post.',
+      };
+    }
+    const cleanLabel = rawLabel.trim().slice(0, 80);
+    const resolvedKind =
+      selectedKind === 'auto' ? inferCommunityLinkKind(parsed) : selectedKind;
+    return {
+      nextList: [
+        ...currentList,
+        {
+          url: finalUrl,
+          label: cleanLabel || undefined,
+          kind: resolvedKind,
+        },
+      ],
+    };
+  }
+
+  function handleAddLink(target: 'new' | 'edit') {
+    if (target === 'new') {
+      if (!newLinkUrl.trim()) return;
+      const result = resolveDraftLinkAddition(newLinks, newLinkUrl, newLinkLabel, newLinkKind);
+      if (result.error) {
+        setModal({
+          mode: 'notice',
+          tone: 'red',
+          title: 'Invalid Link URL',
+          description: result.error,
+        });
+        return;
       }
-    } catch (err) {
-      setModal({
-        mode: 'notice',
-        tone: 'red',
-        title: 'Image Upload Failed',
-        description: err instanceof Error ? err.message : 'Image upload failed.',
-      });
-    } finally {
-      setUploadingImage(false);
+      setNewLinks(result.nextList);
+      setNewLinkUrl('');
+      setNewLinkLabel('');
+      setNewLinkKind('auto');
+    } else {
+      if (!editLinkUrl.trim()) return;
+      const result = resolveDraftLinkAddition(editLinks, editLinkUrl, editLinkLabel, editLinkKind);
+      if (result.error) {
+        setModal({
+          mode: 'notice',
+          tone: 'red',
+          title: 'Invalid Link URL',
+          description: result.error,
+        });
+        return;
+      }
+      setEditLinks(result.nextList);
+      setEditLinkUrl('');
+      setEditLinkLabel('');
+      setEditLinkKind('auto');
     }
   }
 
   function handleCreatePost(e: React.FormEvent) {
     e.preventDefault();
+
+    const pendingLinkResult = resolveDraftLinkAddition(
+      newLinks,
+      newLinkUrl,
+      newLinkLabel,
+      newLinkKind
+    );
+    if (pendingLinkResult.error) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Link URL',
+        description: pendingLinkResult.error,
+      });
+      return;
+    }
+    const finalLinks = pendingLinkResult.nextList;
+    if (newLinkUrl.trim()) {
+      setNewLinks(finalLinks);
+      setNewLinkUrl('');
+      setNewLinkLabel('');
+      setNewLinkKind('auto');
+    }
 
     let pollPayload: { question: string; allowMultiple: boolean; options: string[] } | undefined;
     if (pollEnabled) {
@@ -521,12 +648,19 @@ export function CommunityView({
       mode: 'confirm',
       tone: 'emerald',
       title: 'Publish Community Post?',
-      description: 'Confirm publishing this post to the verified Amanah Member Community.',
+      description: 'Confirm publishing this text post to the verified Amanah Member Community.',
       details: [
         { label: 'Topic', value: newCategory },
         { label: 'Headline', value: newTitle.trim() },
         ...(pollPayload ? [{ label: 'Attached Poll', value: pollPayload.question }] : []),
-        ...(newImageUrl ? [{ label: 'Attachment', value: 'Image attached' }] : []),
+        ...(finalLinks.length > 0
+          ? [
+              {
+                label: 'Links',
+                value: `${finalLinks.length} ${finalLinks.length === 1 ? 'link' : 'links'} attached`,
+              },
+            ]
+          : []),
       ],
       confirmLabel: 'Publish Post',
       run: async () => {
@@ -536,13 +670,18 @@ export function CommunityView({
             category: newCategory,
             title: newTitle,
             content: newContent,
-            imageUrl: newImageUrl || undefined,
+            links: finalLinks.length > 0 ? finalLinks : undefined,
             poll: pollPayload,
           });
           setPosts((prev) => [res.post, ...prev]);
           setNewTitle('');
           setNewContent('');
-          setNewImageUrl('');
+          setNewLinks([]);
+          setNewLinkUrl('');
+          setNewLinkLabel('');
+          setNewLinkKind('auto');
+          setLinkBuilderOpen(false);
+          setNewEmojiOpen(false);
           setNewCategory('General');
           setPollEnabled(false);
           setPollQuestion('');
@@ -593,10 +732,38 @@ export function CommunityView({
     setEditTitle(post.title);
     setEditContent(post.content);
     setEditCategory(post.category);
-    setEditImageUrl(post.imageUrl || '');
+    setEditLinks(Array.isArray(post.links) ? post.links : []);
+    setEditLinkBuilderOpen(false);
+    setEditLinkUrl('');
+    setEditLinkLabel('');
+    setEditLinkKind('auto');
+    setEditEmojiOpen(false);
   }
 
   function handleSavePostEdit(postId: string) {
+    const pendingLinkResult = resolveDraftLinkAddition(
+      editLinks,
+      editLinkUrl,
+      editLinkLabel,
+      editLinkKind
+    );
+    if (pendingLinkResult.error) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Link URL',
+        description: pendingLinkResult.error,
+      });
+      return;
+    }
+    const finalEditLinks = pendingLinkResult.nextList;
+    if (editLinkUrl.trim()) {
+      setEditLinks(finalEditLinks);
+      setEditLinkUrl('');
+      setEditLinkLabel('');
+      setEditLinkKind('auto');
+    }
+
     setModal({
       mode: 'confirm',
       tone: 'emerald',
@@ -614,7 +781,7 @@ export function CommunityView({
             title: editTitle,
             content: editContent,
             category: editCategory,
-            imageUrl: editImageUrl,
+            links: finalEditLinks,
           });
           setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
           setEditingPostId(null);
@@ -1122,6 +1289,7 @@ export function CommunityView({
                     Message (type <span className="font-mono">@Name</span> to mention a member)
                   </label>
                   <textarea
+                    ref={postContentRef}
                     id="post-content"
                     rows={4}
                     required
@@ -1133,7 +1301,7 @@ export function CommunityView({
                       setNewContent(val);
                       setPostMentionQuery(extractTrailingMentionQuery(val));
                     }}
-                    placeholder="Write clearly for verified Amanah members..."
+                    placeholder="Write clearly for verified Amanah members, use emojis, or paste photo/video links..."
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
                   />
                   {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
@@ -1242,42 +1410,144 @@ export function CommunityView({
                   </div>
                 )}
 
-                {newImageUrl && (
-                  <div className="relative inline-block">
-                    <img
-                      src={newImageUrl}
-                      alt="Post attachment preview"
-                      referrerPolicy="no-referrer"
-                      className="max-h-48 rounded-lg border border-slate-200 dark:border-slate-700 object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setNewImageUrl('')}
-                      aria-label="Remove attachment"
-                      className="absolute top-2 right-2 p-1 rounded-md bg-slate-900/75 text-white hover:bg-slate-900 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                {newEmojiOpen && (
+                  <CommunityEmojiPicker
+                    onSelect={(emoji) =>
+                      insertEmojiAtCursor(emoji, postContentRef.current, newContent, setNewContent)
+                    }
+                  />
+                )}
+
+                {(linkBuilderOpen || newLinks.length > 0) && (
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                        <span>
+                          Share Links ({newLinks.length}/{MAX_COMMUNITY_POST_LINKS})
+                        </span>
+                      </span>
+                      {linkBuilderOpen && (
+                        <button
+                          type="button"
+                          onClick={() => setLinkBuilderOpen(false)}
+                          className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                        >
+                          Hide
+                        </button>
+                      )}
+                    </div>
+
+                    {newLinks.length > 0 && (
+                      <div className="space-y-1.5">
+                        {newLinks.map((item) => (
+                          <div
+                            key={item.url}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs"
+                          >
+                            <div className="min-w-0">
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                {item.label || getCommunityLinkHost(item.url)}
+                              </span>
+                              <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                              <span className="text-teal-700 dark:text-teal-400">
+                                {getCommunityLinkKindLabel(item.kind)}
+                              </span>
+                              <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                {item.url}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
+                              }
+                              aria-label="Remove link"
+                              className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {linkBuilderOpen && newLinks.length < MAX_COMMUNITY_POST_LINKS && (
+                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px_120px_auto] gap-2">
+                        <input
+                          type="url"
+                          value={newLinkUrl}
+                          onChange={(e) => setNewLinkUrl(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddLink('new');
+                            }
+                          }}
+                          placeholder="https://... (photo, video, or article URL)"
+                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                        />
+                        <input
+                          type="text"
+                          maxLength={80}
+                          value={newLinkLabel}
+                          onChange={(e) => setNewLinkLabel(e.target.value)}
+                          placeholder="Label (optional)"
+                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                        />
+                        <select
+                          value={newLinkKind}
+                          onChange={(e) =>
+                            setNewLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
+                          }
+                          aria-label="Link content type"
+                          className="px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                        >
+                          <option value="auto">Auto Type</option>
+                          <option value="photo">Photo Link</option>
+                          <option value="video">Video Link</option>
+                          <option value="document">Document</option>
+                          <option value="link">Web Link</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleAddLink('new')}
+                          disabled={!newLinkUrl.trim()}
+                          className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-teal-600 hover:bg-slate-800 dark:hover:bg-teal-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
-                      <ImagePlus className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                      <span>{uploadingImage ? 'Uploading...' : 'Attach Image'}</span>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/gif"
-                        disabled={uploadingImage}
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) void handleImagePick(file, 'new');
-                          e.currentTarget.value = '';
-                        }}
-                      />
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setNewEmojiOpen((prev) => !prev)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                        newEmojiOpen
+                          ? 'border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                      <span>Emoji</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLinkBuilderOpen((prev) => !prev)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                        linkBuilderOpen
+                          ? 'border-teal-300 dark:border-teal-700 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                      <span>Add Link</span>
+                    </button>
                     {!pollEnabled && (
                       <button
                         type="button"
@@ -1300,7 +1570,7 @@ export function CommunityView({
                     </button>
                     <button
                       type="submit"
-                      disabled={creatingPost || uploadingImage}
+                      disabled={creatingPost}
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
                     >
                       {creatingPost ? 'Publishing...' : 'Publish Post'}
@@ -1708,36 +1978,129 @@ export function CommunityView({
                           />
                         </div>
                         <textarea
+                          ref={editContentRef}
                           rows={4}
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
                           className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100"
                         />
+
+                        {editEmojiOpen && (
+                          <CommunityEmojiPicker
+                            onSelect={(emoji) =>
+                              insertEmojiAtCursor(
+                                emoji,
+                                editContentRef.current,
+                                editContent,
+                                setEditContent
+                              )
+                            }
+                          />
+                        )}
+
+                        {(editLinkBuilderOpen || editLinks.length > 0) && (
+                          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5">
+                            {editLinks.length > 0 && (
+                              <div className="space-y-1.5">
+                                {editLinks.map((item) => (
+                                  <div
+                                    key={item.url}
+                                    className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs"
+                                  >
+                                    <div className="min-w-0 truncate">
+                                      <span className="font-medium text-slate-900 dark:text-white">
+                                        {item.label || getCommunityLinkHost(item.url)}
+                                      </span>
+                                      <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                                      <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                        {item.url}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setEditLinks((prev) =>
+                                          prev.filter((l) => l.url !== item.url)
+                                        )
+                                      }
+                                      aria-label="Remove link"
+                                      className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer shrink-0"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {editLinkBuilderOpen && editLinks.length < MAX_COMMUNITY_POST_LINKS && (
+                              <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_110px_auto] gap-2">
+                                <input
+                                  type="url"
+                                  value={editLinkUrl}
+                                  onChange={(e) => setEditLinkUrl(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddLink('edit');
+                                    }
+                                  }}
+                                  placeholder="https://... (photo, video, or web URL)"
+                                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                                />
+                                <input
+                                  type="text"
+                                  maxLength={80}
+                                  value={editLinkLabel}
+                                  onChange={(e) => setEditLinkLabel(e.target.value)}
+                                  placeholder="Label (optional)"
+                                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                                />
+                                <select
+                                  value={editLinkKind}
+                                  onChange={(e) =>
+                                    setEditLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
+                                  }
+                                  aria-label="Link content type"
+                                  className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                                >
+                                  <option value="auto">Auto</option>
+                                  <option value="photo">Photo</option>
+                                  <option value="video">Video</option>
+                                  <option value="document">Document</option>
+                                  <option value="link">Web</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddLink('edit')}
+                                  disabled={!editLinkUrl.trim()}
+                                  className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-teal-600 text-white text-xs font-medium cursor-pointer disabled:opacity-45"
+                                >
+                                  Add
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                              <ImagePlus className="w-3.5 h-3.5" />
-                              <span>{editImageUrl ? 'Replace Image' : 'Add Image'}</span>
-                              <input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/gif"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0];
-                                  if (f) void handleImagePick(f, 'edit');
-                                  e.currentTarget.value = '';
-                                }}
-                              />
-                            </label>
-                            {editImageUrl && (
-                              <button
-                                type="button"
-                                onClick={() => setEditImageUrl('')}
-                                className="text-xs text-red-600 dark:text-red-400 hover:underline cursor-pointer"
-                              >
-                                Remove Image
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditEmojiOpen((prev) => !prev)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                              <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                              <span>Emoji</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkBuilderOpen((prev) => !prev)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                              <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                              <span>Add Link</span>
+                            </button>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
@@ -1763,17 +2126,14 @@ export function CommunityView({
                         <h3 className="font-display text-base font-semibold text-slate-900 dark:text-white leading-snug">
                           {post.title}
                         </h3>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                          {post.content}
-                        </p>
-                        {post.imageUrl && (
-                          <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            referrerPolicy="no-referrer"
-                            className="max-h-80 rounded-lg border border-slate-200 dark:border-slate-800 object-cover"
-                          />
-                        )}
+                        <FormattedCommunityText
+                          text={post.content}
+                          className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                        />
+                        <CommunityPostLinksList
+                          links={post.links}
+                          legacyImageUrl={post.imageUrl}
+                        />
                         {post.poll && (
                           <div className="p-4 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-950/20 space-y-3">
                             {(() => {
@@ -2054,9 +2414,10 @@ export function CommunityView({
                                     </div>
                                   </div>
                                 ) : (
-                                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                                    {comment.content}
-                                  </p>
+                                  <FormattedCommunityText
+                                    text={comment.content}
+                                    className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                                  />
                                 )}
                               </div>
                             );
@@ -2076,6 +2437,7 @@ export function CommunityView({
                               e.preventDefault();
                               void handleAddComment(post.id);
                               setCommentMentionTarget(null);
+                              if (commentEmojiPostId === post.id) setCommentEmojiPostId(null);
                             }}
                             className="flex items-center gap-2"
                           >
@@ -2097,10 +2459,27 @@ export function CommunityView({
                               placeholder={
                                 post.commentsLocked
                                   ? 'Replies locked (Admin reply only)...'
-                                  : 'Write a comment (type @Name to mention)...'
+                                  : 'Write a comment, emoji, or link (@Name to mention)...'
                               }
                               className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                             />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCommentEmojiPostId((prev) =>
+                                  prev === post.id ? null : post.id
+                                )
+                              }
+                              title="Insert emoji"
+                              aria-label="Insert emoji into comment"
+                              className={`p-2 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                                commentEmojiPostId === post.id
+                                  ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
+                                  : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
+                            >
+                              <Smile className="w-4 h-4" aria-hidden="true" />
+                            </button>
                             <button
                               type="submit"
                               disabled={
@@ -2112,6 +2491,17 @@ export function CommunityView({
                               {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
                             </button>
                           </form>
+                          {commentEmojiPostId === post.id && (
+                            <CommunityEmojiPicker
+                              compact
+                              onSelect={(emoji) =>
+                                setCommentDrafts((prev) => ({
+                                  ...prev,
+                                  [post.id]: `${prev[post.id] || ''}${emoji}`,
+                                }))
+                              }
+                            />
+                          )}
                           {commentMentionTarget?.postId === post.id &&
                             filterMentionMatches(commentMentionTarget.query).length > 0 && (
                               <div

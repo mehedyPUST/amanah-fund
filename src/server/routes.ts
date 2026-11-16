@@ -85,6 +85,7 @@ import {
   sendRealtimeEventToUsers,
 } from './realtime.ts';
 import { buildOtpAuthUri, generateTotpSecret, verifyTotpCode } from './totp.ts';
+import { normalizeAndValidatePostLinks } from '../utils/communityLinks.ts';
 
 function extractGoogleBearerToken(req: AuthenticatedRequest): string | null {
   const header = req.headers.authorization;
@@ -5849,6 +5850,7 @@ function hydrateCommunityPost(post: CommunityPost, users: StoredUser[]): Communi
     ...post,
     authorPhotoUrl: author?.photoUrl || post.authorPhotoUrl,
     authorMuted: Boolean(author?.communityMuted),
+    links: Array.isArray(post.links) ? post.links : [],
     reactions: Array.isArray(post.reactions) ? post.reactions : [],
     comments: Array.isArray(post.comments)
       ? post.comments.map((c) => {
@@ -5899,7 +5901,19 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       : 'General';
     const title = String(req.body?.title || '').trim();
     const content = String(req.body?.content || '').trim();
-    const imageUrl = String(req.body?.imageUrl || '').trim();
+    const rejectedImageUrl = String(req.body?.imageUrl || '').trim();
+    if (rejectedImageUrl) {
+      res.status(400).json({
+        error:
+          'Community posts are text-only. Please share photo, video, or content URLs as links instead.',
+      });
+      return;
+    }
+    const linksResult = normalizeAndValidatePostLinks(req.body?.links);
+    if (linksResult.error) {
+      res.status(400).json({ error: linksResult.error });
+      return;
+    }
     const rawPoll = req.body?.poll as
       | { question?: string; allowMultiple?: boolean; options?: unknown[] }
       | undefined;
@@ -5949,7 +5963,7 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       category,
       title,
       content,
-      imageUrl: imageUrl || undefined,
+      links: linksResult.links.length > 0 ? linksResult.links : undefined,
       poll: builtPoll,
       reactions: [],
       comments: [],
@@ -6105,8 +6119,23 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
     const title = req.body?.title !== undefined ? String(req.body.title).trim() : undefined;
     const content = req.body?.content !== undefined ? String(req.body.content).trim() : undefined;
     const rawCategory = req.body?.category as CommunityCategory | undefined;
-    const imageUrl =
-      req.body?.imageUrl !== undefined ? String(req.body.imageUrl || '').trim() : undefined;
+    const rejectedImageUrl =
+      req.body?.imageUrl !== undefined ? String(req.body.imageUrl || '').trim() : '';
+    if (rejectedImageUrl) {
+      res.status(400).json({
+        error:
+          'Community posts are text-only. Please share photo, video, or content URLs as links instead.',
+      });
+      return;
+    }
+    const linksResult =
+      req.body?.links !== undefined
+        ? normalizeAndValidatePostLinks(req.body.links)
+        : undefined;
+    if (linksResult?.error) {
+      res.status(400).json({ error: linksResult.error });
+      return;
+    }
 
     if (title !== undefined && (title.length < 3 || title.length > 140)) {
       res.status(400).json({ error: 'Post title must be between 3 and 140 characters.' });
@@ -6130,8 +6159,9 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
       if (rawCategory && COMMUNITY_CATEGORIES.includes(rawCategory)) {
         target.category = rawCategory;
       }
-      if (imageUrl !== undefined) {
-        target.imageUrl = imageUrl || undefined;
+      if (linksResult !== undefined) {
+        target.links = linksResult.links.length > 0 ? linksResult.links : undefined;
+        target.imageUrl = undefined;
       }
       target.updatedAt = new Date().toISOString();
       updatedPost = target;

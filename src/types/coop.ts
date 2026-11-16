@@ -706,6 +706,14 @@ export interface CommunityPoll {
   options: CommunityPollOption[];
 }
 
+export type CommunityPostLinkKind = 'link' | 'photo' | 'video' | 'document';
+
+export interface CommunityPostLink {
+  url: string;
+  label?: string;
+  kind?: CommunityPostLinkKind;
+}
+
 export interface CommunityPost {
   id: string;
   authorId: string;
@@ -718,6 +726,7 @@ export interface CommunityPost {
   title: string;
   content: string;
   imageUrl?: string;
+  links?: CommunityPostLink[];
   poll?: CommunityPoll;
   mentions?: string[];
   reactions: CommunityReaction[];

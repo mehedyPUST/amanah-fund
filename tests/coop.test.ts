@@ -31,6 +31,10 @@ import {
   generateTotpSecret,
   verifyTotpCode,
 } from '../src/server/totp.ts';
+import {
+  normalizeAndValidatePostLinks,
+  parseTextWithLinks,
+} from '../src/utils/communityLinks.ts';
 import type { LoanRequest, PublicUser } from '../src/types/coop.ts';
 
 function makeBaseState(): VaultState {
@@ -1011,5 +1015,38 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
       })
     ).toThrow(/Invalid PDF file signature/);
   });
+
+  it('validates text-only community post links and auto-linkifies inline photo/video URLs', () => {
+    const valid = normalizeAndValidatePostLinks([
+      { url: 'https://youtu.be/dQw4w9WgXcQ', label: 'Project Walkthrough' },
+      { url: 'https://ik.imagekit.io/amanah/photo.jpg', label: 'Site Visit Photo' },
+      { url: 'docs.google.com/document/d/123', label: 'Budget Sheet' },
+    ]);
+    expect(valid.error).toBeUndefined();
+    expect(valid.links).toEqual([
+      { url: 'https://youtu.be/dQw4w9WgXcQ', label: 'Project Walkthrough', kind: 'video' },
+      {
+        url: 'https://ik.imagekit.io/amanah/photo.jpg',
+        label: 'Site Visit Photo',
+        kind: 'photo',
+      },
+      {
+        url: 'https://docs.google.com/document/d/123',
+        label: 'Budget Sheet',
+        kind: 'document',
+      },
+    ]);
+
+    const unsafe = normalizeAndValidatePostLinks([{ url: 'javascript:alert(1)' }]);
+    expect(unsafe.error).toMatch(/Invalid link URL/);
+
+    const segments = parseTextWithLinks('Salam 🤝 watch https://youtu.be/abc123. Details soon!');
+    expect(segments).toEqual([
+      { type: 'text', value: 'Salam 🤝 watch ' },
+      { type: 'link', value: 'https://youtu.be/abc123' },
+      { type: 'text', value: '. Details soon!' },
+    ]);
+  });
 });
+
 

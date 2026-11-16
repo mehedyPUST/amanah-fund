@@ -2,6 +2,7 @@ import type {
   AuditLogEntry,
   CommunityCategory,
   CommunityPost,
+  CommunityPostLink,
   CommunityReactionType,
   ConstitutionDocumentInfo,
   Contribution,
@@ -593,7 +594,7 @@ export const api = {
     category: CommunityCategory;
     title: string;
     content: string;
-    imageUrl?: string;
+    links?: CommunityPostLink[];
     poll?: { question: string; allowMultiple?: boolean; options: string[] };
   }) =>
     apiRequest<{ post: CommunityPost }>('/api/community/posts', {
@@ -611,7 +612,7 @@ export const api = {
       category?: CommunityCategory;
       title?: string;
       content?: string;
-      imageUrl?: string;
+      links?: CommunityPostLink[];
     }
   ) =>
     apiRequest<{ post: CommunityPost }>(`/api/community/posts/${id}`, {
