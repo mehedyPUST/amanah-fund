@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import { type Response, Router } from 'express';
@@ -390,7 +391,9 @@ apiRouter.post('/auth/google', authRateLimiter, async (req, res) => {
   }
 });
 
-const UPLOADS_DIR = path.resolve(process.cwd(), 'data', 'uploads');
+const UPLOADS_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'amanah-data', 'uploads')
+  : path.resolve(process.cwd(), 'data', 'uploads');
 
 apiRouter.get('/uploads/:filename', (req, res) => {
   const safeName = path.basename(String(req.params.filename || ''));
@@ -403,7 +406,18 @@ apiRouter.get('/uploads/:filename', (req, res) => {
     res.status(404).json({ error: 'Image not found.' });
     return;
   }
-  res.sendFile(filePath);
+  const ext = path.extname(safeName).toLowerCase();
+  const contentType =
+    ext === '.png'
+      ? 'image/png'
+      : ext === '.webp'
+        ? 'image/webp'
+        : ext === '.gif'
+          ? 'image/gif'
+          : 'image/jpeg';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(fs.readFileSync(filePath));
 });
 
 apiRouter.post('/upload/imgbb', uploadRateLimiter, async (req, res) => {

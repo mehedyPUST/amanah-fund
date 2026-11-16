@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { MongoClient, type Db } from 'mongodb';
 import type {
@@ -71,7 +72,9 @@ export interface VaultState {
   profileChangeRequests?: ProfileChangeRequest[];
 }
 
-const VAULT_DIR = path.resolve(process.cwd(), 'data');
+const VAULT_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'amanah-data')
+  : path.resolve(process.cwd(), 'data');
 const VAULT_FILE = path.join(VAULT_DIR, 'amanah-coop-vault.json');
 
 let mongoClient: MongoClient | null = null;
