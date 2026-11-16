@@ -10,48 +10,40 @@ const HERO_IMAGE_URL =
   'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
 const INVESTMENT_IMAGE_URL = 'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
 
-const HIGHLIGHTS = [
+const HIGHLIGHT_STYLES = [
   {
     Icon: Vote,
-    title: '2/3 Democratic Member Voting',
-    detail:
-      'Every Qard Hasan loan request and Halal investment placement requires a verified 2/3 supermajority ballot with SHA-256 voter signatures.',
     cardStyle:
       'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
-    iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200/70 dark:ring-amber-800/50',
+    iconBg:
+      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200/70 dark:ring-amber-800/50',
   },
   {
     Icon: Lock,
-    title: 'End-to-End Encrypted Ledger',
-    detail:
-      'Applicant KYC records, Bank/MFS transaction IDs, and audit metadata are encrypted at rest with AES-256-GCM and protected by HttpOnly JWT sessions.',
     cardStyle:
       'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
-    iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
+    iconBg:
+      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
   },
   {
     Icon: Sheet,
-    title: 'Live Google Sheets & Gmail Sync',
-    detail:
-      'Mirror a 7-tab treasury blueprint to Google Sheets and dispatch Gmail alerts for contributions, approvals, and scheduled repayments.',
     cardStyle:
       'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
-    iconBg: 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
+    iconBg:
+      'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
   },
   {
     Icon: ShieldCheck,
-    title: 'Admin-Verified Onboarding',
-    detail:
-      'Applicants submit verified identification, references, and portrait uploads for administrator review before gaining access to cooperative funds.',
     cardStyle:
       'bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
-    iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
+    iconBg:
+      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
   },
 ];
 
 export function Hero() {
   const pathname = usePathname();
-  const { user } = useCoopSession();
+  const { user, t } = useCoopSession();
 
   function handleSectionLink(e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) {
     if (pathname === '/') {
@@ -72,18 +64,15 @@ export function Hero() {
             className="lg:col-span-6 space-y-6"
           >
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Savings, Investment &amp; Interest-Free Loan Fund · VISION-36 (2027–2036)
+              {t.hero.eyebrow}
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
-              Cooperative Treasury Governed by Shariah &amp; 2/3 Consensus
+              {t.hero.headline}
             </h1>
 
             <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-              A 20-member cooperative pooling ৳5,000 monthly savings by the 10th of each month.
-              Ongoing capital sustains 0% interest Qard Hasan loans (up to ৳50,000 or 75% of
-              savings over 10 months) while advancing 2/3-approved Halal real-economy ventures
-              toward VISION-36.
+              {t.hero.description}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -91,7 +80,7 @@ export function Hero() {
                 href={user ? '/dashboard' : '/signup'}
                 className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2"
               >
-                <span>{user ? 'Enter Member Portal' : 'Apply for Membership'}</span>
+                <span>{user ? t.hero.enterPortal : t.hero.applyMembership}</span>
                 <ArrowRight
                   className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -103,7 +92,7 @@ export function Hero() {
                   href="/login"
                   className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200"
                 >
-                  Member Sign In
+                  {t.hero.memberSignIn}
                 </Link>
               )}
 
@@ -112,36 +101,43 @@ export function Hero() {
                 onClick={(e) => handleSectionLink(e, 'governance-charter')}
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
-                Governance Charter
+                {t.hero.governanceCharter}
               </Link>
             </div>
 
             {/* Clean Institutional Metrics Row */}
             <div className="grid grid-cols-3 gap-3 pt-4">
-              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:shadow-sm">
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  0% · ৳50k
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Qard Hasan (or 75% Savings)
-                </div>
-              </div>
-              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 dark:hover:border-amber-700/70 hover:shadow-sm">
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
-                  2/3
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Investment &amp; Loan Quorum
-                </div>
-              </div>
-              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300 dark:hover:border-teal-700/70 hover:shadow-sm">
-                <div className="font-mono text-xl sm:text-2xl font-bold tabular-nums text-teal-700 dark:text-teal-400">
-                  20 · 10m
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  Max Shares · Max Repay
-                </div>
-              </div>
+              {t.hero.metrics.map((metric, idx) => {
+                const metricStyle = [
+                  {
+                    cardHover: 'hover:border-emerald-300 dark:hover:border-emerald-700/70',
+                    valueColor: 'text-emerald-700 dark:text-emerald-400',
+                  },
+                  {
+                    cardHover: 'hover:border-amber-300 dark:hover:border-amber-700/70',
+                    valueColor: 'text-amber-600 dark:text-amber-400',
+                  },
+                  {
+                    cardHover: 'hover:border-teal-300 dark:hover:border-teal-700/70',
+                    valueColor: 'text-teal-700 dark:text-teal-400',
+                  },
+                ][idx];
+                return (
+                  <div
+                    key={metric.label}
+                    className={`p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${metricStyle.cardHover}`}
+                  >
+                    <div
+                      className={`font-mono text-lg sm:text-2xl font-bold tabular-nums ${metricStyle.valueColor}`}
+                    >
+                      {metric.value}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      {metric.label}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
 
@@ -170,23 +166,24 @@ export function Hero() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 space-y-10">
           <div className="max-w-2xl space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Platform Architecture
+              {t.hero.archEyebrow}
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Built for Financial Integrity and Cooperative Accountability
+              {t.hero.archHeading}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {HIGHLIGHTS.map((item) => {
-              const Icon = item.Icon;
+            {t.hero.highlights.map((item, idx) => {
+              const style = HIGHLIGHT_STYLES[idx];
+              const Icon = style.Icon;
               return (
                 <div
                   key={item.title}
-                  className={`p-5 rounded-xl border space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${item.cardStyle}`}
+                  className={`p-5 rounded-xl border space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${style.cardStyle}`}
                 >
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.iconBg}`}
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${style.iconBg}`}
                   >
                     <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
@@ -222,10 +219,10 @@ export function Hero() {
           <div className="lg:col-span-7 space-y-6">
             <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Two-Stage Capital Lifecycle
+                {t.hero.lifecycleEyebrow}
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                How Central Fund Balances Evolve from Mutual Relief to Productive Equity
+                {t.hero.lifecycleHeading}
               </h2>
             </div>
 
@@ -237,12 +234,10 @@ export function Hero() {
                 />
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Live Central Balance Formula
+                    {t.hero.stage1Title}
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Accepted Bank/MFS contributions immediately credit the Central Balance. When a
-                    Qard Hasan loan passes 2/3 member voting, its principal deducts from the central
-                    balance; every verified monthly installment restores funds back to the pool.
+                    {t.hero.stage1Body}
                   </p>
                 </div>
               </div>
@@ -254,12 +249,10 @@ export function Hero() {
                 />
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Post-Maturity Halal Investment Placements
+                    {t.hero.stage2Title}
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    After the pre-specified maturity date, members vote &ldquo;Yes&rdquo; or
-                    &ldquo;No&rdquo; in real time on vetted Mudarabah, Musharakah, and Murabahah
-                    projects—requiring a 2/3 approval threshold before capital deployment.
+                    {t.hero.stage2Body}
                   </p>
                 </div>
               </div>
@@ -271,13 +264,13 @@ export function Hero() {
                 onClick={(e) => handleSectionLink(e, 'architecture')}
                 className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 transition-all duration-200"
               >
-                Security &amp; Architecture
+                {t.hero.securityArchitectureBtn}
               </Link>
               <Link
                 href={user ? '/dashboard' : '/signup'}
                 className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98]"
               >
-                <span>{user ? 'Open Member Portal' : 'Submit Membership Application'}</span>
+                <span>{user ? t.hero.openPortalBtn : t.hero.submitAppBtn}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"

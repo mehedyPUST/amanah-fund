@@ -25,7 +25,7 @@ import { useCoopSession } from './AppProviders.tsx';
 
 export function SignUpForm() {
   const router = useRouter();
-  const { user, authChecking, setUser } = useCoopSession();
+  const { user, authChecking, setUser, t } = useCoopSession();
 
   const [referenceOptions, setReferenceOptions] = useState<
     Array<{ name: string; memberCode: string }>
@@ -219,10 +219,7 @@ export function SignUpForm() {
       }
       setGoogleOnboarding(null);
 
-      setSuccessMessage(
-        res.message ||
-          'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.'
-      );
+      setSuccessMessage(res.message || t.auth.signUp.submittedFallback);
       setName('');
       setEmail('');
       setPassword('');
@@ -256,21 +253,20 @@ export function SignUpForm() {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-              <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
+              <span>{t.auth.signUp.badge}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Membership Application
+              {t.auth.signUp.title}
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Complete all fields accurately. An administrator will review your profile, reference,
-              and documents before activating sign-in access.
+              {t.auth.signUp.subtitle}
             </p>
           </div>
           <Link
             href="/login"
             className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline whitespace-nowrap shrink-0"
           >
-            Already approved? Sign In →
+            {t.auth.signUp.alreadyApproved}
           </Link>
         </div>
 
@@ -279,7 +275,7 @@ export function SignUpForm() {
             <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
               <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
               <div className="space-y-1">
-                <h2 className="text-base font-semibold">Application Submitted for Review</h2>
+                <h2 className="text-base font-semibold">{t.auth.signUp.submittedTitle}</h2>
                 <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
                   {successMessage}
                 </p>
@@ -290,7 +286,7 @@ export function SignUpForm() {
                 href="/login"
                 className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5"
               >
-                <span>Go to Sign In</span>
+                <span>{t.auth.signUp.goToSignIn}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
               <button
@@ -298,7 +294,7 @@ export function SignUpForm() {
                 onClick={() => setSuccessMessage(null)}
                 className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer"
               >
-                Submit Another Application
+                {t.auth.signUp.submitAnother}
               </button>
             </div>
           </div>
@@ -307,12 +303,10 @@ export function SignUpForm() {
             <div className="p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                  Constitution Charter (§4–§6 · VISION-36: Jan 2027 – Dec 2036)
+                  {t.auth.signUp.charterTitle}
                 </p>
                 <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
-                  Maximum 20 members/shares total (intake closes July 2027; late joiners settle
-                  prior monthly arrears of ৳5,000/mo). Requires NID (member &amp; nominee), photo,
-                  and a ৳200 non-refundable management fee.
+                  {t.auth.signUp.charterBody}
                 </p>
               </div>
               <a
@@ -322,7 +316,7 @@ export function SignUpForm() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
               >
                 <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Constitution PDF</span>
+                <span>{t.auth.signUp.constitutionPdf}</span>
               </a>
             </div>
 
@@ -345,11 +339,10 @@ export function SignUpForm() {
                   />
                   <div className="space-y-0.5">
                     <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                      Google Identity Verified · {googleOnboarding.googleProfile.email}
+                      {t.auth.signUp.googleVerifiedPrefix} · {googleOnboarding.googleProfile.email}
                     </p>
                     <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
-                      Complete the required cooperative KYC fields below. Once an administrator
-                      approves your application, you can sign in directly with Google.
+                      {t.auth.signUp.googleVerifiedBody}
                     </p>
                   </div>
                 </div>
@@ -359,18 +352,17 @@ export function SignUpForm() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Use Email Instead</span>
+                  <span>{t.auth.signUp.useEmailInstead}</span>
                 </button>
               </div>
             ) : (
               <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Applying with a Google account?
+                    {t.auth.signUp.googlePromptTitle}
                   </p>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Verify your Google email first to pre-fill your identity and skip creating a
-                    password—you will still complete KYC verification below.
+                    {t.auth.signUp.googlePromptBody}
                   </p>
                 </div>
                 <button
@@ -384,7 +376,7 @@ export function SignUpForm() {
                   ) : (
                     <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                   )}
-                  <span>{googleVerifying ? 'Verifying…' : 'Continue with Google'}</span>
+                  <span>{googleVerifying ? t.auth.signUp.verifying : t.auth.signUp.continueGoogle}</span>
                 </button>
               </div>
             )}
@@ -392,29 +384,29 @@ export function SignUpForm() {
             {/* Section 1: Identity & Credentials */}
             <div className="space-y-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Personal & Account Information
+                {t.auth.signUp.sectionPersonal}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Full Name <span className="text-red-500">*</span>
+                    {t.auth.signUp.fullName} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Full legal name"
+                    placeholder={t.auth.signUp.fullNamePlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Email Address <span className="text-red-500">*</span>
+                    {t.auth.signUp.emailLabel} <span className="text-red-500">*</span>
                     {googleOnboarding && (
                       <span className="ml-1.5 text-[11px] font-normal text-emerald-700 dark:text-emerald-400">
-                        (Verified via Google)
+                        {t.auth.signUp.emailVerifiedGoogle}
                       </span>
                     )}
                   </label>
@@ -424,7 +416,7 @@ export function SignUpForm() {
                     readOnly={Boolean(googleOnboarding)}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="member@example.com"
+                    placeholder={t.auth.signUp.emailPlaceholder}
                     className={`w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 ${
                       googleOnboarding
                         ? 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 cursor-not-allowed'
@@ -437,12 +429,12 @@ export function SignUpForm() {
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {googleOnboarding ? (
                       <>
-                        Backup Password{' '}
-                        <span className="text-slate-400 font-normal">(Optional for Google)</span>
+                        {t.auth.signUp.backupPassword}{' '}
+                        <span className="text-slate-400 font-normal">{t.auth.signUp.backupPasswordHint}</span>
                       </>
                     ) : (
                       <>
-                        Password (min 6 chars) <span className="text-red-500">*</span>
+                        {t.auth.signUp.passwordLabel} <span className="text-red-500">*</span>
                       </>
                     )}
                   </label>
@@ -454,8 +446,8 @@ export function SignUpForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={
                       googleOnboarding
-                        ? 'Leave blank to sign in with Google only'
-                        : 'Create a secure password'
+                        ? t.auth.signUp.backupPasswordPlaceholder
+                        : t.auth.signUp.passwordPlaceholder
                     }
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
@@ -463,7 +455,7 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Date of Birth <span className="text-red-500">*</span>
+                    {t.auth.signUp.dobLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -476,28 +468,28 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Mobile Number <span className="text-red-500">*</span>
+                    {t.auth.signUp.mobileLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    placeholder="017XX-XXXXXX"
+                    placeholder={t.auth.signUp.mobilePlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    National ID (NID) <span className="text-red-500">*</span>
+                    {t.auth.signUp.nidLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={nid}
                     onChange={(e) => setNid(e.target.value)}
-                    placeholder="Enter NID number"
+                    placeholder={t.auth.signUp.nidPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -507,12 +499,12 @@ export function SignUpForm() {
             {/* Section 2: Reference & Employment */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Reference & Employment
+                {t.auth.signUp.sectionReference}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Reference (Existing Member Name) <span className="text-red-500">*</span>
+                    {t.auth.signUp.referenceLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -520,7 +512,7 @@ export function SignUpForm() {
                     list="coop-existing-members"
                     value={referenceMemberName}
                     onChange={(e) => setReferenceMemberName(e.target.value)}
-                    placeholder="e.g. Amanah Administrator"
+                    placeholder={t.auth.signUp.referencePlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                   <datalist id="coop-existing-members">
@@ -534,28 +526,28 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Occupation <span className="text-red-500">*</span>
+                    {t.auth.signUp.occupationLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
-                    placeholder="e.g. Software Engineer"
+                    placeholder={t.auth.signUp.occupationPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Company / Organization <span className="text-red-500">*</span>
+                    {t.auth.signUp.companyLabel} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={companyOrganization}
                     onChange={(e) => setCompanyOrganization(e.target.value)}
-                    placeholder="Organization name"
+                    placeholder={t.auth.signUp.companyPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -566,7 +558,7 @@ export function SignUpForm() {
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Residential Addresses
+                  {t.auth.signUp.sectionAddress}
                 </h2>
                 <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
                   <input
@@ -575,27 +567,27 @@ export function SignUpForm() {
                     onChange={(e) => setSameAsPresent(e.target.checked)}
                     className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                   />
-                  <span>Permanent address same as present</span>
+                  <span>{t.auth.signUp.sameAsPresent}</span>
                 </label>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Present Address <span className="text-red-500">*</span>
+                    {t.auth.signUp.presentAddress} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
                     required
                     value={presentAddress}
                     onChange={(e) => setPresentAddress(e.target.value)}
-                    placeholder="House, Road, Area, City"
+                    placeholder={t.auth.signUp.presentAddressPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Permanent Address <span className="text-red-500">*</span>
+                    {t.auth.signUp.permanentAddress} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
@@ -603,7 +595,7 @@ export function SignUpForm() {
                     disabled={sameAsPresent}
                     value={permanentAddress}
                     onChange={(e) => setPermanentAddress(e.target.value)}
-                    placeholder="Village / Ward, Post Office, District"
+                    placeholder={t.auth.signUp.permanentAddressPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
                   />
                 </div>
@@ -614,11 +606,10 @@ export function SignUpForm() {
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Identity Photo & Agreement Paper (ImgBB Upload)
+                  {t.auth.signUp.sectionUploads}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Images are uploaded securely via our ImgBB API gateway and visible to the
-                  Administrator during verification.
+                  {t.auth.signUp.uploadsSubtitle}
                 </p>
               </div>
 
@@ -627,12 +618,12 @@ export function SignUpForm() {
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Member Photo <span className="text-red-500">*</span>
+                      {t.auth.signUp.memberPhoto} <span className="text-red-500">*</span>
                     </span>
                     {photoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Uploaded</span>
+                        <span>{t.auth.signUp.uploaded}</span>
                       </span>
                     )}
                   </div>
@@ -646,7 +637,7 @@ export function SignUpForm() {
                         className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
                       />
                       <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                        <span>{photoUploading ? 'Uploading…' : 'Replace Photo'}</span>
+                        <span>{photoUploading ? t.auth.signUp.uploading : t.auth.signUp.replacePhoto}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -664,7 +655,7 @@ export function SignUpForm() {
                         <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {photoUploading ? 'Uploading to ImgBB…' : 'Choose Member Photo'}
+                        {photoUploading ? t.auth.signUp.uploadingImgbb : t.auth.signUp.chooseMemberPhoto}
                       </span>
                       <input
                         type="file"
@@ -681,13 +672,13 @@ export function SignUpForm() {
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Agreement Paper Photo{' '}
-                      <span className="text-slate-400 font-normal">(Optional)</span>
+                      {t.auth.signUp.agreementPhoto}{' '}
+                      <span className="text-slate-400 font-normal">{t.auth.signUp.optional}</span>
                     </span>
                     {agreementPhotoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Uploaded</span>
+                        <span>{t.auth.signUp.uploaded}</span>
                       </span>
                     )}
                   </div>
@@ -702,7 +693,7 @@ export function SignUpForm() {
                       />
                       <div className="flex flex-col gap-1">
                         <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                          <span>{agreementUploading ? 'Uploading…' : 'Replace Image'}</span>
+                          <span>{agreementUploading ? t.auth.signUp.uploading : t.auth.signUp.replaceImage}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -716,7 +707,7 @@ export function SignUpForm() {
                           onClick={() => setAgreementPhotoUrl('')}
                           className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline cursor-pointer"
                         >
-                          Remove
+                          {t.auth.signUp.remove}
                         </button>
                       </div>
                     </div>
@@ -729,8 +720,8 @@ export function SignUpForm() {
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
                         {agreementUploading
-                          ? 'Uploading to ImgBB…'
-                          : 'Upload Signed Agreement (Optional)'}
+                          ? t.auth.signUp.uploadingImgbb
+                          : t.auth.signUp.uploadAgreement}
                       </span>
                       <input
                         type="file"
@@ -747,8 +738,7 @@ export function SignUpForm() {
 
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Your submission is encrypted with AES-256-GCM and locked pending Administrator
-                approval.
+                {t.auth.signUp.encryptionNote}
               </p>
               <button
                 type="submit"
@@ -756,7 +746,7 @@ export function SignUpForm() {
                 className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
-                <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>
+                <span>{submitting ? t.auth.signUp.submittingBtn : t.auth.signUp.submitBtn}</span>
               </button>
             </div>
           </form>

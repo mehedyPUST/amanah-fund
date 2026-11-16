@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
+import { LanguageToggle } from './LanguageToggle.tsx';
 
 type HomeSectionId = 'overview' | 'architecture' | 'governance-charter' | 'community';
 
@@ -15,22 +16,10 @@ interface PublicNavItem {
   label: string;
 }
 
-const PUBLIC_NAV_LINKS: PublicNavItem[] = [
-  { id: 'overview', href: '/#overview', label: 'Overview' },
-  { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
-  {
-    id: 'governance-charter',
-    href: '/#governance-charter',
-    altPath: '/rules',
-    label: 'Governance Charter',
-  },
-  { id: 'community', href: '/#community', label: 'Community' },
-];
-
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, authChecking, logout, darkMode, toggleDarkMode } = useCoopSession();
+  const { user, authChecking, logout, darkMode, toggleDarkMode, t } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [activeHomeSection, setActiveHomeSection] = useState<HomeSectionId>('overview');
@@ -38,9 +27,21 @@ export function Navbar() {
 
   const isAuthenticated = !authChecking && Boolean(user);
 
+  const publicNavLinks: PublicNavItem[] = [
+    { id: 'overview', href: '/#overview', label: t.nav.overview },
+    { id: 'architecture', href: '/#architecture', altPath: '/about', label: t.nav.architecture },
+    {
+      id: 'governance-charter',
+      href: '/#governance-charter',
+      altPath: '/rules',
+      label: t.nav.governanceCharter,
+    },
+    { id: 'community', href: '/#community', label: t.nav.community },
+  ];
+
   const navLinks: PublicNavItem[] = isAuthenticated
-    ? [...PUBLIC_NAV_LINKS, { href: '/dashboard', label: 'Member Portal' }]
-    : PUBLIC_NAV_LINKS;
+    ? [...publicNavLinks, { href: '/dashboard', label: t.nav.memberPortal }]
+    : publicNavLinks;
 
   const scrollToHomeSection = useCallback((sectionId: HomeSectionId, closeDrawer = false) => {
     setActiveHomeSection(sectionId);
@@ -171,7 +172,7 @@ export function Navbar() {
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
           <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
-            Amanah
+            {t.common.brand}
           </span>
         </Link>
 
@@ -202,24 +203,26 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Zone 3: Theme Toggle & Auth Actions */}
+        {/* Zone 3: Language, Theme Toggle & Auth Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          <LanguageToggle compact />
+
           <button
             type="button"
             onClick={toggleDarkMode}
-            title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={darkMode ? t.common.switchToLight : t.common.switchToDark}
+            aria-label={darkMode ? t.common.switchToLight : t.common.switchToDark}
             className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap"
           >
             {darkMode ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                <span className="hidden lg:inline">Light</span>
+                <span className="hidden lg:inline">{t.common.light}</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
-                <span className="hidden lg:inline">Dark</span>
+                <span className="hidden lg:inline">{t.common.dark}</span>
               </>
             )}
           </button>
@@ -232,7 +235,7 @@ export function Navbar() {
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white text-xs font-medium transition-all duration-200 hover:shadow-sm active:scale-[0.98] whitespace-nowrap cursor-pointer disabled:opacity-60"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+              <span>{signingOut ? t.common.signingOut : t.common.signOut}</span>
             </button>
           ) : (
             <>
@@ -240,14 +243,14 @@ export function Navbar() {
                 href="/login"
                 className="hidden sm:inline-flex items-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 hover:shadow-xs whitespace-nowrap"
               >
-                Member Sign In
+                {t.common.memberSignIn}
               </Link>
               <Link
                 href="/signup"
-                title="Apply for Cooperative Membership"
+                title={t.common.applyForMembership}
                 className="group hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
               >
-                <span>Apply Now</span>
+                <span>{t.common.applyNow}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -259,7 +262,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle navigation menu"
+            aria-label={t.nav.toggleMenu}
             className="md:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -288,22 +291,24 @@ export function Navbar() {
             );
           })}
 
+          <LanguageToggle fullWidth />
+
           <button
             type="button"
             onClick={toggleDarkMode}
             className="w-full py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm font-medium flex items-center justify-between transition-colors cursor-pointer"
           >
-            <span>Appearance</span>
+            <span>{t.common.appearance}</span>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
               {darkMode ? (
                 <>
                   <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                  <span>Light Mode</span>
+                  <span>{t.common.lightMode}</span>
                 </>
               ) : (
                 <>
                   <Moon className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
-                  <span>Dark Mode</span>
+                  <span>{t.common.darkMode}</span>
                 </>
               )}
             </span>
@@ -317,7 +322,7 @@ export function Navbar() {
               className="w-full py-2.5 px-4 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 hover:bg-red-600 hover:text-white text-red-700 dark:text-red-400 text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-60"
             >
               <LogOut className="w-4 h-4" aria-hidden="true" />
-              <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+              <span>{signingOut ? t.common.signingOut : t.common.signOut}</span>
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2 pt-1">
@@ -326,14 +331,14 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className="block w-full text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-900"
               >
-                Sign In
+                {t.common.signIn}
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setMobileOpen(false)}
                 className="block w-full text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium"
               >
-                Apply Now
+                {t.common.applyNow}
               </Link>
             </div>
           )}

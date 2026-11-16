@@ -39,6 +39,7 @@ import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
+import { LanguageToggle } from './LanguageToggle.tsx';
 import { LoansView } from './LoansView.tsx';
 import { ManagerCycleView } from './ManagerCycleView.tsx';
 import { ManagerDeskView, type ManagerDeskTab } from './ManagerDeskView.tsx';
@@ -77,44 +78,44 @@ interface NavItemConfig {
   group: 'member' | 'manager' | 'admin';
 }
 
-const MEMBER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
-  { id: 'monthly-contribution', label: 'Monthly Contribution', Icon: CreditCard, group: 'member' },
-  { id: 'quard-hasan', label: 'Quard Hasan', Icon: HandCoins, group: 'member' },
-  { id: 'my-amanah', label: 'My Amanah', Icon: Wallet, group: 'member' },
-  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
-  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
-  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
+const MEMBER_NAV_DEFS: Array<{ id: DashboardSectionId; Icon: typeof BarChart3 }> = [
+  { id: 'fund-overview', Icon: BarChart3 },
+  { id: 'monthly-contribution', Icon: CreditCard },
+  { id: 'quard-hasan', Icon: HandCoins },
+  { id: 'my-amanah', Icon: Wallet },
+  { id: 'notification', Icon: Bell },
+  { id: 'ballot', Icon: Vote },
+  { id: 'statistics', Icon: BarChart3 },
+  { id: 'my-profile', Icon: User },
+  { id: 'members', Icon: Users },
+  { id: 'manager-cycle', Icon: CalendarClock },
+  { id: 'transaction-history', Icon: History },
+  { id: 'community', Icon: MessageSquare },
 ];
 
-const MANAGER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'manager-desk', label: 'Manager Desk', Icon: ClipboardCheck, group: 'manager' },
-  { id: 'member-registry', label: 'Member Updates & Directory', Icon: Users, group: 'manager' },
+const MANAGER_NAV_DEFS: Array<{ id: DashboardSectionId; Icon: typeof BarChart3 }> = [
+  { id: 'manager-desk', Icon: ClipboardCheck },
+  { id: 'member-registry', Icon: Users },
 ];
 
-const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
-  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
-  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
-  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+const ADMIN_PRIMARY_DEFS: Array<{ id: DashboardSectionId; Icon: typeof BarChart3 }> = [
+  { id: 'fund-overview', Icon: BarChart3 },
+  { id: 'transaction-history', Icon: History },
+  { id: 'ballot', Icon: Vote },
+  { id: 'statistics', Icon: BarChart3 },
+  { id: 'members', Icon: Users },
+  { id: 'manager-cycle', Icon: CalendarClock },
+  { id: 'notification', Icon: Bell },
+  { id: 'community', Icon: MessageSquare },
+  { id: 'my-profile', Icon: User },
 ];
 
-const ADMIN_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'member-registry', label: 'User & Role Management', Icon: Users, group: 'admin' },
-  { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
-  { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
-  { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
-  { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
+const ADMIN_NAV_DEFS: Array<{ id: DashboardSectionId; Icon: typeof BarChart3 }> = [
+  { id: 'member-registry', Icon: Users },
+  { id: 'site-settings', Icon: Settings },
+  { id: 'manager-desk', Icon: ClipboardCheck },
+  { id: 'site-activity', Icon: Activity },
+  { id: 'system-audit-logs', Icon: Shield },
 ];
 
 function playSubtleAlertChime() {
@@ -157,6 +158,7 @@ export function DashboardShell() {
     logout,
     darkMode,
     toggleDarkMode,
+    t,
     workspace,
     connectingGoogle,
     handleConnectGoogle,
@@ -343,15 +345,60 @@ export function DashboardShell() {
   const isManager = user?.role === 'manager';
   const isStaff = Boolean(user && (isAdmin || isManager));
 
+  const memberNavItems: NavItemConfig[] = useMemo(
+    () =>
+      MEMBER_NAV_DEFS.map((d) => ({
+        ...d,
+        label: t.dashboard.nav[d.id],
+        group: 'member',
+      })),
+    [t]
+  );
+
+  const managerNavItems: NavItemConfig[] = useMemo(
+    () =>
+      MANAGER_NAV_DEFS.map((d) => ({
+        ...d,
+        label: t.dashboard.nav[d.id],
+        group: 'manager',
+      })),
+    [t]
+  );
+
+  const adminPrimaryItems: NavItemConfig[] = useMemo(
+    () =>
+      ADMIN_PRIMARY_DEFS.map((d) => ({
+        ...d,
+        label: t.dashboard.nav[d.id],
+        group: 'member',
+      })),
+    [t]
+  );
+
+  const adminNavItems: NavItemConfig[] = useMemo(
+    () =>
+      ADMIN_NAV_DEFS.map((d) => ({
+        ...d,
+        label:
+          d.id === 'member-registry'
+            ? t.dashboard.adminNavOverrides['member-registry']
+            : d.id === 'manager-desk'
+              ? t.dashboard.adminNavOverrides['manager-desk']
+              : t.dashboard.nav[d.id],
+        group: 'admin',
+      })),
+    [t]
+  );
+
   const visibleNav = useMemo(() => {
     if (isAdmin) {
-      return [...ADMIN_PRIMARY_ITEMS, ...ADMIN_NAV_ITEMS];
+      return [...adminPrimaryItems, ...adminNavItems];
     }
     if (isManager) {
-      return [...MEMBER_NAV_ITEMS, ...MANAGER_NAV_ITEMS];
+      return [...memberNavItems, ...managerNavItems];
     }
-    return MEMBER_NAV_ITEMS;
-  }, [isAdmin, isManager]);
+    return memberNavItems;
+  }, [isAdmin, isManager, adminPrimaryItems, adminNavItems, memberNavItems, managerNavItems]);
 
   const navigateToPage = useCallback(
     (
@@ -391,17 +438,15 @@ export function DashboardShell() {
   const openLoanRequestModal = useCallback(async () => {
     if (!user || user.role === 'admin') {
       setLoanGateNotice({
-        title: 'Administrators Cannot Borrow',
-        description:
-          'Administrator accounts govern site settings, member roles, and audits only — they do not request Qard Hasan financing.',
+        title: t.dashboard.gateModal.adminTitle,
+        description: t.dashboard.gateModal.adminDesc,
       });
       return;
     }
     if (user.status !== 'active') {
       setLoanGateNotice({
-        title: 'Verification Required',
-        description:
-          'Only administrator-verified active members can open a Qard Hasan loan application.',
+        title: t.dashboard.gateModal.verifyTitle,
+        description: t.dashboard.gateModal.verifyDesc,
       });
       return;
     }
@@ -434,7 +479,7 @@ export function DashboardShell() {
             /pending/i.test(reason));
 
         setLoanGateNotice({
-          title: 'Eligibility Requirements Not Met',
+          title: t.dashboard.gateModal.notMetTitle,
           description: canWithdraw
             ? `${reason}\n\nYou can withdraw that pending application now and open a new request.`
             : reason,
@@ -445,7 +490,7 @@ export function DashboardShell() {
       setLoanModalOpen(true);
     } catch (err) {
       setLoanGateNotice({
-        title: 'Eligibility Check Failed',
+        title: t.dashboard.gateModal.failedTitle,
         description:
           err instanceof Error
             ? err.message
@@ -454,7 +499,7 @@ export function DashboardShell() {
     } finally {
       setLoanGateChecking(false);
     }
-  }, [user, overview, loans]);
+  }, [user, overview, loans, t]);
 
   const openManagerDeskTab = useCallback(
     (tab: ManagerDeskTab) => {
@@ -643,7 +688,7 @@ export function DashboardShell() {
   }
 
   function renderDashboardNavItems(isMobile = false) {
-    const primaryItems = isAdmin ? ADMIN_PRIMARY_ITEMS : MEMBER_NAV_ITEMS;
+    const primaryItems = isAdmin ? adminPrimaryItems : memberNavItems;
     return (
       <div className="space-y-4">
         <div className="space-y-0.5">
@@ -653,10 +698,10 @@ export function DashboardShell() {
         {isManager && (
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
             <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Manager
+              {t.dashboard.managerSection}
             </div>
             <div className="space-y-0.5">
-              {MANAGER_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+              {managerNavItems.map((item) => renderNavButton(item, isMobile))}
             </div>
           </div>
         )}
@@ -664,10 +709,10 @@ export function DashboardShell() {
         {isAdmin && (
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
             <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Admin
+              {t.dashboard.adminSection}
             </div>
             <div className="space-y-0.5">
-              {ADMIN_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
+              {adminNavItems.map((item) => renderNavButton(item, isMobile))}
             </div>
           </div>
         )}
@@ -691,10 +736,10 @@ export function DashboardShell() {
           </span>
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              Amanah
+              {t.common.brand}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-              Member Portal
+              {t.dashboard.portalSubtitle}
             </div>
           </div>
         </div>
@@ -706,18 +751,20 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
-            aria-label="Open navigation"
+            aria-label={t.dashboard.openNavAria}
             className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 text-sm min-w-0">
-            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Amanah</span>
+            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">
+              {t.common.brand}
+            </span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate underline decoration-2 decoration-emerald-600 dark:decoration-emerald-400 underline-offset-4">
               {activeSection === 'member-profile'
-                ? 'Member Profile'
-                : activeNavMeta?.label || 'Fund Overview'}
+                ? t.dashboard.memberProfileTitle
+                : activeNavMeta?.label || t.dashboard.nav['fund-overview']}
             </h1>
           </div>
         </div>
@@ -725,12 +772,14 @@ export function DashboardShell() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/"
-            title="View Public Website"
+            title={t.common.publicWebsite}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 whitespace-nowrap"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Home</span>
+            <span>{t.common.home}</span>
           </Link>
+
+          <LanguageToggle compact />
 
           <HeaderNotificationBell
             user={user}
@@ -750,8 +799,8 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={() => void refreshWorkspace(false)}
-            title="Refresh live balances"
-            aria-label="Refresh live balances"
+            title={t.dashboard.refreshTitle}
+            aria-label={t.dashboard.refreshTitle}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
@@ -760,8 +809,8 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={toggleDarkMode}
-            title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={darkMode ? t.common.switchToLight : t.common.switchToDark}
+            aria-label={darkMode ? t.common.switchToLight : t.common.switchToDark}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer"
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -774,7 +823,7 @@ export function DashboardShell() {
               onClick={() => void openLoanRequestModal()}
               className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-wait"
             >
-              {loanGateChecking ? 'Checking Eligibility…' : 'Request Qard Hasan'}
+              {loanGateChecking ? t.dashboard.checkingEligibility : t.dashboard.requestQardHasan}
             </button>
           )}
         </div>
@@ -798,7 +847,7 @@ export function DashboardShell() {
             <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
               {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
               <span className="text-emerald-700 dark:text-emerald-400">
-                {user.status === 'active' ? 'Verified' : 'Pending'}
+                {user.status === 'active' ? t.common.verified : t.common.pending}
               </span>
             </div>
           </button>
@@ -808,7 +857,7 @@ export function DashboardShell() {
             className="w-full py-2 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Sign Out</span>
+            <span>{t.common.signOut}</span>
           </button>
         </div>
       </aside>
@@ -831,12 +880,12 @@ export function DashboardShell() {
             >
               <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <span className="font-display font-bold text-base text-slate-900 dark:text-white">
-                  Amanah
+                  {t.common.brand}
                 </span>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
-                  aria-label="Close navigation"
+                  aria-label={t.dashboard.closeNavAria}
                   className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
@@ -848,13 +897,14 @@ export function DashboardShell() {
               </nav>
 
               <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                <LanguageToggle fullWidth />
                 <Link
                   href="/"
                   onClick={() => setMobileNavOpen(false)}
                   className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                 >
                   <Home className="w-3.5 h-3.5" />
-                  <span>Public Website</span>
+                  <span>{t.common.publicWebsite}</span>
                 </Link>
                 <button
                   type="button"
@@ -862,7 +912,7 @@ export function DashboardShell() {
                   className="w-full py-2.5 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
+                  <span>{t.common.signOut}</span>
                 </button>
               </div>
             </motion.aside>
@@ -922,8 +972,8 @@ export function DashboardShell() {
                           >
                             <span>
                               {isApproved
-                                ? 'Qard Hasan Loan Approved'
-                                : 'Qard Hasan Loan Request Declined'}
+                                ? t.dashboard.alerts.loanApproved
+                                : t.dashboard.alerts.loanDeclined}
                             </span>
                             <span aria-hidden="true" className="opacity-50">
                               ·
@@ -960,7 +1010,7 @@ export function DashboardShell() {
                             : 'bg-red-600 hover:bg-red-700'
                             }`}
                         >
-                          <span>View Loan Status</span>
+                          <span>{t.dashboard.alerts.viewLoanStatus}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                         <button
@@ -968,7 +1018,7 @@ export function DashboardShell() {
                           onClick={() => navigateToPage('notification', false)}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors whitespace-nowrap cursor-pointer"
                         >
-                          Inbox
+                          {t.dashboard.alerts.inbox}
                         </button>
                         <button
                           type="button"
@@ -1021,8 +1071,8 @@ export function DashboardShell() {
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
                       <span>
                         {unvotedLoanProposals.length === 1
-                          ? 'Qard Hasan Proposal Open for Secret Opinion Ballot'
-                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Open for Secret Opinion Ballot`}
+                          ? t.dashboard.alerts.proposalSingle
+                          : `${unvotedLoanProposals.length} ${t.dashboard.alerts.proposalPluralSuffix}`}
                       </span>
                       <span aria-hidden="true" className="text-amber-400 dark:text-amber-700">
                         ·
@@ -1054,7 +1104,7 @@ export function DashboardShell() {
                     }}
                     className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
-                    <span>Open Ballot</span>
+                    <span>{t.dashboard.alerts.openBallot}</span>
                     <ArrowRight
                       className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                       aria-hidden="true"
@@ -1090,7 +1140,7 @@ export function DashboardShell() {
             >
               {activeSection === 'fund-overview' && (
                 <section id="fund-overview" className="space-y-4">
-                  <SectionEyebrow label="Fund Overview" />
+                  <SectionEyebrow label={t.dashboard.nav['fund-overview']} />
                   <OverviewView
                     overview={overview}
                     contributions={contributions}
@@ -1108,7 +1158,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'monthly-contribution' && (
                 <section id="monthly-contribution" className="space-y-4">
-                  <SectionEyebrow label="Monthly Contribution" />
+                  <SectionEyebrow label={t.dashboard.nav['monthly-contribution']} />
                   <ContributionsView
                     contributions={contributions}
                     config={overview?.config || null}
@@ -1123,7 +1173,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
-                  <SectionEyebrow label="Quard Hasan" />
+                  <SectionEyebrow label={t.dashboard.nav['quard-hasan']} />
                   <LoansView
                     loans={loans}
                     eligibility={overview?.personal.eligibility || null}
@@ -1140,7 +1190,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'my-amanah' && (
                 <section id="my-amanah" className="space-y-4">
-                  <SectionEyebrow label="My Amanah" />
+                  <SectionEyebrow label={t.dashboard.nav['my-amanah']} />
                   <MyAmanahView
                     overview={overview}
                     loans={loans}
@@ -1154,14 +1204,14 @@ export function DashboardShell() {
 
               {activeSection === 'my-profile' && (
                 <section id="my-profile" className="space-y-4">
-                  <SectionEyebrow label="My Profile" />
+                  <SectionEyebrow label={t.dashboard.nav['my-profile']} />
                   <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
                 </section>
               )}
 
               {activeSection === 'notification' && (
                 <section id="notification" className="space-y-4">
-                  <SectionEyebrow label="Notification" />
+                  <SectionEyebrow label={t.dashboard.nav.notification} />
                   <NotificationsView
                     user={user}
                     workspace={workspace}
@@ -1178,7 +1228,7 @@ export function DashboardShell() {
 
               {activeSection === 'statistics' && (
                 <section id="statistics" className="space-y-4">
-                  <SectionEyebrow label="Statistics" />
+                  <SectionEyebrow label={t.dashboard.nav.statistics} />
                   <StatisticsView
                     overview={overview}
                     contributions={contributions}
@@ -1192,7 +1242,7 @@ export function DashboardShell() {
 
               {activeSection === 'ballot' && (
                 <section id="ballot" className="space-y-4">
-                  <SectionEyebrow label="Opinion Ballot" />
+                  <SectionEyebrow label={t.dashboard.nav.ballot} />
                   <VotingView
                     loans={loans}
                     projects={halalProjects}
@@ -1208,7 +1258,7 @@ export function DashboardShell() {
 
               {activeSection === 'transaction-history' && (
                 <section id="transaction-history" className="space-y-4">
-                  <SectionEyebrow label="Transaction History" />
+                  <SectionEyebrow label={t.dashboard.nav['transaction-history']} />
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
@@ -1224,7 +1274,7 @@ export function DashboardShell() {
 
               {activeSection === 'members' && (
                 <section id="members" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Directory" />
+                  <SectionEyebrow label={t.dashboard.nav.members} />
                   <ActiveMembersView
                     user={user}
                     config={overview?.config || null}
@@ -1235,7 +1285,7 @@ export function DashboardShell() {
 
               {activeSection === 'manager-cycle' && (
                 <section id="manager-cycle" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Manager Rotation Cycle" />
+                  <SectionEyebrow label={t.dashboard.managerCycleEyebrow} />
                   <ManagerCycleView
                     user={user}
                     config={overview?.config || null}
@@ -1248,7 +1298,7 @@ export function DashboardShell() {
 
               {activeSection === 'community' && (
                 <section id="community" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Community" />
+                  <SectionEyebrow label={t.dashboard.nav.community} />
                   <CommunityView
                     user={user}
                     currency={overview?.config.currency}
@@ -1263,7 +1313,7 @@ export function DashboardShell() {
 
               {activeSection === 'member-profile' && viewingMemberId && (
                 <section id="member-profile" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Profile" />
+                  <SectionEyebrow label={t.dashboard.memberProfileTitle} />
                   <MemberPublicProfileView
                     memberId={viewingMemberId}
                     currentUser={user}
@@ -1280,7 +1330,13 @@ export function DashboardShell() {
 
               {isStaff && activeSection === 'manager-desk' && (
                 <section id="manager-desk" className="space-y-4 pb-8">
-                  <SectionEyebrow label={isAdmin ? 'Governance Desk' : 'Manager · Manager Desk'} />
+                  <SectionEyebrow
+                    label={
+                      isAdmin
+                        ? t.dashboard.adminGovernanceEyebrow
+                        : t.dashboard.managerDeskEyebrow
+                    }
+                  />
                   <ManagerDeskView
                     user={user}
                     config={overview?.config || null}
@@ -1303,14 +1359,14 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
-                  <SectionEyebrow label="Admin · Site Activity" />
+                  <SectionEyebrow label={t.dashboard.adminSiteActivityEyebrow} />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
               {isAdmin && activeSection === 'system-audit-logs' && (
                 <section id="system-audit-logs" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · System Audit Logs" />
+                  <SectionEyebrow label={t.dashboard.adminAuditLogsEyebrow} />
                   <SystemAuditLogsView user={user} />
                 </section>
               )}
@@ -1320,8 +1376,8 @@ export function DashboardShell() {
                   <SectionEyebrow
                     label={
                       isAdmin
-                        ? 'Admin · User & Role Management'
-                        : 'Manager · Member Updates & Directory'
+                        ? t.dashboard.adminRegistryEyebrow
+                        : t.dashboard.managerRegistryEyebrow
                     }
                   />
                   <MemberRegistrySection
@@ -1335,7 +1391,7 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · Site Settings" />
+                  <SectionEyebrow label={t.dashboard.adminSettingsEyebrow} />
                   <AdminSiteSettingsView
                     overview={overview}
                     config={overview?.config || null}
@@ -1365,10 +1421,10 @@ export function DashboardShell() {
           description={loanGateNotice?.description || ''}
           confirmLabel={
             loanGateNotice?.withdrawLoanId
-              ? 'Withdraw Pending Application'
-              : 'Understood'
+              ? t.dashboard.gateModal.withdrawAction
+              : t.dashboard.gateModal.understood
           }
-          cancelLabel="Close"
+          cancelLabel={t.common.close}
           busy={loanGateBusy}
           onConfirm={
             loanGateNotice?.withdrawLoanId

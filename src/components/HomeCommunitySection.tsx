@@ -15,36 +15,11 @@ import Skeleton from 'react-loading-skeleton';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 
-const COMMUNITY_FEATURES = [
-  {
-    Icon: MessageSquare,
-    title: 'Member Feed & Discussions',
-    detail:
-      'Share updates, Qard Hasan insights, Halal venture ideas, and announcements across the cooperative.',
-  },
-  {
-    Icon: BarChart2,
-    title: 'Community Polls & Replies',
-    detail:
-      'Create single or multi-choice polls, mention members with @handles, and react to helpful posts.',
-  },
-  {
-    Icon: Users,
-    title: 'Verified Member Directory',
-    detail:
-      'Browse active members and inspect their community posts, about details, and fund contribution summary.',
-  },
-  {
-    Icon: ShieldCheck,
-    title: 'Encrypted Private Messages',
-    detail:
-      'Message verified cooperative members directly inside AES-256-GCM encrypted one-on-one threads.',
-  },
-];
+const FEATURE_ICONS = [MessageSquare, BarChart2, Users, ShieldCheck];
 
 export function HomeCommunitySection() {
   const router = useRouter();
-  const { user, authChecking } = useCoopSession();
+  const { user, authChecking, t } = useCoopSession();
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -52,14 +27,13 @@ export function HomeCommunitySection() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="max-w-3xl space-y-3">
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Member Community
+              {t.homeCommunity.eyebrow}
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-              Cooperative Community Hub
+              {t.homeCommunity.heading}
             </h2>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-              Connect with verified Amanah members through discussion threads, polls, member
-              profiles, and encrypted direct messaging.
+              {t.homeCommunity.description}
             </p>
           </div>
 
@@ -68,7 +42,7 @@ export function HomeCommunitySection() {
               href="/dashboard?page=community"
               className="group shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all duration-200 whitespace-nowrap self-start md:self-auto"
             >
-              <span>Open Full Dashboard View</span>
+              <span>{t.homeCommunity.openDashboard}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -96,15 +70,13 @@ export function HomeCommunitySection() {
                 </div>
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Registered Members Only
+                    {t.homeCommunity.registeredOnly}
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                    Please Log In to Enter the Community
+                    {t.homeCommunity.loginHeading}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    To protect member privacy, cooperative discussions, polls, member profiles, and
-                    encrypted direct messages are only visible to registered, logged-in Amanah
-                    members. Please log in with your verified account to enter the community.
+                    {t.homeCommunity.loginBody}
                   </p>
                 </div>
               </div>
@@ -114,7 +86,7 @@ export function HomeCommunitySection() {
                   href="/login"
                   className="group px-5 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2 whitespace-nowrap"
                 >
-                  <span>Log In to Enter Community</span>
+                  <span>{t.homeCommunity.loginCta}</span>
                   <ArrowRight
                     className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                     aria-hidden="true"
@@ -124,14 +96,14 @@ export function HomeCommunitySection() {
                   href="/signup"
                   className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-all duration-200 whitespace-nowrap"
                 >
-                  Apply for Membership
+                  {t.homeCommunity.applyCta}
                 </Link>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {COMMUNITY_FEATURES.map((item) => {
-                const Icon = item.Icon;
+              {t.homeCommunity.features.map((item, idx) => {
+                const Icon = FEATURE_ICONS[idx];
                 return (
                   <div
                     key={item.title}
@@ -159,11 +131,10 @@ export function HomeCommunitySection() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Membership Verification Required
+                  {t.homeCommunity.verificationTitle}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Community access unlocks automatically once an Administrator approves your member
-                  registration.
+                  {t.homeCommunity.verificationBody}
                 </p>
               </div>
             </div>
@@ -171,7 +142,7 @@ export function HomeCommunitySection() {
               href="/dashboard"
               className="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap self-start sm:self-auto"
             >
-              Check Account Status
+              {t.homeCommunity.checkStatus}
             </Link>
           </div>
         ) : (

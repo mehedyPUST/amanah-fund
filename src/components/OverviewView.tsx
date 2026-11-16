@@ -27,6 +27,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { useCoopSession } from './AppProviders.tsx';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
@@ -60,6 +61,7 @@ export function OverviewView({
   onViewMemberProfile,
   onRefresh,
 }: OverviewViewProps) {
+  const { t } = useCoopSession();
   const [quotaInput, setQuotaInput] = useState(
     String(overview?.config.maxLoansPerYear ?? 3)
   );
@@ -153,17 +155,15 @@ export function OverviewView({
           <div className="space-y-1.5 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
               <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                {phase === 'qard_hasan'
-                  ? 'Phase 1 · Active Qard Hasan Lending'
-                  : 'Phase 2 · Post-Maturity Halal Investment'}
+                {phase === 'qard_hasan' ? t.overview.phase1 : t.overview.phase2}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums">
-                Target Maturity: {formatShortDate(config.maturityDate)}
+                {t.overview.targetMaturity}: {formatShortDate(config.maturityDate)}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums text-amber-600 dark:text-amber-400 font-medium">
-                {daysUntilMaturity} days remaining
+                {daysUntilMaturity} {t.overview.daysRemaining}
               </span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -181,7 +181,7 @@ export function OverviewView({
               className="px-4 py-2 text-xs font-medium rounded-lg border border-amber-200/80 dark:border-amber-800/70 bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 transition-all duration-200 whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
             >
               <BarChart3 className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Statistics</span>
+              <span>{t.overview.statistics}</span>
             </button>
             {isAdmin ? (
               <button
@@ -189,7 +189,7 @@ export function OverviewView({
                 onClick={() => onNavigate('site-settings')}
                 className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Site Settings</span>
+                <span>{t.overview.siteSettings}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -201,7 +201,7 @@ export function OverviewView({
                 onClick={() => onNavigate('monthly-contribution')}
                 className="group px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Monthly Contribution</span>
+                <span>{t.overview.monthlyContribution}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -259,7 +259,7 @@ export function OverviewView({
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
                     <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    <span>Your Active Qard Hasan Request</span>
+                    <span>{t.overview.yourActiveLoan}</span>
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                   <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
@@ -274,13 +274,13 @@ export function OverviewView({
                     {formatMoney(loan.amount, ccy)}
                   </h3>
                   <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                    {loan.installmentMonths} monthly installments of{' '}
-                    {formatMoney(loan.monthlyInstallment, ccy)} (0% interest)
+                    {loan.installmentMonths} {t.overview.monthlyInstallmentsOf}{' '}
+                    {formatMoney(loan.monthlyInstallment, ccy)} {t.overview.zeroInterest}
                   </span>
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-3xl">
-                  Purpose: {loan.purpose}
+                  {t.overview.purposePrefix}: {loan.purpose}
                 </p>
               </div>
 
@@ -292,7 +292,7 @@ export function OverviewView({
                     className="px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open Opinion Ballot</span>
+                    <span>{t.overview.openOpinionBallot}</span>
                   </button>
                 )}
                 <button
@@ -300,7 +300,7 @@ export function OverviewView({
                   onClick={() => onNavigate('quard-hasan')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
-                  <span>View in Quard Hasan</span>
+                  <span>{t.overview.viewInQuardHasan}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
@@ -329,12 +329,14 @@ export function OverviewView({
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-0.5">
               <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                {myGuarantorRequests.length} Guarantor Co-Signature Request
-                {myGuarantorRequests.length === 1 ? '' : 's'} Waiting for You
+                {myGuarantorRequests.length}{' '}
+                {myGuarantorRequests.length === 1
+                  ? t.overview.guarantorWaitingSingular
+                  : t.overview.guarantorWaitingPlural}
               </div>
               <p className="text-xs text-amber-800 dark:text-amber-300">
-                {myGuarantorRequests[0].borrowerName} ({myGuarantorRequests[0].id}) nominated you as cooperative guarantor for{' '}
-                {formatMoney(myGuarantorRequests[0].amount, ccy)}. Accept or decline so Manager review can begin.
+                {myGuarantorRequests[0].borrowerName} ({myGuarantorRequests[0].id}) ·{' '}
+                {formatMoney(myGuarantorRequests[0].amount, ccy)}
               </p>
             </div>
           </div>
@@ -343,7 +345,7 @@ export function OverviewView({
             onClick={() => onNavigate('quard-hasan')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
           >
-            Respond in Quard Hasan →
+            {t.overview.respondInQuardHasan}
           </button>
         </section>
       )}
@@ -355,8 +357,10 @@ export function OverviewView({
             <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-0.5">
               <div className="text-xs font-semibold text-red-900 dark:text-red-200">
-                {treasury.overdueInstallmentsCount} Overdue Qard Hasan Installment
-                {treasury.overdueInstallmentsCount === 1 ? '' : 's'} Detected
+                {treasury.overdueInstallmentsCount}{' '}
+                {treasury.overdueInstallmentsCount === 1
+                  ? t.overview.overdueDetectedSingular
+                  : t.overview.overdueDetectedPlural}
               </div>
               <p className="text-xs text-red-800 dark:text-red-300">
                 {!isAdmin && !personal.eligibility.noOverdueInstallments
@@ -371,7 +375,7 @@ export function OverviewView({
               onClick={() => onNavigate('quard-hasan')}
               className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
             >
-              Inspect Repayments →
+              {t.overview.inspectRepayments}
             </button>
           )}
         </section>
@@ -382,11 +386,13 @@ export function OverviewView({
         <section className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="space-y-0.5">
             <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-              {treasury.pendingMembersCount} New Member Application
-              {treasury.pendingMembersCount === 1 ? '' : 's'} Pending Approval
+              {treasury.pendingMembersCount}{' '}
+              {treasury.pendingMembersCount === 1
+                ? t.overview.pendingMembersSingular
+                : t.overview.pendingMembersPlural}
             </div>
             <p className="text-xs text-amber-800 dark:text-amber-300">
-              Pending applicants cannot sign in until verified and activated in Member Registry.
+              {t.overview.pendingMembersNote}
             </p>
           </div>
           <button
@@ -394,7 +400,7 @@ export function OverviewView({
             onClick={() => onNavigate('member-registry')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer shrink-0"
           >
-            Review Member Registry →
+            {t.overview.reviewMemberRegistry}
           </button>
         </section>
       )}
@@ -406,14 +412,13 @@ export function OverviewView({
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Administrator Quota Control</span>
+                <span>{t.overview.adminQuotaBadge}</span>
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Maximum Qard Hasan Loans Per Member Per Year
+                {t.overview.adminQuotaTitle}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Default is 3 loans/year. Changes persist to the database and immediately enforce
-                member loan eligibility across the platform.
+                {t.overview.adminQuotaDesc}
               </p>
             </div>
 
@@ -422,7 +427,7 @@ export function OverviewView({
               className="flex flex-wrap items-center gap-2.5 shrink-0"
             >
               <label htmlFor="admin-annual-loan-limit" className="sr-only">
-                Maximum loans per year
+                {t.overview.adminQuotaTitle}
               </label>
               <input
                 id="admin-annual-loan-limit"
@@ -439,7 +444,7 @@ export function OverviewView({
                 disabled={savingQuota}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer"
               >
-                {savingQuota ? 'Saving…' : 'Update Annual Limit'}
+                {savingQuota ? t.overview.saving : t.overview.updateAnnualLimit}
               </button>
             </form>
           </div>
@@ -455,49 +460,51 @@ export function OverviewView({
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white border border-emerald-500/30 rounded-xl p-5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
-            <span>Amanah Height (Total Raised)</span>
+            <span>{t.overview.amanahHeight}</span>
             <Wallet className="w-4 h-4 text-emerald-100" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-white">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-emerald-100/90 tabular-nums">
-            {treasury.contributingMembersCount} contributing members · Pending{' '}
-            {formatMoney(treasury.pendingContributionsAmount, ccy)}
+            {treasury.contributingMembersCount} {t.overview.contributingMembers} ·{' '}
+            {t.overview.pendingLabel} {formatMoney(treasury.pendingContributionsAmount, ccy)}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <span>Current Balance</span>
+            <span>{t.overview.currentBalance}</span>
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            Amanah Height − Quard Hasan Current
+            {t.overview.currentBalanceFormula}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-xs font-medium text-amber-600 dark:text-amber-400">
-            <span>Quard Hasan Total Current</span>
+            <span>{t.overview.quardHasanCurrent}</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            {treasury.activeBorrowers.length} active borrower
-            {treasury.activeBorrowers.length === 1 ? '' : 's'} · Disbursed{' '}
-            {formatMoney(treasury.totalLoansDisbursed, ccy)}
+            {treasury.activeBorrowers.length}{' '}
+            {treasury.activeBorrowers.length === 1
+              ? t.overview.activeBorrowerSingular
+              : t.overview.activeBorrowerPlural}{' '}
+            · {t.overview.disbursed} {formatMoney(treasury.totalLoansDisbursed, ccy)}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-400">
-            <span>Repayments Returned (+)</span>
+            <span>{t.overview.repaymentsReturned}</span>
             <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -505,8 +512,8 @@ export function OverviewView({
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             {treasury.approvedLoansDeducted > 0
-              ? `${Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100)}% restored to central fund`
-              : '100% revolving principal'}
+              ? `${Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100)}${t.overview.restoredSuffix}`
+              : t.overview.revolvingPrincipal}
           </div>
         </div>
       </section>
@@ -515,7 +522,9 @@ export function OverviewView({
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>This Month Contribution ({treasury.thisMonthKey})</span>
+            <span>
+              {t.overview.thisMonthContribution} ({treasury.thisMonthKey})
+            </span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -547,7 +556,7 @@ export function OverviewView({
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            This Month Due (Remaining / Target)
+            {t.overview.thisMonthDue}
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
@@ -557,14 +566,14 @@ export function OverviewView({
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthDueRemaining === 0
-              ? 'All monthly contribution targets collected'
-              : 'Pending collection from members this cycle'}
+              ? t.overview.allTargetsCollected
+              : t.overview.pendingCollection}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            This Month Hasan Installment (Collected / Need)
+            {t.overview.thisMonthInstallment}
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
@@ -574,20 +583,20 @@ export function OverviewView({
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthHasanInstallmentNeed > 0
-              ? 'Installments due & collected this month'
-              : 'No installments due this month'}
+              ? t.overview.installmentsDueCollected
+              : t.overview.noInstallmentsDue}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>This Month Clearance</span>
+            <span>{t.overview.thisMonthClearance}</span>
             <Users className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {treasury.thisMonthClearanceClearedMembers}{' '}
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {treasury.thisMonthClearanceTotalMembers} cleared members
+              / {treasury.thisMonthClearanceTotalMembers} {t.overview.clearedMembers}
             </span>
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -615,20 +624,20 @@ export function OverviewView({
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Quard Hasan Members
+                {t.overview.activeBorrowersTitle}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Current borrowers with Main Principal / Remaining Due balance
+                {t.overview.activeBorrowersSub}
               </p>
             </div>
             <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
-              {treasury.activeBorrowers.length} active
+              {treasury.activeBorrowers.length} {t.overview.activeCountSuffix}
             </span>
           </div>
 
           {treasury.activeBorrowers.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No active Qard Hasan loans are currently outstanding.
+              {t.overview.noActiveLoans}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -659,10 +668,12 @@ export function OverviewView({
                     )}
                     <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
                       {b.loanId}
-                      {b.nextDueDate ? ` · Next due ${formatShortDate(b.nextDueDate)}` : ''}
+                      {b.nextDueDate
+                        ? ` · ${t.overview.nextDuePrefix} ${formatShortDate(b.nextDueDate)}`
+                        : ''}
                       {b.missedInstallmentsCount > 0 && (
                         <span className="text-red-600 dark:text-red-400 ml-1.5">
-                          · {b.missedInstallmentsCount} overdue
+                          · {b.missedInstallmentsCount} {t.overview.overdueTag}
                         </span>
                       )}
                     </div>
@@ -672,11 +683,11 @@ export function OverviewView({
                       {formatMoney(b.mainAmount, ccy)}{' '}
                       <span className="text-slate-400 font-normal">/</span>{' '}
                       <span className="text-amber-700 dark:text-amber-400">
-                        {formatMoney(b.dueAmount, ccy)} due
+                        {formatMoney(b.dueAmount, ccy)} {t.overview.dueTag}
                       </span>
                     </div>
                     <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                      Repaid {formatMoney(b.totalRepaid, ccy)}
+                      {t.overview.repaidPrefix} {formatMoney(b.totalRepaid, ccy)}
                     </div>
                   </div>
                 </div>
@@ -689,10 +700,10 @@ export function OverviewView({
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                This Month Member Clearance ({treasury.thisMonthKey})
+                {t.overview.memberClearanceTitle} ({treasury.thisMonthKey})
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Contributing members cleared for the current monthly cycle (Admin excluded)
+                {t.overview.memberClearanceSub}
               </p>
             </div>
             <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
@@ -702,7 +713,7 @@ export function OverviewView({
 
           {treasury.thisMonthMemberClearance.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No active contributing members found.
+              {t.overview.noActiveMembers}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto pr-1">
@@ -744,10 +755,10 @@ export function OverviewView({
                     }`}
                   >
                     {entry.status === 'cleared'
-                      ? 'Cleared'
+                      ? t.overview.cleared
                       : entry.status === 'pending'
-                        ? 'Pending Review'
-                        : 'Due'}
+                        ? t.overview.pendingReview
+                        : t.overview.dueStatus}
                   </span>
                 </div>
               ))}
@@ -763,31 +774,29 @@ export function OverviewView({
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Administrator Account · Non-Contributing Governance</span>
+                <span>{t.overview.adminAccountBadge}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Platform Oversight &amp; Configuration
+                {t.overview.platformOversight}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Administrators do not submit monthly contributions or take Qard Hasan loans. Use
-                Site Settings to update cooperative policy variables, User &amp; Role Management to
-                assign Managers/Members, and Opinion Ballot to audit individual votes.
+                {t.overview.platformOversightDesc}
               </p>
               <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs pt-1">
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Pending Profile Edits</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t.overview.pendingProfileEdits}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.pendingProfileRequestsCount}
                   </dd>
                 </div>
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Open Decision Polls</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t.overview.openDecisionPolls}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.openDecisionPollsCount}
                   </dd>
                 </div>
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Upcoming Meetings</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t.overview.upcomingMeetings}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.upcomingMeetingsCount}
                   </dd>
@@ -802,7 +811,7 @@ export function OverviewView({
                 className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Manage Users &amp; Roles</span>
+                <span>{t.overview.manageUsersRoles}</span>
               </button>
               <button
                 type="button"
@@ -810,7 +819,7 @@ export function OverviewView({
                 className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Site Settings</span>
+                <span>{t.overview.siteSettings}</span>
               </button>
             </div>
           </section>
@@ -819,7 +828,7 @@ export function OverviewView({
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Your Member Standing
+                  {t.overview.yourStanding}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {user.name} · <span className="font-mono">{user.memberCode}</span>
@@ -828,7 +837,7 @@ export function OverviewView({
 
               <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Your Approved Deposits</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t.overview.approvedDeposits}</span>
                   <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(personal.totalContributed, ccy)}
                   </span>
@@ -836,10 +845,10 @@ export function OverviewView({
                 <div className="py-2.5 flex items-center justify-between gap-2">
                   <span className="text-slate-600 dark:text-slate-400">
                     {personal.activeLoanBalance > 0
-                      ? 'Active Loan Balance'
+                      ? t.overview.activeLoanBalance
                       : myActiveOrPendingLoan
-                        ? 'Pending Qard Hasan Request'
-                        : 'Active Loan Balance'}
+                        ? t.overview.pendingQardRequest
+                        : t.overview.activeLoanBalance}
                   </span>
                   <div className="text-right">
                     <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
@@ -857,21 +866,21 @@ export function OverviewView({
                   </div>
                 </div>
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t.overview.coopNetEquity}</span>
                   <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(personal.cooperativeEquity, ccy)}
                     {personal.totalProfitDistributed > 0 && (
                       <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
-                        (+{formatMoney(personal.totalProfitDistributed, ccy)} profit)
+                        (+{formatMoney(personal.totalProfitDistributed, ccy)} {t.overview.profitLabel})
                       </span>
                     )}
                   </span>
                 </div>
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Annual Loan Quota</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t.overview.annualLoanQuota}</span>
                   <span className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
                     {personal.eligibility.loansUsedThisYear} / {personal.eligibility.maxLoansPerYear}{' '}
-                    used
+                    {t.overview.usedSuffix}
                   </span>
                 </div>
               </div>
@@ -885,7 +894,7 @@ export function OverviewView({
                         aria-hidden="true"
                       />
                       <span className="text-emerald-700 dark:text-emerald-400">
-                        Eligible for Qard Hasan Request
+                        {t.overview.eligibleLoan}
                       </span>
                     </>
                   ) : (
@@ -895,7 +904,7 @@ export function OverviewView({
                         aria-hidden="true"
                       />
                       <span className="text-amber-700 dark:text-amber-400">
-                        Not Eligible for Qard Hasan
+                        {t.overview.notEligibleLoan}
                       </span>
                     </>
                   )}
@@ -914,7 +923,7 @@ export function OverviewView({
                   className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Request Qard Hasan</span>
+                  <span>{t.overview.requestQardHasan}</span>
                 </button>
               )}
               <button
@@ -922,7 +931,7 @@ export function OverviewView({
                 onClick={() => onNavigate('my-amanah')}
                 className="group flex-1 py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-medium text-slate-800 dark:text-slate-200 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Open My Amanah</span>
+                <span>{t.overview.openMyAmanah}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -936,10 +945,10 @@ export function OverviewView({
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Governance &amp; Approval Queues
+                {t.overview.activeGovernanceQueues}
               </h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                2/3 anonymized ballots · AES-256-GCM encrypted records
+                {t.overview.anonymizedEncrypted}
               </span>
             </div>
 
@@ -954,7 +963,7 @@ export function OverviewView({
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
-                  <span>Pending Loan Reviews</span>
+                  <span>{t.overview.pendingLoanReviews}</span>
                   <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -963,9 +972,9 @@ export function OverviewView({
                 <div className="mt-1 text-xs text-amber-700 dark:text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
                   {isStaff
                     ? pendingGuarantorLoansCount > 0
-                      ? `Open Manager Desk (+${pendingGuarantorLoansCount} guarantor) →`
-                      : 'Initiate 2/3 ballot in Manager Desk →'
-                    : 'Inspect Qard Hasan queue →'}
+                      ? `${t.overview.initiateBallot} (+${pendingGuarantorLoansCount})`
+                      : t.overview.initiateBallot
+                    : t.overview.inspectLoanQueue}
                 </div>
               </button>
 
@@ -975,14 +984,14 @@ export function OverviewView({
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
-                  <span>Open 2/3 Ballots</span>
+                  <span>{t.overview.open23Ballots}</span>
                   <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="mt-2 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
                 </div>
                 <div className="mt-1 text-xs text-amber-700 dark:text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  Cast anonymized vote →
+                  {t.overview.castVote}
                 </div>
               </button>
 
@@ -1004,7 +1013,7 @@ export function OverviewView({
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                  <span>Pending Deposits</span>
+                  <span>{t.overview.pendingDeposits}</span>
                   <ShieldCheck
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
@@ -1014,9 +1023,7 @@ export function OverviewView({
                   {treasury.pendingContributionsCount}
                 </div>
                 <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {isStaff
-                    ? 'Review in Manager Desk →'
-                    : 'View submission status →'}
+                  {isStaff ? t.overview.reviewManagerDesk : t.overview.viewSubmissionStatus}
                 </div>
               </button>
 
@@ -1032,7 +1039,7 @@ export function OverviewView({
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
-                  <span>Awaiting Disbursement</span>
+                  <span>{t.overview.awaitingDisbursement}</span>
                   <ShieldCheck
                     className="w-4 h-4 text-teal-600 dark:text-teal-400"
                     aria-hidden="true"
@@ -1042,9 +1049,7 @@ export function OverviewView({
                   {treasury.pendingDisbursementsCount}
                 </div>
                 <div className="mt-1 text-xs text-teal-700 dark:text-teal-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {isStaff
-                    ? 'Confirm disbursement in Manager Desk →'
-                    : 'Multi-sig treasury release →'}
+                  {isStaff ? t.overview.confirmDisbursement : t.overview.multiSigRelease}
                 </div>
               </button>
 
@@ -1066,7 +1071,7 @@ export function OverviewView({
                 className="group text-left p-4 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-2"
               >
                 <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  <span>Pending Repayments</span>
+                  <span>{t.overview.pendingRepayments}</span>
                   <CheckCircle2
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
@@ -1076,9 +1081,7 @@ export function OverviewView({
                   {treasury.pendingRepaymentsCount}
                 </div>
                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-                  {isStaff
-                    ? 'Verify installments in Manager Desk →'
-                    : 'Inspect installment receipts →'}
+                  {isStaff ? t.overview.verifyInstallments : t.overview.inspectInstallments}
                 </div>
               </button>
             </div>
