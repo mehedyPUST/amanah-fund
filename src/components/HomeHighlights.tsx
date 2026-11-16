@@ -19,10 +19,6 @@ const EXPLORE_PAGES = [
       'Access member feed updates, cooperative polls, the verified directory, and AES-256-GCM encrypted messages.',
     cta: 'Open Community',
     Icon: MessageSquare,
-    iconClass:
-      'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/70 dark:ring-teal-800/50',
-    borderHover: 'hover:border-teal-300 dark:hover:border-teal-700/70',
-    ctaClass: 'text-teal-700 dark:text-teal-400',
   },
   {
     href: '/how-it-works',
@@ -32,10 +28,6 @@ const EXPLORE_PAGES = [
       'Step-by-step operations for cooperative Members, 5-member Shura Managers, and Administrators.',
     cta: 'View Workflows',
     Icon: HelpCircle,
-    iconClass:
-      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/70 dark:ring-emerald-800/50',
-    borderHover: 'hover:border-emerald-300 dark:hover:border-emerald-700/70',
-    ctaClass: 'text-emerald-700 dark:text-emerald-400',
   },
   {
     href: '/about',
@@ -45,10 +37,6 @@ const EXPLORE_PAGES = [
       '20-share KYC onboarding, dual Shura and Savings committees, AES-256-GCM fields, and SHA-256 audit chain.',
     cta: 'Inspect Architecture',
     Icon: ShieldCheck,
-    iconClass:
-      'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200/70 dark:ring-indigo-800/50',
-    borderHover: 'hover:border-indigo-300 dark:hover:border-indigo-700/70',
-    ctaClass: 'text-indigo-700 dark:text-indigo-400',
   },
   {
     href: '/rules',
@@ -58,16 +46,12 @@ const EXPLORE_PAGES = [
       'Read the official VISION-36 cooperative constitution, arrears policies, and preview the signed PDF.',
     cta: 'Read Charter',
     Icon: ScrollText,
-    iconClass:
-      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200/70 dark:ring-amber-800/50',
-    borderHover: 'hover:border-amber-300 dark:hover:border-amber-700/70',
-    ctaClass: 'text-amber-700 dark:text-amber-400',
   },
 ];
 
 export function HomeHighlights() {
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+    <section className="bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div className="space-y-1">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -96,11 +80,11 @@ export function HomeHighlights() {
             >
               <Link
                 href={item.href}
-                className={`group w-full rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex flex-col justify-between gap-3 transition-colors ${item.borderHover}`}
+                className="group w-full rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/75 via-emerald-50/25 to-white dark:from-emerald-950/35 dark:via-emerald-950/15 dark:to-slate-900 p-4 flex flex-col justify-between gap-3 transition-colors hover:border-emerald-300 dark:hover:border-emerald-700/80"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.iconClass}`}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/80 dark:ring-emerald-800/60">
                       <Icon className="w-4 h-4" aria-hidden="true" />
                     </div>
                     <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -110,12 +94,12 @@ export function HomeHighlights() {
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     {item.label}
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     {item.description}
                   </p>
                 </div>
 
-                <div className={`pt-2 border-t border-slate-200/80 dark:border-slate-800 inline-flex items-center gap-1.5 text-xs font-medium ${item.ctaClass}`}>
+                <div className="pt-2 border-t border-emerald-200/70 dark:border-emerald-900/40 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                   <span>{item.cta}</span>
                   <ArrowRight
                     className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"

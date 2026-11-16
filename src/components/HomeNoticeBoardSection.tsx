@@ -52,9 +52,9 @@ const PRIORITY_META: Record<
     label: 'Notice',
     Icon: Info,
     iconBox:
-      'bg-teal-50 dark:bg-teal-950/50 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400',
-    labelClass: 'text-teal-700 dark:text-teal-400',
-    cardBorder: 'border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700',
+      'bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
+    labelClass: 'text-emerald-700 dark:text-emerald-400',
+    cardBorder: 'border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
   },
 };
 
@@ -268,8 +268,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-20 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
-          : 'scroll-mt-20 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-20 bg-gradient-to-b from-emerald-50/45 via-white to-white dark:from-emerald-950/25 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
+          : 'scroll-mt-20 border-t border-emerald-200/70 dark:border-emerald-900/40 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
       }
     >
       <div className={embedded ? 'space-y-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-6'}>
@@ -318,7 +318,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               <button
                 type="button"
                 onClick={() => (composerOpen ? closeComposer() : openCreateComposer())}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 hover:from-emerald-800 hover:via-emerald-700 hover:to-emerald-600 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
               >
                 {composerOpen ? (
                   <>
@@ -552,7 +552,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(idx * 0.04, 0.2) }}
-                  className={`bg-slate-50/70 dark:bg-slate-950/60 border rounded-xl p-4 transition-colors flex flex-col justify-between gap-3 ${meta.cardBorder}`}
+                  className={`bg-gradient-to-br from-emerald-50/70 via-emerald-50/20 to-white dark:from-emerald-950/35 dark:via-emerald-950/15 dark:to-slate-900 border rounded-xl p-4 transition-colors flex flex-col justify-between gap-3 ${meta.cardBorder}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
@@ -637,7 +637,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words text-justify">
                       {notice.body}
                     </p>
                   </div>
