@@ -616,15 +616,15 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center gap-3 bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800">
+      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] px-4 items-center gap-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
           <Skeleton width={32} height={32} borderRadius={8} />
           <div className="space-y-1 flex-1">
             <Skeleton width={80} height={14} />
             <Skeleton width={100} height={10} />
           </div>
         </div>
-        <div className="lg:col-start-2 lg:row-start-1 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4">
+        <div className="lg:col-start-2 lg:row-start-1 h-[60px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -633,30 +633,30 @@ export function DashboardShell() {
             <Skeleton width={140} height={34} borderRadius={8} />
           </div>
         </div>
-        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:w-[260px] lg:flex-col justify-between bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4">
-          <div className="space-y-2.5">
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5">
+          <div className="space-y-2">
             {Array.from({ length: 10 }).map((_, idx) => (
               <Skeleton key={idx} height={34} borderRadius={8} />
             ))}
           </div>
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
             <Skeleton width="75%" height={16} />
             <Skeleton width="60%" height={12} />
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="lg:col-start-2 lg:row-start-2 p-4 sm:p-6 space-y-6">
-          <Skeleton height={86} borderRadius={12} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <main className="lg:col-start-2 lg:row-start-2 flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 space-y-3">
+          <Skeleton height={82} borderRadius={12} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} height={116} borderRadius={12} />
+              <Skeleton key={i} height={112} borderRadius={12} />
             ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Skeleton height={240} borderRadius={12} />
-            <Skeleton height={240} borderRadius={12} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+            <Skeleton height={220} borderRadius={12} />
+            <Skeleton height={220} borderRadius={12} />
           </div>
-          <Skeleton height={260} borderRadius={12} />
+          <Skeleton height={240} borderRadius={12} />
         </main>
       </div>
     );
@@ -786,14 +786,14 @@ export function DashboardShell() {
 
   return (
     /* Strict 4-Grid Dashboard Layout (Footer Strictly Hidden):
-       Grid 1 (Top-Left, 260px x 64px): Amanah Brand Header
-       Grid 2 (Top-Right, 1fr x 64px): Dashboard Nav
-       Grid 3 (Bottom-Left, 260px x 1fr): Dashboard Sidebar
+       Grid 1 (Top-Left, 252px x 60px): Amanah Brand Header
+       Grid 2 (Top-Right, 1fr x 60px): Dashboard Nav
+       Grid 3 (Bottom-Left, 252px x 1fr): Dashboard Sidebar
        Grid 4 (Bottom-Right, 1fr x 1fr): Multi-Page Dashboard Contents
     */
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-16 w-[260px] px-6 items-center justify-between bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] px-4 items-center justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs sticky top-2.5 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
@@ -810,7 +810,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-0 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-2 lg:top-2.5 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -889,8 +889,8 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:w-[260px] lg:flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)]">
-        <nav className="flex-1 px-3 py-5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs lg:sticky lg:top-[80px] lg:h-[calc(100vh-90px)]">
+        <nav className="flex-1 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
 
@@ -979,8 +979,8 @@ export function DashboardShell() {
       </AnimatePresence>
 
       {/* GRID 4: Multi-Page Dashboard Content */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 w-full flex flex-col p-4 sm:p-5 lg:p-6">
-        <div className="w-full flex-1 space-y-6">
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 w-full flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 lg:p-4">
+        <div className="w-full flex-1 space-y-3.5">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
