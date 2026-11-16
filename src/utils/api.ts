@@ -794,19 +794,22 @@ export const api = {
   emailMonthlyPdfSummary: (monthKey?: string) =>
     apiRequest<{
       ok: boolean;
+      smtpConfigured?: boolean;
       monthKey: string;
       sentCount: number;
       failedCount: number;
       totalMembers: number;
+      totalRecipients?: number;
+      errors?: string[];
       skipped?: boolean;
       reason?: string;
     }>('/api/reports/monthly-pdf/email', {
       method: 'POST',
-      body: JSON.stringify(monthKey ? { monthKey } : {}),
+      body: JSON.stringify(monthKey ? { month: monthKey } : {}),
     }),
   getMonthlyPdfDownloadUrl: (monthKey?: string) =>
     monthKey
-      ? `/api/reports/monthly-pdf/download?monthKey=${encodeURIComponent(monthKey)}`
+      ? `/api/reports/monthly-pdf/download?month=${encodeURIComponent(monthKey)}`
       : '/api/reports/monthly-pdf/download',
   getBackupJsonUrl: () => '/api/reports/backup-json',
 };

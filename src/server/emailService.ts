@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
@@ -31,15 +32,27 @@ export interface TransactionEmailSummaryInput {
 let cachedTransporter: Transporter | null = null;
 let cachedConfigSignature = '';
 
+export function normalizeSmtpPass(rawPass: string, host: string): string {
+  const trimmed = rawPass.trim();
+  if (!trimmed) return '';
+  const isGmailHost = host.toLowerCase().includes('gmail');
+  const isGroupedAppPass = /^[a-z0-9]{4}(?:\s+[a-z0-9]{4}){3}$/i.test(trimmed);
+  if (isGmailHost || isGroupedAppPass) {
+    return trimmed.replace(/\s+/g, '');
+  }
+  return trimmed;
+}
+
 function getSmtpConfig(env: NodeJS.ProcessEnv = process.env) {
   const host = env.SMTP_HOST?.trim() || '';
-  const port = Number(env.SMTP_PORT || 587);
+  const parsedPort = Number(env.SMTP_PORT?.trim() || 587);
+  const port = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 587;
   const secure = String(env.SMTP_SECURE || '').trim().toLowerCase() === 'true' || port === 465;
   const user = env.SMTP_USER?.trim() || '';
-  const pass = env.SMTP_PASS?.trim() || '';
+  const pass = normalizeSmtpPass(env.SMTP_PASS || '', host);
   const from = env.SMTP_FROM?.trim() || user || 'noreply@amanah-coop.local';
 
-  return { host, port: Number.isFinite(port) && port > 0 ? port : 587, secure, user, pass, from };
+  return { host, port, secure, user, pass, from };
 }
 
 export function isSmtpConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -51,12 +64,17 @@ function getTransporter(): { transporter: Transporter; from: string } | null {
   const cfg = getSmtpConfig();
   if (!cfg.host) return null;
 
-  const sig = `${cfg.host}:${cfg.port}:${cfg.secure}:${cfg.user}:${cfg.pass ? '1' : '0'}:${cfg.from}`;
+  const passHash = cfg.pass ? createHash('sha256').update(cfg.pass).digest('hex').slice(0, 12) : '0';
+  const sig = `${cfg.host}:${cfg.port}:${cfg.secure}:${cfg.user}:${passHash}:${cfg.from}`;
   if (!cachedTransporter || cachedConfigSignature !== sig) {
     cachedTransporter = nodemailer.createTransport({
       host: cfg.host,
       port: cfg.port,
       secure: cfg.secure,
+      requireTLS: !cfg.secure && cfg.port === 587,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       ...(cfg.user && cfg.pass
         ? {
             auth: {
@@ -124,6 +142,8 @@ export async function sendEmail(options: {
     });
     return { sent: true, messageId: info.messageId };
   } catch (err) {
+    cachedTransporter = null;
+    cachedConfigSignature = '';
     const msg = err instanceof Error ? err.message : 'SMTP delivery failed';
     console.warn('[EmailService] Email dispatch error:', msg);
     return { sent: false, reason: msg };
@@ -367,8 +387,11 @@ export async function sendMonthlyPdfSummaryEmail(options: {
       if (res.reason && !errors.includes(res.reason)) {
         errors.push(res.reason);
       }
-      if (res.reason === 'SMTP_NOT_CONFIGURED') {
-        failedCount = options.recipients.length;
+      const fatalSmtpError =
+        res.reason === 'SMTP_NOT_CONFIGURED' ||
+        /EAUTH|Invalid login|535|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ESOCKET/i.test(res.reason || '');
+      if (fatalSmtpError) {
+        failedCount = options.recipients.length - sentCount;
         break;
       }
     }

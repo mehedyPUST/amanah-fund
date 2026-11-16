@@ -4969,7 +4969,7 @@ apiRouter.post(
       });
 
       broadcastRealtimeEvent('members:updated', { userId: resolvedUser.id });
-      broadcastRealtimeEvent('notification:created', { type: 'system_announcement' });
+      broadcastRealtimeEvent('notification:created', { type: 'cooperative_notice' });
       broadcastRealtimeEvent('audit:updated', {
         action: 'ADMIN_TEMP_PASSWORD_RESET',
         resourceType: 'auth',
@@ -4979,7 +4979,12 @@ apiRouter.post(
       res.json({
         ok: true,
         emailSent: emailResult.sent,
+        emailProvider: 'smtp',
         emailReason: emailResult.reason,
+        emailError: emailResult.reason,
+        recipientEmail: resolvedUser.email,
+        memberName: resolvedUser.name,
+        memberCode: resolvedUser.memberCode,
         tempPassword: emailResult.sent ? undefined : generatedTemp,
         requests: nextState.passwordResetRequests || [],
       });
@@ -8110,7 +8115,7 @@ apiRouter.delete(
 
 apiRouter.get('/reports/monthly-pdf/download', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const monthParam = String(req.query?.month || '').trim();
+    const monthParam = String(req.query?.month || req.query?.monthKey || '').trim();
     const monthKey = /^\d{4}-\d{2}$/.test(monthParam)
       ? monthParam
       : new Date().toISOString().slice(0, 7);
@@ -8200,11 +8205,17 @@ apiRouter.post(
         resourceId: summary.monthKey,
       });
 
+      const smtpConfigured = isSmtpConfigured();
       res.json({
         ok: emailStats.sentCount > 0,
-        smtpConfigured: isSmtpConfigured(),
+        smtpConfigured,
+        skipped: !smtpConfigured,
+        reason: !smtpConfigured
+          ? 'SMTP is not configured on the server.'
+          : emailStats.errors[0] || undefined,
         monthKey: summary.monthKey,
         totalRecipients: emailStats.totalRecipients,
+        totalMembers: emailStats.totalRecipients,
         sentCount: emailStats.sentCount,
         failedCount: emailStats.failedCount,
         errors: emailStats.errors,

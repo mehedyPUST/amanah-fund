@@ -628,7 +628,7 @@ export function AdminReportsView({
                           'Generates the Monthly Cooperative Fund Summary PDF attachment and emails it to all active members.',
                         details: [
                           { label: 'Target Month', value: pdfMonthKey },
-                          { label: 'Attachment', value: `amanah-summary-${pdfMonthKey}.pdf` },
+                          { label: 'Attachment', value: `amanah-monthly-summary-${pdfMonthKey}.pdf` },
                         ],
                         confirmLabel: 'Send Monthly PDF Emails',
                         run: async () => {
@@ -636,6 +636,8 @@ export function AdminReportsView({
                           try {
                             const res = await api.emailMonthlyPdfSummary(pdfMonthKey);
                             await onRefresh();
+                            const totalTargets = res.totalRecipients ?? res.totalMembers ?? 0;
+                            const firstError = res.errors?.[0] || res.reason;
                             setModal({
                               mode: 'notice',
                               tone: res.sentCount > 0 ? 'emerald' : 'amber',
@@ -644,12 +646,17 @@ export function AdminReportsView({
                                   ? 'Monthly PDF Summaries Emailed'
                                   : 'Monthly PDF Email Dispatch Summary',
                               description: res.skipped
-                                ? res.reason || 'SMTP is not configured on the server.'
-                                : `Dispatched monthly PDF summary to ${res.sentCount} of ${res.totalMembers} active member(s).`,
+                                ? firstError || 'SMTP is not configured on the server.'
+                                : res.sentCount === 0 && firstError
+                                  ? `SMTP delivery error: ${firstError}`
+                                  : `Dispatched monthly PDF summary to ${res.sentCount} of ${totalTargets} active member(s).`,
                               details: [
                                 { label: 'Month', value: res.monthKey },
                                 { label: 'Delivered', value: `${res.sentCount}` },
                                 { label: 'Failed / Skipped', value: `${res.failedCount}` },
+                                ...(firstError && res.sentCount === 0
+                                  ? [{ label: 'SMTP Detail', value: firstError }]
+                                  : []),
                               ],
                             });
                           } catch (err) {

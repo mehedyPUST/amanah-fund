@@ -34,6 +34,7 @@ import {
 import {
   buildTransactionSummaryEmailPayload,
   isSmtpConfigured,
+  normalizeSmtpPass,
 } from '../src/server/emailService.ts';
 import {
   buildMonthlyFundSummaryData,
@@ -1083,6 +1084,10 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     expect(isSmtpConfigured({} as NodeJS.ProcessEnv)).toBe(false);
     expect(isSmtpConfigured({ SMTP_HOST: 'smtp.example.org' } as unknown as NodeJS.ProcessEnv)).toBe(
       true
+    );
+    expect(normalizeSmtpPass(' abcd efgh ijkl mnop ', 'smtp.gmail.com')).toBe('abcdefghijklmnop');
+    expect(normalizeSmtpPass('custom pass with spaces', 'smtp.custom.org')).toBe(
+      'custom pass with spaces'
     );
 
     const payload = buildTransactionSummaryEmailPayload({
