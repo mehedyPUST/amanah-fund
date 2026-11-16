@@ -60,15 +60,15 @@ export function Hero({
   }
 
   return (
-    <div className={embedded ? 'space-y-2.5' : 'space-y-3 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6'}>
+    <div className={embedded ? 'space-y-2.5' : 'space-y-2.5 max-w-7xl mx-auto'}>
       {/* Hero Banner Card */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-br from-emerald-50/75 via-teal-50/35 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-6 shadow-2xs"
+        className="bg-gradient-to-br from-emerald-50/75 via-teal-50/35 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 lg:p-7 shadow-2xs"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-7 space-y-4">
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
@@ -81,16 +81,16 @@ export function Hero({
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-[2.1rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+              <h1 className="text-2xl sm:text-3xl lg:text-[2.25rem] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                 Cooperative Treasury Governed by Shariah &amp; 2/3 Consensus
               </h1>
 
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
+              <p className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
                 A 20-member cooperative pooling ৳5,000 monthly savings for strictly 0% Qard Hasan mutual relief and 2/3-approved Halal real-economy ventures.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
               <Link
                 href={user ? '/dashboard' : '/signup'}
                 className="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs sm:text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-2 whitespace-nowrap"
@@ -158,7 +158,7 @@ export function Hero({
                   alt="Qard Hasan cooperative banking alternative visualization for Amanah"
                   referrerPolicy="no-referrer"
                   onError={() => setHeroImgFailed(true)}
-                  className="w-full h-auto max-h-[260px] object-contain rounded-lg"
+                  className="w-full h-auto max-h-[250px] object-contain rounded-lg"
                 />
               )}
             </div>

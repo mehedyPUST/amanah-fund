@@ -18,8 +18,8 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-2xs">
-      <div className="px-4 sm:px-6 py-6 sm:py-7">
+    <footer className="max-w-7xl mx-auto w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-2xs">
+      <div className="px-5 sm:px-6 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5">

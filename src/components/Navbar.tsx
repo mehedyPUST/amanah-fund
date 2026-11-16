@@ -34,9 +34,13 @@ export function Navbar() {
   const manualScrollLockUntilRef = useRef(0);
 
   const isAuthenticated = !authChecking && Boolean(user);
+  const isActiveMember = isAuthenticated && user?.status === 'active';
 
   const navLinks: PublicNavItem[] = [
     { id: 'overview', href: '/#overview', label: 'Overview' },
+    ...(isActiveMember
+      ? [{ id: 'notice-board' as const, href: '/#notice-board', label: 'Notices' }]
+      : []),
     { id: 'community', href: '/#community', label: 'Community' },
     { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
     { id: 'how-it-works', href: '/#how-it-works', label: 'How It Works' },
@@ -131,6 +135,9 @@ export function Navbar() {
 
   function isLinkActive(link: PublicNavItem): boolean {
     if (pathname === '/') {
+      if (link.id === 'architecture' && activeHomeSection === 'lifecycle') {
+        return true;
+      }
       return link.id === activeHomeSection;
     }
     if (link.altPath && pathname === link.altPath) {
@@ -164,8 +171,8 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-2 lg:top-2.5 z-40">
-      <div className="h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-6">
+    <header className="sticky top-2 sm:top-2.5 z-40 max-w-7xl mx-auto w-full">
+      <div className="h-[56px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
         <Link
           href="/#overview"
           onClick={(e) => {
@@ -179,12 +186,17 @@ export function Navbar() {
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-105">
             <Shield className="w-4 h-4" aria-hidden="true" />
           </span>
-          <span className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0 transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
-            Amanah
-          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0 transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+              Amanah
+            </span>
+            <span className="hidden lg:inline text-[11px] font-medium text-teal-700 dark:text-teal-400 whitespace-nowrap">
+              Treasury
+            </span>
+          </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
+        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1" aria-label="Primary navigation">
           {navLinks.map((link) => {
             const active = isLinkActive(link);
             return (
@@ -192,7 +204,7 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link, false)}
-                className={`relative px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
+                className={`relative px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-[13px] font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-emerald-700 dark:text-emerald-400'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
