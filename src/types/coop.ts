@@ -261,6 +261,9 @@ export interface LoanRequest {
   totalEligibleVoters: number;
   voteInitiatedAt?: string;
   voteInitiatedBy?: string;
+  /** ISO timestamp when the secret ballot closes; members may change votes until this time (or until reveal). */
+  voteDeadlineAt?: string;
+  voteDurationHours?: number;
   voteResultRevealed?: boolean;
   voteResultRevealedAt?: string;
   voteResultRevealedBy?: string;

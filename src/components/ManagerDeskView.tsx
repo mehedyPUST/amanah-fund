@@ -57,6 +57,7 @@ type DeskModalState =
       inputPlaceholder?: string;
       inputRequired?: boolean;
       inputMultiline?: boolean;
+      initialInputValue?: string;
       run: (inputValue: string) => Promise<void>;
     }
   | {
@@ -284,21 +285,26 @@ export function ManagerDeskView({
       tone: 'emerald',
       title: `Initiate 2/3 Secret Ballot (${loan.id})`,
       description:
-        'Opening the Opinion Ballot notifies all eligible cooperative members to vote privately. Votes remain confidential until revealed.',
+        'Opening the Opinion Ballot notifies all eligible members to vote privately. Set how long voting stays open — members may change their ballot until the deadline. Results stay sealed until you reveal them.',
       details: [
         { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
         { label: 'Principal', value: formatMoney(loan.amount, ccy) },
         { label: 'Repayment Plan', value: `${loan.installmentMonths} months · 0% interest` },
         { label: 'Purpose', value: loan.purpose },
       ],
+      inputLabel: 'Voting window (hours)',
+      inputPlaceholder: 'e.g. 48',
+      inputRequired: true,
+      initialInputValue: '48',
       confirmLabel: 'Open Secret 2/3 Ballot',
-      run: async () => {
-        await api.initiateLoanVote(loan.id);
+      run: async (hoursInput) => {
+        const hours = Math.min(720, Math.max(1, Math.round(Number(hoursInput) || 48)));
+        await api.initiateLoanVote(loan.id, { durationHours: hours });
         await onRefresh();
         showNotice(
           'emerald',
           'Opinion Ballot Opened',
-          `Secret voting is now live for ${loan.id}. Active members have been notified.`
+          `Secret voting is live for ${loan.id} for ${hours} hours. Members can change votes until the deadline.`
         );
       },
     });
@@ -1675,6 +1681,7 @@ export function ManagerDeskView({
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
         inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        initialInputValue={modal?.mode === 'confirm' ? modal.initialInputValue || '' : ''}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

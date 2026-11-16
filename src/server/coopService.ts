@@ -809,13 +809,17 @@ export function hydrateLoanForViewer(loan: LoanRequest, viewer: PublicUser): Loa
       loan.status !== 'pending_manager_review' &&
       loan.status !== 'pending_guarantor');
 
+  // Before reveal: everyone sees only the number of ballots cast — not the tally.
+  // After reveal (or admin audit): show approve/reject counts.
+  const showTally = isAdmin || isRevealed;
+
   return {
     ...loan,
     votes: isAdmin ? anonymizedVotes : anonymizedVotes.filter((v) => v.isSelf),
     voteResultRevealed: isRevealed,
     totalVotesCast: loan.votes.length,
-    approveCount: isAdmin || isRevealed ? approveCountRaw : undefined,
-    rejectCount: isAdmin || isRevealed ? rejectCountRaw : undefined,
+    approveCount: showTally ? approveCountRaw : undefined,
+    rejectCount: showTally ? rejectCountRaw : undefined,
     adminVoteLedger: isAdmin
       ? loan.votes.map((v) => ({
           ...v,

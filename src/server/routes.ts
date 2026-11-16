@@ -2257,6 +2257,11 @@ apiRouter.post(
     try {
       const { id } = req.params;
       const viewer = req.authUser!;
+      // Voting window in hours (default 48). Manager may set 1–720 (30 days).
+      const rawHours = Number(req.body?.durationHours ?? req.body?.voteDurationHours ?? 48);
+      const durationHours = Number.isFinite(rawHours)
+        ? Math.min(720, Math.max(1, Math.round(rawHours)))
+        : 48;
       let updatedLoan: LoanRequest | null = null;
 
       await updateVaultState((draft) => {
@@ -2270,10 +2275,14 @@ apiRouter.post(
         }
 
         const { activeVoters, requiredApprovals } = computeRequiredApprovals(draft);
-        const now = new Date().toISOString();
+        const nowDate = new Date();
+        const now = nowDate.toISOString();
+        const deadline = new Date(nowDate.getTime() + durationHours * 60 * 60 * 1000).toISOString();
         loan.status = 'pending_vote';
         loan.voteInitiatedAt = now;
         loan.voteInitiatedBy = viewer.name;
+        loan.voteDurationHours = durationHours;
+        loan.voteDeadlineAt = deadline;
         loan.voteResultRevealed = false;
         loan.totalEligibleVoters = activeVoters;
         loan.requiredApprovals = requiredApprovals;
@@ -2289,7 +2298,7 @@ apiRouter.post(
             recipientName: member.name,
             recipientUserId: member.id,
             subject: `Opinion Ballot Open — Qard Hasan Vote: ${loan.borrowerName} (${loan.id})`,
-            body: `Manager ${viewer.name} opened voting on ${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan application for "${loan.purpose}". Cast your secret ballot in Opinion Ballot (Treasury liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
+            body: `Manager ${viewer.name} opened voting on ${loan.borrowerName}'s ${loan.amount} ${draft.fundConfig.currency} Qard Hasan application for "${loan.purpose}". Ballot closes at ${deadline}. Cast or change your secret vote in Opinion Ballot until the deadline (Treasury liquidity: ${overview.treasury.availableLiquidity} ${draft.fundConfig.currency}).`,
             relatedId: loan.id,
           });
         });
@@ -2301,11 +2310,13 @@ apiRouter.post(
           action: 'LOAN_VOTE_INITIATED',
           resourceType: 'loan',
           resourceId: loan.id,
-          summary: `${viewer.name} initiated secret Opinion Ballot voting on ${loan.borrowerName}'s Qard Hasan request (${loan.id})`,
+          summary: `${viewer.name} initiated secret Opinion Ballot on ${loan.borrowerName}'s Qard Hasan request (${loan.id}) — ${durationHours}h window`,
           payload: {
             loanId: loan.id,
             requiredApprovals,
             totalEligibleVoters: activeVoters,
+            durationHours,
+            voteDeadlineAt: deadline,
           },
         });
         return draft;
@@ -2389,12 +2400,16 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
       if (loan.status !== 'pending_vote' || loan.voteResultRevealed) {
         throw new Error('VOTING_CLOSED');
       }
-      if (loan.votes.some((v) => v.voterId === viewer.id)) {
-        throw new Error('ALREADY_VOTED');
+      if (loan.voteDeadlineAt && new Date(loan.voteDeadlineAt).getTime() < Date.now()) {
+        throw new Error('VOTING_DEADLINE_PASSED');
+      }
+      if (loan.borrowerId === viewer.id) {
+        throw new Error('CANNOT_VOTE_OWN');
       }
 
       const castAt = new Date().toISOString();
-      loan.votes.push({
+      const existingIdx = loan.votes.findIndex((v) => v.voterId === viewer.id);
+      const ballot = {
         voterId: viewer.id,
         voterName: viewer.name,
         voterRole: viewer.role,
@@ -2407,20 +2422,29 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
           decision,
           castAt,
         }),
-      });
+      };
+      const isChange = existingIdx >= 0;
+      if (isChange) {
+        loan.votes[existingIdx] = ballot;
+      } else {
+        loan.votes.push(ballot);
+      }
       loan.voteResultRevealed = false;
       updatedLoan = loan;
 
       appendAuditLog(draft, {
         actor: viewer,
-        action: 'LOAN_VOTE_CAST',
+        action: isChange ? 'LOAN_VOTE_CHANGED' : 'LOAN_VOTE_CAST',
         resourceType: 'vote',
         resourceId: loan.id,
-        summary: `An anonymized verified ballot was cast on Qard Hasan request ${loan.id} (${loan.votes.length} total ballots cast)`,
+        summary: isChange
+          ? `An anonymized verified ballot was changed on Qard Hasan request ${loan.id} (${loan.votes.length} total ballots)`
+          : `An anonymized verified ballot was cast on Qard Hasan request ${loan.id} (${loan.votes.length} total ballots cast)`,
         payload: {
           loanId: loan.id,
           decision,
           totalVotesCast: loan.votes.length,
+          changed: isChange,
         },
       });
 
@@ -2450,14 +2474,91 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
       res.status(409).json({ error: 'Voting has already closed for this loan request.' });
       return;
     }
-    if (err instanceof Error && err.message === 'ALREADY_VOTED') {
-      res.status(409).json({ error: 'You have already cast your vote on this loan request.' });
+    if (err instanceof Error && err.message === 'VOTING_DEADLINE_PASSED') {
+      res.status(409).json({
+        error: 'The voting deadline has passed. Ballots can no longer be cast or changed.',
+      });
+      return;
+    }
+    if (err instanceof Error && err.message === 'CANNOT_VOTE_OWN') {
+      res.status(403).json({ error: 'You cannot vote on your own Qard Hasan application.' });
       return;
     }
     console.error('Vote error:', err);
     res.status(500).json({ error: 'Failed to record vote.' });
   }
 });
+
+/** Manager/Admin may extend the ballot deadline before results are revealed. */
+apiRouter.post(
+  '/loans/:id/extend-vote-deadline',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      const extraHoursRaw = Number(req.body?.additionalHours ?? req.body?.hours ?? 24);
+      const additionalHours = Number.isFinite(extraHoursRaw)
+        ? Math.min(720, Math.max(1, Math.round(extraHoursRaw)))
+        : 24;
+      let updatedLoan: LoanRequest | null = null;
+
+      await updateVaultState((draft) => {
+        const loan = draft.loans.find((l) => l.id === id);
+        if (!loan) return draft;
+        if (loan.status !== 'pending_vote' || loan.voteResultRevealed) {
+          throw new Error('VOTING_NOT_OPEN');
+        }
+        const base = loan.voteDeadlineAt
+          ? new Date(loan.voteDeadlineAt)
+          : new Date();
+        // If deadline already passed, extend from now; otherwise from current deadline.
+        const from = base.getTime() < Date.now() ? new Date() : base;
+        const nextDeadline = new Date(from.getTime() + additionalHours * 60 * 60 * 1000).toISOString();
+        loan.voteDeadlineAt = nextDeadline;
+        loan.voteDurationHours = (loan.voteDurationHours || 0) + additionalHours;
+        updatedLoan = loan;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'LOAN_VOTE_DEADLINE_EXTENDED',
+          resourceType: 'loan',
+          resourceId: loan.id,
+          summary: `${viewer.name} extended ballot deadline on ${loan.id} by ${additionalHours}h (new deadline ${nextDeadline})`,
+          payload: {
+            loanId: loan.id,
+            additionalHours,
+            voteDeadlineAt: nextDeadline,
+          },
+        });
+        return draft;
+      });
+
+      if (!updatedLoan) {
+        res.status(404).json({ error: 'Loan request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('loan:reviewed', { loanId: id, decision: 'deadline_extended' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'LOAN_VOTE_DEADLINE_EXTENDED',
+        resourceType: 'loan',
+        resourceId: id,
+      });
+      res.json({ loan: hydrateLoanForViewer(updatedLoan, viewer) });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'VOTING_NOT_OPEN') {
+        res.status(409).json({
+          error: 'Ballot is not open; deadline can only be extended before results are revealed.',
+        });
+        return;
+      }
+      console.error('Extend vote deadline error:', err);
+      res.status(500).json({ error: 'Failed to extend voting deadline.' });
+    }
+  }
+);
 
 apiRouter.post(
   '/loans/:id/reveal-vote',

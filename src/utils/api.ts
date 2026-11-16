@@ -262,9 +262,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ decision, note }),
     }),
-  initiateLoanVote: (id: string) =>
+  initiateLoanVote: (id: string, payload?: { durationHours?: number }) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/initiate-vote`, {
       method: 'POST',
+      body: JSON.stringify(payload || {}),
+    }),
+  extendLoanVoteDeadline: (id: string, additionalHours: number) =>
+    apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/extend-vote-deadline`, {
+      method: 'POST',
+      body: JSON.stringify({ additionalHours }),
     }),
   revealLoanVote: (id: string) =>
     apiRequest<{ loan: LoanRequest }>(`/api/loans/${id}/reveal-vote`, {

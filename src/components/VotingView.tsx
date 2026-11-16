@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   Check,
+  Clock,
   Eye,
   EyeOff,
   Lock,
@@ -85,6 +86,26 @@ export function VotingView({
     | null
   >(null);
   const [modalBusy, setModalBusy] = useState(false);
+  /** Tick every second so deadline countdowns stay live */
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  function formatCountdown(deadlineIso: string | undefined): string {
+    if (!deadlineIso) return 'No deadline set';
+    const ms = new Date(deadlineIso).getTime() - nowTick;
+    if (ms <= 0) return 'Deadline passed';
+    const totalSec = Math.floor(ms / 1000);
+    const d = Math.floor(totalSec / 86400);
+    const h = Math.floor((totalSec % 86400) / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (d > 0) return `${d}d ${h}h ${m}m ${s}s`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
+  }
 
   // Create decision poll drawer state (Manager/Admin)
   const [showCreatePoll, setShowCreatePoll] = useState(false);
@@ -120,23 +141,47 @@ export function VotingView({
       return;
     }
     const loan = loans.find((l) => l.id === loanId);
+    if (loan?.voteDeadlineAt && new Date(loan.voteDeadlineAt).getTime() < Date.now()) {
+      setModal({
+        mode: 'notice',
+        tone: 'amber',
+        title: 'Voting Deadline Passed',
+        description: 'The ballot window has closed. You can no longer cast or change your vote.',
+      });
+      return;
+    }
+    const isChange = Boolean(loan?.votes.some((v) => v.isSelf || v.voterId === user.id));
     setModal({
       mode: 'confirm',
       tone: decision === 'upvote' ? 'emerald' : 'red',
-      title: `Cast Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} Ballot?`,
-      description:
-        'Your ballot is cryptographically signed and sealed until Manager or Admin reveals the tally.',
+      title: isChange
+        ? `Change Ballot to ${decision === 'upvote' ? 'Upvote' : 'Downvote'}?`
+        : `Cast Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} Ballot?`,
+      description: isChange
+        ? 'Your previous sealed ballot will be replaced. You may change again until the deadline or until results are revealed.'
+        : 'Your ballot is cryptographically signed and sealed until Manager reveals the tally. You may change it until the deadline.',
       details: [
         { label: 'Loan ID', value: loanId },
         ...(loan
           ? [
               { label: 'Applicant', value: `${loan.borrowerName} (${loan.borrowerCode})` },
               { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+              { label: 'Purpose', value: loan.purpose },
+              {
+                label: 'Repayment',
+                value: `${loan.installmentMonths} × ${formatMoney(loan.monthlyInstallment, ccy)}`,
+              },
             ]
           : []),
         { label: 'Ballot Choice', value: decision.toUpperCase() },
       ],
-      confirmLabel: decision === 'upvote' ? 'Confirm Upvote' : 'Confirm Downvote',
+      confirmLabel: isChange
+        ? decision === 'upvote'
+          ? 'Change to Upvote'
+          : 'Change to Downvote'
+        : decision === 'upvote'
+          ? 'Confirm Upvote'
+          : 'Confirm Downvote',
       run: async () => {
         setBusyId(loanId);
         try {
@@ -145,8 +190,10 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Secret Ballot Recorded',
-            description: `Your secret ${decision.toUpperCase()} ballot has been cryptographically recorded on ${loanId}. Results remain sealed until Manager/Admin reveals them.`,
+            title: isChange ? 'Ballot Updated' : 'Secret Ballot Recorded',
+            description: isChange
+              ? `Your ballot on ${loanId} was changed to ${decision.toUpperCase()}. Results stay sealed until reveal.`
+              : `Your secret ${decision.toUpperCase()} ballot has been recorded on ${loanId}. You may change it until the deadline.`,
           });
         } catch (err) {
           setModal({
@@ -154,6 +201,44 @@ export function VotingView({
             tone: 'red',
             title: 'Vote Submission Failed',
             description: err instanceof Error ? err.message : 'Failed to submit vote.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
+  function handleExtendDeadline(loanId: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Extend Voting Deadline?',
+      description:
+        'Add more time before results are revealed. Members can continue casting or changing ballots until the new deadline.',
+      details: [{ label: 'Loan ID', value: loanId }],
+      inputLabel: 'Additional hours',
+      inputPlaceholder: 'e.g. 24',
+      inputRequired: true,
+      confirmLabel: 'Extend Deadline',
+      run: async (hoursInput) => {
+        const hours = Math.min(720, Math.max(1, Math.round(Number(hoursInput) || 24)));
+        setBusyId(`extend-${loanId}`);
+        try {
+          await api.extendLoanVoteDeadline(loanId, hours);
+          await onRefresh();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Deadline Extended',
+            description: `Ballot window for ${loanId} extended by ${hours} hours.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Extend Failed',
+            description: err instanceof Error ? err.message : 'Failed to extend deadline.',
           });
         } finally {
           setBusyId(null);
@@ -833,6 +918,15 @@ export function VotingView({
                   const myVote = loan.votes.find((v) => v.isSelf || v.voterId === user.id);
                   const adminLedger = loan.adminVoteLedger || [];
                   const ledgerExpanded = Boolean(expandedAdminLedgers[loan.id]);
+                  const deadlinePassed = Boolean(
+                    loan.voteDeadlineAt && new Date(loan.voteDeadlineAt).getTime() < nowTick
+                  );
+                  const votingOpen =
+                    loan.status === 'pending_vote' && !isRevealed && !deadlinePassed;
+                  const castProgressPct = Math.min(
+                    100,
+                    Math.round((totalCast / Math.max(1, loan.totalEligibleVoters)) * 100)
+                  );
 
                   return (
                     <article
@@ -840,7 +934,7 @@ export function VotingView({
                       className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
                               {loan.id}
@@ -852,7 +946,7 @@ export function VotingView({
                             {!isRevealed && loan.status === 'pending_vote' && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
                                 <Lock className="w-3 h-3" aria-hidden="true" />
-                                <span>Poll Ongoing</span>
+                                <span>{deadlinePassed ? 'Deadline Passed' : 'Poll Ongoing'}</span>
                               </span>
                             )}
                           </div>
@@ -879,9 +973,69 @@ export function VotingView({
                               </span>
                             </div>
                           )}
+
+                          {/* Full applicant summary for voters */}
+                          {loan.status === 'pending_vote' && !isRevealed && (
+                            <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 divide-y divide-slate-200/70 dark:divide-slate-800 text-xs">
+                              <div className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
+                                Applicant Application Details
+                              </div>
+                              {[
+                                {
+                                  label: 'Applicant',
+                                  value: `${loan.borrowerName} (${loan.borrowerCode})`,
+                                },
+                                { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+                                {
+                                  label: 'Schedule',
+                                  value: `${loan.installmentMonths} × ${formatMoney(loan.monthlyInstallment, ccy)}`,
+                                },
+                                { label: 'Purpose', value: loan.purpose },
+                                {
+                                  label: 'Requested',
+                                  value: formatDateTime(loan.requestedAt),
+                                },
+                                {
+                                  label: 'Eligibility snapshot',
+                                  value: loan.eligibilitySnapshot?.eligible
+                                    ? 'Eligible at application'
+                                    : loan.eligibilitySnapshot?.reasons?.[0] || 'Recorded',
+                                },
+                              ].map((row) => (
+                                <div
+                                  key={row.label}
+                                  className="px-3 py-1.5 flex items-start justify-between gap-3"
+                                >
+                                  <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                                    {row.label}
+                                  </span>
+                                  <span className="text-right text-slate-900 dark:text-slate-100 break-all">
+                                    {row.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <div className="lg:w-80 shrink-0 space-y-2.5 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                          {loan.status === 'pending_vote' && !isRevealed && (
+                            <div className="flex items-center justify-between gap-2 text-xs pb-2 border-b border-slate-200 dark:border-slate-800">
+                              <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
+                                <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                                <span>Deadline</span>
+                              </span>
+                              <span
+                                className={`font-mono tabular-nums font-semibold ${
+                                  deadlinePassed
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-slate-900 dark:text-white'
+                                }`}
+                              >
+                                {formatCountdown(loan.voteDeadlineAt)}
+                              </span>
+                            </div>
+                          )}
                           {canSeeTally ? (
                             <>
                               <div className="flex items-center justify-between text-xs">
@@ -913,33 +1067,61 @@ export function VotingView({
                               </div>
                             </>
                           ) : (
-                            <div className="space-y-1.5 text-xs">
+                            <div className="space-y-2 text-xs">
                               <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
                                 <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                                <span>Poll Ongoing — Secret Ballot</span>
+                                <span>Secret Ballot — Results Hidden</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  Ballots cast
+                                </span>
+                                <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                                  {totalCast} / {loan.totalEligibleVoters}
+                                </span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-amber-500 transition-all duration-300"
+                                  style={{ width: `${castProgressPct}%` }}
+                                />
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                {totalCast} ballot{totalCast === 1 ? '' : 's'} submitted so far (of{' '}
-                                {loan.totalEligibleVoters} eligible voters). Tallies stay hidden
-                                until Manager reveals the vote result.
+                                Only the number of votes cast is visible. Approve/reject tallies
+                                stay sealed until a manager reveals the result.
                               </p>
                             </div>
                           )}
 
                           {isStaff && loan.status === 'pending_vote' && !isRevealed && (
-                            <button
-                              type="button"
-                              disabled={busyId === `reveal-${loan.id}`}
-                              onClick={() => void handleRevealLoanVote(loan.id)}
-                              className="w-full mt-1 px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                            >
-                              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>
-                                {busyId === `reveal-${loan.id}`
-                                  ? 'Revealing Result…'
-                                  : 'Stop Voting & Reveal Result'}
-                              </span>
-                            </button>
+                            <div className="space-y-2 pt-1">
+                              <button
+                                type="button"
+                                disabled={busyId === `extend-${loan.id}`}
+                                onClick={() => handleExtendDeadline(loan.id)}
+                                className="w-full px-3 py-2 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>
+                                  {busyId === `extend-${loan.id}`
+                                    ? 'Extending…'
+                                    : 'Extend Deadline'}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busyId === `reveal-${loan.id}`}
+                                onClick={() => void handleRevealLoanVote(loan.id)}
+                                className="w-full px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>
+                                  {busyId === `reveal-${loan.id}`
+                                    ? 'Revealing Result…'
+                                    : 'Stop Voting & Reveal Result'}
+                                </span>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1014,23 +1196,27 @@ export function VotingView({
                         </div>
                       )}
 
-                      {/* Member/Manager Vote Controls */}
+                      {/* Member/Manager Vote Controls — change allowed until deadline */}
                       {loan.status === 'pending_vote' && !isRevealed && !isAdmin && (
-                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                          {myVote ? (
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                          {myVote && (
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                              <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                              <Vote className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                               <span>
-                                You cast an{' '}
+                                Your current ballot:{' '}
                                 <strong className="uppercase">
                                   {myVote.decision === 'approve' ? 'Upvote' : 'Downvote'}
                                 </strong>{' '}
-                                on {formatDateTime(myVote.castAt)} (Sig:{' '}
+                                · {formatDateTime(myVote.castAt)} (Sig:{' '}
                                 {shortHash(myVote.signatureHash)}). Other members cannot see your
-                                vote.
+                                choice.
+                                {votingOpen
+                                  ? ' You may change it until the deadline.'
+                                  : ' Voting is closed for changes.'}
                               </span>
                             </div>
-                          ) : (
+                          )}
+                          {votingOpen ? (
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                               <input
                                 type="text"
@@ -1050,7 +1236,7 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Upvote</span>
+                                  <span>{myVote ? 'Change to Upvote' : 'Upvote'}</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1059,10 +1245,17 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Downvote</span>
+                                  <span>{myVote ? 'Change to Downvote' : 'Downvote'}</span>
                                 </button>
                               </div>
                             </div>
+                          ) : (
+                            !myVote && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                The voting deadline has passed. Waiting for a manager to reveal
+                                results.
+                              </p>
+                            )
                           )}
                         </div>
                       )}
