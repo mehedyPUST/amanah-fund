@@ -117,6 +117,9 @@ export function AdminSiteSettingsView({
     config?.managerCycleStartDate || '2027-01-01'
   );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
+  const [monthlyReportAutoEmail, setMonthlyReportAutoEmail] = useState<boolean>(
+    config?.monthlyReportAutoEmail ?? true
+  );
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
   const [modal, setModal] = useState<SettingsModalState | null>(null);
@@ -144,6 +147,7 @@ export function AdminSiteSettingsView({
       setManagerCycleMonths(String(config.managerCycleMonths ?? 3));
       setManagerCycleStartDate(config.managerCycleStartDate || '2027-01-01');
       setCurrency(config.currency);
+      setMonthlyReportAutoEmail(config.monthlyReportAutoEmail ?? true);
       setHalalThesis(config.halalInvestmentThesis);
     }
   }, [config]);
@@ -191,6 +195,10 @@ export function AdminSiteSettingsView({
         { label: 'Manager Cycle Interval', value: `Every ${cycleMonthsNum} Month(s)` },
         { label: 'Cycle Anchor Date', value: formatShortDate(managerCycleStartDate) },
         { label: 'Maturity Date', value: formatShortDate(maturityDate) },
+        {
+          label: 'Monthly PDF Auto-Email',
+          value: monthlyReportAutoEmail ? 'Enabled' : 'Disabled',
+        },
       ],
       confirmLabel: 'Save Site Settings',
       run: async () => {
@@ -211,6 +219,7 @@ export function AdminSiteSettingsView({
           managerCycleMonths: cycleMonthsNum,
           managerCycleStartDate,
           currency,
+          monthlyReportAutoEmail,
           halalInvestmentThesis: halalThesis,
         });
         await onRefresh();
@@ -684,6 +693,21 @@ export function AdminSiteSettingsView({
                 onChange={(e) => setHalalThesis(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
+            </div>
+
+            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <label className="inline-flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={monthlyReportAutoEmail}
+                  onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                />
+                <span>Automatically email monthly PDF fund summary at month rollover</span>
+              </label>
+              <span className="font-mono text-slate-500 dark:text-slate-400">
+                Last emailed month: {config?.lastMonthlyPdfSentMonth || 'None yet'}
+              </span>
             </div>
 
             <div className="flex justify-end">

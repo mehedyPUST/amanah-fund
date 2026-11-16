@@ -39,6 +39,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { ActionModal } from './ActionModal.tsx';
 import {
   CommunityPostLinksList,
   FormattedCommunityText,
@@ -801,15 +802,6 @@ export function MemberPublicProfileView({
             </div>
           </div>
 
-          {actionError && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 px-4 py-3 text-xs text-red-800 dark:text-red-300"
-            >
-              {actionError}
-            </div>
-          )}
-
           {communityPosts.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">
               <MessageSquare className="w-7 h-7 text-slate-400 mx-auto" />
@@ -1093,6 +1085,15 @@ export function MemberPublicProfileView({
           )}
         </section>
       )}
+
+      <ActionModal
+        open={Boolean(actionError)}
+        mode="notice"
+        tone="red"
+        title="Action Failed"
+        description={actionError || ''}
+        onClose={() => setActionError(null)}
+      />
     </motion.div>
   );
 }

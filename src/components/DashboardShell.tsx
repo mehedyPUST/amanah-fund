@@ -49,6 +49,7 @@ import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { ActionModal } from './ActionModal.tsx';
+import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
 import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
@@ -861,6 +862,8 @@ export function DashboardShell() {
             <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin text-teal-600 dark:text-teal-400' : ''}`} />
           </button>
 
+          <PWAInstallButton compact className="hidden sm:inline-flex" />
+
           <button
             type="button"
             onClick={toggleDarkMode}
@@ -874,17 +877,6 @@ export function DashboardShell() {
               <Moon className="w-4 h-4 text-indigo-600" />
             )}
           </button>
-
-          {!isAdmin && (
-            <button
-              type="button"
-              disabled={loanGateChecking}
-              onClick={() => void openLoanRequestModal()}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-60 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-wait"
-            >
-              {loanGateChecking ? 'Checking Eligibility…' : 'Request Qard Hasan'}
-            </button>
-          )}
         </div>
       </header>
 
@@ -1308,6 +1300,7 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
                     onRefresh={handleRefreshWithAutoSync}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}

@@ -51,7 +51,7 @@ export function GoogleSignInButton({
       ) : (
         <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
       )}
-      <span>{connecting ? 'Connecting Google…' : 'Sign in with Google'}</span>
+      <span>{connecting ? 'Connecting Google Sheets…' : 'Connect Google Sheets'}</span>
     </motion.button>
   );
 }

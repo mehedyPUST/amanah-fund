@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     'jsonwebtoken',
     'qrcode',
     'cookie-parser',
+    'nodemailer',
+    'jspdf',
   ],
   outputFileTracingIncludes: {
     '/api/**': ['./firebase-applet-config.json'],

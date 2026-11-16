@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,6 +24,7 @@ import type {
   LoanVote,
   NoticePriority,
   NotificationPreferences,
+  PasswordResetRequest,
   PrivateMessage,
   ProfileChangePayload,
   ProfileChangeRequest,
@@ -42,9 +44,6 @@ import {
   sanitizeUser,
   setAuthCookie,
   signAuthToken,
-  signGoogleRegistrationToken,
-  verifyFirebaseGoogleIdToken,
-  verifyGoogleRegistrationToken,
 } from './auth.ts';
 import {
   appendAuditLog,
@@ -72,6 +71,14 @@ import {
   maskReference,
 } from './crypto.ts';
 import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVaultState } from './db.ts';
+import {
+  isSmtpConfigured,
+  sendMonthlyPdfSummaryEmail,
+  sendPasswordResetAdminAlertEmail,
+  sendTempPasswordEmail,
+  sendTransactionSummaryEmail,
+  type TransactionEmailSummaryInput,
+} from './emailService.ts';
 import { verifyPaymentReceiptImage } from './geminiService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
@@ -80,12 +87,23 @@ import {
   validateAndDecodeUpload,
 } from './imagekitStorage.ts';
 import {
+  generateMonthlyFundSummaryPdfBuffer,
+  getPreviousMonthKey,
+} from './pdfSummaryService.ts';
+import {
   broadcastRealtimeEvent,
   registerSseClient,
   sendRealtimeEventToUsers,
 } from './realtime.ts';
 import { buildOtpAuthUri, generateTotpSecret, verifyTotpCode } from './totp.ts';
 import { normalizeAndValidatePostLinks } from '../utils/communityLinks.ts';
+
+function dispatchTransactionEmails(items: TransactionEmailSummaryInput[]): void {
+  if (items.length === 0) return;
+  void Promise.allSettled(items.map((item) => sendTransactionSummaryEmail(item))).catch((err) => {
+    console.warn('[EmailService] Background transaction summary dispatch error:', err);
+  });
+}
 
 function extractGoogleBearerToken(req: AuthenticatedRequest): string | null {
   const header = req.headers.authorization;
@@ -247,7 +265,8 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
     }
     if (!user.passwordHash) {
       res.status(401).json({
-        error: 'This account uses Google Sign-In. Please click "Continue with Google" to sign in.',
+        error:
+          'Password credentials are not configured for this account. Use "Forgot Password" to request a temporary password from an administrator.',
       });
       return;
     }
@@ -295,110 +314,110 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
   }
 });
 
-apiRouter.post('/auth/google', authRateLimiter, async (req, res) => {
+apiRouter.post('/auth/forgot-password', authRateLimiter, async (req, res) => {
   try {
-    const idToken = String(req.body?.idToken || '').trim();
-    if (!idToken) {
-      res.status(400).json({ error: 'Google ID token is required.' });
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const reason = String(req.body?.reason || '').trim().slice(0, 400);
+
+    if (!email || !email.includes('@')) {
+      res.status(400).json({ error: 'Please enter a valid registered email address.' });
       return;
     }
 
-    let googleIdentity;
-    try {
-      googleIdentity = await verifyFirebaseGoogleIdToken(idToken);
-    } catch (verifyErr) {
-      res.status(401).json({
-        error:
-          verifyErr instanceof Error
-            ? verifyErr.message
-            : 'Unable to verify Google Sign-In credentials.',
-      });
-      return;
-    }
+    let matchedUser: StoredUser | null = null;
+    let adminRecipients: string[] = [];
+    let fundName = 'Amanah Cooperative Treasury';
 
-    if (!googleIdentity.emailVerified) {
-      res.status(403).json({
-        error: 'Your Google account email must be verified before signing in.',
-      });
-      return;
-    }
+    await updateVaultState((draft) => {
+      draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
+        ? draft.passwordResetRequests
+        : [];
+      fundName = draft.fundConfig.fundName;
+      const target = draft.users.find((u) => u.email.toLowerCase() === email);
+      if (!target) return draft;
+      matchedUser = target;
 
-    const state = await loadVaultState();
-    const existingUser = state.users.find(
-      (u) =>
-        u.googleUid === googleIdentity.uid ||
-        u.email.toLowerCase() === googleIdentity.email
-    );
-
-    if (existingUser) {
-      if (existingUser.status === 'pending_approval') {
-        res.status(403).json({
-          status: 'pending_approval',
-          error:
-            'Your membership application is awaiting administrator approval. Only approved members can sign in.',
-        });
-        return;
+      const existingPending = draft.passwordResetRequests.find(
+        (r) => r.userId === target.id && r.status === 'pending'
+      );
+      const now = new Date().toISOString();
+      if (existingPending) {
+        existingPending.requestedAt = now;
+        if (reason) existingPending.reason = reason;
+      } else {
+        const reqEntry: PasswordResetRequest = {
+          id: `pwr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          userId: target.id,
+          memberName: target.name,
+          memberCode: target.memberCode,
+          email: target.email,
+          reason: reason || undefined,
+          status: 'pending',
+          requestedAt: now,
+        };
+        draft.passwordResetRequests.unshift(reqEntry);
       }
 
-      if (existingUser.status !== 'active') {
-        res.status(403).json({
-          status: 'suspended',
-          error: 'Account is suspended. Contact an administrator.',
+      const activeAdmins = draft.users.filter((u) => u.role === 'admin' && u.status === 'active');
+      adminRecipients = activeAdmins.map((a) => a.email).filter(Boolean);
+      activeAdmins.forEach((admin) => {
+        queueEmailNotification(draft, {
+          type: 'cooperative_notice',
+          recipientEmail: admin.email,
+          recipientName: admin.name,
+          recipientUserId: admin.id,
+          subject: `Password Reset Request: ${target.name} (${target.memberCode})`,
+          body: `${target.name} (${target.memberCode}, ${target.email}) requested a forgotten-password reset.${
+            reason ? ` Note: "${reason}".` : ''
+          } Open Member Registry to reset and email a temporary password.`,
+          relatedId: target.id,
         });
-        return;
-      }
-
-      let updatedUser = existingUser;
-      await updateVaultState((draft) => {
-        const target = draft.users.find((u) => u.id === existingUser.id);
-        if (target) {
-          if (!target.googleUid) {
-            target.googleUid = googleIdentity.uid;
-          }
-          target.authProvider = target.passwordHash ? 'both' : 'google';
-          updatedUser = target;
-        }
-        const actor = sanitizeUser(updatedUser);
-        appendAuditLog(draft, {
-          actor,
-          action: 'AUTH_LOGIN',
-          resourceType: 'auth',
-          resourceId: actor.id,
-          summary: `${actor.name} (${actor.role}) signed in via Google SSO`,
-          payload: { email: actor.email, role: actor.role, provider: 'google' },
-        });
-        return draft;
       });
 
-      broadcastRealtimeEvent('audit:updated', {
-        action: 'AUTH_LOGIN',
+      appendAuditLog(draft, {
+        actor: sanitizeUser(target),
+        action: 'PASSWORD_RESET_REQUESTED',
         resourceType: 'auth',
-        resourceId: existingUser.id,
+        resourceId: target.id,
+        summary: `${target.name} (${target.memberCode}) submitted a forgotten-password reset request to administrators`,
+        payload: {
+          email: target.email,
+          hasNote: Boolean(reason),
+        },
       });
-      const sanitized = sanitizeUser(updatedUser);
-      const token = signAuthToken(updatedUser);
-      setAuthCookie(req, res, token);
+      return draft;
+    });
 
-      res.json({
-        status: 'authenticated',
-        user: sanitized,
+    if (matchedUser) {
+      const target = matchedUser as StoredUser;
+      broadcastRealtimeEvent('notification:created', { type: 'system_announcement' });
+      broadcastRealtimeEvent('members:updated', { userId: target.id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'PASSWORD_RESET_REQUESTED',
+        resourceType: 'auth',
+        resourceId: target.id,
       });
-      return;
+      void sendPasswordResetAdminAlertEmail({
+        adminEmails: adminRecipients,
+        memberName: target.name,
+        memberCode: target.memberCode,
+        memberEmail: target.email,
+        reason: reason || undefined,
+        fundName,
+      }).catch((err) => {
+        console.warn('[EmailService] Admin alert dispatch error:', err);
+      });
     }
 
-    const registrationToken = signGoogleRegistrationToken(googleIdentity);
     res.json({
-      status: 'needs_onboarding',
-      registrationToken,
-      googleProfile: {
-        name: googleIdentity.name,
-        email: googleIdentity.email,
-        photoUrl: googleIdentity.picture || '',
-      },
+      ok: true,
+      queued: Boolean(matchedUser),
+      message:
+        'If your email matches a registered member account, your password reset request has been forwarded to an administrator. You will receive a temporary password via email once approved.',
     });
   } catch (err) {
-    console.error('Google auth error:', err);
-    res.status(500).json({ error: 'Google authentication failed.' });
+    console.error('Forgot password request error:', err);
+    res.status(500).json({ error: 'Failed to submit password reset request.' });
   }
 });
 
@@ -614,26 +633,8 @@ apiRouter.get('/auth/references', async (_req, res) => {
 
 apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
   try {
-    const googleRegistrationToken = String(req.body?.googleRegistrationToken || '').trim();
-    let verifiedGoogle: ReturnType<typeof verifyGoogleRegistrationToken> | null = null;
-    if (googleRegistrationToken) {
-      try {
-        verifiedGoogle = verifyGoogleRegistrationToken(googleRegistrationToken);
-      } catch (tokenErr) {
-        res.status(401).json({
-          error:
-            tokenErr instanceof Error
-              ? tokenErr.message
-              : 'Google onboarding token expired. Please verify with Google again.',
-        });
-        return;
-      }
-    }
-
-    const name = String(req.body?.name || verifiedGoogle?.name || '').trim();
-    const email = (verifiedGoogle ? verifiedGoogle.email : String(req.body?.email || ''))
-      .trim()
-      .toLowerCase();
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
     const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
     const referenceMemberName = String(req.body?.referenceMemberName || '').trim();
@@ -646,15 +647,8 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     const photoUrl = String(req.body?.photoUrl || '').trim();
     const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
-    if (!verifiedGoogle && password.length < 6) {
+    if (password.length < 6) {
       res.status(400).json({ error: 'Password must be at least 6 characters long.' });
-      return;
-    }
-
-    if (verifiedGoogle && password.length > 0 && password.length < 6) {
-      res.status(400).json({
-        error: 'Optional backup password must be at least 6 characters long (or leave it blank).',
-      });
       return;
     }
 
@@ -698,23 +692,13 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       nominees: nomineeValidation.nominees,
     };
 
-    const passwordHash = password.length >= 6 ? bcrypt.hashSync(password, 10) : '';
-    const authProvider: StoredUser['authProvider'] = verifiedGoogle
-      ? passwordHash
-        ? 'both'
-        : 'google'
-      : 'password';
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const authProvider: StoredUser['authProvider'] = 'password';
     let createdUser!: StoredUser;
     let sanitized!: ReturnType<typeof sanitizeUser>;
 
     await updateVaultState((draft) => {
-      if (
-        draft.users.some(
-          (u) =>
-            u.email.toLowerCase() === email ||
-            (verifiedGoogle && u.googleUid === verifiedGoogle.uid)
-        )
-      ) {
+      if (draft.users.some((u) => u.email.toLowerCase() === email)) {
         throw new Error('EMAIL_IN_USE');
       }
 
@@ -726,7 +710,6 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         name,
         email,
         passwordHash,
-        googleUid: verifiedGoogle?.uid,
         authProvider,
         role: isBootstrapAdmin ? 'admin' : 'member',
         memberCode: nextMemberCode(draft.users),
@@ -749,7 +732,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
             recipientName: admin.name,
             recipientUserId: admin.id,
             subject: `New Member Signup Pending Approval: ${name} (${createdUser.memberCode})`,
-            body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}${verifiedGoogle ? ', Google-verified email' : ''}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
+            body: `${name} (${email}, Mobile: ${mobile}, Ref: ${referenceMemberName}) submitted a cooperative membership application (${createdUser.memberCode}). Inspect their registration details and approve in Admin & Reports before they can sign in.`,
             relatedId: createdUser.id,
           });
         });
@@ -794,9 +777,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       message:
         createdUser.role === 'admin'
           ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is ready to sign in.'
-          : verifiedGoogle
-            ? 'Membership application submitted with your verified Google account. An administrator will review your KYC details and approve your account before you can sign in with Google.'
-            : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
+          : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -1712,6 +1693,34 @@ apiRouter.post('/contributions', requireAuth, async (req: AuthenticatedRequest, 
       return draft;
     });
 
+    let txEmailPayload: TransactionEmailSummaryInput | null = null;
+    {
+      const st = await loadVaultState();
+      const submitter = st.users.find((u) => u.id === viewer.id);
+      const monthsLabel = billingMonths.join(', ');
+      if (submitter?.email) {
+        txEmailPayload = {
+          to: submitter.email,
+          recipientName: submitter.name,
+          fundName: st.fundConfig.fundName,
+          currency: st.fundConfig.currency,
+          eventTitle: 'Monthly Contribution Submitted',
+          transactionType: 'Contribution Request',
+          referenceId: createdList[0].id,
+          amount,
+          statusLabel: 'Pending Manager Verification',
+          summaryText: `Your contribution request (${monthsLabel}) via ${channel.toUpperCase()} (${providerName}) has been received and queued for Manager review.`,
+          details: [
+            { label: 'Billing Month(s)', value: monthsLabel },
+            { label: 'Channel / Provider', value: `${channel.toUpperCase()} · ${providerName}` },
+            { label: 'Transaction Ref', value: maskReference(referenceId) },
+          ],
+          timestampIso: createdList[0].submittedAt,
+        };
+      }
+    }
+    if (txEmailPayload) dispatchTransactionEmails([txEmailPayload]);
+
     broadcastRealtimeEvent('contribution:submitted', {
       contributionId: createdList[0].id,
       billingMonth: billingMonths[0],
@@ -1834,6 +1843,40 @@ apiRouter.patch(
       if (!updated) {
         res.status(404).json({ error: 'Contribution request not found.' });
         return;
+      }
+
+      {
+        const finalC = updated as Contribution;
+        const st = await loadVaultState();
+        const member = st.users.find((u) => u.id === finalC.userId);
+        if (member?.email) {
+          dispatchTransactionEmails([
+            {
+              to: member.email,
+              recipientName: member.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle:
+                decision === 'approved'
+                  ? 'Monthly Contribution Approved'
+                  : 'Monthly Contribution Denied — Action Needed',
+              transactionType: 'Contribution Verification',
+              referenceId: finalC.id,
+              amount: finalC.amount,
+              statusLabel: decision === 'approved' ? 'Approved & Credited' : 'Rejected',
+              summaryText:
+                decision === 'approved'
+                  ? `Your ${finalC.billingMonth} contribution via ${finalC.providerName} was verified by ${viewer.name} and added to the central cooperative fund balance.`
+                  : `Your ${finalC.billingMonth} contribution was declined by ${viewer.name}. Correction Note: "${finalC.reviewNote || 'Review details'}".`,
+              details: [
+                { label: 'Billing Month', value: finalC.billingMonth },
+                { label: 'Provider', value: finalC.providerName },
+                { label: 'Reviewed By', value: viewer.name },
+              ],
+              timestampIso: finalC.reviewedAt,
+            },
+          ]);
+        }
       }
 
       broadcastRealtimeEvent('contribution:reviewed', {
@@ -2123,6 +2166,32 @@ apiRouter.post('/loans', requireAuth, async (req: AuthenticatedRequest, res) => 
       });
       return draft;
     });
+
+    {
+      const st = await loadVaultState();
+      const borrower = st.users.find((u) => u.id === viewer.id);
+      if (borrower?.email) {
+        dispatchTransactionEmails([
+          {
+            to: borrower.email,
+            recipientName: borrower.name,
+            fundName: st.fundConfig.fundName,
+            currency: st.fundConfig.currency,
+            eventTitle: 'Qard Hasan Application Submitted',
+            transactionType: 'Qard Hasan Loan Request',
+            referenceId: createdLoan.id,
+            amount: createdLoan.amount,
+            statusLabel: 'Pending Manager Review & 2/3 Ballot',
+            summaryText: `Your interest-free Qard Hasan request (${createdLoan.installmentMonths} monthly installments of ${createdLoan.monthlyInstallment} ${currency}) has been logged for "${purpose}".`,
+            details: [
+              { label: 'Installments', value: `${createdLoan.installmentMonths} months` },
+              { label: 'Payout Channel', value: `${channel.toUpperCase()} · ${provider}` },
+            ],
+            timestampIso: createdLoan.requestedAt,
+          },
+        ]);
+      }
+    }
 
     broadcastRealtimeEvent('loan:created', {
       loanId: createdLoan.id,
@@ -2779,6 +2848,39 @@ apiRouter.post(
         return;
       }
 
+      {
+        const finalLoan = updatedLoan as LoanRequest;
+        const st = await loadVaultState();
+        const borrower = st.users.find((u) => u.id === finalLoan.borrowerId);
+        if (borrower?.email) {
+          const approveVotes = finalLoan.votes.filter((v) => v.decision === 'approve').length;
+          const rejectVotes = finalLoan.votes.filter((v) => v.decision === 'reject').length;
+          dispatchTransactionEmails([
+            {
+              to: borrower.email,
+              recipientName: borrower.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle: passed
+                ? 'Qard Hasan Opinion Ballot Passed'
+                : 'Qard Hasan Opinion Ballot Closed — Not Approved',
+              transactionType: 'Qard Hasan Vote Result',
+              referenceId: finalLoan.id,
+              amount: finalLoan.amount,
+              statusLabel: passed ? 'Approved — Awaiting Disbursement' : 'Declined',
+              summaryText: passed
+                ? `Manager ${viewer.name} revealed your Qard Hasan ballot result (${approveVotes} Approve / ${rejectVotes} Reject). Treasury disbursement will be confirmed shortly.`
+                : `Manager ${viewer.name} revealed your Qard Hasan ballot result (${approveVotes} Approve / ${rejectVotes} Reject; ${finalLoan.requiredApprovals} required).`,
+              details: [
+                { label: 'Ballot Tally', value: `${approveVotes} Approve · ${rejectVotes} Reject` },
+                { label: 'Revealed By', value: viewer.name },
+              ],
+              timestampIso: finalLoan.voteResultRevealedAt,
+            },
+          ]);
+        }
+      }
+
       broadcastRealtimeEvent('loan:voted', { loanId: id });
       broadcastRealtimeEvent('loan:reviewed', {
         loanId: id,
@@ -2901,6 +3003,36 @@ apiRouter.patch(
       if (!updatedLoan) {
         res.status(404).json({ error: 'Loan request not found.' });
         return;
+      }
+
+      {
+        const finalLoan = updatedLoan as LoanRequest;
+        const st = await loadVaultState();
+        const borrower = st.users.find((u) => u.id === finalLoan.borrowerId);
+        if (borrower?.email) {
+          dispatchTransactionEmails([
+            {
+              to: borrower.email,
+              recipientName: borrower.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle:
+                decision === 'approve'
+                  ? 'Qard Hasan Approved by Administration'
+                  : 'Qard Hasan Declined in Review',
+              transactionType: 'Qard Hasan Review',
+              referenceId: finalLoan.id,
+              amount: finalLoan.amount,
+              statusLabel: decision === 'approve' ? 'Approved Pending Disbursement' : 'Declined',
+              summaryText:
+                decision === 'approve'
+                  ? `Your Qard Hasan application (${finalLoan.id}) was approved by ${viewer.name} and queued for disbursement.`
+                  : `Your Qard Hasan application (${finalLoan.id}) was declined by ${viewer.name}.${reviewNote ? ` Note: "${reviewNote}"` : ''}`,
+              details: [{ label: 'Reviewed By', value: viewer.name }],
+              timestampIso: finalLoan.adminReviewedAt,
+            },
+          ]);
+        }
       }
 
       const notifType =
@@ -3031,6 +3163,36 @@ apiRouter.post(
       if (!updatedLoan) {
         res.status(404).json({ error: 'Loan request not found.' });
         return;
+      }
+
+      {
+        const finalLoan = updatedLoan as LoanRequest;
+        const st = await loadVaultState();
+        const borrower = st.users.find((u) => u.id === finalLoan.borrowerId);
+        if (borrower?.email) {
+          dispatchTransactionEmails([
+            {
+              to: borrower.email,
+              recipientName: borrower.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle: 'Qard Hasan Disbursed',
+              transactionType: 'Loan Disbursement (0% Qard Hasan)',
+              referenceId: finalLoan.id,
+              amount: finalLoan.amount,
+              statusLabel: 'Active — Disbursed',
+              summaryText: `${viewer.name} completed treasury disbursement for your Qard Hasan loan (${finalLoan.id}). Your ${finalLoan.installmentMonths}-month repayment schedule is now active.`,
+              details: [
+                ...(transactionNumber
+                  ? [{ label: 'Transaction Number', value: transactionNumber }]
+                  : []),
+                { label: 'Monthly Installment', value: `${finalLoan.monthlyInstallment} ${st.fundConfig.currency}` },
+                { label: 'Disbursed By', value: viewer.name },
+              ],
+              timestampIso: finalLoan.disbursedAt,
+            },
+          ]);
+        }
       }
 
       broadcastRealtimeEvent('loan:reviewed', {
@@ -3168,6 +3330,35 @@ apiRouter.post(
       if (!updatedLoan) {
         res.status(404).json({ error: 'Loan not found.' });
         return;
+      }
+
+      {
+        const finalLoan = updatedLoan as LoanRequest;
+        const st = await loadVaultState();
+        const borrower = st.users.find((u) => u.id === finalLoan.borrowerId);
+        const instItem = finalLoan.installments.find((i) => i.installmentNumber === num);
+        if (borrower?.email && instItem) {
+          dispatchTransactionEmails([
+            {
+              to: borrower.email,
+              recipientName: borrower.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle: `Qard Hasan Installment #${num} Submitted`,
+              transactionType: 'Loan Installment Repayment',
+              referenceId: `${finalLoan.id}#${num}`,
+              amount: instItem.amount,
+              statusLabel: 'Pending Manager Verification',
+              summaryText: `Installment #${num} repayment via ${providerName} has been submitted for Manager verification.`,
+              details: [
+                { label: 'Loan ID', value: finalLoan.id },
+                { label: 'Provider / Channel', value: `${channel.toUpperCase()} · ${providerName}` },
+                { label: 'Transaction Ref', value: maskReference(referenceId) },
+              ],
+              timestampIso: instItem.submittedAt,
+            },
+          ]);
+        }
       }
 
       broadcastRealtimeEvent('repayment:submitted', {
@@ -3345,6 +3536,43 @@ apiRouter.patch(
       if (!updatedLoan) {
         res.status(404).json({ error: 'Loan not found.' });
         return;
+      }
+
+      {
+        const finalLoan = updatedLoan as LoanRequest;
+        const st = await loadVaultState();
+        const borrower = st.users.find((u) => u.id === finalLoan.borrowerId);
+        const instItem = finalLoan.installments.find((i) => i.installmentNumber === num);
+        if (borrower?.email && instItem) {
+          dispatchTransactionEmails([
+            {
+              to: borrower.email,
+              recipientName: borrower.name,
+              fundName: st.fundConfig.fundName,
+              currency: st.fundConfig.currency,
+              eventTitle: approve
+                ? `Qard Hasan Installment #${num} Verified`
+                : `Qard Hasan Installment #${num} Denied — Action Needed`,
+              transactionType: 'Loan Installment Verification',
+              referenceId: `${finalLoan.id}#${num}`,
+              amount: instItem.amount,
+              statusLabel: approve
+                ? finalLoan.status === 'repaid'
+                  ? 'Paid — Loan Fully Repaid'
+                  : 'Verified & Credited'
+                : 'Rejected — Needs Correction',
+              summaryText: approve
+                ? `Installment #${num} for loan ${finalLoan.id} was verified by ${viewer.name}. Remaining balance: ${finalLoan.remainingBalance} ${st.fundConfig.currency}.`
+                : `Installment #${num} for loan ${finalLoan.id} was declined by ${viewer.name}. Correction Note: "${reviewNote}".`,
+              details: [
+                { label: 'Loan ID', value: finalLoan.id },
+                { label: 'Remaining Balance', value: `${finalLoan.remainingBalance} ${st.fundConfig.currency}` },
+                { label: 'Verified By', value: viewer.name },
+              ],
+              timestampIso: instItem.paidAt || instItem.rejectedAt,
+            },
+          ]);
+        }
       }
 
       broadcastRealtimeEvent('repayment:verified', {
@@ -4014,6 +4242,38 @@ apiRouter.post(
         return;
       }
 
+      {
+        const finalProj = updatedProject as HalalProject;
+        const latestDist = finalProj.distributions?.[0];
+        if (latestDist) {
+          const st = await loadVaultState();
+          const txEmails: TransactionEmailSummaryInput[] = [];
+          latestDist.allocations.forEach((alloc) => {
+            const m = st.users.find((u) => u.id === alloc.userId);
+            if (m?.email) {
+              txEmails.push({
+                to: m.email,
+                recipientName: m.name,
+                fundName: st.fundConfig.fundName,
+                currency: st.fundConfig.currency,
+                eventTitle: `Halal Profit Distribution (${latestDist.periodLabel})`,
+                transactionType: 'Mudarabah Dividend Payout',
+                referenceId: latestDist.id,
+                amount: alloc.payoutAmount,
+                statusLabel: 'Recorded',
+                summaryText: `Your dividend share (${alloc.contributionWeightPct}% contribution weight) from "${finalProj.title}" (${latestDist.periodLabel}) has been recorded.`,
+                details: [
+                  { label: 'Project', value: finalProj.title },
+                  { label: 'Share Weight', value: `${alloc.contributionWeightPct}%` },
+                ],
+                timestampIso: latestDist.distributedAt,
+              });
+            }
+          });
+          dispatchTransactionEmails(txEmails);
+        }
+      }
+
       broadcastRealtimeEvent('investment:voted', { projectId: id });
       broadcastRealtimeEvent('notification:created', { type: 'profit_distribution_notice' });
       broadcastRealtimeEvent('audit:updated', {
@@ -4546,6 +4806,190 @@ apiRouter.delete(
   }
 );
 
+apiRouter.get(
+  '/admin/password-reset-requests',
+  requireAuth,
+  requireRole(['admin']),
+  async (_req, res) => {
+    try {
+      const state = await loadVaultState();
+      const requests = (state.passwordResetRequests || []).slice().sort((a, b) =>
+        b.requestedAt.localeCompare(a.requestedAt)
+      );
+      res.json({ requests, smtpConfigured: isSmtpConfigured() });
+    } catch (err) {
+      console.error('Load password reset requests error:', err);
+      res.status(500).json({ error: 'Failed to load password reset requests.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/admin/password-reset-requests/:id/decline',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const { id } = req.params;
+      const resolutionNote = String(req.body?.note || '').trim().slice(0, 300);
+      let found = false;
+
+      const nextState = await updateVaultState((draft) => {
+        draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
+          ? draft.passwordResetRequests
+          : [];
+        const target = draft.passwordResetRequests.find((r) => r.id === id);
+        if (!target) return draft;
+        found = true;
+        target.status = 'declined';
+        target.resolvedAt = new Date().toISOString();
+        target.resolvedById = viewer.id;
+        target.resolvedByName = viewer.name;
+        if (resolutionNote) target.resolutionNote = resolutionNote;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'PASSWORD_RESET_DECLINED',
+          resourceType: 'auth',
+          resourceId: target.userId,
+          summary: `${viewer.name} declined password reset request for ${target.memberName} (${target.memberCode})`,
+          payload: { requestId: target.id, note: resolutionNote || undefined },
+        });
+        return draft;
+      });
+
+      if (!found) {
+        res.status(404).json({ error: 'Password reset request not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('members:updated', {});
+      broadcastRealtimeEvent('audit:updated', { action: 'PASSWORD_RESET_DECLINED' });
+      res.json({ requests: nextState.passwordResetRequests || [] });
+    } catch (err) {
+      console.error('Decline password reset error:', err);
+      res.status(500).json({ error: 'Failed to decline password reset request.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/members/:id/reset-password',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const viewer = req.authUser!;
+      const targetId = String(req.params.id || '');
+      const customTemp = String(req.body?.tempPassword || '').trim();
+      if (customTemp && customTemp.length < 6) {
+        res.status(400).json({ error: 'Temporary password must be at least 6 characters.' });
+        return;
+      }
+
+      const generatedTemp =
+        customTemp ||
+        `Amn-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      const hashed = bcrypt.hashSync(generatedTemp, 10);
+
+      let targetUser: StoredUser | null = null;
+      let fundName = 'Amanah Cooperative Treasury';
+
+      await updateVaultState((draft) => {
+        draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
+          ? draft.passwordResetRequests
+          : [];
+        fundName = draft.fundConfig.fundName;
+        const user = draft.users.find((u) => u.id === targetId);
+        if (!user) return draft;
+        targetUser = user;
+        user.passwordHash = hashed;
+        user.authProvider = 'password';
+        return draft;
+      });
+
+      if (!targetUser) {
+        res.status(404).json({ error: 'Member account not found.' });
+        return;
+      }
+
+      const resolvedUser = targetUser as StoredUser;
+      const emailResult = await sendTempPasswordEmail({
+        to: resolvedUser.email,
+        memberName: resolvedUser.name,
+        memberCode: resolvedUser.memberCode,
+        tempPassword: generatedTemp,
+        adminName: viewer.name,
+        fundName,
+      });
+
+      const nextState = await updateVaultState((draft) => {
+        draft.passwordResetRequests = Array.isArray(draft.passwordResetRequests)
+          ? draft.passwordResetRequests
+          : [];
+        const now = new Date().toISOString();
+        draft.passwordResetRequests.forEach((r) => {
+          if (r.userId === resolvedUser.id && r.status === 'pending') {
+            r.status = 'completed';
+            r.resolvedAt = now;
+            r.resolvedById = viewer.id;
+            r.resolvedByName = viewer.name;
+            r.emailSent = emailResult.sent;
+          }
+        });
+
+        queueEmailNotification(draft, {
+          type: 'cooperative_notice',
+          recipientEmail: resolvedUser.email,
+          recipientName: resolvedUser.name,
+          recipientUserId: resolvedUser.id,
+          subject: `Temporary Password Issued (${resolvedUser.memberCode})`,
+          body: emailResult.sent
+            ? `Administrator ${viewer.name} issued a temporary password for your account and dispatched it via email to ${resolvedUser.email}.`
+            : `Administrator ${viewer.name} reset your password. Please contact administration if you did not receive the temporary credential via email.`,
+          relatedId: resolvedUser.id,
+        });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'ADMIN_TEMP_PASSWORD_RESET',
+          resourceType: 'auth',
+          resourceId: resolvedUser.id,
+          summary: `${viewer.name} reset password for ${resolvedUser.name} (${resolvedUser.memberCode}) — ${emailResult.sent ? 'temporary password emailed via SMTP' : 'SMTP not configured; issued directly'}`,
+          payload: {
+            targetUserId: resolvedUser.id,
+            email: resolvedUser.email,
+            emailSent: emailResult.sent,
+            emailReason: emailResult.reason,
+          },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('members:updated', { userId: resolvedUser.id });
+      broadcastRealtimeEvent('notification:created', { type: 'system_announcement' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'ADMIN_TEMP_PASSWORD_RESET',
+        resourceType: 'auth',
+        resourceId: resolvedUser.id,
+      });
+
+      res.json({
+        ok: true,
+        emailSent: emailResult.sent,
+        emailReason: emailResult.reason,
+        tempPassword: emailResult.sent ? undefined : generatedTemp,
+        requests: nextState.passwordResetRequests || [],
+      });
+    } catch (err) {
+      console.error('Admin temp password reset error:', err);
+      res.status(500).json({ error: 'Failed to reset member password.' });
+    }
+  }
+);
+
 apiRouter.patch(
   '/admin/config',
   requireAuth,
@@ -4827,6 +5271,15 @@ apiRouter.patch(
           if (!trimmedId) {
             cfg.googleSheetUrl = undefined;
           }
+        }
+        if (typeof body.monthlyReportAutoEmail === 'boolean') {
+          if (body.monthlyReportAutoEmail !== (cfg.monthlyReportAutoEmail ?? true)) {
+            changes.monthlyReportAutoEmail = {
+              from: cfg.monthlyReportAutoEmail ?? true,
+              to: body.monthlyReportAutoEmail,
+            };
+          }
+          cfg.monthlyReportAutoEmail = body.monthlyReportAutoEmail;
         }
         cfg.updatedAt = new Date().toISOString();
         cfg.updatedBy = viewer.name;
@@ -7650,6 +8103,185 @@ apiRouter.delete(
     }
   }
 );
+
+// ---------------------------------------------------------------------------
+// 11. Monthly PDF Summary Reports, Auto-Email Scheduler & JSON Backup
+// ---------------------------------------------------------------------------
+
+apiRouter.get('/reports/monthly-pdf/download', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const monthParam = String(req.query?.month || '').trim();
+    const monthKey = /^\d{4}-\d{2}$/.test(monthParam)
+      ? monthParam
+      : new Date().toISOString().slice(0, 7);
+
+    const state = await loadVaultState();
+    const { buffer, filename } = generateMonthlyFundSummaryPdfBuffer(state, monthKey);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('Monthly PDF download error:', err);
+    res.status(500).json({ error: 'Failed to generate monthly PDF summary.' });
+  }
+});
+
+async function dispatchMonthlyPdfReport(options: {
+  monthKey: string;
+  actor: ReturnType<typeof sanitizeUser> | null;
+  isAutomated: boolean;
+}) {
+  const state = await loadVaultState();
+  const recipients = state.users
+    .filter((u) => u.status === 'active' && Boolean(u.email))
+    .map((u) => ({ email: u.email, name: u.name }));
+
+  const { buffer, summary } = generateMonthlyFundSummaryPdfBuffer(state, options.monthKey);
+  const emailStats = await sendMonthlyPdfSummaryEmail({
+    recipients,
+    monthKey: summary.monthKey,
+    fundName: summary.fundName,
+    currency: summary.currency,
+    amanahHeight: summary.amanahHeight,
+    currentBalance: summary.currentBalance,
+    monthlyCollected: summary.monthContributionsCollected,
+    activeLoanTotal: summary.activeQardHasanTotal,
+    pdfBuffer: buffer,
+  });
+
+  if (emailStats.sentCount > 0 || !options.isAutomated) {
+    await updateVaultState((draft) => {
+      if (emailStats.sentCount > 0) {
+        draft.fundConfig.lastMonthlyPdfSentMonth = summary.monthKey;
+      }
+      if (options.actor) {
+        appendAuditLog(draft, {
+          actor: options.actor,
+          action: 'MONTHLY_PDF_SUMMARY_EMAILED',
+          resourceType: 'config',
+          resourceId: summary.monthKey,
+          summary: `${options.actor.name} emailed ${summary.monthKey} PDF summary to ${emailStats.sentCount}/${emailStats.totalRecipients} active member(s)`,
+          payload: {
+            monthKey: summary.monthKey,
+            sentCount: emailStats.sentCount,
+            failedCount: emailStats.failedCount,
+            errors: emailStats.errors,
+          },
+        });
+      }
+      return draft;
+    });
+  }
+
+  return { summary, emailStats };
+}
+
+apiRouter.post(
+  '/reports/monthly-pdf/email',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const monthParam = String(req.body?.month || '').trim();
+      const monthKey = /^\d{4}-\d{2}$/.test(monthParam)
+        ? monthParam
+        : new Date().toISOString().slice(0, 7);
+
+      const { summary, emailStats } = await dispatchMonthlyPdfReport({
+        monthKey,
+        actor: viewer,
+        isAutomated: false,
+      });
+
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'MONTHLY_PDF_SUMMARY_EMAILED',
+        resourceType: 'config',
+        resourceId: summary.monthKey,
+      });
+
+      res.json({
+        ok: emailStats.sentCount > 0,
+        smtpConfigured: isSmtpConfigured(),
+        monthKey: summary.monthKey,
+        totalRecipients: emailStats.totalRecipients,
+        sentCount: emailStats.sentCount,
+        failedCount: emailStats.failedCount,
+        errors: emailStats.errors,
+      });
+    } catch (err) {
+      console.error('Monthly PDF email error:', err);
+      res.status(500).json({ error: 'Failed to email monthly PDF summary.' });
+    }
+  }
+);
+
+apiRouter.get(
+  '/reports/backup-json',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (_req, res) => {
+    try {
+      const state = await loadVaultState();
+      const tabs = buildGoogleSheetsBlueprint(state);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const backupPayload = {
+        exportedAt: new Date().toISOString(),
+        fundConfig: state.fundConfig,
+        tabs,
+      };
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="amanah-fund-backup-${dateStr}.json"`);
+      res.send(JSON.stringify(backupPayload, null, 2));
+    } catch (err) {
+      console.error('Fund JSON backup error:', err);
+      res.status(500).json({ error: 'Failed to generate fund JSON backup.' });
+    }
+  }
+);
+
+apiRouter.use((_req, res) => {
+  res.status(404).json({ error: 'API endpoint not found.' });
+});
+
+export async function runMonthlyPdfSummaryJobIfDue(): Promise<boolean> {
+  if (String(process.env.MONTHLY_REPORT_AUTO_EMAIL || 'true').trim().toLowerCase() === 'false') {
+    return false;
+  }
+  if (!isSmtpConfigured()) {
+    return false;
+  }
+
+  const state = await loadVaultState();
+  if (state.fundConfig.monthlyReportAutoEmail === false) {
+    return false;
+  }
+
+  const prevMonthKey = getPreviousMonthKey();
+  if (state.fundConfig.lastMonthlyPdfSentMonth === prevMonthKey) {
+    return false;
+  }
+
+  const activeUsersCount = state.users.filter((u) => u.status === 'active').length;
+  if (activeUsersCount === 0) {
+    return false;
+  }
+
+  const { emailStats } = await dispatchMonthlyPdfReport({
+    monthKey: prevMonthKey,
+    actor: null,
+    isAutomated: true,
+  });
+
+  if (emailStats.sentCount > 0) {
+    console.log(
+      `[Scheduler] Auto-emailed ${prevMonthKey} Monthly PDF summary to ${emailStats.sentCount}/${emailStats.totalRecipients} active members.`
+    );
+    return true;
+  }
+  return false;
+}
+
 
 
 

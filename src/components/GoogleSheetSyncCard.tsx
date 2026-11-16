@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLink, RefreshCw, Sheet } from 'lucide-react';
+import { Download, ExternalLink, RefreshCw, Sheet } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { FundConfig } from '../types/coop.ts';
@@ -283,6 +283,15 @@ export function GoogleSheetSyncCard({
               Create New Sheet
             </button>
           )}
+
+          <a
+            href={api.getBackupJsonUrl()}
+            download
+            className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+          >
+            <Download className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Download Backup (JSON)</span>
+          </a>
 
           <button
             type="button"

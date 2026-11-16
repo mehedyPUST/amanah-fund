@@ -3,7 +3,11 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import next from 'next';
 import { initDatabase } from './src/server/db.ts';
-import { apiRouter, syncOverdueInstallments } from './src/server/routes.ts';
+import {
+  apiRouter,
+  runMonthlyPdfSummaryJobIfDue,
+  syncOverdueInstallments,
+} from './src/server/routes.ts';
 
 async function startServer() {
   const dev = process.env.NODE_ENV !== 'production';
@@ -17,10 +21,16 @@ async function startServer() {
   await syncOverdueInstallments().catch((err) => {
     console.warn('[Scheduler] Initial overdue installment scan failed:', err);
   });
+  await runMonthlyPdfSummaryJobIfDue().catch((err) => {
+    console.warn('[Scheduler] Initial monthly PDF email check failed:', err);
+  });
 
   const overdueTimer = setInterval(() => {
     syncOverdueInstallments().catch((err) => {
       console.warn('[Scheduler] Periodic overdue scan error:', err);
+    });
+    runMonthlyPdfSummaryJobIfDue().catch((err) => {
+      console.warn('[Scheduler] Periodic monthly PDF email error:', err);
     });
   }, 15 * 60 * 1000);
   overdueTimer.unref();

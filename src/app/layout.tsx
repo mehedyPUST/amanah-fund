@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans, Public_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { AppProviders } from '../components/AppProviders.tsx';
@@ -22,10 +22,27 @@ const jetBrainsMono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#059669' },
+    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+  ],
+};
+
 export const metadata: Metadata = {
   title: 'Amanah — Qard Hasan & Halal Fund Management',
   description:
     'Encrypted cooperative fund management platform for monthly contributions, 2/3 member-voted Qard Hasan interest-free loans, and post-maturity Halal project investment.',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/pwa-192x192.png',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Amanah',
+  },
   openGraph: {
     title: 'Amanah — Qard Hasan & Halal Fund Management',
     description:

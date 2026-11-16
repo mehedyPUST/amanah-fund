@@ -15,6 +15,7 @@ import type {
   HalalProject,
   LoanRequest,
   NotificationPreferences,
+  PasswordResetRequest,
   ProfileChangeRequest,
   UserRole,
   UserStatus,
@@ -72,6 +73,7 @@ export interface VaultState {
   meetings?: CoopMeeting[];
   notices?: CoopNotice[];
   profileChangeRequests?: ProfileChangeRequest[];
+  passwordResetRequests?: PasswordResetRequest[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -112,6 +114,7 @@ function createEmptyVaultState(): VaultState {
     registrationFeeAmount: 200,
     managerCycleMonths: 3,
     managerCycleStartDate: '2027-01-01',
+    monthlyReportAutoEmail: true,
     halalInvestmentThesis:
       'VISION-36 (Jan 2027 – Dec 2036): Deploy accumulated Halal capital with 2/3 member approval into 1 land share per member share, Islamic schools across at least 3 districts, the "Al Madina City" residential community blueprint, and Maktab institutions in northern and hill-tract districts.',
     updatedAt: now,
@@ -132,6 +135,7 @@ function createEmptyVaultState(): VaultState {
     meetings: [],
     notices: [],
     profileChangeRequests: [],
+    passwordResetRequests: [],
   };
 }
 
@@ -180,6 +184,9 @@ function normalizeVaultState(state: VaultState): VaultState {
   state.profileChangeRequests = Array.isArray(state.profileChangeRequests)
     ? state.profileChangeRequests
     : [];
+  state.passwordResetRequests = Array.isArray(state.passwordResetRequests)
+    ? state.passwordResetRequests
+    : [];
   if (state.fundConfig) {
     if (state.fundConfig.guarantorThresholdAmount === undefined) {
       state.fundConfig.guarantorThresholdAmount = 40000;
@@ -192,6 +199,9 @@ function normalizeVaultState(state: VaultState): VaultState {
     }
     if (!state.fundConfig.managerCycleStartDate) {
       state.fundConfig.managerCycleStartDate = '2026-01-01';
+    }
+    if (state.fundConfig.monthlyReportAutoEmail === undefined) {
+      state.fundConfig.monthlyReportAutoEmail = true;
     }
   }
   const activeVoters = Math.max(1, state.users.filter((u) => u.status === 'active').length);
@@ -349,6 +359,8 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('notices').createIndex({ createdAt: -1 }),
         mongoDb.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
+        mongoDb.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
       ]);
 
       initialized = true;
@@ -387,6 +399,7 @@ export async function loadVaultState(): Promise<VaultState> {
       meetings,
       notices,
       profileChangeRequests,
+      passwordResetRequests,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
       mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -401,6 +414,7 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
       mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+      mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
     ]);
 
     return normalizeVaultState({
@@ -417,6 +431,7 @@ export async function loadVaultState(): Promise<VaultState> {
       meetings,
       notices,
       profileChangeRequests,
+      passwordResetRequests,
     });
   }
   return readLocalVault();
@@ -500,6 +515,12 @@ export function updateVaultState(
           'profileChangeRequests',
           current.profileChangeRequests || [],
           next.profileChangeRequests || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'passwordResetRequests',
+          current.passwordResetRequests || [],
+          next.passwordResetRequests || []
         ),
       ]);
     } else {

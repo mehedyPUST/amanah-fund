@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   CheckCircle2,
   Eye,
+  KeyRound,
+  Mail,
   Pencil,
   Search,
   Trash2,
@@ -16,12 +18,13 @@ import Skeleton from 'react-loading-skeleton';
 import type {
   FundConfig,
   MemberSummary,
+  PasswordResetRequest,
   PublicUser,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -71,6 +74,26 @@ export function AdminUserManagementPanel({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [modal, setModal] = useState<UserMgmtModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+  const [resetRequests, setResetRequests] = useState<PasswordResetRequest[]>([]);
+
+  const loadResetRequests = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await api.getPasswordResetRequests();
+      setResetRequests(res.requests || []);
+    } catch {
+      // ignore initial permission errors for non-admins
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    void loadResetRequests();
+  }, [loadResetRequests]);
+
+  const pendingResetRequests = useMemo(
+    () => resetRequests.filter((r) => r.status === 'pending'),
+    [resetRequests]
+  );
 
   // Create User modal state
   const [createOpen, setCreateOpen] = useState(false);
@@ -248,6 +271,96 @@ export function AdminUserManagementPanel({
     });
   }
 
+  function requestAdminPasswordReset(
+    member: { id: string; name: string; memberCode: string; email: string },
+    pendingReq?: PasswordResetRequest
+  ) {
+    setModal({
+      mode: 'confirm',
+      tone: 'amber',
+      title: 'Reset Password & Send Temporary Password?',
+      description:
+        'Generates a strong temporary password, updates the member login hash, resolves any pending reset request, and sends the temporary password via email.',
+      details: [
+        { label: 'Member', value: `${member.name} (${member.memberCode})` },
+        { label: 'Email', value: member.email },
+        ...(pendingReq
+          ? [{ label: 'Request ID', value: pendingReq.id }]
+          : []),
+      ],
+      confirmLabel: 'Generate & Send Temp Password',
+      run: async () => {
+        setBusyId(member.id);
+        try {
+          const res = await api.adminResetMemberPassword(member.id);
+          await Promise.all([loadResetRequests(), onRefreshAll()]);
+          setModal({
+            mode: 'notice',
+            tone: res.emailSent ? 'emerald' : 'amber',
+            title: res.emailSent
+              ? 'Temporary Password Sent via Email'
+              : 'Password Reset (SMTP Not Configured)',
+            description: res.emailSent
+              ? `Temporary password has been dispatched to ${res.recipientEmail}. Instruct the member to change it from My Profile after signing in.`
+              : `Password was updated for ${res.memberName}, but SMTP email could not be sent (${res.emailError || 'SMTP_NOT_CONFIGURED'}). Share the temporary password securely below.`,
+            details: [
+              { label: 'Member', value: `${res.memberName} (${res.memberCode})` },
+              { label: 'Email Dispatch', value: res.emailSent ? 'Delivered via SMTP' : 'Not Delivered' },
+              ...(!res.emailSent && res.tempPassword
+                ? [{ label: 'Temporary Password', value: res.tempPassword }]
+                : []),
+            ],
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Password Reset Failed',
+            description: err instanceof Error ? err.message : 'Could not reset member password.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
+  function requestDeclinePasswordReset(req: PasswordResetRequest) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Decline Password Reset Request?',
+      description: 'Marks this pending password reset request as declined without changing the account password.',
+      details: [
+        { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
+        { label: 'Email', value: req.email },
+      ],
+      confirmLabel: 'Decline Request',
+      run: async () => {
+        setBusyId(req.userId);
+        try {
+          await api.declinePasswordResetRequest(req.id, 'Declined by administrator');
+          await loadResetRequests();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Reset Request Declined',
+            description: `Declined password reset request ${req.id} for ${req.memberName}.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Decline Failed',
+            description: err instanceof Error ? err.message : 'Could not decline password reset request.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
   function handleCreateUserSubmit(e: FormEvent) {
     e.preventDefault();
     const createdName = createForm.name.trim();
@@ -405,6 +518,75 @@ export function AdminUserManagementPanel({
           </button>
         )}
       </div>
+
+      {/* Pending Password Reset Requests Queue (Admin) */}
+      {isAdmin && pendingResetRequests.length > 0 && (
+        <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/75 dark:bg-amber-950/25 p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <KeyRound className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <span>Pending Password Reset Requests ({pendingResetRequests.length})</span>
+            </div>
+            <span className="text-[11px] font-mono text-amber-800 dark:text-amber-300">
+              Step-up 2FA required for admin reset
+            </span>
+          </div>
+
+          <div className="divide-y divide-amber-200/70 dark:divide-amber-900/40 border border-amber-200/80 dark:border-amber-900/50 rounded-lg bg-white/85 dark:bg-slate-900/80">
+            {pendingResetRequests.map((req) => (
+              <div
+                key={req.id}
+                className="p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+              >
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {req.memberName}{' '}
+                    <span className="font-mono text-slate-500 dark:text-slate-400">
+                      ({req.memberCode})
+                    </span>
+                  </div>
+                  <div className="font-mono text-slate-500 dark:text-slate-400">
+                    {req.email} · Requested {formatDateTime(req.requestedAt)}
+                  </div>
+                  {req.reason && (
+                    <p className="text-slate-700 dark:text-slate-300 pt-0.5">Note: {req.reason}</p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    disabled={busyId === req.userId}
+                    onClick={() => requestDeclinePasswordReset(req)}
+                    className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyId === req.userId}
+                    onClick={() =>
+                      requestAdminPasswordReset(
+                        {
+                          id: req.userId,
+                          name: req.memberName,
+                          memberCode: req.memberCode,
+                          email: req.email,
+                        },
+                        req
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                  >
+                    <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Reset &amp; Email Temp Password</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary Counts Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-3.5 border-y border-slate-100 dark:border-slate-800 text-xs">
@@ -633,6 +815,26 @@ export function AdminUserManagementPanel({
                             <Pencil className="w-3 h-3" aria-hidden="true" />
                             <span>Edit</span>
                           </button>
+
+                          {!isSelf && (
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() =>
+                                requestAdminPasswordReset({
+                                  id: m.id,
+                                  name: m.name,
+                                  memberCode: m.memberCode,
+                                  email: m.email,
+                                })
+                              }
+                              title="Reset password and email temporary password"
+                              className="px-2.5 py-1 rounded border border-amber-200 dark:border-amber-900/70 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <KeyRound className="w-3 h-3" aria-hidden="true" />
+                              <span>Reset PW</span>
+                            </button>
+                          )}
 
                           {!isSelf && (
                             <>

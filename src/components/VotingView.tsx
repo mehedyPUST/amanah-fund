@@ -39,6 +39,7 @@ interface VotingViewProps {
   user: PublicUser;
   loading: boolean;
   onRefresh: () => Promise<void>;
+  onViewMemberProfile?: (userId: string) => void;
 }
 
 export function VotingView({
@@ -50,6 +51,7 @@ export function VotingView({
   user,
   loading,
   onRefresh,
+  onViewMemberProfile,
 }: VotingViewProps) {
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
@@ -865,7 +867,18 @@ export function VotingView({
               >
                 <div className="text-xs space-y-0.5">
                   <div className="font-semibold text-slate-900 dark:text-white">
-                    {loan.borrowerName} ({loan.borrowerCode}) ·{' '}
+                    {onViewMemberProfile ? (
+                      <button
+                        type="button"
+                        onClick={() => onViewMemberProfile(loan.borrowerId)}
+                        className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                      >
+                        {loan.borrowerName}
+                      </button>
+                    ) : (
+                      loan.borrowerName
+                    )}{' '}
+                    ({loan.borrowerCode}) ·{' '}
                     <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                   </div>
                   <div className="text-slate-600 dark:text-slate-300">
@@ -984,8 +997,18 @@ export function VotingView({
                             )}
                           </div>
                           <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            {loan.borrowerName} ({loan.borrowerCode}) —{' '}
-                            {formatMoney(loan.amount, ccy)}
+                            {onViewMemberProfile ? (
+                              <button
+                                type="button"
+                                onClick={() => onViewMemberProfile(loan.borrowerId)}
+                                className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                              >
+                                {loan.borrowerName}
+                              </button>
+                            ) : (
+                              loan.borrowerName
+                            )}{' '}
+                            ({loan.borrowerCode}) — {formatMoney(loan.amount, ccy)}
                           </h4>
                           <p className="text-sm text-slate-600 dark:text-slate-300">
                             {loan.purpose}
@@ -1879,7 +1902,17 @@ export function VotingView({
                         </span>
                         <span aria-hidden="true"> · </span>
                         <span className="font-medium text-slate-900 dark:text-white">
-                          {loan.borrowerName}
+                          {onViewMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(loan.borrowerId)}
+                              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              {loan.borrowerName}
+                            </button>
+                          ) : (
+                            loan.borrowerName
+                          )}
                         </span>
                         <span aria-hidden="true"> · </span>
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>

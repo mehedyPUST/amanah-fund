@@ -138,6 +138,8 @@ export interface FundConfig {
   googleSheetUrl?: string;
   lastSheetSyncAt?: string;
   autoSyncSheet?: boolean;
+  lastMonthlyPdfSentMonth?: string;
+  monthlyReportAutoEmail?: boolean;
   updatedAt: string;
   updatedBy: string;
 }
@@ -871,4 +873,20 @@ export interface CoopNotice {
   authorRole: UserRole;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface PasswordResetRequest {
+  id: string;
+  userId: string;
+  memberName: string;
+  memberCode: string;
+  email: string;
+  reason?: string;
+  status: 'pending' | 'completed' | 'declined';
+  requestedAt: string;
+  resolvedAt?: string;
+  resolvedById?: string;
+  resolvedByName?: string;
+  emailSent?: boolean;
+  resolutionNote?: string;
 }

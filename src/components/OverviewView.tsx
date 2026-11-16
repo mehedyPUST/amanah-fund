@@ -28,6 +28,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { ActionModal } from './ActionModal.tsx';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
@@ -65,7 +66,11 @@ export function OverviewView({
     String(overview?.config.maxLoansPerYear ?? 3)
   );
   const [savingQuota, setSavingQuota] = useState(false);
-  const [quotaMessage, setQuotaMessage] = useState<string | null>(null);
+  const [quotaModal, setQuotaModal] = useState<{
+    tone: 'emerald' | 'red';
+    title: string;
+    description: string;
+  } | null>(null);
 
   useEffect(() => {
     if (overview?.config.maxLoansPerYear !== undefined) {
@@ -76,16 +81,23 @@ export function OverviewView({
   async function handleQuickQuotaSave(e: FormEvent) {
     e.preventDefault();
     setSavingQuota(true);
-    setQuotaMessage(null);
+    setQuotaModal(null);
     try {
       const nextLimit = Number(quotaInput);
       await api.updateConfig({ maxLoansPerYear: nextLimit });
-      setQuotaMessage(`Saved: ${nextLimit} loans per member per year.`);
       await onRefresh();
+      setQuotaModal({
+        tone: 'emerald',
+        title: 'Annual Loan Quota Updated',
+        description: `Saved: ${nextLimit} Qard Hasan loans per member per year.`,
+      });
     } catch (err) {
-      setQuotaMessage(
-        err instanceof Error ? err.message : 'Could not update annual loan limit.'
-      );
+      setQuotaModal({
+        tone: 'red',
+        title: 'Quota Update Failed',
+        description:
+          err instanceof Error ? err.message : 'Could not update annual loan limit.',
+      });
     } finally {
       setSavingQuota(false);
     }
@@ -472,11 +484,6 @@ export function OverviewView({
               </button>
             </form>
           </div>
-          {quotaMessage && (
-            <p className="mt-2.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              {quotaMessage}
-            </p>
-          )}
         </section>
       )}
 
@@ -1159,6 +1166,15 @@ export function OverviewView({
         user={user}
         loading={loading}
         onNavigate={onNavigate}
+      />
+
+      <ActionModal
+        open={quotaModal !== null}
+        mode="notice"
+        tone={quotaModal?.tone || 'emerald'}
+        title={quotaModal?.title || ''}
+        description={quotaModal?.description || ''}
+        onClose={() => setQuotaModal(null)}
       />
     </div>
   );

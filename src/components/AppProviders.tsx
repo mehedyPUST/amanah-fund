@@ -15,7 +15,6 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
 import { api, registerTotpChallengeHandler } from '../utils/api.ts';
-import { signOutGoogleIdentity } from '../utils/googleAuth.ts';
 import {
   connectGoogleWorkspace,
   disconnectGoogleWorkspace,
@@ -23,6 +22,7 @@ import {
   subscribeWorkspaceAuth,
   type WorkspaceSessionInfo,
 } from '../utils/googleWorkspace.ts';
+import { OfflineIndicator } from './OfflineIndicator.tsx';
 
 
 interface CoopSessionContextValue {
@@ -160,11 +160,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
     void refreshUser();
   }, [refreshUser]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
+        // Optional SW registration when browser restricts scope
+      });
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.logout();
     } finally {
-      await signOutGoogleIdentity();
       setUser(null);
     }
   }, []);
@@ -207,6 +214,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           borderRadius={8}
         >
           {children}
+          <OfflineIndicator />
           <AnimatePresence>
             {totpPrompt && (
               <motion.div

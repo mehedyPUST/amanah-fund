@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
   HelpCircle,
   Info,
@@ -120,33 +121,41 @@ export function ActionModal({
     };
   }, [open]);
 
+  const isCircleSuccess =
+    mode === 'notice' && (tone === 'emerald' || tone === 'teal');
+
   const Icon =
     mode === 'notice'
-      ? tone === 'red'
-        ? XCircle
-        : tone === 'amber'
-          ? AlertTriangle
-          : tone === 'slate'
-            ? Info
-            : CheckCircle2
+      ? isCircleSuccess
+        ? Check
+        : tone === 'red'
+          ? XCircle
+          : tone === 'amber'
+            ? AlertTriangle
+            : tone === 'slate'
+              ? Info
+              : CheckCircle2
       : tone === 'red'
         ? AlertTriangle
         : tone === 'amber'
           ? AlertTriangle
           : HelpCircle;
 
-  const iconBoxClass =
-    tone === 'red'
-      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400'
+  const iconBoxClass = isCircleSuccess
+    ? tone === 'teal'
+      ? 'w-10 h-10 rounded-full bg-teal-600 text-white border-teal-500 shadow-xs ring-4 ring-teal-100 dark:ring-teal-950/60'
+      : 'w-10 h-10 rounded-full bg-emerald-600 text-white border-emerald-500 shadow-xs ring-4 ring-emerald-100 dark:ring-emerald-950/60'
+    : tone === 'red'
+      ? 'w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400'
       : tone === 'amber'
-        ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400'
+        ? 'w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400'
         : tone === 'indigo'
-          ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400'
+          ? 'w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400'
           : tone === 'teal'
-            ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400'
+            ? 'w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400'
             : tone === 'slate'
-              ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400';
+              ? 'w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+              : 'w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400';
 
   const confirmBtnClass =
     tone === 'red'
@@ -228,9 +237,12 @@ export function ActionModal({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0">
                   <div
-                    className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${iconBoxClass}`}
+                    className={`border flex items-center justify-center shrink-0 ${iconBoxClass}`}
                   >
-                    <Icon className="w-5 h-5" aria-hidden="true" />
+                    <Icon
+                      className={isCircleSuccess ? 'w-5 h-5 stroke-[2.75]' : 'w-5 h-5'}
+                      aria-hidden="true"
+                    />
                   </div>
                   <div className="space-y-1 min-w-0">
                     <h3

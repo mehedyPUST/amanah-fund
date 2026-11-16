@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   FileText,
   HandCoins,
+  Mail,
   UserPlus,
   X,
   XCircle,
@@ -70,6 +71,8 @@ export function AdminReportsView({
   const [loading, setLoading] = useState(true);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
   const [adminSection, setAdminSection] = useState<'all' | 'users' | 'analytics' | 'policy'>('all');
+  const [pdfMonthKey, setPdfMonthKey] = useState(() => new Date().toISOString().slice(0, 7));
+  const [emailingPdf, setEmailingPdf] = useState(false);
 
   // Admin policy form state
   const [maxLoansPerYear, setMaxLoansPerYear] = useState(String(config?.maxLoansPerYear ?? 3));
@@ -572,6 +575,108 @@ export function AdminReportsView({
               await Promise.all([onRefresh(), loadAdminData()]);
             }}
           />
+
+          {/* Monthly Fund Summary PDF & Email Distribution */}
+          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                  <FileText className="w-4 h-4" aria-hidden="true" />
+                  <span>Monthly PDF Fund Statement &amp; Automated Dispatch</span>
+                </div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Monthly Fund Summary PDF Report
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Auto-email at month rollover is{' '}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    {config?.monthlyReportAutoEmail === false ? 'Disabled' : 'Enabled'}
+                  </strong>
+                  {' · '}Last automated month emailed:{' '}
+                  <span className="font-mono text-slate-800 dark:text-slate-200">
+                    {config?.lastMonthlyPdfSentMonth || 'None yet'}
+                  </span>
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <input
+                  type="month"
+                  aria-label="Summary month"
+                  value={pdfMonthKey}
+                  onChange={(e) => setPdfMonthKey(e.target.value)}
+                  className="px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+                <a
+                  href={api.getMonthlyPdfDownloadUrl(pdfMonthKey)}
+                  download
+                  className="px-3.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800/70 bg-teal-50/70 dark:bg-teal-950/30 hover:bg-teal-100/80 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-700 dark:text-teal-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                >
+                  <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Download Monthly PDF</span>
+                </a>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    disabled={emailingPdf}
+                    onClick={() => {
+                      setModal({
+                        mode: 'confirm',
+                        tone: 'emerald',
+                        title: `Email Monthly PDF Summary (${pdfMonthKey})?`,
+                        description:
+                          'Generates the Monthly Cooperative Fund Summary PDF attachment and emails it to all active members.',
+                        details: [
+                          { label: 'Target Month', value: pdfMonthKey },
+                          { label: 'Attachment', value: `amanah-summary-${pdfMonthKey}.pdf` },
+                        ],
+                        confirmLabel: 'Send Monthly PDF Emails',
+                        run: async () => {
+                          setEmailingPdf(true);
+                          try {
+                            const res = await api.emailMonthlyPdfSummary(pdfMonthKey);
+                            await onRefresh();
+                            setModal({
+                              mode: 'notice',
+                              tone: res.sentCount > 0 ? 'emerald' : 'amber',
+                              title:
+                                res.sentCount > 0
+                                  ? 'Monthly PDF Summaries Emailed'
+                                  : 'Monthly PDF Email Dispatch Summary',
+                              description: res.skipped
+                                ? res.reason || 'SMTP is not configured on the server.'
+                                : `Dispatched monthly PDF summary to ${res.sentCount} of ${res.totalMembers} active member(s).`,
+                              details: [
+                                { label: 'Month', value: res.monthKey },
+                                { label: 'Delivered', value: `${res.sentCount}` },
+                                { label: 'Failed / Skipped', value: `${res.failedCount}` },
+                              ],
+                            });
+                          } catch (err) {
+                            setModal({
+                              mode: 'notice',
+                              tone: 'red',
+                              title: 'PDF Dispatch Failed',
+                              description:
+                                err instanceof Error
+                                  ? err.message
+                                  : 'Failed to email monthly PDF summary.',
+                            });
+                          } finally {
+                            setEmailingPdf(false);
+                          }
+                        },
+                      });
+                    }}
+                    className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap"
+                  >
+                    <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{emailingPdf ? 'Sending…' : 'Email PDF to Active Members'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Automated Reporting Tools */}
           <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">

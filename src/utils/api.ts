@@ -22,6 +22,7 @@ import type {
   NomineeInfo,
   NoticePriority,
   NotificationPreferences,
+  PasswordResetRequest,
   PrivateMessage,
   ProfileChangeRequest,
   PublicUser,
@@ -91,8 +92,7 @@ export interface SheetTabBlueprint {
 export interface RegisterMemberPayload {
   name: string;
   email: string;
-  password?: string;
-  googleRegistrationToken?: string;
+  password: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;
@@ -105,14 +105,6 @@ export interface RegisterMemberPayload {
   agreementPhotoUrl?: string;
   nominees: NomineeInfo[];
 }
-
-export type GoogleAuthResponse =
-  | { status: 'authenticated'; user: PublicUser }
-  | {
-      status: 'needs_onboarding';
-      registrationToken: string;
-      googleProfile: { name: string; email: string; photoUrl: string };
-    };
 
 export const api = {
   getMe: () => apiRequest<{ user: PublicUser }>('/api/auth/me'),
@@ -156,10 +148,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  googleAuth: (idToken: string) =>
-    apiRequest<GoogleAuthResponse>('/api/auth/google', {
+  forgotPassword: (email: string, reason?: string) =>
+    apiRequest<{ ok: boolean; message: string; adminCount: number }>('/api/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ email, reason }),
     }),
   getReferenceMembers: () =>
     apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),
@@ -771,5 +763,51 @@ export const api = {
     apiRequest<{ ok: boolean; id: string }>(`/api/notices/${id}`, {
       method: 'DELETE',
     }),
+
+  // Admin Password Reset Requests & Temporary Password Dispatch
+  getPasswordResetRequests: () =>
+    apiRequest<{ requests: PasswordResetRequest[] }>('/api/admin/password-reset-requests'),
+  declinePasswordResetRequest: (id: string, note?: string) =>
+    apiRequest<{ ok: boolean; request: PasswordResetRequest }>(
+      `/api/admin/password-reset-requests/${id}/decline`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ note }),
+      }
+    ),
+  adminResetMemberPassword: (id: string, tempPassword?: string) =>
+    apiRequest<{
+      ok: boolean;
+      emailSent: boolean;
+      emailProvider: string;
+      emailError?: string;
+      tempPassword?: string;
+      recipientEmail: string;
+      memberName: string;
+      memberCode: string;
+    }>(`/api/admin/members/${id}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify(tempPassword ? { tempPassword } : {}),
+    }),
+
+  // Monthly Fund Summary PDF & Fund JSON Backup
+  emailMonthlyPdfSummary: (monthKey?: string) =>
+    apiRequest<{
+      ok: boolean;
+      monthKey: string;
+      sentCount: number;
+      failedCount: number;
+      totalMembers: number;
+      skipped?: boolean;
+      reason?: string;
+    }>('/api/reports/monthly-pdf/email', {
+      method: 'POST',
+      body: JSON.stringify(monthKey ? { monthKey } : {}),
+    }),
+  getMonthlyPdfDownloadUrl: (monthKey?: string) =>
+    monthKey
+      ? `/api/reports/monthly-pdf/download?monthKey=${encodeURIComponent(monthKey)}`
+      : '/api/reports/monthly-pdf/download',
+  getBackupJsonUrl: () => '/api/reports/backup-json',
 };
 

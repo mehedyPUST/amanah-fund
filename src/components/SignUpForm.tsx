@@ -9,7 +9,6 @@ import {
   ExternalLink,
   FileCheck2,
   FileText,
-  Globe,
   ImagePlus,
   Loader2,
   Plus,
@@ -17,18 +16,13 @@ import {
   Trash2,
   UserPlus,
   Users,
-  X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { ConstitutionDocumentInfo, NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
-import {
-  GOOGLE_ONBOARDING_STORAGE_KEY,
-  signInWithGoogleIdentity,
-  type StoredGoogleOnboarding,
-} from '../utils/googleAuth.ts';
+import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 
 interface NomineeDraft {
@@ -67,15 +61,11 @@ function createEmptyNominee(sharePercentage = '100'): NomineeDraft {
 
 export function SignUpForm() {
   const router = useRouter();
-  const { user, authChecking, setUser } = useCoopSession();
+  const { user, authChecking } = useCoopSession();
 
   const [referenceOptions, setReferenceOptions] = useState<
     Array<{ name: string; memberCode: string }>
   >([]);
-
-  // Google-verified onboarding state
-  const [googleOnboarding, setGoogleOnboarding] = useState<StoredGoogleOnboarding | null>(null);
-  const [googleVerifying, setGoogleVerifying] = useState(false);
 
   // Required & optional signup fields
   const [name, setName] = useState('');
@@ -104,28 +94,13 @@ export function SignUpForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     if (!authChecking && user) {
-      router.replace('/dashboard');
+      router.replace('/');
     }
   }, [authChecking, user, router]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.sessionStorage.getItem(GOOGLE_ONBOARDING_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as StoredGoogleOnboarding;
-      if (parsed?.registrationToken && parsed?.googleProfile?.email) {
-        setGoogleOnboarding(parsed);
-        setName((prev) => prev || parsed.googleProfile.name || '');
-        setEmail(parsed.googleProfile.email);
-      }
-    } catch {
-      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
-    }
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -236,49 +211,6 @@ export function SignUpForm() {
     });
   }
 
-  async function handleStartGoogleOnboarding() {
-    setError(null);
-    setSuccessMessage(null);
-    setGoogleVerifying(true);
-    try {
-      const { idToken } = await signInWithGoogleIdentity();
-      const res = await api.googleAuth(idToken);
-
-      if (res.status === 'authenticated') {
-        setUser(res.user);
-        router.push('/dashboard');
-        return;
-      }
-
-      const onboardingPayload: StoredGoogleOnboarding = {
-        registrationToken: res.registrationToken,
-        googleProfile: res.googleProfile,
-      };
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(
-          GOOGLE_ONBOARDING_STORAGE_KEY,
-          JSON.stringify(onboardingPayload)
-        );
-      }
-      setGoogleOnboarding(onboardingPayload);
-      setName(res.googleProfile.name || '');
-      setEmail(res.googleProfile.email);
-      setPassword('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google verification failed.');
-    } finally {
-      setGoogleVerifying(false);
-    }
-  }
-
-  function handleClearGoogleOnboarding() {
-    setGoogleOnboarding(null);
-    setEmail('');
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
-    }
-  }
-
   async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>, target: 'photo' | 'agreement') {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -368,12 +300,8 @@ export function SignUpForm() {
       setError('Please upload your profile photo before submitting the application.');
       return;
     }
-    if (!googleOnboarding && password.length < 6) {
+    if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
-      return;
-    }
-    if (googleOnboarding && password.length > 0 && password.length < 6) {
-      setError('Optional backup password must be at least 6 characters long (or leave blank).');
       return;
     }
 
@@ -442,8 +370,7 @@ export function SignUpForm() {
       const res = await api.register({
         name,
         email,
-        password: password || undefined,
-        googleRegistrationToken: googleOnboarding?.registrationToken,
+        password,
         dateOfBirth,
         referenceMemberName,
         mobile,
@@ -457,15 +384,11 @@ export function SignUpForm() {
         nominees: preparedNominees,
       });
 
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.removeItem(GOOGLE_ONBOARDING_STORAGE_KEY);
-      }
-      setGoogleOnboarding(null);
-
-      setSuccessMessage(
+      const msg =
         res.message ||
-          'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.'
-      );
+        'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.';
+      setSuccessMessage(msg);
+      setSuccessModalOpen(true);
       setName('');
       setEmail('');
       setPassword('');
@@ -630,58 +553,6 @@ export function SignUpForm() {
                 )}
               </AnimatePresence>
 
-              {/* Google Identity Prefill / Verification Banner */}
-              {googleOnboarding ? (
-                <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/70 dark:bg-teal-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2
-                      className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5"
-                      aria-hidden="true"
-                    />
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-teal-900 dark:text-teal-200">
-                        Google Identity Verified · {googleOnboarding.googleProfile.email}
-                      </p>
-                      <p className="text-xs text-teal-800/90 dark:text-teal-300/90">
-                        Complete the KYC fields below for administrator approval.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleClearGoogleOnboarding}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 text-xs font-medium text-teal-800 dark:text-teal-200 hover:bg-teal-100/70 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                  >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Use Email Instead</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="p-4 rounded-xl border border-teal-200/70 dark:border-teal-900/40 bg-teal-50/35 dark:bg-teal-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                      Applying with a Google account?
-                    </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Pre-fill your verified Google email and skip setting a password.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleStartGoogleOnboarding}
-                    disabled={googleVerifying || submitting}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-xs font-medium text-slate-800 dark:text-slate-100 shadow-2xs transition-colors cursor-pointer disabled:opacity-60 shrink-0 whitespace-nowrap"
-                  >
-                    {googleVerifying ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" aria-hidden="true" />
-                    ) : (
-                      <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                    )}
-                    <span>{googleVerifying ? 'Verifying…' : 'Continue with Google'}</span>
-                  </button>
-                </div>
-              )}
-
             {/* Section 1: Identity & Credentials */}
             <div className="space-y-4">
               <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
@@ -705,51 +576,28 @@ export function SignUpForm() {
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Email Address <span className="text-red-500">*</span>
-                    {googleOnboarding && (
-                      <span className="ml-1.5 text-[11px] font-normal text-emerald-700 dark:text-emerald-400">
-                        (Verified via Google)
-                      </span>
-                    )}
                   </label>
                   <input
                     type="email"
                     required
-                    readOnly={Boolean(googleOnboarding)}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="member@example.com"
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 ${
-                      googleOnboarding
-                        ? 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 cursor-not-allowed'
-                        : 'bg-white dark:bg-slate-950'
-                    }`}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    {googleOnboarding ? (
-                      <>
-                        Backup Password{' '}
-                        <span className="text-slate-400 font-normal">(Optional for Google)</span>
-                      </>
-                    ) : (
-                      <>
-                        Password (min 6 chars) <span className="text-red-500">*</span>
-                      </>
-                    )}
+                    Password (min 6 chars) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="password"
-                    required={!googleOnboarding}
-                    minLength={googleOnboarding && password.length === 0 ? undefined : 6}
+                    required
+                    minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder={
-                      googleOnboarding
-                        ? 'Leave blank to sign in with Google only'
-                        : 'Create a secure password'
-                    }
+                    placeholder="Create a secure password"
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -1417,6 +1265,19 @@ export function SignUpForm() {
         )}
         </AnimatePresence>
       </motion.div>
+
+      <ActionModal
+        open={successModalOpen}
+        mode="notice"
+        tone="emerald"
+        title="Application Submitted for Review"
+        description={
+          successMessage ||
+          'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.'
+        }
+        confirmLabel="OK, Got It"
+        onClose={() => setSuccessModalOpen(false)}
+      />
     </div>
   );
 }

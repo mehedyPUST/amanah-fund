@@ -6,10 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, LogOut, Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
+import { PWAInstallButton } from './PWAInstallButton.tsx';
 
 type HomeSectionId =
   | 'overview'
   | 'notice-board'
+  | 'community'
   | 'architecture'
   | 'how-it-works'
   | 'governance-charter';
@@ -34,6 +36,7 @@ export function Navbar() {
 
   const publicNavLinks: PublicNavItem[] = [
     { id: 'overview', href: '/#overview', label: 'Overview' },
+    { id: 'community', href: '/#community', label: 'Community' },
     { id: 'architecture', href: '/#architecture', altPath: '/about', label: 'Architecture' },
     { id: 'how-it-works', href: '/#how-it-works', label: 'How It Works' },
     {
@@ -67,6 +70,7 @@ export function Navbar() {
     if (
       hash === 'overview' ||
       hash === 'notice-board' ||
+      hash === 'community' ||
       hash === 'architecture' ||
       hash === 'how-it-works' ||
       hash === 'governance-charter'
@@ -83,6 +87,7 @@ export function Navbar() {
     const sectionIds: HomeSectionId[] = [
       'overview',
       'notice-board',
+      'community',
       'architecture',
       'how-it-works',
       'governance-charter',
@@ -220,6 +225,8 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
+          <PWAInstallButton compact className="hidden sm:inline-flex" />
+
           <button
             type="button"
             onClick={toggleDarkMode}
@@ -309,6 +316,10 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <PWAInstallButton className="flex-1 justify-center py-2.5" />
+            </div>
 
             <button
               type="button"

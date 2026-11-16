@@ -32,9 +32,19 @@ import {
   verifyTotpCode,
 } from '../src/server/totp.ts';
 import {
+  buildTransactionSummaryEmailPayload,
+  isSmtpConfigured,
+} from '../src/server/emailService.ts';
+import {
+  buildMonthlyFundSummaryData,
+  generateMonthlyFundSummaryPdfBuffer,
+  getPreviousMonthKey,
+} from '../src/server/pdfSummaryService.ts';
+import {
   normalizeAndValidatePostLinks,
   parseTextWithLinks,
 } from '../src/utils/communityLinks.ts';
+import { BANK_PROVIDERS } from '../src/utils/format.ts';
 import type { LoanRequest, PublicUser } from '../src/types/coop.ts';
 
 function makeBaseState(): VaultState {
@@ -1046,6 +1056,79 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
       { type: 'link', value: 'https://youtu.be/abc123' },
       { type: 'text', value: '. Details soon!' },
     ]);
+  });
+
+  it('generates monthly fund summary PDF buffer with accurate totals and previous-month rollover key', () => {
+    const state = makeBaseState();
+    const nowYear = new Date().getUTCFullYear();
+    const monthKey = `${nowYear}-01`;
+
+    const summary = buildMonthlyFundSummaryData(state, monthKey);
+    expect(summary.monthKey).toBe(monthKey);
+    expect(summary.amanahHeight).toBe(15000);
+    expect(summary.monthContributionsCollected).toBe(15000);
+    expect(summary.clearedMembersCount).toBe(2);
+
+    const { buffer, filename } = generateMonthlyFundSummaryPdfBuffer(state, monthKey);
+    expect(filename).toBe(`amanah-monthly-summary-${monthKey}.pdf`);
+    expect(Buffer.isBuffer(buffer)).toBe(true);
+    expect(buffer.length).toBeGreaterThan(1000);
+    expect(buffer.subarray(0, 5).toString('utf8')).toBe('%PDF-');
+
+    expect(getPreviousMonthKey(new Date('2027-01-02T00:00:00.000Z'))).toBe('2026-12');
+    expect(getPreviousMonthKey(new Date('2027-03-15T12:00:00.000Z'))).toBe('2027-02');
+  });
+
+  it('formats transaction email summary payloads cleanly and checks SMTP env configuration', () => {
+    expect(isSmtpConfigured({} as NodeJS.ProcessEnv)).toBe(false);
+    expect(isSmtpConfigured({ SMTP_HOST: 'smtp.example.org' } as unknown as NodeJS.ProcessEnv)).toBe(
+      true
+    );
+
+    const payload = buildTransactionSummaryEmailPayload({
+      to: 'bilal@amanahcoop.org',
+      recipientName: 'Bilal Hasan',
+      fundName: 'Amanah',
+      currency: 'BDT',
+      eventTitle: 'Monthly Contribution Approved',
+      transactionType: 'Contribution Approval',
+      referenceId: 'C-2026-01',
+      amount: 5000,
+      statusLabel: 'Approved',
+      summaryText: 'Your monthly cooperative deposit has been credited.',
+      details: [{ label: 'Billing Month', value: '2026-11' }],
+      timestampIso: '2026-11-16T08:00:00.000Z',
+    });
+
+    expect(payload.subject).toContain('Monthly Contribution Approved');
+    expect(payload.subject).toContain('5,000 BDT');
+    expect(payload.subject).toContain('C-2026-01');
+    expect(payload.text).toContain('Assalamu Alaikum Bilal Hasan');
+    expect(payload.text).toContain('Billing Month: 2026-11');
+    expect(payload.html).toContain('5,000 BDT');
+  });
+
+  it('exposes the full Bangladesh scheduled banks catalog and evaluates blocking loan eligibility checks', () => {
+    expect(BANK_PROVIDERS.length).toBeGreaterThanOrEqual(60);
+    expect(BANK_PROVIDERS).toContain('Islami Bank Bangladesh');
+    expect(BANK_PROVIDERS).toContain('Sonali Bank');
+    expect(BANK_PROVIDERS).toContain('BRAC Bank');
+
+    const state = makeBaseState();
+    const cycle3 = buildManagerCycleSchedule({
+      ...state,
+      fundConfig: { ...state.fundConfig, managerCycleMonths: 3, managerCycleStartDate: '2027-01-01' },
+    });
+    const cycle6 = buildManagerCycleSchedule({
+      ...state,
+      fundConfig: { ...state.fundConfig, managerCycleMonths: 6, managerCycleStartDate: '2027-01-01' },
+    });
+    expect(cycle3.cycleMonths).toBe(3);
+    expect(cycle6.cycleMonths).toBe(6);
+
+    const elig = evaluateLoanEligibility(state, state.users[1].id);
+    expect(elig.eligible).toBe(true);
+    expect(elig.reasons.length).toBeGreaterThan(0);
   });
 });
 
