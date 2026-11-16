@@ -404,3 +404,85 @@ export async function sendMonthlyPdfSummaryEmail(options: {
     errors,
   };
 }
+
+export async function sendRegistrationPendingAdminEmail(options: {
+  adminEmails: string[];
+  applicantName: string;
+  applicantCode: string;
+  applicantEmail: string;
+  mobile: string;
+  referenceMemberName: string;
+  fundName: string;
+}): Promise<EmailSendResult> {
+  if (options.adminEmails.length === 0) {
+    return { sent: false, reason: 'NO_ADMIN_EMAILS' };
+  }
+
+  const subject = `[Amanah] New Member Signup Request: ${options.applicantName} (${options.applicantCode})`;
+  const text = [
+    `New membership registration received for ${options.fundName}.`,
+    '',
+    `Applicant: ${options.applicantName} (${options.applicantCode})`,
+    `Email: ${options.applicantEmail}`,
+    `Mobile: ${options.mobile}`,
+    `Reference Member: ${options.referenceMemberName}`,
+    '',
+    'Open Dashboard -> Member Registry -> Pending User Registrations to review KYC details and approve or reject.',
+  ].join('\n');
+
+  const html = `
+  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:580px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#0f766e,#065f46);padding:18px 24px;color:#ffffff;">
+      <div style="font-size:11px;opacity:0.9;">${escapeHtml(options.fundName)}</div>
+      <h2 style="margin:4px 0 0;font-size:17px;">New Registration Pending Approval</h2>
+    </div>
+    <div style="padding:20px 24px;color:#334155;font-size:14px;line-height:1.6;">
+      <p style="margin:0 0 12px;"><strong>${escapeHtml(options.applicantName)}</strong> (${escapeHtml(options.applicantCode)}) submitted a cooperative membership application.</p>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;background:#f8fafc;margin-bottom:14px;">
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Email</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:right;">${escapeHtml(options.applicantEmail)}</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Mobile</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:right;font-family:monospace;">${escapeHtml(options.mobile)}</td></tr>
+        <tr><td style="padding:8px 12px;font-size:12px;color:#475569;">Reference</td><td style="padding:8px 12px;font-size:12px;font-weight:600;text-align:right;">${escapeHtml(options.referenceMemberName)}</td></tr>
+      </table>
+      <p style="margin:0;font-size:13px;color:#475569;">Review KYC documents and approve in <strong>Member Registry → Pending User Registrations</strong>.</p>
+    </div>
+  </div>`;
+
+  return sendEmail({ to: options.adminEmails, subject, text, html });
+}
+
+export async function sendRegistrationApprovedEmail(options: {
+  to: string;
+  memberName: string;
+  memberCode: string;
+  adminName: string;
+  fundName: string;
+}): Promise<EmailSendResult> {
+  const subject = `[Amanah] Membership Approved — Welcome (${options.memberCode})`;
+  const text = [
+    `Assalamu Alaikum ${options.memberName},`,
+    '',
+    `Your cooperative membership application for ${options.fundName} has been approved by administrator ${options.adminName}.`,
+    `Member Code: ${options.memberCode}`,
+    '',
+    'You may now sign in to submit monthly contributions, participate in community discussions, and vote on cooperative governance proposals.',
+  ].join('\n');
+
+  const html = `
+  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:580px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#059669,#0f766e);padding:20px 24px;color:#ffffff;">
+      <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.9;">${escapeHtml(options.fundName)}</div>
+      <h2 style="margin:6px 0 0;font-size:18px;font-weight:700;">Membership Approved — Welcome</h2>
+    </div>
+    <div style="padding:22px 24px;color:#334155;font-size:14px;line-height:1.6;">
+      <p style="margin:0 0 12px;">Assalamu Alaikum <strong>${escapeHtml(options.memberName)}</strong>,</p>
+      <p style="margin:0 0 14px;">Your membership application has been verified and approved by administrator <strong>${escapeHtml(options.adminName)}</strong>.</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;color:#166534;text-transform:uppercase;letter-spacing:0.05em;">Assigned Member Code</div>
+        <div style="font-family:monospace;font-size:18px;font-weight:700;color:#064e3b;margin-top:4px;">${escapeHtml(options.memberCode)}</div>
+      </div>
+      <p style="margin:0;font-size:13px;color:#475569;">You can now sign in with your registered email and password to access the cooperative portal.</p>
+    </div>
+  </div>`;
+
+  return sendEmail({ to: options.to, subject, text, html });
+}

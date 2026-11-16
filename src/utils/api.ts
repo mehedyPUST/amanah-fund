@@ -509,7 +509,12 @@ export const api = {
       permanentAddress?: string;
     }
   ) =>
-    apiRequest<{ members: MemberSummary[] }>(`/api/admin/members/${id}`, {
+    apiRequest<{
+      members: MemberSummary[];
+      approvedNow?: boolean;
+      emailSent?: boolean;
+      emailReason?: string;
+    }>(`/api/admin/members/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),

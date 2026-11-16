@@ -125,13 +125,22 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       run: async () => {
         setBusyAction({ id: member.id, type: 'approve' });
         try {
-          await api.updateMember(member.id, { status: 'active' });
+          const res = await api.updateMember(member.id, { status: 'active' });
           setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
           await onRefresh();
           showNotice(
             'emerald',
             'Member Registration Approved',
-            `Approved ${member.name} (${member.memberCode}). Account is now active and welcome notice queued.`
+            res.emailSent
+              ? `Approved ${member.name} (${member.memberCode}). Account is now active and welcome email sent to ${member.email}.`
+              : `Approved ${member.name} (${member.memberCode}). Account is active and welcome notice queued in-app${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`,
+            [
+              { label: 'Member', value: `${member.name} (${member.memberCode})` },
+              {
+                label: 'Welcome Email',
+                value: res.emailSent ? `Sent to ${member.email}` : 'In-App Only',
+              },
+            ]
           );
         } finally {
           setBusyAction(null);

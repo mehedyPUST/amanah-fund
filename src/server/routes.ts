@@ -75,6 +75,8 @@ import {
   isSmtpConfigured,
   sendMonthlyPdfSummaryEmail,
   sendPasswordResetAdminAlertEmail,
+  sendRegistrationApprovedEmail,
+  sendRegistrationPendingAdminEmail,
   sendTempPasswordEmail,
   sendTransactionSummaryEmail,
   type TransactionEmailSummaryInput,
@@ -697,13 +699,16 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     let createdUser!: StoredUser;
     let sanitized!: ReturnType<typeof sanitizeUser>;
 
-    await updateVaultState((draft) => {
+    let adminEmailsForAlert: string[] = [];
+    let fundNameForAlert = 'Amanah Cooperative Treasury';
+    const nextRegisterState = await updateVaultState((draft) => {
       if (draft.users.some((u) => u.email.toLowerCase() === email)) {
         throw new Error('EMAIL_IN_USE');
       }
 
       // First account on an empty cooperative becomes the bootstrap administrator.
       const isBootstrapAdmin = draft.users.length === 0;
+      fundNameForAlert = draft.fundConfig.fundName;
 
       createdUser = {
         id: `usr-${isBootstrapAdmin ? 'adm' : 'mem'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -725,6 +730,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
 
       if (!isBootstrapAdmin) {
         const activeAdmins = draft.users.filter((u) => u.role === 'admin' && u.status === 'active');
+        adminEmailsForAlert = activeAdmins.map((a) => a.email).filter(Boolean);
         activeAdmins.forEach((admin) => {
           queueEmailNotification(draft, {
             type: 'signup_pending_admin',
@@ -758,6 +764,20 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       });
       return draft;
     });
+
+    if (createdUser.status === 'pending_approval' && adminEmailsForAlert.length > 0) {
+      void sendRegistrationPendingAdminEmail({
+        adminEmails: adminEmailsForAlert,
+        applicantName: createdUser.name,
+        applicantCode: createdUser.memberCode,
+        applicantEmail: createdUser.email,
+        mobile,
+        referenceMemberName,
+        fundName: nextRegisterState.fundConfig?.fundName || fundNameForAlert,
+      }).catch((err) => {
+        console.warn('[EmailService] Admin registration alert dispatch failed:', err);
+      });
+    }
 
     broadcastRealtimeEvent('members:updated', { userId: createdUser.id });
     if (createdUser.status === 'pending_approval') {
@@ -4567,6 +4587,7 @@ apiRouter.patch(
 
       let found = false;
       let approvedNow = false;
+      let approvedTarget: { email: string; name: string; memberCode: string } | null = null;
       const nextState = await updateVaultState((draft) => {
         const user = draft.users.find((u) => u.id === id);
         if (!user) return draft;
@@ -4669,6 +4690,7 @@ apiRouter.patch(
 
         if (prevStatus === 'pending_approval' && user.status === 'active') {
           approvedNow = true;
+          approvedTarget = { email: user.email, name: user.name, memberCode: user.memberCode };
           queueEmailNotification(draft, {
             type: 'signup_approved',
             recipientEmail: user.email,
@@ -4714,16 +4736,52 @@ apiRouter.patch(
         return;
       }
 
+      let emailSent = false;
+      let emailReason: string | undefined;
+      if (approvedNow && approvedTarget) {
+        try {
+          const targetInfo = approvedTarget as {
+            email: string;
+            name: string;
+            memberCode: string;
+          };
+          const emailRes = await Promise.race([
+            sendRegistrationApprovedEmail({
+              to: targetInfo.email,
+              memberName: targetInfo.name,
+              memberCode: targetInfo.memberCode,
+              adminName: viewer.name,
+              fundName: nextState.fundConfig.fundName,
+            }),
+            new Promise<{ sent: false; reason: string }>((resolve) =>
+              setTimeout(() => resolve({ sent: false, reason: 'SMTP_TIMEOUT' }), 6000)
+            ),
+          ]);
+          emailSent = emailRes.sent;
+          emailReason = emailRes.reason;
+        } catch (emailErr) {
+          emailSent = false;
+          emailReason =
+            emailErr instanceof Error ? emailErr.message : 'SMTP delivery failed';
+          console.warn('[EmailService] Registration approval email failed safely:', emailReason);
+        }
+      }
+
       broadcastRealtimeEvent('members:updated', { userId: id });
       if (approvedNow) {
         broadcastRealtimeEvent('notification:created', { type: 'signup_approved' });
       }
       broadcastRealtimeEvent('audit:updated', {
-        action: 'MEMBER_RBAC_UPDATED',
+        action: approvedNow ? 'MEMBER_SIGNUP_APPROVED' : 'MEMBER_RBAC_UPDATED',
         resourceType: 'auth',
         resourceId: id,
       });
-      res.json({ members: buildMemberSummaries(nextState, true) });
+      res.json({
+        members: buildMemberSummaries(nextState, true),
+        approvedNow,
+        emailSent,
+        emailReason,
+      });
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
         res.status(409).json({ error: 'Another user account already uses that email address.' });

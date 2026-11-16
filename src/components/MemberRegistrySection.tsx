@@ -139,7 +139,13 @@ export function MemberRegistrySection({
         showNotice(
           'emerald',
           'Member Approved & Activated',
-          `${member.name} (${member.memberCode}) is now an active cooperative member. Welcome notification queued.`
+          res.emailSent
+            ? `${member.name} (${member.memberCode}) is now an active cooperative member. Welcome email sent to ${member.email}.`
+            : `${member.name} (${member.memberCode}) is now an active cooperative member. In-app welcome notice queued${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`,
+          [
+            { label: 'Member', value: `${member.name} (${member.memberCode})` },
+            { label: 'Welcome Email', value: res.emailSent ? `Sent to ${member.email}` : 'In-App Only' },
+          ]
         );
       },
     });

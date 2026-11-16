@@ -208,13 +208,20 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'User Account Updated',
-            description: successText,
+            title: res.approvedNow ? 'Membership Approved' : 'User Account Updated',
+            description: res.approvedNow
+              ? res.emailSent
+                ? `Approved ${member.name} (${member.memberCode}) and sent welcome email to ${member.email}.`
+                : `Approved ${member.name} (${member.memberCode}) and queued in-app welcome notice${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`
+              : successText,
             details: [
               { label: 'Member', value: `${member.name} (${member.memberCode})` },
               ...(payload.role ? [{ label: 'Role', value: payload.role.toUpperCase() }] : []),
               ...(payload.status
                 ? [{ label: 'Status', value: payload.status.replace(/_/g, ' ') }]
+                : []),
+              ...(res.approvedNow
+                ? [{ label: 'Welcome Email', value: res.emailSent ? `Sent to ${member.email}` : 'In-App Only' }]
                 : []),
             ],
           });

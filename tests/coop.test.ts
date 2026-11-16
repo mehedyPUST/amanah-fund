@@ -35,6 +35,8 @@ import {
   buildTransactionSummaryEmailPayload,
   isSmtpConfigured,
   normalizeSmtpPass,
+  sendRegistrationApprovedEmail,
+  sendRegistrationPendingAdminEmail,
 } from '../src/server/emailService.ts';
 import {
   buildMonthlyFundSummaryData,
@@ -1134,6 +1136,30 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     const elig = evaluateLoanEligibility(state, state.users[1].id);
     expect(elig.eligible).toBe(true);
     expect(elig.reasons.length).toBeGreaterThan(0);
+  });
+
+  it('handles registration alert and approval emails safely without throwing when SMTP is unconfigured', async () => {
+    const adminAlert = await sendRegistrationPendingAdminEmail({
+      adminEmails: ['admin@amanahcoop.org'],
+      applicantName: 'Nadia Karim',
+      applicantCode: 'MEM-008',
+      applicantEmail: 'nadia@amanahcoop.org',
+      mobile: '01700000008',
+      referenceMemberName: 'Ayesha Rahman',
+      fundName: 'Amanah Cooperative',
+    });
+    expect(adminAlert.sent).toBe(false);
+    expect(adminAlert.reason).toBe('SMTP_NOT_CONFIGURED');
+
+    const welcomeRes = await sendRegistrationApprovedEmail({
+      to: 'nadia@amanahcoop.org',
+      memberName: 'Nadia Karim',
+      memberCode: 'MEM-008',
+      adminName: 'Root Admin',
+      fundName: 'Amanah Cooperative',
+    });
+    expect(welcomeRes.sent).toBe(false);
+    expect(welcomeRes.reason).toBe('SMTP_NOT_CONFIGURED');
   });
 });
 

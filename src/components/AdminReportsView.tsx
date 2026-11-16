@@ -210,7 +210,9 @@ export function AdminReportsView({
             mode: 'notice',
             tone: 'emerald',
             title: 'Membership Approved',
-            description: `${member.name} (${member.memberCode}) is now an active verified member. Welcome notification queued.`,
+            description: res.emailSent
+              ? `${member.name} (${member.memberCode}) is now an active verified member. Welcome email sent to ${member.email}.`
+              : `${member.name} (${member.memberCode}) is now an active verified member. In-app welcome notice queued${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`,
           });
         } catch (err) {
           setModal({
