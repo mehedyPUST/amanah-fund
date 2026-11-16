@@ -402,7 +402,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
   if (!canViewSystemLogs) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-3">
+      <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-3 shadow-xs">
         <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
@@ -435,7 +435,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
     >
       {/* 4-Column Summary KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Immutable Admin Records</span>
             <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
@@ -463,7 +463,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>User Approvals &amp; Registry</span>
             <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -480,7 +480,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Setting Modifications</span>
             <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
@@ -497,7 +497,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs transition-colors">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Financial &amp; Moderation</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -516,7 +516,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       </div>
 
       {/* Main Immutable Audit Ledger Panel */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

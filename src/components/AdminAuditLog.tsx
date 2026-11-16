@@ -471,7 +471,7 @@ export function AdminAuditLog({
 
   if (!canViewAuditLogs) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-3">
+      <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-3 shadow-xs">
         <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
@@ -499,7 +499,7 @@ export function AdminAuditLog({
       {/* KPI Summary Strip */}
       {!compactHeader && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Site Events</span>
               <ScrollText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
@@ -523,7 +523,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Loan Requests &amp; Votes</span>
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -540,7 +540,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Contributions &amp; Repayments</span>
               <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -557,7 +557,7 @@ export function AdminAuditLog({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 space-y-1 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Settings &amp; Member Registry</span>
               <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
@@ -577,7 +577,7 @@ export function AdminAuditLog({
       )}
 
       {/* Real-Time Site Activity Feed Panel */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -794,7 +794,7 @@ export function AdminAuditLog({
         {loading && logs.length === 0 ? (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-4 flex items-start justify-between gap-3 bg-white dark:bg-slate-900">
+              <div key={i} className="p-4 flex items-start justify-between gap-3 bg-white/50 dark:bg-slate-900/50">
                 <div className="flex items-start gap-3 flex-1">
                   <Skeleton width={36} height={36} borderRadius={8} />
                   <div className="flex-1 space-y-1.5">
@@ -830,7 +830,7 @@ export function AdminAuditLog({
                   className={`p-4 transition-colors space-y-3 ${
                     isJustArrived
                       ? 'bg-emerald-50/60 dark:bg-emerald-950/25 ring-1 ring-inset ring-emerald-500/30'
-                      : 'bg-white dark:bg-slate-900 hover:bg-slate-50/60 dark:hover:bg-slate-900/70'
+                      : 'bg-white/50 dark:bg-slate-900/50 hover:bg-slate-50/70 dark:hover:bg-slate-900/75'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">

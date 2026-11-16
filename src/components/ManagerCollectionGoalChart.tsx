@@ -56,7 +56,7 @@ function CollectionGoalTooltip({ active, payload, label, currency }: GoalTooltip
   const point = payload[0]?.payload;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 shadow-md text-xs space-y-1.5">
+    <div className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 shadow-md text-xs space-y-1.5">
       <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-1">
         <span className="font-semibold text-slate-900 dark:text-white">{label}</span>
         {point && (
@@ -231,7 +231,7 @@ export function ManagerCollectionGoalChart({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-label="Monthly Collection Progress vs Target Goals"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5"
+      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5"
     >
       {/* Header & Controls */}
       <div className="space-y-4">

@@ -284,29 +284,33 @@ export function DashboardShell() {
   const refreshWorkspace = useCallback(async (silent = false): Promise<DashboardOverview | null> => {
     if (!silent) setDataLoading(true);
     try {
-      const [ovRes, cRes, lRes, hRes, nRes, dmRes, pRes, mRes, pcrRes] = await Promise.all([
+      const [ovRes, cRes, lRes, hRes, nRes, dmRes, pRes, mRes, pcrRes] = await Promise.allSettled([
         api.getDashboard(),
         api.getContributions(),
         api.getLoans(),
         api.getHalalProjects(),
         api.getNotifications(),
-        api.getPrivateThreads().catch(() => ({ threads: [], totalUnread: 0, directory: [] })),
-        api.getPolls().catch(() => ({ polls: [] as DecisionPoll[] })),
-        api.getMeetings().catch(() => ({ meetings: [] as CoopMeeting[] })),
-        api
-          .getProfileChangeRequests()
-          .catch(() => ({ requests: [] as ProfileChangeRequest[] })),
+        api.getPrivateThreads(),
+        api.getPolls(),
+        api.getMeetings(),
+        api.getProfileChangeRequests(),
       ]);
-      setOverview(ovRes);
-      setContributions(cRes.contributions);
-      setLoans(lRes.loans);
-      setHalalProjects(hRes.projects);
-      setNotifications(nRes.notifications);
-      setUnreadDmCount(dmRes.totalUnread);
-      setPolls(pRes.polls);
-      setMeetings(mRes.meetings);
-      setProfileChangeRequests(pcrRes.requests);
-      return ovRes;
+
+      let nextOverview: DashboardOverview | null = null;
+      if (ovRes.status === 'fulfilled') {
+        nextOverview = ovRes.value;
+        setOverview(ovRes.value);
+      }
+      if (cRes.status === 'fulfilled') setContributions(cRes.value.contributions);
+      if (lRes.status === 'fulfilled') setLoans(lRes.value.loans);
+      if (hRes.status === 'fulfilled') setHalalProjects(hRes.value.projects);
+      if (nRes.status === 'fulfilled') setNotifications(nRes.value.notifications);
+      if (dmRes.status === 'fulfilled') setUnreadDmCount(dmRes.value.totalUnread);
+      if (pRes.status === 'fulfilled') setPolls(pRes.value.polls);
+      if (mRes.status === 'fulfilled') setMeetings(mRes.value.meetings);
+      if (pcrRes.status === 'fulfilled') setProfileChangeRequests(pcrRes.value.requests);
+
+      return nextOverview;
     } catch (err) {
       console.error('Workspace sync error:', err);
       return null;
@@ -373,6 +377,7 @@ export function DashboardShell() {
     es.addEventListener('investment:distributed', handleSync);
     es.addEventListener('investment:revealed', handleSync);
     es.addEventListener('loan:created', handleLoanCreated);
+    es.addEventListener('loan:updated', handleSync);
     es.addEventListener('loan:reviewed', handleSync);
     es.addEventListener('loan:voted', handleSync);
     es.addEventListener('loan:vote_initiated', handleSync);
@@ -490,7 +495,7 @@ export function DashboardShell() {
         const pendingLoan =
           loans.find(
             (l) =>
-              l.borrowerId === user.id &&
+              (l.borrowerId === user.id || (Boolean(user.memberCode) && l.borrowerCode === user.memberCode)) &&
               (l.status === 'pending_manager_review' || l.status === 'pending_guarantor')
           ) || null;
         const withdrawId =
@@ -593,10 +598,51 @@ export function DashboardShell() {
     router.push('/');
   }
 
-  async function handleRefreshWithAutoSync() {
+  const handleRefreshWithAutoSync = useCallback(async () => {
     const freshOverview = await refreshWorkspace(true);
     await triggerAutoSheetSyncIfEnabled(freshOverview);
-  }
+  }, [refreshWorkspace, triggerAutoSheetSyncIfEnabled]);
+
+  const handleLoanCreatedOptimistic = useCallback((createdLoan: LoanRequest) => {
+    setLoans((prev) => {
+      const idx = prev.findIndex((l) => l.id === createdLoan.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = createdLoan;
+        return next;
+      }
+      return [createdLoan, ...prev];
+    });
+    setOverview((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        personal: {
+          ...prev.personal,
+          eligibility: {
+            ...prev.personal.eligibility,
+            eligible: false,
+            noActiveLoan: false,
+            activeLoanId: createdLoan.id,
+            loansUsedThisYear: (prev.personal.eligibility.loansUsedThisYear || 0) + 1,
+            reasons: [
+              `Existing loan (${createdLoan.id}) is currently "${createdLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`,
+              ...(prev.personal.eligibility.reasons || []).filter(
+                (r) => !r.startsWith('Existing loan') && !r.startsWith('No active')
+              ),
+            ],
+          },
+        },
+        treasury: {
+          ...prev.treasury,
+          pendingLoansReviewCount:
+            createdLoan.status === 'pending_manager_review'
+              ? (prev.treasury.pendingLoansReviewCount || 0) + 1
+              : prev.treasury.pendingLoansReviewCount,
+        },
+      };
+    });
+  }, []);
 
   async function handleDismissLoanDecisionAlert(notificationId: string) {
     setNotifications((prev) =>
@@ -617,15 +663,15 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="h-dvh overflow-hidden w-full bg-slate-50 dark:bg-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+      <div className="h-dvh overflow-hidden w-full bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50/35 dark:from-slate-950 dark:via-emerald-950/20 dark:to-slate-950 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
           <Skeleton width={32} height={32} borderRadius={8} />
           <div className="space-y-1 flex-1">
             <Skeleton width={80} height={14} />
             <Skeleton width={100} height={10} />
           </div>
         </div>
-        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -634,7 +680,7 @@ export function DashboardShell() {
             <Skeleton width={140} height={34} borderRadius={8} />
           </div>
         </div>
-        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5">
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5">
           <div className="space-y-2">
             {Array.from({ length: 10 }).map((_, idx) => (
               <Skeleton key={idx} height={34} borderRadius={8} />
@@ -646,7 +692,7 @@ export function DashboardShell() {
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs p-3.5 sm:p-4 space-y-3">
+        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/65 dark:bg-slate-900/65 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5 sm:p-4 space-y-3">
           <Skeleton height={82} borderRadius={12} />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
@@ -792,9 +838,9 @@ export function DashboardShell() {
        Grid 3 (Bottom-Left, 252px x 1fr): Dashboard Sidebar
        Grid 4 (Bottom-Right, 1fr x 1fr): Multi-Page Dashboard Contents
     */
-    <div className="h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
+    <div className="h-dvh overflow-hidden bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50/35 dark:from-slate-950 dark:via-emerald-950/20 dark:to-slate-950 text-slate-900 dark:text-slate-100 p-2 lg:p-2.5 flex flex-col gap-2 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-2.5">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 ring-1 ring-emerald-500/25 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Shield className="w-4 h-4" aria-hidden="true" />
@@ -811,7 +857,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -890,7 +936,7 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
         <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Primary">
           {renderDashboardNavItems(false)}
         </nav>
@@ -927,7 +973,7 @@ export function DashboardShell() {
         {mobileNavOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex">
             <div
-              className="fixed inset-0 bg-slate-900/50"
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
               onClick={() => setMobileNavOpen(false)}
               aria-hidden="true"
             />
@@ -936,9 +982,9 @@ export function DashboardShell() {
               animate={{ x: 0 }}
               exit={{ x: -260 }}
               transition={{ duration: 0.18 }}
-              className="relative w-64 max-w-full bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 z-10"
+              className="relative w-64 max-w-full bg-white/88 dark:bg-slate-900/88 backdrop-blur-md h-full flex flex-col border-r border-slate-200/80 dark:border-slate-800/80 z-10"
             >
-              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75">
                 <span className="font-display font-bold text-base text-slate-900 dark:text-white">
                   Amanah
                 </span>
@@ -980,7 +1026,7 @@ export function DashboardShell() {
       </AnimatePresence>
 
       {/* GRID 4: Multi-Page Dashboard Content (Fixed container below navbar with internal scroll) */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden">
+      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/65 dark:bg-slate-900/65 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden">
         <div
           ref={mainScrollRef}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3.5 sm:p-4 lg:p-4"
@@ -1008,9 +1054,9 @@ export function DashboardShell() {
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18 }}
-                      className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${isApproved
-                        ? 'bg-emerald-50/85 dark:bg-emerald-950/35 border-emerald-200 dark:border-emerald-900/60'
-                        : 'bg-red-50/85 dark:bg-red-950/35 border-red-200 dark:border-red-900/60'
+                      className={`rounded-xl border backdrop-blur-md p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs transition-all duration-200 hover:shadow-md ${isApproved
+                        ? 'bg-emerald-50/75 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60'
+                        : 'bg-red-50/75 dark:bg-red-950/40 border-red-200/80 dark:border-red-900/60'
                         }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
@@ -1124,7 +1170,7 @@ export function DashboardShell() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
+                className="bg-amber-50/75 dark:bg-amber-950/40 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-amber-600/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -1243,6 +1289,7 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && loans.length === 0}
                     onOpenLoanModal={() => void openLoanRequestModal()}
+                    onLoanCreated={handleLoanCreatedOptimistic}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -1571,41 +1618,7 @@ export function DashboardShell() {
           config={overview?.config || null}
           availableLiquidity={overview?.treasury.availableLiquidity || 0}
           onSubmitted={async (createdLoan) => {
-            // Show the new request immediately on the member dashboard
-            // (Overview + Qard Hasan list) before the full workspace refresh.
-            setLoans((prev) => {
-              if (prev.some((l) => l.id === createdLoan.id)) return prev;
-              return [createdLoan, ...prev];
-            });
-            setOverview((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                personal: {
-                  ...prev.personal,
-                  eligibility: {
-                    ...prev.personal.eligibility,
-                    eligible: false,
-                    noActiveLoan: false,
-                    activeLoanId: createdLoan.id,
-                    reasons: [
-                      `Existing loan (${createdLoan.id}) is currently "${createdLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`,
-                      ...(prev.personal.eligibility.reasons || []).filter(
-                        (r) => !r.startsWith('Existing loan')
-                      ),
-                    ],
-                  },
-                },
-                treasury: {
-                  ...prev.treasury,
-                  pendingLoansReviewCount:
-                    createdLoan.status === 'pending_manager_review'
-                      ? (prev.treasury.pendingLoansReviewCount || 0) + 1
-                      : prev.treasury.pendingLoansReviewCount,
-                },
-              };
-            });
-            // Prefer Qard Hasan section so the member sees their active request
+            handleLoanCreatedOptimistic(createdLoan);
             navigateToPage('quard-hasan');
             try {
               await handleRefreshWithAutoSync();

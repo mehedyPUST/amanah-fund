@@ -49,6 +49,7 @@ export function registerTotpChallengeHandler(handler: TotpChallengeHandler | nul
 async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
   const res = await fetch(path, {
     credentials: 'include',
+    cache: 'no-store',
     ...init,
     headers: {
       'Content-Type': 'application/json',

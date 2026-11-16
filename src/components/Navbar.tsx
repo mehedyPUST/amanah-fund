@@ -48,7 +48,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full h-[60px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
+      <div className="w-full h-[60px] bg-white/75 dark:bg-slate-900/75 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-5 flex items-center justify-between gap-4">
         <Link
           href="/"
           onClick={() => setMobileOpen(false)}
@@ -135,7 +135,7 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0"
+                className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0"
               >
                 Sign In
               </Link>
@@ -171,7 +171,7 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden absolute left-0 right-0 top-[68px] z-50 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 shadow-lg"
+            className="md:hidden absolute left-0 right-0 top-[68px] z-50 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 p-3 space-y-1.5 shadow-lg"
           >
             {NAV_LINKS.map((link) => {
               const active = isLinkActive(link.href);

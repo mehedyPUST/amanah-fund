@@ -690,7 +690,7 @@ export function ManagerDeskView({
       className="space-y-6"
     >
       {/* Manager Desk Header + Interactive Queue KPI Cards */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -770,7 +770,7 @@ export function ManagerDeskView({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.16 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -918,7 +918,7 @@ export function ManagerDeskView({
           className="space-y-6"
         >
           {/* Stage 1: Awaiting Vote Initiation */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 1 · Applications Awaiting Vote Initiation ({pendingReviewLoans.length})
@@ -1002,7 +1002,7 @@ export function ManagerDeskView({
           </section>
 
           {pendingGuarantorLoans.length > 0 && (
-            <section className="bg-white dark:bg-slate-900 border border-amber-200/90 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                   Awaiting Guarantor Co-Signature ({pendingGuarantorLoans.length})
@@ -1064,7 +1064,7 @@ export function ManagerDeskView({
           )}
 
           {/* Stage 2: Ongoing Ballots */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 2 · Ongoing Secret Qard Hasan Ballots ({votingLoans.length})
@@ -1127,7 +1127,7 @@ export function ManagerDeskView({
           </section>
 
           {/* Stage 3: Approved Awaiting Disbursement Confirmation */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Stage 3 · Approved &amp; Awaiting Disbursement ({pendingDisbursementLoans.length})
@@ -1215,7 +1215,7 @@ export function ManagerDeskView({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.16 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
         >
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1321,7 +1321,7 @@ export function ManagerDeskView({
           transition={{ duration: 0.16 }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
         >
-          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Initiate Decision Poll</span>
@@ -1440,7 +1440,7 @@ export function ManagerDeskView({
             </form>
           </section>
 
-          <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="xl:col-span-7 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Ongoing Secret Ballots ({ballotsCount})
@@ -1565,7 +1565,7 @@ export function ManagerDeskView({
           transition={{ duration: 0.16 }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
         >
-          <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Meeting Scheduler</span>
@@ -1663,7 +1663,7 @@ export function ManagerDeskView({
             )}
           </section>
 
-          <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Profile Update Requests</span>

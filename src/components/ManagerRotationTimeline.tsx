@@ -228,7 +228,7 @@ export function ManagerRotationTimeline({
   return (
     <section
       aria-label="Manager Rotation Visual Timeline"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-5"
+      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-5"
     >
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -515,14 +515,14 @@ export function ManagerRotationTimeline({
                     <div className="px-1.5 flex-1 flex">
                       <article
                         onClick={() => setSelectedCycleNumber(slot.cycleNumber)}
-                        className={`w-full rounded-xl border p-4 flex flex-col justify-between gap-3 transition-colors cursor-pointer ${
+                        className={`w-full rounded-xl border p-4 flex flex-col justify-between gap-3 transition-colors cursor-pointer backdrop-blur-md ${
                           slot.status === 'current'
-                            ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/40 dark:bg-emerald-950/20'
+                            ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/60 dark:bg-emerald-950/30'
                             : isSelected
-                              ? 'border-slate-400 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/40'
+                              ? 'border-slate-400 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/50'
                               : slot.status === 'completed'
-                                ? 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-slate-300 dark:hover:border-slate-700'
-                                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                                ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/65 hover:border-slate-300 dark:hover:border-slate-700'
+                                : 'border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
                         <div className="space-y-3">
@@ -699,12 +699,12 @@ export function ManagerRotationTimeline({
                 {/* Timeline Row Content */}
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
                   <div
-                    className={`rounded-xl border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    className={`rounded-xl border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md ${
                       slot.status === 'current'
-                        ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/40 dark:bg-emerald-950/20'
+                        ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/60 dark:bg-emerald-950/30'
                         : slot.status === 'completed'
-                          ? 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                          ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/65'
+                          : 'border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">

@@ -674,7 +674,7 @@ export function VotingView({
         </div>
       )}
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -854,7 +854,7 @@ export function VotingView({
       </section>
 
       {!isAdmin && guarantorPendingForMe.length > 0 && (
-        <section className="bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
+        <section className="bg-amber-50/75 dark:bg-amber-950/30 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             <span>Awaiting Your Guarantor Co-Signature ({guarantorPendingForMe.length})</span>
@@ -914,7 +914,7 @@ export function VotingView({
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4"
             >
               <div className="flex flex-col lg:flex-row justify-between gap-4">
                 <div className="space-y-2 flex-1">
@@ -944,7 +944,7 @@ export function VotingView({
               </div>
 
               {pendingOrApprovedLoans.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   No Qard Hasan proposals are currently open for voting or awaiting disbursement.
                 </div>
               ) : (
@@ -977,7 +977,7 @@ export function VotingView({
                   return (
                     <article
                       key={loan.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs transition-all duration-200"
+                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5 min-w-0 flex-1">
@@ -1368,7 +1368,7 @@ export function VotingView({
               </div>
 
               {openPolls.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   No cooperative decision polls are currently open.
                 </div>
               ) : (
@@ -1386,7 +1386,7 @@ export function VotingView({
                   return (
                     <article
                       key={poll.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
+                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -1609,7 +1609,7 @@ export function VotingView({
               </div>
 
               {openProjects.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   No proposed investment placements are currently open for voting.
                 </div>
               ) : (
@@ -1633,7 +1633,7 @@ export function VotingView({
                   return (
                     <article
                       key={proj.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200"
+                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -1813,7 +1813,7 @@ export function VotingView({
 
           {/* Completed Voting Outcomes (Revealed Tallies Only) */}
           {(closedProjects.length > 0 || archivedLoans.length > 0 || closedPolls.length > 0) && (
-            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-3">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-3">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Completed &amp; Revealed Ballot Outcomes
               </h3>

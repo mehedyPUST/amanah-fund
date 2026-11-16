@@ -122,7 +122,7 @@ export function RequestQardHasanModal({
             exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.18 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+            className="relative z-10 w-full max-w-xl bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
           >
             <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-50/85 via-teal-50/45 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 flex items-start justify-between gap-4 shrink-0">
               <div className="space-y-1">

@@ -39,7 +39,7 @@ const PRIORITY_META: Record<
       'bg-rose-100/80 dark:bg-rose-950/60 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
     cardClass:
-      'bg-gradient-to-br from-rose-100/70 via-rose-50/30 to-white dark:from-rose-950/45 dark:via-rose-950/15 dark:to-slate-900 border-rose-200/90 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800',
+      'bg-gradient-to-br from-rose-100/65 via-rose-50/30 to-white/75 dark:from-rose-950/45 dark:via-rose-950/15 dark:to-slate-900/75 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800',
   },
   important: {
     label: 'Important',
@@ -48,7 +48,7 @@ const PRIORITY_META: Record<
       'bg-orange-100/80 dark:bg-orange-950/60 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400',
     labelClass: 'text-orange-700 dark:text-orange-400',
     cardClass:
-      'bg-gradient-to-br from-orange-100/70 via-orange-50/30 to-white dark:from-orange-950/45 dark:via-orange-950/15 dark:to-slate-900 border-orange-200/90 dark:border-orange-900/60 hover:border-orange-300 dark:hover:border-orange-800',
+      'bg-gradient-to-br from-orange-100/65 via-orange-50/30 to-white/75 dark:from-orange-950/45 dark:via-orange-950/15 dark:to-slate-900/75 backdrop-blur-md border-orange-200/80 dark:border-orange-900/60 hover:border-orange-300 dark:hover:border-orange-800',
   },
   normal: {
     label: 'Notice',
@@ -57,7 +57,7 @@ const PRIORITY_META: Record<
       'bg-teal-100/80 dark:bg-teal-950/60 border-teal-200/80 dark:border-teal-900/60 text-teal-700 dark:text-teal-400',
     labelClass: 'text-teal-700 dark:text-teal-400',
     cardClass:
-      'bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white dark:from-teal-950/45 dark:via-teal-950/15 dark:to-slate-900 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
+      'bg-gradient-to-br from-teal-100/65 via-teal-50/30 to-white/75 dark:from-teal-950/45 dark:via-teal-950/15 dark:to-slate-900/75 backdrop-blur-md border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
   },
 };
 
@@ -271,8 +271,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-2 bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
-          : 'scroll-mt-2 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-2 bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 space-y-4'
+          : 'scroll-mt-2 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 backdrop-blur-sm text-slate-900 dark:text-slate-100'
       }
     >
       <div className={embedded ? 'space-y-4' : 'w-full px-4 sm:px-6 py-10 sm:py-12 space-y-6'}>
@@ -364,7 +364,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-slate-900 border border-emerald-200/90 dark:border-emerald-900/60 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">

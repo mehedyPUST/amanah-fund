@@ -91,7 +91,7 @@ export function CommunityPostLinksList({
             className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 px-3.5 py-2.5 transition-colors"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm text-teal-700 dark:text-teal-400 flex items-center justify-center shrink-0">
                 <Icon className="w-4 h-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -127,7 +127,7 @@ export function CommunityEmojiPicker({
     <div
       role="group"
       aria-label="Insert emoji"
-      className={`rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-2.5 ${
+      className={`rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-sm p-2.5 ${
         compact ? 'max-w-sm' : ''
       }`}
     >

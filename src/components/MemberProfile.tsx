@@ -435,7 +435,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-4">
             <Skeleton width={64} height={64} borderRadius={12} />
             <div className="space-y-1.5">
@@ -445,7 +445,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </div>
           <Skeleton height={56} />
         </section>
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6">
           <Skeleton height={240} />
         </section>
       </div>
@@ -460,7 +460,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       className="space-y-6"
     >
       {/* Membership Status & Identity Summary */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -529,7 +529,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       {/* Main Split: Registration KYC Details (Read-Only) + Editable Contact Info */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Read-Only Registration Details */}
-        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Registration Credentials
@@ -634,7 +634,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         </section>
 
         {/* Editable Contact Information Form */}
-        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-7 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Update Contact Information
@@ -834,7 +834,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       </div>
 
       {/* Instant Password Change (No Approval Needed) */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -913,7 +913,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -1051,7 +1051,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </AnimatePresence>
         </section>
 
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

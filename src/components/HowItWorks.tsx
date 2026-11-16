@@ -48,7 +48,7 @@ interface RoleGuide {
 const STEP_TONES = {
   emerald: {
     cardClass:
-      'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'bg-gradient-to-br from-emerald-100/65 via-emerald-50/35 to-white/75 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/75 backdrop-blur-md border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
     iconClass:
       'bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/80 dark:ring-emerald-800/60',
     numClass: 'text-emerald-700/75 dark:text-emerald-400/75',
@@ -57,7 +57,7 @@ const STEP_TONES = {
   },
   teal: {
     cardClass:
-      'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
+      'bg-gradient-to-br from-teal-100/65 via-teal-50/35 to-white/75 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/75 backdrop-blur-md border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
     iconClass:
       'bg-teal-100/90 dark:bg-teal-950/70 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200/80 dark:ring-teal-800/60',
     numClass: 'text-teal-700/75 dark:text-teal-400/75',
@@ -66,7 +66,7 @@ const STEP_TONES = {
   },
   violet: {
     cardClass:
-      'bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+      'bg-gradient-to-br from-violet-100/65 via-violet-50/35 to-white/75 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/75 backdrop-blur-md border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
     iconClass:
       'bg-violet-100/90 dark:bg-violet-950/70 text-violet-700 dark:text-violet-400 ring-1 ring-violet-200/80 dark:ring-violet-800/60',
     numClass: 'text-violet-700/75 dark:text-violet-400/75',
@@ -75,7 +75,7 @@ const STEP_TONES = {
   },
   orange: {
     cardClass:
-      'bg-gradient-to-br from-orange-100/70 via-orange-50/35 to-white dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900 border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80',
+      'bg-gradient-to-br from-orange-100/65 via-orange-50/35 to-white/75 dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900/75 backdrop-blur-md border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80',
     iconClass:
       'bg-orange-100/90 dark:bg-orange-950/70 text-orange-700 dark:text-orange-400 ring-1 ring-orange-200/80 dark:ring-orange-800/60',
     numClass: 'text-orange-700/75 dark:text-orange-400/75',
@@ -230,8 +230,8 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={
         embedded
-          ? 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
-          : 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          ? 'bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          : 'bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
       }
     >
       <section className="space-y-4">
@@ -324,7 +324,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           </motion.div>
         </AnimatePresence>
 
-        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-r from-slate-100/80 via-slate-50/40 to-white dark:from-slate-800/55 dark:via-slate-900/80 dark:to-slate-950 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-r from-slate-100/70 via-slate-50/35 to-white/75 dark:from-slate-800/50 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
             <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
             <span className="text-justify">

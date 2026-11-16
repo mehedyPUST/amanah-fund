@@ -326,7 +326,7 @@ export function AdminReportsView({
       className="space-y-6"
     >
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl px-4 py-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl px-4 py-3 shadow-xs">
         <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
           Admin Panel Workspace
         </div>
@@ -367,7 +367,7 @@ export function AdminReportsView({
 
       {/* New User Signup Approval Queue (Admin) */}
       {isAdmin && (adminSection === 'all' || adminSection === 'users') && (
-        <section className="bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -461,7 +461,7 @@ export function AdminReportsView({
 
       {/* Administrative Qard Hasan Loan Review Queue */}
       {(adminSection === 'all' || adminSection === 'analytics') && (
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -579,7 +579,7 @@ export function AdminReportsView({
           />
 
           {/* Monthly Fund Summary PDF & Email Distribution */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -688,7 +688,7 @@ export function AdminReportsView({
           </section>
 
           {/* Automated Reporting Tools */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -724,7 +724,7 @@ export function AdminReportsView({
 
       {/* Admin Governance & Policy Controls */}
       {isAdmin && (adminSection === 'all' || adminSection === 'policy') && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Fund Policy & Annual Loan Quota
@@ -875,9 +875,9 @@ export function AdminReportsView({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
           >
-            <div className="sticky top-0 bg-white dark:bg-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+            <div className="sticky top-0 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between gap-4">
               <div>
                 <h3
                   id="member-reg-modal-title"

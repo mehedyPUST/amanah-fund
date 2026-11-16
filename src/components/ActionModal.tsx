@@ -231,7 +231,7 @@ export function ActionModal({
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.16 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto"
+            className="relative z-10 w-full max-w-md bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto"
           >
             <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
               <div className="flex items-start justify-between gap-3">

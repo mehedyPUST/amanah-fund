@@ -293,7 +293,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
       aria-label="Member Audit Log"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4"
+      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4"
     >
       <div className="space-y-3.5">
         {/* Header */}

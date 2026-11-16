@@ -194,7 +194,7 @@ export function ManagerCycleView({
       className="space-y-6"
     >
       {/* Header Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -236,7 +236,7 @@ export function ManagerCycleView({
 
       {/* Admin Controls */}
       {isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -320,7 +320,7 @@ export function ManagerCycleView({
         <>
           {/* Current & Next Spotlight */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <section className="bg-white dark:bg-slate-900 border border-emerald-200/90 dark:border-emerald-900/60 rounded-xl p-5 shadow-xs space-y-3">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/60 rounded-xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
                   <Crown className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -368,7 +368,7 @@ export function ManagerCycleView({
               )}
             </section>
 
-            <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-3">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400">
                   <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -419,7 +419,7 @@ export function ManagerCycleView({
 
           {/* Active Assigned Managers Note */}
           {schedule.activeDesignatedManagers.length > 0 && (
-            <section className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <section className="bg-slate-50/75 dark:bg-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                 <span>Currently Active Manager Role Holder(s):</span>
@@ -453,7 +453,7 @@ export function ManagerCycleView({
           />
 
           {/* Full Cyclic Rotation Table */}
-          <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-600" aria-hidden="true" />

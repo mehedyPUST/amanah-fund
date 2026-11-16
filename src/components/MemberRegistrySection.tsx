@@ -255,7 +255,7 @@ export function MemberRegistrySection({
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="space-y-6"
     >
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -310,7 +310,7 @@ export function MemberRegistrySection({
           className="space-y-6"
         >
           {pendingProfileRequests.length > 0 && (
-            <section className="bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
               <div>
                 <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                   <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -426,9 +426,9 @@ export function MemberRegistrySection({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
           >
-            <div className="sticky top-0 bg-white dark:bg-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+            <div className="sticky top-0 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between gap-4">
               <div>
                 <h3
                   id="registry-member-modal-title"

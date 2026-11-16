@@ -42,7 +42,7 @@ export function MyAmanahView({
   if (loading || !overview) {
     return (
       <div className="space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2 flex-1">
             <Skeleton width={200} height={14} />
             <Skeleton width={260} height={24} />
@@ -57,7 +57,7 @@ export function MyAmanahView({
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2.5"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-2.5"
             >
               <Skeleton width="55%" height={12} />
               <Skeleton width="75%" height={28} />
@@ -81,12 +81,15 @@ export function MyAmanahView({
   const { personal } = overview;
   const { eligibility } = personal;
 
+  const isMyLoan = (l: LoanRequest) =>
+    l.borrowerId === user.id || (Boolean(user.memberCode) && l.borrowerCode === user.memberCode);
+
   const myActiveLoan = loans.find(
-    (l) => l.borrowerId === user.id && l.status === 'active'
+    (l) => isMyLoan(l) && l.status === 'active'
   );
   const myPendingLoan = loans.find(
     (l) =>
-      l.borrowerId === user.id &&
+      isMyLoan(l) &&
       [
         'pending_guarantor',
         'pending_manager_review',
@@ -107,7 +110,7 @@ export function MyAmanahView({
       className="space-y-6"
     >
       {/* Identity & Eligibility Status Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -160,7 +163,7 @@ export function MyAmanahView({
         </div>
 
         {/* Last Contribution */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs hover:border-teal-300 dark:hover:border-teal-800/70 transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs hover:border-teal-300 dark:hover:border-teal-800/70 transition-colors">
           <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
             Last Contribution
           </div>
@@ -183,10 +186,10 @@ export function MyAmanahView({
 
         {/* Due Contribution */}
         <div
-          className={`rounded-xl p-5 border shadow-xs transition-colors ${
+          className={`rounded-xl p-5 border backdrop-blur-md shadow-xs transition-colors ${
             personal.dueContributionAmount > 0
-              ? 'bg-amber-50/70 dark:bg-amber-950/25 border-amber-200 dark:border-amber-900/60'
-              : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800'
+              ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200/80 dark:border-amber-900/60'
+              : 'bg-white/75 dark:bg-slate-900/75 border-slate-200/80 dark:border-slate-800/80'
           }`}
         >
           <div
@@ -215,7 +218,7 @@ export function MyAmanahView({
         </div>
 
         {/* Next Contribution Deadline */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800/70 transition-colors">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800/70 transition-colors">
           <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             <span>Next Contribution Deadline</span>
@@ -231,7 +234,7 @@ export function MyAmanahView({
 
       {/* Qard Hasan Personal Summary & Eligibility */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+        <section className="xl:col-span-7 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -265,6 +268,11 @@ export function MyAmanahView({
                     <span>{formatMoney(myPendingLoan.amount, ccy)}</span>
                     <StatusText status={myPendingLoan.status} />
                   </>
+                ) : hasActiveOrPending && eligibility.activeLoanId ? (
+                  <>
+                    <span>{eligibility.activeLoanId}</span>
+                    <StatusText status="pending_manager_review" />
+                  </>
                 ) : (
                   'No Active Qard Hasan'
                 )}
@@ -274,7 +282,9 @@ export function MyAmanahView({
                   ? `${myActiveLoan.id} · Repaid ${formatMoney(myActiveLoan.totalRepaid, ccy)}`
                   : myPendingLoan
                     ? `${myPendingLoan.id} · ${myPendingLoan.installmentMonths} months · ${myPendingLoan.purpose}`
-                    : `Lifetime repaid: ${formatMoney(personal.totalRepaidPersonal, ccy)}`}
+                    : hasActiveOrPending && eligibility.activeLoanId
+                      ? 'Active/pending request registered on your account'
+                      : `Lifetime repaid: ${formatMoney(personal.totalRepaidPersonal, ccy)}`}
               </div>
             </div>
 
@@ -335,7 +345,7 @@ export function MyAmanahView({
         </section>
 
         {/* Qard Hasan Eligibility Card */}
-        <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs">
+        <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs">
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>

@@ -414,7 +414,7 @@ export function SignUpForm() {
   if (authChecking || user) {
     return (
       <div className="px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="max-w-3xl w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
+        <div className="max-w-3xl w-full mx-auto bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
             <div className="space-y-2 flex-1">
               <Skeleton width={240} height={14} />
@@ -451,7 +451,7 @@ export function SignUpForm() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-3xl w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
+        className="max-w-3xl w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white/75 to-white/75 dark:from-slate-900/75 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
           <div className="space-y-1.5">
@@ -819,7 +819,7 @@ export function SignUpForm() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="p-4 sm:p-5 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 bg-indigo-50/25 dark:bg-slate-950/60 space-y-4"
+                      className="p-4 sm:p-5 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-slate-950/55 backdrop-blur-sm space-y-4"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 dark:border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
@@ -1012,7 +1012,7 @@ export function SignUpForm() {
                       </div>
 
                       {/* Nominee Photo (Not required when female) */}
-                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5">
+                      <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                             Nominee Photo{' '}

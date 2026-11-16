@@ -269,6 +269,13 @@ export async function syncOverdueInstallments(): Promise<number> {
 
 export const apiRouter = Router();
 
+apiRouter.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Real-time Server-Sent Events stream for live voting and treasury synchronization
 apiRouter.get('/events', requireAuth, (req: AuthenticatedRequest, res) => {
   registerSseClient(req.authUser!.id, res);

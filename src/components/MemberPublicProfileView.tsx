@@ -221,7 +221,7 @@ export function MemberPublicProfileView({
           <Skeleton width={130} height={36} />
           <Skeleton width={150} height={36} />
         </div>
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-4">
             <Skeleton width={72} height={72} borderRadius={12} />
             <div className="space-y-2">
@@ -235,7 +235,7 @@ export function MemberPublicProfileView({
             ))}
           </div>
         </section>
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6">
           <Skeleton height={220} />
         </section>
       </div>
@@ -244,7 +244,7 @@ export function MemberPublicProfileView({
 
   if (error || !profile) {
     return (
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-4">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 sm:p-8 space-y-4">
         <button
           type="button"
           onClick={onBack}
@@ -338,7 +338,7 @@ export function MemberPublicProfileView({
       </div>
 
       {/* Member Identity & Quick Metrics Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {profile.photoUrl && !photoBroken ? (
@@ -506,7 +506,7 @@ export function MemberPublicProfileView({
               aria-label="Member Fund Summary"
               className={`${
                 showAbout ? 'xl:col-span-7' : ''
-              } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -659,7 +659,7 @@ export function MemberPublicProfileView({
               aria-label="About Member"
               className={`${
                 showFund ? 'xl:col-span-5' : ''
-              } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
             >
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -784,7 +784,7 @@ export function MemberPublicProfileView({
           aria-label="Member Community Posts"
           className="space-y-4"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
@@ -803,7 +803,7 @@ export function MemberPublicProfileView({
           </div>
 
           {communityPosts.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">
+            <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-2">
               <MessageSquare className="w-7 h-7 text-slate-400 mx-auto" />
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                 No Community Posts Yet
@@ -830,10 +830,10 @@ export function MemberPublicProfileView({
                 return (
                   <article
                     key={post.id}
-                    className={`bg-white dark:bg-slate-900 border rounded-xl p-5 space-y-4 ${
+                    className={`bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border rounded-xl p-5 space-y-4 ${
                       post.isPinned
-                        ? 'border-emerald-300 dark:border-emerald-800/80'
-                        : 'border-slate-200 dark:border-slate-800'
+                        ? 'border-emerald-300/80 dark:border-emerald-800/80'
+                        : 'border-slate-200/80 dark:border-slate-800/80'
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">

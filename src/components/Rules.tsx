@@ -170,8 +170,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
     <div
       className={
         embedded
-          ? 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
-          : 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          ? 'bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
+          : 'bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-2xs text-slate-900 dark:text-slate-100 w-full'
       }
     >
       <section className="space-y-4">
@@ -223,7 +223,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.22 }}
-          className="rounded-xl border border-violet-200/90 dark:border-violet-900/60 bg-gradient-to-br from-violet-100/75 via-violet-50/40 to-white dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900 p-4 sm:p-5 space-y-4 shadow-2xs"
+          className="rounded-xl border border-violet-200/80 dark:border-violet-900/60 bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white/75 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/75 backdrop-blur-md p-4 sm:p-5 space-y-4 shadow-2xs"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -343,10 +343,10 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.2, delay: idx * 0.03 }}
-                className={`border rounded-xl p-4 space-y-2.5 transition-colors flex flex-col justify-between ${
+                className={`border rounded-xl p-4 space-y-2.5 transition-colors flex flex-col justify-between backdrop-blur-md ${
                   isEven
-                    ? 'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900 border-emerald-200/90 dark:border-emerald-800/60 hover:border-emerald-300 dark:hover:border-emerald-700'
-                    : 'bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900 border-violet-200/90 dark:border-violet-800/60 hover:border-violet-300 dark:hover:border-violet-700'
+                    ? 'bg-gradient-to-br from-emerald-100/65 via-emerald-50/35 to-white/75 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/75 border-emerald-200/80 dark:border-emerald-800/60 hover:border-emerald-300 dark:hover:border-emerald-700'
+                    : 'bg-gradient-to-br from-violet-100/65 via-violet-50/35 to-white/75 dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900/75 border-violet-200/80 dark:border-violet-800/60 hover:border-violet-300 dark:hover:border-violet-700'
                 }`}
               >
                 <div className="space-y-2">
@@ -441,7 +441,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           })}
         </div>
 
-        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-r from-slate-100/80 via-slate-50/40 to-white dark:from-slate-800/55 dark:via-slate-900/85 dark:to-slate-950 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-r from-slate-100/70 via-slate-50/35 to-white/75 dark:from-slate-800/50 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-slate-600 dark:text-slate-400 text-justify">
             Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
           </p>

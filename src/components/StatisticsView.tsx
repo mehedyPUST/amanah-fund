@@ -40,7 +40,7 @@ export function StatisticsView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-r from-teal-50/75 via-white to-indigo-50/45 dark:from-teal-950/30 dark:via-slate-900 dark:to-indigo-950/25 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+        className="bg-gradient-to-r from-teal-50/75 via-white/75 to-indigo-50/55 dark:from-teal-950/35 dark:via-slate-900/75 dark:to-indigo-950/35 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
       >
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">

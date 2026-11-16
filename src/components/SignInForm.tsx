@@ -112,7 +112,7 @@ export function SignInForm() {
   if (authChecking) {
     return (
       <div className="px-2 sm:px-6 lg:px-8 py-8 sm:py-16">
-        <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="max-w-md w-full mx-auto bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="space-y-2">
             <Skeleton width={210} height={14} />
             <Skeleton width="70%" height={28} />
@@ -134,7 +134,7 @@ export function SignInForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="max-w-md w-full mx-auto bg-gradient-to-b from-slate-50/80 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
+        className="max-w-md w-full mx-auto bg-gradient-to-b from-slate-50/75 via-white/75 to-white/75 dark:from-slate-900/75 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-200 space-y-6"
       >
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-400">
@@ -253,7 +253,7 @@ export function SignInForm() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.16 }}
-              className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4"
+              className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md p-6 shadow-2xl space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5">

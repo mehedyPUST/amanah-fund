@@ -210,7 +210,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
   if (!isAdmin) {
     return (
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 sm:p-8 shadow-xs">
         <div className="flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -235,7 +235,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       className="space-y-6"
     >
       {/* Header & Controls */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -288,7 +288,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           {[1, 2].map((item) => (
             <div
               key={item}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 space-y-4"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -308,7 +308,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           ))}
         </div>
       ) : registrations.length === 0 ? (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-2 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
           </div>
@@ -317,7 +317,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           </h3>
         </section>
       ) : filteredRegistrations.length === 0 ? (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-2 shadow-xs">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             No Matching Applicants
           </h3>
@@ -345,7 +345,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             return (
               <article
                 key={applicant.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-xs hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
               >
                 {/* Applicant Header & Primary Approve / Reject Actions */}
                 <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">

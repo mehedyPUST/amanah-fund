@@ -155,7 +155,7 @@ export function ProviderSelect({
                   ...(coords.top !== undefined ? { top: coords.top } : {}),
                   ...(coords.bottom !== undefined ? { bottom: coords.bottom } : {}),
                 }}
-                className="z-[65] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl overflow-hidden"
+                className="z-[65] rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-950/88 backdrop-blur-md shadow-xl overflow-hidden"
               >
                 <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
                   <Search

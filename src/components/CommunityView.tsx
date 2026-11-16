@@ -1098,7 +1098,7 @@ export function CommunityView({
       className="space-y-6"
     >
       {/* Top Toolbar: Mode Switch + Primary Action */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1228,7 +1228,7 @@ export function CommunityView({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.16 }}
                 onSubmit={handleCreatePost}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4"
+                className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-4 shadow-xs"
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -1308,7 +1308,7 @@ export function CommunityView({
                     <div
                       role="listbox"
                       aria-label="Mention member suggestions"
-                      className="mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
+                      className="mt-1 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
                     >
                       {filterMentionMatches(postMentionQuery).map((m) => (
                         <button
@@ -1599,7 +1599,7 @@ export function CommunityView({
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
                       ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                      : 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   {item.label}
@@ -1628,7 +1628,7 @@ export function CommunityView({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3"
+                  className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -1648,7 +1648,7 @@ export function CommunityView({
               ))}
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center space-y-3">
+            <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-10 text-center space-y-3 shadow-xs">
               <MessageSquare className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -1681,12 +1681,12 @@ export function CommunityView({
                 return (
                   <article
                     key={post.id}
-                    className={`bg-white dark:bg-slate-900 border rounded-xl p-5 space-y-4 transition-colors ${
+                    className={`backdrop-blur-md border rounded-xl p-5 space-y-4 transition-colors shadow-xs ${
                       post.status === 'hidden'
-                        ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/20 dark:bg-amber-950/10'
+                        ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/25'
                         : post.isPinned
-                          ? 'border-emerald-300 dark:border-emerald-800/80'
-                          : 'border-slate-200 dark:border-slate-800'
+                          ? 'bg-white/75 dark:bg-slate-900/75 border-emerald-300/80 dark:border-emerald-800/80'
+                          : 'bg-white/75 dark:bg-slate-900/75 border-slate-200/80 dark:border-slate-800/80'
                     }`}
                   >
                     {/* Author Header & Clean Unboxed Metadata */}
@@ -2507,7 +2507,7 @@ export function CommunityView({
                               <div
                                 role="listbox"
                                 aria-label="Mention member in comment"
-                                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
+                                className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
                               >
                                 {filterMentionMatches(commentMentionTarget.query).map((m) => (
                                   <button
@@ -2554,7 +2554,7 @@ export function CommunityView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh] shadow-xs"
+            className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh] shadow-xs"
           >
             {/* Left Pane: Threads + Active Member Directory */}
             <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col min-h-0 max-h-72 lg:max-h-none">
@@ -2821,7 +2821,7 @@ export function CommunityView({
 
                 <form
                   onSubmit={handleSendPrivateMessage}
-                  className="p-3.5 border-t border-slate-200 dark:border-slate-800 flex items-end gap-2 bg-white dark:bg-slate-900"
+                  className="p-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-end gap-2 bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm"
                 >
                   <textarea
                     rows={1}
@@ -2862,7 +2862,7 @@ export function CommunityView({
             transition={{ duration: 0.16 }}
             className="space-y-5"
           >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Verified Cooperative Members ({activeMembersList.length})
@@ -2888,7 +2888,7 @@ export function CommunityView({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4"
+                  className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-4"
                 >
                   <div className="flex items-start gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -2916,7 +2916,7 @@ export function CommunityView({
             );
             if (list.length === 0) {
               return (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
                   No verified members match your search.
                 </div>
               );
@@ -2928,7 +2928,7 @@ export function CommunityView({
                   return (
                     <div
                       key={member.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs transition-all duration-200"
+                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs transition-all duration-200"
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <AvatarBadge name={member.name} photoUrl={member.photoUrl} />

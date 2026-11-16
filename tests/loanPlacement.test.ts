@@ -323,9 +323,23 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
       headers: authHeaders('u-member-1'),
     });
     expect(memberOvRes.status).toBe(200);
+    expect(memberOvRes.headers.get('cache-control')).toContain('no-store');
     const memberOv = (await memberOvRes.json()) as DashboardOverview;
+    expect(memberOv.personal.eligibility.noActiveLoan).toBe(false);
     expect(memberOv.personal.eligibility.activeLoanId).toBe(loan.id);
     expect(memberOv.treasury.pendingLoansReviewCount).toBe(1);
+
+    const borrowerLoansRes = await fetch(`${baseUrl}/api/loans`, {
+      headers: authHeaders('u-member-1'),
+    });
+    expect(borrowerLoansRes.status).toBe(200);
+    expect(borrowerLoansRes.headers.get('cache-control')).toContain('no-store');
+    const borrowerLoansData = (await borrowerLoansRes.json()) as { loans: LoanRequest[] };
+    expect(
+      borrowerLoansData.loans.some(
+        (l) => l.id === loan.id && l.borrowerId === 'u-member-1' && l.status === 'pending_manager_review'
+      )
+    ).toBe(true);
 
     const mgrLoansRes = await fetch(`${baseUrl}/api/loans`, {
       headers: authHeaders('u-manager-1'),

@@ -97,7 +97,7 @@ export function RecentTransactions({
       });
 
     loans
-      .filter((l) => l.borrowerId === user.id)
+      .filter((l) => l.borrowerId === user.id || (Boolean(user.memberCode) && l.borrowerCode === user.memberCode))
       .forEach((loan) => {
         if (loan.status !== 'active' && loan.status !== 'repaid') {
           list.push({
@@ -175,7 +175,7 @@ export function RecentTransactions({
     });
 
     return list;
-  }, [contributions, loans, user.id]);
+  }, [contributions, loans, user.id, user.memberCode]);
 
   const counts = useMemo(() => {
     const contribCount = items.filter((i) => i.type === 'contribution').length;
@@ -201,7 +201,7 @@ export function RecentTransactions({
   return (
     <section
       aria-labelledby="recent-transactions-heading"
-      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">

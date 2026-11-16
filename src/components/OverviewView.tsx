@@ -106,7 +106,7 @@ export function OverviewView({
   if (loading || !overview) {
     return (
       <div className="space-y-3">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
           <Skeleton width={260} height={14} />
           <Skeleton width={320} height={22} />
           <Skeleton width="80%" height={14} />
@@ -115,7 +115,7 @@ export function OverviewView({
           {[1, 2, 3, 4].map((k) => (
             <div
               key={k}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4"
             >
               <Skeleton width="55%" height={14} />
               <div className="mt-3">
@@ -131,7 +131,7 @@ export function OverviewView({
           {[1, 2, 3, 4].map((k) => (
             <div
               key={k}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-2"
+              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 space-y-2"
             >
               <Skeleton width="65%" height={12} />
               <Skeleton width="50%" height={20} />
@@ -140,11 +140,11 @@ export function OverviewView({
           ))}
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
-          <div className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+          <div className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
             <Skeleton width={190} height={18} />
             <Skeleton height={150} borderRadius={10} />
           </div>
-          <div className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+          <div className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
             <Skeleton width={210} height={18} />
             <Skeleton height={150} borderRadius={10} />
           </div>
@@ -161,7 +161,8 @@ export function OverviewView({
   const myActiveOrPendingLoan = !isAdmin
     ? loans.find(
         (l) =>
-          l.borrowerId === user.id &&
+          (l.borrowerId === user.id ||
+            (Boolean(user.memberCode) && l.borrowerCode === user.memberCode)) &&
           [
             'pending_guarantor',
             'pending_manager_review',
@@ -169,7 +170,15 @@ export function OverviewView({
             'approved_pending_disbursement',
             'active',
           ].includes(l.status)
-      ) || null
+      ) ||
+      (personal.eligibility?.activeLoanId
+        ? loans.find(
+            (l) =>
+              l.id === personal.eligibility.activeLoanId &&
+              l.status !== 'rejected' &&
+              l.status !== 'repaid'
+          ) || null
+        : null)
     : null;
 
   const myGuarantorRequests = !isAdmin
@@ -189,7 +198,7 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-br from-emerald-50/75 via-teal-50/35 to-white dark:from-emerald-950/35 dark:via-teal-950/20 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+        className="bg-gradient-to-br from-emerald-50/75 via-teal-50/40 to-white/75 dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-1.5 max-w-3xl">
@@ -294,7 +303,7 @@ export function OverviewView({
         return (
           <section
             aria-label="Your Active Qard Hasan Request"
-            className="bg-white dark:bg-slate-900 border border-emerald-200/90 dark:border-emerald-900/60 rounded-xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/60 rounded-xl p-5 sm:p-6 shadow-xs space-y-4"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
@@ -366,7 +375,7 @@ export function OverviewView({
 
       {/* Guarantor Co-Sign Alert */}
       {myGuarantorRequests.length > 0 && (
-        <section className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+        <section className="bg-amber-50/75 dark:bg-amber-950/35 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-0.5">
@@ -394,7 +403,7 @@ export function OverviewView({
 
       {/* Overdue Installment Warning */}
       {treasury.overdueInstallmentsCount > 0 && (
-        <section className="bg-red-50/85 dark:bg-red-950/35 border border-red-200 dark:border-red-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+        <section className="bg-red-50/75 dark:bg-red-950/35 backdrop-blur-md border border-red-200/80 dark:border-red-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-0.5">
@@ -425,7 +434,7 @@ export function OverviewView({
 
       {/* Pending Member Signup Approvals Notice for Admins */}
       {isAdmin && treasury.pendingMembersCount > 0 && (
-        <section className="bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="bg-amber-50/75 dark:bg-amber-950/35 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="space-y-0.5">
             <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
               {treasury.pendingMembersCount}{' '}
@@ -446,7 +455,7 @@ export function OverviewView({
 
       {/* Admin Quick Control: Maximum Loans Per Member Per Year */}
       {isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -512,7 +521,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.06 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-300 dark:hover:border-teal-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-400">
             <span>Current Balance</span>
@@ -530,7 +539,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.1 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-amber-600 dark:text-amber-400">
             <span>Quard Hasan Total Current</span>
@@ -550,7 +559,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.14 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-700/70 rounded-xl p-4 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <span>Repayments Returned (+)</span>
@@ -569,7 +578,7 @@ export function OverviewView({
 
       {/* This Month Treasury Pulse: Contribution, Due, Hasan Installment, Clearance */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
             <span>This Month Contribution ({treasury.thisMonthKey})</span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -605,7 +614,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
           <div className="text-xs text-amber-700 dark:text-amber-400 font-medium">
             This Month Due (Remaining / Target)
           </div>
@@ -622,7 +631,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
           <div className="text-xs text-teal-700 dark:text-teal-400 font-medium">
             This Month Hasan Installment (Collected / Need)
           </div>
@@ -639,7 +648,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-400 font-medium">
             <span>This Month Clearance</span>
             <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
@@ -675,7 +684,7 @@ export function OverviewView({
 
       {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -748,7 +757,7 @@ export function OverviewView({
           )}
         </section>
 
-        <section className="xl:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -819,7 +828,7 @@ export function OverviewView({
       {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
         {isAdmin ? (
-          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
+          <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -870,7 +879,7 @@ export function OverviewView({
             </div>
           </section>
         ) : (
-          <section className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-5 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -987,7 +996,7 @@ export function OverviewView({
           </section>
         )}
 
-        <section className="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <section className="xl:col-span-7 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">

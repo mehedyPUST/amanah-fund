@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   CalendarClock,
@@ -39,6 +39,7 @@ interface LoansViewProps {
   user: PublicUser;
   loading: boolean;
   onOpenLoanModal?: () => void;
+  onLoanCreated?: (loan: LoanRequest) => void;
   onViewMemberProfile?: (memberId: string) => void;
   onRefresh: () => Promise<void>;
 }
@@ -73,6 +74,7 @@ export function LoansView({
   user,
   loading,
   onOpenLoanModal,
+  onLoanCreated,
   onViewMemberProfile,
   onRefresh,
 }: LoansViewProps) {
@@ -85,6 +87,19 @@ export function LoansView({
 
   const [scope, setScope] = useState<'mine' | 'all'>(isAdmin ? 'all' : 'mine');
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+  const [optimisticLoan, setOptimisticLoan] = useState<LoanRequest | null>(null);
+
+  useEffect(() => {
+    if (optimisticLoan && loans.some((l) => l.id === optimisticLoan.id)) {
+      setOptimisticLoan(null);
+    }
+  }, [loans, optimisticLoan]);
+
+  const effectiveLoans = useMemo(() => {
+    if (!optimisticLoan) return loans;
+    if (loans.some((l) => l.id === optimisticLoan.id)) return loans;
+    return [optimisticLoan, ...loans];
+  }, [loans, optimisticLoan]);
 
   const [payingInstallment, setPayingInstallment] = useState<{
     loanId: string;
@@ -412,13 +427,16 @@ export function LoansView({
     });
   }
 
-  const myGuarantorRequests = loans.filter(
+  const isBorrowerLoan = (l: LoanRequest) =>
+    l.borrowerId === user.id || (Boolean(user.memberCode) && l.borrowerCode === user.memberCode);
+
+  const myGuarantorRequests = effectiveLoans.filter(
     (l) =>
       l.status === 'pending_guarantor' &&
       l.guarantors?.some((g) => g.memberId === user.id && g.status === 'pending')
   );
 
-  const visibleLoans = scope === 'mine' ? loans.filter((l) => l.borrowerId === user.id) : loans;
+  const visibleLoans = scope === 'mine' ? effectiveLoans.filter(isBorrowerLoan) : effectiveLoans;
   const activeSelectedLoan =
     visibleLoans.find((l) => l.id === selectedLoanId) || visibleLoans[0] || null;
 
@@ -432,9 +450,9 @@ export function LoansView({
       : 0;
 
   const myActiveOrPendingLoan =
-    loans.find(
+    effectiveLoans.find(
       (l) =>
-        l.borrowerId === user.id &&
+        isBorrowerLoan(l) &&
         [
           'pending_guarantor',
           'pending_manager_review',
@@ -442,7 +460,16 @@ export function LoansView({
           'approved_pending_disbursement',
           'active',
         ].includes(l.status)
-    ) || null;
+    ) ||
+    (eligibility?.activeLoanId
+      ? effectiveLoans.find(
+          (l) => l.id === eligibility.activeLoanId && l.status !== 'rejected' && l.status !== 'repaid'
+        ) || null
+      : null);
+
+  const hasSyncedEligibilityActive = Boolean(
+    !myActiveOrPendingLoan && eligibility && !eligibility.noActiveLoan && eligibility.activeLoanId
+  );
 
   let loanProgressPct = 0;
   let loanProgressCaption = 'No active or pending Qard Hasan loan request on your account.';
@@ -495,12 +522,18 @@ export function LoansView({
       loanProgressCaption = `Repaid ${formatMoney(myActiveOrPendingLoan.totalRepaid, ccy)} of ${formatMoney(myActiveOrPendingLoan.amount, ccy)} (${paidInstallments}/${myActiveOrPendingLoan.installments.length} installments · ${loanProgressPct}%)`;
       loanBarColorClass = 'bg-emerald-600';
     }
+  } else if (hasSyncedEligibilityActive && eligibility?.activeLoanId) {
+    loanProgressPct = 30;
+    loanProgressCaption =
+      eligibility.reasons[0] ||
+      'Application registered on your account and queued for review.';
+    loanBarColorClass = 'bg-amber-500';
   }
 
   return (
     <div className="space-y-6">
       {myGuarantorRequests.length > 0 && (
-        <section className="bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
+        <section className="bg-amber-50/75 dark:bg-amber-950/35 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             <span>
@@ -550,7 +583,7 @@ export function LoansView({
       {!isAdmin && (
         <section
           aria-label="Member Loan Quota and Active Request Summary"
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
         >
           {!eligibility && loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -618,11 +651,15 @@ export function LoansView({
                     <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white truncate">
                       {myActiveOrPendingLoan
                         ? `${myActiveOrPendingLoan.id} · ${formatMoney(myActiveOrPendingLoan.amount, ccy)}`
-                        : 'No Active Request'}
+                        : hasSyncedEligibilityActive && eligibility?.activeLoanId
+                          ? `${eligibility.activeLoanId} · Active Request`
+                          : 'No Active Request'}
                     </div>
                   </div>
                   {myActiveOrPendingLoan ? (
                     <StatusText status={myActiveOrPendingLoan.status} />
+                  ) : hasSyncedEligibilityActive ? (
+                    <StatusText status="pending_manager_review" />
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
@@ -650,7 +687,7 @@ export function LoansView({
 
                 <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span className="truncate">{loanProgressCaption}</span>
-                  {myActiveOrPendingLoan && (
+                  {(myActiveOrPendingLoan || hasSyncedEligibilityActive) && (
                     <span className="font-mono tabular-nums shrink-0 text-teal-700 dark:text-teal-400">
                       {loanProgressPct}%
                     </span>
@@ -687,6 +724,9 @@ export function LoansView({
                             confirmLabel: 'Yes, Withdraw Application',
                             run: async () => {
                               await api.withdrawLoan(loanId);
+                              if (optimisticLoan?.id === loanId) {
+                                setOptimisticLoan(null);
+                              }
                               await onRefresh();
                               setModal({
                                 mode: 'notice',
@@ -710,7 +750,7 @@ export function LoansView({
       )}
 
       {!isAdmin && (
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6">
+        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -840,8 +880,10 @@ export function LoansView({
               config={config}
               availableLiquidity={availableLiquidity}
               onSubmitted={async (loan) => {
-                // Select the new request immediately so it appears in the
-                // member's portfolio list while the parent refreshes.
+                // Immediately surface the newly placed loan in both the summary
+                // tracker and the parent DashboardShell state before refreshing.
+                setOptimisticLoan(loan);
+                onLoanCreated?.(loan);
                 setSelectedLoanId(loan.id);
                 setScope('mine');
                 try {
@@ -857,7 +899,7 @@ export function LoansView({
         <section
           className={`${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
-          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-5`}
+          } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

@@ -23,7 +23,7 @@ const COMMUNITY_FEATURES = [
     detail:
       'Share updates, Qard Hasan insights, Halal venture ideas, and announcements across the cooperative.',
     cardClass:
-      'border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white dark:from-emerald-950/40 dark:via-emerald-950/15 dark:to-slate-900 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-100/65 via-emerald-50/35 to-white/75 dark:from-emerald-950/40 dark:via-emerald-950/15 dark:to-slate-900/75 backdrop-blur-md hover:border-emerald-300 dark:hover:border-emerald-700/80',
     iconClass:
       'bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400',
   },
@@ -33,7 +33,7 @@ const COMMUNITY_FEATURES = [
     detail:
       'Create single or multi-choice polls, mention members with @handles, and react to helpful posts.',
     cardClass:
-      'border-orange-200/80 dark:border-orange-900/50 bg-gradient-to-br from-orange-100/70 via-orange-50/35 to-white dark:from-orange-950/40 dark:via-orange-950/15 dark:to-slate-900 hover:border-orange-300 dark:hover:border-orange-700/80',
+      'border-orange-200/80 dark:border-orange-900/50 bg-gradient-to-br from-orange-100/65 via-orange-50/35 to-white/75 dark:from-orange-950/40 dark:via-orange-950/15 dark:to-slate-900/75 backdrop-blur-md hover:border-orange-300 dark:hover:border-orange-700/80',
     iconClass:
       'bg-orange-100/80 dark:bg-orange-950/60 border-orange-200/80 dark:border-orange-800/60 text-orange-700 dark:text-orange-400',
   },
@@ -43,7 +43,7 @@ const COMMUNITY_FEATURES = [
     detail:
       'Browse active members and inspect their community posts, about details, and fund contribution summary.',
     cardClass:
-      'border-teal-200/80 dark:border-teal-900/50 bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white dark:from-teal-950/40 dark:via-teal-950/15 dark:to-slate-900 hover:border-teal-300 dark:hover:border-teal-700/80',
+      'border-teal-200/80 dark:border-teal-900/50 bg-gradient-to-br from-teal-100/65 via-teal-50/35 to-white/75 dark:from-teal-950/40 dark:via-teal-950/15 dark:to-slate-900/75 backdrop-blur-md hover:border-teal-300 dark:hover:border-teal-700/80',
     iconClass:
       'bg-teal-100/80 dark:bg-teal-950/60 border-teal-200/80 dark:border-teal-800/60 text-teal-700 dark:text-teal-400',
   },
@@ -53,7 +53,7 @@ const COMMUNITY_FEATURES = [
     detail:
       'Message verified cooperative members directly inside AES-256-GCM encrypted one-on-one threads.',
     cardClass:
-      'border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900 hover:border-violet-300 dark:hover:border-violet-700/80',
+      'border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-100/65 via-violet-50/35 to-white/75 dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900/75 backdrop-blur-md hover:border-violet-300 dark:hover:border-violet-700/80',
     iconClass:
       'bg-violet-100/80 dark:bg-violet-950/60 border-violet-200/80 dark:border-violet-800/60 text-violet-700 dark:text-violet-400',
   },
@@ -67,8 +67,8 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
     <div
       className={
         embedded
-          ? 'bg-gradient-to-b from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
-          : 'bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100'
+          ? 'bg-gradient-to-b from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs text-slate-900 dark:text-slate-100'
+          : 'bg-slate-50/70 dark:bg-slate-950/70 backdrop-blur-sm text-slate-900 dark:text-slate-100'
       }
     >
       <div
@@ -103,7 +103,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
         </div>
 
         {authChecking ? (
-          <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-slate-100/70 via-slate-50/30 to-white dark:from-slate-800/45 dark:via-slate-900/85 dark:to-slate-950 p-4 sm:p-5 space-y-5">
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-br from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md p-4 sm:p-5 space-y-5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
               <div className="flex items-start gap-3 flex-1 max-w-2xl">
                 <Skeleton width={44} height={44} borderRadius={10} />
@@ -134,7 +134,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={{ duration: 0.22 }}
-            className="rounded-xl border border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-100/65 via-violet-50/30 to-white dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900 p-4 sm:p-5 space-y-5"
+            className="rounded-xl border border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-100/65 via-violet-50/30 to-white/75 dark:from-violet-950/40 dark:via-violet-950/15 dark:to-slate-900/75 backdrop-blur-md p-4 sm:p-5 space-y-5"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-violet-200/70 dark:border-violet-900/40">
               <div className="flex items-start gap-4 max-w-2xl">
@@ -201,7 +201,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             </div>
           </motion.div>
         ) : user.status !== 'active' ? (
-          <div className="bg-gradient-to-br from-orange-100/65 via-orange-50/30 to-white dark:from-orange-950/40 dark:via-orange-950/15 dark:to-slate-900 border border-orange-200/80 dark:border-orange-900/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-gradient-to-br from-orange-100/65 via-orange-50/30 to-white/75 dark:from-orange-950/40 dark:via-orange-950/15 dark:to-slate-900/75 backdrop-blur-md border border-orange-200/80 dark:border-orange-900/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-xl bg-orange-100/80 dark:bg-orange-950/60 border border-orange-200/80 dark:border-orange-800/60 text-orange-700 dark:text-orange-400 flex items-center justify-center shrink-0">
                 <UserCheck className="w-5 h-5" aria-hidden="true" />

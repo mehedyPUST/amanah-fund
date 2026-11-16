@@ -17,7 +17,7 @@ const KEY_TERMS = [
     sublabel: 'Or up to 75% of savings',
     badgeText: 'Interest-Free',
     cardClass:
-      'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
+      'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/75 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/75 backdrop-blur-md border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700/80',
     badgeClass: 'bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300',
     valueColor: 'text-emerald-700 dark:text-emerald-400',
   },
@@ -27,7 +27,7 @@ const KEY_TERMS = [
     sublabel: 'Per share · due 10th monthly',
     badgeText: 'Pooled',
     cardClass:
-      'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
+      'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white/75 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/75 backdrop-blur-md border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80',
     badgeClass: 'bg-teal-100/90 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300',
     valueColor: 'text-teal-700 dark:text-teal-400',
   },
@@ -37,7 +37,7 @@ const KEY_TERMS = [
     sublabel: 'Approval for loans & ventures',
     badgeText: 'Consensus',
     cardClass:
-      'bg-gradient-to-br from-orange-100/70 via-orange-50/35 to-white dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900 border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80',
+      'bg-gradient-to-br from-orange-100/70 via-orange-50/35 to-white/75 dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900/75 backdrop-blur-md border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80',
     badgeClass: 'bg-orange-100/90 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300',
     valueColor: 'text-orange-600 dark:text-orange-400',
   },
@@ -47,7 +47,7 @@ const KEY_TERMS = [
     sublabel: 'Max 20 shares · max 10m repay',
     badgeText: '2027–2036',
     cardClass:
-      'bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
+      'bg-gradient-to-br from-violet-100/70 via-violet-50/35 to-white/75 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/75 backdrop-blur-md border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700/80',
     badgeClass: 'bg-violet-100/90 dark:bg-violet-950/70 text-violet-800 dark:text-violet-300',
     valueColor: 'text-violet-700 dark:text-violet-400',
   },
@@ -74,7 +74,7 @@ export function Hero({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 lg:p-7 shadow-2xs"
+        className="bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/75 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-5 sm:p-6 lg:p-7 shadow-2xs"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-7 space-y-4">
@@ -122,7 +122,7 @@ export function Hero({
               {!user && (
                 <Link
                   href="/login"
-                  className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-700 text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap"
+                  className="px-4 py-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm text-slate-800 dark:text-slate-200 hover:bg-violet-50/70 dark:hover:bg-violet-950/30 hover:border-violet-300 dark:hover:border-violet-700 text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap"
                 >
                   Sign In
                 </Link>
@@ -216,8 +216,8 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       id="lifecycle"
       className={
         embedded
-          ? 'scroll-mt-2 bg-gradient-to-b from-slate-100/75 via-slate-50/35 to-white dark:from-slate-800/50 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs'
-          : 'scroll-mt-2 bg-gradient-to-b from-slate-100/75 via-slate-50/35 to-white dark:from-slate-800/50 dark:via-slate-900/85 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-2xs'
+          ? 'scroll-mt-2 bg-gradient-to-b from-slate-100/70 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-2xs'
+          : 'scroll-mt-2 bg-gradient-to-b from-slate-100/70 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-2xs'
       }
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
@@ -256,7 +256,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900 border border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80 flex items-start gap-2.5 transition-colors">
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-teal-100/65 via-teal-50/30 to-white/75 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/75 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300 dark:hover:border-teal-700/80 flex items-start gap-2.5 transition-colors">
               <CheckCircle2
                 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5"
                 aria-hidden="true"
@@ -271,7 +271,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-orange-100/70 via-orange-50/30 to-white dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900 border border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80 flex items-start gap-2.5 transition-colors">
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-orange-100/65 via-orange-50/30 to-white/75 dark:from-orange-950/45 dark:via-orange-950/20 dark:to-slate-900/75 backdrop-blur-md border border-orange-200/80 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-700/80 flex items-start gap-2.5 transition-colors">
               <CheckCircle2
                 className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5"
                 aria-hidden="true"

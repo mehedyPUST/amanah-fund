@@ -257,7 +257,7 @@ export function HalalProjectsView({
       className="space-y-6"
     >
       {/* Maturity Transition Summary */}
-      <section className="bg-gradient-to-br from-amber-50/75 via-white to-teal-50/35 dark:from-amber-950/25 dark:via-slate-900 dark:to-teal-950/15 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-gradient-to-br from-amber-50/75 via-white/75 to-teal-50/45 dark:from-amber-950/30 dark:via-slate-900/75 dark:to-teal-950/20 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -275,13 +275,13 @@ export function HalalProjectsView({
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-emerald-200/70 dark:border-emerald-900/50">
+            <div className="p-3.5 rounded-lg bg-white/75 dark:bg-slate-950/75 backdrop-blur-sm border border-emerald-200/70 dark:border-emerald-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Current Pool</div>
               <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="p-3.5 rounded-lg bg-white dark:bg-slate-950 border border-amber-200/70 dark:border-amber-900/50">
+            <div className="p-3.5 rounded-lg bg-white/75 dark:bg-slate-950/75 backdrop-blur-sm border border-amber-200/70 dark:border-amber-900/50">
               <div className="text-xs text-slate-500 dark:text-slate-400">Pipeline Target</div>
               <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
                 {formatMoney(totalTarget, ccy)}
@@ -295,7 +295,7 @@ export function HalalProjectsView({
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
-          } bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs`}
+          } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -354,7 +354,7 @@ export function HalalProjectsView({
                 return (
                   <article
                     key={proj.id}
-                    className="p-4 sm:p-5 rounded-xl bg-slate-50/65 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
+                    className="p-4 sm:p-5 rounded-xl bg-slate-50/70 dark:bg-slate-950/65 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="space-y-1.5">
@@ -747,7 +747,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-4 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement
