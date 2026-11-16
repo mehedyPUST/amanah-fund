@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import next from 'next';
 import { initDatabase } from './src/server/db.ts';
+import { processDueEmailQueue } from './src/server/emailQueueService.ts';
 import {
   apiRouter,
   runMonthlyPdfSummaryJobIfDue,
@@ -34,6 +35,20 @@ async function startServer() {
     });
   }, 15 * 60 * 1000);
   overdueTimer.unref();
+
+  const initialEmailRetryTimer = setTimeout(() => {
+    processDueEmailQueue().catch((err) => {
+      console.warn('[EmailQueue] Startup retry sweep error:', err);
+    });
+  }, 15 * 1000);
+  initialEmailRetryTimer.unref();
+
+  const emailQueueTimer = setInterval(() => {
+    processDueEmailQueue().catch((err) => {
+      console.warn('[EmailQueue] Periodic retry sweep error:', err);
+    });
+  }, 60 * 1000);
+  emailQueueTimer.unref();
 
   const app = express();
   app.set('trust proxy', 1);

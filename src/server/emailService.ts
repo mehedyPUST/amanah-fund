@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import type {
+  EmailQueueCategory,
+  EmailQueueItem,
   EmailTemplateCollection,
   EmailTemplateKey,
 } from '../types/coop.ts';
@@ -16,12 +18,31 @@ export interface EmailSendResult {
   sent: boolean;
   messageId?: string;
   reason?: string;
+  queuedId?: string;
 }
 
 export interface EmailAttachmentInput {
   filename: string;
   content: Buffer;
   contentType?: string;
+}
+
+export type EmailFailureHandler = (
+  payload: {
+    to: string[];
+    subject: string;
+    text: string;
+    html?: string;
+    attachments?: EmailAttachmentInput[];
+    category?: EmailQueueCategory;
+  },
+  reason: string
+) => Promise<EmailQueueItem>;
+
+let registeredFailureHandler: EmailFailureHandler | null = null;
+
+export function registerEmailFailureHandler(handler: EmailFailureHandler): void {
+  registeredFailureHandler = handler;
 }
 
 export interface TransactionEmailSummaryInput {
@@ -122,7 +143,7 @@ function formatMoneyText(amount: number, currency: string): string {
   return `${formatted} ${currency}`;
 }
 
-export async function sendEmail(options: {
+export async function deliverEmailDirect(options: {
   to: string | string[];
   subject: string;
   text: string;
@@ -163,6 +184,71 @@ export async function sendEmail(options: {
     console.warn('[EmailService] Email dispatch error:', msg);
     return { sent: false, reason: msg };
   }
+}
+
+async function persistFailedDispatch(
+  recipients: string[],
+  options: {
+    subject: string;
+    text: string;
+    html?: string;
+    attachments?: EmailAttachmentInput[];
+    category?: EmailQueueCategory;
+  },
+  reason: string
+): Promise<string | undefined> {
+  if (recipients.length === 0) return undefined;
+  if (process.env.VITEST) return undefined;
+  try {
+    let handler = registeredFailureHandler;
+    if (!handler) {
+      await import('./emailQueueService.ts');
+      handler = registeredFailureHandler;
+    }
+    if (!handler) return undefined;
+    const queued = await handler(
+      {
+        to: recipients,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+        attachments: options.attachments,
+        category: options.category || 'general',
+      },
+      reason
+    );
+    return queued.id;
+  } catch (err) {
+    console.warn('[EmailService] Failed to enqueue failed email for retry:', err);
+    return undefined;
+  }
+}
+
+export async function sendEmail(options: {
+  to: string | string[];
+  subject: string;
+  text: string;
+  html?: string;
+  attachments?: EmailAttachmentInput[];
+  category?: EmailQueueCategory;
+  skipQueue?: boolean;
+}): Promise<EmailSendResult> {
+  const recipients = (Array.isArray(options.to) ? options.to : [options.to])
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  const res = await deliverEmailDirect(options);
+  if (!res.sent && recipients.length > 0 && !options.skipQueue) {
+    const queuedId = await persistFailedDispatch(
+      recipients,
+      options,
+      res.reason || 'SMTP delivery failed'
+    );
+    if (queuedId) {
+      return { ...res, queuedId };
+    }
+  }
+  return res;
 }
 
 export function buildTransactionSummaryEmailPayload(
@@ -267,6 +353,7 @@ export async function sendTransactionSummaryEmail(
     subject: payload.subject,
     text: payload.text,
     html: payload.html,
+    category: 'transaction',
   });
 }
 
@@ -335,7 +422,7 @@ export async function sendTempPasswordEmail(options: {
   templateOverrides?: EmailTemplateCollection;
 }): Promise<EmailSendResult> {
   const payload = buildTempPasswordEmailPayload(options);
-  return sendEmail({ to: options.to, ...payload });
+  return sendEmail({ to: options.to, ...payload, category: 'password_reset' });
 }
 
 export function buildPasswordResetAdminAlertEmailPayload(options: {
@@ -408,7 +495,7 @@ export async function sendPasswordResetAdminAlertEmail(options: {
     return { sent: false, reason: 'NO_ADMIN_EMAILS' };
   }
   const payload = buildPasswordResetAdminAlertEmailPayload(options);
-  return sendEmail({ to: options.adminEmails, ...payload });
+  return sendEmail({ to: options.adminEmails, ...payload, category: 'password_reset' });
 }
 
 export function buildMonthlyPdfSummaryEmailPayload(options: {
@@ -511,7 +598,8 @@ export async function sendMonthlyPdfSummaryEmail(options: {
   let failedCount = 0;
   const errors: string[] = [];
 
-  for (const recipient of options.recipients) {
+  for (let idx = 0; idx < options.recipients.length; idx += 1) {
+    const recipient = options.recipients[idx];
     const payload = buildMonthlyPdfSummaryEmailPayload({
       recipientName: recipient.name,
       monthKey: options.monthKey,
@@ -524,18 +612,21 @@ export async function sendMonthlyPdfSummaryEmail(options: {
       templateOverrides: options.templateOverrides,
     });
 
+    const attachments: EmailAttachmentInput[] = [
+      {
+        filename,
+        content: options.pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ];
+
     const res = await sendEmail({
       to: recipient.email,
       subject: payload.subject,
       text: payload.text,
       html: payload.html,
-      attachments: [
-        {
-          filename,
-          content: options.pdfBuffer,
-          contentType: 'application/pdf',
-        },
-      ],
+      attachments,
+      category: 'monthly_pdf',
     });
 
     if (res.sent) {
@@ -549,6 +640,32 @@ export async function sendMonthlyPdfSummaryEmail(options: {
         res.reason === 'SMTP_NOT_CONFIGURED' ||
         /EAUTH|Invalid login|535|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ESOCKET/i.test(res.reason || '');
       if (fatalSmtpError) {
+        // Persist any remaining recipients into the retry queue without hanging on broken SMTP
+        for (let j = idx + 1; j < options.recipients.length; j += 1) {
+          const remaining = options.recipients[j];
+          const remainingPayload = buildMonthlyPdfSummaryEmailPayload({
+            recipientName: remaining.name,
+            monthKey: options.monthKey,
+            fundName: options.fundName,
+            currency: options.currency,
+            amanahHeight: options.amanahHeight,
+            currentBalance: options.currentBalance,
+            monthlyCollected: options.monthlyCollected,
+            activeLoanTotal: options.activeLoanTotal,
+            templateOverrides: options.templateOverrides,
+          });
+          await persistFailedDispatch(
+            [remaining.email.trim()].filter(Boolean),
+            {
+              subject: remainingPayload.subject,
+              text: remainingPayload.text,
+              html: remainingPayload.html,
+              attachments,
+              category: 'monthly_pdf',
+            },
+            res.reason || 'SMTP delivery failed'
+          );
+        }
         failedCount = options.recipients.length - sentCount;
         break;
       }
@@ -639,7 +756,7 @@ export async function sendRegistrationPendingAdminEmail(options: {
     return { sent: false, reason: 'NO_ADMIN_EMAILS' };
   }
   const payload = buildRegistrationPendingAdminEmailPayload(options);
-  return sendEmail({ to: options.adminEmails, ...payload });
+  return sendEmail({ to: options.adminEmails, ...payload, category: 'registration' });
 }
 
 export function buildRegistrationApprovedEmailPayload(options: {
@@ -702,7 +819,7 @@ export async function sendRegistrationApprovedEmail(options: {
   templateOverrides?: EmailTemplateCollection;
 }): Promise<EmailSendResult> {
   const payload = buildRegistrationApprovedEmailPayload(options);
-  return sendEmail({ to: options.to, ...payload });
+  return sendEmail({ to: options.to, ...payload, category: 'registration' });
 }
 
 export function buildEmailTemplatePreview(options: {

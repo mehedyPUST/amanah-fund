@@ -16,6 +16,7 @@ import {
   History,
   Home,
   LogOut,
+  MailWarning,
   Menu,
   MessageSquare,
   Moon,
@@ -34,6 +35,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
+import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
 import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
@@ -113,6 +115,7 @@ const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'member-registry', label: 'User & Role Management', Icon: Users, group: 'admin' },
   { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
+  { id: 'email-queue', label: 'Email Queue', Icon: MailWarning, group: 'admin' },
   { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
   { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
@@ -137,6 +140,7 @@ const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
   community: 'indigo',
   'member-registry': 'indigo',
   'site-settings': 'indigo',
+  'email-queue': 'amber',
   'site-activity': 'indigo',
   'system-audit-logs': 'indigo',
 };
@@ -387,6 +391,7 @@ export function DashboardShell() {
     es.addEventListener('repayment:overdue', handleSync);
     es.addEventListener('config:updated', handleSync);
     es.addEventListener('notification:created', handleAlertSync);
+    es.addEventListener('email-queue:updated', handleSync);
     es.addEventListener('members:updated', handleSync);
     es.addEventListener('sheet:synced', handleSync);
     es.addEventListener('dm:received', handleAlertSync);
@@ -696,6 +701,9 @@ export function DashboardShell() {
         (isAdmin ? overview.treasury.pendingMembersCount : 0) +
         overview.treasury.pendingProfileRequestsCount
       );
+    }
+    if (sectionId === 'email-queue' && isAdmin) {
+      return overview.treasury.emailQueueAttentionCount || 0;
     }
     return 0;
   };
@@ -1452,6 +1460,13 @@ export function DashboardShell() {
                     onDisconnectGoogle={handleDisconnectGoogle}
                     onRefresh={handleRefreshWithAutoSync}
                   />
+                </section>
+              )}
+
+              {isAdmin && activeSection === 'email-queue' && (
+                <section id="email-queue" className="space-y-4 pb-8">
+                  <SectionEyebrow label="Admin · Email Queue" tone="amber" />
+                  <AdminEmailQueueView onRefreshWorkspace={handleRefreshWithAutoSync} />
                 </section>
               )}
             </motion.div>

@@ -40,6 +40,15 @@ import {
   sendRegistrationPendingAdminEmail,
 } from '../src/server/emailService.ts';
 import {
+  computeEmailQueueStats,
+  computeRetryBackoffMs,
+  enqueueEmailFailureInState,
+  markQueueItemRetryFailedInState,
+  markQueueItemSuccessInState,
+  sanitizeQueueItemForMonitor,
+  scheduleManualRetryInState,
+} from '../src/server/emailQueueService.ts';
+import {
   buildMonthlyFundSummaryData,
   generateMonthlyFundSummaryPdfBuffer,
   getPreviousMonthKey,
@@ -1229,7 +1238,99 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     });
     expect(afterReset).toBeUndefined();
   });
+
+  it('tracks failed emails in persistent retry queue with exponential backoff, manual retry, and monitor redaction', () => {
+    expect(computeRetryBackoffMs(1)).toBe(60_000);
+    expect(computeRetryBackoffMs(2)).toBe(180_000);
+    expect(computeRetryBackoffMs(3)).toBe(600_000);
+    expect(computeRetryBackoffMs(4)).toBe(1_800_000);
+
+    const state = makeBaseState();
+    const t0 = new Date('2026-11-16T10:00:00.000Z');
+    const item = enqueueEmailFailureInState(
+      state,
+      {
+        to: ['bilal@amanahcoop.org'],
+        subject: '[Amanah] Temporary Password Reset (AC-002)',
+        text: 'Assalamu Alaikum Bilal,\nTemporary Password: Amn-SECRET99\nSign in soon.',
+        category: 'password_reset',
+        attachments: [
+          {
+            filename: 'summary.pdf',
+            content: Buffer.from('%PDF-1.4 sample', 'utf8'),
+            contentType: 'application/pdf',
+          },
+        ],
+        maxAttempts: 3,
+      },
+      'ETIMEDOUT: SMTP timeout',
+      t0
+    );
+
+    expect(item.status).toBe('retrying');
+    expect(item.attempts).toBe(1);
+    expect(item.nextAttemptAt).toBe('2026-11-16T10:01:00.000Z');
+
+    // Monitor view must redact temp password & omit heavy base64 payload while keeping filename
+    const monitorView = sanitizeQueueItemForMonitor(item);
+    expect(monitorView.text).not.toContain('Amn-SECRET99');
+    expect(monitorView.text).toContain('Temporary Password: ••••••••');
+    expect(monitorView.attachmentFilenames).toEqual(['summary.pdf']);
+    expect('attachments' in monitorView).toBe(false);
+
+    // Attempt 2 fails -> still retrying with 3m backoff
+    markQueueItemRetryFailedInState(
+      state,
+      item.id,
+      'ECONNREFUSED',
+      new Date('2026-11-16T10:01:00.000Z')
+    );
+    expect(item.status).toBe('retrying');
+    expect(item.attempts).toBe(2);
+    expect(item.nextAttemptAt).toBe('2026-11-16T10:04:00.000Z');
+
+    // Attempt 3 fails (reaches maxAttempts=3) -> transitions to terminal 'failed'
+    markQueueItemRetryFailedInState(
+      state,
+      item.id,
+      '535 Authentication failed',
+      new Date('2026-11-16T10:04:00.000Z')
+    );
+    expect(item.status).toBe('failed');
+    expect(item.attempts).toBe(3);
+
+    expect(computeEmailQueueStats(state.emailQueue)).toEqual({
+      total: 1,
+      pending: 0,
+      retrying: 0,
+      failed: 1,
+      sent: 0,
+    });
+
+    // Admin schedules manual retry -> resets to pending, then succeeds
+    scheduleManualRetryInState(state, item.id, new Date('2026-11-16T10:10:00.000Z'));
+    expect(item.status).toBe('pending');
+    expect(item.attempts).toBe(0);
+
+    markQueueItemSuccessInState(
+      state,
+      item.id,
+      '<msg-123@amanahcoop.org>',
+      new Date('2026-11-16T10:10:05.000Z')
+    );
+    expect(item.status).toBe('sent');
+    expect(item.lastError).toBeUndefined();
+    expect(item.messageId).toBe('<msg-123@amanahcoop.org>');
+    expect(computeEmailQueueStats(state.emailQueue)).toEqual({
+      total: 1,
+      pending: 0,
+      retrying: 0,
+      failed: 0,
+      sent: 1,
+    });
+  });
 });
+
 
 
 

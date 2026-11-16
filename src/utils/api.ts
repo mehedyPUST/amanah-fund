@@ -13,6 +13,9 @@ import type {
   DecisionPoll,
   EligibilityCheck,
   EmailNotification,
+  EmailQueueCategory,
+  EmailQueueStats,
+  EmailQueueStatus,
   EmailTemplateCollection,
   EmailTemplateFormat,
   EmailTemplateKey,
@@ -553,9 +556,82 @@ export const api = {
       recipientEmail: string;
       subject: string;
       reason?: string;
+      queuedId?: string;
     }>('/api/admin/email-templates/test', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+
+  // Admin Persistent Email Retry Queue Monitor
+  getEmailQueue: (
+    status: 'all' | 'attention' | 'pending' | 'retrying' | 'failed' | 'sent' = 'all'
+  ) =>
+    apiRequest<{
+      items: Array<{
+        id: string;
+        to: string[];
+        subject: string;
+        text: string;
+        textPreview: string;
+        category: EmailQueueCategory;
+        status: EmailQueueStatus;
+        attempts: number;
+        maxAttempts: number;
+        lastError?: string;
+        messageId?: string;
+        nextAttemptAt: string;
+        createdAt: string;
+        updatedAt: string;
+        sentAt?: string;
+        attachmentFilenames: string[];
+      }>;
+      stats: EmailQueueStats;
+      smtpConfigured: boolean;
+    }>(`/api/admin/email-queue?status=${encodeURIComponent(status)}`),
+  processEmailQueue: () =>
+    apiRequest<{
+      ok: boolean;
+      processed: number;
+      sent: number;
+      failed: number;
+      stats: EmailQueueStats;
+      smtpConfigured: boolean;
+    }>('/api/admin/email-queue/process', { method: 'POST', body: JSON.stringify({ forceAllPending: true }) }),
+  retryAllEmailQueue: () =>
+    apiRequest<{
+      ok: boolean;
+      queuedCount: number;
+      processed: number;
+      sent: number;
+      failed: number;
+      stats: EmailQueueStats;
+      smtpConfigured: boolean;
+    }>('/api/admin/email-queue/retry-all', { method: 'POST' }),
+  retryEmailQueueItem: (id: string) =>
+    apiRequest<{
+      ok: boolean;
+      sent: boolean;
+      reason?: string;
+      stats: EmailQueueStats;
+      smtpConfigured: boolean;
+    }>(`/api/admin/email-queue/${encodeURIComponent(id)}/retry`, {
+      method: 'POST',
+    }),
+  clearSentEmailQueue: () =>
+    apiRequest<{
+      ok: boolean;
+      removedCount: number;
+      stats: EmailQueueStats;
+    }>('/api/admin/email-queue/sent', {
+      method: 'DELETE',
+    }),
+  deleteEmailQueueItem: (id: string) =>
+    apiRequest<{
+      ok: boolean;
+      id: string;
+      stats: EmailQueueStats;
+    }>(`/api/admin/email-queue/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     }),
   getAuditLogs: () =>
     apiRequest<{

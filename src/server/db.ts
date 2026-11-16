@@ -10,6 +10,7 @@ import type {
   CoopNotice,
   DecisionPoll,
   EmailNotification,
+  EmailQueueItem,
   EncryptedEnvelope,
   FundConfig,
   HalalProject,
@@ -74,6 +75,7 @@ export interface VaultState {
   notices?: CoopNotice[];
   profileChangeRequests?: ProfileChangeRequest[];
   passwordResetRequests?: PasswordResetRequest[];
+  emailQueue?: EmailQueueItem[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -136,6 +138,7 @@ function createEmptyVaultState(): VaultState {
     notices: [],
     profileChangeRequests: [],
     passwordResetRequests: [],
+    emailQueue: [],
   };
 }
 
@@ -186,6 +189,9 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.passwordResetRequests = Array.isArray(state.passwordResetRequests)
     ? state.passwordResetRequests
+    : [];
+  state.emailQueue = Array.isArray(state.emailQueue)
+    ? state.emailQueue
     : [];
   if (state.fundConfig) {
     if (state.fundConfig.guarantorThresholdAmount === undefined) {
@@ -361,6 +367,9 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
         mongoDb.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
+        mongoDb.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
+        mongoDb.collection('emailQueue').createIndex({ createdAt: -1 }),
       ]);
 
       initialized = true;
@@ -400,6 +409,7 @@ export async function loadVaultState(): Promise<VaultState> {
       notices,
       profileChangeRequests,
       passwordResetRequests,
+      emailQueue,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
       mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -415,6 +425,7 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
       mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+      mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
     ]);
 
     return normalizeVaultState({
@@ -432,6 +443,7 @@ export async function loadVaultState(): Promise<VaultState> {
       notices,
       profileChangeRequests,
       passwordResetRequests,
+      emailQueue,
     });
   }
   return readLocalVault();
@@ -521,6 +533,12 @@ export function updateVaultState(
           'passwordResetRequests',
           current.passwordResetRequests || [],
           next.passwordResetRequests || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'emailQueue',
+          current.emailQueue || [],
+          next.emailQueue || []
         ),
       ]);
     } else {

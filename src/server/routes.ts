@@ -84,6 +84,13 @@ import {
   sendTransactionSummaryEmail,
   type TransactionEmailSummaryInput,
 } from './emailService.ts';
+import {
+  computeEmailQueueStats,
+  processDueEmailQueue,
+  retryAllFailedEmailQueueItems,
+  retryEmailQueueItemNow,
+  sanitizeQueueItemForMonitor,
+} from './emailQueueService.ts';
 import { verifyPaymentReceiptImage } from './geminiService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
@@ -5466,6 +5473,8 @@ apiRouter.post(
         subject: testSubject,
         text: preview.text,
         html: preview.html,
+        category: 'template_test',
+        skipQueue: !Boolean(req.body?.queueOnFailure),
       });
 
       res.json({
@@ -5475,10 +5484,261 @@ apiRouter.post(
         recipientEmail,
         subject: testSubject,
         reason: result.reason,
+        queuedId: result.queuedId,
       });
     } catch (err) {
       console.error('Test email template dispatch error:', err);
       res.status(500).json({ error: 'Failed to dispatch test email.' });
+    }
+  }
+);
+
+apiRouter.get(
+  '/admin/email-queue',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const state = await loadVaultState();
+      const allItems = state.emailQueue || [];
+      const stats = computeEmailQueueStats(allItems);
+      const statusFilter = String(req.query?.status || 'all').trim().toLowerCase();
+
+      const filtered = allItems
+        .filter((item) => {
+          if (statusFilter === 'attention') {
+            return (
+              item.status === 'failed' ||
+              item.status === 'retrying' ||
+              item.status === 'pending'
+            );
+          }
+          if (
+            statusFilter === 'pending' ||
+            statusFilter === 'retrying' ||
+            statusFilter === 'failed' ||
+            statusFilter === 'sent'
+          ) {
+            return item.status === statusFilter;
+          }
+          return true;
+        })
+        .map(sanitizeQueueItemForMonitor);
+
+      res.json({
+        items: filtered,
+        stats,
+        smtpConfigured: isSmtpConfigured(),
+      });
+    } catch (err) {
+      console.error('Load email queue error:', err);
+      res.status(500).json({ error: 'Failed to load email retry queue.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/email-queue/process',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const result = await processDueEmailQueue({
+        forceAllPending: req.body?.forceAllPending !== false,
+        limit: 50,
+      });
+
+      if (result.processed > 0) {
+        await updateVaultState((draft) => {
+          appendAuditLog(draft, {
+            actor: viewer,
+            action: 'EMAIL_QUEUE_PROCESSED',
+            resourceType: 'notification',
+            resourceId: 'email-queue',
+            summary: `${viewer.name} processed ${result.processed} queued email(s): ${result.sent} sent, ${result.failed} failed`,
+            payload: result,
+          });
+          return draft;
+        });
+        broadcastRealtimeEvent('audit:updated', { action: 'EMAIL_QUEUE_PROCESSED' });
+      }
+
+      const nextState = await loadVaultState();
+      res.json({
+        ok: true,
+        ...result,
+        stats: computeEmailQueueStats(nextState.emailQueue || []),
+        smtpConfigured: isSmtpConfigured(),
+      });
+    } catch (err) {
+      console.error('Process email queue error:', err);
+      res.status(500).json({ error: 'Failed to process email queue.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/email-queue/retry-all',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const result = await retryAllFailedEmailQueueItems();
+
+      if (result.queuedCount > 0) {
+        await updateVaultState((draft) => {
+          appendAuditLog(draft, {
+            actor: viewer,
+            action: 'EMAIL_QUEUE_RETRY_ALL',
+            resourceType: 'notification',
+            resourceId: 'email-queue',
+            summary: `${viewer.name} retried ${result.queuedCount} queued/failed email(s): ${result.sent} sent, ${result.failed} still failed`,
+            payload: result,
+          });
+          return draft;
+        });
+        broadcastRealtimeEvent('audit:updated', { action: 'EMAIL_QUEUE_RETRY_ALL' });
+      }
+
+      const nextState = await loadVaultState();
+      res.json({
+        ok: true,
+        ...result,
+        stats: computeEmailQueueStats(nextState.emailQueue || []),
+        smtpConfigured: isSmtpConfigured(),
+      });
+    } catch (err) {
+      console.error('Retry all email queue error:', err);
+      res.status(500).json({ error: 'Failed to retry failed emails.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/email-queue/:id/retry',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const id = String(req.params.id || '');
+      const result = await retryEmailQueueItemNow(id);
+      if (!result.found) {
+        res.status(404).json({ error: 'Email queue entry not found.' });
+        return;
+      }
+
+      await updateVaultState((draft) => {
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'EMAIL_QUEUE_ITEM_RETRIED',
+          resourceType: 'notification',
+          resourceId: id,
+          summary: `${viewer.name} manually retried queued email ${id} (${result.sent ? 'delivered' : 'failed'})`,
+          payload: { id, sent: result.sent, reason: result.reason },
+        });
+        return draft;
+      });
+      broadcastRealtimeEvent('audit:updated', { action: 'EMAIL_QUEUE_ITEM_RETRIED' });
+
+      const nextState = await loadVaultState();
+      res.json({
+        ok: true,
+        sent: result.sent,
+        reason: result.reason,
+        item: result.item ? sanitizeQueueItemForMonitor(result.item) : undefined,
+        stats: computeEmailQueueStats(nextState.emailQueue || []),
+        smtpConfigured: isSmtpConfigured(),
+      });
+    } catch (err) {
+      console.error('Retry single email queue item error:', err);
+      res.status(500).json({ error: 'Failed to retry email delivery.' });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/admin/email-queue/sent',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      let removedCount = 0;
+      const nextState = await updateVaultState((draft) => {
+        const before = (draft.emailQueue || []).length;
+        draft.emailQueue = (draft.emailQueue || []).filter((item) => item.status !== 'sent');
+        removedCount = before - draft.emailQueue.length;
+        if (removedCount > 0) {
+          appendAuditLog(draft, {
+            actor: viewer,
+            action: 'EMAIL_QUEUE_CLEARED_SENT',
+            resourceType: 'notification',
+            resourceId: 'email-queue',
+            summary: `${viewer.name} cleared ${removedCount} delivered email log(s) from the queue`,
+            payload: { removedCount },
+          });
+        }
+        return draft;
+      });
+
+      broadcastRealtimeEvent('email-queue:updated', { action: 'cleared_sent', removedCount });
+      res.json({
+        ok: true,
+        removedCount,
+        stats: computeEmailQueueStats(nextState.emailQueue || []),
+      });
+    } catch (err) {
+      console.error('Clear sent email queue error:', err);
+      res.status(500).json({ error: 'Failed to clear delivered email queue items.' });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/admin/email-queue/:id',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const viewer = req.authUser!;
+      const id = String(req.params.id || '');
+      let removedSubject = '';
+
+      const nextState = await updateVaultState((draft) => {
+        const idx = (draft.emailQueue || []).findIndex((q) => q.id === id);
+        if (idx === -1) return draft;
+        const [removed] = draft.emailQueue!.splice(idx, 1);
+        removedSubject = removed.subject;
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'EMAIL_QUEUE_ITEM_DELETED',
+          resourceType: 'notification',
+          resourceId: id,
+          summary: `${viewer.name} discarded queued email "${removed.subject}"`,
+          payload: { id, to: removed.to, status: removed.status },
+        });
+        return draft;
+      });
+
+      if (!removedSubject) {
+        res.status(404).json({ error: 'Email queue entry not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('email-queue:updated', { action: 'deleted', id });
+      broadcastRealtimeEvent('audit:updated', { action: 'EMAIL_QUEUE_ITEM_DELETED' });
+      res.json({
+        ok: true,
+        id,
+        stats: computeEmailQueueStats(nextState.emailQueue || []),
+      });
+    } catch (err) {
+      console.error('Delete email queue item error:', err);
+      res.status(500).json({ error: 'Failed to delete email queue item.' });
     }
   }
 );

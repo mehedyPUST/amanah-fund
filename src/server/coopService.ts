@@ -649,6 +649,13 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     return n.recipientUserId === currentUser.id || n.recipientEmail === currentUser.email;
   }).length;
 
+  const emailQueueAttentionCount =
+    currentUser.role === 'admin'
+      ? (state.emailQueue || []).filter(
+          (q) => q.status === 'pending' || q.status === 'retrying' || q.status === 'failed'
+        ).length
+      : 0;
+
   const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   const prevMonthKey = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
 
@@ -746,6 +753,7 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       openDecisionPollsCount,
       upcomingMeetingsCount,
       unreadNotificationsCount,
+      emailQueueAttentionCount,
       thisMonthKey: currentMonthKey,
       thisMonthContributionTarget,
       thisMonthContributionCollected,

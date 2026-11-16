@@ -19,7 +19,8 @@ export type DashboardSectionId =
   | 'site-settings'
   | 'member-profile'
   | 'manager-cycle'
-  | 'members';
+  | 'members'
+  | 'email-queue';
 
 export interface EncryptedEnvelope {
   iv: string;
@@ -637,6 +638,7 @@ export interface DashboardOverview {
     openDecisionPollsCount: number;
     upcomingMeetingsCount: number;
     unreadNotificationsCount: number;
+    emailQueueAttentionCount?: number;
     thisMonthKey: string;
     thisMonthContributionTarget: number;
     thisMonthContributionCollected: number;
@@ -911,3 +913,47 @@ export interface PasswordResetRequest {
   emailSent?: boolean;
   resolutionNote?: string;
 }
+
+export type EmailQueueStatus = 'pending' | 'retrying' | 'sent' | 'failed';
+
+export type EmailQueueCategory =
+  | 'transaction'
+  | 'registration'
+  | 'password_reset'
+  | 'monthly_pdf'
+  | 'template_test'
+  | 'general';
+
+export interface EmailQueueAttachment {
+  filename: string;
+  contentBase64: string;
+  contentType?: string;
+}
+
+export interface EmailQueueItem {
+  id: string;
+  to: string[];
+  subject: string;
+  text: string;
+  html?: string;
+  attachments?: EmailQueueAttachment[];
+  category: EmailQueueCategory;
+  status: EmailQueueStatus;
+  attempts: number;
+  maxAttempts: number;
+  lastError?: string;
+  messageId?: string;
+  nextAttemptAt: string;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+}
+
+export interface EmailQueueStats {
+  total: number;
+  pending: number;
+  retrying: number;
+  failed: number;
+  sent: number;
+}
+
