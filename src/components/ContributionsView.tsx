@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, ExternalLink, FileImage, Lock, Search, Shield, Sparkles, X } from 'lucide-react';
+import {
+  Check,
+  ExternalLink,
+  FileImage,
+  FileText,
+  Lock,
+  Search,
+  Shield,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, PublicUser, ReceiptAiExtraction } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -12,6 +22,7 @@ import {
   formatBillingMonth,
   formatDateTime,
   formatMoney,
+  isPdfFileUrl,
   shortHash,
 } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
@@ -163,7 +174,7 @@ export function ContributionsView({
     setReceiptNotice(null);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
-        api.uploadImage(file, `contrib-receipt-${Date.now()}`),
+        api.uploadFile(file, `contrib-receipt-${Date.now()}`),
         api.verifyReceiptWithGemini(file),
       ]);
 
@@ -187,13 +198,13 @@ export function ContributionsView({
         );
       } else if (uploadRes.status === 'fulfilled') {
         setReceiptNotice(
-          'Receipt screenshot attached. Verify Transaction Number and sender account manually.'
+          'Receipt file attached. Verify Transaction Number and sender account manually.'
         );
       } else {
         showNotice(
           'red',
           'Receipt Upload Failed',
-          'Could not upload receipt image. Please check file size (<8 MB) and try again.'
+          'Could not upload receipt PDF or image. Please check file size (<10 MB) and try again.'
         );
       }
     } finally {
@@ -515,12 +526,12 @@ export function ContributionsView({
                     {scanningReceipt
                       ? 'Uploading & Scanning Slip with Gemini AI…'
                       : receiptPhotoUrl
-                        ? 'Replace Receipt Screenshot'
-                        : 'Upload Slip & Auto-Fill Transaction #'}
+                        ? 'Replace Receipt (PDF or Photo)'
+                        : 'Upload Slip (PDF/Photo) & Auto-Fill TrxID'}
                   </span>
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"
                     disabled={scanningReceipt}
                     className="hidden"
                     onChange={(e) => {
@@ -543,7 +554,14 @@ export function ContributionsView({
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
                   >
-                    <span>View Attached Slip Image</span>
+                    {isPdfFileUrl(receiptPhotoUrl) ? (
+                      <>
+                        <FileText className="w-3 h-3" aria-hidden="true" />
+                        <span>View Attached Slip PDF</span>
+                      </>
+                    ) : (
+                      <span>View Attached Slip Image</span>
+                    )}
                     <ExternalLink className="w-3 h-3" aria-hidden="true" />
                   </a>
                 )}
@@ -1064,7 +1082,11 @@ export function ContributionsView({
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-1 text-teal-700 dark:text-teal-400 font-medium hover:underline"
                                       >
-                                        <span>Open Attached Transfer Receipt</span>
+                                        <span>
+                                          {isPdfFileUrl(item.receiptPhotoUrl)
+                                            ? 'Open Attached Receipt PDF'
+                                            : 'Open Attached Transfer Receipt'}
+                                        </span>
                                         <ExternalLink className="w-3 h-3" aria-hidden="true" />
                                       </a>
                                     </div>

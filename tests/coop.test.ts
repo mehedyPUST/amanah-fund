@@ -18,6 +18,12 @@ import {
 } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
 import {
+  buildImageKitAuthHeader,
+  getImageKitConfig,
+  uploadToImageKit,
+  validateAndDecodeUpload,
+} from '../src/server/imagekitStorage.ts';
+import {
   buildOtpAuthUri,
   generateTotpCode,
   generateTotpSecret,
@@ -862,6 +868,105 @@ describe('Nominee registration validation', () => {
     }
   });
 });
+
+describe('ImageKit.io media storage & PDF/photo validation', () => {
+  it('detects ImageKit.io config, formats Basic auth headers, and uploads PDFs & photos', async () => {
+    const cfg = getImageKitConfig({
+      NODE_ENV: 'test',
+      IMAGEKIT_PRIVATE_KEY: 'private_test_key_123',
+      IMAGEKIT_PUBLIC_KEY: 'public_test_key_123',
+      IMAGEKIT_URL_ENDPOINT: 'https://ik.imagekit.io/amanah/',
+      IMAGEKIT_FOLDER: 'coop-docs/',
+    });
+    expect(cfg).toEqual({
+      privateKey: 'private_test_key_123',
+      publicKey: 'public_test_key_123',
+      urlEndpoint: 'https://ik.imagekit.io/amanah',
+      folder: '/coop-docs',
+    });
+
+    expect(buildImageKitAuthHeader('private_test_key_123')).toBe(
+      `Basic ${Buffer.from('private_test_key_123:', 'utf8').toString('base64')}`
+    );
+
+    const calls: Array<{ url: string; auth: string | null; fileName: string | null; folder: string | null }> = [];
+    const mockFetch: typeof fetch = async (input, init) => {
+      const form = init?.body as FormData;
+      const headers = init?.headers as Record<string, string>;
+      calls.push({
+        url: String(input),
+        auth: headers.Authorization || null,
+        fileName: String(form.get('fileName') || ''),
+        folder: String(form.get('folder') || ''),
+      });
+      return new Response(
+        JSON.stringify({
+          fileId: 'ik_file_1',
+          filePath: '/coop-docs/agreement-1.pdf',
+          url: 'https://ik.imagekit.io/amanah/coop-docs/agreement-1.pdf',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    };
+
+    const res = await uploadToImageKit({
+      fileName: 'agreement-1.pdf',
+      base64Payload: Buffer.from('%PDF-1.4\n%%EOF', 'utf8').toString('base64'),
+      mimeType: 'application/pdf',
+      config: cfg!,
+      fetchImpl: mockFetch,
+    });
+
+    expect(res).toEqual({
+      fileId: 'ik_file_1',
+      filePath: '/coop-docs/agreement-1.pdf',
+      url: 'https://ik.imagekit.io/amanah/coop-docs/agreement-1.pdf',
+      provider: 'imagekit',
+      contentType: 'application/pdf',
+    });
+    expect(calls[0]).toEqual({
+      url: 'https://upload.imagekit.io/api/v1/files/upload',
+      auth: buildImageKitAuthHeader('private_test_key_123'),
+      fileName: 'agreement-1.pdf',
+      folder: '/coop-docs',
+    });
+  });
+
+  it('validates genuine PDF documents and PNG photos while rejecting spoofed PDFs', () => {
+    const validPdfBase64 = Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF', 'utf8').toString(
+      'base64'
+    );
+    const decodedPdf = validateAndDecodeUpload({
+      rawData: `data:application/pdf;base64,${validPdfBase64}`,
+      rawName: 'Signed Agreement 2026',
+    });
+    expect(decodedPdf.isPdf).toBe(true);
+    expect(decodedPdf.mimeType).toBe('application/pdf');
+    expect(decodedPdf.ext).toBe('pdf');
+    expect(decodedPdf.filename).toMatch(/^Signed-Agreement-2026-.*\.pdf$/);
+
+    const pngBytes = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const decodedPng = validateAndDecodeUpload({
+      rawData: `data:image/png;base64,${pngBytes.toString('base64')}`,
+      rawName: 'member-photo',
+    });
+    expect(decodedPng.isPdf).toBe(false);
+    expect(decodedPng.mimeType).toBe('image/png');
+    expect(decodedPng.ext).toBe('png');
+
+    const spoofedPdf = Buffer.from('NOT_A_REAL_PDF_FILE', 'utf8').toString('base64');
+    expect(() =>
+      validateAndDecodeUpload({
+        rawData: `data:application/pdf;base64,${spoofedPdf}`,
+        rawName: 'fake',
+      })
+    ).toThrow(/Invalid PDF file signature/);
+  });
+});
+
 
 
 

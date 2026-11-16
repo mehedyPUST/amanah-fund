@@ -71,6 +71,11 @@ import { loadVaultState, type StoredPrivateMessage, type StoredUser, updateVault
 import { verifyPaymentReceiptImage } from './geminiService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
+  getImageKitConfig,
+  uploadToImageKit,
+  validateAndDecodeUpload,
+} from './imagekitStorage.ts';
+import {
   broadcastRealtimeEvent,
   registerSseClient,
   sendRealtimeEventToUsers,
@@ -396,106 +401,144 @@ const UPLOADS_DIR = process.env.VERCEL
   ? path.join(os.tmpdir(), 'amanah-data', 'uploads')
   : path.resolve(process.cwd(), 'data', 'uploads');
 
-apiRouter.get('/uploads/:filename', (req, res) => {
-  const safeName = path.basename(String(req.params.filename || ''));
-  if (!safeName || !/^[a-zA-Z0-9._-]+$/.test(safeName)) {
-    res.status(400).json({ error: 'Invalid file name.' });
-    return;
-  }
-  const filePath = path.join(UPLOADS_DIR, safeName);
-  if (!fs.existsSync(filePath)) {
-    res.status(404).json({ error: 'Image not found.' });
-    return;
-  }
+function contentTypeFromFilename(safeName: string): string {
   const ext = path.extname(safeName).toLowerCase();
-  const contentType =
-    ext === '.png'
-      ? 'image/png'
-      : ext === '.webp'
-        ? 'image/webp'
-        : ext === '.gif'
-          ? 'image/gif'
-          : 'image/jpeg';
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  res.send(fs.readFileSync(filePath));
+  if (ext === '.pdf') return 'application/pdf';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  return 'image/jpeg';
+}
+
+apiRouter.get('/uploads/:filename', (req, res) => {
+  try {
+    const safeName = path.basename(String(req.params.filename || ''));
+    if (!safeName || !/^[a-zA-Z0-9._-]+$/.test(safeName)) {
+      res.status(400).json({ error: 'Invalid file name.' });
+      return;
+    }
+
+    const expectedContentType = contentTypeFromFilename(safeName);
+    const filePath = path.join(UPLOADS_DIR, safeName);
+
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', expectedContentType);
+      res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.send(fs.readFileSync(filePath));
+      return;
+    }
+
+    res.status(404).json({ error: 'Uploaded file not found.' });
+  } catch (err) {
+    console.error('Upload fetch error:', err);
+    res.status(502).json({ error: 'Failed to retrieve file from storage.' });
+  }
 });
 
-apiRouter.post('/upload/imgbb', uploadRateLimiter, async (req, res) => {
+async function handleFileUpload(req: AuthenticatedRequest, res: Response) {
   try {
-    const rawData = String(req.body?.imageBase64 || '').trim();
+    const rawData = String(req.body?.fileBase64 || req.body?.imageBase64 || '').trim();
     const rawName = String(req.body?.name || 'member-upload').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fallbackMimeType = String(req.body?.mimeType || '').trim() || undefined;
 
-    if (!rawData) {
-      res.status(400).json({ error: 'Image payload is required.' });
-      return;
-    }
-
-    let mimeType = 'image/jpeg';
-    let base64Payload = rawData;
-    const dataUrlMatch = rawData.match(/^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,(.+)$/i);
-    if (dataUrlMatch) {
-      mimeType = dataUrlMatch[1].toLowerCase();
-      base64Payload = dataUrlMatch[2];
-    }
-
-    const buffer = Buffer.from(base64Payload, 'base64');
-    if (buffer.length === 0 || buffer.length > 8 * 1024 * 1024) {
-      res.status(400).json({ error: 'Image must be a valid image under 8 MB.' });
-      return;
-    }
-
-    const apiKey = process.env.IMGBB_API_KEY?.trim();
-    if (apiKey) {
-      const formBody = new URLSearchParams();
-      formBody.set('key', apiKey);
-      formBody.set('image', base64Payload);
-      formBody.set('name', rawName);
-
-      const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formBody.toString(),
+    let decoded: ReturnType<typeof validateAndDecodeUpload>;
+    try {
+      decoded = validateAndDecodeUpload({
+        rawData,
+        rawName,
+        fallbackMimeType,
       });
+    } catch (validationErr) {
+      res.status(400).json({
+        error: validationErr instanceof Error ? validationErr.message : 'Invalid upload payload.',
+      });
+      return;
+    }
 
-      const imgbbJson = (await imgbbRes.json()) as {
-        success?: boolean;
-        data?: { url?: string; display_url?: string };
-        error?: { message?: string };
-      };
-
-      if (!imgbbRes.ok || !imgbbJson.success || !imgbbJson.data) {
-        res.status(502).json({
-          error: imgbbJson.error?.message || 'ImgBB upload failed. Check IMGBB_API_KEY configuration.',
-        });
-        return;
-      }
-
+    // 1. Primary provider: ImageKit.io Media Storage (supports both PDFs & photos)
+    const imagekitConfig = getImageKitConfig();
+    if (imagekitConfig) {
+      const uploaded = await uploadToImageKit({
+        fileName: decoded.filename,
+        base64Payload: decoded.base64Payload,
+        mimeType: decoded.mimeType,
+        config: imagekitConfig,
+      });
       res.json({
-        url: imgbbJson.data.display_url || imgbbJson.data.url,
-        provider: 'imgbb',
+        url: uploaded.url,
+        provider: uploaded.provider,
+        fileId: uploaded.fileId,
+        mimeType: decoded.mimeType,
+        filename: decoded.filename,
+        sizeBytes: decoded.buffer.length,
       });
       return;
     }
 
-    // Graceful server-side storage fallback when IMGBB_API_KEY is not configured in environment
+    // 2. Legacy image-only provider fallback if IMGBB_API_KEY is explicitly configured
+    const imgbbApiKey = process.env.IMGBB_API_KEY?.trim();
+    if (imgbbApiKey && !decoded.isPdf) {
+      try {
+        const formBody = new URLSearchParams();
+        formBody.set('key', imgbbApiKey);
+        formBody.set('image', decoded.base64Payload);
+        formBody.set('name', rawName);
+
+        const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formBody.toString(),
+        });
+
+        const imgbbJson = (await imgbbRes.json()) as {
+          success?: boolean;
+          data?: { url?: string; display_url?: string };
+          error?: { message?: string };
+        };
+
+        if (imgbbRes.ok && imgbbJson.success && imgbbJson.data) {
+          res.json({
+            url: imgbbJson.data.display_url || imgbbJson.data.url,
+            provider: 'imgbb',
+            mimeType: decoded.mimeType,
+            filename: decoded.filename,
+            sizeBytes: decoded.buffer.length,
+          });
+          return;
+        }
+        console.warn(
+          '[Upload] Legacy ImgBB fallback rejected upload, falling back to local vault:',
+          imgbbJson.error?.message || imgbbRes.status
+        );
+      } catch (imgbbErr) {
+        console.warn('[Upload] Legacy ImgBB fallback error, falling back to local vault:', imgbbErr);
+      }
+    }
+
+    // 3. Graceful local vault disk fallback for both PDFs & photos when R2 credentials are omitted
     if (!fs.existsSync(UPLOADS_DIR)) {
       fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
-    const ext =
-      mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffer);
+    fs.writeFileSync(path.join(UPLOADS_DIR, decoded.filename), decoded.buffer);
 
     res.json({
-      url: `/api/uploads/${filename}`,
+      url: `/api/uploads/${decoded.filename}`,
       provider: 'local_vault',
+      mimeType: decoded.mimeType,
+      filename: decoded.filename,
+      sizeBytes: decoded.buffer.length,
     });
   } catch (err) {
-    console.error('Image upload error:', err);
-    res.status(500).json({ error: 'Failed to process image upload.' });
+    console.error('File upload error:', err);
+    res.status(500).json({
+      error: err instanceof Error ? err.message : 'Failed to process file upload.',
+    });
   }
-});
+}
+
+apiRouter.post('/upload', uploadRateLimiter, handleFileUpload);
+apiRouter.post('/upload/imgbb', uploadRateLimiter, handleFileUpload);
 
 apiRouter.get('/auth/references', async (_req, res) => {
   try {

@@ -473,7 +473,7 @@ export function CommunityView({
   async function handleImagePick(file: File, target: 'new' | 'edit') {
     setUploadingImage(true);
     try {
-      const res = await api.uploadImage(file, `community-${Date.now()}`);
+      const res = await api.uploadFile(file, `community-${Date.now()}`);
       if (target === 'new') {
         setNewImageUrl(res.url);
       } else {

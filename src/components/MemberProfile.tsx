@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  FileText,
   KeyRound,
   Lock,
   RefreshCw,
@@ -18,7 +19,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatDateTime } from '../utils/format.ts';
+import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
@@ -590,19 +591,43 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   rel="noreferrer"
                   className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
                 >
-                  <span>Open Full Image</span>
+                  <span>{isPdfFileUrl(agreementUrl) ? 'Open Agreement PDF' : 'Open Full Image'}</span>
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </a>
               </div>
-              <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 aspect-[16/10]">
-                <img
-                  src={agreementUrl}
-                  alt={`${profile.name} signed cooperative agreement`}
-                  referrerPolicy="no-referrer"
-                  onError={() => setAgreementBroken(true)}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {isPdfFileUrl(agreementUrl) ? (
+                <a
+                  href={agreementUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 flex items-center justify-between gap-3 hover:border-emerald-400 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        Signed Cooperative Agreement (PDF)
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Stored on ImageKit.io document vault
+                      </div>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                </a>
+              ) : (
+                <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 aspect-[16/10]">
+                  <img
+                    src={agreementUrl}
+                    alt={`${profile.name} signed cooperative agreement`}
+                    referrerPolicy="no-referrer"
+                    onError={() => setAgreementBroken(true)}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           )}
 

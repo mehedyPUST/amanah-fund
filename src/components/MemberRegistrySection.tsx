@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle2, ClipboardCheck, Users, X, XCircle } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, ExternalLink, FileText, Users, X, XCircle } from 'lucide-react';
 import type {
   FundConfig,
   MemberSummary,
@@ -12,7 +12,7 @@ import type {
   UserStatus,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatDateTime } from '../utils/format.ts';
+import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
@@ -483,22 +483,37 @@ export function MemberRegistrySection({
 
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          Agreement Paper Photo (Optional)
+                          Agreement Paper (Optional)
                         </div>
                         {reg?.agreementPhotoUrl ? (
-                          <a
-                            href={reg.agreementPhotoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 aspect-[4/3]"
-                          >
-                            <img
-                              src={reg.agreementPhotoUrl}
-                              alt={`${inspectingMember.name} signed agreement`}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover"
-                            />
-                          </a>
+                          isPdfFileUrl(reg.agreementPhotoUrl) ? (
+                            <a
+                              href={reg.agreementPhotoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-32 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-white dark:bg-slate-900 flex flex-col items-center justify-center gap-2 p-3 text-center hover:border-emerald-500 transition-colors"
+                            >
+                              <FileText className="w-6 h-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                              <span className="text-xs font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1">
+                                <span>Open Signed Agreement PDF</span>
+                                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                              </span>
+                            </a>
+                          ) : (
+                            <a
+                              href={reg.agreementPhotoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 aspect-[4/3]"
+                            >
+                              <img
+                                src={reg.agreementPhotoUrl}
+                                alt={`${inspectingMember.name} signed agreement`}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          )
                         ) : (
                           <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400">
                             Not provided (optional)

@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   CheckCircle2,
+  ExternalLink,
   FileCheck2,
+  FileText,
   Globe,
   ImagePlus,
   Loader2,
@@ -21,6 +23,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { isPdfFileUrl } from '../utils/format.ts';
 import {
   GOOGLE_ONBOARDING_STORAGE_KEY,
   signInWithGoogleIdentity,
@@ -91,7 +94,7 @@ export function SignUpForm() {
   // Nominees (1 or more; share % sums to 100%)
   const [nominees, setNominees] = useState<NomineeDraft[]>(() => [createEmptyNominee('100')]);
 
-  // ImgBB uploaded photo & agreement paper URLs
+  // ImageKit.io uploaded photo & agreement paper URLs
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
   const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
@@ -270,12 +273,20 @@ export function SignUpForm() {
   async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>, target: 'photo' | 'agreement') {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file (PNG, JPG, or WEBP).');
+    const isPdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImage = file.type.startsWith('image/');
+
+    if (target === 'photo' && !isImage) {
+      setError('Please select a valid image file (PNG, JPG, WEBP, or GIF) for your member photo.');
       return;
     }
-    if (file.size > 6 * 1024 * 1024) {
-      setError('Selected image must be smaller than 6 MB.');
+    if (target === 'agreement' && !isImage && !isPdf) {
+      setError('Agreement paper must be a PDF document or image file (PNG, JPG, WEBP).');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Selected file must be smaller than 10 MB.');
       return;
     }
 
@@ -285,14 +296,14 @@ export function SignUpForm() {
 
     try {
       const label = `${target}-${Date.now()}`;
-      const res = await api.uploadImage(file, label);
+      const res = await api.uploadFile(file, label);
       if (target === 'photo') {
         setPhotoUrl(res.url);
       } else {
         setAgreementPhotoUrl(res.url);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Image upload failed.');
+      setError(err instanceof Error ? err.message : 'File upload failed.');
     } finally {
       if (target === 'photo') setPhotoUploading(false);
       else setAgreementUploading(false);
@@ -306,8 +317,8 @@ export function SignUpForm() {
       setError('Please select a valid image file (PNG, JPG, or WEBP).');
       return;
     }
-    if (file.size > 6 * 1024 * 1024) {
-      setError('Selected nominee image must be smaller than 6 MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Selected nominee image must be smaller than 10 MB.');
       return;
     }
 
@@ -318,7 +329,7 @@ export function SignUpForm() {
 
     try {
       const label = `nominee-${index + 1}-${Date.now()}`;
-      const res = await api.uploadImage(file, label);
+      const res = await api.uploadFile(file, label);
       setNominees((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, photoUrl: res.url, photoUploading: false } : item
@@ -1192,7 +1203,7 @@ export function SignUpForm() {
                             )}
                             <span className="text-xs text-slate-600 dark:text-slate-400">
                               {nominee.photoUploading
-                                ? 'Uploading to ImgBB…'
+                                ? 'Uploading to ImageKit.io…'
                                 : 'Choose Nominee Photo'}
                             </span>
                             <input
@@ -1212,14 +1223,14 @@ export function SignUpForm() {
               </div>
             </div>
 
-            {/* Section 5: ImgBB API Photo & Agreement Uploads */}
+            {/* Section 5: ImageKit.io Photo & Agreement PDF/Photo Uploads */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
                 <h2 className="text-xs font-semibold tracking-wide text-amber-700 dark:text-amber-400">
-                  05. Identity Photo &amp; Agreement Paper (ImgBB Upload)
+                  05. Identity Photo &amp; Agreement Paper (ImageKit.io Storage)
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Images are uploaded securely via our ImgBB API gateway and visible to the Administrator during verification.
+                  Photos and PDF agreements are stored via our ImageKit.io media vault and visible to the Administrator during verification.
                 </p>
               </div>
 
@@ -1265,7 +1276,7 @@ export function SignUpForm() {
                         <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {photoUploading ? 'Uploading to ImgBB…' : 'Choose Member Photo'}
+                        {photoUploading ? 'Uploading to ImageKit.io…' : 'Choose Member Photo'}
                       </span>
                       <input
                         type="file"
@@ -1278,11 +1289,11 @@ export function SignUpForm() {
                   )}
                 </div>
 
-                {/* Agreement Paper Photo (Optional) */}
+                {/* Agreement Paper PDF or Photo (Optional) */}
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Agreement Paper Photo{' '}
+                      Agreement Paper (PDF or Photo){' '}
                       <span className="text-slate-400 font-normal">(Optional)</span>
                     </span>
                     {agreementPhotoUrl && (
@@ -1295,18 +1306,41 @@ export function SignUpForm() {
 
                   {agreementPhotoUrl ? (
                     <div className="flex items-center gap-3">
-                      <img
-                        src={agreementPhotoUrl}
-                        alt="Uploaded agreement paper"
-                        referrerPolicy="no-referrer"
-                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
-                      />
+                      {isPdfFileUrl(agreementPhotoUrl) ? (
+                        <a
+                          href={agreementPhotoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-16 h-16 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0"
+                        >
+                          <FileText className="w-5 h-5" aria-hidden="true" />
+                          <span>PDF</span>
+                        </a>
+                      ) : (
+                        <img
+                          src={agreementPhotoUrl}
+                          alt="Uploaded agreement paper"
+                          referrerPolicy="no-referrer"
+                          className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white shrink-0"
+                        />
+                      )}
                       <div className="flex flex-col gap-1">
+                        {isPdfFileUrl(agreementPhotoUrl) && (
+                          <a
+                            href={agreementPhotoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-medium text-slate-700 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
+                          >
+                            <span>Preview PDF</span>
+                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                          </a>
+                        )}
                         <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                          <span>{agreementUploading ? 'Uploading…' : 'Replace Image'}</span>
+                          <span>{agreementUploading ? 'Uploading…' : 'Replace File'}</span>
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/*,application/pdf,.pdf"
                             disabled={agreementUploading}
                             onChange={(e) => void handlePhotoUpload(e, 'agreement')}
                             className="sr-only"
@@ -1326,16 +1360,16 @@ export function SignUpForm() {
                       {agreementUploading ? (
                         <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
                       ) : (
-                        <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                        <FileText className="w-5 h-5 text-slate-400" aria-hidden="true" />
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
                         {agreementUploading
-                          ? 'Uploading to ImgBB…'
-                          : 'Upload Signed Agreement (Optional)'}
+                          ? 'Uploading to ImageKit.io…'
+                          : 'Upload Signed Agreement (PDF or Photo)'}
                       </span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,application/pdf,.pdf"
                         disabled={agreementUploading}
                         onChange={(e) => void handlePhotoUpload(e, 'agreement')}
                         className="sr-only"

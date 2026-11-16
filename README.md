@@ -14,8 +14,8 @@ An encrypted, Shariah-governed cooperative fund management and member community 
   - **Pending or Suspended Accounts** are blocked (`403`) with clear status messaging.
   - **New Applicants** receive a signed `20m` onboarding token and transition to `/signup?mode=google` with Full Name pre-filled, verified email locked, and optional backup password—while all cooperative KYC fields remain mandatory.
 - **Extended Application & Document Uploads**:
-  - Full Name, Email, Password, Date of Birth, Reference Member (autocomplete), Mobile Number, National ID (NID), Occupation & Organization, Present & Permanent Addresses.
-  - **Member Photo** (required) & **Signed Agreement Paper Photo** (optional) uploaded via `/api/upload/imgbb` (with automatic local vault fallback).
+  - Full Name, Email, Password, Date of Birth, Reference Member (autocomplete), Mobile Number, National ID (NID), Occupation & Organization, Present & Permanent Addresses, and Nominee details.
+  - **Member Photo** (required), **Nominee Photo**, and **Signed Agreement Paper (PDF or Photo)** uploaded via `POST /api/upload` (ImageKit.io cloud media storage, with optional ImgBB image fallback and automatic local vault fallback).
 
 ### 2. Multi-Page Authenticated Dashboard (`/dashboard?page=...`)
 URL-synced (`?page=<sectionId>`) multi-page workspace with `AnimatePresence` transitions, persistent light/dark theme toggle, and real-time Server-Sent Events (`/api/events`) updates:
@@ -48,6 +48,7 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 - **AES-256-GCM Field Encryption**: Sensitive KYC details, Bank/MFS transaction IDs, loan payout accounts, TOTP secrets, audit payloads, and 1-on-1 private direct message bodies are encrypted at rest.
 - **SHA-256 Hash-Chained Audit Log**: Every mutating operation appends an immutable, non-editable cryptographic entry linking `prevHash -> entryHash` with per-block SHA-256 verification and before/after diffs for administrative changes.
 - **Automated Overdue Scheduler**: Background sweep checks active loan installment deadlines on startup and hourly intervals, marking past-due items `overdue` and dispatching single-send reminder alerts.
+- **ImageKit.io Cloud Media Storage (`/api/upload`, `/api/uploads/:filename`)**: Accepts both PDF documents (`application/pdf` with `%PDF-` header validation) and photos (`PNG`, `JPG`, `WEBP`, `GIF`) up to `10 MB`, uploading server-side via the ImageKit.io Upload API v1 (`IMAGEKIT_PRIVATE_KEY`, optional `IMAGEKIT_FOLDER`) with automatic local vault fallback when omitted.
 - **Dual Persistence Engine**: Connects to **MongoDB Atlas** (`amanah_coop`) with startup indexes and atomic `bulkWrite`/`deleteMany` sync when `MONGODB_URI` is configured, or falls back seamlessly to an encrypted local JSON vault (`data/amanah-coop-vault.json`) serialized via a promise write queue.
 
 ---
@@ -119,10 +120,11 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 │   │   ├── totp.ts                        # RFC 6238 TOTP secret & verification helpers
 │   │   ├── geminiService.ts               # Server-side @google/genai receipt OCR verification
 │   │   ├── rateLimit.ts                   # Sliding-window route rate limiter
+│   │   ├── imagekitStorage.ts             # ImageKit.io Upload API v1 client & PDF/photo validator
 │   │   ├── db.ts                          # MongoDB Atlas + encrypted local vault persistence
 │   │   ├── coopService.ts                 # Accounting, overdue checks, eligibility, mentions & Sheets blueprint
 │   │   ├── realtime.ts                    # Broadcast & user-targeted SSE manager
-│   │   └── routes.ts                      # Express API routes & ImgBB upload proxy
+│   │   └── routes.ts                      # Express API routes & ImageKit.io / vault upload proxy
 │   ├── types/coop.ts                      # Shared TypeScript interfaces
 │   └── utils/
 │       ├── api.ts                         # Typed API client with global 2FA step-up retry
@@ -139,10 +141,14 @@ Central Balance = (+ Approved Contributions) − (Approved / Active Loans) + (Ve
 Copy `.env.example` to `.env` and configure values as needed:
 
 ```env
+IMAGEKIT_PRIVATE_KEY= # ImageKit.io Private API Key (server-side PDF & photo uploads)
+IMAGEKIT_PUBLIC_KEY=  # Optional ImageKit.io Public Key reference
+IMAGEKIT_URL_ENDPOINT= # Optional ImageKit.io URL Endpoint (e.g. https://ik.imagekit.io/your_id)
+IMAGEKIT_FOLDER=      # Optional destination folder inside ImageKit.io (defaults to /amanah)
 ENCRYPTION_KEY=       # Optional 64-char hex key for AES-256-GCM encryption (falls back to SHA-256 of JWT_SECRET)
 JWT_SECRET=           # Secret for signing HttpOnly JWT session cookies & onboarding tokens
 MONGODB_URI=          # Optional MongoDB Atlas URI (falls back to data/amanah-coop-vault.json if omitted)
-IMGBB_API_KEY=        # Optional server-side ImgBB API key (falls back to data/uploads/ if omitted)
+IMGBB_API_KEY=        # Optional legacy image-only fallback key when ImageKit.io is not configured
 GEMINI_API_KEY=       # Optional server-side Gemini API key (enables AI receipt slip extraction)
 FIREBASE_PROJECT_ID=  # Optional override for firebase-applet-config.json projectId
 ```
@@ -184,3 +190,33 @@ If a member cannot access the self-service dashboard (for example, following acc
    ```
 3. Open `http://localhost:3000`.
 4. Clean bootstrap starts with **no users and no demo data**. Register the first account — it becomes the **bootstrap administrator** (active immediately). Later signups stay pending until an admin approves them. Fund defaults (contribution amount, loan caps, maturity, etc.) are editable under Admin → Site Settings.
+
+---
+
+## Development History
+
+Chronological summary of major engineering milestones across the **Amanah** cooperative platform:
+
+1. **Foundation & Security-First Monolith (`Next.js 16` + `Express` + Cryptographic Vault)**
+   - Unified Next.js App Router frontend and Express API server on port `3000` with security headers, rate-limited endpoints (`rateLimit.ts`), and HttpOnly JWT cookie sessions (`auth.ts`).
+   - Added AES-256-GCM field-level encryption for sensitive KYC records, Bank/MFS transaction IDs, and disbursement accounts (`crypto.ts`), alongside dual persistence via MongoDB Atlas (`amanah_coop`) and promise-queued encrypted local JSON storage (`db.ts`).
+2. **Public Scrollspy Landing, Navigation & Admin-Gated KYC Onboarding**
+   - Built the public single-page scrollspy landing experience (`Hero`, `About`, `Rules` with dedicated `/about` and `/rules` routes) and auth-aware `Navbar` (showing `Home · About · Rules · Dashboard · Sign Out` for authenticated users and `Home · About · Rules · Join` for visitors).
+   - Implemented KYC application registration (`SignUpForm`) with NID, permanent/present addresses, reference member validation, photo & agreement uploads, and an Admin Onboarding Queue (`PendingRegistrationsView`) with full KYC inspection, Approve/Reject actions, and `AdminUserManagementPanel` RBAC lifecycle controls.
+3. **Core Cooperative Accounting, Qard Hasan & Democratic 2/3 Consensus**
+   - Added monthly contribution deposits with multi-month batching (`ContributionsView`), `ContributionGoalTracker`, `ContributionTiers`, and `RequestQardHasanLoanForm` / `RequestQardHasanModal` with automated 4-point eligibility enforcement.
+   - Implemented `VotingView` for anonymized `2/3` supermajority Qard Hasan loan ballots (`⌈2/3 × active members⌉`) and Halal venture approvals, guarantor co-signing workflows (`pending_guarantor`), 0% loan rescheduling, and automated hourly overdue installment sweeps.
+4. **Recharts Analytics, Financial PDFs & Real-Time Notifications**
+   - Built interactive Recharts visualizations (`TreasuryGrowthChart`, `CashflowChart`, `MonthlyFinancialSnapshot`, `AuditTrendsCharts`) in `StatisticsView`.
+   - Added `pdfStatement.ts` (`jsPDF`) inside `TransactionHistory` for CSV ledger exports, downloadable PDF Financial Statements, and Annual Zakat & Cooperative Equity (`2.5%`) certificates.
+   - Implemented SSE live updates (`realtime.ts`), `HeaderNotificationBell`, `NotificationsView` (with Web Audio chime and notification preferences), and automated alerts on loan approvals, rejections, disbursements, and overdue installments.
+5. **Immutable Audit Chain, Governance Desk & Google Sheets Integration**
+   - Implemented sequential SHA-256 hash-chained `SystemAuditLogsView` (with before/after diffs, chain integrity verification, and JSON/CSV proof exports) and live-streamed `AdminAuditLog` (`Site Activity`).
+   - Consolidated cooperative oversight into `MemberRegistrySection`, `ManagerDeskView`, `AdminSiteSettingsView`, `HalalProjectsView` (post-maturity pro-rata profit distributions), and `GoogleSheetSyncCard` for 7-tab Google Sheets & Gmail sync.
+6. **Community Hub, Direct Messages & Cooperative Expansion (VISION-36)**
+   - Built `CommunityView` supporting categorized posts, image attachments, multi-reactions, threaded comments, interactive single/multi-choice `CommunityPoll`s, `@mention` autocomplete/alerts, and AES-256-GCM encrypted 1-on-1 Direct Messages.
+   - Added 2-stage Firebase Google Sign-In (`googleAuth.ts`) feeding progressive KYC (`/signup?mode=google`), Nominee registration & share-percentage validation (`NomineeDetailsList`), `ManagerCycleView` & `ManagerRotationTimeline` round-robin tenure scheduling, `MyAmanahView`, `MemberPublicProfileView`, Gemini AI payment slip OCR extraction (`geminiService.ts`), and RFC 6238 TOTP Two-Factor Authentication (`totp.ts`).
+7. **ImageKit.io Storage for User-Uploaded PDFs & Photos**
+   - Migrated media storage to `src/server/imagekitStorage.ts` using ImageKit.io Upload API v1 (`IMAGEKIT_PRIVATE_KEY`, optional `IMAGEKIT_FOLDER`) with automatic local vault disk fallback.
+   - Upgraded KYC Agreement Paper uploads, Contribution receipt uploads, Loan repayment slips, and Gemini AI receipt extraction to store and preview both **PDF documents** (`application/pdf` with `%PDF-` signature validation) and **photos** cleanly across `SignUpForm`, `MemberProfile`, `PendingRegistrationsView`, `MemberRegistrySection`, `AdminReportsView`, `ContributionsView`, `LoansView`, and `CommunityView`.
+

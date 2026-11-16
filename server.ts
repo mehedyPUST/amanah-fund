@@ -38,7 +38,7 @@ async function startServer() {
   });
 
   // Mount Express API routes (JSON + Cookies + SSE) before Next.js request handler
-  app.use('/api', express.json({ limit: '12mb' }), cookieParser(), apiRouter);
+  app.use('/api', express.json({ limit: '16mb' }), cookieParser(), apiRouter);
 
   app.get('/favicon.ico', (_req, res) => {
     res.redirect(307, '/icon');

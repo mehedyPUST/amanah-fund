@@ -32,14 +32,16 @@ export async function verifyPaymentReceiptImage(params: {
   let mimeType = 'image/jpeg';
   let data = params.imageBase64.trim();
 
-  const match = data.match(/^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,(.+)$/i);
+  const match = data.match(
+    /^data:(image\/(?:png|jpeg|jpg|webp|gif)|application\/pdf);base64,(.+)$/i
+  );
   if (match) {
     mimeType = match[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].toLowerCase();
     data = match[2];
   }
 
   if (!data) {
-    throw new Error('Receipt image payload is empty.');
+    throw new Error('Receipt file payload is empty.');
   }
 
   const ai = getGeminiClient();
@@ -56,7 +58,7 @@ export async function verifyPaymentReceiptImage(params: {
         },
         {
           text:
-            `Extract cooperative payment transfer details from this Bank or Mobile Financial Service (MFS such as bKash, Nagad, Rocket, Upay, Islami Bank, DBBL, BRAC Bank, City Bank, Standard Chartered) screenshot or deposit slip. ` +
+            `Extract cooperative payment transfer details from this Bank or Mobile Financial Service (MFS such as bKash, Nagad, Rocket, Upay, Islami Bank, DBBL, BRAC Bank, City Bank, Standard Chartered) screenshot, PDF receipt, or deposit slip. ` +
             `Return JSON matching the schema. Expected currency: ${params.currency}. If a field is unreadable, return an empty string (or null for amount) and explain briefly in summary.`,
         },
       ],

@@ -24,6 +24,7 @@ import {
   MFS_PROVIDERS,
   formatMoney,
   formatShortDate,
+  isPdfFileUrl,
 } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ProviderSelect } from './ProviderSelect.tsx';
@@ -130,7 +131,7 @@ export function LoansView({
     setScanningRepaySlip(true);
     try {
       const [uploadRes, aiRes] = await Promise.allSettled([
-        api.uploadImage(file, `repay-receipt-${Date.now()}`),
+        api.uploadFile(file, `repay-receipt-${Date.now()}`),
         api.verifyReceiptWithGemini(file),
       ]);
       if (uploadRes.status === 'fulfilled') {
@@ -155,14 +156,14 @@ export function LoansView({
       } else if (uploadRes.status === 'fulfilled') {
         showNotice(
           'slate',
-          'Receipt Image Attached',
+          'Receipt File Attached',
           'Please verify the Transaction Number and sender account before submitting.'
         );
       } else {
         showNotice(
           'red',
           'Receipt Upload Failed',
-          'Could not upload receipt image. Please check file size (<8 MB) and try again.'
+          'Could not upload receipt PDF or image. Please check file size (<10 MB) and try again.'
         );
       }
     } finally {
@@ -1277,11 +1278,11 @@ export function LoansView({
                             <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-teal-700 dark:text-teal-400 cursor-pointer">
                               <Sparkles className="w-3 h-3" aria-hidden="true" />
                               <span>
-                                {scanningRepaySlip ? 'Scanning…' : 'Scan Slip (AI)'}
+                                {scanningRepaySlip ? 'Scanning…' : 'Scan Slip PDF/Photo (AI)'}
                               </span>
                               <input
                                 type="file"
-                                accept="image/png,image/jpeg,image/webp"
+                                accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"
                                 disabled={scanningRepaySlip}
                                 className="hidden"
                                 onChange={(e) => {
@@ -1441,7 +1442,7 @@ export function LoansView({
                                         rel="noreferrer"
                                         className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5"
                                       >
-                                        <span>Slip</span>
+                                        <span>{isPdfFileUrl(inst.receiptPhotoUrl) ? 'Slip PDF' : 'Slip'}</span>
                                         <ExternalLink className="w-3 h-3" aria-hidden="true" />
                                       </a>
                                     )}

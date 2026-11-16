@@ -13,7 +13,7 @@ function getExpressApp(): express.Express {
   const app = express();
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
-  app.use('/api', express.json({ limit: '12mb' }), cookieParser(), apiRouter);
+  app.use('/api', express.json({ limit: '16mb' }), cookieParser(), apiRouter);
   cachedExpressApp = app;
   return app;
 }

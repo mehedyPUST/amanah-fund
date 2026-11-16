@@ -155,3 +155,10 @@ export function computeInstallmentDueDate(anchor: Date, monthOffset: number): st
   return due.toISOString().slice(0, 10);
 }
 
+export function isPdfFileUrl(url?: string): boolean {
+  if (!url) return false;
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed.startsWith('data:application/pdf')) return true;
+  const withoutQuery = trimmed.split('?')[0]?.split('#')[0] || '';
+  return withoutQuery.endsWith('.pdf');
+}

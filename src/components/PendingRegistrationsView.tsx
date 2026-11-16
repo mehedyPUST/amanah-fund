@@ -15,7 +15,7 @@ import {
 import Skeleton from 'react-loading-skeleton';
 import type { MemberSummary, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
-import { formatDateTime } from '../utils/format.ts';
+import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
@@ -552,25 +552,40 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         Agreement Paper
                       </div>
                       {agreementUrl && !brokenImages[agreementKey] ? (
-                        <a
-                          href={agreementUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group relative block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 aspect-[4/3]"
-                        >
-                          <img
-                            src={agreementUrl}
-                            alt={`${applicant.name} signed agreement paper`}
-                            referrerPolicy="no-referrer"
-                            onError={() =>
-                              setBrokenImages((prev) => ({ ...prev, [agreementKey]: true }))
-                            }
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute bottom-1.5 right-1.5 p-1 rounded bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                          </span>
-                        </a>
+                        isPdfFileUrl(agreementUrl) ? (
+                          <a
+                            href={agreementUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group aspect-[4/3] rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/30 flex flex-col items-center justify-center gap-1.5 p-2 text-center hover:border-emerald-500 transition-colors"
+                          >
+                            <FileText className="w-5 h-5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+                            <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1">
+                              <span>View PDF</span>
+                              <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                            </span>
+                          </a>
+                        ) : (
+                          <a
+                            href={agreementUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group relative block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 aspect-[4/3]"
+                          >
+                            <img
+                              src={agreementUrl}
+                              alt={`${applicant.name} signed agreement paper`}
+                              referrerPolicy="no-referrer"
+                              onError={() =>
+                                setBrokenImages((prev) => ({ ...prev, [agreementKey]: true }))
+                              }
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-1.5 right-1.5 p-1 rounded bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                            </span>
+                          </a>
+                        )
                       ) : (
                         <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-2 text-[11px] text-slate-400 gap-1">
                           <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />

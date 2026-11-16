@@ -158,18 +158,41 @@ export const api = {
     }),
   getReferenceMembers: () =>
     apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),
+  uploadFile: async (
+    file: File,
+    label?: string
+  ): Promise<{ url: string; provider: string; mimeType?: string; filename?: string }> => {
+    const fileBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected file.'));
+      reader.readAsDataURL(file);
+    });
+    return apiRequest<{ url: string; provider: string; mimeType?: string; filename?: string }>(
+      '/api/upload',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          fileBase64,
+          name: label || file.name,
+          mimeType: file.type || undefined,
+        }),
+      }
+    );
+  },
   uploadImage: async (file: File, label?: string): Promise<{ url: string; provider: string }> => {
-    const imageBase64 = await new Promise<string>((resolve, reject) => {
+    const fileBase64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
       reader.onerror = () => reject(new Error('Failed to read selected image file.'));
       reader.readAsDataURL(file);
     });
-    return apiRequest<{ url: string; provider: string }>('/api/upload/imgbb', {
+    return apiRequest<{ url: string; provider: string }>('/api/upload', {
       method: 'POST',
       body: JSON.stringify({
-        imageBase64,
+        fileBase64,
         name: label || file.name,
+        mimeType: file.type || undefined,
       }),
     });
   },
