@@ -18,6 +18,7 @@ import type {
   InstallmentItem,
   LoanGuarantor,
   LoanRequest,
+  LoanVote,
   NotificationPreferences,
   PrivateMessage,
   ProfileChangePayload,
@@ -2409,7 +2410,7 @@ apiRouter.post('/loans/:id/vote', requireAuth, async (req: AuthenticatedRequest,
 
       const castAt = new Date().toISOString();
       const existingIdx = loan.votes.findIndex((v) => v.voterId === viewer.id);
-      const ballot = {
+      const ballot: LoanVote = {
         voterId: viewer.id,
         voterName: viewer.name,
         voterRole: viewer.role,
