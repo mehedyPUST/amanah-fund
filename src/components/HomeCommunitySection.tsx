@@ -193,7 +193,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             </div>
           </motion.div>
         ) : user.status !== 'active' ? (
-          <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-slate-50/70 dark:bg-slate-950/60 border border-amber-200/90 dark:border-amber-900/60 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <UserCheck className="w-5 h-5" aria-hidden="true" />

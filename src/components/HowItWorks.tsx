@@ -324,9 +324,9 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               onClick={(e) => {
                 if (pathname === '/') {
                   e.preventDefault();
-                  document
-                    .getElementById('governance-charter')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  window.history.replaceState(null, '', '#governance-charter');
+                  window.dispatchEvent(new HashChangeEvent('hashchange'));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
               className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-amber-300 dark:hover:border-amber-700 transition-colors whitespace-nowrap"

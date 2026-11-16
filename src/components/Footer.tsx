@@ -12,7 +12,9 @@ export function Footer() {
   function scrollIfHome(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
     if (pathname === '/') {
       e.preventDefault();
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.history.replaceState(null, '', id === 'overview' ? '/' : `#${id}`);
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
