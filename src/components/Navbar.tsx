@@ -9,6 +9,7 @@ import { useCoopSession } from './AppProviders.tsx';
 
 type HomeSectionId =
   | 'overview'
+  | 'notice-board'
   | 'architecture'
   | 'how-it-works'
   | 'governance-charter'
@@ -67,6 +68,7 @@ export function Navbar() {
     const hash = window.location.hash.replace('#', '') as HomeSectionId;
     if (
       hash === 'overview' ||
+      hash === 'notice-board' ||
       hash === 'architecture' ||
       hash === 'how-it-works' ||
       hash === 'governance-charter' ||
@@ -83,6 +85,7 @@ export function Navbar() {
     if (pathname !== '/') return;
     const sectionIds: HomeSectionId[] = [
       'overview',
+      'notice-board',
       'architecture',
       'how-it-works',
       'governance-charter',

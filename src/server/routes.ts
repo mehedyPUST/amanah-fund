@@ -13,6 +13,7 @@ import type {
   Contribution,
   ConversationThreadSummary,
   CoopMeeting,
+  CoopNotice,
   DecisionPoll,
   FundConfig,
   HalalProject,
@@ -20,6 +21,7 @@ import type {
   LoanGuarantor,
   LoanRequest,
   LoanVote,
+  NoticePriority,
   NotificationPreferences,
   PrivateMessage,
   ProfileChangePayload,
@@ -7399,5 +7401,225 @@ apiRouter.patch(
     }
   }
 );
+
+// 12. Cooperative Notice Board (Logged-In Only; Admin & Manager Write Access)
+const VALID_NOTICE_PRIORITIES: ReadonlySet<NoticePriority> = new Set([
+  'normal',
+  'important',
+  'urgent',
+]);
+
+apiRouter.get('/notices', requireAuth, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const state = await loadVaultState();
+    const notices = [...(state.notices || [])].sort((a, b) => {
+      const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+      if (pinDiff !== 0) return pinDiff;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    res.json({ notices });
+  } catch (err) {
+    console.error('Fetch notices error:', err);
+    res.status(500).json({ error: 'Failed to load cooperative notices.' });
+  }
+});
+
+apiRouter.post(
+  '/notices',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const title = String(req.body?.title || '').trim();
+      const body = String(req.body?.body || '').trim();
+      const rawPriority = String(req.body?.priority || 'normal').trim() as NoticePriority;
+      const priority: NoticePriority = VALID_NOTICE_PRIORITIES.has(rawPriority)
+        ? rawPriority
+        : 'normal';
+      const pinned = Boolean(req.body?.pinned);
+
+      if (title.length < 3 || title.length > 160) {
+        res.status(400).json({ error: 'Notice title must be between 3 and 160 characters.' });
+        return;
+      }
+      if (body.length < 3 || body.length > 2000) {
+        res.status(400).json({ error: 'Notice message must be between 3 and 2000 characters.' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const notice: CoopNotice = {
+        id: `notice-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        title,
+        body,
+        priority,
+        pinned,
+        authorId: viewer.id,
+        authorName: viewer.name,
+        authorCode: viewer.memberCode,
+        authorRole: viewer.role,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await updateVaultState((draft) => {
+        draft.notices = Array.isArray(draft.notices) ? draft.notices : [];
+        draft.notices.unshift(notice);
+
+        draft.users
+          .filter((u) => u.status === 'active')
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'cooperative_notice',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `Cooperative Notice: ${title}`,
+              body: `${viewer.name} (${viewer.role}) posted a ${priority} cooperative notice: "${title}". ${body}`,
+              relatedId: notice.id,
+            });
+          });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'NOTICE_PUBLISHED',
+          resourceType: 'notification',
+          resourceId: notice.id,
+          summary: `${viewer.name} published ${priority} notice "${title}"`,
+          payload: { noticeId: notice.id, title, priority, pinned },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('notice:updated', { action: 'created', noticeId: notice.id });
+      broadcastRealtimeEvent('notification:created', { type: 'cooperative_notice' });
+      broadcastRealtimeEvent('audit:updated', { action: 'NOTICE_PUBLISHED' });
+      res.status(201).json({ notice });
+    } catch (err) {
+      console.error('Create notice error:', err);
+      res.status(500).json({ error: 'Failed to publish notice.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/notices/:id',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const { id } = req.params;
+      const hasTitle = req.body?.title !== undefined;
+      const hasBody = req.body?.body !== undefined;
+      const hasPriority = req.body?.priority !== undefined;
+      const hasPinned = req.body?.pinned !== undefined;
+
+      const title = hasTitle ? String(req.body.title || '').trim() : undefined;
+      const body = hasBody ? String(req.body.body || '').trim() : undefined;
+      const priority = hasPriority ? (String(req.body.priority || '').trim() as NoticePriority) : undefined;
+      const pinned = hasPinned ? Boolean(req.body.pinned) : undefined;
+
+      if (title !== undefined && (title.length < 3 || title.length > 160)) {
+        res.status(400).json({ error: 'Notice title must be between 3 and 160 characters.' });
+        return;
+      }
+      if (body !== undefined && (body.length < 3 || body.length > 2000)) {
+        res.status(400).json({ error: 'Notice message must be between 3 and 2000 characters.' });
+        return;
+      }
+      if (priority !== undefined && !VALID_NOTICE_PRIORITIES.has(priority)) {
+        res.status(400).json({ error: 'Invalid notice priority.' });
+        return;
+      }
+
+      let updated: CoopNotice | null = null;
+      await updateVaultState((draft) => {
+        draft.notices = Array.isArray(draft.notices) ? draft.notices : [];
+        const target = draft.notices.find((n) => n.id === id);
+        if (!target) return draft;
+
+        if (title !== undefined) target.title = title;
+        if (body !== undefined) target.body = body;
+        if (priority !== undefined) target.priority = priority;
+        if (pinned !== undefined) target.pinned = pinned;
+        target.updatedAt = new Date().toISOString();
+        updated = { ...target };
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'NOTICE_UPDATED',
+          resourceType: 'notification',
+          resourceId: target.id,
+          summary: `${viewer.name} updated notice "${target.title}"`,
+          payload: {
+            noticeId: target.id,
+            title: target.title,
+            priority: target.priority,
+            pinned: target.pinned,
+          },
+        });
+        return draft;
+      });
+
+      if (!updated) {
+        res.status(404).json({ error: 'Notice not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('notice:updated', { action: 'updated', noticeId: id });
+      broadcastRealtimeEvent('audit:updated', { action: 'NOTICE_UPDATED' });
+      res.json({ notice: updated });
+    } catch (err) {
+      console.error('Update notice error:', err);
+      res.status(500).json({ error: 'Failed to update notice.' });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/notices/:id',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const { id } = req.params;
+      let removed: CoopNotice | null = null;
+
+      await updateVaultState((draft) => {
+        draft.notices = Array.isArray(draft.notices) ? draft.notices : [];
+        const idx = draft.notices.findIndex((n) => n.id === id);
+        if (idx === -1) return draft;
+        const [deleted] = draft.notices.splice(idx, 1);
+        removed = deleted;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'NOTICE_DELETED',
+          resourceType: 'notification',
+          resourceId: deleted.id,
+          summary: `${viewer.name} deleted notice "${deleted.title}"`,
+          payload: { noticeId: deleted.id, title: deleted.title },
+        });
+        return draft;
+      });
+
+      if (!removed) {
+        res.status(404).json({ error: 'Notice not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('notice:updated', { action: 'deleted', noticeId: id });
+      broadcastRealtimeEvent('audit:updated', { action: 'NOTICE_DELETED' });
+      res.json({ ok: true, id });
+    } catch (err) {
+      console.error('Delete notice error:', err);
+      res.status(500).json({ error: 'Failed to delete notice.' });
+    }
+  }
+);
+
 
 

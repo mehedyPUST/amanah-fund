@@ -7,6 +7,7 @@ import type {
   Contribution,
   ConversationThreadSummary,
   CoopMeeting,
+  CoopNotice,
   DashboardOverview,
   DecisionPoll,
   EligibilityCheck,
@@ -18,6 +19,7 @@ import type {
   MemberPublicProfile,
   MemberSummary,
   NomineeInfo,
+  NoticePriority,
   NotificationPreferences,
   PrivateMessage,
   ProfileChangeRequest,
@@ -737,6 +739,36 @@ export const api = {
     apiRequest<{ meeting: CoopMeeting }>(`/api/meetings/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    }),
+
+  // Cooperative Notice Board (Authenticated members view; Admin/Manager manage)
+  getNotices: () => apiRequest<{ notices: CoopNotice[] }>('/api/notices'),
+  createNotice: (payload: {
+    title: string;
+    body: string;
+    priority?: NoticePriority;
+    pinned?: boolean;
+  }) =>
+    apiRequest<{ notice: CoopNotice }>('/api/notices', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateNotice: (
+    id: string,
+    payload: {
+      title?: string;
+      body?: string;
+      priority?: NoticePriority;
+      pinned?: boolean;
+    }
+  ) =>
+    apiRequest<{ notice: CoopNotice }>(`/api/notices/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  deleteNotice: (id: string) =>
+    apiRequest<{ ok: boolean; id: string }>(`/api/notices/${id}`, {
+      method: 'DELETE',
     }),
 };
 

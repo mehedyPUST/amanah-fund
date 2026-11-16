@@ -7,6 +7,7 @@ import type {
   CommunityPost,
   Contribution,
   CoopMeeting,
+  CoopNotice,
   DecisionPoll,
   EmailNotification,
   EncryptedEnvelope,
@@ -69,6 +70,7 @@ export interface VaultState {
   privateMessages: StoredPrivateMessage[];
   decisionPolls?: DecisionPoll[];
   meetings?: CoopMeeting[];
+  notices?: CoopNotice[];
   profileChangeRequests?: ProfileChangeRequest[];
 }
 
@@ -128,6 +130,7 @@ function createEmptyVaultState(): VaultState {
     privateMessages: [],
     decisionPolls: [],
     meetings: [],
+    notices: [],
     profileChangeRequests: [],
   };
 }
@@ -170,6 +173,9 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.meetings = Array.isArray(state.meetings)
     ? state.meetings
+    : [];
+  state.notices = Array.isArray(state.notices)
+    ? state.notices
     : [];
   state.profileChangeRequests = Array.isArray(state.profileChangeRequests)
     ? state.profileChangeRequests
@@ -339,6 +345,8 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('decisionPolls').createIndex({ createdAt: -1 }),
         mongoDb.collection('meetings').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('meetings').createIndex({ scheduledFor: 1 }),
+        mongoDb.collection('notices').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('notices').createIndex({ createdAt: -1 }),
         mongoDb.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
       ]);
@@ -377,6 +385,7 @@ export async function loadVaultState(): Promise<VaultState> {
       privateMessages,
       decisionPolls,
       meetings,
+      notices,
       profileChangeRequests,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
@@ -390,6 +399,7 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
       mongoDb.collection<DecisionPoll>('decisionPolls').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
+      mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
     ]);
 
@@ -405,6 +415,7 @@ export async function loadVaultState(): Promise<VaultState> {
       privateMessages,
       decisionPolls,
       meetings,
+      notices,
       profileChangeRequests,
     });
   }
@@ -477,6 +488,12 @@ export function updateVaultState(
           'meetings',
           current.meetings || [],
           next.meetings || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'notices',
+          current.notices || [],
+          next.notices || []
         ),
         syncCollectionById(
           mongoDb,

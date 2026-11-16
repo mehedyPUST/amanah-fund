@@ -140,6 +140,16 @@ export function HeaderNotificationBell({
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'notification',
         });
+      } else if (n.type === 'cooperative_notice') {
+        list.push({
+          id: `notif-${n.id}`,
+          notificationId: n.id,
+          kind: 'governance',
+          title: 'Official Cooperative Notice',
+          detail: n.subject,
+          timestampLabel: formatDateTime(n.createdAt),
+          targetTab: 'notification',
+        });
       } else if (n.type === 'loan_guarantor_requested') {
         list.push({
           id: `notif-${n.id}`,

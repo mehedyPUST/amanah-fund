@@ -33,7 +33,7 @@ const METRICS = [
 
 export function Hero() {
   const pathname = usePathname();
-  const { user } = useCoopSession();
+  const { user, authChecking } = useCoopSession();
 
   function handleSectionLink(e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) {
     if (pathname === '/') {
@@ -88,6 +88,16 @@ export function Hero() {
                   className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 text-sm font-medium shadow-2xs hover:shadow-sm transition-all duration-200 whitespace-nowrap"
                 >
                   Member Sign In
+                </Link>
+              )}
+
+              {!authChecking && user && user.status === 'active' && (
+                <Link
+                  href="/#notice-board"
+                  onClick={(e) => handleSectionLink(e, 'notice-board')}
+                  className="px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors whitespace-nowrap"
+                >
+                  Notice Board
                 </Link>
               )}
 

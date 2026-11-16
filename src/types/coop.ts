@@ -515,7 +515,8 @@ export type NotificationType =
   | 'profile_update_reviewed'
   | 'community_post_created'
   | 'community_moderation'
-  | 'community_mention';
+  | 'community_mention'
+  | 'cooperative_notice';
 
 export interface EmailNotification {
   id: string;
@@ -845,4 +846,20 @@ export interface ManagerCycleSchedule {
     photoUrl?: string;
   }>;
   slots: ManagerCycleSlot[];
+}
+
+export type NoticePriority = 'normal' | 'important' | 'urgent';
+
+export interface CoopNotice {
+  id: string;
+  title: string;
+  body: string;
+  priority: NoticePriority;
+  pinned?: boolean;
+  authorId: string;
+  authorName: string;
+  authorCode: string;
+  authorRole: UserRole;
+  createdAt: string;
+  updatedAt?: string;
 }

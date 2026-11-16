@@ -53,6 +53,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   community_post_created: 'Community Post Published',
   community_moderation: 'Community Moderation',
   community_mention: 'Community Mention',
+  cooperative_notice: 'Cooperative Notice',
 };
 
 type CategoryFilter = 'all' | 'contributions' | 'loans' | 'meetings' | 'voting' | 'community_profile';

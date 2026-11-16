@@ -7,7 +7,7 @@ import { useCoopSession } from './AppProviders.tsx';
 
 export function Footer() {
   const pathname = usePathname();
-  const { user, darkMode, toggleDarkMode } = useCoopSession();
+  const { user, authChecking, darkMode, toggleDarkMode } = useCoopSession();
 
   function scrollIfHome(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
     if (pathname === '/') {
@@ -48,6 +48,17 @@ export function Footer() {
                   Overview
                 </Link>
               </li>
+              {!authChecking && user && user.status === 'active' && (
+                <li>
+                  <Link
+                    href="/#notice-board"
+                    onClick={(e) => scrollIfHome(e, 'notice-board')}
+                    className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  >
+                    Notice Board
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
                   href="/#architecture"
