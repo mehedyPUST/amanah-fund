@@ -18,6 +18,8 @@ import type {
   MemberSummary,
   MonthClearanceEntry,
   MonthlyCashflowPoint,
+  NomineeGender,
+  NomineeInfo,
   NotificationType,
   PublicUser,
   RepaymentReceiptDetails,
@@ -1546,5 +1548,116 @@ export function buildManagerCycleSchedule(
     slots,
   };
 }
+
+export function validateAndNormalizeNominees(
+  rawNominees: unknown
+): { ok: true; nominees: NomineeInfo[] } | { ok: false; error: string } {
+  if (!Array.isArray(rawNominees) || rawNominees.length === 0) {
+    return { ok: false, error: 'At least one nominee is required for membership registration.' };
+  }
+  if (rawNominees.length > 10) {
+    return { ok: false, error: 'A maximum of 10 nominees may be registered per member.' };
+  }
+
+  const normalized: NomineeInfo[] = [];
+  const multiple = rawNominees.length > 1;
+  let shareSum = 0;
+
+  for (let idx = 0; idx < rawNominees.length; idx += 1) {
+    const raw = (rawNominees[idx] || {}) as Record<string, unknown>;
+    const label = multiple ? `Nominee #${idx + 1}` : 'Nominee';
+
+    const name = String(raw.name || '').trim();
+    const dateOfBirth = String(raw.dateOfBirth || '').trim();
+    const genderRaw = String(raw.gender || '').trim().toLowerCase();
+    const occupation = String(raw.occupation || '').trim();
+    const relation = String(raw.relation || '').trim();
+    const nidOrBirthReg = String(raw.nidOrBirthReg || '').trim();
+    const mobile = String(raw.mobile || '').trim();
+    const address = String(raw.address || '').trim();
+    const photoUrl = String(raw.photoUrl || '').trim();
+
+    if (!name) {
+      return { ok: false, error: `${label}: Nominee name is required.` };
+    }
+    if (!dateOfBirth) {
+      return { ok: false, error: `${label}: Date of birth is required.` };
+    }
+    if (genderRaw !== 'male' && genderRaw !== 'female' && genderRaw !== 'other') {
+      return { ok: false, error: `${label}: Gender must be Male, Female, or Other.` };
+    }
+    const gender = genderRaw as NomineeGender;
+
+    if (!occupation) {
+      return { ok: false, error: `${label}: Occupation is required.` };
+    }
+    if (!relation) {
+      return { ok: false, error: `${label}: Relation to applicant is required.` };
+    }
+    if (!nidOrBirthReg) {
+      return { ok: false, error: `${label}: NID or Birth Registration number is required.` };
+    }
+    if (!address) {
+      return { ok: false, error: `${label}: Address is required.` };
+    }
+    if (gender !== 'female' && !photoUrl) {
+      return {
+        ok: false,
+        error: `${label}: Nominee photo is required unless the nominee is female.`,
+      };
+    }
+
+    let sharePercentage = 100;
+    if (multiple) {
+      const parsedShare = Number(raw.sharePercentage);
+      if (!Number.isFinite(parsedShare) || parsedShare <= 0 || parsedShare > 100) {
+        return {
+          ok: false,
+          error: `${label}: Share percentage must be between 0.01% and 100% when registering multiple nominees.`,
+        };
+      }
+      sharePercentage = Math.round(parsedShare * 100) / 100;
+      shareSum += sharePercentage;
+    } else {
+      const hasExplicitShare =
+        raw.sharePercentage !== undefined &&
+        raw.sharePercentage !== null &&
+        String(raw.sharePercentage).trim() !== '';
+      if (hasExplicitShare) {
+        const parsedShare = Number(raw.sharePercentage);
+        if (!Number.isFinite(parsedShare) || Math.abs(parsedShare - 100) > 0.01) {
+          return {
+            ok: false,
+            error: 'A single nominee must receive a 100% share.',
+          };
+        }
+      }
+      shareSum = 100;
+    }
+
+    normalized.push({
+      name,
+      dateOfBirth,
+      gender,
+      occupation,
+      relation,
+      sharePercentage,
+      nidOrBirthReg,
+      mobile: mobile || undefined,
+      address,
+      photoUrl: photoUrl || undefined,
+    });
+  }
+
+  if (multiple && Math.abs(shareSum - 100) > 0.05) {
+    return {
+      ok: false,
+      error: `Total nominee share percentage must equal 100% (currently ${Math.round(shareSum * 100) / 100}%).`,
+    };
+  }
+
+  return { ok: true, nominees: normalized };
+}
+
 
 

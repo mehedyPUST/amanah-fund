@@ -9,6 +9,7 @@ import {
   evaluateLoanEligibility,
   extractMentionedUsers,
   hydrateLoanForViewer,
+  validateAndNormalizeNominees,
 } from '../src/server/coopService.ts';
 import {
   computeSha256Hash,
@@ -743,6 +744,125 @@ describe('Manager rotation cycle timeline schedule', () => {
     expect(upcoming.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('Nominee registration validation', () => {
+  it('allows a single female nominee without photo and defaults share to 100%', () => {
+    const res = validateAndNormalizeNominees([
+      {
+        name: 'Fatema Begum',
+        dateOfBirth: '1975-04-12',
+        gender: 'female',
+        occupation: 'Homemaker',
+        relation: 'Mother',
+        nidOrBirthReg: '19751234567890123',
+        address: 'House 12, Dhanmondi, Dhaka',
+      },
+    ]);
+
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.nominees).toHaveLength(1);
+      expect(res.nominees[0].sharePercentage).toBe(100);
+      expect(res.nominees[0].photoUrl).toBeUndefined();
+      expect(res.nominees[0].mobile).toBeUndefined();
+    }
+  });
+
+  it('requires a photo when nominee gender is male or other', () => {
+    const missingPhoto = validateAndNormalizeNominees([
+      {
+        name: 'Karim Uddin',
+        dateOfBirth: '1990-06-20',
+        gender: 'male',
+        occupation: 'Engineer',
+        relation: 'Brother',
+        nidOrBirthReg: '19901234567890123',
+        mobile: '01711223344',
+        address: 'Banani, Dhaka',
+      },
+    ]);
+
+    expect(missingPhoto.ok).toBe(false);
+
+    const withPhoto = validateAndNormalizeNominees([
+      {
+        name: 'Karim Uddin',
+        dateOfBirth: '1990-06-20',
+        gender: 'male',
+        occupation: 'Engineer',
+        relation: 'Brother',
+        nidOrBirthReg: '19901234567890123',
+        mobile: '01711223344',
+        address: 'Banani, Dhaka',
+        photoUrl: 'https://i.ibb.co/example/karim.jpg',
+      },
+    ]);
+
+    expect(withPhoto.ok).toBe(true);
+    if (withPhoto.ok) {
+      expect(withPhoto.nominees[0].mobile).toBe('01711223344');
+      expect(withPhoto.nominees[0].photoUrl).toBe('https://i.ibb.co/example/karim.jpg');
+    }
+  });
+
+  it('requires share percentages summing to 100% when multiple nominees are provided', () => {
+    const badTotal = validateAndNormalizeNominees([
+      {
+        name: 'Nusrat Jahan',
+        dateOfBirth: '1994-03-10',
+        gender: 'female',
+        occupation: 'Doctor',
+        relation: 'Spouse',
+        sharePercentage: 60,
+        nidOrBirthReg: '19941122334455',
+        address: 'Uttara, Dhaka',
+      },
+      {
+        name: 'Tariq Hasan',
+        dateOfBirth: '2018-09-01',
+        gender: 'male',
+        occupation: 'Student',
+        relation: 'Son',
+        sharePercentage: 30,
+        nidOrBirthReg: 'BR-201899887766',
+        address: 'Uttara, Dhaka',
+        photoUrl: 'https://i.ibb.co/example/tariq.jpg',
+      },
+    ]);
+
+    expect(badTotal.ok).toBe(false);
+
+    const validTotal = validateAndNormalizeNominees([
+      {
+        name: 'Nusrat Jahan',
+        dateOfBirth: '1994-03-10',
+        gender: 'female',
+        occupation: 'Doctor',
+        relation: 'Spouse',
+        sharePercentage: 60,
+        nidOrBirthReg: '19941122334455',
+        address: 'Uttara, Dhaka',
+      },
+      {
+        name: 'Tariq Hasan',
+        dateOfBirth: '2018-09-01',
+        gender: 'male',
+        occupation: 'Student',
+        relation: 'Son',
+        sharePercentage: 40,
+        nidOrBirthReg: 'BR-201899887766',
+        address: 'Uttara, Dhaka',
+        photoUrl: 'https://i.ibb.co/example/tariq.jpg',
+      },
+    ]);
+
+    expect(validTotal.ok).toBe(true);
+    if (validTotal.ok) {
+      expect(validTotal.nominees.map((n) => n.sharePercentage)).toEqual([60, 40]);
+    }
+  });
+});
+
 
 
 

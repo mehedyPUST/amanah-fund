@@ -20,6 +20,7 @@ import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 
 interface MemberProfileProps {
   user: PublicUser;
@@ -597,6 +598,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 />
               </div>
             </div>
+          )}
+
+          {reg?.nominees && reg.nominees.length > 0 && (
+            <NomineeDetailsList nominees={reg.nominees} compact />
           )}
         </section>
 

@@ -31,6 +31,7 @@ import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
+import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 
 interface AdminReportsViewProps {
   config: FundConfig | null;
@@ -891,6 +892,9 @@ export function AdminReportsView({
                       <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500">
                         No extended KYC registration payload stored for this bootstrap account.
                       </div>
+                    )}
+                    {reg?.nominees && reg.nominees.length > 0 && (
+                      <NomineeDetailsList nominees={reg.nominees} compact />
                     )}
                   </>
                 );

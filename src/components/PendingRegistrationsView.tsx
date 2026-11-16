@@ -17,6 +17,7 @@ import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
 
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 
 type RegModalState =
   | {
@@ -185,7 +186,14 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
         (reg?.occupation || '').toLowerCase().includes(q) ||
         (reg?.companyOrganization || '').toLowerCase().includes(q) ||
         (reg?.presentAddress || '').toLowerCase().includes(q) ||
-        (reg?.permanentAddress || '').toLowerCase().includes(q)
+        (reg?.permanentAddress || '').toLowerCase().includes(q) ||
+        (reg?.nominees || []).some(
+          (n) =>
+            n.name.toLowerCase().includes(q) ||
+            n.nidOrBirthReg.toLowerCase().includes(q) ||
+            (n.mobile || '').toLowerCase().includes(q) ||
+            n.relation.toLowerCase().includes(q)
+        )
       );
     });
   }, [registrations, searchQuery]);
@@ -487,6 +495,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           </dd>
                         </div>
                       </div>
+
+                      {reg.nominees && reg.nominees.length > 0 && (
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <NomineeDetailsList nominees={reg.nominees} />
+                        </div>
+                      )}
                     </dl>
                   ) : (
                     <div className="xl:col-span-8 text-xs text-slate-500 dark:text-slate-400 flex items-center">

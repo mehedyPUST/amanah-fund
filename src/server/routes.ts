@@ -59,6 +59,7 @@ import {
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
   queueEmailNotification,
+  validateAndNormalizeNominees,
 } from './coopService.ts';
 import {
   computeSha256Hash,
@@ -575,6 +576,12 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       return;
     }
 
+    const nomineeValidation = validateAndNormalizeNominees(req.body?.nominees);
+    if ('error' in nomineeValidation) {
+      res.status(400).json({ error: nomineeValidation.error });
+      return;
+    }
+
     const registrationDetails: UserRegistrationDetails = {
       dateOfBirth,
       referenceMemberName,
@@ -586,6 +593,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       permanentAddress,
       photoUrl,
       agreementPhotoUrl: agreementPhotoUrl || undefined,
+      nominees: nomineeValidation.nominees,
     };
 
     const passwordHash = password.length >= 6 ? bcrypt.hashSync(password, 10) : '';

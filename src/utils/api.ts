@@ -16,6 +16,7 @@ import type {
   ManagerCycleSchedule,
   MemberPublicProfile,
   MemberSummary,
+  NomineeInfo,
   NotificationPreferences,
   PrivateMessage,
   ProfileChangeRequest,
@@ -97,6 +98,7 @@ export interface RegisterMemberPayload {
   permanentAddress: string;
   photoUrl: string;
   agreementPhotoUrl?: string;
+  nominees: NomineeInfo[];
 }
 
 export type GoogleAuthResponse =

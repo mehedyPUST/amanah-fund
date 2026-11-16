@@ -36,6 +36,21 @@ export interface NotificationPreferences {
   soundEnabled: boolean;
 }
 
+export type NomineeGender = 'male' | 'female' | 'other';
+
+export interface NomineeInfo {
+  name: string;
+  dateOfBirth: string;
+  gender: NomineeGender;
+  occupation: string;
+  relation: string;
+  sharePercentage: number;
+  nidOrBirthReg: string;
+  mobile?: string;
+  address: string;
+  photoUrl?: string;
+}
+
 export interface UserRegistrationDetails {
   dateOfBirth: string;
   referenceMemberName: string;
@@ -47,6 +62,7 @@ export interface UserRegistrationDetails {
   permanentAddress: string;
   photoUrl: string;
   agreementPhotoUrl?: string;
+  nominees?: NomineeInfo[];
 }
 
 export interface PublicUser {

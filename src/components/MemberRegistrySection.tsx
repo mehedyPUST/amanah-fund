@@ -15,6 +15,7 @@ import { formatDateTime } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
+import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
 
 type RegistryModalState =
@@ -527,6 +528,9 @@ export function MemberRegistrySection({
                       <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500">
                         No extended KYC registration payload stored for this account.
                       </div>
+                    )}
+                    {reg?.nominees && reg.nominees.length > 0 && (
+                      <NomineeDetailsList nominees={reg.nominees} compact />
                     )}
                   </>
                 );

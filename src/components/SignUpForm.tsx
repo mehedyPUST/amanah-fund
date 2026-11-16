@@ -10,11 +10,15 @@ import {
   Globe,
   ImagePlus,
   Loader2,
+  Plus,
   ShieldCheck,
+  Trash2,
   UserPlus,
+  Users,
   X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
   GOOGLE_ONBOARDING_STORAGE_KEY,
@@ -22,6 +26,40 @@ import {
   type StoredGoogleOnboarding,
 } from '../utils/googleAuth.ts';
 import { useCoopSession } from './AppProviders.tsx';
+
+interface NomineeDraft {
+  id: string;
+  name: string;
+  dateOfBirth: string;
+  gender: '' | NomineeGender;
+  occupation: string;
+  relation: string;
+  sharePercentage: string;
+  nidOrBirthReg: string;
+  mobile: string;
+  address: string;
+  sameAsApplicantPresent: boolean;
+  photoUrl: string;
+  photoUploading: boolean;
+}
+
+function createEmptyNominee(sharePercentage = '100'): NomineeDraft {
+  return {
+    id: `nom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: '',
+    dateOfBirth: '',
+    gender: '',
+    occupation: '',
+    relation: '',
+    sharePercentage,
+    nidOrBirthReg: '',
+    mobile: '',
+    address: '',
+    sameAsApplicantPresent: false,
+    photoUrl: '',
+    photoUploading: false,
+  };
+}
 
 export function SignUpForm() {
   const router = useRouter();
@@ -48,6 +86,9 @@ export function SignUpForm() {
   const [presentAddress, setPresentAddress] = useState('');
   const [permanentAddress, setPermanentAddress] = useState('');
   const [sameAsPresent, setSameAsPresent] = useState(false);
+
+  // Nominees (1 or more; share % sums to 100%)
+  const [nominees, setNominees] = useState<NomineeDraft[]>(() => [createEmptyNominee('100')]);
 
   // ImgBB uploaded photo & agreement paper URLs
   const [photoUrl, setPhotoUrl] = useState('');
@@ -101,6 +142,86 @@ export function SignUpForm() {
       setPermanentAddress(presentAddress);
     }
   }, [sameAsPresent, presentAddress]);
+
+  useEffect(() => {
+    setNominees((prev) => {
+      const hasSynced = prev.some((n) => n.sameAsApplicantPresent && n.address !== presentAddress);
+      if (!hasSynced) return prev;
+      return prev.map((n) => (n.sameAsApplicantPresent ? { ...n, address: presentAddress } : n));
+    });
+  }, [presentAddress]);
+
+  const anyNomineePhotoUploading = nominees.some((n) => n.photoUploading);
+  const totalNomineeShare =
+    nominees.length === 1
+      ? 100
+      : Math.round(
+          nominees.reduce((sum, n) => {
+            const val = Number(n.sharePercentage);
+            return Number.isFinite(val) && val > 0 ? sum + val : sum;
+          }, 0) * 100
+        ) / 100;
+
+  function updateNomineeField<K extends keyof NomineeDraft>(
+    index: number,
+    field: K,
+    value: NomineeDraft[K]
+  ) {
+    setNominees((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const next: NomineeDraft = { ...item, [field]: value };
+        if (field === 'gender' && value === 'female') {
+          next.photoUrl = '';
+        }
+        return next;
+      })
+    );
+  }
+
+  function handleAddNominee() {
+    setError(null);
+    setNominees((prev) => {
+      if (prev.length >= 10) return prev;
+      if (prev.length === 1 && (Number(prev[0].sharePercentage) === 100 || !prev[0].sharePercentage)) {
+        return [{ ...prev[0], sharePercentage: '50' }, createEmptyNominee('50')];
+      }
+      const existingSum = prev.reduce((sum, n) => {
+        const val = Number(n.sharePercentage);
+        return Number.isFinite(val) && val > 0 ? sum + val : sum;
+      }, 0);
+      const remaining = Math.max(0, Math.round((100 - existingSum) * 100) / 100);
+      return [...prev, createEmptyNominee(remaining > 0 ? String(remaining) : '')];
+    });
+  }
+
+  function handleRemoveNominee(index: number) {
+    setNominees((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 1) {
+        return [{ ...next[0], sharePercentage: '100' }];
+      }
+      return next;
+    });
+  }
+
+  function handleEqualSplitShares() {
+    setNominees((prev) => {
+      const count = prev.length;
+      if (count <= 1) return prev.map((n) => ({ ...n, sharePercentage: '100' }));
+      const base = Math.floor((10000 / count)) / 100;
+      let running = 0;
+      return prev.map((n, idx) => {
+        if (idx === count - 1) {
+          const lastShare = Math.round((100 - running) * 100) / 100;
+          return { ...n, sharePercentage: String(lastShare) };
+        }
+        running += base;
+        return { ...n, sharePercentage: String(base) };
+      });
+    });
+  }
 
   async function handleStartGoogleOnboarding() {
     setError(null);
@@ -177,6 +298,39 @@ export function SignUpForm() {
     }
   }
 
+  async function handleNomineePhotoUpload(index: number, e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, or WEBP).');
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      setError('Selected nominee image must be smaller than 6 MB.');
+      return;
+    }
+
+    setError(null);
+    setNominees((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, photoUploading: true } : item))
+    );
+
+    try {
+      const label = `nominee-${index + 1}-${Date.now()}`;
+      const res = await api.uploadImage(file, label);
+      setNominees((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, photoUrl: res.url, photoUploading: false } : item
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nominee photo upload failed.');
+      setNominees((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, photoUploading: false } : item))
+      );
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -192,6 +346,66 @@ export function SignUpForm() {
     }
     if (googleOnboarding && password.length > 0 && password.length < 6) {
       setError('Optional backup password must be at least 6 characters long (or leave blank).');
+      return;
+    }
+
+    const preparedNominees: NomineeInfo[] = [];
+    const multipleNominees = nominees.length > 1;
+    let shareSum = 0;
+
+    for (let i = 0; i < nominees.length; i += 1) {
+      const n = nominees[i];
+      const prefix = multipleNominees ? `Nominee #${i + 1}` : 'Nominee';
+
+      if (
+        !n.name.trim() ||
+        !n.dateOfBirth.trim() ||
+        !n.gender ||
+        !n.occupation.trim() ||
+        !n.relation.trim() ||
+        !n.nidOrBirthReg.trim() ||
+        !n.address.trim()
+      ) {
+        setError(`${prefix}: Please complete all required nominee details.`);
+        return;
+      }
+
+      if (n.gender !== 'female' && !n.photoUrl) {
+        setError(`${prefix}: Nominee photo is required unless the nominee gender is Female.`);
+        return;
+      }
+
+      let sharePercentage = 100;
+      if (multipleNominees) {
+        const parsed = Number(n.sharePercentage);
+        if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
+          setError(`${prefix}: Enter a valid share percentage between 0.01% and 100%.`);
+          return;
+        }
+        sharePercentage = Math.round(parsed * 100) / 100;
+        shareSum += sharePercentage;
+      } else {
+        shareSum = 100;
+      }
+
+      preparedNominees.push({
+        name: n.name.trim(),
+        dateOfBirth: n.dateOfBirth.trim(),
+        gender: n.gender,
+        occupation: n.occupation.trim(),
+        relation: n.relation.trim(),
+        sharePercentage,
+        nidOrBirthReg: n.nidOrBirthReg.trim(),
+        mobile: n.mobile.trim() || undefined,
+        address: n.address.trim(),
+        photoUrl: n.gender === 'female' ? undefined : n.photoUrl || undefined,
+      });
+    }
+
+    if (multipleNominees && Math.abs(shareSum - 100) > 0.05) {
+      setError(
+        `Total share percentage across all nominees must equal 100% (currently ${Math.round(shareSum * 100) / 100}%).`
+      );
       return;
     }
 
@@ -212,6 +426,7 @@ export function SignUpForm() {
         permanentAddress,
         photoUrl,
         agreementPhotoUrl: agreementPhotoUrl || undefined,
+        nominees: preparedNominees,
       });
 
       if (typeof window !== 'undefined') {
@@ -237,6 +452,7 @@ export function SignUpForm() {
       setSameAsPresent(false);
       setPhotoUrl('');
       setAgreementPhotoUrl('');
+      setNominees([createEmptyNominee('100')]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit registration.');
     } finally {
@@ -605,7 +821,344 @@ export function SignUpForm() {
               </div>
             </div>
 
-            {/* Section 4: ImgBB API Photo & Agreement Uploads */}
+            {/* Section 4: Nominee Information */}
+            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                    <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Nominee Information
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Provide details for one or more nominees. If adding multiple nominees, share percentages must total 100%. Photo is not needed for female nominees.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {nominees.length > 1 && (
+                    <>
+                      <span
+                        className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-md border ${
+                          Math.abs(totalNomineeShare - 100) <= 0.05
+                            ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                            : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
+                        }`}
+                      >
+                        Total Share: {totalNomineeShare}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleEqualSplitShares}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+                      >
+                        Equal Split
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddNominee}
+                    disabled={nominees.length >= 10}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                  >
+                    <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Add Another Nominee</span>
+                  </button>
+                </div>
+              </div>
+
+              <datalist id="coop-nominee-relations">
+                <option value="Spouse" />
+                <option value="Father" />
+                <option value="Mother" />
+                <option value="Son" />
+                <option value="Daughter" />
+                <option value="Brother" />
+                <option value="Sister" />
+              </datalist>
+
+              <div className="space-y-4">
+                {nominees.map((nominee, idx) => (
+                  <div
+                    key={nominee.id}
+                    className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 space-y-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                          {nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee'}
+                        </span>
+                        <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400">
+                          {nominees.length === 1
+                            ? '100% Share'
+                            : `${nominee.sharePercentage || 0}% Share`}
+                        </span>
+                      </div>
+
+                      {nominees.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveNominee(idx)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Nominee Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nominee.name}
+                          onChange={(e) => updateNomineeField(idx, 'name', e.target.value)}
+                          placeholder="Full legal name"
+                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Date of Birth <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={nominee.dateOfBirth}
+                          onChange={(e) => updateNomineeField(idx, 'dateOfBirth', e.target.value)}
+                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Gender <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={nominee.gender}
+                          onChange={(e) =>
+                            updateNomineeField(idx, 'gender', e.target.value as '' | NomineeGender)
+                          }
+                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        >
+                          <option value="">Select gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Occupation <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nominee.occupation}
+                          onChange={(e) => updateNomineeField(idx, 'occupation', e.target.value)}
+                          placeholder="e.g. Teacher, Homemaker, Student"
+                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Relation <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          list="coop-nominee-relations"
+                          value={nominee.relation}
+                          onChange={(e) => updateNomineeField(idx, 'relation', e.target.value)}
+                          placeholder="e.g. Spouse, Mother, Son"
+                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          NID / Birth Registration No. <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nominee.nidOrBirthReg}
+                          onChange={(e) => updateNomineeField(idx, 'nidOrBirthReg', e.target.value)}
+                          placeholder="Enter NID or Birth Reg number"
+                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          Nominee Mobile No.{' '}
+                          <span className="text-slate-400 font-normal">(If available)</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={nominee.mobile}
+                          onChange={(e) => updateNomineeField(idx, 'mobile', e.target.value)}
+                          placeholder="017XX-XXXXXX (optional)"
+                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                        />
+                      </div>
+
+                      {nominees.length > 1 && (
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                            Share Percentage (%) <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            required
+                            min="0.01"
+                            max="100"
+                            step="0.01"
+                            value={nominee.sharePercentage}
+                            onChange={(e) =>
+                              updateNomineeField(idx, 'sharePercentage', e.target.value)
+                            }
+                            placeholder="e.g. 50"
+                            className="w-full px-3.5 py-2.5 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Nominee Address <span className="text-red-500">*</span>
+                          </label>
+                          <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={nominee.sameAsApplicantPresent}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setNominees((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx
+                                      ? {
+                                          ...item,
+                                          sameAsApplicantPresent: checked,
+                                          address: checked ? presentAddress : item.address,
+                                        }
+                                      : item
+                                  )
+                                );
+                              }}
+                              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                            />
+                            <span>Same as applicant present</span>
+                          </label>
+                        </div>
+                        <textarea
+                          rows={2}
+                          required
+                          disabled={nominee.sameAsApplicantPresent}
+                          value={nominee.address}
+                          onChange={(e) => updateNomineeField(idx, 'address', e.target.value)}
+                          placeholder="Full nominee residential address"
+                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
+                        />
+                      </div>
+
+                      {/* Nominee Photo (Not required when female) */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                            Nominee Photo{' '}
+                            {nominee.gender === 'female' ? (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-normal">
+                                (Not needed for female)
+                              </span>
+                            ) : (
+                              <span className="text-red-500">*</span>
+                            )}
+                          </span>
+                          {nominee.photoUrl && nominee.gender !== 'female' && (
+                            <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                              <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>Uploaded</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {nominee.gender === 'female' ? (
+                          <div className="py-3 px-3 rounded-lg border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
+                            Photo upload is not required for female nominees.
+                          </div>
+                        ) : nominee.photoUrl ? (
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={nominee.photoUrl}
+                              alt={`Nominee ${idx + 1} portrait`}
+                              referrerPolicy="no-referrer"
+                              className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                <span>
+                                  {nominee.photoUploading ? 'Uploading…' : 'Replace Photo'}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={nominee.photoUploading}
+                                  onChange={(e) => void handleNomineePhotoUpload(idx, e)}
+                                  className="sr-only"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => updateNomineeField(idx, 'photoUrl', '')}
+                                className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                            {nominee.photoUploading ? (
+                              <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                            ) : (
+                              <ImagePlus className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                            )}
+                            <span className="text-xs text-slate-600 dark:text-slate-400">
+                              {nominee.photoUploading
+                                ? 'Uploading to ImgBB…'
+                                : 'Choose Nominee Photo'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={nominee.photoUploading}
+                              onChange={(e) => void handleNomineePhotoUpload(idx, e)}
+                              className="sr-only"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 5: ImgBB API Photo & Agreement Uploads */}
             <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -745,7 +1298,9 @@ export function SignUpForm() {
               </p>
               <button
                 type="submit"
-                disabled={submitting || photoUploading || agreementUploading}
+                disabled={
+                  submitting || photoUploading || agreementUploading || anyNomineePhotoUploading
+                }
                 className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white text-sm font-medium inline-flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
