@@ -2,23 +2,41 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Download, ExternalLink, Eye, EyeOff, FileText } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  FileText,
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { ConstitutionDocumentInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
 
-const RULES = [
+interface CharterSection {
+  code: string;
+  title: string;
+  summary: string;
+  points: string[];
+  cardClass: string;
+  codeClass: string;
+  iconClass: string;
+}
+
+const CHARTER_SECTIONS: CharterSection[] = [
   {
-    code: 'ART. 01–06',
-    title: 'Society Identity, VISION-36 Term (2027–2036) & 20-Member Cap',
+    code: 'ART. 01–03',
+    title: 'Identity, Core Mission & Community Objectives',
     summary:
-      'Operates as Savings, Investment and Interest-Free Loan Fund Cooperative Society (সঞ্চয়, বিনিয়োগ ও সুদমুক্ত ঋণ তহবিল) from January 2027 through December 2036, building joint capital for Halal investment and interest-free Qard Hasan.',
+      'Operates as the Savings, Investment and Interest-Free Loan Fund Cooperative Society to pool joint Halal investment capital while extending strictly 0% interest Qard Hasan support to members.',
     points: [
-      'Membership & Share Limit (§6): Maximum 20 members / shares total. New intake closes July 2027; late joiners before July 2027 pay all prior months’ arrears in full.',
-      'Second Share Rule (§6ঙ): If fewer than 20 members join by July 2027, an existing member may hold up to 2 shares (paying prior arrears), never exceeding 20 total shares.',
-      'Onboarding & Fee (§4–5): Applicants must be practicing (Namazi), cautious of Halal/Haram, submit photo + NID (member & nominee), and pay a 200 BDT non-refundable management fee.',
+      'Article 1 — Society Name: Officially established as the Savings, Investment and Interest-Free Loan Fund Cooperative Society.',
+      'Article 2 — Core Objective: Build collective capital for future Halal investments while utilizing ongoing accumulated funds as interest-free Qard Hasan loans to meet members’ urgent financial needs.',
+      'Article 3 — Aims & Purposes: (a) Cultivate a strong, supportive community among members; (b) Contribute meaningfully to vital avenues of religious and charitable service; and (c) Empower members toward shared economic resilience and prosperity.',
     ],
     cardClass:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
@@ -26,14 +44,14 @@ const RULES = [
     iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
   {
-    code: 'ART. 08–10',
-    title: 'Monthly Savings (৳5,000 by 10th), Joint Accounts & Sadaqah Late Fee',
+    code: 'ART. 04–06',
+    title: 'Membership Admission, Character Standards & 20-Share Term (2027–2036)',
     summary:
-      'Every share contributes 5,000 BDT per month into joint cooperative accounts managed with dual-custody safeguards and hard/soft copy ledger archiving.',
+      'Sets transparent KYC onboarding standards, ethical conduct criteria, a strict 20-share ceiling, and a 10-year cooperative cycle running from January 2027 through December 2036.',
     points: [
-      'Monthly Due Date (§10ক): 5,000 BDT/month payable by the 10th of each month; upload deposit slip in the portal and retain the original receipt.',
-      'Late Fee & Annual Sadaqah (§10খ–গ): Deposits after the 10th incur a 50 BDT late fee held in a separate Sadaqah account and distributed as Sadaqah every January.',
-      'Joint Custody (§8): Account cheque books are held by a Shura Committee member separate from the account signatory; withdrawals require Shura/Board meeting approval.',
+      'Article 4 — Admission & Management Fee: Applicants enroll by completing the designated application form with a photograph, National ID copies for both member and nominee, and a non-refundable BDT 200 fee allocated to administrative supplies (stationery, registers, photocopying, stamps, and filing).',
+      'Article 5 — Member Qualifications: Every member must (a) observe regular daily prayers (Salah), (b) exercise strict vigilance regarding Halal and Haram, (c) show sincere respect and affection toward respected Islamic scholars, and (d) wish well for the flourishing of Islamic values.',
+      'Article 6 — Term & Cap: (a) Operations begin January 2027; (b) capped at 20 members total; (c) new admissions close in July 2027; (d) applicants joining up to July 2027 must settle all prior months’ arrears in full; (e) if fewer than 20 join by July 2027, an existing member may hold up to 2 shares by paying prior arrears in full—never exceeding 20 total members or shares; (f) the term concludes in December 2036, when members will unanimously determine any extension.',
     ],
     cardClass:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
@@ -41,14 +59,30 @@ const RULES = [
     iconClass: 'text-teal-600 dark:text-teal-400',
   },
   {
-    code: 'ART. 11',
-    title: 'Membership Cancellation, Arrears & Exit Policy',
+    code: 'ART. 07–10',
+    title: '2/3 Investment Consensus, Dual-Custody Accounts & Monthly Savings',
     summary:
-      'Structured continuity protects long-term cooperative capital while giving fair reinstatement pathways for temporary hardship.',
+      'Requires supermajority member approval for capital deployment, separates account signatories from checkbook custody, maintains hard and digital records, and routes late fees to annual charity.',
     points: [
-      '3-Month & 7-Month Arrears (§11খ–গ): 3 months of arrears suspends membership (rejoinable within 2 months with 200 BDT fee); 7 consecutive months causes permanent cancellation unless reinstated by written petition, full arrears settlement, and Shura approval.',
-      'Minimum Commitment & Exit (§11ক, ঙ): No member may exit before at least 1 investment is completed. Afterwards, shares may be transferred to an approved known person or existing member (prioritizing lower-share holders) at the 4-monthly Board share valuation.',
-      'Non-Reentry & Conduct (§11ঘ, ঙ): Exited members cannot rejoin a second time; Shura/Board meetings may revoke membership for misconduct or disruption.',
+      'Article 7 — Investment Approval: All financial investments deployed through the platform require formal approval from at least a two-thirds (2/3) majority of members.',
+      'Article 8 — Capital Custody & Licensing: Share savings are deposited into a joint bank account (with an additional joint account permitted if balances grow). Checkbooks are held by a Shura/Management member separate from the signatories, and withdrawals require Shura/Board meeting authorization. Upon institutional licensing in the future, accounts will transition to the licensed entity and individual joint accounts will be closed.',
+      'Article 9 — Recordkeeping: All membership applications, deposit slips, income ledgers, and expenditure records are preserved in both physical hard copies and digital formats using standardized forms and receipts.',
+      'Article 10 — Monthly Savings & Sadaqah Late Fee: (a) BDT 5,000 per share is due by the 10th of each month, with deposit slips submitted to the designated officer and originals retained by members; (b) members unable to pay on time must notify a Management Committee member, and post-deadline deposits incur a BDT 50 late fee; (c) all late fees are held in a separate account and distributed as Sadaqah (charity) each January after annual closing.',
+    ],
+    cardClass:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700/70',
+    codeClass: 'text-cyan-700 dark:text-cyan-400',
+    iconClass: 'text-cyan-600 dark:text-cyan-400',
+  },
+  {
+    code: 'ART. 11',
+    title: 'Membership Cancellation, Arrears Policy & Share Exit Valuation',
+    summary:
+      'Protects long-term cooperative liquidity through structured notice windows, fair reinstatement procedures for temporary arrears, and 4-monthly share valuations.',
+    points: [
+      'Minimum Commitment & Exit (11a): No member may exit before at least one cooperative investment is completed. Thereafter, a member may withdraw upon consultation; entitled payouts are disbursed immediately if fund liquidity allows, or once sufficient capital accumulates.',
+      'Three-Month & Seven-Month Arrears (11b–c): Three months of unpaid contributions result in suspension, redeemable within two months via a BDT 200 re-joining fee and reinstatement form. Seven consecutive unpaid months result in permanent cancellation, unless the member submits a written pledge of adherence, settles all arrears in full, and receives Shura/Management approval.',
+      'Disciplinary Revocation & Share Transfers (11d–e): Creating disorder or undermining Shura/Board decisions warrants revocation via Shura/Board resolution. After the first investment, departing members should transfer their share to an approved acquaintance or an existing member (prioritizing holders with fewer shares), or else receive payout from the investment fund at the 4-monthly Board share valuation. Once exited, a member may never rejoin a second time.',
     ],
     cardClass:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70',
@@ -57,47 +91,62 @@ const RULES = [
   },
   {
     code: 'ART. 12',
-    title: 'Qard Hasan (0% Interest) — Max ৳50,000 or 75% Savings & 10-Month Cap',
+    title: 'Qard Hasan (0% Interest) — Up to BDT 50,000 or 75% of Savings',
     summary:
-      'Effective January 2027, members may request strictly 0% interest Qard Hasan loans enforced programmatically against cooperative caps and maturity timelines.',
+      'Starting January 2027, eligible members may access strictly interest-free Qard Hasan loans bounded by share caps, member savings ratios, and the cooperative end date.',
     points: [
-      'Borrowing Limit (§12ক): Maximum 50,000 BDT per 1 share OR 75% of the member’s accumulated approved savings — whichever is lower.',
-      'Repayment Window (§12খ, ঘ): Maximum 10 monthly installments. Within the final 10 months of the project (2036), installment months cap at the remaining project months so all loans settle before project close.',
-      'Installment Late Fee (§12গ): Overdue monthly installments incur a 50 BDT late fee tracked separately and distributed as Sadaqah every January.',
+      'Borrowing Limit (12a): Per single share, a member may borrow up to BDT 50,000 or 75% of their accumulated savings—whichever is lower.',
+      'Repayment Schedule (12b): Loans must be repaid within a maximum of 10 monthly installments calculated proportionally to the principal and maximum term.',
+      'Installment Late Fee & Maturity Settlement (12c–d): Overdue monthly installments incur a BDT 50 late fee held separately for annual January Sadaqah distribution. Within the final 10 months of the project (2036), installment counts scale to the remaining project months so every Qard Hasan settles in full before term completion.',
     ],
     cardClass:
-      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700/70',
-    codeClass: 'text-cyan-700 dark:text-cyan-400',
-    iconClass: 'text-cyan-600 dark:text-cyan-400',
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/70',
+    codeClass: 'text-emerald-700 dark:text-emerald-400',
+    iconClass: 'text-emerald-600 dark:text-emerald-400',
   },
   {
-    code: 'ART. 07, 13–19',
-    title: '2/3 Supermajority Consensus & Dual 5-Member Committees',
+    code: 'ART. 13–17',
+    title: 'Shariah Safeguards, Capital Protection, Due Diligence & Amendments',
     summary:
-      'Governance is split between a 5-member Management/Shura Committee and a 5-member Savings Accounts Committee, with impartial asset protections and transparent reporting.',
+      'Guarantees impartial institutional governance free from outside influence, safeguards member principal and profits, and defines clear supermajority amendment procedures.',
     points: [
-      '2/3 Investment & Ballot Quorum (§7): Every capital investment and Qard Hasan ballot requires at least 2/3 member approval with SHA-256 signature verification.',
-      'Shura & Savings Committees (§18–19): Shura oversees loan review and publishes active/pending loan lists by the 15th (with annual December review); Savings Committee maintains per-member ledgers and shares bank statements by the 15th.',
-      'Amendments & Impartiality (§14, 17): Member capital/profit cannot be arbitrarily seized; constitution amendments require 2/3 of Shura plus 1/2 of present members.',
+      'Articles 13–14 — Shariah Ruling & Capital Impartiality: Any fund loss caused through an individual’s involvement is resolved by final Shariah ruling. The society remains free from external or personal interference: a member’s capital and profit can never be arbitrarily confiscated, and verified dues owed to the society may only be offset via formal Board meeting notice.',
+      'Articles 15–16 — Due Diligence & Dispute Resolution: Maximum caution and stamped legal documentation must accompany all fund investments. Unforeseen matters not covered by existing clauses are resolved through Shura consultation or a general advisory assembly of members.',
+      'Article 17 — Constitutional Amendments: Amending, adding, or repealing any constitutional clause requires a member meeting convened by the Shura/Management Committee and the consent of at least two-thirds (2/3) of the Shura/Management Committee alongside one-half (1/2) of the other members present.',
     ],
     cardClass:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
-    codeClass: 'text-amber-600 dark:text-amber-400',
+    codeClass: 'text-amber-700 dark:text-amber-400',
     iconClass: 'text-amber-600 dark:text-amber-400',
   },
   {
-    code: 'ART. 20–25',
-    title: 'VISION-36 Real-Economy Goals, Islamic Schools & Al Madina City',
+    code: 'ART. 18–20',
+    title: 'Dual 5-Member Shura & Savings Committees and Member Field Duties',
     summary:
-      'Over the 10-year horizon (2027–2036), cooperative Halal investments target durable community assets, education, and safeguarded member equity.',
+      'Separates operational oversight and loan governance from ledger accounting, mandates monthly transparency by the 15th, and encourages active grassroots participation.',
     points: [
-      'VISION-36 Land & Schools (§21): Enable 1 land share per member share by 2036 (or distribute/reinvest upon early target completion) and establish Islamic schools in at least 3 districts.',
-      'Al Madina City & Maktabs (§22–23): Long-term residential housing society vision with Masjid, Hifzkhana, Islamic School & Qawmi Madrasah, plus Maktabs across northern and hill-tract districts.',
-      'Stewardship & Safeguards (§24–25): Members actively oversee properties; in any leadership crisis, Shura executes an orderly 3–4 month wind-down returning full shareholder funds.',
+      'Article 18 — Management / Shura Committee (5 Members): Composed of up to 5 active, diligent members dedicated to property transactions and non-profit initiatives (with field allowances set by consultation). Shura administers loan reviews, resolves project disputes, publishes active/pending Qard Hasan lists by the 15th monthly, and allows voluntary annual rotation every December.',
+      'Article 19 — Savings Accounts Committee (5 Members): Comprises joint bank account holders who maintain itemized per-member Excel ledgers, separately track Qard Hasan inflows/outflows and Sadaqah late fees, and publish bank statements plus account summaries to the member group by the 15th of every month.',
+      'Article 20 — Member Duties: When any cooperative investment, religious, or social initiative operates in a member’s local or permanent area, members are expected to participate actively—or at minimum follow progress closely—as a service committed to lasting good.',
+    ],
+    cardClass:
+      'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70',
+    codeClass: 'text-teal-700 dark:text-teal-400',
+    iconClass: 'text-teal-600 dark:text-teal-400',
+  },
+  {
+    code: 'ART. 21–25',
+    title: 'VISION-36 Real Assets, Al Madina City, Stewardship & Continuity',
+    summary:
+      'Charts the 10-year roadmap toward member-owned land shares, Islamic educational institutions, model residential communities, and an orderly wind-down safeguard.',
+    points: [
+      'Article 21 — VISION-36 Goals: Achieve one land share per member share within 10 years (extending via Shura/Board resolution if needed, or distributing/reinvesting upon early completion), establish Islamic schools in at least 3 districts, and allow members to sell personal acquired shares when needed—prioritizing buyers aligned with cooperative values.',
+      'Articles 22–23 — Al Madina City & Maktabs: Build a model residential housing community in each metropolitan city corporation featuring a Masjid and Hifzkhana complex, Islamic School, Qawmi Madrasah (integrating Islamic and general studies), prayer-centered community life, children’s play park and swimming pond, alongside foundational Maktabs across northern and hill-tract districts.',
+      'Articles 24–25 — Property Stewardship & Wind-Down Safeguard: Recognizing that every asset reflects the hard-earned Halal savings of 20 members, all members share duty for property care. Should leadership disruptions ever threaten safe operations, the Shura/Board Committee must execute an orderly 3–4 month wind-down returning full shareholder funds.',
     ],
     cardClass:
       'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/70',
-    codeClass: 'text-amber-600 dark:text-amber-400',
+    codeClass: 'text-amber-700 dark:text-amber-400',
     iconClass: 'text-amber-600 dark:text-amber-400',
   },
 ];
@@ -146,7 +195,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             Savings, Investment &amp; Interest-Free Loan Fund Charter
           </HeadingTag>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-            Articles 1–25 of the cooperative constitution (সঞ্চয়, বিনিয়োগ ও সুদমুক্ত ঋণ তহবিল গঠনতন্ত্র, নীতিমালা এবং নির্দেশিকা) are enforced in the Amanah ledger, 2/3 member voting engine, and Shura audit trail.
+            Complete English translation of Articles 1–25 of the cooperative constitution, operating policies, and governance guidelines—enforced programmatically inside the Amanah ledger, 2/3 member voting engine, and Shura audit trail.
           </p>
         </motion.div>
 
@@ -183,7 +232,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Read or download the full cooperative constitution uploaded by cooperative administration.
+                      Read or download the full signed constitution PDF published by cooperative administration and hosted securely on ImageKit.io.
                     </p>
                     <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
@@ -260,7 +309,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   Official Cooperative Constitution PDF
                 </h2>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  No constitution PDF has been published yet. Administrators can upload the signed cooperative constitution PDF from Site Settings in the Admin panel; once published, members and applicants can preview or download it directly here.
+                  No constitution PDF has been published yet. Administrators can upload the official constitution PDF from Site Settings in the Admin panel to store it on ImageKit.io and make it available for preview and download here.
                 </p>
               </div>
             </div>
@@ -268,7 +317,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         </motion.div>
 
         <div className="space-y-4">
-          {RULES.map((rule, idx) => (
+          {CHARTER_SECTIONS.map((rule, idx) => (
             <motion.article
               key={rule.code}
               initial={{ opacity: 0, y: 10 }}
@@ -292,7 +341,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 {rule.points.map((pt) => (
                   <li
                     key={pt}
-                    className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300"
+                    className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
                   >
                     <CheckCircle2
                       className={`w-4 h-4 shrink-0 mt-0.5 ${rule.iconClass}`}
