@@ -4,9 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, HandCoins, LayoutDashboard, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
-import heroTreasuryImg from '../assets/images/hero_amanah_treasury_1794861404641.jpg';
-import halalCampusImg from '../assets/images/halal_lifecycle_campus_1794861405579.jpg';
 import { useCoopSession } from './AppProviders.tsx';
+
+const HERO_IMAGE_URL =
+  'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
+const INVESTMENT_IMAGE_URL =
+  'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
 
 const KEY_TERMS = [
   {
@@ -144,8 +147,8 @@ export function Hero({
               ) : (
                 <>
                   <img
-                    src={heroTreasuryImg.src}
-                    alt="Sunlit limestone cooperative hall overlooking a courtyard garden representing Amanah stewardship"
+                    src={HERO_IMAGE_URL}
+                    alt="Qard Hasan ethical interest-free banking alternative banner"
                     referrerPolicy="no-referrer"
                     onError={() => setHeroImgFailed(true)}
                     className="w-full h-full object-cover"
@@ -225,8 +228,8 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             ) : (
               <>
                 <img
-                  src={halalCampusImg.src}
-                  alt="Sustainable cooperative campus courtyard with travertine arches and greenery at golden hour"
+                  src={INVESTMENT_IMAGE_URL}
+                  alt="Amanah VISION-36 Halal cooperative investment horizon"
                   referrerPolicy="no-referrer"
                   onError={() => setLifecycleImgFailed(true)}
                   className="w-full h-full object-cover"
