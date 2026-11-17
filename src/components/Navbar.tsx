@@ -159,10 +159,11 @@ export function Navbar() {
             <>
               <Link
                 href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Open Dashboard</span>
+                <span className="sm:hidden">Dashboard</span>
+                <span className="hidden sm:inline">Open Dashboard</span>
               </Link>
               <button
                 type="button"

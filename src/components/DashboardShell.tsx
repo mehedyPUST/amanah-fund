@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Activity,
+  ArrowLeft,
   ArrowRight,
   BarChart3,
   Bell,
@@ -15,9 +16,9 @@ import {
   HandCoins,
   History,
   Home,
+  LayoutGrid,
   LogOut,
   MailWarning,
-  Menu,
   MessageSquare,
   Moon,
   RefreshCw,
@@ -47,6 +48,7 @@ import { ManagerDeskView, type ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
+import { MobileMfsHome } from './MobileMfsHome.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
@@ -820,7 +822,7 @@ export function DashboardShell() {
   }
 
   return (
-    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-1.5 sm:p-2.5 lg:p-3 flex flex-col gap-1.5 sm:gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
+    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -839,25 +841,45 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-14 sm:h-[60px] shrink-0 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 z-30 min-w-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen(true)}
-            aria-label="Open navigation"
-            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {activeSection === 'fund-overview' ? (
+            <span className="lg:hidden w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Shield className="w-4 h-4" aria-hidden="true" />
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                navigateToPage(
+                  activeSection === 'member-profile' ? profileReturnSection : 'fund-overview',
+                  false
+                )
+              }
+              aria-label="Back to MFS home"
+              className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+            </button>
+          )}
           <div className="flex items-center gap-2 text-sm min-w-0">
-            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">
+            <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               Amanah
             </span>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">/</span>
+            <span className="text-slate-300 dark:text-slate-700 hidden lg:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
-              {activeSection === 'member-profile'
-                ? 'Member Profile'
-                : activeNavMeta?.label || 'Overview'}
+              <span className="lg:hidden">
+                {activeSection === 'fund-overview'
+                  ? 'Amanah'
+                  : activeSection === 'member-profile'
+                    ? 'Member Profile'
+                    : activeNavMeta?.label || 'Amanah'}
+              </span>
+              <span className="hidden lg:inline">
+                {activeSection === 'member-profile'
+                  ? 'Member Profile'
+                  : activeNavMeta?.label || 'Overview'}
+              </span>
             </h1>
           </div>
         </div>
@@ -955,60 +977,113 @@ export function DashboardShell() {
         </div>
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile MFS Bottom Sheet (All Icons & Account Controls) */}
       <AnimatePresence>
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
             <div
               className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
               onClick={() => setMobileNavOpen(false)}
               aria-hidden="true"
             />
-            <motion.aside
-              initial={{ x: -260 }}
-              animate={{ x: 0 }}
-              exit={{ x: -260 }}
-              transition={{ duration: 0.18 }}
-              className="relative w-64 max-w-full bg-white/88 dark:bg-slate-900/88 backdrop-blur-md h-full flex flex-col border-r border-slate-200/80 dark:border-slate-800/80 z-10"
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-10 w-full max-h-[85dvh] bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 flex flex-col shadow-xl"
             >
-              <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75">
-                <span className="font-display font-bold text-base text-slate-900 dark:text-white">
-                  Amanah
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setMobileNavOpen(false)}
-                  aria-label="Close navigation"
-                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <div className="pt-2.5 pb-3 px-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <div
+                  className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3"
+                  aria-hidden="true"
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      {user.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
+                      {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        {user.status === 'active' ? 'Verified' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(false)}
+                    aria-label="Close menu"
+                    className="min-w-[44px] min-h-[44px] rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
-              <nav className="flex-1 p-3 overflow-y-auto">
-                {renderDashboardNavItems(true)}
-              </nav>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="grid grid-cols-4 gap-2">
+                  {visibleNav.map((item) => {
+                    const Icon = item.Icon;
+                    const active = activeSection === item.id;
+                    const count = pendingBadgeCount(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => navigateToPage(item.id, true)}
+                        className={`min-h-[76px] px-1.5 py-2 rounded-2xl border flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer ${
+                          active
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300'
+                            : 'bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <span className="relative w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-center">
+                          <Icon
+                            className={`w-4.5 h-4.5 ${
+                              active
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : 'text-slate-600 dark:text-slate-300'
+                            }`}
+                            aria-hidden="true"
+                          />
+                          {count > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center">
+                              {count > 99 ? '99+' : count}
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[11px] font-medium leading-tight text-center line-clamp-1">
+                          {item.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2 shrink-0">
                 <PWAUpdateButton fullWidth />
-                <Link
-                  href="/"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Home className="w-3.5 h-3.5" />
-                  <span>Public Website</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => void handleSignOut()}
-                  className="w-full py-2.5 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Home className="w-4 h-4" />
+                    <span>Public Site</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void handleSignOut()}
+                    className="min-h-[44px] py-2 px-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
-            </motion.aside>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -1016,11 +1091,11 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/80 lg:dark:bg-slate-900/75 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/80 lg:dark:border-slate-800/80 lg:shadow-2xs overflow-hidden"
       >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 sm:p-4 lg:p-5"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 pb-20 sm:p-4 sm:pb-20 lg:p-5 lg:pb-5"
         >
           <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
@@ -1238,19 +1313,33 @@ export function DashboardShell() {
             >
               {activeSection === 'fund-overview' && (
                 <section id="fund-overview" className="space-y-4">
-                  <SectionEyebrow label="Overview" tone="emerald" />
-                  <OverviewView
-                    overview={overview}
-                    contributions={contributions}
-                    loans={loans}
-                    user={user}
-                    loading={dataLoading && !overview}
-                    onNavigate={(sec) => navigateToPage(sec, false)}
-                    onOpenManagerDeskTab={openManagerDeskTab}
-                    onOpenLoanModal={() => void openLoanRequestModal()}
-                    onRefresh={handleRefreshWithAutoSync}
-                    onViewMemberProfile={handleViewMemberProfile}
-                  />
+                  <div className="lg:hidden">
+                    <MobileMfsHome
+                      overview={overview}
+                      contributions={contributions}
+                      loans={loans}
+                      user={user}
+                      loading={dataLoading && !overview}
+                      pendingBadgeCount={pendingBadgeCount}
+                      onNavigate={(sec) => navigateToPage(sec, false)}
+                      onOpenLoanModal={() => void openLoanRequestModal()}
+                    />
+                  </div>
+                  <div className="hidden lg:block space-y-4">
+                    <SectionEyebrow label="Overview" tone="emerald" />
+                    <OverviewView
+                      overview={overview}
+                      contributions={contributions}
+                      loans={loans}
+                      user={user}
+                      loading={dataLoading && !overview}
+                      onNavigate={(sec) => navigateToPage(sec, false)}
+                      onOpenManagerDeskTab={openManagerDeskTab}
+                      onOpenLoanModal={() => void openLoanRequestModal()}
+                      onRefresh={handleRefreshWithAutoSync}
+                      onViewMemberProfile={handleViewMemberProfile}
+                    />
+                  </div>
                 </section>
               )}
 
@@ -1618,6 +1707,72 @@ export function DashboardShell() {
           }}
         />
       )}
+
+      {/* Mobile Fixed MFS Bottom Navigation Bar */}
+      <nav
+        aria-label="Mobile MFS Navigation"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/85 dark:border-slate-800/85 px-1 grid grid-cols-5 items-center"
+      >
+        {(isAdmin
+          ? ([
+              { id: 'fund-overview', label: 'Home', Icon: Home },
+              { id: 'member-registry', label: 'Users', Icon: Users },
+              { id: 'manager-desk', label: 'Desk', Icon: ClipboardCheck },
+              { id: 'ballot', label: 'Voting', Icon: Vote },
+            ] as const)
+          : ([
+              { id: 'fund-overview', label: 'Home', Icon: Home },
+              { id: 'monthly-contribution', label: 'Savings', Icon: CreditCard },
+              { id: 'quard-hasan', label: 'Qard', Icon: HandCoins },
+              { id: 'ballot', label: 'Voting', Icon: Vote },
+            ] as const)
+        ).map((tab) => {
+          const Icon = tab.Icon;
+          const active = activeSection === tab.id;
+          const badge = tab.id === 'fund-overview' ? 0 : pendingBadgeCount(tab.id);
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => navigateToPage(tab.id, true)}
+              aria-current={active ? 'page' : undefined}
+              className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer ${
+                active
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <span className="relative flex items-center justify-center">
+                <Icon className="w-5 h-5" aria-hidden="true" />
+                {badge > 0 && (
+                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-amber-600 text-white font-mono text-[9px] font-bold tabular-nums flex items-center justify-center">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </span>
+              <span className="text-[10px] font-medium tracking-tight whitespace-nowrap">
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          aria-expanded={mobileNavOpen}
+          className={`min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer ${
+            mobileNavOpen
+              ? 'text-emerald-700 dark:text-emerald-400'
+              : 'text-slate-500 dark:text-slate-400'
+          }`}
+        >
+          <LayoutGrid className="w-5 h-5" aria-hidden="true" />
+          <span className="text-[10px] font-medium tracking-tight whitespace-nowrap">
+            More
+          </span>
+        </button>
+      </nav>
     </div>
   );
 }
@@ -1631,7 +1786,7 @@ function SectionEyebrow({
 }) {
   const toneClass = SIDEBAR_TONE_STYLES[tone]?.eyebrowText || SIDEBAR_TONE_STYLES.emerald.eyebrowText;
   return (
-    <div className="flex items-center gap-3">
+    <div className="hidden lg:flex items-center gap-3">
       <h2 className={`text-xs font-semibold tracking-wide ${toneClass}`}>{label}</h2>
       <div className="h-px flex-1 bg-slate-200/80 dark:bg-slate-800/80" aria-hidden="true" />
     </div>
