@@ -19,10 +19,10 @@ async function startServer() {
 
   await nextApp.prepare();
   await initDatabase();
-  await syncOverdueInstallments().catch((err) => {
+  void syncOverdueInstallments().catch((err) => {
     console.warn('[Scheduler] Initial overdue installment scan failed:', err);
   });
-  await runMonthlyPdfSummaryJobIfDue().catch((err) => {
+  void runMonthlyPdfSummaryJobIfDue().catch((err) => {
     console.warn('[Scheduler] Initial monthly PDF email check failed:', err);
   });
 

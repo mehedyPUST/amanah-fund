@@ -42,12 +42,12 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                <Link href="/#architecture" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   Security &amp; Architecture
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                <Link href="/#how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   How It Works
                 </Link>
               </li>

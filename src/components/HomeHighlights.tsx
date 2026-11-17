@@ -37,7 +37,7 @@ const EXPLORE_PAGES: Array<{
       'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
   },
   {
-    href: '/how-it-works',
+    href: '/#how-it-works',
     index: '02.',
     label: 'How It Works',
     eyebrow: 'Role Workflows',
@@ -51,7 +51,7 @@ const EXPLORE_PAGES: Array<{
       'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
   },
   {
-    href: '/about',
+    href: '/#architecture',
     index: '03.',
     label: 'Security & Architecture',
     eyebrow: 'Trust Stack',

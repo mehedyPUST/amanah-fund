@@ -15,8 +15,6 @@ interface PublicNavItem {
 const NAV_LINKS: PublicNavItem[] = [
   { href: '/', label: 'Overview' },
   { href: '/community', label: 'Community' },
-  { href: '/about', label: 'Architecture' },
-  { href: '/how-it-works', label: 'How It Works' },
   { href: '/rules', label: 'Charter' },
 ];
 

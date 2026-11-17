@@ -147,7 +147,14 @@ export function Hero({
               )}
 
               <Link
-                href="/how-it-works"
+                href="/#how-it-works"
+                onClick={(e) => {
+                  const target = document.getElementById('how-it-works');
+                  if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="px-2.5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors whitespace-nowrap shrink-0"
               >
                 How It Works
