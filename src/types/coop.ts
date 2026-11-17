@@ -773,10 +773,12 @@ export interface CommunityPost {
   comments: CommunityComment[];
   isPinned: boolean;
   commentsLocked: boolean;
-  status: 'active' | 'hidden';
+  status: 'active' | 'hidden' | 'draft';
   moderationReason?: string;
   moderatedByName?: string;
   moderatedAt?: string;
+  /** Optional link to the loan that triggered this auto-generated post (drafts from loan approval). */
+  relatedLoanId?: string;
   createdAt: string;
   updatedAt?: string;
 }

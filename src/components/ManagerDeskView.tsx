@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import type {
+  CommunityPost,
   Contribution,
   CoopMeeting,
   DashboardOverview,
@@ -46,7 +47,8 @@ export type ManagerDeskTab =
   | 'qard-hasan'
   | 'installments'
   | 'ballots'
-  | 'meetings-profiles';
+  | 'meetings-profiles'
+  | 'community-drafts';
 
 type DeskModalState =
   | {
@@ -69,6 +71,12 @@ type DeskModalState =
       title: string;
       description: string;
       details?: ActionModalDetailItem[];
+    }
+  | {
+      mode: 'loan-approved-post';
+      loan: LoanRequest;
+      title: string;
+      content: string;
     };
 
 interface ManagerDeskViewProps {
@@ -114,6 +122,28 @@ export function ManagerDeskView({
   const [contribSearch, setContribSearch] = useState('');
   const [modal, setModal] = useState<DeskModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+  const [communityDrafts, setCommunityDrafts] = useState<CommunityPost[]>([]);
+  const [draftsLoading, setDraftsLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'community-drafts') return;
+    let cancelled = false;
+    setDraftsLoading(true);
+    api
+      .getCommunityDrafts()
+      .then((res) => {
+        if (!cancelled) setCommunityDrafts(res.posts || []);
+      })
+      .catch(() => {
+        if (!cancelled) setCommunityDrafts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDraftsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
 
   useEffect(() => {
     if (requestedTab?.tab) {
@@ -438,6 +468,32 @@ export function ManagerDeskView({
     }
   }
 
+  function buildLoanApprovalPost(loan: LoanRequest): { title: string; content: string } {
+    const amount = formatMoney(loan.amount, ccy);
+    const title = `Qard Hasan Approved: ${loan.borrowerName} (${loan.id})`;
+    const content = [
+      `Alhamdulillah — the cooperative has approved a 0% interest Qard Hasan loan.`,
+      ``,
+      `• Borrower: ${loan.borrowerName} (${loan.borrowerCode})`,
+      `• Amount: ${amount}`,
+      `• Repayment plan: ${loan.installmentMonths} months`,
+      `• Purpose: ${loan.purpose}`,
+      ``,
+      `The request is now queued for treasury disbursement. May Allah make it a means of ease and barakah for the member and the fund.`,
+    ].join('\n');
+    return { title, content };
+  }
+
+  function openLoanApprovedPostModal(loan: LoanRequest) {
+    const { title, content } = buildLoanApprovalPost(loan);
+    setModal({
+      mode: 'loan-approved-post',
+      loan,
+      title,
+      content,
+    });
+  }
+
   function confirmRevealBallot(
     type: 'loan' | 'poll' | 'project',
     id: string,
@@ -456,9 +512,22 @@ export function ManagerDeskView({
       ],
       confirmLabel: 'Stop & Reveal Result',
       run: async () => {
-        if (type === 'loan') await api.revealLoanVote(id);
-        else if (type === 'poll') await api.revealPoll(id);
-        else await api.revealHalalProjectVote(id);
+        if (type === 'loan') {
+          const prior = loans.find((l) => l.id === id);
+          await api.revealLoanVote(id);
+          await onRefresh();
+          // Offer automated community post after loan vote reveal. Manager can post now,
+          // save as draft, or dismiss. Content is pre-filled for an approval announcement;
+          // if the vote failed the manager can simply close the modal without posting.
+          if (prior) {
+            openLoanApprovedPostModal(prior);
+            return;
+          }
+        } else if (type === 'poll') {
+          await api.revealPoll(id);
+        } else {
+          await api.revealHalalProjectVote(id);
+        }
         await onRefresh();
         showNotice(
           'emerald',
@@ -717,6 +786,16 @@ export function ManagerDeskView({
       activeTextClass: 'text-indigo-800 dark:text-indigo-300',
       activeIconClass: 'text-indigo-600 dark:text-indigo-400',
       hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
+    },
+    {
+      id: 'community-drafts',
+      label: 'Community Drafts',
+      count: communityDrafts.length,
+      Icon: ClipboardCheck,
+      activeClass: 'border-violet-600 bg-violet-50/80 dark:bg-violet-950/35 shadow-xs',
+      activeTextClass: 'text-violet-800 dark:text-violet-300',
+      activeIconClass: 'text-violet-600 dark:text-violet-400',
+      hoverClass: 'hover:border-violet-300 dark:hover:border-violet-800',
     },
   ];
 
@@ -1790,6 +1869,122 @@ export function ManagerDeskView({
           </section>
         </motion.div>
       )}
+
+      {activeTab === 'community-drafts' && (
+        <motion.div
+          key="tab-community-drafts"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.18 }}
+          className="space-y-4"
+        >
+          <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Community Drafts ({communityDrafts.length})
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                Draft announcements saved after loan approvals. Edit or publish them to the Community
+                hub when ready.
+              </p>
+            </div>
+
+            {draftsLoading ? (
+              <div className="space-y-3">
+                <Skeleton height={72} />
+                <Skeleton height={72} />
+              </div>
+            ) : communityDrafts.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
+                No saved drafts. When you approve a Qard Hasan loan you can choose &quot;Save for
+                Later&quot; to keep an announcement draft here.
+              </p>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+                {communityDrafts.map((draft) => (
+                  <div
+                    key={draft.id}
+                    className="p-4 flex flex-col lg:flex-row lg:items-start justify-between gap-3"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {draft.title}
+                        </span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300">
+                          Draft
+                        </span>
+                        {draft.relatedLoanId && (
+                          <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                            {draft.relatedLoanId}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 whitespace-pre-wrap">
+                        {draft.content}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                        Saved {formatDateTime(draft.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={async () => {
+                          setModalBusy(true);
+                          try {
+                            await api.publishCommunityDraft(draft.id);
+                            setCommunityDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+                            await onRefresh();
+                            showNotice(
+                              'emerald',
+                              'Draft Published',
+                              `"${draft.title}" is now live in the Community hub.`
+                            );
+                          } catch (err) {
+                            const msg =
+                              err instanceof Error ? err.message : 'Failed to publish draft.';
+                            showNotice('red', 'Publish Failed', msg);
+                          } finally {
+                            setModalBusy(false);
+                          }
+                        }}
+                        className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Publish</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={modalBusy}
+                        onClick={async () => {
+                          setModalBusy(true);
+                          try {
+                            await api.deleteCommunityPost(draft.id, 'Discarded draft');
+                            setCommunityDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+                            showNotice('slate', 'Draft Discarded', 'The draft has been removed.');
+                          } catch (err) {
+                            const msg =
+                              err instanceof Error ? err.message : 'Failed to delete draft.';
+                            showNotice('red', 'Delete Failed', msg);
+                          } finally {
+                            setModalBusy(false);
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </motion.div>
+      )}
       </AnimatePresence>
 
       {/* Manager Oversight: Monthly Collection Progress vs Goals + Member Audit Log */}
@@ -1808,12 +2003,12 @@ export function ManagerDeskView({
       </div>
 
       <ActionModal
-        open={Boolean(modal)}
-        mode={modal?.mode || 'notice'}
-        tone={modal?.tone || 'emerald'}
-        title={modal?.title || ''}
-        description={modal?.description || ''}
-        details={modal?.details}
+        open={Boolean(modal) && modal?.mode !== 'loan-approved-post'}
+        mode={modal?.mode === 'loan-approved-post' ? 'notice' : modal?.mode || 'notice'}
+        tone={modal?.mode === 'loan-approved-post' ? 'emerald' : modal?.tone || 'emerald'}
+        title={modal?.mode === 'loan-approved-post' ? '' : modal?.title || ''}
+        description={modal?.mode === 'loan-approved-post' ? '' : modal?.description || ''}
+        details={modal?.mode === 'loan-approved-post' ? undefined : modal?.details}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
@@ -1826,6 +2021,186 @@ export function ManagerDeskView({
           if (!modalBusy) setModal(null);
         }}
       />
+
+      {/* Post-approval community announcement modal */}
+      {modal?.mode === 'loan-approved-post' && (
+        <LoanApprovedPostModal
+          loan={modal.loan}
+          initialTitle={modal.title}
+          initialContent={modal.content}
+          busy={modalBusy}
+          onClose={() => {
+            if (!modalBusy) setModal(null);
+          }}
+          onPostNow={async (title, content) => {
+            setModalBusy(true);
+            try {
+              await api.createCommunityPost({
+                category: 'Announcements',
+                title,
+                content,
+                relatedLoanId: modal.loan.id,
+              });
+              await onRefresh();
+              setModal(null);
+              showNotice(
+                'emerald',
+                'Community Post Published',
+                'The loan approval announcement has been posted to the Community hub.'
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Failed to publish post.';
+              showNotice('red', 'Could Not Publish', msg);
+            } finally {
+              setModalBusy(false);
+            }
+          }}
+          onSaveDraft={async (title, content) => {
+            setModalBusy(true);
+            try {
+              await api.createCommunityPost({
+                category: 'Announcements',
+                title,
+                content,
+                status: 'draft',
+                relatedLoanId: modal.loan.id,
+              });
+              await onRefresh();
+              setModal(null);
+              showNotice(
+                'emerald',
+                'Draft Saved',
+                'The announcement was saved as a draft. Open Manager Desk → Community Drafts to edit or publish later.'
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Failed to save draft.';
+              showNotice('red', 'Could Not Save Draft', msg);
+            } finally {
+              setModalBusy(false);
+            }
+          }}
+        />
+      )}
     </motion.div>
+  );
+}
+
+/** Inline modal for posting a loan-approval community announcement now or later. */
+function LoanApprovedPostModal({
+  loan,
+  initialTitle,
+  initialContent,
+  busy,
+  onClose,
+  onPostNow,
+  onSaveDraft,
+}: {
+  loan: LoanRequest;
+  initialTitle: string;
+  initialContent: string;
+  busy: boolean;
+  onClose: () => void;
+  onPostNow: (title: string, content: string) => Promise<void>;
+  onSaveDraft: (title: string, content: string) => Promise<void>;
+}) {
+  const [title, setTitle] = useState(initialTitle);
+  const [content, setContent] = useState(initialContent);
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-3 sm:p-6">
+      <div
+        className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
+        onClick={() => {
+          if (!busy) onClose();
+        }}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="loan-approved-post-title"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl"
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
+          <div className="space-y-1 min-w-0">
+            <h2
+              id="loan-approved-post-title"
+              className="text-base font-semibold text-slate-900 dark:text-white"
+            >
+              Share Loan Approval with Community?
+            </h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              An automated announcement was prepared for{' '}
+              <span className="font-mono font-medium">{loan.id}</span>. Post it now or save a draft
+              for later.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={busy}
+              maxLength={140}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              Content
+            </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={busy}
+              rows={8}
+              maxLength={4000}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-y"
+            />
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 px-5 py-4 border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+          >
+            Dismiss
+          </button>
+          <button
+            type="button"
+            disabled={busy || title.trim().length < 3 || content.trim().length < 3}
+            onClick={() => void onSaveDraft(title.trim(), content.trim())}
+            className="px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 cursor-pointer disabled:opacity-50"
+          >
+            {busy ? 'Saving…' : 'Save for Later'}
+          </button>
+          <button
+            type="button"
+            disabled={busy || title.trim().length < 3 || content.trim().length < 3}
+            onClick={() => void onPostNow(title.trim(), content.trim())}
+            className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>{busy ? 'Posting…' : 'Post Now'}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

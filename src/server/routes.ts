@@ -7145,6 +7145,9 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       return;
     }
 
+    const wantDraft = String(req.body?.status || '').toLowerCase() === 'draft';
+    const relatedLoanId = String(req.body?.relatedLoanId || '').trim() || undefined;
+
     const now = new Date().toISOString();
     const newPost: CommunityPost = {
       id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -7163,63 +7166,77 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       comments: [],
       isPinned: false,
       commentsLocked: false,
-      status: 'active',
+      status: wantDraft ? 'draft' : 'active',
+      relatedLoanId,
       createdAt: now,
     };
 
     let mentionCount = 0;
     await updateVaultState((draft) => {
-      const mentioned = extractMentionedUsers(`${title} ${content}`, draft.users, viewer.id);
-      const mentionedIds = new Set(mentioned.map((m) => m.id));
-      if (mentioned.length > 0) {
-        newPost.mentions = mentioned.map((m) => m.memberCode);
-        mentionCount = mentioned.length;
-        mentioned.forEach((m) => {
-          queueEmailNotification(draft, {
-            type: 'community_mention',
-            recipientEmail: m.email,
-            recipientName: m.name,
-            recipientUserId: m.id,
-            subject: `${viewer.name} mentioned you in "${title}"`,
-            body: `${viewer.name} (${viewer.memberCode}) mentioned you in the Community Hub post "${title}". View and reply in the Community tab.`,
-            relatedId: newPost.id,
+      if (!wantDraft) {
+        const mentioned = extractMentionedUsers(`${title} ${content}`, draft.users, viewer.id);
+        const mentionedIds = new Set(mentioned.map((m) => m.id));
+        if (mentioned.length > 0) {
+          newPost.mentions = mentioned.map((m) => m.memberCode);
+          mentionCount = mentioned.length;
+          mentioned.forEach((m) => {
+            queueEmailNotification(draft, {
+              type: 'community_mention',
+              recipientEmail: m.email,
+              recipientName: m.name,
+              recipientUserId: m.id,
+              subject: `${viewer.name} mentioned you in "${title}"`,
+              body: `${viewer.name} (${viewer.memberCode}) mentioned you in the Community Hub post "${title}". View and reply in the Community tab.`,
+              relatedId: newPost.id,
+            });
           });
-        });
-      }
+        }
 
-      // Notify active members of new community posts
-      draft.users
-        .filter((u) => u.status === 'active' && u.id !== viewer.id && !mentionedIds.has(u.id))
-        .forEach((member) => {
-          queueEmailNotification(draft, {
-            type: 'community_post_created',
-            recipientEmail: member.email,
-            recipientName: member.name,
-            recipientUserId: member.id,
-            subject: `New Community Post [${category}]: ${title}`,
-            body: `${viewer.name} (${viewer.memberCode}) shared a new post in ${category}: "${title}". Open Community to read and join the discussion.`,
-            relatedId: newPost.id,
+        // Notify active members of new community posts
+        draft.users
+          .filter((u) => u.status === 'active' && u.id !== viewer.id && !mentionedIds.has(u.id))
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'community_post_created',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `New Community Post [${category}]: ${title}`,
+              body: `${viewer.name} (${viewer.memberCode}) shared a new post in ${category}: "${title}". Open Community to read and join the discussion.`,
+              relatedId: newPost.id,
+            });
           });
-        });
+      }
 
       draft.communityPosts.unshift(newPost);
       appendAuditLog(draft, {
         actor: viewer,
-        action: 'COMMUNITY_POST_CREATED',
+        action: wantDraft ? 'COMMUNITY_POST_DRAFT_SAVED' : 'COMMUNITY_POST_CREATED',
         resourceType: 'community',
         resourceId: newPost.id,
-        summary: `${viewer.name} published community post "${title}" in ${category}`,
-        payload: { postId: newPost.id, category, title, hasPoll: Boolean(builtPoll) },
+        summary: wantDraft
+          ? `${viewer.name} saved community post draft "${title}"`
+          : `${viewer.name} published community post "${title}" in ${category}`,
+        payload: {
+          postId: newPost.id,
+          category,
+          title,
+          hasPoll: Boolean(builtPoll),
+          isDraft: wantDraft,
+          relatedLoanId,
+        },
       });
       return draft;
     });
 
-    broadcastRealtimeEvent('community:updated', { postId: newPost.id, type: 'post_created' });
-    broadcastRealtimeEvent('notification:created', {
-      type: mentionCount > 0 ? 'community_mention' : 'community_post_created',
-    });
+    if (!wantDraft) {
+      broadcastRealtimeEvent('community:updated', { postId: newPost.id, type: 'post_created' });
+      broadcastRealtimeEvent('notification:created', {
+        type: mentionCount > 0 ? 'community_mention' : 'community_post_created',
+      });
+    }
     broadcastRealtimeEvent('audit:updated', {
-      action: 'COMMUNITY_POST_CREATED',
+      action: wantDraft ? 'COMMUNITY_POST_DRAFT_SAVED' : 'COMMUNITY_POST_CREATED',
       resourceType: 'community',
       resourceId: newPost.id,
     });
@@ -7230,6 +7247,104 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
     res.status(500).json({ error: 'Failed to create community post.' });
   }
 });
+
+/** List draft community posts belonging to the current user (managers/admins). */
+apiRouter.get('/community/posts/drafts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const state = await loadVaultState();
+    const drafts = (state.communityPosts || [])
+      .filter((p) => p.status === 'draft' && p.authorId === viewer.id)
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    res.json({ posts: drafts });
+  } catch (err) {
+    console.error('List community drafts error:', err);
+    res.status(500).json({ error: 'Failed to load draft posts.' });
+  }
+});
+
+/** Publish a draft community post (changes status to active and notifies members). */
+apiRouter.post(
+  '/community/posts/:id/publish',
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const viewer = req.authUser!;
+      let published: CommunityPost | null = null;
+
+      await updateVaultState((draft) => {
+        const post = (draft.communityPosts || []).find((p) => p.id === id);
+        if (!post) return draft;
+        if (post.authorId !== viewer.id && viewer.role !== 'admin') {
+          throw new Error('NOT_AUTHORIZED');
+        }
+        if (post.status !== 'draft') {
+          throw new Error('NOT_A_DRAFT');
+        }
+
+        post.status = 'active';
+        post.updatedAt = new Date().toISOString();
+        published = post;
+
+        // Notify active members (same as create)
+        draft.users
+          .filter((u) => u.status === 'active' && u.id !== viewer.id)
+          .forEach((member) => {
+            queueEmailNotification(draft, {
+              type: 'community_post_created',
+              recipientEmail: member.email,
+              recipientName: member.name,
+              recipientUserId: member.id,
+              subject: `New Community Post [${post.category}]: ${post.title}`,
+              body: `${viewer.name} (${viewer.memberCode}) shared a new post in ${post.category}: "${post.title}". Open Community to read and join the discussion.`,
+              relatedId: post.id,
+            });
+          });
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'COMMUNITY_POST_PUBLISHED',
+          resourceType: 'community',
+          resourceId: post.id,
+          summary: `${viewer.name} published draft community post "${post.title}"`,
+          payload: { postId: post.id, category: post.category, title: post.title },
+        });
+        return draft;
+      });
+
+      if (!published) {
+        res.status(404).json({ error: 'Draft post not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('community:updated', {
+        postId: (published as CommunityPost).id,
+        type: 'post_created',
+      });
+      broadcastRealtimeEvent('notification:created', { type: 'community_post_created' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'COMMUNITY_POST_PUBLISHED',
+        resourceType: 'community',
+        resourceId: (published as CommunityPost).id,
+      });
+
+      res.json({ post: published });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'NOT_AUTHORIZED') {
+        res.status(403).json({ error: 'You can only publish your own drafts.' });
+        return;
+      }
+      if (msg === 'NOT_A_DRAFT') {
+        res.status(400).json({ error: 'This post is not a draft.' });
+        return;
+      }
+      console.error('Publish community draft error:', err);
+      res.status(500).json({ error: 'Failed to publish draft.' });
+    }
+  }
+);
 
 apiRouter.post('/community/posts/:id/poll-vote', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {

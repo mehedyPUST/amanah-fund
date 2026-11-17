@@ -12,6 +12,7 @@ import {
   EyeOff,
   FileText,
   Languages,
+  LayoutGrid,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
@@ -227,6 +228,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
   const [expandedCodes, setExpandedCodes] = useState<Record<string, boolean>>({});
+  /** Card layout for better readability: single column (comfortable) vs two-column grid. */
+  const [cardLayout, setCardLayout] = useState<'single' | 'grid'>('grid');
 
   // Language toggle is strictly for the standalone Charter page (/rules)
   const activeLang: CharterLanguage = embedded ? 'en' : lang;
@@ -309,50 +312,97 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {!embedded ? (
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-end">
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                <span className="hidden md:inline">Language</span>
-              </span>
-              <div
-                role="tablist"
-                aria-label="Charter language"
-                className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
-              >
-                {(
-                  [
-                    { id: 'en', label: 'English' },
-                    { id: 'bn', label: 'বাংলা' },
-                  ] as const
-                ).map((option) => {
-                  const selected = lang === option.id;
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={selected}
-                      onClick={() => setLang(option.id)}
-                      className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
-                        selected
-                          ? 'text-slate-900 dark:text-white'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      {selected && (
-                        <motion.span
-                          layoutId="charter-language-toggle"
-                          transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <span lang={option.id} className="relative z-10">
-                        {option.label}
-                      </span>
-                    </button>
-                  );
-                })}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0 self-start sm:self-end">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  <span className="hidden md:inline">Language</span>
+                </span>
+                <div
+                  role="tablist"
+                  aria-label="Charter language"
+                  className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
+                >
+                  {(
+                    [
+                      { id: 'en', label: 'English' },
+                      { id: 'bn', label: 'বাংলা' },
+                    ] as const
+                  ).map((option) => {
+                    const selected = lang === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => setLang(option.id)}
+                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                          selected
+                            ? 'text-slate-900 dark:text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        {selected && (
+                          <motion.span
+                            layoutId="charter-language-toggle"
+                            transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                            className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span lang={option.id} className="relative z-10">
+                          {option.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  <span className="hidden md:inline">Layout</span>
+                </span>
+                <div
+                  role="tablist"
+                  aria-label="Card layout for readability"
+                  className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
+                >
+                  {(
+                    [
+                      { id: 'single' as const, label: 'Single', title: 'Single column — better readability' },
+                      { id: 'grid' as const, label: 'Grid', title: 'Two-column grid' },
+                    ] as const
+                  ).map((option) => {
+                    const selected = cardLayout === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        title={option.title}
+                        onClick={() => setCardLayout(option.id)}
+                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                          selected
+                            ? 'text-slate-900 dark:text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        {selected && (
+                          <motion.span
+                            layoutId="charter-layout-toggle"
+                            transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                            className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className="relative z-10">{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : (
@@ -475,7 +525,14 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
-        <div lang={isBn ? 'bn' : 'en'} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div
+          lang={isBn ? 'bn' : 'en'}
+          className={
+            cardLayout === 'single'
+              ? 'grid grid-cols-1 gap-4 max-w-3xl mx-auto'
+              : 'grid grid-cols-1 xl:grid-cols-2 gap-4'
+          }
+        >
           {sections.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
             const ruleHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];

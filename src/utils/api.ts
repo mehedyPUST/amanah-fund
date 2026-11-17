@@ -705,10 +705,18 @@ export const api = {
     content: string;
     links?: CommunityPostLink[];
     poll?: { question: string; allowMultiple?: boolean; options: string[] };
+    status?: 'active' | 'draft';
+    relatedLoanId?: string;
   }) =>
     apiRequest<{ post: CommunityPost }>('/api/community/posts', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  getCommunityDrafts: () =>
+    apiRequest<{ posts: CommunityPost[] }>('/api/community/posts/drafts'),
+  publishCommunityDraft: (id: string) =>
+    apiRequest<{ post: CommunityPost }>(`/api/community/posts/${id}/publish`, {
+      method: 'POST',
     }),
   voteCommunityPoll: (postId: string, optionIds: string[]) =>
     apiRequest<{ post: CommunityPost }>(`/api/community/posts/${postId}/poll-vote`, {
