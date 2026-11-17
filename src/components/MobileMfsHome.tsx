@@ -173,6 +173,62 @@ function MobileBottomSheet({
   );
 }
 
+const MFS_TAP_SPRING = {
+  type: 'spring' as const,
+  stiffness: 540,
+  damping: 28,
+  mass: 0.6,
+};
+
+function MfsGridTileButton({
+  tile,
+  compact = false,
+  labelWeight = 'medium',
+  singleLine = false,
+}: {
+  tile: MfsIconTile;
+  compact?: boolean;
+  labelWeight?: 'medium' | 'semibold';
+  singleLine?: boolean;
+}) {
+  const Icon = tile.Icon;
+  return (
+    <motion.button
+      type="button"
+      onClick={tile.onClick}
+      whileTap={{ scale: 0.94, y: 1.5 }}
+      transition={MFS_TAP_SPRING}
+      className={`${
+        compact ? 'mfs-tile-compact gap-1.5' : 'mfs-tile gap-2'
+      } rounded-2xl bg-white dark:bg-slate-900 border ${
+        compact
+          ? 'border-slate-200/75 dark:border-slate-800/80'
+          : 'border-slate-200/80 dark:border-slate-800/80'
+      } hover:border-emerald-300/80 dark:hover:border-emerald-700/70 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner shadow-2xs flex flex-col items-center justify-center transition-colors cursor-pointer`}
+    >
+      <span
+        className={`mfs-tile-icon-box relative rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
+      >
+        <Icon className={`mfs-tile-icon ${tile.iconColorClass}`} aria-hidden="true" />
+        {typeof tile.badge === 'number' && tile.badge > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs">
+            {tile.badge > 99 ? '99+' : tile.badge}
+          </span>
+        )}
+      </span>
+      <span
+        className={`mfs-tile-label ${
+          labelWeight === 'semibold'
+            ? 'font-semibold text-slate-800 dark:text-slate-100 leading-snug'
+            : 'font-medium text-slate-700 dark:text-slate-200 leading-tight'
+        } text-center ${singleLine ? 'line-clamp-1' : ''}`}
+      >
+        {tile.label}
+      </span>
+    </motion.button>
+  );
+}
+
 export function MobileMfsHome({
   overview,
   contributions,
@@ -299,12 +355,12 @@ export function MobileMfsHome({
             <Skeleton key={idx} height={92} borderRadius={16} />
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="mfs-icon-grid-3">
           {Array.from({ length: 6 }).map((_, idx) => (
             <Skeleton key={idx} height={96} borderRadius={16} />
           ))}
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="mfs-icon-grid-4">
           {Array.from({ length: 8 }).map((_, idx) => (
             <Skeleton key={idx} height={82} borderRadius={16} />
           ))}
@@ -1028,10 +1084,12 @@ export function MobileMfsHome({
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
-          <button
+          <motion.button
             type="button"
             onClick={() => setActiveSheet('pulse')}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between text-left active:scale-[0.98] transition-transform cursor-pointer"
+            whileTap={{ scale: 0.96, y: 1.5 }}
+            transition={MFS_TAP_SPRING}
+            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
@@ -1049,12 +1107,14 @@ export function MobileMfsHome({
                 {treasury.contributingMembersCount} members · Month {thisMonthContribPct}%
               </div>
             </div>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             onClick={() => onNavigate('transaction-history')}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between text-left active:scale-[0.98] transition-transform cursor-pointer"
+            whileTap={{ scale: 0.96, y: 1.5 }}
+            transition={MFS_TAP_SPRING}
+            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
@@ -1072,12 +1132,14 @@ export function MobileMfsHome({
                 Liquid reserve · Tap ledger
               </div>
             </div>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             onClick={() => setActiveSheet('borrowers')}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between text-left active:scale-[0.98] transition-transform cursor-pointer"
+            whileTap={{ scale: 0.96, y: 1.5 }}
+            transition={MFS_TAP_SPRING}
+            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
@@ -1096,12 +1158,14 @@ export function MobileMfsHome({
                 {treasury.activeBorrowers.length === 1 ? 'borrower' : 'borrowers'}
               </div>
             </div>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             onClick={() => setActiveSheet('repayments')}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between text-left active:scale-[0.98] transition-transform cursor-pointer"
+            whileTap={{ scale: 0.96, y: 1.5 }}
+            transition={MFS_TAP_SPRING}
+            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
@@ -1121,7 +1185,7 @@ export function MobileMfsHome({
                   : 'Revolving principal · View schedule'}
               </div>
             </div>
-          </button>
+          </motion.button>
         </div>
       </section>
 
@@ -1131,32 +1195,10 @@ export function MobileMfsHome({
           Services
         </h2>
 
-        <div className="grid grid-cols-3 gap-2">
-          {coreActionTiles.map((tile) => {
-            const Icon = tile.Icon;
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={tile.onClick}
-                className="min-h-[96px] px-2 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
-              >
-                <span
-                  className={`relative w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
-                >
-                  <Icon className={`w-5 h-5 ${tile.iconColorClass}`} aria-hidden="true" />
-                  {typeof tile.badge === 'number' && tile.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs">
-                      {tile.badge > 99 ? '99+' : tile.badge}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 leading-snug text-center">
-                  {tile.label}
-                </span>
-              </button>
-            );
-          })}
+        <div className="mfs-icon-grid-3">
+          {coreActionTiles.map((tile) => (
+            <MfsGridTileButton key={tile.id} tile={tile} labelWeight="semibold" />
+          ))}
         </div>
       </section>
 
@@ -1166,32 +1208,10 @@ export function MobileMfsHome({
           {isAdmin ? 'Governance & Ledger Pages' : isManager ? 'Management & Ledger Pages' : 'All Pages & Account'}
         </h2>
 
-        <div className="grid grid-cols-4 gap-2">
-          {functionalPageTiles.map((tile) => {
-            const Icon = tile.Icon;
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={tile.onClick}
-                className="min-h-[80px] px-1.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/75 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
-              >
-                <span
-                  className={`relative w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
-                >
-                  <Icon className={`w-4.5 h-4.5 ${tile.iconColorClass}`} aria-hidden="true" />
-                  {typeof tile.badge === 'number' && tile.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs">
-                      {tile.badge > 99 ? '99+' : tile.badge}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight text-center line-clamp-1">
-                  {tile.label}
-                </span>
-              </button>
-            );
-          })}
+        <div className="mfs-icon-grid-4">
+          {functionalPageTiles.map((tile) => (
+            <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
+          ))}
         </div>
       </section>
 
@@ -1201,32 +1221,10 @@ export function MobileMfsHome({
           Treasury Insights &amp; Queues
         </h2>
 
-        <div className="grid grid-cols-3 gap-2">
-          {insightTiles.map((tile) => {
-            const Icon = tile.Icon;
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={tile.onClick}
-                className="min-h-[84px] px-2 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/75 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
-              >
-                <span
-                  className={`relative w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
-                >
-                  <Icon className={`w-4.5 h-4.5 ${tile.iconColorClass}`} aria-hidden="true" />
-                  {typeof tile.badge === 'number' && tile.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs">
-                      {tile.badge > 99 ? '99+' : tile.badge}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight text-center">
-                  {tile.label}
-                </span>
-              </button>
-            );
-          })}
+        <div className="mfs-icon-grid-3">
+          {insightTiles.map((tile) => (
+            <MfsGridTileButton key={tile.id} tile={tile} />
+          ))}
         </div>
       </section>
 
