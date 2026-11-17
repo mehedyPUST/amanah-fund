@@ -172,7 +172,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.15 }}
                     transition={{ duration: 0.2, delay: idx * 0.04 }}
-                    className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/50 space-y-2.5"
+                    className="amanah-card-border p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/50 space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
                       <div className="w-8 h-8 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">

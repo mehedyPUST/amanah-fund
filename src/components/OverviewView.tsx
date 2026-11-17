@@ -502,7 +502,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.02 }}
-          className="bg-emerald-700 dark:bg-emerald-800 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
+          className="amanah-card-border amanah-card-border-hero bg-emerald-700 dark:bg-emerald-800 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
             <span>Amanah Height (Total Raised)</span>

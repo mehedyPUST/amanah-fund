@@ -175,7 +175,7 @@ export function Hero({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, delay: 0.03 * idx }}
-            className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs flex flex-col justify-between gap-3"
+            className="amanah-card-border bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs flex flex-col justify-between gap-3"
           >
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -208,7 +208,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
   return (
     <section
       id="lifecycle"
-      className={`scroll-mt-20 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs ${
+      className={`scroll-mt-2 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >

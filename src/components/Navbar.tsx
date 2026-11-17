@@ -46,7 +46,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="relative z-40 w-full">
+    <header className="relative shrink-0 z-40 w-full">
       <div className="w-full h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs px-4 sm:px-6 flex items-center justify-between gap-8">
         {/* Zone 1: Clean single-element Brand Wordmark */}
         <Link

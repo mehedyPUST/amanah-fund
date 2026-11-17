@@ -4,19 +4,18 @@ import { Navbar } from './Navbar.tsx';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-dvh flex flex-col amanah-ambient-canvas text-slate-900 dark:text-slate-100">
-      <div className="sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-8 pt-2.5 sm:pt-3">
-        <div className="max-w-[1380px] mx-auto w-full">
-          <Navbar />
-        </div>
+    <div className="h-dvh overflow-hidden flex flex-col amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-2.5 sm:p-4 lg:p-5 gap-2.5 sm:gap-3">
+      <div className="max-w-[1380px] mx-auto w-full shrink-0">
+        <Navbar />
       </div>
 
-      <main className="flex-1 w-full max-w-[1380px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 min-w-0">
-        {children}
-      </main>
-
-      <div className="w-full max-w-[1380px] mx-auto px-3 sm:px-6 lg:px-8 pb-6 sm:pb-8">
-        <Footer />
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle">
+        <div className="max-w-[1380px] mx-auto w-full flex flex-col gap-5 sm:gap-6 pb-2">
+          <main className="w-full min-w-0 space-y-6 sm:space-y-8">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </div>
     </div>
   );

@@ -242,7 +242,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               return (
                 <div
                   key={step.number}
-                  className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 flex flex-col justify-between gap-4"
+                  className="amanah-card-border rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">

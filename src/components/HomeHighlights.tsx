@@ -88,7 +88,7 @@ export function HomeHighlights() {
             >
               <Link
                 href={item.href}
-                className="group w-full rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 hover:border-emerald-300 dark:hover:border-emerald-700/80 hover:bg-white dark:hover:bg-slate-900/90 p-5 sm:p-6 flex flex-col justify-between gap-5 transition-colors duration-150"
+                className="amanah-card-border group w-full rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 hover:bg-white dark:hover:bg-slate-900/90 p-5 sm:p-6 flex flex-col justify-between gap-5 transition-colors duration-150"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">

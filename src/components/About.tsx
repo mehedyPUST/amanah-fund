@@ -88,7 +88,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.18, delay: idx * 0.03 }}
-                className={`${spanClass} rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 space-y-3`}
+                className={`${spanClass} amanah-card-border rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 space-y-3`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
