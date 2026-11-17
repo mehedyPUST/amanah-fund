@@ -82,44 +82,44 @@ interface NavItemConfig {
 }
 
 const MEMBER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
-  { id: 'monthly-contribution', label: 'Monthly Contribution', Icon: CreditCard, group: 'member' },
-  { id: 'quard-hasan', label: 'Quard Hasan', Icon: HandCoins, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: BarChart3, group: 'member' },
   { id: 'my-amanah', label: 'My Amanah', Icon: Wallet, group: 'member' },
-  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
-  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
+  { id: 'monthly-contribution', label: 'Contributions', Icon: CreditCard, group: 'member' },
+  { id: 'quard-hasan', label: 'Qard Hasan', Icon: HandCoins, group: 'member' },
+  { id: 'transaction-history', label: 'Transactions', Icon: History, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
-  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
+  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
+  { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
+  { id: 'members', label: 'Members', Icon: Users, group: 'member' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
+  { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
 ];
 
 const MANAGER_NAV_ITEMS: NavItemConfig[] = [
   { id: 'manager-desk', label: 'Manager Desk', Icon: ClipboardCheck, group: 'manager' },
-  { id: 'member-registry', label: 'Member Updates & Directory', Icon: Users, group: 'manager' },
+  { id: 'member-registry', label: 'Member Registry', Icon: Users, group: 'manager' },
 ];
 
 const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Amanah Overview', Icon: BarChart3, group: 'member' },
-  { id: 'transaction-history', label: 'Transaction History', Icon: History, group: 'member' },
-  { id: 'ballot', label: 'Opinion Ballot', Icon: Vote, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: BarChart3, group: 'member' },
+  { id: 'transaction-history', label: 'Transactions', Icon: History, group: 'member' },
+  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'members', label: 'Member Directory', Icon: Users, group: 'member' },
+  { id: 'members', label: 'Members', Icon: Users, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'notification', label: 'Notification', Icon: Bell, group: 'member' },
+  { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
-  { id: 'my-profile', label: 'My Profile', Icon: User, group: 'member' },
+  { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
 ];
 
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'member-registry', label: 'User & Role Management', Icon: Users, group: 'admin' },
+  { id: 'member-registry', label: 'Users & Roles', Icon: Users, group: 'admin' },
+  { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
   { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
   { id: 'email-queue', label: 'Email Queue', Icon: MailWarning, group: 'admin' },
-  { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
-  { id: 'system-audit-logs', label: 'System Audit Logs', Icon: Shield, group: 'admin' },
+  { id: 'system-audit-logs', label: 'Audit Logs', Icon: Shield, group: 'admin' },
 ];
 
 type SectionAccentTone = 'emerald' | 'amber';
@@ -857,7 +857,7 @@ export function DashboardShell() {
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
               {activeSection === 'member-profile'
                 ? 'Member Profile'
-                : activeNavMeta?.label || 'Amanah Overview'}
+                : activeNavMeta?.label || 'Overview'}
             </h1>
           </div>
         </div>
@@ -1238,7 +1238,7 @@ export function DashboardShell() {
             >
               {activeSection === 'fund-overview' && (
                 <section id="fund-overview" className="space-y-4">
-                  <SectionEyebrow label="Amanah Overview" tone="emerald" />
+                  <SectionEyebrow label="Overview" tone="emerald" />
                   <OverviewView
                     overview={overview}
                     contributions={contributions}
@@ -1256,7 +1256,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'monthly-contribution' && (
                 <section id="monthly-contribution" className="space-y-4">
-                  <SectionEyebrow label="Monthly Contribution" tone="emerald" />
+                  <SectionEyebrow label="Contributions" tone="emerald" />
                   <ContributionsView
                     contributions={contributions}
                     config={overview?.config || null}
@@ -1271,7 +1271,7 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
-                  <SectionEyebrow label="Quard Hasan" tone="emerald" />
+                  <SectionEyebrow label="Qard Hasan" tone="emerald" />
                   <LoansView
                     loans={loans}
                     eligibility={overview?.personal.eligibility || null}
@@ -1303,14 +1303,14 @@ export function DashboardShell() {
 
               {activeSection === 'my-profile' && (
                 <section id="my-profile" className="space-y-4">
-                  <SectionEyebrow label="My Profile" tone="emerald" />
+                  <SectionEyebrow label="Profile" tone="emerald" />
                   <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
                 </section>
               )}
 
               {activeSection === 'notification' && (
                 <section id="notification" className="space-y-4">
-                  <SectionEyebrow label="Notification" tone="amber" />
+                  <SectionEyebrow label="Notifications" tone="amber" />
                   <NotificationsView
                     user={user}
                     workspace={workspace}
@@ -1341,7 +1341,7 @@ export function DashboardShell() {
 
               {activeSection === 'ballot' && (
                 <section id="ballot" className="space-y-4">
-                  <SectionEyebrow label="Opinion Ballot" tone="amber" />
+                  <SectionEyebrow label="Voting" tone="amber" />
                   <VotingView
                     loans={loans}
                     projects={halalProjects}
@@ -1358,7 +1358,7 @@ export function DashboardShell() {
 
               {activeSection === 'transaction-history' && (
                 <section id="transaction-history" className="space-y-4">
-                  <SectionEyebrow label="Transaction History" tone="emerald" />
+                  <SectionEyebrow label="Transactions" tone="emerald" />
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
@@ -1373,7 +1373,7 @@ export function DashboardShell() {
 
               {activeSection === 'members' && (
                 <section id="members" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Member Directory" tone="emerald" />
+                  <SectionEyebrow label="Members" tone="emerald" />
                   <ActiveMembersView
                     user={user}
                     config={overview?.config || null}

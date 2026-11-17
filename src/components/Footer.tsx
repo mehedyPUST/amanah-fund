@@ -33,32 +33,32 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
               <li>
                 <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Overview
+                  Home
                 </Link>
               </li>
               <li>
-                <Link href="/community" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Community Hub
-                </Link>
-              </li>
-              <li>
-                <Link href="/#architecture" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Security &amp; Architecture
-                </Link>
-              </li>
-              <li>
-                <Link href="/#how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                <Link href="/how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   How It Works
                 </Link>
               </li>
               <li>
+                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                  About &amp; Security
+                </Link>
+              </li>
+              <li>
                 <Link href="/rules" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Governance Charter
+                  Rules &amp; Charter
+                </Link>
+              </li>
+              <li>
+                <Link href="/community" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                  Community
                 </Link>
               </li>
               <li>
                 <Link href="/#faq" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Frequently Asked Questions
+                  FAQ
                 </Link>
               </li>
             </ul>

@@ -443,7 +443,7 @@ export function MyAmanahView({
               onClick={() => onNavigate('quard-hasan')}
               className="font-medium text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
             >
-              Open Quard Hasan →
+              Open Qard Hasan →
             </button>
           </div>
         </section>
