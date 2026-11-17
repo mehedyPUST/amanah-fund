@@ -54,6 +54,43 @@ export function extractJsonObjectFromText<T>(raw: string): T {
   }
 }
 
+function extractMessageContentText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object' && 'text' in part) {
+          return String((part as { text?: unknown }).text || '');
+        }
+        return '';
+      })
+      .join('');
+  }
+  return '';
+}
+
+function stripThinkTags(raw: string): string {
+  return raw
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<think>[\s\S]*$/gi, '')
+    .trim();
+}
+
+function applyReasoningModelDefaults(body: Record<string, unknown>, model: string): void {
+  const maxTokens = Number(body.max_tokens || 2400);
+  if (/^openai\/gpt-oss/i.test(model)) {
+    body.reasoning_effort = 'low';
+    body.max_tokens = Math.max(maxTokens, 4096);
+  } else if (/qwen3/i.test(model)) {
+    body.reasoning_effort = 'none';
+    body.max_tokens = Math.max(maxTokens, 3200);
+  } else if (/deepseek-r1/i.test(model)) {
+    body.reasoning_format = 'hidden';
+    body.max_tokens = Math.max(maxTokens, 4096);
+  }
+}
+
 class GroqHttpError extends Error {
   status: number;
   code?: string;
@@ -68,13 +105,28 @@ class GroqHttpError extends Error {
   }
 }
 
-async function callGroqChat(params: {
+interface GroqChatChoice {
+  finish_reason?: string | null;
+  message?: {
+    content?: unknown;
+    reasoning?: string;
+    reasoning_content?: string;
+  };
+}
+
+async function executeGroqChatOnce(params: {
   messages: GroqMessage[];
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
+  includeReasoningHints?: boolean;
   fetchImpl?: typeof fetch;
-}): Promise<{ content: string; model: string }> {
+}): Promise<{
+  content: string;
+  reasoningFallback: string;
+  finishReason: string;
+  model: string;
+}> {
   const apiKey = getGroqApiKey();
   if (!apiKey) {
     throw new Error('GROQ_API_KEY is not configured in the server environment.');
@@ -91,6 +143,10 @@ async function callGroqChat(params: {
 
   if (params.jsonMode) {
     body.response_format = { type: 'json_object' };
+  }
+
+  if (params.includeReasoningHints !== false) {
+    applyReasoningModelDefaults(body, model);
   }
 
   const response = await fetchFn(GROQ_API_ENDPOINT, {
@@ -124,18 +180,114 @@ async function callGroqChat(params: {
 
   const data = (await response.json()) as {
     model?: string;
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: GroqChatChoice[];
   };
 
-  const content = String(data?.choices?.[0]?.message?.content || '').trim();
-  if (!content) {
-    throw new Error('Groq API returned an empty completion.');
-  }
+  const choice = data?.choices?.[0];
+  const rawContent = extractMessageContentText(choice?.message?.content);
+  const cleanedContent = stripThinkTags(rawContent);
+  const reasoningFallback = String(
+    choice?.message?.reasoning_content || choice?.message?.reasoning || ''
+  ).trim();
 
   return {
-    content,
+    content: cleanedContent,
+    reasoningFallback,
+    finishReason: String(choice?.finish_reason || '').trim(),
     model: data?.model || model,
   };
+}
+
+function extractRecoverableReasoningText(reasoning: string): string {
+  if (!reasoning) return '';
+  if (reasoning.includes('===TRANSLATION===')) {
+    return reasoning;
+  }
+  const startIdx = reasoning.indexOf('{');
+  const endIdx = reasoning.lastIndexOf('}');
+  if (startIdx !== -1 && endIdx > startIdx) {
+    return reasoning.slice(startIdx, endIdx + 1).trim();
+  }
+  return '';
+}
+
+async function callGroqChat(params: {
+  messages: GroqMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  jsonMode?: boolean;
+  fetchImpl?: typeof fetch;
+}): Promise<{ content: string; model: string }> {
+  let firstAttempt;
+  let supportsReasoningHints = true;
+  try {
+    firstAttempt = await executeGroqChatOnce({
+      ...params,
+      includeReasoningHints: true,
+    });
+  } catch (err) {
+    const isUnsupportedReasoningHint =
+      err instanceof GroqHttpError &&
+      err.status === 400 &&
+      /reasoning_effort|reasoning_format/i.test(err.message);
+    if (!isUnsupportedReasoningHint) {
+      throw err;
+    }
+    supportsReasoningHints = false;
+    firstAttempt = await executeGroqChatOnce({
+      ...params,
+      includeReasoningHints: false,
+    });
+  }
+
+  if (firstAttempt.content) {
+    return {
+      content: firstAttempt.content,
+      model: firstAttempt.model,
+    };
+  }
+
+  const recoveredFromFirst = extractRecoverableReasoningText(firstAttempt.reasoningFallback);
+  if (recoveredFromFirst) {
+    return {
+      content: recoveredFromFirst,
+      model: firstAttempt.model,
+    };
+  }
+
+  // Automatic single retry when Groq returns HTTP 200 with an empty completion
+  // (e.g. reasoning-token exhaustion, strict json_object stall, or transient upstream blank reply).
+  const retryMaxTokens = Math.min(8192, Math.max(params.maxTokens ?? 2400, 4096));
+  const retryTemp = Math.max(params.temperature ?? 0.35, 0.25);
+
+  const retryAttempt = await executeGroqChatOnce({
+    messages: params.messages,
+    temperature: retryTemp,
+    maxTokens: retryMaxTokens,
+    jsonMode: false,
+    includeReasoningHints: supportsReasoningHints,
+    fetchImpl: params.fetchImpl,
+  });
+
+  if (retryAttempt.content) {
+    return {
+      content: retryAttempt.content,
+      model: retryAttempt.model,
+    };
+  }
+
+  const recoveredFromRetry = extractRecoverableReasoningText(retryAttempt.reasoningFallback);
+  if (recoveredFromRetry) {
+    return {
+      content: recoveredFromRetry,
+      model: retryAttempt.model,
+    };
+  }
+
+  const reasonTag = retryAttempt.finishReason || firstAttempt.finishReason || 'empty';
+  throw new Error(
+    `Groq API returned an empty completion (model: ${retryAttempt.model}, finish_reason: ${reasonTag}). Please retry or verify GROQ_MODEL.`
+  );
 }
 
 export async function callGroqJson<T>(params: {
@@ -157,15 +309,20 @@ export async function callGroqJson<T>(params: {
     const isJsonValidationError =
       err instanceof GroqHttpError &&
       err.status === 400 &&
-      (err.code === 'json_validate_failed' ||
-        /validate json/i.test(err.message));
+      (err.code === 'json_validate_failed' || /validate json/i.test(err.message));
 
-    if (!isJsonValidationError) {
+    const isRecoverableOutputFailure =
+      isJsonValidationError ||
+      (err instanceof Error &&
+        !(err instanceof GroqHttpError) &&
+        (/empty completion/i.test(err.message) || /invalid JSON output/i.test(err.message)));
+
+    if (!isRecoverableOutputFailure) {
       throw err;
     }
 
     // Attempt to recover if Groq returned a nearly-valid JSON snippet in failed_generation
-    if (err.failedGeneration) {
+    if (err instanceof GroqHttpError && err.failedGeneration) {
       try {
         return {
           parsed: extractJsonObjectFromText<T>(err.failedGeneration),
@@ -188,8 +345,8 @@ export async function callGroqJson<T>(params: {
 
     const retryResult = await callGroqChat({
       messages: fallbackMessages,
-      temperature: params.temperature,
-      maxTokens: params.maxTokens,
+      temperature: Math.max(params.temperature ?? 0.35, 0.25),
+      maxTokens: Math.max(params.maxTokens ?? 2400, 3200),
       jsonMode: false,
       fetchImpl: params.fetchImpl,
     });
@@ -706,7 +863,7 @@ export async function translateAndRefineCharterText(params: {
   const maxTotalChars = 36000;
   const truncated = cleanText.length > maxTotalChars;
   const workingText = truncated ? cleanText.slice(0, maxTotalChars) : cleanText;
-  const chunks = splitTextIntoChunks(workingText, 4200);
+  const chunks = splitTextIntoChunks(workingText, 2600);
   const langLabel = LANGUAGE_LABELS[params.targetLanguage] || 'English';
 
   const translatedParts: string[] = [];

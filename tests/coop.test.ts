@@ -1540,4 +1540,65 @@ describe('Groq AI Community Spam Shield & Charter PDF Extraction', () => {
       }
     }
   });
+
+  it('retries automatically when Groq returns an empty completion and strips reasoning tags', async () => {
+    const prevKey = process.env.GROQ_API_KEY;
+    const prevModel = process.env.GROQ_MODEL;
+    process.env.GROQ_API_KEY = 'gsk_test_mock_key';
+    process.env.GROQ_MODEL = 'qwen/qwen3-32b';
+    try {
+      const seenBodies: Array<Record<string, unknown>> = [];
+      let callCount = 0;
+      const emptyThenSuccessFetch: typeof fetch = async (_input, init) => {
+        callCount += 1;
+        seenBodies.push(JSON.parse(String(init?.body || '{}')));
+        if (callCount === 1) {
+          return new Response(
+            JSON.stringify({
+              model: 'qwen/qwen3-32b',
+              choices: [
+                {
+                  finish_reason: 'length',
+                  message: { content: '<think>reasoning truncated before output' },
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            model: 'qwen/qwen3-32b',
+            choices: [
+              {
+                finish_reason: 'stop',
+                message: {
+                  content: '<think>done</think>{"rewrittenText":"Clean cooperative update","improvements":["Clarified"]}',
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      };
+
+      const res = await callGroqJson<{ rewrittenText: string; improvements: string[] }>({
+        messages: [{ role: 'user', content: 'Rewrite' }],
+        maxTokens: 700,
+        fetchImpl: emptyThenSuccessFetch,
+      });
+
+      expect(callCount).toBe(2);
+      expect(seenBodies[0].reasoning_effort).toBe('none');
+      expect(seenBodies[0].response_format).toEqual({ type: 'json_object' });
+      expect(seenBodies[1].response_format).toBeUndefined();
+      expect(Number(seenBodies[1].max_tokens)).toBeGreaterThanOrEqual(4096);
+      expect(res.parsed.rewrittenText).toBe('Clean cooperative update');
+    } finally {
+      if (prevKey === undefined) delete process.env.GROQ_API_KEY;
+      else process.env.GROQ_API_KEY = prevKey;
+      if (prevModel === undefined) delete process.env.GROQ_MODEL;
+      else process.env.GROQ_MODEL = prevModel;
+    }
+  });
 });
