@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { JetBrains_Mono, Plus_Jakarta_Sans, Public_Sans } from 'next/font/google';
+import { Anek_Bangla, JetBrains_Mono, Plus_Jakarta_Sans, Public_Sans } from 'next/font/google';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
 import { AppProviders } from '../components/AppProviders.tsx';
@@ -21,6 +21,12 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-mono',
+});
+
+const anekBangla = Anek_Bangla({
+  subsets: ['bengali', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-bangla',
 });
 
 export const viewport: Viewport = {
@@ -60,7 +66,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plusJakarta.variable} ${publicSans.variable} ${jetBrainsMono.variable}`}
+      className={`${plusJakarta.variable} ${publicSans.variable} ${jetBrainsMono.variable} ${anekBangla.variable}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
         <Script id="amanah-theme-init" strategy="beforeInteractive">

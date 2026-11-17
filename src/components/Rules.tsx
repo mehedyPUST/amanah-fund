@@ -347,7 +347,9 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                           aria-hidden="true"
                         />
                       )}
-                      <span className="relative z-10">{option.label}</span>
+                      <span lang={option.id} className="relative z-10">
+                        {option.label}
+                      </span>
                     </button>
                   );
                 })}

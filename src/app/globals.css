@@ -15,16 +15,25 @@ html.dark {
 
 @layer base {
   body {
-    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans), var(--font-bangla), system-ui, -apple-system, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, .font-display {
-    font-family: var(--font-display), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-display), var(--font-bangla), system-ui, -apple-system, sans-serif;
   }
 
   .font-mono {
-    font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+    font-family: var(--font-mono), var(--font-bangla), ui-monospace, SFMono-Regular, monospace;
+  }
+
+  [lang="bn"],
+  [lang="bn"] h1,
+  [lang="bn"] h2,
+  [lang="bn"] h3,
+  [lang="bn"] h4,
+  [lang="bn"] .font-mono {
+    font-family: var(--font-bangla), var(--font-sans), system-ui, -apple-system, sans-serif;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
