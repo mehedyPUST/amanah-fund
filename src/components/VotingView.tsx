@@ -89,15 +89,17 @@ export function VotingView({
     | null
   >(null);
   const [modalBusy, setModalBusy] = useState(false);
-  /** Tick every second so deadline countdowns stay live */
-  const [nowTick, setNowTick] = useState(() => Date.now());
+  /** Tick every second so deadline countdowns stay live (hydrated post-mount to avoid SSR mismatch) */
+  const [nowTick, setNowTick] = useState<number>(0);
   useEffect(() => {
+    setNowTick(Date.now());
     const t = window.setInterval(() => setNowTick(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
 
   function formatCountdown(deadlineIso: string | undefined): string {
     if (!deadlineIso) return 'No deadline set';
+    if (!nowTick) return 'Loading...';
     const ms = new Date(deadlineIso).getTime() - nowTick;
     if (ms <= 0) return 'Deadline passed';
     const totalSec = Math.floor(ms / 1000);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanah-pwa-v2';
+const CACHE_NAME = 'amanah-pwa-v3';
 const APP_SHELL_URLS = [
   '/',
   '/manifest.webmanifest',
@@ -8,12 +8,29 @@ const APP_SHELL_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // On initial install (no active worker yet), activate immediately;
+  // on subsequent updates, wait so the UI can present the "Update App" action cleanly.
+  if (!self.registration || !self.registration.active) {
+    self.skipWaiting();
+  }
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(APP_SHELL_URLS).catch(() => undefined))
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (!event.data || typeof event.data !== 'object') return;
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+  if (event.data.type === 'CLEAR_CACHES') {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+    );
+  }
 });
 
 self.addEventListener('activate', (event) => {

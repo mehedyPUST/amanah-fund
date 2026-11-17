@@ -25,6 +25,20 @@ import {
 import { OfflineIndicator } from './OfflineIndicator.tsx';
 
 
+const PWA_LAST_CHECK_KEY = 'amanah_pwa_last_update_check';
+const PWA_DAILY_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+export interface PwaUpdateContextState {
+  updateAvailable: boolean;
+  checkingUpdate: boolean;
+  applyingUpdate: boolean;
+  lastCheckedAt: number | null;
+  statusMessage: string | null;
+  checkForUpdates: (manual?: boolean) => Promise<'update-available' | 'up-to-date' | 'unsupported'>;
+  applyUpdate: () => Promise<void>;
+  dismissStatusMessage: () => void;
+}
+
 interface CoopSessionContextValue {
   user: PublicUser | null;
   authChecking: boolean;
@@ -37,6 +51,7 @@ interface CoopSessionContextValue {
   connectingGoogle: boolean;
   handleConnectGoogle: () => Promise<void>;
   handleDisconnectGoogle: () => Promise<void>;
+  pwaUpdate: PwaUpdateContextState;
 }
 
 const CoopSessionContext = createContext<CoopSessionContextValue | null>(null);
@@ -58,6 +73,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     getWorkspaceSessionInfo()
   );
   const [connectingGoogle, setConnectingGoogle] = useState(false);
+
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [applyingUpdate, setApplyingUpdate] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
+  const reloadingRef = useRef(false);
 
   const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
@@ -100,6 +123,27 @@ export function AppProviders({ children }: { children: ReactNode }) {
       (!saved && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
     setDarkMode(prefersDark);
     document.documentElement.classList.toggle('dark', prefersDark);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__amanahInstallPrompt = window.__amanahInstallPrompt ?? null;
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      window.__amanahInstallPrompt = e as unknown as typeof window.__amanahInstallPrompt;
+      window.dispatchEvent(new CustomEvent('amanah:pwa-prompt-updated'));
+    };
+    const handleAppInstalled = () => {
+      window.__amanahInstallPrompt = null;
+      window.__amanahAppInstalled = true;
+      window.dispatchEvent(new CustomEvent('amanah:pwa-prompt-updated'));
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   const toggleDarkMode = useCallback(() => {
@@ -160,18 +204,189 @@ export function AppProviders({ children }: { children: ReactNode }) {
     void refreshUser();
   }, [refreshUser]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-        .then((reg) => {
-          reg.update().catch(() => {});
-        })
-        .catch(() => {
-          // Optional SW registration when browser restricts scope
-        });
+  const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
+    swRegRef.current = reg;
+    if (reg.waiting) {
+      setUpdateAvailable(true);
+      setStatusMessage('New app update is ready to install.');
+    }
+
+    const handleInstallingWorker = (worker: ServiceWorker | null) => {
+      if (!worker) return;
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          setUpdateAvailable(true);
+          setStatusMessage('New app update is ready to install.');
+        }
+      });
+    };
+
+    if (reg.installing) {
+      handleInstallingWorker(reg.installing);
+    }
+
+    reg.addEventListener('updatefound', () => {
+      handleInstallingWorker(reg.installing);
+    });
+  }, []);
+
+  const checkForUpdates = useCallback(
+    async (manual = true): Promise<'update-available' | 'up-to-date' | 'unsupported'> => {
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        if (manual) {
+          setStatusMessage('Service worker updates require a supported browser.');
+        }
+        return 'unsupported';
+      }
+
+      setCheckingUpdate(true);
+      if (manual) {
+        setStatusMessage('Checking for app updates...');
+      }
+
+      try {
+        const reg =
+          swRegRef.current ||
+          (await navigator.serviceWorker.getRegistration('/')) ||
+          (await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+            updateViaCache: 'none',
+          }));
+
+        attachRegistrationListeners(reg);
+
+        const now = Date.now();
+        window.localStorage.setItem(PWA_LAST_CHECK_KEY, String(now));
+        setLastCheckedAt(now);
+
+        await reg.update();
+
+        // Give an incoming installing worker a short window to reach waiting state
+        if (reg.installing) {
+          await new Promise<void>((resolve) => {
+            const worker = reg.installing;
+            if (!worker) {
+              resolve();
+              return;
+            }
+            const timer = window.setTimeout(resolve, 1400);
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' || worker.state === 'redundant') {
+                window.clearTimeout(timer);
+                resolve();
+              }
+            });
+          });
+        }
+
+        if (reg.waiting) {
+          setUpdateAvailable(true);
+          setStatusMessage('New app update ready. Click Update App to apply.');
+          return 'update-available';
+        }
+
+        setUpdateAvailable(false);
+        if (manual) {
+          setStatusMessage('You are on the latest version.');
+        }
+        return 'up-to-date';
+      } catch {
+        const now = Date.now();
+        window.localStorage.setItem(PWA_LAST_CHECK_KEY, String(now));
+        setLastCheckedAt(now);
+        if (manual) {
+          setStatusMessage('Unable to check updates right now. Please try again.');
+        }
+        return 'up-to-date';
+      } finally {
+        setCheckingUpdate(false);
+      }
+    },
+    [attachRegistrationListeners]
+  );
+
+  const applyUpdate = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    setApplyingUpdate(true);
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = swRegRef.current || (await navigator.serviceWorker.getRegistration('/'));
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          window.setTimeout(() => {
+            if (!reloadingRef.current) {
+              reloadingRef.current = true;
+              window.location.reload();
+            }
+          }, 1200);
+          return;
+        }
+        if (reg?.active) {
+          reg.active.postMessage({ type: 'CLEAR_CACHES' });
+        }
+      }
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((k) => window.caches.delete(k)));
+      }
+      window.location.reload();
+    } catch {
+      window.location.reload();
     }
   }, []);
+
+  const dismissStatusMessage = useCallback(() => {
+    setStatusMessage(null);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    const rawLast = window.localStorage.getItem(PWA_LAST_CHECK_KEY);
+    const parsedLast = rawLast ? Number(rawLast) : null;
+    if (parsedLast && Number.isFinite(parsedLast)) {
+      setLastCheckedAt(parsedLast);
+    }
+
+    const handleControllerChange = () => {
+      if (!reloadingRef.current) {
+        reloadingRef.current = true;
+        window.location.reload();
+      }
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .then((reg) => {
+        attachRegistrationListeners(reg);
+        const now = Date.now();
+        const isDailyDue =
+          !parsedLast ||
+          !Number.isFinite(parsedLast) ||
+          now - parsedLast >= PWA_DAILY_CHECK_INTERVAL_MS;
+        if (isDailyDue) {
+          void checkForUpdates(false);
+        }
+      })
+      .catch(() => {
+        // Optional SW registration when browser restricts scope
+      });
+
+    // Periodic hourly check in case standalone PWA stays open across 24h boundary
+    const intervalId = window.setInterval(() => {
+      const stored = window.localStorage.getItem(PWA_LAST_CHECK_KEY);
+      const last = stored ? Number(stored) : 0;
+      if (!last || Date.now() - last >= PWA_DAILY_CHECK_INTERVAL_MS) {
+        void checkForUpdates(false);
+      }
+    }, 60 * 60 * 1000);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      window.clearInterval(intervalId);
+    };
+  }, [attachRegistrationListeners, checkForUpdates]);
 
   const logout = useCallback(async () => {
     try {
@@ -210,6 +425,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         connectingGoogle,
         handleConnectGoogle,
         handleDisconnectGoogle,
+        pwaUpdate: {
+          updateAvailable,
+          checkingUpdate,
+          applyingUpdate,
+          lastCheckedAt,
+          statusMessage,
+          checkForUpdates,
+          applyUpdate,
+          dismissStatusMessage,
+        },
       }}
     >
       <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>

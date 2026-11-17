@@ -9,7 +9,7 @@ export function Footer() {
   const { user, darkMode, toggleDarkMode } = useCoopSession();
 
   return (
-    <footer className="w-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs">
+    <footer className="w-full amanah-card-emerald border rounded-2xl">
       <div className="px-6 sm:px-8 py-7">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
@@ -97,7 +97,7 @@ export function Footer() {
 
         <div className="mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            © {new Date().getFullYear()} Amanah · 0% Interest · Shariah-Governed
+            © {new Date().getUTCFullYear()} Amanah · 0% Interest · Shariah-Governed
           </span>
 
           <button

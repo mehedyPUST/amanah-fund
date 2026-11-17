@@ -52,6 +52,7 @@ import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { ActionModal } from './ActionModal.tsx';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
+import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
 import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
@@ -205,6 +206,7 @@ export function DashboardShell() {
   const {
     user,
     authChecking,
+    refreshUser,
     logout,
     darkMode,
     toggleDarkMode,
@@ -582,9 +584,13 @@ export function DashboardShell() {
   }
 
   const handleRefreshWithAutoSync = useCallback(async () => {
-    const freshOverview = await refreshWorkspace(true);
+    const [, freshOverview] = await Promise.all([
+      refreshUser(),
+      refreshWorkspace(false),
+    ]);
+    router.refresh();
     await triggerAutoSheetSyncIfEnabled(freshOverview);
-  }, [refreshWorkspace, triggerAutoSheetSyncIfEnabled]);
+  }, [refreshUser, refreshWorkspace, router, triggerAutoSheetSyncIfEnabled]);
 
   const handleLoanCreatedOptimistic = useCallback((createdLoan: LoanRequest) => {
     setLoans((prev) => {
@@ -833,7 +839,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 amanah-card-emerald backdrop-blur-md rounded-2xl border px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -860,7 +866,7 @@ export function DashboardShell() {
           <Link
             href="/"
             title="Public Website"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Home</span>
@@ -883,22 +889,29 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => void refreshWorkspace(false)}
-            title="Refresh live balances"
-            aria-label="Refresh live balances"
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+            onClick={() => void handleRefreshWithAutoSync()}
+            disabled={dataLoading}
+            title="Refresh dashboard & live balances"
+            aria-label="Refresh dashboard"
+            className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70"
           >
-            <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
+              aria-hidden="true"
+            />
+            <span className="hidden md:inline">Refresh</span>
           </button>
 
-          <PWAInstallButton compact className="hidden sm:inline-flex" />
+          <PWAUpdateButton compact className="hidden sm:inline-flex" />
+
+          <PWAInstallButton compact className="hidden lg:inline-flex" />
 
           <button
             type="button"
             onClick={toggleDarkMode}
             title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-500" />
@@ -977,6 +990,7 @@ export function DashboardShell() {
               </nav>
 
               <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                <PWAUpdateButton fullWidth />
                 <Link
                   href="/"
                   onClick={() => setMobileNavOpen(false)}

@@ -125,12 +125,18 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
 
   useEffect(() => {
     if (!isActiveMember) return;
+    const handleGlobalRefresh = () => {
+      void loadNotices(false);
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+
     const source = new EventSource('/api/events');
     const handleNoticeUpdate = () => {
       void loadNotices(true);
     };
     source.addEventListener('notice:updated', handleNoticeUpdate);
     return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
       source.removeEventListener('notice:updated', handleNoticeUpdate);
       source.close();
     };

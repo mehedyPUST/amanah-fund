@@ -41,9 +41,9 @@ interface NomineeDraft {
   photoUploading: boolean;
 }
 
-function createEmptyNominee(sharePercentage = '100'): NomineeDraft {
+function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeDraft {
   return {
-    id: `nom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: fixedId || `nom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: '',
     dateOfBirth: '',
     gender: '',
@@ -82,7 +82,9 @@ export function SignUpForm() {
   const [sameAsPresent, setSameAsPresent] = useState(false);
 
   // Nominees (1 or more; share % sums to 100%)
-  const [nominees, setNominees] = useState<NomineeDraft[]>(() => [createEmptyNominee('100')]);
+  const [nominees, setNominees] = useState<NomineeDraft[]>(() => [
+    createEmptyNominee('100', 'nom-initial-1'),
+  ]);
 
   // ImageKit.io uploaded photo & agreement paper URLs
   const [photoUrl, setPhotoUrl] = useState('');
