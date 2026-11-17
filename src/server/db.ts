@@ -12,6 +12,7 @@ import type {
   EmailNotification,
   EmailQueueItem,
   EncryptedEnvelope,
+  FaqItem,
   FundConfig,
   HalalProject,
   LoanRequest,
@@ -21,6 +22,7 @@ import type {
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
+import { createDefaultFaqs, sortFaqItems } from '../utils/faqDefaults.ts';
 
 export interface StoredUser {
   id: string;
@@ -76,6 +78,7 @@ export interface VaultState {
   profileChangeRequests?: ProfileChangeRequest[];
   passwordResetRequests?: PasswordResetRequest[];
   emailQueue?: EmailQueueItem[];
+  faqs?: FaqItem[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -117,6 +120,7 @@ function createEmptyVaultState(): VaultState {
     managerCycleMonths: 3,
     managerCycleStartDate: '2027-01-01',
     monthlyReportAutoEmail: true,
+    faqsSeeded: true,
     halalInvestmentThesis:
       'VISION-36 (Jan 2027 – Dec 2036): Deploy accumulated Halal capital with 2/3 member approval into 1 land share per member share, Islamic schools across at least 3 districts, the "Al Madina City" residential community blueprint, and Maktab institutions in northern and hill-tract districts.',
     updatedAt: now,
@@ -139,6 +143,7 @@ function createEmptyVaultState(): VaultState {
     profileChangeRequests: [],
     passwordResetRequests: [],
     emailQueue: [],
+    faqs: createDefaultFaqs(now),
   };
 }
 
@@ -193,6 +198,14 @@ function normalizeVaultState(state: VaultState): VaultState {
   state.emailQueue = Array.isArray(state.emailQueue)
     ? state.emailQueue
     : [];
+  if (!Array.isArray(state.faqs)) {
+    state.faqs = createDefaultFaqs();
+    if (state.fundConfig) {
+      state.fundConfig.faqsSeeded = true;
+    }
+  } else {
+    state.faqs = sortFaqItems(state.faqs);
+  }
   if (state.fundConfig) {
     if (state.fundConfig.guarantorThresholdAmount === undefined) {
       state.fundConfig.guarantorThresholdAmount = 40000;
@@ -286,12 +299,26 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
       mongoDb = mongoClient.db('amanah_coop');
       storageEngine = 'mongodb_atlas';
 
-      const configCount = await mongoDb.collection('fundConfig').countDocuments({
+      const existingConfig = await mongoDb.collection<FundConfig>('fundConfig').findOne({
         id: 'default-config',
       });
-      if (configCount === 0) {
+      if (!existingConfig) {
         const empty = createEmptyVaultState();
         await mongoDb.collection('fundConfig').insertOne(empty.fundConfig);
+        if (empty.faqs && empty.faqs.length > 0) {
+          const faqsCount = await mongoDb.collection('faqs').countDocuments({});
+          if (faqsCount === 0) {
+            await mongoDb.collection('faqs').insertMany(empty.faqs);
+          }
+        }
+      } else if (!existingConfig.faqsSeeded) {
+        const faqsCount = await mongoDb.collection('faqs').countDocuments({});
+        if (faqsCount === 0) {
+          await mongoDb.collection('faqs').insertMany(createDefaultFaqs());
+        }
+        await mongoDb
+          .collection('fundConfig')
+          .updateOne({ id: 'default-config' }, { $set: { faqsSeeded: true } });
       }
 
       // One-time migration: remove historical demo seed accounts & related rows.
@@ -370,6 +397,8 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
         mongoDb.collection('emailQueue').createIndex({ createdAt: -1 }),
+        mongoDb.collection('faqs').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('faqs').createIndex({ sortOrder: 1 }),
       ]);
 
       initialized = true;
@@ -410,6 +439,7 @@ export async function loadVaultState(): Promise<VaultState> {
       profileChangeRequests,
       passwordResetRequests,
       emailQueue,
+      faqs,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
       mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -426,6 +456,7 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
       mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
       mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+      mongoDb.collection<FaqItem>('faqs').find({}, { projection: { _id: 0 } }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
     ]);
 
     return normalizeVaultState({
@@ -444,6 +475,7 @@ export async function loadVaultState(): Promise<VaultState> {
       profileChangeRequests,
       passwordResetRequests,
       emailQueue,
+      faqs,
     });
   }
   return readLocalVault();
@@ -539,6 +571,12 @@ export function updateVaultState(
           'emailQueue',
           current.emailQueue || [],
           next.emailQueue || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'faqs',
+          current.faqs || [],
+          next.faqs || []
         ),
       ]);
     } else {

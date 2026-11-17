@@ -20,6 +20,8 @@ import type {
   EmailTemplateCollection,
   EmailTemplateFormat,
   EmailTemplateKey,
+  FaqCategory,
+  FaqItem,
   FundConfig,
   HalalProject,
   LoanRequest,
@@ -872,6 +874,37 @@ export const api = {
     }),
   deleteNotice: (id: string) =>
     apiRequest<{ ok: boolean; id: string }>(`/api/notices/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Frequently Asked Questions (Public read; Admin add/edit/delete)
+  getFaqs: () => apiRequest<{ faqs: FaqItem[] }>('/api/faqs'),
+  createFaq: (payload: {
+    category: FaqCategory;
+    articleRef?: string;
+    question: string;
+    answer: string;
+  }) =>
+    apiRequest<{ faq: FaqItem; faqs: FaqItem[] }>('/api/faqs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateFaq: (
+    id: string,
+    payload: {
+      category?: FaqCategory;
+      articleRef?: string;
+      question?: string;
+      answer?: string;
+      sortOrder?: number;
+    }
+  ) =>
+    apiRequest<{ faq: FaqItem; faqs: FaqItem[] }>(`/api/faqs/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  deleteFaq: (id: string) =>
+    apiRequest<{ ok: boolean; id: string; faqs: FaqItem[] }>(`/api/faqs/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }),
 

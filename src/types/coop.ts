@@ -162,8 +162,23 @@ export interface FundConfig {
   lastMonthlyPdfSentMonth?: string;
   monthlyReportAutoEmail?: boolean;
   emailTemplates?: EmailTemplateCollection;
+  faqsSeeded?: boolean;
   updatedAt: string;
   updatedBy: string;
+}
+
+export type FaqCategory = 'membership' | 'fund' | 'loans' | 'governance';
+
+export interface FaqItem {
+  id: string;
+  category: FaqCategory;
+  articleRef: string;
+  question: string;
+  answer: string;
+  sortOrder?: number;
+  createdAt: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export type UploadDocumentCategory =

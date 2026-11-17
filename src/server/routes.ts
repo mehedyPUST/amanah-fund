@@ -17,6 +17,8 @@ import type {
   CoopNotice,
   DecisionPoll,
   EmailTemplateCollection,
+  FaqCategory,
+  FaqItem,
   FundConfig,
   HalalProject,
   InstallmentItem,
@@ -100,6 +102,7 @@ import {
   retryEmailQueueItemNow,
   sanitizeQueueItemForMonitor,
 } from './emailQueueService.ts';
+import { sortFaqItems } from '../utils/faqDefaults.ts';
 import { verifyPaymentReceiptImage } from './geminiService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
@@ -8660,6 +8663,240 @@ apiRouter.delete(
     } catch (err) {
       console.error('Delete notice error:', err);
       res.status(500).json({ error: 'Failed to delete notice.' });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// 10B. Frequently Asked Questions (Public read; Admin add/edit/delete)
+// ---------------------------------------------------------------------------
+
+const VALID_FAQ_CATEGORIES = new Set<FaqCategory>([
+  'membership',
+  'fund',
+  'loans',
+  'governance',
+]);
+
+apiRouter.get('/faqs', async (_req, res) => {
+  try {
+    const state = await loadVaultState();
+    const faqs = sortFaqItems(Array.isArray(state.faqs) ? state.faqs : []);
+    res.json({ faqs });
+  } catch (err) {
+    console.error('Fetch FAQs error:', err);
+    res.status(500).json({ error: 'Failed to load frequently asked questions.' });
+  }
+});
+
+apiRouter.post(
+  '/faqs',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const question = String(req.body?.question || '').trim();
+      const answer = String(req.body?.answer || '').trim();
+      const articleRef = String(req.body?.articleRef || '').trim();
+      const rawCategory = String(req.body?.category || 'membership').trim() as FaqCategory;
+
+      if (!VALID_FAQ_CATEGORIES.has(rawCategory)) {
+        res.status(400).json({ error: 'Invalid FAQ category.' });
+        return;
+      }
+      if (question.length < 5 || question.length > 300) {
+        res.status(400).json({ error: 'FAQ question must be between 5 and 300 characters.' });
+        return;
+      }
+      if (answer.length < 5 || answer.length > 4000) {
+        res.status(400).json({ error: 'FAQ answer must be between 5 and 4000 characters.' });
+        return;
+      }
+      if (articleRef.length > 80) {
+        res.status(400).json({ error: 'Charter reference must be 80 characters or fewer.' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      let createdFaq: FaqItem | null = null;
+      let sortedFaqs: FaqItem[] = [];
+
+      await updateVaultState((draft) => {
+        draft.faqs = Array.isArray(draft.faqs) ? draft.faqs : [];
+        const maxOrder = draft.faqs.reduce(
+          (max, item) => (typeof item.sortOrder === 'number' && item.sortOrder > max ? item.sortOrder : max),
+          0
+        );
+        const faq: FaqItem = {
+          id: `faq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          category: rawCategory,
+          articleRef: articleRef || 'Charter Policy',
+          question,
+          answer,
+          sortOrder: maxOrder + 1,
+          createdAt: now,
+          updatedAt: now,
+          updatedBy: viewer.name,
+        };
+        createdFaq = faq;
+        draft.faqs.push(faq);
+        draft.faqs = sortFaqItems(draft.faqs);
+        draft.fundConfig.faqsSeeded = true;
+        sortedFaqs = draft.faqs;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'FAQ_CREATED',
+          resourceType: 'config',
+          resourceId: faq.id,
+          summary: `${viewer.name} added FAQ "${question.slice(0, 80)}"`,
+          payload: { faqId: faq.id, category: faq.category, articleRef: faq.articleRef, question },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('faq:updated', { action: 'created', faqId: createdFaq?.id });
+      broadcastRealtimeEvent('audit:updated', { action: 'FAQ_CREATED' });
+      res.status(201).json({ faq: createdFaq, faqs: sortedFaqs });
+    } catch (err) {
+      console.error('Create FAQ error:', err);
+      res.status(500).json({ error: 'Failed to add FAQ entry.' });
+    }
+  }
+);
+
+apiRouter.patch(
+  '/faqs/:id',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const { id } = req.params;
+      const hasQuestion = req.body?.question !== undefined;
+      const hasAnswer = req.body?.answer !== undefined;
+      const hasCategory = req.body?.category !== undefined;
+      const hasArticleRef = req.body?.articleRef !== undefined;
+      const hasSortOrder = req.body?.sortOrder !== undefined;
+
+      const question = hasQuestion ? String(req.body.question || '').trim() : undefined;
+      const answer = hasAnswer ? String(req.body.answer || '').trim() : undefined;
+      const category = hasCategory ? (String(req.body.category || '').trim() as FaqCategory) : undefined;
+      const articleRef = hasArticleRef ? String(req.body.articleRef || '').trim() : undefined;
+      const sortOrder = hasSortOrder ? Number(req.body.sortOrder) : undefined;
+
+      if (category !== undefined && !VALID_FAQ_CATEGORIES.has(category)) {
+        res.status(400).json({ error: 'Invalid FAQ category.' });
+        return;
+      }
+      if (question !== undefined && (question.length < 5 || question.length > 300)) {
+        res.status(400).json({ error: 'FAQ question must be between 5 and 300 characters.' });
+        return;
+      }
+      if (answer !== undefined && (answer.length < 5 || answer.length > 4000)) {
+        res.status(400).json({ error: 'FAQ answer must be between 5 and 4000 characters.' });
+        return;
+      }
+      if (articleRef !== undefined && articleRef.length > 80) {
+        res.status(400).json({ error: 'Charter reference must be 80 characters or fewer.' });
+        return;
+      }
+      if (sortOrder !== undefined && (!Number.isFinite(sortOrder) || sortOrder < 0)) {
+        res.status(400).json({ error: 'Sort order must be a non-negative number.' });
+        return;
+      }
+
+      let updatedFaq: FaqItem | null = null;
+      let sortedFaqs: FaqItem[] = [];
+
+      await updateVaultState((draft) => {
+        draft.faqs = Array.isArray(draft.faqs) ? draft.faqs : [];
+        const target = draft.faqs.find((item) => item.id === id);
+        if (!target) return draft;
+
+        if (question !== undefined) target.question = question;
+        if (answer !== undefined) target.answer = answer;
+        if (category !== undefined) target.category = category;
+        if (articleRef !== undefined) target.articleRef = articleRef || 'Charter Policy';
+        if (sortOrder !== undefined) target.sortOrder = sortOrder;
+        target.updatedAt = new Date().toISOString();
+        target.updatedBy = viewer.name;
+
+        draft.faqs = sortFaqItems(draft.faqs);
+        draft.fundConfig.faqsSeeded = true;
+        updatedFaq = { ...target };
+        sortedFaqs = draft.faqs;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'FAQ_UPDATED',
+          resourceType: 'config',
+          resourceId: target.id,
+          summary: `${viewer.name} updated FAQ "${target.question.slice(0, 80)}"`,
+          payload: { faqId: target.id, category: target.category, articleRef: target.articleRef },
+        });
+        return draft;
+      });
+
+      if (!updatedFaq) {
+        res.status(404).json({ error: 'FAQ item not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('faq:updated', { action: 'updated', faqId: id });
+      broadcastRealtimeEvent('audit:updated', { action: 'FAQ_UPDATED' });
+      res.json({ faq: updatedFaq, faqs: sortedFaqs });
+    } catch (err) {
+      console.error('Update FAQ error:', err);
+      res.status(500).json({ error: 'Failed to update FAQ entry.' });
+    }
+  }
+);
+
+apiRouter.delete(
+  '/faqs/:id',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const { id } = req.params;
+      let removed: FaqItem | null = null;
+      let sortedFaqs: FaqItem[] = [];
+
+      await updateVaultState((draft) => {
+        draft.faqs = Array.isArray(draft.faqs) ? draft.faqs : [];
+        const idx = draft.faqs.findIndex((item) => item.id === id);
+        if (idx === -1) return draft;
+        const [deleted] = draft.faqs.splice(idx, 1);
+        removed = deleted;
+        draft.faqs = sortFaqItems(draft.faqs);
+        draft.fundConfig.faqsSeeded = true;
+        sortedFaqs = draft.faqs;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'FAQ_DELETED',
+          resourceType: 'config',
+          resourceId: deleted.id,
+          summary: `${viewer.name} deleted FAQ "${deleted.question.slice(0, 80)}"`,
+          payload: { faqId: deleted.id, question: deleted.question },
+        });
+        return draft;
+      });
+
+      if (!removed) {
+        res.status(404).json({ error: 'FAQ item not found.' });
+        return;
+      }
+
+      broadcastRealtimeEvent('faq:updated', { action: 'deleted', faqId: id });
+      broadcastRealtimeEvent('audit:updated', { action: 'FAQ_DELETED' });
+      res.json({ ok: true, id, faqs: sortedFaqs });
+    } catch (err) {
+      console.error('Delete FAQ error:', err);
+      res.status(500).json({ error: 'Failed to delete FAQ entry.' });
     }
   }
 );

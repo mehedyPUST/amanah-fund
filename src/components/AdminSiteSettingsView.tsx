@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   FileText,
   HardDrive,
+  HelpCircle,
   Lock,
   Mail,
   MailCheck,
@@ -47,6 +48,7 @@ import { formatDateTime, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
+import { AdminFaqManager } from './AdminFaqManager.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 
@@ -65,7 +67,7 @@ interface AdminSiteSettingsViewProps {
   onNavigateSection?: (section: DashboardSectionId) => void;
 }
 
-type SettingsTabId = 'policy' | 'charter' | 'email' | 'integrations' | 'ventures';
+type SettingsTabId = 'policy' | 'charter' | 'faqs' | 'email' | 'integrations' | 'ventures';
 
 type SettingsModalState =
   | {
@@ -569,6 +571,7 @@ export function AdminSiteSettingsView({
   const tabs: Array<{ id: SettingsTabId; label: string; Icon: typeof Settings; badge?: string | number }> = [
     { id: 'policy', label: 'Policy & Limits', Icon: Settings, badge: isDirty ? 'Unsaved' : undefined },
     { id: 'charter', label: 'Charter & Reports', Icon: FileText },
+    { id: 'faqs', label: 'FAQ Manager', Icon: HelpCircle },
     { id: 'email', label: 'Email & Templates', Icon: Mail },
     { id: 'integrations', label: 'Integrations & Health', Icon: Server },
     {
@@ -1635,6 +1638,9 @@ export function AdminSiteSettingsView({
           />
         </div>
       )}
+
+      {/* TAB 2B: FAQ MANAGER */}
+      {isAdmin && activeTab === 'faqs' && <AdminFaqManager />}
 
       {/* TAB 5: HALAL VENTURES */}
       {isAdmin && activeTab === 'ventures' && (

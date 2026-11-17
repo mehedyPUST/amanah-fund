@@ -68,6 +68,7 @@ import {
   sanitizeEmailHeaderColor,
 } from '../src/utils/emailTemplates.ts';
 import { BANK_PROVIDERS } from '../src/utils/format.ts';
+import { createDefaultFaqs, sortFaqItems } from '../src/utils/faqDefaults.ts';
 import type { LoanRequest, PublicUser } from '../src/types/coop.ts';
 
 function makeBaseState(): VaultState {
@@ -1347,6 +1348,24 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     });
   });
 });
+
+describe('FAQ Defaults & Sorting', () => {
+  it('seeds 10 default charter FAQs in ascending sortOrder and preserves sort stability', () => {
+    const defaults = createDefaultFaqs('2026-11-16T00:00:00.000Z');
+    expect(defaults).toHaveLength(10);
+    expect(defaults[0].id).toBe('faq-kyc-application');
+    expect(defaults[9].id).toBe('faq-exit-transfer');
+
+    const shuffled = [defaults[5], defaults[1], defaults[0]];
+    const sorted = sortFaqItems(shuffled);
+    expect(sorted.map((f) => f.id)).toEqual([
+      'faq-kyc-application',
+      'faq-member-cap',
+      'faq-qard-hasan-limits',
+    ]);
+  });
+});
+
 
 
 

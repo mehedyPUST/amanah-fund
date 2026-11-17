@@ -1,174 +1,124 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
   ChevronDown,
+  Edit3,
   HelpCircle,
+  Plus,
   Search,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import Skeleton from 'react-loading-skeleton';
+import type { FaqCategory, FaqItem } from '../types/coop.ts';
+import { api } from '../utils/api.ts';
+import {
+  createDefaultFaqs,
+  FAQ_CARD_HUE_CYCLE,
+  FAQ_CATEGORIES,
+  FAQ_CATEGORY_META,
+  sortFaqItems,
+  type FaqFilterCategory,
+} from '../utils/faqDefaults.ts';
+import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
-import { MotionCard, type CardHue } from './MotionCard.tsx';
-
-type FaqCategory = 'all' | 'membership' | 'fund' | 'loans' | 'governance';
-
-interface FaqItem {
-  id: string;
-  number: string;
-  category: Exclude<FaqCategory, 'all'>;
-  categoryLabel: string;
-  articleRef: string;
-  question: string;
-  answer: string;
-  hue: CardHue;
-}
-
-const FAQ_CATEGORIES: Array<{ key: FaqCategory; label: string }> = [
-  { key: 'all', label: 'All Questions' },
-  { key: 'membership', label: 'Membership' },
-  { key: 'fund', label: 'Fund & Savings' },
-  { key: 'loans', label: 'Qard Hasan' },
-  { key: 'governance', label: 'Governance & Halal' },
-];
-
-const FAQ_ITEMS: FaqItem[] = [
-  {
-    id: 'faq-kyc-application',
-    number: '01.',
-    category: 'membership',
-    categoryLabel: 'Membership',
-    articleRef: 'Articles 04–06',
-    hue: 'emerald',
-    question: 'How do I apply for membership and what documents are required?',
-    answer:
-      'Prospective members apply through the Join Amanah portal by submitting verified KYC details, a portrait photo, National ID documents for both the applicant and nominee(s) totaling 100% share allocation, an existing member reference, and a non-refundable BDT 200 administrative fee. Applications are reviewed by the Administrator and Shura before portal activation.',
-  },
-  {
-    id: 'faq-member-cap',
-    number: '02.',
-    category: 'membership',
-    categoryLabel: 'Membership',
-    articleRef: 'Article 06',
-    hue: 'violet',
-    question: 'Why is the cooperative capped at 20 shares and when does enrollment close?',
-    answer:
-      'Amanah operates on a focused 20-share cap for the 10-year 2027–2036 charter term to preserve high trust and direct accountability. New member admissions close in July 2027, and anyone joining before that cutoff must settle prior months’ savings in full. If fewer than 20 members join by July 2027, existing members may hold up to 2 shares by settling prior arrears, never exceeding 20 total shares.',
-  },
-  {
-    id: 'faq-monthly-contribution',
-    number: '03.',
-    category: 'fund',
-    categoryLabel: 'Fund & Savings',
-    articleRef: 'Article 10',
-    hue: 'teal',
-    question: 'What is the monthly contribution amount and how are deposits verified?',
-    answer:
-      'Each share contributes BDT 5,000 monthly, due by the 10th of every month via approved Bank or Mobile Financial Service (MFS) channels. After transferring funds, members log the encrypted transaction reference or upload the deposit slip in the Monthly Contribution tab so elected Shura Managers can verify and credit the central treasury.',
-  },
-  {
-    id: 'faq-late-fees',
-    number: '04.',
-    category: 'fund',
-    categoryLabel: 'Fund & Savings',
-    articleRef: 'Articles 10c & 12c',
-    hue: 'amber',
-    question: 'How are BDT 50 late fees handled to remain strictly Shariah-compliant?',
-    answer:
-      'Late monthly savings or overdue loan installments incur a fixed BDT 50 administrative penalty, which is never added to member equity, profits, or loan principal. All late fees are isolated in a dedicated Sadaqah (charity) ledger and distributed transparently to charitable causes every January after annual account closing.',
-  },
-  {
-    id: 'faq-arrears-policy',
-    number: '05.',
-    category: 'fund',
-    categoryLabel: 'Fund & Savings',
-    articleRef: 'Article 11b–c',
-    hue: 'emerald',
-    question: 'What happens if a member misses multiple monthly contributions?',
-    answer:
-      'Three missed monthly contributions result in temporary suspension, which can be redeemed within two months by settling unpaid dues with a BDT 200 reinstatement fee. Seven consecutive unpaid months trigger permanent membership cancellation unless the member submits a formal written pledge, settles all arrears in full, and receives Shura approval.',
-  },
-  {
-    id: 'faq-qard-hasan-limits',
-    number: '06.',
-    category: 'loans',
-    categoryLabel: 'Qard Hasan',
-    articleRef: 'Article 12',
-    hue: 'violet',
-    question: 'How much Qard Hasan financing can I borrow and what is the profit or interest rate?',
-    answer:
-      'Every Qard Hasan loan carries strictly 0% interest and zero compounding fees. Eligible active members may borrow up to BDT 50,000 per share or 75% of their accumulated verified savings—whichever is lower—repayable over up to 10 proportional monthly installments (scaled within the final 10 months of the 2036 project term).',
-  },
-  {
-    id: 'faq-loan-voting',
-    number: '07.',
-    category: 'loans',
-    categoryLabel: 'Qard Hasan',
-    articleRef: 'Articles 07 & 18',
-    hue: 'teal',
-    question: 'How are Qard Hasan loan requests approved and disbursed?',
-    answer:
-      'Once an eligible member submits a request (and any required guarantor confirms), Shura Managers inspect treasury liquidity and open an anonymized 2/3 supermajority Opinion Ballot for active members. When the ballot reaches 2/3 approval and closes, Shura/Savings disburse the principal and log encrypted payout proof.',
-  },
-  {
-    id: 'faq-security-custody',
-    number: '08.',
-    category: 'governance',
-    categoryLabel: 'Governance & Halal',
-    articleRef: 'Articles 08 & 18–19',
-    hue: 'amber',
-    question: 'How are cooperative funds safeguarded and audited each month?',
-    answer:
-      'Funds are held in joint accounts where bank signatories and checkbook custody are separated across a 5-member Shura Committee and a 5-member Savings Accounts Committee. Monthly bank statements and loan ledgers are published by the 15th of each month, sensitive KYC/TXN data is AES-256-GCM encrypted, and all system actions are sealed in a SHA-256 hash-chained audit log.',
-  },
-  {
-    id: 'faq-halal-ventures',
-    number: '09.',
-    category: 'governance',
-    categoryLabel: 'Governance & Halal',
-    articleRef: 'Articles 07 & 21–25',
-    hue: 'emerald',
-    question: 'How do post-maturity Halal investments work under VISION-36?',
-    answer:
-      'In addition to providing 0% mutual relief today, the central fund pools long-term capital toward productive real-economy Mudarabah, Musharakah, and Murabahah ventures (such as verified land shares and ethical residential/educational initiatives). Every venture requires at least a 2/3 majority member vote before any capital is deployed.',
-  },
-  {
-    id: 'faq-exit-transfer',
-    number: '10.',
-    category: 'membership',
-    categoryLabel: 'Membership',
-    articleRef: 'Article 11a, d–e',
-    hue: 'violet',
-    question: 'Can a member withdraw early or transfer their cooperative share?',
-    answer:
-      'Members commit until at least the cooperative’s first collective investment is completed. Afterward, a departing member may transfer their share to an approved acquaintance or an existing member (prioritizing single-share holders), or receive payout from the fund at the 4-monthly Board share valuation. Once exited, a member may not rejoin a second time.',
-  },
-];
+import { MotionCard } from './MotionCard.tsx';
 
 export function FAQSection({ embedded = true }: { embedded?: boolean }) {
-  const { user } = useCoopSession();
-  const [activeCategory, setActiveCategory] = useState<FaqCategory>('all');
+  const { user, authChecking } = useCoopSession();
+  const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
+  const isAdmin = isActiveMember && user?.role === 'admin';
+
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [activeCategory, setActiveCategory] = useState<FaqFilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>({
-    'faq-kyc-application': true,
-    'faq-monthly-contribution': true,
-  });
+  // Always start with zero opened answers; questions open only on explicit user action.
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
+
+  // Admin add/edit/delete state
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [editingFaq, setEditingFaq] = useState<FaqItem | null>(null);
+  const [categoryInput, setCategoryInput] = useState<FaqCategory>('membership');
+  const [articleRefInput, setArticleRefInput] = useState('');
+  const [questionInput, setQuestionInput] = useState('');
+  const [answerInput, setAnswerInput] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const loadFaqs = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await api.getFaqs();
+      setFaqs(sortFaqItems(Array.isArray(data.faqs) ? data.faqs : []));
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load FAQs.');
+      setFaqs((prev) => (prev.length > 0 ? prev : createDefaultFaqs()));
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadFaqs(false);
+  }, [loadFaqs]);
+
+  useEffect(() => {
+    const handleLocalRefresh = () => {
+      void loadFaqs(true);
+    };
+    window.addEventListener('amanah:faq-updated', handleLocalRefresh);
+    window.addEventListener('amanah:refresh', handleLocalRefresh);
+
+    let source: EventSource | null = null;
+    if (isActiveMember) {
+      source = new EventSource('/api/events', { withCredentials: true });
+      source.addEventListener('faq:updated', handleLocalRefresh);
+    }
+
+    return () => {
+      window.removeEventListener('amanah:faq-updated', handleLocalRefresh);
+      window.removeEventListener('amanah:refresh', handleLocalRefresh);
+      if (source) {
+        source.removeEventListener('faq:updated', handleLocalRefresh);
+        source.close();
+      }
+    };
+  }, [isActiveMember, loadFaqs]);
+
+  const faqNumberMap = useMemo(() => {
+    const map = new Map<string, string>();
+    faqs.forEach((item, index) => {
+      map.set(item.id, `${String(index + 1).padStart(2, '0')}.`);
+    });
+    return map;
+  }, [faqs]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return FAQ_ITEMS.filter((item) => {
+    return faqs.filter((item) => {
+      const meta = FAQ_CATEGORY_META[item.category] || FAQ_CATEGORY_META.membership;
       const matchesCat = activeCategory === 'all' || item.category === activeCategory;
       if (!matchesCat) return false;
       if (!q) return true;
       return (
         item.question.toLowerCase().includes(q) ||
         item.answer.toLowerCase().includes(q) ||
-        item.categoryLabel.toLowerCase().includes(q) ||
-        item.articleRef.toLowerCase().includes(q)
+        meta.label.toLowerCase().includes(q) ||
+        (item.articleRef || '').toLowerCase().includes(q)
       );
     });
-  }, [activeCategory, searchQuery]);
+  }, [faqs, activeCategory, searchQuery]);
 
   const allVisibleExpanded =
     filteredItems.length > 0 && filteredItems.every((item) => Boolean(openIds[item.id]));
@@ -190,6 +140,111 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         for (const item of filteredItems) next[item.id] = true;
         return next;
       });
+    }
+  }
+
+  function openCreateComposer() {
+    setEditingFaq(null);
+    setCategoryInput(activeCategory === 'all' ? 'membership' : activeCategory);
+    setArticleRefInput('');
+    setQuestionInput('');
+    setAnswerInput('');
+    setFormError(null);
+    setComposerOpen(true);
+  }
+
+  function openEditComposer(item: FaqItem) {
+    setEditingFaq(item);
+    setCategoryInput(item.category);
+    setArticleRefInput(item.articleRef || '');
+    setQuestionInput(item.question);
+    setAnswerInput(item.answer);
+    setFormError(null);
+    setComposerOpen(true);
+  }
+
+  function closeComposer() {
+    if (submitting) return;
+    setComposerOpen(false);
+    setEditingFaq(null);
+    setFormError(null);
+  }
+
+  async function handleSaveFaq(e: FormEvent) {
+    e.preventDefault();
+    if (!isAdmin || submitting) return;
+
+    const cleanQuestion = questionInput.trim();
+    const cleanAnswer = answerInput.trim();
+    const cleanArticleRef = articleRefInput.trim();
+
+    if (cleanQuestion.length < 5 || cleanQuestion.length > 300) {
+      setFormError('Question must be between 5 and 300 characters.');
+      return;
+    }
+    if (cleanAnswer.length < 5 || cleanAnswer.length > 4000) {
+      setFormError('Answer must be between 5 and 4000 characters.');
+      return;
+    }
+    if (cleanArticleRef.length > 80) {
+      setFormError('Charter / policy reference must be 80 characters or fewer.');
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      if (editingFaq) {
+        const res = await api.updateFaq(editingFaq.id, {
+          category: categoryInput,
+          articleRef: cleanArticleRef || 'Charter Policy',
+          question: cleanQuestion,
+          answer: cleanAnswer,
+        });
+        setFaqs(sortFaqItems(res.faqs));
+      } else {
+        const res = await api.createFaq({
+          category: categoryInput,
+          articleRef: cleanArticleRef || 'Charter Policy',
+          question: cleanQuestion,
+          answer: cleanAnswer,
+        });
+        setFaqs(sortFaqItems(res.faqs));
+      }
+      setComposerOpen(false);
+      setEditingFaq(null);
+      window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Unable to save FAQ entry.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmDeleteFaq() {
+    if (!isAdmin || !deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      const targetId = deleteTarget.id;
+      const res = await api.deleteFaq(targetId);
+      setFaqs(sortFaqItems(res.faqs));
+      setOpenIds((prev) => {
+        if (!(targetId in prev)) return prev;
+        const next = { ...prev };
+        delete next[targetId];
+        return next;
+      });
+      if (editingFaq?.id === targetId) {
+        setComposerOpen(false);
+        setEditingFaq(null);
+      }
+      setDeleteTarget(null);
+      window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to delete FAQ item.');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -225,17 +280,164 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openCreateComposer}
+              className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Add FAQ</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={toggleExpandAll}
-            disabled={filteredItems.length === 0}
+            disabled={loading || filteredItems.length === 0}
             className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
           >
             {allVisibleExpanded ? 'Collapse All' : 'Expand All Answers'}
           </button>
         </div>
       </div>
+
+      {/* Admin Add / Edit FAQ Composer */}
+      <AnimatePresence initial={false}>
+        {isAdmin && composerOpen && (
+          <motion.form
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            onSubmit={handleSaveFaq}
+            className="amanah-card-emerald border rounded-xl p-4 sm:p-5 space-y-4 shadow-xs"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {editingFaq ? 'Edit FAQ Question & Answer' : 'Add New FAQ Question & Answer'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Changes apply immediately across the Home, About, How It Works, and Charter Rules pages.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeComposer}
+                disabled={submitting}
+                aria-label="Close FAQ editor"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="rounded-lg border border-rose-200 dark:border-rose-800/70 bg-rose-50 dark:bg-rose-950/40 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
+                {formError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="faq-editor-category"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Topic Category
+                </label>
+                <select
+                  id="faq-editor-category"
+                  value={categoryInput}
+                  onChange={(e) => setCategoryInput(e.target.value as FaqCategory)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                >
+                  {FAQ_CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
+                    <option key={cat.key} value={cat.key}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="faq-editor-ref"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Charter / Policy Reference (Optional)
+                </label>
+                <input
+                  id="faq-editor-ref"
+                  type="text"
+                  maxLength={80}
+                  value={articleRefInput}
+                  onChange={(e) => setArticleRefInput(e.target.value)}
+                  placeholder="e.g. Article 10 or Charter Policy"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="faq-editor-question"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Question
+              </label>
+              <input
+                id="faq-editor-question"
+                type="text"
+                required
+                maxLength={300}
+                value={questionInput}
+                onChange={(e) => setQuestionInput(e.target.value)}
+                placeholder="Enter the FAQ question..."
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="faq-editor-answer"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Answer
+              </label>
+              <textarea
+                id="faq-editor-answer"
+                rows={4}
+                required
+                maxLength={4000}
+                value={answerInput}
+                onChange={(e) => setAnswerInput(e.target.value)}
+                placeholder="Write a clear, accurate answer..."
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 leading-relaxed"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeComposer}
+                disabled={submitting}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {submitting ? 'Saving...' : editingFaq ? 'Save Changes' : 'Publish FAQ'}
+              </button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
 
       {/* Category Filter Tabs & Search */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -289,73 +491,147 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         </div>
       </div>
 
-      {/* Accordion Cards Grid */}
-      {filteredItems.length === 0 ? (
-        <div className="amanah-card-violet border rounded-xl p-8 text-center space-y-2.5">
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-            No FAQ entries match your filter.
-          </p>
+      {loadError && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50/80 dark:bg-amber-950/30 px-3.5 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
+          <span>{loadError}</span>
           <button
             type="button"
-            onClick={() => {
-              setActiveCategory('all');
-              setSearchQuery('');
-            }}
-            className="px-3.5 py-1.5 rounded-lg border border-violet-300 dark:border-violet-700 bg-white dark:bg-slate-900 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors cursor-pointer whitespace-nowrap"
+            onClick={() => void loadFaqs(false)}
+            className="underline font-medium cursor-pointer shrink-0"
           >
-            Reset Filters
+            Retry
           </button>
+        </div>
+      )}
+
+      {/* Accordion Cards Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 space-y-2.5"
+            >
+              <Skeleton width={160} height={12} />
+              <Skeleton width="90%" height={18} />
+            </div>
+          ))}
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="amanah-card-violet border rounded-xl p-8 text-center space-y-3">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+            {faqs.length === 0
+              ? 'No FAQ entries have been published yet.'
+              : 'No FAQ entries match your filter.'}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {(activeCategory !== 'all' || searchQuery.trim() !== '') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveCategory('all');
+                  setSearchQuery('');
+                }}
+                className="px-3.5 py-1.5 rounded-lg border border-violet-300 dark:border-violet-700 bg-white dark:bg-slate-900 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                Reset Filters
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={openCreateComposer}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Add First FAQ</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
           {filteredItems.map((item, idx) => {
             const isOpen = Boolean(openIds[item.id]);
             const panelId = `${item.id}-panel`;
+            const meta = FAQ_CATEGORY_META[item.category] || FAQ_CATEGORY_META.membership;
+            const hue = FAQ_CARD_HUE_CYCLE[idx % FAQ_CARD_HUE_CYCLE.length];
+            const itemNumber = faqNumberMap.get(item.id) || `${String(idx + 1).padStart(2, '0')}.`;
+
             return (
               <MotionCard
                 as="article"
                 key={item.id}
-                hue={item.hue}
+                hue={hue}
                 delay={Math.min(idx * 0.025, 0.16)}
                 inView
                 className="backdrop-blur-md border rounded-xl shadow-xs hover:shadow-md transition-all duration-200"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleItem(item.id)}
-                  aria-expanded={isOpen}
-                  aria-controls={panelId}
-                  className="w-full text-left p-5 flex items-start justify-between gap-3 cursor-pointer"
-                >
-                  <div className="space-y-1.5 min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                        {item.number}
-                      </span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {item.categoryLabel}
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-mono">{item.articleRef}</span>
-                    </div>
-                    <h3 className="text-sm sm:text-[15px] font-semibold text-slate-900 dark:text-white leading-snug">
-                      {item.question}
-                    </h3>
-                  </div>
-
-                  <span
-                    className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                      isOpen
-                        ? 'border-emerald-300/80 dark:border-emerald-700/70 bg-emerald-100/75 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
-                        : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-500 dark:text-slate-400'
-                    }`}
-                    aria-hidden="true"
+                <div className="p-5 flex items-start justify-between gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleItem(item.id)}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    className="flex-1 min-w-0 text-left flex items-start justify-between gap-3 cursor-pointer"
                   >
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
-                    />
-                  </span>
-                </button>
+                    <div className="space-y-1.5 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                          {itemNumber}
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                          {meta.label}
+                        </span>
+                        {item.articleRef && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="font-mono">{item.articleRef}</span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="text-sm sm:text-[15px] font-semibold text-slate-900 dark:text-white leading-snug">
+                        {item.question}
+                      </h3>
+                    </div>
+
+                    <span
+                      className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                        isOpen
+                          ? 'border-emerald-300/80 dark:border-emerald-700/70 bg-emerald-100/75 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
+                          : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-500 dark:text-slate-400'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </span>
+                  </button>
+
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => openEditComposer(item)}
+                        title="Edit FAQ"
+                        aria-label={`Edit FAQ: ${item.question}`}
+                        className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:border-emerald-400 dark:hover:border-emerald-600 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(item)}
+                        title="Delete FAQ"
+                        aria-label={`Delete FAQ: ${item.question}`}
+                        className="w-7 h-7 rounded-lg border border-rose-200/80 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-600 hover:border-rose-600 text-rose-600 dark:text-rose-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <AnimatePresence initial={false}>
                   {isOpen && (
@@ -368,7 +644,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                       className="overflow-hidden"
                     >
                       <div className="px-5 pb-5 pt-3 border-t border-slate-200/70 dark:border-slate-800/80">
-                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed text-justify">
+                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-justify">
                           {item.answer}
                         </p>
                       </div>
@@ -405,6 +681,31 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           </Link>
         </div>
       </div>
+
+      <ActionModal
+        open={Boolean(deleteTarget)}
+        mode="confirm"
+        tone="red"
+        title="Delete FAQ Question & Answer"
+        description="Removing this FAQ immediately hides it from all public and member information pages."
+        details={
+          deleteTarget
+            ? [
+                {
+                  label: 'Category',
+                  value: (FAQ_CATEGORY_META[deleteTarget.category] || FAQ_CATEGORY_META.membership).label,
+                },
+                { label: 'Question', value: deleteTarget.question },
+              ]
+            : undefined
+        }
+        confirmLabel="Delete FAQ"
+        busy={deleting}
+        onConfirm={confirmDeleteFaq}
+        onClose={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+      />
     </section>
   );
 }
