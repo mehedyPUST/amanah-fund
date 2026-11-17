@@ -31,6 +31,7 @@ import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
+import { MotionCard } from './MotionCard.tsx';
 import { RecentTransactions } from './RecentTransactions.tsx';
 import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 import { StatusText } from './StatusText.tsx';
@@ -498,11 +499,10 @@ export function OverviewView({
 
       {/* 4-Column Amanah Treasury Headline KPI Strip */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: 0.02 }}
-          className="amanah-card-border amanah-card-border-hero bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
+        <MotionCard
+          hue="deep-emerald"
+          delay={0.02}
+          className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 text-white border border-emerald-500/45 hover:border-emerald-400/70 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
             <span>Amanah Height (Total Raised)</span>
@@ -515,13 +515,12 @@ export function OverviewView({
             {treasury.contributingMembersCount} contributing members · Pending{' '}
             {formatMoney(treasury.pendingContributionsAmount, ccy)}
           </div>
-        </motion.div>
+        </MotionCard>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: 0.06 }}
-          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+        <MotionCard
+          hue="teal"
+          delay={0.06}
+          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Current Balance</span>
@@ -533,13 +532,12 @@ export function OverviewView({
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             Amanah Height − Quard Hasan Current
           </div>
-        </motion.div>
+        </MotionCard>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: 0.1 }}
-          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+        <MotionCard
+          hue="amber"
+          delay={0.1}
+          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Quard Hasan Total Current</span>
@@ -553,13 +551,12 @@ export function OverviewView({
             {treasury.activeBorrowers.length === 1 ? 'active borrower' : 'active borrowers'} ·
             Disbursed {formatMoney(treasury.totalLoansDisbursed, ccy)}
           </div>
-        </motion.div>
+        </MotionCard>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, delay: 0.14 }}
-          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+        <MotionCard
+          hue="sky"
+          delay={0.14}
+          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Repayments Returned (+)</span>
@@ -573,12 +570,16 @@ export function OverviewView({
               ? `${Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100)}% restored to central fund`
               : '100% revolving principal'}
           </div>
-        </motion.div>
+        </MotionCard>
       </section>
 
       {/* This Month Treasury Pulse */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <div className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl p-4 shadow-xs">
+        <MotionCard
+          hue="emerald"
+          delay={0.04}
+          className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+        >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Contribution ({treasury.thisMonthKey})</span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -612,9 +613,13 @@ export function OverviewView({
               className="h-full bg-emerald-600 rounded-full"
             />
           </div>
-        </div>
+        </MotionCard>
 
-        <div className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-4 shadow-xs">
+        <MotionCard
+          hue="amber"
+          delay={0.07}
+          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+        >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Due (Remaining / Target)
           </div>
@@ -629,9 +634,13 @@ export function OverviewView({
               ? 'All monthly contribution targets collected'
               : 'Pending collection from members this cycle'}
           </div>
-        </div>
+        </MotionCard>
 
-        <div className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-4 shadow-xs">
+        <MotionCard
+          hue="sky"
+          delay={0.1}
+          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+        >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Hasan Installment
           </div>
@@ -646,9 +655,13 @@ export function OverviewView({
               ? 'Installments due & collected this month'
               : 'No installments due this month'}
           </div>
-        </div>
+        </MotionCard>
 
-        <div className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-4 shadow-xs">
+        <MotionCard
+          hue="teal"
+          delay={0.13}
+          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+        >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Clearance</span>
             <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -679,12 +692,16 @@ export function OverviewView({
               className="h-full bg-emerald-600 rounded-full"
             />
           </div>
-        </div>
+        </MotionCard>
       </section>
 
       {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        <section className="xl:col-span-6 bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
+        <MotionCard
+          as="section"
+          hue="amber"
+          className="xl:col-span-6 bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+        >
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -755,9 +772,13 @@ export function OverviewView({
               ))}
             </div>
           )}
-        </section>
+        </MotionCard>
 
-        <section className="xl:col-span-6 bg-gradient-to-br from-emerald-100/70 via-emerald-50/30 to-white/85 dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
+        <MotionCard
+          as="section"
+          hue="emerald"
+          className="xl:col-span-6 bg-gradient-to-br from-emerald-100/70 via-emerald-50/30 to-white/85 dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+        >
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -822,13 +843,17 @@ export function OverviewView({
               ))}
             </div>
           )}
-        </section>
+        </MotionCard>
       </div>
 
       {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
         {isAdmin ? (
-          <section className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs">
+          <MotionCard
+            as="section"
+            hue="teal"
+            className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+          >
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -877,9 +902,13 @@ export function OverviewView({
                 <span>Site Settings</span>
               </button>
             </div>
-          </section>
+          </MotionCard>
         ) : (
-          <section className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs transition-colors">
+          <MotionCard
+            as="section"
+            hue="teal"
+            className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+          >
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -964,7 +993,7 @@ export function OverviewView({
                     </>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
                   {personal.eligibility.reasons[0]}
                 </p>
               </div>
@@ -993,10 +1022,14 @@ export function OverviewView({
                 />
               </button>
             </div>
-          </section>
+          </MotionCard>
         )}
 
-        <section className="xl:col-span-7 bg-gradient-to-br from-sky-100/70 via-sky-50/30 to-white/85 dark:from-sky-950/40 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <MotionCard
+          as="section"
+          hue="sky"
+          className="xl:col-span-7 bg-gradient-to-br from-sky-100/70 via-sky-50/30 to-white/85 dark:from-sky-950/40 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
+        >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1141,7 +1174,7 @@ export function OverviewView({
               </button>
             </div>
           </div>
-        </section>
+        </MotionCard>
       </div>
 
       {/* Repayment Schedule & Contribution Leaderboard */}

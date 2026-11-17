@@ -2,16 +2,25 @@
 
 import { KeyRound, Lock, ShieldCheck, Users, Vote } from 'lucide-react';
 import { motion } from 'motion/react';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-const PILLARS = [
+const PILLARS: Array<{
+  index: string;
+  Icon: typeof ShieldCheck;
+  title: string;
+  description: string;
+  hue: CardHue;
+  cardClass: string;
+}> = [
   {
     index: '01.',
     Icon: ShieldCheck,
     title: '20-Member Shura-Approved Onboarding',
     description:
       'Applicants submit KYC details, nominee NID, portrait photo, existing member reference, and a ৳200 fee into a queue capped at 20 shares.',
+    hue: 'emerald',
     cardClass:
-      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
   },
   {
     index: '02.',
@@ -19,8 +28,9 @@ const PILLARS = [
     title: '5-Member Shura & Savings Committees',
     description:
       'Separation of duties across Shura Management (loan review and monthly updates), Savings Accounts (joint custody), and verified Members.',
+    hue: 'teal',
     cardClass:
-      'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+      'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
   },
   {
     index: '03.',
@@ -28,8 +38,9 @@ const PILLARS = [
     title: 'AES-256-GCM & SHA-256 Audit Chain',
     description:
       'Sensitive KYC fields, Bank/MFS transaction references, and disbursement contexts are encrypted at rest and linked in a tamper-evident hash chain.',
+    hue: 'sky',
     cardClass:
-      'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+      'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
   },
   {
     index: '04.',
@@ -37,8 +48,9 @@ const PILLARS = [
     title: '2/3 Supermajority Consensus',
     description:
       'Qard Hasan loans and Halal investments require a two-thirds member majority; charter amendments require 2/3 Shura plus 1/2 member quorum.',
+    hue: 'amber',
     cardClass:
-      'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+      'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
   },
   {
     index: '05.',
@@ -46,8 +58,9 @@ const PILLARS = [
     title: 'VISION-36 & Sadaqah Late-Fee Ledger',
     description:
       'Tracks ৳5,000 monthly savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs live to Google Sheets.',
+    hue: 'violet',
     cardClass:
-      'bg-gradient-to-br from-violet-100/75 via-violet-50/35 to-white/85 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/80 border-violet-200/80 dark:border-violet-900/50',
+      'bg-gradient-to-br from-violet-100/75 via-violet-50/35 to-white/85 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/80 border-violet-200/80 dark:border-violet-900/50 hover:border-violet-300/90 dark:hover:border-violet-700/70',
   },
 ];
 
@@ -92,13 +105,12 @@ export function About({ embedded = false }: { embedded?: boolean }) {
             const Icon = pillar.Icon;
             const spanClass = idx < 3 ? 'xl:col-span-2' : 'xl:col-span-3';
             return (
-              <motion.div
+              <MotionCard
                 key={pillar.title}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ duration: 0.18, delay: idx * 0.03 }}
-                className={`${spanClass} amanah-card-border rounded-xl border ${pillar.cardClass} p-5 space-y-3`}
+                hue={pillar.hue}
+                delay={idx * 0.03}
+                inView
+                className={`${spanClass} backdrop-blur-md rounded-xl border ${pillar.cardClass} p-5 space-y-3 shadow-xs hover:shadow-md transition-all duration-200`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -109,10 +121,10 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                   {pillar.title}
                 </h3>
-                <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                   {pillar.description}
                 </p>
-              </motion.div>
+              </MotionCard>
             );
           })}
         </div>

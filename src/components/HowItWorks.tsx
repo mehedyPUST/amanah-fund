@@ -21,6 +21,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 type RoleGuideKey = 'member' | 'manager' | 'admin';
 
@@ -239,16 +240,19 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           >
             {currentGuide.steps.map((step, idx) => {
               const Icon = step.Icon;
+              const stepHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
               const stepCardClass = [
-                'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
-                'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
-                'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
-                'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+                'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
+                'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
+                'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
+                'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
               ][idx % 4];
               return (
-                <div
+                <MotionCard
                   key={step.number}
-                  className={`amanah-card-border rounded-xl border ${stepCardClass} p-5 flex flex-col justify-between gap-4`}
+                  hue={stepHue}
+                  delay={idx * 0.03}
+                  className={`backdrop-blur-md rounded-xl border ${stepCardClass} p-5 flex flex-col justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
@@ -260,7 +264,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                       {step.summary}
                     </p>
                   </div>
@@ -268,7 +272,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                   <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                     {step.actionHint}
                   </div>
-                </div>
+                </MotionCard>
               );
             })}
           </motion.div>

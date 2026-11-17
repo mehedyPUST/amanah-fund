@@ -3,22 +3,31 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, HandCoins, LayoutDashboard, Shield } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 const HERO_IMAGE_URL =
   'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
 const INVESTMENT_IMAGE_URL =
   'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
 
-const KEY_TERMS = [
+const KEY_TERMS: Array<{
+  kicker: string;
+  meta: string;
+  value: string;
+  sublabel: string;
+  hue: CardHue;
+  cardClass: string;
+  metaClass: string;
+}> = [
   {
     kicker: 'Qard Hasan Ceiling',
     meta: '0% Interest',
     value: '৳50,000',
     sublabel: 'Or up to 75% of personal verified savings',
+    hue: 'emerald',
     cardClass:
-      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
     metaClass: 'text-emerald-700 dark:text-emerald-400',
   },
   {
@@ -26,8 +35,9 @@ const KEY_TERMS = [
     meta: 'Due 10th Monthly',
     value: '৳5,000',
     sublabel: 'Pooled per share with ৳50 Sadaqah late-fee isolation',
+    hue: 'teal',
     cardClass:
-      'bg-gradient-to-br from-teal-100/75 via-teal-50/40 to-white/85 dark:from-teal-950/50 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+      'bg-gradient-to-br from-teal-100/75 via-teal-50/40 to-white/85 dark:from-teal-950/50 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
     metaClass: 'text-teal-700 dark:text-teal-400',
   },
   {
@@ -35,8 +45,9 @@ const KEY_TERMS = [
     meta: 'Secret Ballot',
     value: '2/3 Vote',
     sublabel: 'Required consensus for loans & Halal capital deployment',
+    hue: 'amber',
     cardClass:
-      'bg-gradient-to-br from-amber-100/75 via-amber-50/40 to-white/85 dark:from-amber-950/50 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+      'bg-gradient-to-br from-amber-100/75 via-amber-50/40 to-white/85 dark:from-amber-950/50 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
     metaClass: 'text-amber-700 dark:text-amber-400',
   },
   {
@@ -44,8 +55,9 @@ const KEY_TERMS = [
     meta: '2027–2036',
     value: '20 Shares',
     sublabel: 'Up to 10-month revolving repayment schedules',
+    hue: 'sky',
     cardClass:
-      'bg-gradient-to-br from-sky-100/75 via-sky-50/40 to-white/85 dark:from-sky-950/50 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+      'bg-gradient-to-br from-sky-100/75 via-sky-50/40 to-white/85 dark:from-sky-950/50 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
     metaClass: 'text-sky-700 dark:text-sky-400',
   },
 ];
@@ -67,11 +79,10 @@ export function Hero({
   return (
     <div className="space-y-4 w-full">
       {/* Main Hero Statement + Architectural Showcase */}
-      <motion.section
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs"
+      <MotionCard
+        as="section"
+        hue="emerald"
+        className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
@@ -90,7 +101,7 @@ export function Hero({
                 Interest-free mutual relief governed by 2/3 consensus
               </h1>
 
-              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl text-justify">
                 Twenty verified shareholders pool ৳5,000 monthly savings into an encrypted cooperative ledger—extending 0% Qard Hasan relief loans today and deploying 2/3-approved Halal assets toward 2036.
               </p>
             </div>
@@ -177,17 +188,16 @@ export function Hero({
             </div>
           </div>
         </div>
-      </motion.section>
+      </MotionCard>
 
       {/* 4-Column Charter Metrics Strip (Full-Width Row Below Hero Split) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
         {KEY_TERMS.map((metric, idx) => (
-          <motion.div
+          <MotionCard
             key={metric.kicker}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18, delay: 0.03 * idx }}
-            className={`amanah-card-border backdrop-blur-md border rounded-xl p-5 shadow-xs flex flex-col justify-between gap-3 ${metric.cardClass}`}
+            hue={metric.hue}
+            delay={0.03 * idx}
+            className={`backdrop-blur-md border rounded-xl p-5 shadow-xs hover:shadow-md flex flex-col justify-between gap-3 transition-all duration-200 ${metric.cardClass}`}
           >
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -201,11 +211,11 @@ export function Hero({
               <div className="font-display font-mono text-2xl font-bold tracking-tight tabular-nums text-slate-900 dark:text-white">
                 {metric.value}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
                 {metric.sublabel}
               </p>
             </div>
-          </motion.div>
+          </MotionCard>
         ))}
       </div>
 
@@ -218,9 +228,12 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
   const [lifecycleImgFailed, setLifecycleImgFailed] = useState(false);
 
   return (
-    <section
+    <MotionCard
+      as="section"
       id="lifecycle"
-      className={`scroll-mt-2 bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 rounded-2xl shadow-xs ${
+      hue="teal"
+      inView
+      className={`scroll-mt-2 bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >
@@ -274,7 +287,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Revolving Central Balance Formula
               </h3>
-              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                 Verified member deposits credit the central pool; 2/3-approved Qard Hasan loans disburse interest-free principal; monthly installments restore liquidity cleanly.
               </p>
             </div>
@@ -286,13 +299,13 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 2/3-Voted Halal Asset Deployment
               </h3>
-              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                 Upon reaching the maturity threshold, members vote on Mudarabah, Musharakah, and Murabahah ventures by 2/3 supermajority before capital deployment.
               </p>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </MotionCard>
   );
 }

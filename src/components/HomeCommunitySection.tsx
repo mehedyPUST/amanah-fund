@@ -15,6 +15,7 @@ import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 const COMMUNITY_FEATURES = [
   {
@@ -136,7 +137,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                     Log In to Enter the Community
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     Discussions, polls, and direct messages are private to verified Amanah members.
                   </p>
                 </div>
@@ -165,20 +166,20 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {COMMUNITY_FEATURES.map((item, idx) => {
                 const Icon = item.Icon;
+                const cardHue: CardHue = (['emerald', 'teal', 'amber', 'sky'] as const)[idx % 4];
                 const cardClass = [
-                  'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
-                  'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
-                  'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
-                  'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+                  'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
+                  'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
+                  'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
+                  'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
                 ][idx % 4];
                 return (
-                  <motion.div
+                  <MotionCard
                     key={item.title}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.15 }}
-                    transition={{ duration: 0.2, delay: idx * 0.04 }}
-                    className={`amanah-card-border p-4 rounded-xl border ${cardClass} space-y-2.5`}
+                    hue={cardHue}
+                    delay={idx * 0.04}
+                    inView
+                    className={`backdrop-blur-md p-4 rounded-xl border ${cardClass} space-y-2.5 shadow-xs hover:shadow-md transition-all duration-200`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="w-8 h-8 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
@@ -191,10 +192,10 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                       {item.title}
                     </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                       {item.detail}
                     </p>
-                  </motion.div>
+                  </MotionCard>
                 );
               })}
             </div>

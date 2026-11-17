@@ -19,6 +19,7 @@ import type { CoopNotice, NoticePriority } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 type NoticeFilter = 'all' | 'pinned' | 'urgent' | 'important';
 
@@ -27,6 +28,7 @@ const PRIORITY_META: Record<
   {
     label: string;
     Icon: typeof Info;
+    hue: CardHue;
     iconBox: string;
     labelClass: string;
     cardClass: string;
@@ -35,29 +37,32 @@ const PRIORITY_META: Record<
   urgent: {
     label: 'Urgent',
     Icon: AlertTriangle,
+    hue: 'rose',
     iconBox:
       'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
     cardClass:
-      'amanah-card-border bg-gradient-to-br from-rose-100/75 via-rose-50/35 to-white/85 dark:from-rose-950/45 dark:via-rose-950/20 dark:to-slate-900/80 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60',
+      'bg-gradient-to-br from-rose-100/75 via-rose-50/35 to-white/85 dark:from-rose-950/45 dark:via-rose-950/20 dark:to-slate-900/80 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300/90 dark:hover:border-rose-700/70',
   },
   important: {
     label: 'Important',
     Icon: Megaphone,
+    hue: 'amber',
     iconBox:
       'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400',
     labelClass: 'text-amber-700 dark:text-amber-400',
     cardClass:
-      'amanah-card-border bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60',
+      'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60 hover:border-amber-300/90 dark:hover:border-amber-700/70',
   },
   normal: {
     label: 'Notice',
     Icon: Info,
+    hue: 'emerald',
     iconBox:
       'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
     labelClass: 'text-emerald-700 dark:text-emerald-400',
     cardClass:
-      'amanah-card-border bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border-emerald-200/70 dark:border-emerald-800/60',
+      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
   },
 };
 
@@ -550,12 +555,12 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               const rowBusy = busyId === notice.id;
 
               return (
-                <motion.article
+                <MotionCard
+                  as="article"
                   key={notice.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: Math.min(idx * 0.04, 0.2) }}
-                  className={`border rounded-xl p-4 transition-colors flex flex-col justify-between gap-3 ${meta.cardClass}`}
+                  hue={meta.hue}
+                  delay={Math.min(idx * 0.04, 0.2)}
+                  className={`border rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 ${meta.cardClass}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
@@ -640,11 +645,11 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words text-justify">
                       {notice.body}
                     </p>
                   </div>
-                </motion.article>
+                </MotionCard>
               );
             })}
           </div>

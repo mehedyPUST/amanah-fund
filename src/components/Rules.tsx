@@ -17,6 +17,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { ConstitutionDocumentInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
+import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 interface CharterSection {
   code: string;
@@ -334,20 +335,21 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {CHARTER_SECTIONS.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
+            const ruleHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
             const ruleCardClass = [
-              'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
-              'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
-              'bg-gradient-to-br from-sky-100/70 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
-              'bg-gradient-to-br from-amber-100/70 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+              'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
+              'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
+              'bg-gradient-to-br from-sky-100/70 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
+              'bg-gradient-to-br from-amber-100/70 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
             ][idx % 4];
             return (
-              <motion.article
+              <MotionCard
+                as="article"
                 key={rule.code}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ duration: 0.18, delay: idx * 0.03 }}
-                className={`amanah-card-border border rounded-xl ${ruleCardClass} p-5 space-y-3 flex flex-col justify-between`}
+                hue={ruleHue}
+                delay={idx * 0.03}
+                inView
+                className={`backdrop-blur-md border rounded-xl ${ruleCardClass} p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-200`}
               >
                 <div className="space-y-2.5">
                   <div className="space-y-1">
@@ -358,7 +360,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       {rule.title}
                     </ArticleHeadingTag>
                   </div>
-                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     {rule.summary}
                   </p>
                   <AnimatePresence initial={false}>
@@ -379,7 +381,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                               className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400"
                               aria-hidden="true"
                             />
-                            <span>{pt}</span>
+                            <span className="text-justify">{pt}</span>
                           </li>
                         ))}
                       </motion.ul>
@@ -405,7 +407,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     </button>
                   </div>
                 )}
-              </motion.article>
+              </MotionCard>
             );
           })}
         </div>

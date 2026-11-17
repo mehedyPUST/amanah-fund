@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { DashboardSectionId, FundConfig, LeaderboardEntry } from '../types/coop.ts';
 import { formatMoney } from '../utils/format.ts';
+import { MotionCard } from './MotionCard.tsx';
 
 interface ContributionLeaderboardProps {
   entries: LeaderboardEntry[];
@@ -125,9 +126,11 @@ export function ContributionLeaderboard({
   }
 
   return (
-    <section
+    <MotionCard
+      as="section"
+      hue="amber"
       aria-label="Contribution Leaderboard"
-      className="bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
+      className="bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -346,6 +349,6 @@ export function ContributionLeaderboard({
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
-    </section>
+    </MotionCard>
   );
 }

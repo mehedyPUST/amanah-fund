@@ -20,6 +20,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { MotionCard } from './MotionCard.tsx';
 
 interface RepaymentScheduleProps {
   loans: LoanRequest[];
@@ -155,9 +156,11 @@ export function RepaymentSchedule({
     : [];
 
   return (
-    <section
+    <MotionCard
+      as="section"
+      hue="teal"
       aria-label="Repayment Schedule"
-      className="bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
+      className="bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
         {/* Header */}
@@ -500,6 +503,6 @@ export function RepaymentSchedule({
           </button>
         </div>
       )}
-    </section>
+    </MotionCard>
   );
 }
