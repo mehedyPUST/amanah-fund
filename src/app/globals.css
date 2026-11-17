@@ -247,6 +247,7 @@ html.dark .amanah-card-rose:hover {
  * Nested surface: content lives inside Dashboard/Public shells that are already
  * card-like. Flatten child "cards" so we don't stack card-in-card.
  */
+/* Flatten fill only — keep each hue’s colored border + hover */
 [data-surface='app'] :is(
   .amanah-card-emerald,
   .amanah-card-violet,
@@ -257,7 +258,6 @@ html.dark .amanah-card-rose:hover {
 ) {
   background-image: none;
   background-color: rgba(255, 255, 255, 0.55);
-  border-color: rgba(148, 163, 184, 0.28);
   box-shadow: none;
 }
 html.dark [data-surface='app'] :is(
@@ -269,27 +269,84 @@ html.dark [data-surface='app'] :is(
   .amanah-card-rose
 ) {
   background-color: rgba(15, 23, 42, 0.45);
-  border-color: rgba(51, 65, 85, 0.65);
 }
-[data-surface='app'] :is(
-  .amanah-card-emerald,
-  .amanah-card-violet,
-  .amanah-card-teal,
-  .amanah-card-amber,
-  .amanah-card-sky,
-  .amanah-card-rose
-):hover {
-  border-color: rgba(100, 116, 139, 0.45);
+
+[data-surface='app'] .amanah-card-emerald {
+  border-color: rgba(52, 211, 153, 0.55);
 }
-html.dark [data-surface='app'] :is(
-  .amanah-card-emerald,
-  .amanah-card-violet,
-  .amanah-card-teal,
-  .amanah-card-amber,
-  .amanah-card-sky,
-  .amanah-card-rose
-):hover {
-  border-color: rgba(71, 85, 105, 0.9);
+[data-surface='app'] .amanah-card-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.88);
+}
+html.dark [data-surface='app'] .amanah-card-emerald {
+  border-color: rgba(52, 211, 153, 0.34);
+}
+html.dark [data-surface='app'] .amanah-card-emerald:hover {
+  border-color: rgba(52, 211, 153, 0.6);
+}
+
+[data-surface='app'] .amanah-card-violet {
+  border-color: rgba(192, 132, 252, 0.55);
+}
+[data-surface='app'] .amanah-card-violet:hover {
+  border-color: rgba(168, 85, 247, 0.88);
+}
+html.dark [data-surface='app'] .amanah-card-violet {
+  border-color: rgba(192, 132, 252, 0.34);
+}
+html.dark [data-surface='app'] .amanah-card-violet:hover {
+  border-color: rgba(192, 132, 252, 0.6);
+}
+
+[data-surface='app'] .amanah-card-teal {
+  border-color: rgba(45, 212, 191, 0.55);
+}
+[data-surface='app'] .amanah-card-teal:hover {
+  border-color: rgba(20, 184, 166, 0.88);
+}
+html.dark [data-surface='app'] .amanah-card-teal {
+  border-color: rgba(45, 212, 191, 0.34);
+}
+html.dark [data-surface='app'] .amanah-card-teal:hover {
+  border-color: rgba(45, 212, 191, 0.6);
+}
+
+[data-surface='app'] .amanah-card-amber {
+  border-color: rgba(251, 191, 36, 0.55);
+}
+[data-surface='app'] .amanah-card-amber:hover {
+  border-color: rgba(245, 158, 11, 0.85);
+}
+html.dark [data-surface='app'] .amanah-card-amber {
+  border-color: rgba(251, 191, 36, 0.32);
+}
+html.dark [data-surface='app'] .amanah-card-amber:hover {
+  border-color: rgba(251, 191, 36, 0.56);
+}
+
+[data-surface='app'] .amanah-card-sky {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+[data-surface='app'] .amanah-card-sky:hover {
+  border-color: rgba(14, 165, 233, 0.85);
+}
+html.dark [data-surface='app'] .amanah-card-sky {
+  border-color: rgba(56, 189, 248, 0.32);
+}
+html.dark [data-surface='app'] .amanah-card-sky:hover {
+  border-color: rgba(56, 189, 248, 0.56);
+}
+
+[data-surface='app'] .amanah-card-rose {
+  border-color: rgba(251, 113, 133, 0.55);
+}
+[data-surface='app'] .amanah-card-rose:hover {
+  border-color: rgba(244, 63, 94, 0.85);
+}
+html.dark [data-surface='app'] .amanah-card-rose {
+  border-color: rgba(251, 113, 133, 0.34);
+}
+html.dark [data-surface='app'] .amanah-card-rose:hover {
+  border-color: rgba(251, 113, 133, 0.58);
 }
 
 /* Tighter section spacing on small screens inside app surfaces */
