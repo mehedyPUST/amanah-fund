@@ -292,26 +292,6 @@ html.dark [data-surface='app'] :is(
   border-color: rgba(71, 85, 105, 0.9);
 }
 
-/* Subtle left accent so hue still reads without full tinted fill */
-[data-surface='app'] .amanah-card-emerald {
-  border-left: 3px solid rgba(16, 185, 129, 0.75);
-}
-[data-surface='app'] .amanah-card-violet {
-  border-left: 3px solid rgba(168, 85, 247, 0.7);
-}
-[data-surface='app'] .amanah-card-teal {
-  border-left: 3px solid rgba(20, 184, 166, 0.75);
-}
-[data-surface='app'] .amanah-card-amber {
-  border-left: 3px solid rgba(245, 158, 11, 0.75);
-}
-[data-surface='app'] .amanah-card-sky {
-  border-left: 3px solid rgba(14, 165, 233, 0.7);
-}
-[data-surface='app'] .amanah-card-rose {
-  border-left: 3px solid rgba(244, 63, 94, 0.7);
-}
-
 /* Tighter section spacing on small screens inside app surfaces */
 @media (max-width: 639px) {
   [data-surface='app'] :is(
