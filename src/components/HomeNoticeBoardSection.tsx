@@ -282,7 +282,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       className={
         embedded
           ? 'scroll-mt-4 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs text-slate-900 dark:text-slate-100 space-y-5'
-          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/90 backdrop-blur-sm text-slate-900 dark:text-slate-100'
+          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 text-slate-900 dark:text-slate-100'
       }
     >
       <div className={embedded ? 'space-y-5' : 'w-full py-10 sm:py-12 space-y-6'}>

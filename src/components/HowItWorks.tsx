@@ -169,11 +169,13 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
 
   return (
     <div
-      className={`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
-        embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
+      className={`w-full text-slate-900 dark:text-slate-100 ${
+        embedded
+          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          : ''
       }`}
     >
-      <section className="space-y-6">
+      <section className="space-y-6 sm:space-y-7">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800">
           <div className="max-w-2xl space-y-1.5">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">

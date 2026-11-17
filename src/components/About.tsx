@@ -80,11 +80,13 @@ export function About({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      className={`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
-        embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
+      className={`w-full text-slate-900 dark:text-slate-100 ${
+        embedded
+          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          : ''
       }`}
     >
-      <section className="space-y-6">
+      <section className="space-y-6 sm:space-y-7">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}

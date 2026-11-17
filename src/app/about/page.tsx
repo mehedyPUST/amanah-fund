@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <PublicShell>
-      <div className="space-y-2.5">
+      <div className="space-y-8 sm:space-y-10">
         <About />
         <HeroLifecycle embedded />
-        <FAQSection embedded />
+        <FAQSection embedded={false} />
       </div>
     </PublicShell>
   );

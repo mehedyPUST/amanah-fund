@@ -96,7 +96,7 @@ const EXPLORE_PAGES: Array<{
 
 export function HomeHighlights() {
   return (
-    <section className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+    <section className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-slate-800">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">

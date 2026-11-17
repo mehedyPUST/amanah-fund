@@ -254,8 +254,10 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
     <section
       id="faq"
       aria-labelledby="faq-section-heading"
-      className={`scroll-mt-4 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full space-y-6 ${
-        embedded ? 'p-6 sm:p-8' : 'p-6 sm:p-9'
+      className={`scroll-mt-4 w-full space-y-6 sm:space-y-7 text-slate-900 dark:text-slate-100 ${
+        embedded
+          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-8'
+          : ''
       }`}
     >
       {/* Header */}

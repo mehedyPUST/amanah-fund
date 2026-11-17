@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function RulesPage() {
   return (
     <PublicShell>
-      <div className="space-y-5">
+      <div className="space-y-8 sm:space-y-10">
         <Rules />
-        <FAQSection embedded />
+        <FAQSection embedded={false} />
       </div>
     </PublicShell>
   );

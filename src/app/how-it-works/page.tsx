@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function HowItWorksPage() {
   return (
     <PublicShell>
-      <div className="space-y-5">
+      <div className="space-y-8 sm:space-y-10">
         <HowItWorks embedded={false} />
-        <FAQSection embedded />
+        <FAQSection embedded={false} />
       </div>
     </PublicShell>
   );

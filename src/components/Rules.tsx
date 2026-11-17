@@ -281,11 +281,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      className={`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
-        embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
+      className={`w-full text-slate-900 dark:text-slate-100 ${
+        embedded
+          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          : ''
       }`}
     >
-      <section className="space-y-6">
+      <section className="space-y-6 sm:space-y-7">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -424,13 +426,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
-        {/* Official Constitution PDF Banner */}
+        {/* Official Constitution PDF — flat toolbar panel (not a nested card) */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.2 }}
-          className="amanah-card-emerald rounded-xl border p-5 space-y-4"
+          className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 sm:p-5 space-y-4"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -529,8 +531,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           lang={isBn ? 'bn' : 'en'}
           className={
             cardLayout === 'single'
-              ? 'grid grid-cols-1 gap-4 max-w-3xl mx-auto'
-              : 'grid grid-cols-1 xl:grid-cols-2 gap-4'
+              ? 'grid grid-cols-1 gap-4 w-full'
+              : 'grid grid-cols-1 xl:grid-cols-2 gap-4 w-full'
           }
         >
           {sections.map((rule, idx) => {
