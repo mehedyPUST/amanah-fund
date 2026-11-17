@@ -197,19 +197,21 @@ export function Navbar() {
             </>
           )}
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle navigation menu"
-            className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
-          >
-            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label="Toggle navigation menu"
+              className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+            >
+              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       </div>
 
       <AnimatePresence>
-        {mobileOpen && (
+        {isAuthenticated && mobileOpen && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
