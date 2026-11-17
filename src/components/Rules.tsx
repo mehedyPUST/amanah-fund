@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Languages,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
@@ -19,6 +20,8 @@ import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
+type CharterLanguage = 'en' | 'bn';
+
 interface CharterSection {
   code: string;
   title: string;
@@ -26,7 +29,12 @@ interface CharterSection {
   points: string[];
 }
 
-const CHARTER_SECTIONS: CharterSection[] = [
+const DEFAULT_CONSTITUTION_PDF_URL =
+  '/assets/aistudio/cooperative-constitution-cooperative-charter-2027-2036-2026-11-16-30b5a0_98df82ac.pdf';
+const DEFAULT_CONSTITUTION_PDF_NAME =
+  'cooperative-constitution-cooperative-charter-2027-2036.pdf';
+
+const CHARTER_SECTIONS_EN: CharterSection[] = [
   {
     code: 'Articles 01–03',
     title: 'Identity, Core Mission & Community Objectives',
@@ -118,17 +126,115 @@ const CHARTER_SECTIONS: CharterSection[] = [
   },
 ];
 
+const CHARTER_SECTIONS_BN: CharterSection[] = [
+  {
+    code: 'ধারা ০১–০৩',
+    title: 'সংগঠনের নাম, মূল লক্ষ্য ও উদ্দেশ্য',
+    summary:
+      'Savings, Investment and Interest-Free Loan Fund Cooperative Society হিসেবে ভবিষ্যৎ হালাল বিনিয়োগের জন্য যৌথ মূলধন গঠন এবং চলমান সঞ্চয় থেকে সদস্যদের প্রয়োজনে সুদমুক্ত কর্জে হাসানা প্রদান করে।',
+    points: [
+      '১. সংগঠনের নাম: Savings, Investment and Interest-Free Loan Fund Cooperative Society।',
+      '২. মূল লক্ষ্য: ভবিষ্যতে বিনিয়োগের জন্য যৌথ মূলধন গঠন করা এবং চলমান জমাকৃত মূলধন নিজেদের প্রয়োজনে কর্জে হাসানা হিসেবে ব্যবহার করা।',
+      '৩. উদ্দেশ্য: ক) নিজেদের মধ্যে একটি শক্তিশালী কমিউনিটি গড়ে তোলা; খ) দ্বীনের বিভিন্ন গুরুত্বপূর্ণ শাখায় খেদমত করা; গ) আমরা (মুসলমানরা) যাতে অর্থনৈতিকভাবে সমৃদ্ধশালী হতে পারি।',
+    ],
+  },
+  {
+    code: 'ধারা ০৪–০৬',
+    title: 'সদস্যপদ লাভ, সদস্যের বৈশিষ্ট্য ও মেয়াদকাল (২০২৭–২০৩৬)',
+    summary:
+      'নির্ধারিত ফরম, জাতীয় পরিচয়পত্র ও ২০০ টাকা ম্যানেজমেন্ট ফিসহ সদস্যপদ গ্রহণ, দ্বীনি ও নৈতিক মানদণ্ড, সর্বোচ্চ ২০টি শেয়ার এবং জানুয়ারি ২০২৭ থেকে ডিসেম্বর ২০৩৬ মেয়াদ নির্ধারণ।',
+    points: [
+      '৪. সদস্যপদ লাভ: প্ল্যাটফর্মে নির্ধারিত ফরম (গুগল ফরম) পূরণ করে সদস্যপদ লাভ করতে হবে। ফরমের সাথে এক কপি ছবি, জাতীয় পরিচয়পত্রের এক কপি (সদস্য ও নমিনি) ও প্রতি সদস্য বাবদ ২০০/- টাকা (অ-ফেরতযোগ্য) প্রদান করতে হবে। উক্ত টাকা প্ল্যাটফর্মের ম্যানেজমেন্ট ফান্ডে জমা থাকবে, যা স্ট্যাপলার, ফটোকপি, রিং ফাইল, রেজিস্টার খাতা, স্ট্যাম্প ইত্যাদি ক্রয় বাবদ খরচ করা হবে ইনশাআল্লাহ।',
+      '৫. সদস্যের বৈশিষ্ট্য: ক) অবশ্যই নামাজী হতে হবে; খ) হালাল-হারামের ব্যাপারে সতর্কতা অবলম্বনকারী হতে হবে; গ) দেশবরেণ্য ওলামায়ে কেরামকে মহব্বতকারী হতে হবে; ঘ) দ্বীন-ইসলামের বিজয় কামনাকারী হতে হবে।',
+      '৬. মেয়াদকাল ও সদস্যসংখ্যা: ক) কার্যক্রম শুরু হবে জানুয়ারি ২০২৭ থেকে; খ) মোট সদস্যসংখ্যা হবে সর্বোচ্চ ২০ জন; গ) নতুন সদস্য গ্রহণের শেষ সময় হবে জুলাই ২০২৭, এরপর আর নতুন সদস্য নেওয়া হবে না; ঘ) জুলাই ২০২৭ এর মধ্যে নতুন সদস্য হতে চাইলে পূর্ববর্তী সকল মাসের বকেয়া চাঁদা একত্রে পরিশোধ করতে হবে; ঙ) জুলাই ২০২৭ এর মধ্যে সদস্য সংখ্যা ২০ জন হতে কম হলে একই ব্যক্তি সর্বাধিক ২টি শেয়ার নিতে পারবে এবং নতুন শেয়ারের জন্য পূর্ববর্তী সকল মাসের বকেয়া চাঁদা একত্রে পরিশোধ করতে হবে—সদস্য ও শেয়ার সংখ্যা কোনো অবস্থাতেই ২০ এর অধিক হবে না; চ) জানুয়ারি ২০২৭ হতে ডিসেম্বর ২০৩৬ এ প্রকল্প শেষ হবে এবং মেয়াদ শেষে সকল সদস্যের সর্বসম্মত আলোচনায় মেয়াদ পুনর্নির্ধারণ করা হবে।',
+    ],
+  },
+  {
+    code: 'ধারা ০৭–১০',
+    title: '২/৩ বিনিয়োগ অনুমোদন, মূলধন হেফাজত, নথি ও মাসিক চাঁদা',
+    summary:
+      'যাবতীয় বিনিয়োগে কমপক্ষে দুই-তৃতীয়াংশ সদস্যের সম্মতি, চেকবই ও অ্যাকাউন্ট হোল্ডারের পৃথক দায়িত্ব, হার্ড ও সফট কপি সংরক্ষণ এবং বিলম্ব ফি সাদাকাহ হিসেবে বিতরণ।',
+    points: [
+      '৭. বিনিয়োগ অনুমোদন: প্ল্যাটফর্মের যাবতীয় অর্থ বিনিয়োগের ক্ষেত্রে কমপক্ষে ২/৩ (দুই-তৃতীয়াংশ) সদস্যের অনুমোদন থাকতে হবে।',
+      '৮. মূলধন জমা ও উত্তোলন: একটি যৌথ অ্যাকাউন্টে প্রত্যেক সদস্য আপন শেয়ারের টাকা জমা দিবে। টাকার পরিমাণ অনেক বেশি হলে পরামর্শ সাপেক্ষে অন্য সদস্যের নামে আরেকটি যৌথ অ্যাকাউন্ট করা যেতে পারে। চেক বই অ্যাকাউন্ট হোল্ডার ব্যতীত অন্য শূরা/পরিচালনা কমিটির সদস্যের নিকট রাখা হবে এবং শূরা/বোর্ড মিটিংয়ের মাধ্যমে অ্যাকাউন্ট হোল্ডাররা ব্যাংক থেকে টাকা উত্তোলন করবে। প্রয়োজনে পরবর্তীতে প্রতিষ্ঠানের লাইসেন্স ও প্রতিষ্ঠানের নামে অ্যাকাউন্ট করা হলে যৌথ অ্যাকাউন্ট বাতিল করা হবে।',
+      '৯. নথি সংগ্রহ: প্ল্যাটফর্মের যাবতীয় ডাটা যেমন সদস্য ফরম, জমা, আয় ও ব্যয় ইত্যাদি নির্ধারিত ফরম/রশিদের মাধ্যমে হার্ড ও সফট কপিতে সংরক্ষণ থাকবে।',
+      '১০. মাসিক চাঁদা ও বিলম্ব ফি: ক) মাসিক সঞ্চয় ৫,০০০ টাকা প্রতি মাসের ১০ তারিখের মধ্যে পরিশোধ করতে হবে; জমা স্লিপের এক কপি দায়িত্বরত ব্যক্তির কাছে পাঠাতে হবে এবং মূল কপি সদস্যকে সংরক্ষণ করতে হবে; খ) নির্ধারিত সময়ে জমা দিতে ব্যর্থ হলে পরিচালনা কমিটির সদস্যকে অবহিত করতে হবে এবং বিলম্ব ফি হিসাবে ৫০ টাকা ধার্য হবে; গ) বিলম্ব ফি থেকে প্রাপ্ত অর্থ আলাদা হিসাবে রাখা হবে এবং বছর শেষে চূড়ান্ত হিসাব অনুযায়ী প্রতি বছর জানুয়ারি মাসে সাদাকাহ হিসেবে প্রদান করা হবে।',
+    ],
+  },
+  {
+    code: 'ধারা ১১',
+    title: 'সদস্যপদ বাতিল, পুনর্বহাল ও সঞ্চয় ফেরত নীতিমালা',
+    summary:
+      'প্রথম বিনিয়োগের পূর্বে বহির্গমন রোধ, ৩ ও ৭ মাসের বকেয়া সংক্রান্ত বিধান, শৃঙ্খলাভঙ্গের ব্যবস্থা এবং প্রতি ৪ মাস পরপর শেয়ার মূল্যায়ন।',
+    points: [
+      'অব্যাহতি ও সঞ্চয় ফেরত (১১ক): প্ল্যাটফর্ম সূচনালগ্নে কমপক্ষে ১টি বিনিয়োগের পূর্বে কেউ বের হতে পারবে না। পরবর্তীতে যে কোনো সময় অব্যাহতি নিতে চাইলে প্রাপ্য অর্থ ফান্ডে জমা থাকা সাপেক্ষে ফেরত দিতে প্ল্যাটফর্ম বাধ্য থাকবে; অন্যথায় ফান্ডে জমা হওয়া পর্যন্ত অপেক্ষা করতে হবে।',
+      '৩ মাস ও ৭ মাসের বকেয়া (১১খ–গ): কোনো সদস্যের ৩ মাসের টাকা বকেয়া থাকলে সদস্যপদ বাতিল হবে এবং পরবর্তী দুই মাসের ভেতর ২০০/- টাকা (অ-ফেরতযোগ্য) পরিশোধ করে Re-joining ফরম পূরণ করে পুনরায় সদস্যপদ গ্রহণ করতে হবে। ধারাবাহিক ৭ মাস টাকা জমা না দিলে সদস্যপদ স্থায়ীভাবে বাতিল বলে গণ্য হবে; তবে লিখিত দরখাস্ত ও শূরা/পরিচালনা কমিটির সম্মতি সাপেক্ষে সকল বকেয়া পরিশোধের মাধ্যমে পুনর্বহাল করা যাবে।',
+      'শৃঙ্খলাভঙ্গ ও শেয়ার হস্তান্তর (১১ঘ–ঙ): বিশৃঙ্খলা বা শূরা/বোর্ড মিটিং সিদ্ধান্তের ওপর অনাস্থা প্রকাশ করে অরাজকতা সৃষ্টি করলে শূরা/বোর্ড মিটিংয়ের মাধ্যমে সদস্যপদ বাতিল করা হবে। প্রথম বিনিয়োগের পর কেউ চলে যেতে চাইলে পরিচিত যোগ্য ব্যক্তি বা বিদ্যমান সদস্যের নিকট (কম শেয়ারধারীকে অগ্রাধিকার দিয়ে) শেয়ার বিক্রির ব্যবস্থা করা হবে; সম্ভব না হলে বিনিয়োগ তহবিল থেকে ৪ মাস পরপর বোর্ড মিটিংয়ে নির্ধারিত মূল্যে টাকা ফেরত দেওয়া হবে। একবার বের হয়ে গেলে দ্বিতীয়বার যুক্ত হওয়ার সুযোগ থাকবে না।',
+    ],
+  },
+  {
+    code: 'ধারা ১২',
+    title: 'সুদমুক্ত কর্জে হাসানা ঋণসুবিধা (সর্বোচ্চ ৫০,০০০ টাকা বা ৭৫%)',
+    summary:
+      'জানুয়ারি ২০২৭ হতে বিনাসুদে ১টি শেয়ারের বিপরীতে সর্বোচ্চ ৫০,০০০ টাকা অথবা সঞ্চয়ের সর্বোচ্চ ৭৫% পর্যন্ত কর্জে হাসানা এবং অনধিক ১০ মাসে পরিশোধের নিয়ম।',
+    points: [
+      '১২(ক) ঋণসীমা: জানুয়ারি ২০২৭ হতে বিনাসুদে ১টি শেয়ারের জন্য সর্বোচ্চ ৫০,০০০ টাকা অথবা সঞ্চয়ের সর্বোচ্চ ৭৫%—এর মধ্যে যেটি পরিমাণে কম সে পরিমাণ টাকা কর্জে হাসানা নিতে পারবে।',
+      '১২(খ) পরিশোধের সময়সীমা: কর্জে হাসানা পরিশোধের সময় অনধিক ১০ মাস। ঋণের পরিমাণ ও ফেরত দেওয়ার সর্বোচ্চ মাস হিসাবে কিস্তি নির্ধারিত হবে।',
+      '১২(গ–ঘ) কিস্তির বিলম্ব ফি ও মেয়াদান্তে সমন্বয়: কিস্তি পরিশোধে বিলম্ব হলে প্রতি মাসিক কিস্তির জন্য ৫০ টাকা বিলম্ব ফি আলাদা হিসাবে জমা হয়ে প্রতি বছর জানুয়ারি মাসে সাদাকাহ হিসেবে প্রদান করা হবে। প্রকল্পের মেয়াদ শেষ হওয়ার ১০ মাস পূর্ব থেকে বাকি সময়ের মধ্যে ঋণ আবেদন করলে কিস্তি অবশিষ্ট মাসের উপর নির্ধারিত হবে, যাতে সকল কর্জে হাসানা প্রকল্পের শেষ মাসের মধ্যেই পুনরায় ফান্ডে জমা হয়।',
+    ],
+  },
+  {
+    code: 'ধারা ১৩–১৭',
+    title: 'শরঈ ফায়সালা, নিরপেক্ষতা, স্বচ্ছতা ও গঠনতন্ত্র সংশোধনী',
+    summary:
+      'ক্ষয়ক্ষতিতে শরঈ সিদ্ধান্ত, মূলধন ও লভ্যাংশের নিরাপত্তা, স্ট্যাম্পসহ স্বচ্ছ বিনিয়োগ এবং ২/৩ শূরা ও ১/২ উপস্থিত সদস্যের সম্মতিতে গঠনতন্ত্র সংশোধন।',
+    points: [
+      '১৩ ও ১৪. ফান্ডের নিরাপত্তা ও নিরপেক্ষ কার্যক্রম: ফান্ডের টাকা কারো মাধ্যমে ক্ষতিসাধিত হলে শরঈ সিদ্ধান্তই চূড়ান্ত হবে। প্ল্যাটফর্ম সর্বাবস্থায় ব্যক্তিগত ও প্রাতিষ্ঠানিক প্রভাবমুক্ত থাকবে; কোনো সদস্যের মূলধন ও লভ্যাংশ কখনোই বাজেয়াপ্ত বা ক্রোক করা যাবে না, তবে আর্থিক পাওনা থাকলে বোর্ড মিটিংয়ের নোটিশ প্রদান করে তা কেটে রাখা হবে।',
+      '১৫ ও ১৬. স্বচ্ছতা ও নতুন সমস্যা সমাধান: অর্থ বিনিয়োগে সর্বোচ্চ সতর্কতা ও প্রয়োজনে স্ট্যাম্প ব্যবহারসহ যাবতীয় করণীয় অনুসরণ করতে হবে। গঠনতন্ত্রে উল্লেখ নেই এমন সমস্যা শূরা/পরিচালনা কমিটি পরামর্শক্রমে বা সদস্যদের নিয়ে পরামর্শ সভার মাধ্যমে সমাধান করবে।',
+      '১৭. গঠনতন্ত্র সংশোধনী: গঠনতন্ত্রের কোনো ধারা সংশোধন, সংযোজন-বিয়োজন বা বাতিলের প্রয়োজন হলে শূরা/পরিচালনা কমিটি সদস্যদের নিয়ে মিটিংয়ের মাধ্যমে সমাধান করবে; এক্ষেত্রে কমপক্ষে শূরা/পরিচালনা কমিটির ২/৩ অংশ ও অন্যান্য উপস্থিত সদস্যদের ১/২ অংশের মতামতের উপর সবাইকে আস্থা রাখতে হবে।',
+    ],
+  },
+  {
+    code: 'ধারা ১৮–২০',
+    title: '৫ সদস্যের শূরা ও সঞ্চয়ী হিসাব কমিটি এবং সদস্যদের দায়িত্ব',
+    summary:
+      'সক্রিয় ৫ সদস্যের পরিচালনা/শূরা কমিটি, ৫ সদস্যের সঞ্চয়ী হিসাব কমিটি, প্রতি মাসের ১৫ তারিখে হিসাব ও কর্জে হাসানা তালিকা প্রকাশ এবং স্থানীয় প্রকল্পে সদস্যদের সহযোগিতা।',
+    points: [
+      '১৮. পরিচালনা/শূরা কমিটি (৫ জন): সবচেয়ে সক্রিয়, ব্যবস্থাপনা, জমি/ফ্ল্যাট ক্রয়-বিক্রয় ও অলাভজনক প্রতিষ্ঠানের কাজে সময় দিতে আগ্রহী সর্বোচ্চ ৫ জন সদস্য নিয়ে শূরা কমিটি গঠিত হবে। তারা ঋণ আবেদন গ্রহণ ও অনুমোদন করবেন, প্রতি মাসের ১৫ তারিখের মধ্যে চলতি কর্জে হাসানা ও অপেক্ষমান তালিকা প্রকাশ করবেন, বিবাদ মীমাংসা করবেন এবং প্রতি ডিসেম্বর মিটিংয়ে প্রয়োজনে কমিটি পুনর্বিন্যাস করা হবে।',
+      '১৯. সঞ্চয়ী হিসাব কমিটি (৫ জন): যৌথ অ্যাকাউন্ট খোলা যায় এমন সর্বোচ্চ সংখ্যক সদস্য এই কমিটিতে থাকবেন। তারা প্রতিটি সদস্যের হিসাব আলাদাভাবে এক্সেল ফাইলে রাখবেন, কর্জে হাসানা ও বিলম্ব ফি আলাদাভাবে নথিভুক্ত করবেন এবং প্রতি মাসের ১৫ তারিখের মধ্যে ব্যাংক স্টেটমেন্ট ও হিসাবের তালিকা সদস্য গ্রুপে শেয়ার করবেন।',
+      '২০. সদস্যদের দায়িত্ব: সদস্যদের বর্তমান বা স্থায়ী ঠিকানার এলাকায় কোনো বিনিয়োগ, ধর্মীয় বা সামাজিক প্রকল্প বাস্তবায়ন চলাকালে উপস্থিত থেকে সর্বোচ্চ সহযোগিতা করা এবং প্রয়োজনে অন্তত ফোনের মাধ্যমে খোঁজখবর রাখা—যা পরকালের পাথেয় হবে ইনশাআল্লাহ।',
+    ],
+  },
+  {
+    code: 'ধারা ২১–২৫',
+    title: 'VISION-36, আল মদিনা সিটি, প্রোপার্টি হেফাজত ও জরুরি বিধান',
+    summary:
+      '১০ বছরে প্রতি শেয়ারের বিপরীতে ১টি জমির শেয়ার, ৩ জেলায় ইসলামিক স্কুল, "আল মদিনা সিটি" আবাসন, মক্তব প্রতিষ্ঠা এবং জরুরি অবস্থায় ৩–৪ মাসে মূলধন ফেরত।',
+    points: [
+      '২১. VISION-36: ১০ বছর (১ দশক) পর ইনশাআল্লাহ প্রত্যেকেই ১টি শেয়ারের বিপরীতে ১টি করে জমির শেয়ারের মালিক হবো। সময়ের আগে লক্ষ্য পূরণ হলে সম্পদ বণ্টন করে নতুন ভিশন শুরু হবে, আর পূরণ না হলে শূরা/বোর্ড মিটিংয়ে সময় বর্ধিত করা হবে। কেউ প্রয়োজনবোধে অর্জিত শেয়ার বিক্রি করতে চাইলে সদস্যদের বৈশিষ্ট্যের অনুরূপ ব্যক্তির নিকট বিক্রির সর্বোচ্চ চেষ্টা করতে হবে। এছাড়া কমপক্ষে ৩টি জেলায় ইসলামিক স্কুল প্রতিষ্ঠা করা হবে।',
+      '২২ ও ২৩. ভবিষ্যৎ পরিকল্পনা ও বহুমুখী বিনিয়োগ: দেশের প্রত্যেকটি সিটি কর্পোরেশনে কমপক্ষে ১টি করে আবাসিক হাউজিং সোসাইটি "আল মদিনা সিটি" গড়ে তোলা—যেখানে মসজিদ ও হেফজখানা কমপ্লেক্স, ইসলামিক স্কুল, কওমি মাদ্রাসা (মাদানী নেসাব + জেনারেল), ১০০% নামাজী ও পর্দানশীন পরিবেশ, খেলার মাঠ, পার্ক ও সাঁতার শেখার পুকুর থাকবে; পাশাপাশি উত্তরবঙ্গ ও পার্বত্য জেলাসমূহে একটি করে মক্তব প্রতিষ্ঠা করা হবে।',
+      '২৪ ও ২৫. প্রোপার্টি ক্রয় প্রক্রিয়া ও অ-স্বাভাবিক পরিস্থিতি: ২০ জন সদস্যের কষ্টার্জিত হালাল টাকায় অর্জিত প্রতিটি প্রোপার্টির যত্ন নেওয়া ও হেফাজত করা প্রত্যেক সদস্যের দায়িত্ব ও কর্তব্য। আল্লাহ এই দ্বীনি প্ল্যাটফর্মকে হেফাজত করুন (আমীন)। কোনো কারণে বলিষ্ঠ নেতৃত্বের অভাবে অ-স্বাভাবিক পরিস্থিতির সৃষ্টি হলে শূরা/বোর্ড কমিটি ৩–৪ মাসের ভেতর যাবতীয় কার্যক্রম সমাপ্ত করে প্রত্যেক শেয়ারহোল্ডারকে তাদের টাকা ফেরত প্রদান করবে।',
+    ],
+  },
+];
+
 export function Rules({ embedded = false }: { embedded?: boolean }) {
   const HeadingTag = embedded ? 'h2' : 'h1';
   const PdfHeadingTag = embedded ? 'h3' : 'h2';
   const ArticleHeadingTag = embedded ? 'h3' : 'h2';
+  const [lang, setLang] = useState<CharterLanguage>('en');
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
   const [expandedCodes, setExpandedCodes] = useState<Record<string, boolean>>({});
 
+  // Language toggle is strictly for the standalone Charter page (/rules)
+  const activeLang: CharterLanguage = embedded ? 'en' : lang;
+  const isBn = activeLang === 'bn';
+  const sections = isBn ? CHARTER_SECTIONS_BN : CHARTER_SECTIONS_EN;
+
   const allExpanded =
-    !embedded || CHARTER_SECTIONS.every((section) => Boolean(expandedCodes[section.code]));
+    !embedded || sections.every((section) => Boolean(expandedCodes[section.code]));
 
   function toggleSectionCode(code: string) {
     setExpandedCodes((prev) => ({ ...prev, [code]: !prev[code] }));
@@ -139,7 +245,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
       setExpandedCodes({});
     } else {
       const next: Record<string, boolean> = {};
-      CHARTER_SECTIONS.forEach((s) => {
+      sections.forEach((s) => {
         next[s.code] = true;
       });
       setExpandedCodes(next);
@@ -164,11 +270,15 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
     };
   }, []);
 
-  const constitutionUrl = constitution?.constitutionPdfUrl || null;
-  const constitutionName = constitution?.constitutionPdfName || 'cooperative-constitution.pdf';
+  const constitutionUrl = constitution?.constitutionPdfUrl || DEFAULT_CONSTITUTION_PDF_URL;
+  const constitutionName =
+    constitution?.constitutionPdfUrl
+      ? constitution.constitutionPdfName || DEFAULT_CONSTITUTION_PDF_NAME
+      : DEFAULT_CONSTITUTION_PDF_NAME;
 
   return (
     <div
+      lang={isBn ? 'bn' : 'en'}
       className={`bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
       }`}
@@ -182,8 +292,15 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800"
         >
           <div className="space-y-1.5">
+            {isBn && (
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </p>
+            )}
             <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Official Constitution &amp; Bylaws · Jan 2027 – Dec 2036
+              {isBn
+                ? 'আনুষ্ঠানিক গঠনতন্ত্র, নীতিমালা এবং নির্দেশিকা · মেয়াদ: জানুয়ারি ২০২৭ – ডিসেম্বর ২০৩৬'
+                : 'Official Constitution & Bylaws · Jan 2027 – Dec 2036'}
             </div>
             <HeadingTag
               className={
@@ -192,13 +309,63 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   : 'text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white text-balance'
               }
             >
-              Savings, Investment &amp; Interest-Free Loan Fund Charter
+              {isBn
+                ? 'সঞ্চয়, বিনিয়োগ ও সুদমুক্ত ঋণ তহবিল গঠনতন্ত্র'
+                : 'Savings, Investment & Interest-Free Loan Fund Charter'}
             </HeadingTag>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-              English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
+              {isBn
+                ? 'মূল বাংলা গঠনতন্ত্রের ধারা ১–২৫ (Savings, Investment and Interest-Free Loan Fund Cooperative Society)।'
+                : 'English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.'}
             </p>
           </div>
-          {embedded && (
+
+          {!embedded ? (
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-end">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span className="hidden md:inline">Language</span>
+              </span>
+              <div
+                role="tablist"
+                aria-label="Charter language"
+                className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
+              >
+                {(
+                  [
+                    { id: 'en', label: 'English' },
+                    { id: 'bn', label: 'বাংলা' },
+                  ] as const
+                ).map((option) => {
+                  const selected = lang === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setLang(option.id)}
+                      className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                        selected
+                          ? 'text-slate-900 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {selected && (
+                        <motion.span
+                          layoutId="charter-language-toggle"
+                          transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="relative z-10">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -239,7 +406,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 <Skeleton width={98} height={34} borderRadius={8} />
               </div>
             </div>
-          ) : constitutionUrl ? (
+          ) : (
             <>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
@@ -248,7 +415,9 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   <div className="space-y-1">
                     <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                      Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
+                      {isBn
+                        ? 'আনুষ্ঠানিক সমবায় গঠনতন্ত্র পিডিএফ (ধারা ১–২৫ · ২০২৭–২০৩৬)'
+                        : 'Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)'}
                     </PdfHeadingTag>
                     <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
@@ -268,12 +437,12 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     {showPdfPreview ? (
                       <>
                         <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Hide PDF</span>
+                        <span>{isBn ? 'পিডিএফ লুকান' : 'Hide PDF'}</span>
                       </>
                     ) : (
                       <>
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Preview PDF</span>
+                        <span>{isBn ? 'পিডিএফ দেখুন' : 'Preview PDF'}</span>
                       </>
                     )}
                   </button>
@@ -284,7 +453,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open PDF</span>
+                    <span>{isBn ? 'পিডিএফ খুলুন' : 'Open PDF'}</span>
                   </a>
                   <a
                     href={constitutionUrl}
@@ -292,7 +461,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Download PDF</span>
+                    <span>{isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}</span>
                   </a>
                 </div>
               </div>
@@ -315,25 +484,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 )}
               </AnimatePresence>
             </>
-          ) : (
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5" aria-hidden="true" />
-              </div>
-              <div className="space-y-1">
-                <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                  Official Cooperative Constitution PDF
-                </PdfHeadingTag>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  No constitution PDF published yet. Administrators can upload it from Site Settings.
-                </p>
-              </div>
-            </div>
           )}
         </motion.div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {CHARTER_SECTIONS.map((rule, idx) => {
+          {sections.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
             const ruleHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
             const ruleCardClass = [
@@ -345,7 +500,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             return (
               <MotionCard
                 as="article"
-                key={rule.code}
+                key={`${activeLang}-${rule.code}`}
                 hue={ruleHue}
                 delay={idx * 0.03}
                 inView
@@ -414,20 +569,22 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
         <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
+            {isBn
+              ? 'আমানাহ-এর ২০-শেয়ার সমবায় তহবিল চক্রে (২০২৭–২০৩৬) অংশ নিতে প্রস্তুত?'
+              : "Ready to participate in Amanah's 20-share cooperative treasury cycle (2027–2036)?"}
           </p>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              Member Sign In
+              {isBn ? 'সদস্য সাইন ইন' : 'Member Sign In'}
             </Link>
             <Link
               href="/signup"
               className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
             >
-              <span>Apply for Membership</span>
+              <span>{isBn ? 'সদস্যপদের জন্য আবেদন' : 'Apply for Membership'}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
