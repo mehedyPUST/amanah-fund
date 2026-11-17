@@ -32,6 +32,7 @@ import {
   formatShortDate,
   shortHash,
 } from '../utils/format.ts';
+import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { StatusText } from './StatusText.tsx';
 
 export type TransactionTabTarget = DashboardSectionId;
@@ -399,7 +400,7 @@ export function TransactionHistory({
 
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
           {!compact && isStaff && !isAdmin && (
-            <div className="col-span-2 sm:col-span-1 flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <div className="col-span-2 sm:col-span-1 flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               {(
                 [
                   { id: 'mine', label: 'My Transactions' },
@@ -411,7 +412,10 @@ export function TransactionHistory({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setScope(item.id)}
+                    onClick={(e) => {
+                      setScope(item.id);
+                      scrollFilterButtonWithNeighbors(e.currentTarget);
+                    }}
                     className={`relative flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       active
                         ? 'text-slate-900 dark:text-white'
@@ -520,7 +524,7 @@ export function TransactionHistory({
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full lg:w-auto">
-          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit">
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit">
             {(
               [
                 { id: 'all', label: `All (${counts.total})` },
@@ -534,7 +538,10 @@ export function TransactionHistory({
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setTypeFilter(tab.id)}
+                  onClick={(e) => {
+                    setTypeFilter(tab.id);
+                    scrollFilterButtonWithNeighbors(e.currentTarget);
+                  }}
                   className={`relative px-3 py-1.5 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'

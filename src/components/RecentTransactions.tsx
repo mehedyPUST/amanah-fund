@@ -19,6 +19,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { MotionCard } from './MotionCard.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -225,11 +226,11 @@ export function RecentTransactions({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 max-w-full">
           <div
             role="group"
             aria-label="Filter recent transactions"
-            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
           >
             {(
               [
@@ -243,7 +244,10 @@ export function RecentTransactions({
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setFilter(tab.id)}
+                  onClick={(e) => {
+                    setFilter(tab.id);
+                    scrollFilterButtonWithNeighbors(e.currentTarget);
+                  }}
                   className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
