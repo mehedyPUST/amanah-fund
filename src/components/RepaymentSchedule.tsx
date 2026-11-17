@@ -293,7 +293,7 @@ export function RepaymentSchedule({
                   onClick={onOpenLoanModal}
                   className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer transition-colors"
                 >
-                  Request Qard Hasan
+                  Request Loan
                 </button>
               )}
               <button
@@ -301,7 +301,7 @@ export function RepaymentSchedule({
                 onClick={() => onNavigate('quard-hasan')}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
               >
-                View Loan Ledger
+                Open Qard Hasan
               </button>
             </div>
           </div>
@@ -498,7 +498,7 @@ export function RepaymentSchedule({
             onClick={() => onNavigate('quard-hasan')}
             className="group text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
           >
-            <span>Pay Installment</span>
+            <span>Open Qard Hasan</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>

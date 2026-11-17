@@ -510,7 +510,7 @@ export function AdminSiteSettingsView({
         ? 'Replace Cooperative Constitution PDF'
         : 'Publish Cooperative Constitution PDF',
       description:
-        'The PDF will be automatically renamed semantically, uploaded to governance media storage, and published immediately on the Charter Rules & Membership Application pages.',
+        'The PDF will be automatically renamed semantically, uploaded to governance media storage, and published immediately on the Rules & Charter & Join Amanah pages.',
       details: [
         { label: 'Selected File', value: file.name },
         { label: 'File Size', value: sizeLabel },
@@ -529,7 +529,7 @@ export function AdminSiteSettingsView({
             mode: 'notice',
             tone: 'emerald',
             title: 'Constitution PDF Published',
-            description: `Saved as ${uploaded.constitutionPdfName} (${uploaded.provider}) and published to the Rules Charter & Sign-Up pages.`,
+            description: `Saved as ${uploaded.constitutionPdfName} (${uploaded.provider}) and published to the Rules & Charter & Join Amanah pages.`,
           });
         } finally {
           setConstitutionBusy(false);
@@ -545,7 +545,7 @@ export function AdminSiteSettingsView({
       tone: 'red',
       title: 'Remove Published Constitution PDF',
       description:
-        'Removing this document unlinks the Constitution PDF from the public Charter Rules and Membership Application pages until a new PDF is uploaded.',
+        'Removing this document unlinks the Constitution PDF from the public Rules & Charter and Join Amanah pages until a new PDF is uploaded.',
       details: [
         { label: 'Current File', value: config.constitutionPdfName || 'cooperative-constitution.pdf' },
       ],
@@ -1195,7 +1195,7 @@ export function AdminSiteSettingsView({
                 Official Cooperative Constitution PDF
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Automatically renamed semantically and published to the Charter Rules &amp; Sign-Up pages.
+                Automatically renamed semantically and published to the Rules &amp; Charter &amp; Join Amanah pages.
               </p>
             </div>
 

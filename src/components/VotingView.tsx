@@ -682,7 +682,7 @@ export function VotingView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Opinion Ballot — Qard Hasan, Investment &amp; Decision Polls
+              Voting — Qard Hasan, Investment &amp; Decision Polls
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Secret ballots stay sealed until revealed by a manager.

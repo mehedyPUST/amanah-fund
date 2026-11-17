@@ -124,7 +124,7 @@ export function MobileVisitorGate() {
             <Shield className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
-            Amanah Co-op
+            Amanah
           </div>
           <div className="mt-1.5 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700 dark:text-emerald-400" />
@@ -167,7 +167,7 @@ export function MobileVisitorGate() {
                       id="mobile-visitor-gate-title"
                       className="font-display text-lg font-bold tracking-tight"
                     >
-                      Amanah Co-op
+                      Amanah
                     </h2>
                     <p className="text-xs text-emerald-100/85">
                       Qard Hasan &amp; Halal Treasury
@@ -297,7 +297,7 @@ export function MobileVisitorGate() {
                         className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Use 4-Digit Device PIN</span>
+                        <span>Sign in with 4-Digit PIN</span>
                       </button>
                     )}
                   </div>
@@ -321,7 +321,7 @@ export function MobileVisitorGate() {
                           className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400"
                           aria-hidden="true"
                         />
-                        <span>Read the Charter</span>
+                        <span>Rules &amp; Charter</span>
                       </span>
                       <ArrowRight className="w-4 h-4 text-slate-400" aria-hidden="true" />
                     </Link>

@@ -645,16 +645,14 @@ export function OverviewView({
             : 'Waiting for guarantor co-signature before Manager review.';
         } else if (loan.status === 'pending_manager_review') {
           progressPct = 35;
-          stageCaption =
-            'Application submitted and queued in Manager Desk to initiate the 2/3 Opinion Ballot.';
+          stageCaption = `Application submitted and queued in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} to initiate the 2/3 Voting ballot.`;
         } else if (loan.status === 'pending_vote') {
           progressPct = 60;
           const cast = loan.totalVotesCast ?? loan.votes.length;
-          stageCaption = `Secret 2/3 Opinion Ballot is open (${cast} of ${loan.totalEligibleVoters} member ballot(s) cast).`;
+          stageCaption = `Secret 2/3 Voting ballot is open (${cast} of ${loan.totalEligibleVoters} member ballot(s) cast).`;
         } else if (loan.status === 'approved_pending_disbursement') {
           progressPct = 85;
-          stageCaption =
-            '2/3 quorum approved! Awaiting Manager payout confirmation in Manager Desk.';
+          stageCaption = `2/3 quorum approved! Awaiting Manager payout confirmation in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}.`;
           barColor = 'bg-teal-600 dark:bg-teal-500';
         } else if (loan.status === 'active') {
           progressPct =
@@ -708,7 +706,7 @@ export function OverviewView({
                     className="px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open Opinion Ballot</span>
+                    <span>Open Voting</span>
                   </button>
                 )}
                 <button
@@ -716,7 +714,7 @@ export function OverviewView({
                   onClick={() => onNavigate('quard-hasan')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
-                  <span>View in Quard Hasan</span>
+                  <span>Open Qard Hasan</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
@@ -761,7 +759,7 @@ export function OverviewView({
             onClick={() => onNavigate('quard-hasan')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
           >
-            Respond in Quard Hasan →
+            Open Qard Hasan →
           </button>
         </section>
       )}
@@ -780,7 +778,7 @@ export function OverviewView({
               </div>
               <p className="text-xs text-red-800 dark:text-red-300">
                 {!isAdmin && !personal.eligibility.noOverdueInstallments
-                  ? `You have ${personal.eligibility.overdueCount} overdue installment(s). Settle them in Quard Hasan before requesting new financing.`
+                  ? `You have ${personal.eligibility.overdueCount} overdue installment(s). Settle them in Qard Hasan before requesting new financing.`
                   : 'Cooperative repayment scheduler flagged past-due installments requiring follow-up.'}
               </p>
             </div>
@@ -813,7 +811,7 @@ export function OverviewView({
             onClick={() => onNavigate('member-registry')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer shrink-0"
           >
-            Review Member Registry →
+            Review Users &amp; Roles →
           </button>
         </section>
       )}
@@ -894,7 +892,7 @@ export function OverviewView({
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            Amanah Height − Quard Hasan Current
+            Amanah Height − Qard Hasan Current
           </div>
         </MotionCard>
 
@@ -904,7 +902,7 @@ export function OverviewView({
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>Quard Hasan Total Current</span>
+            <span>Qard Hasan Total Current</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -1069,7 +1067,7 @@ export function OverviewView({
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Quard Hasan Members
+                Active Qard Hasan Members
               </h3>
             </div>
             <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
@@ -1255,7 +1253,7 @@ export function OverviewView({
                 className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Manage Users &amp; Roles</span>
+                <span>Users &amp; Roles</span>
               </button>
               <button
                 type="button"
@@ -1371,7 +1369,7 @@ export function OverviewView({
                   className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Request Qard Hasan</span>
+                  <span>Request Loan</span>
                 </button>
               )}
               <button
@@ -1475,7 +1473,9 @@ export function OverviewView({
                   {treasury.pendingContributionsCount}
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                  {isStaff ? 'Review in Manager Desk →' : 'View submission status →'}
+                  {isStaff
+                    ? `Review in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
+                    : 'View submission status →'}
                 </div>
               </button>
 
@@ -1501,7 +1501,9 @@ export function OverviewView({
                   {treasury.pendingDisbursementsCount}
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
-                  {isStaff ? 'Confirm payout in Manager Desk →' : 'Multi-sig treasury release →'}
+                  {isStaff
+                    ? `Confirm payout in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
+                    : 'Multi-sig treasury release →'}
                 </div>
               </button>
 
@@ -1533,7 +1535,9 @@ export function OverviewView({
                   {treasury.pendingRepaymentsCount}
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                  {isStaff ? 'Verify installments in Manager Desk →' : 'Inspect installment receipts →'}
+                  {isStaff
+                    ? `Verify installments in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
+                    : 'Inspect installment receipts →'}
                 </div>
               </button>
             </div>

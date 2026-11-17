@@ -538,7 +538,7 @@ export function SignUpForm() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Charter Rules</span>
+                    <span>Rules &amp; Charter</span>
                   </Link>
                 )}
               </div>

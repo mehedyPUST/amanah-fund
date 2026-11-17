@@ -460,7 +460,7 @@ export function TransactionHistory({
               onClick={() => onNavigate('transaction-history')}
               className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
-              <span>Full General Ledger</span>
+              <span>Open Transactions</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           )}

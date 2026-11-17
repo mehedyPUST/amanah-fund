@@ -457,11 +457,11 @@ export function MobileMfsHome({
         : 'Waiting for guarantor co-signature before Manager review';
     } else if (loan.status === 'pending_manager_review') {
       progressPct = 35;
-      stageCaption = 'Queued in Manager Desk to initiate the 2/3 Opinion Ballot';
+      stageCaption = `Queued in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} to initiate the 2/3 ballot`;
     } else if (loan.status === 'pending_vote') {
       progressPct = 60;
       const cast = loan.totalVotesCast ?? loan.votes.length;
-      stageCaption = `Secret 2/3 Opinion Ballot open (${cast} / ${loan.totalEligibleVoters} ballots)`;
+      stageCaption = `Secret 2/3 Voting ballot open (${cast} / ${loan.totalEligibleVoters} ballots)`;
     } else if (loan.status === 'approved_pending_disbursement') {
       progressPct = 85;
       stageCaption = '2/3 quorum approved · Awaiting Manager payout release';
@@ -1042,7 +1042,7 @@ export function MobileMfsHome({
                   className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <span>
-                    {loanProgress.loan.status === 'pending_vote' ? 'Open Ballot' : 'Details'}
+                    {loanProgress.loan.status === 'pending_vote' ? 'Open Voting' : 'Open Qard Hasan'}
                   </span>
                   <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </button>
@@ -1479,7 +1479,7 @@ export function MobileMfsHome({
                   {isStaff
                     ? pendingGuarantorLoansCount > 0
                       ? `Initiate 2/3 ballot (+${pendingGuarantorLoansCount} awaiting guarantor)`
-                      : 'Initiate 2/3 ballot in Manager Desk'
+                      : `Initiate 2/3 ballot in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
                     : 'Inspect Qard Hasan queue'}
                 </div>
               </div>
@@ -1542,7 +1542,9 @@ export function MobileMfsHome({
                   Pending Deposits
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
-                  {isStaff ? 'Review in Manager Desk' : 'View contribution submission status'}
+                  {isStaff
+                    ? `Review in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
+                    : 'View contribution submission status'}
                 </div>
               </div>
             </div>
@@ -1570,7 +1572,9 @@ export function MobileMfsHome({
                   Awaiting Disbursement
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
-                  {isStaff ? 'Confirm payout in Manager Desk' : 'Multi-sig treasury release'}
+                  {isStaff
+                    ? `Confirm payout in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
+                    : 'Multi-sig treasury release'}
                 </div>
               </div>
             </div>
@@ -1605,7 +1609,9 @@ export function MobileMfsHome({
                   Pending Repayments
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
-                  {isStaff ? 'Verify installments in Manager Desk' : 'Inspect installment receipts'}
+                  {isStaff
+                    ? `Verify installments in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
+                    : 'Inspect installment receipts'}
                 </div>
               </div>
             </div>
@@ -1685,7 +1691,7 @@ export function MobileMfsHome({
           }}
           className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>{isAdmin ? 'Open Voting & Ballots' : 'Open Qard Hasan Workspace'}</span>
+          <span>{isAdmin ? 'Open Voting' : 'Open Qard Hasan'}</span>
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </MobileBottomSheet>
@@ -1913,7 +1919,7 @@ export function MobileMfsHome({
                   className="min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <FilePlus2 className="w-4 h-4" />
-                  <span>Request Qard Hasan</span>
+                  <span>Request Loan</span>
                 </button>
               )}
               <button

@@ -57,11 +57,11 @@ const EXPLORE_PAGES: Array<{
   {
     href: '/rules',
     index: '03.',
-    label: 'Governance Charter',
+    label: 'Rules & Charter',
     eyebrow: 'Articles 1–25 · PDF',
     description:
       'Read the official VISION-36 cooperative constitution, arrears policies, Qard Hasan ceilings, and preview the signed PDF.',
-    cta: 'Read Charter',
+    cta: 'Rules & Charter',
     Icon: ScrollText,
     hue: 'emerald',
     iconBoxClass:

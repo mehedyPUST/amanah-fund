@@ -321,7 +321,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                   {editingFaq ? 'Edit FAQ Question & Answer' : 'Add New FAQ Question & Answer'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Changes apply immediately across the Home, About, How It Works, and Charter Rules pages.
+                  Changes apply immediately across the Home, About, How It Works, and Rules &amp; Charter pages.
                 </p>
               </div>
               <button

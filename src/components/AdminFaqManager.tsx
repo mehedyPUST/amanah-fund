@@ -208,7 +208,7 @@ export function AdminFaqManager() {
             Manage Frequently Asked Questions
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Add, edit, or delete questions and answers displayed on the Home, About, How It Works, and Charter Rules pages.
+            Add, edit, or delete questions and answers displayed on the Home, About, How It Works, and Rules &amp; Charter pages.
           </p>
         </div>
 

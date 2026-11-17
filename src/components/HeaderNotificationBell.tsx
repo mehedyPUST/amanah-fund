@@ -170,7 +170,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: isManagerReviewNotice ? 'approved_loan' : 'governance',
-          title: isManagerReviewNotice ? 'Qard Hasan Application Ready for Review' : 'Opinion Ballot Open',
+          title: isManagerReviewNotice ? 'Qard Hasan Application Ready for Review' : 'Voting Open',
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: isManagerReviewNotice ? 'manager-desk' : 'ballot',
@@ -287,8 +287,8 @@ export function HeaderNotificationBell({
         id: 'staff-pending-loan-reviews',
         kind: 'approved_loan',
         title: 'Qard Hasan Awaiting Vote Initiation',
-        detail: `${count} Qard Hasan request${count === 1 ? '' : 's'} waiting in Manager Desk to initiate 2/3 ballot.`,
-        timestampLabel: 'Manager Desk queue',
+        detail: `${count} Qard Hasan request${count === 1 ? '' : 's'} waiting in ${user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'} to initiate 2/3 ballot.`,
+        timestampLabel: user.role === 'admin' ? 'Governance Desk queue' : 'Manager Desk queue',
         targetTab: 'manager-desk',
         managerDeskTab: 'qard-hasan',
       });
@@ -455,7 +455,7 @@ export function HeaderNotificationBell({
 
             <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-center justify-between gap-2">
               <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                {unreadInboxCount} unread in inbox
+                {unreadInboxCount} unread
               </span>
               <button
                 type="button"
@@ -465,7 +465,7 @@ export function HeaderNotificationBell({
                 }}
                 className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
-                <span>Open Inbox</span>
+                <span>Open Notifications</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>

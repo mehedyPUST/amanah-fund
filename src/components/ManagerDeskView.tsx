@@ -319,7 +319,7 @@ export function ManagerDeskView({
       tone: 'emerald',
       title: `Initiate 2/3 Secret Ballot (${loan.id})`,
       description:
-        'Opening the Opinion Ballot notifies all eligible members to vote privately. Set how long voting stays open — members may change their ballot until the deadline. Results stay sealed until you reveal them.',
+        'Opening the Voting ballot notifies all eligible members to vote privately. Set how long voting stays open — members may change their ballot until the deadline. Results stay sealed until you reveal them.',
       details: [
         { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
         { label: 'Principal', value: formatMoney(loan.amount, ccy) },
@@ -337,7 +337,7 @@ export function ManagerDeskView({
         await onRefresh();
         showNotice(
           'emerald',
-          'Opinion Ballot Opened',
+          'Voting Opened',
           `Secret voting is live for ${loan.id} for ${hours} hours. Members can change votes until the deadline.`
         );
       },
@@ -573,7 +573,7 @@ export function ManagerDeskView({
         showNotice(
           'emerald',
           'Decision Poll Opened',
-          'Members have been notified and can now cast their secret ballots in Opinion Ballot.'
+          'Members have been notified and can now cast their secret ballots in Voting.'
         );
       },
     });

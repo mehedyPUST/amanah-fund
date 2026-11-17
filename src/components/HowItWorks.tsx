@@ -58,8 +58,8 @@ const ROLE_GUIDES: RoleGuide[] = [
         number: '02.',
         title: 'Log Monthly Savings',
         summary:
-          'Deposit ৳5,000 per share by the 10th via Bank or MFS, then upload the receipt or transaction ID in Monthly Contribution.',
-        actionHint: 'Monthly Contribution → Submit Receipt',
+          'Deposit ৳5,000 per share by the 10th via Bank or MFS, then upload the receipt or transaction ID in Contributions.',
+        actionHint: 'Contributions → Submit Receipt',
         Icon: Wallet,
       },
       {
@@ -67,15 +67,15 @@ const ROLE_GUIDES: RoleGuide[] = [
         title: 'Request & Repay Qard Hasan',
         summary:
           'Apply for a 0% interest loan (up to ৳50,000 or 75% of your savings) and submit monthly installments over up to 10 months.',
-        actionHint: 'Request Qard Hasan → Track Schedule',
+        actionHint: 'Request Loan → Qard Hasan',
         Icon: HandCoins,
       },
       {
         number: '04.',
         title: 'Vote & Connect Safely',
         summary:
-          'Cast secret 2/3 ballots on loan requests and Halal ventures in Opinion Ballot, and message verified peers in Community.',
-        actionHint: 'Opinion Ballot · Community Hub',
+          'Cast secret 2/3 ballots on loan requests and Halal ventures in Voting, and message verified peers in Community.',
+        actionHint: 'Voting · Community',
         Icon: Vote,
       },
     ],
@@ -89,16 +89,16 @@ const ROLE_GUIDES: RoleGuide[] = [
         number: '01.',
         title: 'Verify Deposit Receipts',
         summary:
-          'Inspect incoming Bank/MFS deposit slips and installment payments in Governance Desk before crediting member savings.',
-        actionHint: 'Governance Desk → Contributions',
+          'Inspect incoming Bank/MFS deposit slips and installment payments in Manager Desk before crediting member savings.',
+        actionHint: 'Manager Desk → Contributions',
         Icon: ClipboardCheck,
       },
       {
         number: '02.',
         title: 'Open 2/3 Loan Ballots',
         summary:
-          'Review pending Qard Hasan applications against liquidity limits and launch secret opinion voting for active members.',
-        actionHint: 'Governance Desk → Loan Requests',
+          'Review pending Qard Hasan applications against liquidity limits and launch secret voting for active members.',
+        actionHint: 'Manager Desk → Loan Requests',
         Icon: Vote,
       },
       {
@@ -114,7 +114,7 @@ const ROLE_GUIDES: RoleGuide[] = [
         title: 'Propose Ventures & Meetings',
         summary:
           'Publish Halal investment proposals for 2/3 voting, create community polls, and sync Shura meeting notices.',
-        actionHint: 'Governance Desk → Projects & Polls',
+        actionHint: 'Manager Desk → Projects & Polls',
         Icon: Building2,
       },
     ],
@@ -128,8 +128,8 @@ const ROLE_GUIDES: RoleGuide[] = [
         number: '01.',
         title: 'Approve Member KYC',
         summary:
-          'Verify NIDs, nominee shares, portrait uploads, and reference checks in Member Registry before activating new accounts.',
-        actionHint: 'User & Role Management → Pending',
+          'Verify NIDs, nominee shares, portrait uploads, and reference checks in Users & Roles before activating new accounts.',
+        actionHint: 'Users & Roles → Pending',
         Icon: ShieldCheck,
       },
       {
@@ -307,7 +307,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               href="/rules"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              Read Charter
+              Rules &amp; Charter
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}

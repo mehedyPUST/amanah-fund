@@ -578,7 +578,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Review in Manager Desk</span>
+                        <span>Review in {user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -597,7 +597,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Manager Desk</span>
+                        <span>Open {user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -615,7 +615,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Opinion Ballot</span>
+                        <span>Open Voting</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -638,7 +638,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Quard Hasan</span>
+                        <span>Open Qard Hasan</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );

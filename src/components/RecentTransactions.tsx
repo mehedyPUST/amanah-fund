@@ -270,7 +270,7 @@ export function RecentTransactions({
               onClick={() => onNavigate('transaction-history')}
               className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
             >
-              <span>Full General Ledger</span>
+              <span>Open Transactions</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -465,10 +465,10 @@ export function RecentTransactions({
                         >
                           <span>
                             {item.status === 'scheduled' || item.status === 'overdue'
-                              ? 'Pay Installment'
+                              ? 'Open Qard Hasan'
                               : isContribution
-                                ? 'Open Deposits'
-                                : 'Open Loan Schedule'}
+                                ? 'Open Contributions'
+                                : 'Open Qard Hasan'}
                           </span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
@@ -492,7 +492,7 @@ export function RecentTransactions({
             onClick={() => onNavigate('transaction-history')}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
           >
-            <span>View all {filteredItems.length} in General Ledger</span>
+            <span>View all {filteredItems.length} in Transactions</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>

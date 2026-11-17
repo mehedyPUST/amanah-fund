@@ -77,6 +77,7 @@ import type {
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
+import { getDashboardSectionLabel, getDeskLabel, getRegistryLabel } from '../utils/navigation.ts';
 
 interface NavItemConfig {
   id: DashboardSectionId;
@@ -1112,7 +1113,7 @@ export function DashboardShell() {
       },
       {
         id: 'theme-toggle',
-        label: darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+        label: darkMode ? 'Light Mode' : 'Dark Mode',
         Icon: darkMode ? Sun : Moon,
         onClick: () => toggleDarkMode(),
       },
@@ -1170,18 +1171,7 @@ export function DashboardShell() {
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden lg:inline">/</span>
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
-              <span className="lg:hidden">
-                {activeSection === 'fund-overview'
-                  ? 'Amanah'
-                  : activeSection === 'member-profile'
-                    ? 'Member Profile'
-                    : activeNavMeta?.label || 'Amanah'}
-              </span>
-              <span className="hidden lg:inline">
-                {activeSection === 'member-profile'
-                  ? 'Member Profile'
-                  : activeNavMeta?.label || 'Overview'}
-              </span>
+              {getDashboardSectionLabel(activeSection, user.role)}
             </h1>
           </div>
         </div>
@@ -1503,7 +1493,7 @@ export function DashboardShell() {
                             : 'bg-red-600 hover:bg-red-700'
                             }`}
                         >
-                          <span>View Loan Status</span>
+                          <span>Open Qard Hasan</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                         <button
@@ -1511,7 +1501,7 @@ export function DashboardShell() {
                           onClick={() => navigateToPage('notification', false)}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors whitespace-nowrap cursor-pointer"
                         >
-                          Inbox
+                          Notifications
                         </button>
                         <button
                           type="button"
@@ -1564,8 +1554,8 @@ export function DashboardShell() {
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
                       <span>
                         {unvotedLoanProposals.length === 1
-                          ? 'Qard Hasan Proposal Open for Secret Opinion Ballot'
-                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Open for Secret Opinion Ballot`}
+                          ? 'Qard Hasan Proposal Open for Secret Voting'
+                          : `${unvotedLoanProposals.length} Qard Hasan Proposals Open for Secret Voting`}
                       </span>
                       <span aria-hidden="true" className="text-amber-400 dark:text-amber-700">
                         ·
@@ -1595,7 +1585,7 @@ export function DashboardShell() {
                     }}
                     className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
-                    <span>Open Ballot</span>
+                    <span>Open Voting</span>
                     <ArrowRight
                       className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                       aria-hidden="true"
@@ -1839,10 +1829,7 @@ export function DashboardShell() {
 
               {isStaff && activeSection === 'manager-desk' && (
                 <section id="manager-desk" className="space-y-4 pb-8">
-                  <SectionEyebrow
-                    label={isAdmin ? 'Governance Desk' : 'Manager · Manager Desk'}
-                    tone="amber"
-                  />
+                  <SectionEyebrow label={getDeskLabel(user.role)} tone="amber" />
                   <ManagerDeskView
                     user={user}
                     config={overview?.config || null}
@@ -1865,28 +1852,21 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
-                  <SectionEyebrow label="Admin · Site Activity" tone="emerald" />
+                  <SectionEyebrow label="Site Activity" tone="emerald" />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
               {isAdmin && activeSection === 'system-audit-logs' && (
                 <section id="system-audit-logs" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · System Audit Logs" tone="emerald" />
+                  <SectionEyebrow label="Audit Logs" tone="emerald" />
                   <SystemAuditLogsView user={user} />
                 </section>
               )}
 
               {isStaff && activeSection === 'member-registry' && (
                 <section id="member-registry" className="space-y-4">
-                  <SectionEyebrow
-                    label={
-                      isAdmin
-                        ? 'Admin · User & Role Management'
-                        : 'Manager · Member Updates & Directory'
-                    }
-                    tone="emerald"
-                  />
+                  <SectionEyebrow label={getRegistryLabel(user.role)} tone="emerald" />
                   <MemberRegistrySection
                     user={user}
                     config={overview?.config || null}
@@ -1898,7 +1878,7 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · Site Settings" tone="emerald" />
+                  <SectionEyebrow label="Site Settings" tone="emerald" />
                   <AdminSiteSettingsView
                     overview={overview}
                     config={overview?.config || null}
@@ -1918,7 +1898,7 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'email-queue' && (
                 <section id="email-queue" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Admin · Email Queue" tone="amber" />
+                  <SectionEyebrow label="Email Queue" tone="amber" />
                   <AdminEmailQueueView onRefreshWorkspace={handleRefreshWithAutoSync} />
                 </section>
               )}

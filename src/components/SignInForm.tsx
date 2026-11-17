@@ -85,7 +85,7 @@ export function SignInForm() {
           { label: 'Member Code', value: res.user.memberCode },
           { label: 'Role', value: res.user.role.toUpperCase() },
         ],
-        confirmLabel: mobile ? 'Dashboard' : 'Continue to Homepage',
+        confirmLabel: mobile ? 'Dashboard' : 'Home',
         redirectHomeOnClose: true,
       });
       setUser(res.user);
@@ -307,7 +307,7 @@ export function SignInForm() {
                   className="w-full py-2 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Use 4-Digit Device PIN</span>
+                  <span>Sign in with 4-Digit PIN</span>
                 </button>
               )}
             </>
