@@ -305,7 +305,7 @@ export function MobileMfsHome({
           ))}
         </div>
         <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 8 }).map((_, idx) => (
             <Skeleton key={idx} height={82} borderRadius={16} />
           ))}
         </div>
@@ -384,7 +384,6 @@ export function MobileMfsHome({
         )
       : 0;
 
-  // Compute active loan progress tracker metadata
   const loanProgress = (() => {
     if (!myActiveOrPendingLoan) return null;
     const loan = myActiveOrPendingLoan;
@@ -422,211 +421,140 @@ export function MobileMfsHome({
     return { loan, progressPct, stageCaption, barColor };
   })();
 
-  // Core bKash-style Services Grid (exact requested icons + full desktop entry points)
-  const coreActionTiles: MfsIconTile[] = [
-    {
-      id: 'pay-monthly-contribution',
-      label: 'Pay Monthly Contribution',
-      Icon: CreditCard,
-      iconBgClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-      badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
-      onClick: () => {
-        if (isAdmin) {
-          if (onOpenManagerDeskTab) onOpenManagerDeskTab('contributions');
-          else onNavigate('manager-desk');
-        } else {
-          onNavigate('monthly-contribution');
-        }
-      },
-    },
-    {
-      id: 'apply-qard-hasan',
-      label: 'Apply for Qard Hasan',
-      Icon: FilePlus2,
-      iconBgClass:
-        'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-      iconColorClass: 'text-teal-700 dark:text-teal-400',
-      onClick: () => {
-        if (isAdmin) {
-          onNavigate('ballot');
-        } else if (onOpenLoanModal) {
-          onOpenLoanModal();
-        } else {
-          onNavigate('quard-hasan');
-        }
-      },
-    },
-    {
-      id: 'my-amanah',
-      label: 'My Amanah',
-      Icon: Wallet,
-      iconBgClass:
-        'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
-      iconColorClass: 'text-violet-700 dark:text-violet-400',
-      onClick: () => {
-        if (isAdmin) {
-          setActiveSheet('standing');
-        } else {
-          onNavigate('my-amanah');
-        }
-      },
-    },
-    {
-      id: 'community',
-      label: 'Community',
-      Icon: MessageSquare,
-      iconBgClass:
-        'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
-      iconColorClass: 'text-indigo-700 dark:text-indigo-400',
-      badge: pendingBadgeCount('community'),
-      onClick: () => onNavigate('community'),
-    },
-    {
-      id: 'members',
-      label: 'Members',
-      Icon: Users,
-      iconBgClass:
-        'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
-      iconColorClass: 'text-sky-700 dark:text-sky-400',
-      badge: isAdmin ? pendingBadgeCount('member-registry') : 0,
-      onClick: () => onNavigate('members'),
-    },
-    {
-      id: 'voting',
-      label: 'Voting',
-      Icon: Vote,
-      iconBgClass:
-        'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
-      iconColorClass: 'text-amber-700 dark:text-amber-400',
-      badge: pendingBadgeCount('ballot'),
-      onClick: () => onNavigate('ballot'),
-    },
-  ];
-
-  // Desktop-parity Analytical & Operational Sheet Launchers
-  const insightTiles: MfsIconTile[] = [
-    {
-      id: 'monthly-pulse',
-      label: 'Monthly Pulse',
-      Icon: CalendarCheck,
-      iconBgClass:
-        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-      onClick: () => setActiveSheet('pulse'),
-    },
-    {
-      id: 'approval-queues',
-      label: 'Queues',
-      Icon: ClipboardCheck,
-      iconBgClass:
-        'bg-violet-50 dark:bg-violet-950/40 border-violet-200/70 dark:border-violet-800/60',
-      iconColorClass: 'text-violet-700 dark:text-violet-400',
-      badge: totalQueueCount,
-      onClick: () => setActiveSheet('queues'),
-    },
-    {
-      id: 'active-borrowers',
-      label: 'Borrowers',
-      Icon: HandCoins,
-      iconBgClass:
-        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-      iconColorClass: 'text-amber-700 dark:text-amber-400',
-      badge: treasury.activeBorrowers.length,
-      onClick: () => setActiveSheet('borrowers'),
-    },
-    {
-      id: 'repayment-schedule',
-      label: 'Schedule',
-      Icon: CalendarClock,
-      iconBgClass:
-        'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
-      iconColorClass: 'text-teal-700 dark:text-teal-400',
-      onClick: () => setActiveSheet('repayments'),
-    },
-    {
-      id: 'leaderboard',
-      label: 'Leaderboard',
-      Icon: Trophy,
-      iconBgClass:
-        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-      iconColorClass: 'text-amber-700 dark:text-amber-400',
-      onClick: () => setActiveSheet('leaderboard'),
-    },
-    {
-      id: 'standing-quota',
-      label: isAdmin ? 'Loan Quota' : 'Standing',
-      Icon: ShieldCheck,
-      iconBgClass:
-        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-      onClick: () => setActiveSheet('standing'),
-    },
-    {
-      id: 'qard-hasan-page',
-      label: isAdmin ? 'Ballots' : 'My Loans',
-      Icon: HandCoins,
-      iconBgClass:
-        'bg-sky-50 dark:bg-sky-950/40 border-sky-200/70 dark:border-sky-800/60',
-      iconColorClass: 'text-sky-700 dark:text-sky-400',
-      onClick: () => onNavigate(isAdmin ? 'ballot' : 'quard-hasan'),
-    },
-    {
-      id: 'statistics',
-      label: 'Statistics',
-      Icon: BarChart3,
-      iconBgClass:
-        'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/70 dark:border-indigo-800/60',
-      iconColorClass: 'text-indigo-700 dark:text-indigo-400',
-      onClick: () => onNavigate('statistics'),
-    },
-  ];
-
-  // Role-specific Governance & Account Tools
-  const toolTiles: MfsIconTile[] = isAdmin
+  // 1. Primary Services (3-col bKash-style primary icons)
+  const coreActionTiles: MfsIconTile[] = isAdmin
     ? [
         {
           id: 'member-registry',
-          label: 'Users',
+          label: 'Users & Roles',
           Icon: UserCheck,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+            'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
           iconColorClass: 'text-emerald-700 dark:text-emerald-400',
           badge: pendingBadgeCount('member-registry'),
           onClick: () => onNavigate('member-registry'),
         },
         {
           id: 'manager-desk',
-          label: 'Gov. Desk',
+          label: 'Governance Desk',
           Icon: ClipboardCheck,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+            'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
           iconColorClass: 'text-amber-700 dark:text-amber-400',
           badge: pendingBadgeCount('manager-desk'),
           onClick: () => onNavigate('manager-desk'),
         },
         {
           id: 'site-settings',
-          label: 'Settings',
+          label: 'Site Settings',
           Icon: Settings,
           iconBgClass:
-            'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/70 dark:border-indigo-800/60',
+            'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
           iconColorClass: 'text-indigo-700 dark:text-indigo-400',
           onClick: () => onNavigate('site-settings'),
         },
         {
-          id: 'system-audit-logs',
-          label: 'Audit Logs',
-          Icon: Shield,
+          id: 'community',
+          label: 'Community',
+          Icon: MessageSquare,
           iconBgClass:
-            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
-          iconColorClass: 'text-rose-700 dark:text-rose-400',
-          onClick: () => onNavigate('system-audit-logs'),
+            'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
+          iconColorClass: 'text-teal-700 dark:text-teal-400',
+          badge: pendingBadgeCount('community'),
+          onClick: () => onNavigate('community'),
         },
         {
+          id: 'members',
+          label: 'Members',
+          Icon: Users,
+          iconBgClass:
+            'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
+          iconColorClass: 'text-sky-700 dark:text-sky-400',
+          onClick: () => onNavigate('members'),
+        },
+        {
+          id: 'voting',
+          label: 'Voting',
+          Icon: Vote,
+          iconBgClass:
+            'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
+          iconColorClass: 'text-violet-700 dark:text-violet-400',
+          badge: pendingBadgeCount('ballot'),
+          onClick: () => onNavigate('ballot'),
+        },
+      ]
+    : [
+        {
+          id: 'pay-monthly-contribution',
+          label: 'Pay Monthly Contribution',
+          Icon: CreditCard,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
+          onClick: () => onNavigate('monthly-contribution'),
+        },
+        {
+          id: 'apply-qard-hasan',
+          label: 'Apply for Qard Hasan',
+          Icon: FilePlus2,
+          iconBgClass:
+            'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
+          iconColorClass: 'text-teal-700 dark:text-teal-400',
+          onClick: () => {
+            if (onOpenLoanModal) {
+              onOpenLoanModal();
+            } else {
+              onNavigate('quard-hasan');
+            }
+          },
+        },
+        {
+          id: 'my-amanah',
+          label: 'My Amanah',
+          Icon: Wallet,
+          iconBgClass:
+            'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
+          iconColorClass: 'text-violet-700 dark:text-violet-400',
+          onClick: () => onNavigate('my-amanah'),
+        },
+        {
+          id: 'community',
+          label: 'Community',
+          Icon: MessageSquare,
+          iconBgClass:
+            'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
+          iconColorClass: 'text-indigo-700 dark:text-indigo-400',
+          badge: pendingBadgeCount('community'),
+          onClick: () => onNavigate('community'),
+        },
+        {
+          id: 'members',
+          label: 'Members',
+          Icon: Users,
+          iconBgClass:
+            'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
+          iconColorClass: 'text-sky-700 dark:text-sky-400',
+          onClick: () => onNavigate('members'),
+        },
+        {
+          id: 'voting',
+          label: 'Voting',
+          Icon: Vote,
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
+          iconColorClass: 'text-amber-700 dark:text-amber-400',
+          badge: pendingBadgeCount('ballot'),
+          onClick: () => onNavigate('ballot'),
+        },
+      ];
+
+  // 2. Every Remaining Functional Page (4-col iconic grid so 100% of functional pages are on Home!)
+  const functionalPageTiles: MfsIconTile[] = isAdmin
+    ? [
+        {
           id: 'transaction-history',
-          label: 'Ledger',
+          label: 'Transactions',
           Icon: History,
           iconBgClass:
             'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
@@ -634,8 +562,17 @@ export function MobileMfsHome({
           onClick: () => onNavigate('transaction-history'),
         },
         {
+          id: 'statistics',
+          label: 'Statistics',
+          Icon: BarChart3,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          onClick: () => onNavigate('statistics'),
+        },
+        {
           id: 'manager-cycle',
-          label: 'Cycle',
+          label: 'Mgr Cycle',
           Icon: CalendarClock,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -644,7 +581,7 @@ export function MobileMfsHome({
         },
         {
           id: 'notification',
-          label: 'Alerts',
+          label: 'Notifications',
           Icon: Bell,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -672,6 +609,15 @@ export function MobileMfsHome({
           onClick: () => onNavigate('site-activity'),
         },
         {
+          id: 'system-audit-logs',
+          label: 'Audit Logs',
+          Icon: Shield,
+          iconBgClass:
+            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
+          iconColorClass: 'text-rose-700 dark:text-rose-400',
+          onClick: () => onNavigate('system-audit-logs'),
+        },
+        {
           id: 'my-profile',
           label: 'Profile',
           Icon: User,
@@ -682,6 +628,61 @@ export function MobileMfsHome({
         },
       ]
     : [
+        {
+          id: 'quard-hasan',
+          label: 'Qard Hasan',
+          Icon: HandCoins,
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconColorClass: 'text-amber-700 dark:text-amber-400',
+          onClick: () => onNavigate('quard-hasan'),
+        },
+        {
+          id: 'transaction-history',
+          label: 'Transactions',
+          Icon: History,
+          iconBgClass:
+            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
+          iconColorClass: 'text-slate-700 dark:text-slate-200',
+          onClick: () => onNavigate('transaction-history'),
+        },
+        {
+          id: 'statistics',
+          label: 'Statistics',
+          Icon: BarChart3,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          onClick: () => onNavigate('statistics'),
+        },
+        {
+          id: 'manager-cycle',
+          label: 'Mgr Cycle',
+          Icon: CalendarClock,
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconColorClass: 'text-amber-700 dark:text-amber-400',
+          onClick: () => onNavigate('manager-cycle'),
+        },
+        {
+          id: 'notification',
+          label: 'Notifications',
+          Icon: Bell,
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconColorClass: 'text-amber-700 dark:text-amber-400',
+          badge: pendingBadgeCount('notification'),
+          onClick: () => onNavigate('notification'),
+        },
+        {
+          id: 'my-profile',
+          label: 'Profile',
+          Icon: User,
+          iconBgClass:
+            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
+          iconColorClass: 'text-slate-700 dark:text-slate-200',
+          onClick: () => onNavigate('my-profile'),
+        },
         ...(isManager
           ? [
               {
@@ -706,44 +707,67 @@ export function MobileMfsHome({
               },
             ]
           : []),
-        {
-          id: 'transaction-history',
-          label: 'Ledger',
-          Icon: History,
-          iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
-          onClick: () => onNavigate('transaction-history'),
-        },
-        {
-          id: 'manager-cycle',
-          label: 'Cycle',
-          Icon: CalendarClock,
-          iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
-          onClick: () => onNavigate('manager-cycle'),
-        },
-        {
-          id: 'notification',
-          label: 'Alerts',
-          Icon: Bell,
-          iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
-          badge: pendingBadgeCount('notification'),
-          onClick: () => onNavigate('notification'),
-        },
-        {
-          id: 'my-profile',
-          label: 'Profile',
-          Icon: User,
-          iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
-          onClick: () => onNavigate('my-profile'),
-        },
       ];
+
+  // 3. Desktop Overview Drill-Down Sheets (3-col clean cards)
+  const insightTiles: MfsIconTile[] = [
+    {
+      id: 'monthly-pulse',
+      label: 'Monthly Pulse',
+      Icon: CalendarCheck,
+      iconBgClass:
+        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+      onClick: () => setActiveSheet('pulse'),
+    },
+    {
+      id: 'approval-queues',
+      label: 'Approval Queues',
+      Icon: ClipboardCheck,
+      iconBgClass:
+        'bg-violet-50 dark:bg-violet-950/40 border-violet-200/70 dark:border-violet-800/60',
+      iconColorClass: 'text-violet-700 dark:text-violet-400',
+      badge: totalQueueCount,
+      onClick: () => setActiveSheet('queues'),
+    },
+    {
+      id: 'active-borrowers',
+      label: 'Active Borrowers',
+      Icon: HandCoins,
+      iconBgClass:
+        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+      iconColorClass: 'text-amber-700 dark:text-amber-400',
+      badge: treasury.activeBorrowers.length,
+      onClick: () => setActiveSheet('borrowers'),
+    },
+    {
+      id: 'repayment-schedule',
+      label: 'Repayment Schedule',
+      Icon: CalendarClock,
+      iconBgClass:
+        'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
+      iconColorClass: 'text-teal-700 dark:text-teal-400',
+      onClick: () => setActiveSheet('repayments'),
+    },
+    {
+      id: 'leaderboard',
+      label: 'Leaderboard',
+      Icon: Trophy,
+      iconBgClass:
+        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+      iconColorClass: 'text-amber-700 dark:text-amber-400',
+      onClick: () => setActiveSheet('leaderboard'),
+    },
+    {
+      id: 'standing-quota',
+      label: isAdmin ? 'Annual Quota' : 'Member Standing',
+      Icon: ShieldCheck,
+      iconBgClass:
+        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+      onClick: () => setActiveSheet('standing'),
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -987,7 +1011,7 @@ export function MobileMfsHome({
         </div>
       )}
 
-      {/* 3. Treasury Headline KPI Strip (2x2 clean grid, zero truncation at 375px) */}
+      {/* 3. Treasury Headline KPI Strip (2x2 clean grid) */}
       <section aria-label="Fund Overview" className="space-y-2">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1101,7 +1125,7 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* 4. Core bKash-Style Services Icon Grid */}
+      {/* 4. Core Services Grid */}
       <section aria-label="Services" className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
           Services
@@ -1136,14 +1160,14 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* 5. Insights, Queues & Analytics Iconic Menu (Desktop Overview Parity) */}
-      <section aria-label="Treasury Insights and Queues" className="space-y-2">
+      {/* 5. All Functional Pages (4-col grid ensuring 100% of app pages have iconic buttons on Home) */}
+      <section aria-label="All App Pages" className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          Insights &amp; Queues
+          {isAdmin ? 'Governance & Ledger Pages' : isManager ? 'Management & Ledger Pages' : 'All Pages & Account'}
         </h2>
 
         <div className="grid grid-cols-4 gap-2">
-          {insightTiles.map((tile) => {
+          {functionalPageTiles.map((tile) => {
             const Icon = tile.Icon;
             return (
               <button
@@ -1171,21 +1195,21 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* 6. Role-Specific Governance & Account Tools */}
-      <section aria-label="Tools and Governance" className="space-y-2">
+      {/* 6. Treasury Insights & Live Queues (Bottom-sheet drill-downs matching Desktop Overview) */}
+      <section aria-label="Treasury Insights and Queues" className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {isAdmin ? 'Governance & System' : isManager ? 'Shura & Account' : 'Account & Ledger'}
+          Treasury Insights &amp; Queues
         </h2>
 
-        <div className="grid grid-cols-4 gap-2">
-          {toolTiles.map((tile) => {
+        <div className="grid grid-cols-3 gap-2">
+          {insightTiles.map((tile) => {
             const Icon = tile.Icon;
             return (
               <button
                 key={tile.id}
                 type="button"
                 onClick={tile.onClick}
-                className="min-h-[80px] px-1.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/75 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
+                className="min-h-[84px] px-2 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/75 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
               >
                 <span
                   className={`relative w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
@@ -1197,7 +1221,7 @@ export function MobileMfsHome({
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight text-center line-clamp-1">
+                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight text-center">
                   {tile.label}
                 </span>
               </button>
@@ -1273,7 +1297,7 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* ==================== DRILL-DOWN BOTTOM SHEETS (Full Desktop Parity) ==================== */}
+      {/* ==================== DRILL-DOWN BOTTOM SHEETS ==================== */}
 
       {/* Sheet 1: Monthly Treasury Pulse & Clearance */}
       <MobileBottomSheet
@@ -1430,7 +1454,7 @@ export function MobileMfsHome({
         </div>
       </MobileBottomSheet>
 
-      {/* Sheet 2: Active Governance & Approval Queues (5 Desktop Queues) */}
+      {/* Sheet 2: Active Governance & Approval Queues */}
       <MobileBottomSheet
         open={activeSheet === 'queues'}
         onClose={() => setActiveSheet(null)}

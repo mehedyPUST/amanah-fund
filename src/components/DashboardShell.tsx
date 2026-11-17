@@ -11,8 +11,10 @@ import {
   Bell,
   CalendarClock,
   CheckCircle2,
+  ChevronRight,
   ClipboardCheck,
   CreditCard,
+  FilePlus2,
   HandCoins,
   History,
   Home,
@@ -821,6 +823,248 @@ export function DashboardShell() {
     );
   }
 
+  function renderMobileDrawerSection(
+    title: string,
+    items: Array<{
+      id: string;
+      label: string;
+      Icon: typeof Home;
+      badge?: number;
+      active?: boolean;
+      accent?: 'emerald' | 'amber';
+      onClick: () => void;
+    }>
+  ) {
+    return (
+      <div className="space-y-1">
+        <div className="px-3 pb-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+          {title}
+        </div>
+        <div className="space-y-0.5">
+          {items.map((item) => {
+            const Icon = item.Icon;
+            const toneStyle = SIDEBAR_TONE_STYLES[item.accent || 'emerald'];
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={item.onClick}
+                aria-current={item.active ? 'page' : undefined}
+                className={`w-full min-h-[44px] px-3 py-2 text-sm rounded-xl flex items-center justify-between gap-3 transition-colors cursor-pointer text-left ${
+                  item.active
+                    ? `${toneStyle.pillBg} ${toneStyle.activeText}`
+                    : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <span className="flex items-center gap-3 min-w-0">
+                  <Icon
+                    className={`w-4.5 h-4.5 shrink-0 ${
+                      item.active ? toneStyle.activeIcon : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.label}</span>
+                </span>
+                {typeof item.badge === 'number' && item.badge > 0 && (
+                  <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderMobileDrawerNav() {
+    const moneyItems = isAdmin
+      ? [
+          {
+            id: 'fund-overview',
+            label: 'Home Dashboard',
+            Icon: Home,
+            active: activeSection === 'fund-overview',
+            onClick: () => navigateToPage('fund-overview', true),
+          },
+          {
+            id: 'transaction-history',
+            label: 'Transaction Ledger',
+            Icon: History,
+            active: activeSection === 'transaction-history',
+            onClick: () => navigateToPage('transaction-history', true),
+          },
+          {
+            id: 'statistics',
+            label: 'Treasury Statistics',
+            Icon: BarChart3,
+            active: activeSection === 'statistics',
+            onClick: () => navigateToPage('statistics', true),
+          },
+        ]
+      : [
+          {
+            id: 'fund-overview',
+            label: 'Home Dashboard',
+            Icon: Home,
+            active: activeSection === 'fund-overview',
+            onClick: () => navigateToPage('fund-overview', true),
+          },
+          {
+            id: 'monthly-contribution',
+            label: 'Pay Monthly Contribution',
+            Icon: CreditCard,
+            badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
+            active: activeSection === 'monthly-contribution',
+            onClick: () => navigateToPage('monthly-contribution', true),
+          },
+          {
+            id: 'apply-qard-hasan',
+            label: 'Apply for Qard Hasan',
+            Icon: FilePlus2,
+            onClick: () => {
+              setMobileNavOpen(false);
+              void openLoanRequestModal();
+            },
+          },
+          {
+            id: 'quard-hasan',
+            label: 'Qard Hasan & Repayments',
+            Icon: HandCoins,
+            active: activeSection === 'quard-hasan',
+            onClick: () => navigateToPage('quard-hasan', true),
+          },
+          {
+            id: 'my-amanah',
+            label: 'My Amanah Standing',
+            Icon: Wallet,
+            active: activeSection === 'my-amanah',
+            onClick: () => navigateToPage('my-amanah', true),
+          },
+          {
+            id: 'transaction-history',
+            label: 'Transaction Ledger',
+            Icon: History,
+            active: activeSection === 'transaction-history',
+            onClick: () => navigateToPage('transaction-history', true),
+          },
+        ];
+
+    const communityItems = [
+      {
+        id: 'ballot',
+        label: 'Voting & 2/3 Ballots',
+        Icon: Vote,
+        badge: pendingBadgeCount('ballot'),
+        active: activeSection === 'ballot',
+        accent: 'amber' as const,
+        onClick: () => navigateToPage('ballot', true),
+      },
+      {
+        id: 'community',
+        label: 'Community & Chat',
+        Icon: MessageSquare,
+        badge: pendingBadgeCount('community'),
+        active: activeSection === 'community',
+        onClick: () => navigateToPage('community', true),
+      },
+      {
+        id: 'members',
+        label: 'Members Directory',
+        Icon: Users,
+        active: activeSection === 'members',
+        onClick: () => navigateToPage('members', true),
+      },
+      {
+        id: 'manager-cycle',
+        label: 'Manager Rotation Cycle',
+        Icon: CalendarClock,
+        active: activeSection === 'manager-cycle',
+        accent: 'amber' as const,
+        onClick: () => navigateToPage('manager-cycle', true),
+      },
+      ...(!isAdmin
+        ? [
+            {
+              id: 'statistics',
+              label: 'Treasury Statistics',
+              Icon: BarChart3,
+              active: activeSection === 'statistics',
+              onClick: () => navigateToPage('statistics', true),
+            },
+          ]
+        : []),
+    ];
+
+    const roleStaffItems = isAdmin
+      ? ADMIN_NAV_ITEMS.map((item) => ({
+          id: item.id,
+          label: item.label,
+          Icon: item.Icon,
+          badge: pendingBadgeCount(item.id),
+          active: activeSection === item.id,
+          accent: SECTION_TONE_MAP[item.id] || 'emerald',
+          onClick: () => navigateToPage(item.id, true),
+        }))
+      : isManager
+        ? MANAGER_NAV_ITEMS.map((item) => ({
+            id: item.id,
+            label: item.label,
+            Icon: item.Icon,
+            badge: pendingBadgeCount(item.id),
+            active: activeSection === item.id,
+            accent: SECTION_TONE_MAP[item.id] || 'amber',
+            onClick: () => navigateToPage(item.id, true),
+          }))
+        : [];
+
+    const accountItems = [
+      {
+        id: 'notification',
+        label: 'Notifications & Alerts',
+        Icon: Bell,
+        badge: pendingBadgeCount('notification'),
+        active: activeSection === 'notification',
+        accent: 'amber' as const,
+        onClick: () => navigateToPage('notification', true),
+      },
+      {
+        id: 'my-profile',
+        label: 'Profile & Security (2FA)',
+        Icon: User,
+        active: activeSection === 'my-profile',
+        onClick: () => navigateToPage('my-profile', true),
+      },
+      {
+        id: 'theme-toggle',
+        label: darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+        Icon: darkMode ? Sun : Moon,
+        onClick: () => toggleDarkMode(),
+      },
+    ];
+
+    return (
+      <div className="space-y-4">
+        {renderMobileDrawerSection('Money & Treasury', moneyItems)}
+        <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
+          {renderMobileDrawerSection('Cooperative & Shura', communityItems)}
+        </div>
+        {roleStaffItems.length > 0 && (
+          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
+            {renderMobileDrawerSection(
+              isAdmin ? 'Administration' : 'Manager Operations',
+              roleStaffItems
+            )}
+          </div>
+        )}
+        <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
+          {renderMobileDrawerSection('Account & App', accountItems)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
@@ -1032,26 +1276,46 @@ export function DashboardShell() {
                 </button>
               </div>
 
-              <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Mobile navigation">
-                {renderDashboardNavItems(true)}
-              </nav>
-
-              <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2.5 shrink-0">
+              {/* Drawer Top Identity Card */}
+              <div className="p-3 border-b border-slate-200/80 dark:border-slate-800/80 shrink-0 bg-emerald-50/40 dark:bg-emerald-950/20">
                 <button
                   type="button"
                   onClick={() => navigateToPage('my-profile', true)}
-                  className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                  className="w-full min-h-[48px] text-left rounded-xl p-2 hover:bg-white/80 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between gap-2.5 cursor-pointer"
                 >
-                  <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                    {user.name}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
-                    {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-                    <span className="text-emerald-700 dark:text-emerald-400">
-                      {user.status === 'active' ? 'Verified' : 'Pending'}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-9 h-9 rounded-full bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                      {(user.name || 'AM')
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((p) => p[0]?.toUpperCase() || '')
+                        .join('')}
                     </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {user.name}
+                      </div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400 capitalize truncate">
+                        {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                          {user.status === 'active' ? 'Verified' : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
                 </button>
+              </div>
+
+              <nav
+                className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle"
+                aria-label="Mobile navigation"
+              >
+                {renderMobileDrawerNav()}
+              </nav>
+
+              <div className="p-3.5 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2 shrink-0">
                 <PWAUpdateButton fullWidth />
                 <div className="grid grid-cols-2 gap-2">
                   <Link
@@ -1598,6 +1862,93 @@ export function DashboardShell() {
           </div>
         </div>
       </main>
+
+      {/* bKash-Style Sticky Mobile Footer Navigation Bar */}
+      <nav
+        aria-label="Mobile footer navigation"
+        className="lg:hidden shrink-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800/90 pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-4 h-[58px] items-stretch">
+          {(
+            [
+              {
+                id: 'home',
+                label: 'Home',
+                Icon: Home,
+                target: 'fund-overview' as DashboardSectionId,
+                active: activeSection === 'fund-overview',
+                badge: 0,
+              },
+              {
+                id: 'my-amanah',
+                label: 'My Amanah',
+                Icon: Wallet,
+                target: (isAdmin ? 'transaction-history' : 'my-amanah') as DashboardSectionId,
+                active: isAdmin
+                  ? activeSection === 'transaction-history'
+                  : activeSection === 'my-amanah',
+                badge: 0,
+              },
+              {
+                id: 'community',
+                label: 'Community',
+                Icon: MessageSquare,
+                target: 'community' as DashboardSectionId,
+                active: activeSection === 'community',
+                badge: pendingBadgeCount('community'),
+              },
+              {
+                id: 'notification',
+                label: 'Notification',
+                Icon: Bell,
+                target: 'notification' as DashboardSectionId,
+                active: activeSection === 'notification',
+                badge: pendingBadgeCount('notification'),
+              },
+            ] as const
+          ).map((tab) => {
+            const Icon = tab.Icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => navigateToPage(tab.target, false)}
+                aria-current={tab.active ? 'page' : undefined}
+                className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer active:scale-95 ${
+                  tab.active
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {tab.active && (
+                  <span
+                    className="absolute top-0 inset-x-4 h-0.5 rounded-b-full bg-emerald-700 dark:bg-emerald-400"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative inline-flex items-center justify-center">
+                  <Icon
+                    className={`w-[21px] h-[21px] ${tab.active ? 'stroke-[2.2]' : 'stroke-[1.8]'}`}
+                    aria-hidden="true"
+                  />
+                  {tab.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-600 text-white font-mono text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs">
+                      {tab.badge > 99 ? '99+' : tab.badge}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={`text-[10px] leading-tight tracking-tight whitespace-nowrap ${
+                    tab.active ? 'font-semibold' : 'font-medium'
+                  }`}
+                >
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {!isAdmin && (
         <ActionModal
