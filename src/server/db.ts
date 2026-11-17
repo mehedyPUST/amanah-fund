@@ -83,8 +83,8 @@ export interface VaultState {
 
 const VAULT_DIR = process.env.VERCEL
   ? path.join(os.tmpdir(), 'amanah-data')
-  : path.resolve(process.cwd(), 'data');
-const VAULT_FILE = path.join(VAULT_DIR, 'amanah-coop-vault.json');
+  : path.resolve(/* turbopackIgnore: true */ process.cwd(), 'data');
+const VAULT_FILE = path.join(/* turbopackIgnore: true */ VAULT_DIR, 'amanah-coop-vault.json');
 
 let mongoClient: MongoClient | null = null;
 let mongoDb: Db | null = null;

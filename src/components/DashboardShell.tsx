@@ -16,9 +16,9 @@ import {
   HandCoins,
   History,
   Home,
-  LayoutGrid,
   LogOut,
   MailWarning,
+  Menu,
   MessageSquare,
   Moon,
   RefreshCw,
@@ -842,10 +842,20 @@ export function DashboardShell() {
 
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileNavOpen}
+            className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          </button>
+
           {activeSection === 'fund-overview' ? (
-            <span className="lg:hidden w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Shield className="w-4 h-4" aria-hidden="true" />
+            <span className="lg:hidden w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Shield className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
           ) : (
             <button
@@ -856,10 +866,10 @@ export function DashboardShell() {
                   false
                 )
               }
-              aria-label="Back to MFS home"
-              className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label="Back to main page"
+              className="lg:hidden min-w-[40px] min-h-[40px] rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+              <ArrowLeft className="w-4.5 h-4.5" aria-hidden="true" />
             </button>
           )}
           <div className="flex items-center gap-2 text-sm min-w-0">
@@ -977,98 +987,77 @@ export function DashboardShell() {
         </div>
       </aside>
 
-      {/* Mobile MFS Bottom Sheet (All Icons & Account Controls) */}
+      {/* Mobile Side Navigation Drawer (slides in from the left side) */}
       <AnimatePresence>
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
-            <div
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
               className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
               onClick={() => setMobileNavOpen(false)}
               aria-hidden="true"
             />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-10 w-full max-h-[85dvh] bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 flex flex-col shadow-xl"
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              aria-label="Mobile dashboard menu"
+              className="relative z-10 w-72 max-w-[84vw] h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
-              <div className="pt-2.5 pb-3 px-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <div
-                  className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3"
-                  aria-hidden="true"
-                />
-                <div className="flex items-center justify-between gap-3">
+              <div className="h-14 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Shield className="w-4 h-4" aria-hidden="true" />
+                  </span>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {user.name}
+                    <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
+                      Amanah
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
-                      {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-                      <span className="text-emerald-700 dark:text-emerald-400">
-                        {user.status === 'active' ? 'Verified' : 'Pending'}
-                      </span>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
+                      Member Portal
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setMobileNavOpen(false)}
-                    aria-label="Close menu"
-                    className="min-w-[44px] min-h-[44px] rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  aria-label="Close navigation menu"
+                  className="min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="grid grid-cols-4 gap-2">
-                  {visibleNav.map((item) => {
-                    const Icon = item.Icon;
-                    const active = activeSection === item.id;
-                    const count = pendingBadgeCount(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => navigateToPage(item.id, true)}
-                        className={`min-h-[76px] px-1.5 py-2 rounded-2xl border flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer ${
-                          active
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300'
-                            : 'bg-slate-50/70 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <span className="relative w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-center">
-                          <Icon
-                            className={`w-4.5 h-4.5 ${
-                              active
-                                ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-600 dark:text-slate-300'
-                            }`}
-                            aria-hidden="true"
-                          />
-                          {count > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center">
-                              {count > 99 ? '99+' : count}
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-[11px] font-medium leading-tight text-center line-clamp-1">
-                          {item.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label="Mobile navigation">
+                {renderDashboardNavItems(true)}
+              </nav>
 
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2 shrink-0">
+              <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => navigateToPage('my-profile', true)}
+                  className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                >
+                  <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    {user.name}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
+                    {user.role} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+                    <span className="text-emerald-700 dark:text-emerald-400">
+                      {user.status === 'active' ? 'Verified' : 'Pending'}
+                    </span>
+                  </div>
+                </button>
                 <PWAUpdateButton fullWidth />
                 <div className="grid grid-cols-2 gap-2">
                   <Link
-                    href="/"
+                    href="/?browse=1"
                     onClick={() => setMobileNavOpen(false)}
-                    className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                    className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Home className="w-4 h-4" />
                     <span>Public Site</span>
@@ -1076,14 +1065,14 @@ export function DashboardShell() {
                   <button
                     type="button"
                     onClick={() => void handleSignOut()}
-                    className="min-h-[44px] py-2 px-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
+                    className="min-h-[44px] py-2 px-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </motion.aside>
           </div>
         )}
       </AnimatePresence>
@@ -1095,7 +1084,7 @@ export function DashboardShell() {
       >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 pb-20 sm:p-4 sm:pb-20 lg:p-5 lg:pb-5"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 pb-6 sm:p-4 sm:pb-6 lg:p-5 lg:pb-5"
         >
           <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
@@ -1708,71 +1697,6 @@ export function DashboardShell() {
         />
       )}
 
-      {/* Mobile Fixed MFS Bottom Navigation Bar */}
-      <nav
-        aria-label="Mobile MFS Navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/85 dark:border-slate-800/85 px-1 grid grid-cols-5 items-center"
-      >
-        {(isAdmin
-          ? ([
-              { id: 'fund-overview', label: 'Home', Icon: Home },
-              { id: 'member-registry', label: 'Users', Icon: Users },
-              { id: 'manager-desk', label: 'Desk', Icon: ClipboardCheck },
-              { id: 'ballot', label: 'Voting', Icon: Vote },
-            ] as const)
-          : ([
-              { id: 'fund-overview', label: 'Home', Icon: Home },
-              { id: 'monthly-contribution', label: 'Savings', Icon: CreditCard },
-              { id: 'quard-hasan', label: 'Qard', Icon: HandCoins },
-              { id: 'ballot', label: 'Voting', Icon: Vote },
-            ] as const)
-        ).map((tab) => {
-          const Icon = tab.Icon;
-          const active = activeSection === tab.id;
-          const badge = tab.id === 'fund-overview' ? 0 : pendingBadgeCount(tab.id);
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => navigateToPage(tab.id, true)}
-              aria-current={active ? 'page' : undefined}
-              className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer ${
-                active
-                  ? 'text-emerald-700 dark:text-emerald-400'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              <span className="relative flex items-center justify-center">
-                <Icon className="w-5 h-5" aria-hidden="true" />
-                {badge > 0 && (
-                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-amber-600 text-white font-mono text-[9px] font-bold tabular-nums flex items-center justify-center">
-                    {badge > 99 ? '99+' : badge}
-                  </span>
-                )}
-              </span>
-              <span className="text-[10px] font-medium tracking-tight whitespace-nowrap">
-                {tab.label}
-              </span>
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => setMobileNavOpen(true)}
-          aria-expanded={mobileNavOpen}
-          className={`min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer ${
-            mobileNavOpen
-              ? 'text-emerald-700 dark:text-emerald-400'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          <LayoutGrid className="w-5 h-5" aria-hidden="true" />
-          <span className="text-[10px] font-medium tracking-tight whitespace-nowrap">
-            More
-          </span>
-        </button>
-      </nav>
     </div>
   );
 }

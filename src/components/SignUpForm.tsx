@@ -100,7 +100,9 @@ export function SignUpForm() {
 
   useEffect(() => {
     if (!authChecking && user) {
-      router.replace('/');
+      const isMobile =
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+      router.replace(isMobile ? '/dashboard' : '/');
     }
   }, [authChecking, user, router]);
 

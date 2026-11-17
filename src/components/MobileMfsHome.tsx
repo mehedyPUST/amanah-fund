@@ -14,13 +14,15 @@ import {
   CreditCard,
   Eye,
   EyeOff,
+  FilePlus2,
   HandCoins,
   History,
-  Landmark,
   MailWarning,
   MessageSquare,
   Settings,
   Shield,
+  ShieldCheck,
+  TrendingUp,
   User,
   UserCheck,
   Users,
@@ -42,6 +44,7 @@ import { StatusText } from './StatusText.tsx';
 export interface MfsIconTile {
   id: string;
   label: string;
+  subValue?: string;
   Icon: typeof CreditCard;
   iconBgClass: string;
   iconColorClass: string;
@@ -135,17 +138,17 @@ export function MobileMfsHome({
     return (
       <div className="space-y-4">
         <Skeleton height={132} borderRadius={20} />
-        <div className="grid grid-cols-4 gap-2.5">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <Skeleton key={idx} height={82} borderRadius={16} />
+        <div className="grid grid-cols-3 gap-2.5">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <Skeleton key={idx} height={106} borderRadius={16} />
           ))}
         </div>
-        <div className="grid grid-cols-4 gap-2.5">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <Skeleton key={idx} height={82} borderRadius={16} />
+        <div className="grid grid-cols-3 gap-2.5">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <Skeleton key={idx} height={96} borderRadius={16} />
           ))}
         </div>
-        <Skeleton height={160} borderRadius={16} />
+        <Skeleton height={150} borderRadius={16} />
       </div>
     );
   }
@@ -175,13 +178,117 @@ export function MobileMfsHome({
       )
     : [];
 
-  const coreTiles: MfsIconTile[] = isAdmin
+  // bKash-style Treasury Metric Icon Cards
+  const treasuryTiles: MfsIconTile[] = [
+    {
+      id: 'fund-height',
+      label: 'Fund Height',
+      subValue: formatMoney(treasury.amanahHeight, ccy),
+      Icon: TrendingUp,
+      iconBgClass:
+        'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+      onClick: () => onNavigate('statistics'),
+    },
+    {
+      id: 'current-balance',
+      label: 'Current Balance',
+      subValue: formatMoney(treasury.currentBalance, ccy),
+      Icon: ShieldCheck,
+      iconBgClass:
+        'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
+      iconColorClass: 'text-violet-700 dark:text-violet-400',
+      onClick: () => onNavigate('transaction-history'),
+    },
+    {
+      id: 'current-qard-hasan',
+      label: 'Current Qard Hasan',
+      subValue: formatMoney(treasury.quardHasanTotalCurrent, ccy),
+      Icon: HandCoins,
+      iconBgClass:
+        'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
+      iconColorClass: 'text-amber-700 dark:text-amber-400',
+      onClick: () => onNavigate(isAdmin ? 'ballot' : 'quard-hasan'),
+    },
+  ];
+
+  // bKash-style Core Action Icons (all requested main page icons & labels)
+  const coreActionTiles: MfsIconTile[] = [
+    {
+      id: 'pay-monthly-contribution',
+      label: 'Pay Monthly Contribution',
+      Icon: CreditCard,
+      iconBgClass:
+        'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+      badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
+      onClick: () => onNavigate(isAdmin ? 'manager-desk' : 'monthly-contribution'),
+    },
+    {
+      id: 'apply-qard-hasan',
+      label: 'Apply for Qard Hasan',
+      Icon: FilePlus2,
+      iconBgClass: 'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
+      iconColorClass: 'text-teal-700 dark:text-teal-400',
+      onClick: () => {
+        if (isAdmin) {
+          onNavigate('ballot');
+        } else if (onOpenLoanModal) {
+          onOpenLoanModal();
+        } else {
+          onNavigate('quard-hasan');
+        }
+      },
+    },
+    {
+      id: 'my-amanah',
+      label: 'My Amanah',
+      Icon: Wallet,
+      iconBgClass:
+        'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
+      iconColorClass: 'text-violet-700 dark:text-violet-400',
+      onClick: () => onNavigate(isAdmin ? 'my-profile' : 'my-amanah'),
+    },
+    {
+      id: 'community',
+      label: 'Community',
+      Icon: MessageSquare,
+      iconBgClass:
+        'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
+      iconColorClass: 'text-indigo-700 dark:text-indigo-400',
+      badge: pendingBadgeCount('community'),
+      onClick: () => onNavigate('community'),
+    },
+    {
+      id: 'members',
+      label: 'Members',
+      Icon: Users,
+      iconBgClass: 'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
+      iconColorClass: 'text-sky-700 dark:text-sky-400',
+      badge: isAdmin ? pendingBadgeCount('member-registry') : 0,
+      onClick: () => onNavigate('members'),
+    },
+    {
+      id: 'voting',
+      label: 'Voting',
+      Icon: Vote,
+      iconBgClass:
+        'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
+      iconColorClass: 'text-amber-700 dark:text-amber-400',
+      badge: pendingBadgeCount('ballot'),
+      onClick: () => onNavigate('ballot'),
+    },
+  ];
+
+  // Secondary Icons Grid (remaining dashboard features by role)
+  const secondaryTiles: MfsIconTile[] = isAdmin
     ? [
         {
           id: 'member-registry',
           label: 'Users',
-          Icon: Users,
-          iconBgClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
+          Icon: UserCheck,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
           iconColorClass: 'text-emerald-700 dark:text-emerald-400',
           badge: pendingBadgeCount('member-registry'),
           onClick: () => onNavigate('member-registry'),
@@ -190,41 +297,18 @@ export function MobileMfsHome({
           id: 'manager-desk',
           label: 'Gov. Desk',
           Icon: ClipboardCheck,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
           iconColorClass: 'text-amber-700 dark:text-amber-400',
           badge: pendingBadgeCount('manager-desk'),
           onClick: () => onNavigate('manager-desk'),
         },
         {
-          id: 'ballot',
-          label: 'Voting',
-          Icon: Vote,
-          iconBgClass: 'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
-          badge: pendingBadgeCount('ballot'),
-          onClick: () => onNavigate('ballot'),
-        },
-        {
-          id: 'transaction-history',
-          label: 'Ledger',
-          Icon: History,
-          iconBgClass: 'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
-          iconColorClass: 'text-sky-700 dark:text-sky-400',
-          onClick: () => onNavigate('transaction-history'),
-        },
-        {
-          id: 'statistics',
-          label: 'Stats',
-          Icon: BarChart3,
-          iconBgClass: 'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
-          iconColorClass: 'text-violet-700 dark:text-violet-400',
-          onClick: () => onNavigate('statistics'),
-        },
-        {
           id: 'site-settings',
           label: 'Settings',
           Icon: Settings,
-          iconBgClass: 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
+          iconBgClass:
+            'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/70 dark:border-indigo-800/60',
           iconColorClass: 'text-indigo-700 dark:text-indigo-400',
           onClick: () => onNavigate('site-settings'),
         },
@@ -232,113 +316,26 @@ export function MobileMfsHome({
           id: 'system-audit-logs',
           label: 'Audit Logs',
           Icon: Shield,
-          iconBgClass: 'bg-rose-50 dark:bg-rose-950/50 border-rose-200/80 dark:border-rose-800/60',
+          iconBgClass:
+            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
           iconColorClass: 'text-rose-700 dark:text-rose-400',
           onClick: () => onNavigate('system-audit-logs'),
-        },
-        {
-          id: 'community',
-          label: 'Community',
-          Icon: MessageSquare,
-          iconBgClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-          badge: pendingBadgeCount('community'),
-          onClick: () => onNavigate('community'),
-        },
-      ]
-    : [
-        {
-          id: 'monthly-contribution',
-          label: 'Pay Monthly',
-          Icon: CreditCard,
-          iconBgClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-          badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
-          onClick: () => onNavigate('monthly-contribution'),
-        },
-        {
-          id: 'request-loan',
-          label: 'Request Loan',
-          Icon: HandCoins,
-          iconBgClass: 'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
-          onClick: () => (onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan')),
-        },
-        {
-          id: 'quard-hasan',
-          label: 'Qard Hasan',
-          Icon: Landmark,
-          iconBgClass: 'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
-          iconColorClass: 'text-sky-700 dark:text-sky-400',
-          onClick: () => onNavigate('quard-hasan'),
-        },
-        {
-          id: 'my-amanah',
-          label: 'My Amanah',
-          Icon: Wallet,
-          iconBgClass: 'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
-          iconColorClass: 'text-violet-700 dark:text-violet-400',
-          onClick: () => onNavigate('my-amanah'),
-        },
-        {
-          id: 'ballot',
-          label: 'Voting',
-          Icon: Vote,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
-          badge: pendingBadgeCount('ballot'),
-          onClick: () => onNavigate('ballot'),
         },
         {
           id: 'transaction-history',
           label: 'Ledger',
           Icon: History,
-          iconBgClass: 'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
-          onClick: () => onNavigate('transaction-history'),
-        },
-        {
-          id: 'community',
-          label: 'Community',
-          Icon: MessageSquare,
-          iconBgClass: 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
-          iconColorClass: 'text-indigo-700 dark:text-indigo-400',
-          badge: pendingBadgeCount('community'),
-          onClick: () => onNavigate('community'),
-        },
-        {
-          id: 'statistics',
-          label: 'Stats',
-          Icon: BarChart3,
-          iconBgClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-          onClick: () => onNavigate('statistics'),
-        },
-      ];
-
-  const secondaryTiles: MfsIconTile[] = isAdmin
-    ? [
-        {
-          id: 'members',
-          label: 'Members',
-          Icon: Users,
-          iconBgClass: 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
+          iconBgClass:
+            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
           iconColorClass: 'text-slate-700 dark:text-slate-200',
-          onClick: () => onNavigate('members'),
-        },
-        {
-          id: 'manager-cycle',
-          label: 'Cycle',
-          Icon: CalendarClock,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
-          onClick: () => onNavigate('manager-cycle'),
+          onClick: () => onNavigate('transaction-history'),
         },
         {
           id: 'notification',
           label: 'Alerts',
           Icon: Bell,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
           iconColorClass: 'text-amber-700 dark:text-amber-400',
           badge: pendingBadgeCount('notification'),
           onClick: () => onNavigate('notification'),
@@ -347,25 +344,20 @@ export function MobileMfsHome({
           id: 'email-queue',
           label: 'Mail Queue',
           Icon: MailWarning,
-          iconBgClass: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
+          iconBgClass:
+            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
           iconColorClass: 'text-rose-700 dark:text-rose-400',
+          badge: pendingBadgeCount('email-queue'),
           onClick: () => onNavigate('email-queue'),
         },
         {
           id: 'site-activity',
           label: 'Activity',
           Icon: Activity,
-          iconBgClass: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
+          iconBgClass:
+            'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
           iconColorClass: 'text-teal-700 dark:text-teal-400',
           onClick: () => onNavigate('site-activity'),
-        },
-        {
-          id: 'my-profile',
-          label: 'Profile',
-          Icon: User,
-          iconBgClass: 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
-          onClick: () => onNavigate('my-profile'),
         },
       ]
     : [
@@ -375,7 +367,8 @@ export function MobileMfsHome({
                 id: 'manager-desk',
                 label: 'Mgr Desk',
                 Icon: ClipboardCheck,
-                iconBgClass: 'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
+                iconBgClass:
+                  'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
                 iconColorClass: 'text-amber-700 dark:text-amber-400',
                 badge: pendingBadgeCount('manager-desk'),
                 onClick: () => onNavigate('manager-desk'),
@@ -384,7 +377,8 @@ export function MobileMfsHome({
                 id: 'member-registry',
                 label: 'Registry',
                 Icon: UserCheck,
-                iconBgClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
+                iconBgClass:
+                  'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
                 iconColorClass: 'text-emerald-700 dark:text-emerald-400',
                 badge: pendingBadgeCount('member-registry'),
                 onClick: () => onNavigate('member-registry'),
@@ -392,18 +386,29 @@ export function MobileMfsHome({
             ]
           : []),
         {
-          id: 'members',
-          label: 'Members',
-          Icon: Users,
-          iconBgClass: 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
+          id: 'transaction-history',
+          label: 'Ledger',
+          Icon: History,
+          iconBgClass:
+            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
           iconColorClass: 'text-slate-700 dark:text-slate-200',
-          onClick: () => onNavigate('members'),
+          onClick: () => onNavigate('transaction-history'),
+        },
+        {
+          id: 'statistics',
+          label: 'Stats',
+          Icon: BarChart3,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          onClick: () => onNavigate('statistics'),
         },
         {
           id: 'manager-cycle',
           label: 'Cycle',
           Icon: CalendarClock,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
           iconColorClass: 'text-amber-700 dark:text-amber-400',
           onClick: () => onNavigate('manager-cycle'),
         },
@@ -411,7 +416,8 @@ export function MobileMfsHome({
           id: 'notification',
           label: 'Alerts',
           Icon: Bell,
-          iconBgClass: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
+          iconBgClass:
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
           iconColorClass: 'text-amber-700 dark:text-amber-400',
           badge: pendingBadgeCount('notification'),
           onClick: () => onNavigate('notification'),
@@ -420,7 +426,8 @@ export function MobileMfsHome({
           id: 'my-profile',
           label: 'Profile',
           Icon: User,
-          iconBgClass: 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
+          iconBgClass:
+            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
           iconColorClass: 'text-slate-700 dark:text-slate-200',
           onClick: () => onNavigate('my-profile'),
         },
@@ -428,7 +435,7 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
-      {/* MFS Wallet Balance Card (Tap-for-Balance like bKash / Nagad) */}
+      {/* MFS Wallet Balance Card (Tap-for-Balance like bKash) */}
       <motion.section
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -441,14 +448,15 @@ export function MobileMfsHome({
               {user.name} · <span className="font-mono">{user.memberCode}</span>
             </div>
             <div className="text-[11px] text-emerald-100/75 capitalize mt-0.5">
-              {user.role} · {phase === 'qard_hasan' ? 'Phase 1 Qard Hasan' : 'Phase 2 Halal Equity'}
+              {user.role} ·{' '}
+              {phase === 'qard_hasan' ? 'Phase 1 Qard Hasan' : 'Phase 2 Halal Equity'}
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setBalanceVisible((v) => !v)}
-            aria-label={balanceVisible ? 'Hide treasury balance' : 'Tap to show balance'}
+            aria-label={balanceVisible ? 'Hide balance' : 'Tap for balance'}
             className="min-h-[44px] px-3.5 py-2 rounded-full bg-white/95 text-emerald-900 text-xs font-semibold shadow-xs active:scale-95 transition-transform inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
           >
             {balanceVisible ? (
@@ -456,7 +464,7 @@ export function MobileMfsHome({
                 <EyeOff className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
                 <span className="font-mono tabular-nums">
                   {formatMoney(
-                    isAdmin ? treasury.availableLiquidity : personal.totalContributed,
+                    isAdmin ? treasury.currentBalance : personal.totalContributed,
                     ccy
                   )}
                 </span>
@@ -507,7 +515,7 @@ export function MobileMfsHome({
         </div>
       </motion.section>
 
-      {/* Actionable Alerts Strip (only rendered when immediate action exists) */}
+      {/* Actionable Alerts Strip */}
       {(myGuarantorRequests.length > 0 ||
         (!isAdmin && !personal.eligibility.noOverdueInstallments) ||
         (isAdmin && treasury.pendingMembersCount > 0) ||
@@ -608,26 +616,60 @@ export function MobileMfsHome({
         </div>
       )}
 
-      {/* Primary MFS Icon Grid (4 columns, bKash/Nagad style) */}
-      <section aria-label="Services" className="space-y-2.5">
-        <div className="flex items-center justify-between px-0.5">
-          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            {isAdmin ? 'Treasury & Governance' : 'Services'}
-          </h2>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            Tap any icon
-          </span>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          {coreTiles.map((tile) => {
+      {/* Treasury Snapshot Icons: Fund Height, Current Balance, Current Qard Hasan */}
+      <section aria-label="Treasury Snapshot" className="space-y-2">
+        <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
+          Fund Overview
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          {treasuryTiles.map((tile) => {
             const Icon = tile.Icon;
             return (
               <button
                 key={tile.id}
                 type="button"
                 onClick={tile.onClick}
-                className="min-h-[82px] px-1.5 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/75 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
+                className="min-h-[104px] px-2 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer text-center"
+              >
+                <span
+                  className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
+                >
+                  <Icon className={`w-5 h-5 ${tile.iconColorClass}`} aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 leading-tight">
+                  {tile.label}
+                </span>
+                {tile.subValue && (
+                  <span className="font-mono text-[11px] font-bold tabular-nums text-slate-900 dark:text-white leading-tight">
+                    {tile.subValue}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Core bKash-Style Services Icon Grid */}
+      <section aria-label="Services" className="space-y-2">
+        <div className="flex items-center justify-between px-0.5">
+          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Services
+          </h2>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            Tap any icon
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {coreActionTiles.map((tile) => {
+            const Icon = tile.Icon;
+            return (
+              <button
+                key={tile.id}
+                type="button"
+                onClick={tile.onClick}
+                className="min-h-[96px] px-2 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
               >
                 <span
                   className={`relative w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
@@ -639,7 +681,7 @@ export function MobileMfsHome({
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight text-center line-clamp-1">
+                <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 leading-snug text-center">
                   {tile.label}
                 </span>
               </button>
@@ -648,10 +690,10 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* Secondary MFS Icon Grid (Governance & Account) */}
-      <section aria-label="Cooperative & Account" className="space-y-2.5">
+      {/* Secondary Quick Icons */}
+      <section aria-label="More Tools" className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {isAdmin ? 'System & Co-op' : isManager ? 'Shura & Account' : 'Co-op & Account'}
+          {isAdmin ? 'Governance & System' : isManager ? 'Shura & Account' : 'More Services'}
         </h2>
 
         <div className="grid grid-cols-4 gap-2">
@@ -684,7 +726,7 @@ export function MobileMfsHome({
       </section>
 
       {/* Recent Activity Tap-List */}
-      <section aria-label="Recent Activity" className="space-y-2.5">
+      <section aria-label="Recent Activity" className="space-y-2">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
             Recent Activity

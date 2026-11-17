@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Footer } from './Footer.tsx';
+import { MobileVisitorGate } from './MobileVisitorGate.tsx';
 import { Navbar } from './Navbar.tsx';
 import { PublicScrollViewport } from './PublicScrollViewport.tsx';
 
@@ -19,6 +20,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <Footer />
         </PublicScrollViewport>
       </div>
+      <MobileVisitorGate />
     </div>
   );
 }

@@ -36,7 +36,9 @@ export function SignInForm() {
 
   useEffect(() => {
     if (!authChecking && user && !noticeModal?.redirectHomeOnClose) {
-      router.replace('/');
+      const isMobile =
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+      router.replace(isMobile ? '/dashboard' : '/');
     }
   }, [authChecking, user, router, noticeModal]);
 
@@ -395,7 +397,9 @@ export function SignInForm() {
           const shouldGoHome = Boolean(noticeModal?.redirectHomeOnClose);
           setNoticeModal(null);
           if (shouldGoHome) {
-            router.push('/');
+            const isMobile =
+              typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+            router.push(isMobile ? '/dashboard' : '/');
           }
         }}
       />
