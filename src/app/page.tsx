@@ -1,4 +1,5 @@
 import { About } from '../components/About.tsx';
+import { FAQSection } from '../components/FAQSection.tsx';
 import { Hero, HeroLifecycle } from '../components/Hero.tsx';
 import { HomeHighlights } from '../components/HomeHighlights.tsx';
 import { HomeNoticeBoardSection } from '../components/HomeNoticeBoardSection.tsx';
@@ -24,6 +25,8 @@ export default function HomePage() {
         <section id="architecture" className="scroll-mt-2">
           <About embedded />
         </section>
+
+        <FAQSection embedded />
 
         <HomeHighlights />
       </div>

@@ -56,6 +56,11 @@ export function Footer() {
                   Governance Charter
                 </Link>
               </li>
+              <li>
+                <Link href="/#faq" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                  Frequently Asked Questions
+                </Link>
+              </li>
             </ul>
           </div>
 

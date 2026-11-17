@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { About } from '../../components/About.tsx';
+import { FAQSection } from '../../components/FAQSection.tsx';
 import { HeroLifecycle } from '../../components/Hero.tsx';
 import { PublicShell } from '../../components/PublicShell.tsx';
 
@@ -13,6 +14,7 @@ export default function AboutPage() {
       <div className="space-y-2.5">
         <About />
         <HeroLifecycle embedded />
+        <FAQSection embedded />
       </div>
     </PublicShell>
   );
