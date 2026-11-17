@@ -8,7 +8,6 @@ import QRCode from 'qrcode';
 import type {
   AiRewriteContext,
   AiRewriteTone,
-  CharterTargetLanguage,
   CommunityCategory,
   CommunityComment,
   CommunityPoll,
@@ -112,13 +111,7 @@ import {
   getGroqModel,
   isGroqConfigured,
   rewriteCooperativeText,
-  translateAndRefineCharterText,
 } from './groqService.ts';
-import {
-  decodeBase64PdfPayload,
-  extractPdfTextFromBuffer,
-  resolveActiveConstitutionPdfBuffer,
-} from './pdfTextService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
   getImageKitConfig,
@@ -1707,97 +1700,6 @@ apiRouter.post(
       const message =
         err instanceof Error ? err.message : 'Failed to run community spam check.';
       res.status(500).json({ error: message });
-    }
-  }
-);
-
-apiRouter.post(
-  '/ai/charter/extract-translate',
-  groqAiRateLimiter,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      const rawFileBase64 = String(req.body?.fileBase64 || '').trim();
-      const rawTargetLang = String(req.body?.targetLanguage || 'en').trim().toLowerCase();
-      const targetLanguage: CharterTargetLanguage =
-        rawTargetLang === 'bn' || rawTargetLang === 'ar' ? rawTargetLang : 'en';
-      const shouldTranslate = req.body?.translate !== false;
-
-      let pdfBuffer: Buffer;
-      let sourceName: string;
-
-      if (rawFileBase64) {
-        const optionalUser = await resolveOptionalAuthUser(req);
-        if (!optionalUser || optionalUser.role !== 'admin') {
-          res.status(403).json({
-            error: 'Only administrators can extract custom PDF files directly.',
-          });
-          return;
-        }
-        try {
-          pdfBuffer = decodeBase64PdfPayload(rawFileBase64);
-        } catch (decodeErr) {
-          res.status(400).json({
-            error:
-              decodeErr instanceof Error ? decodeErr.message : 'Invalid Charter PDF payload.',
-          });
-          return;
-        }
-        sourceName = String(req.body?.sourceName || 'uploaded-charter.pdf').trim();
-      } else {
-        const state = await loadVaultState();
-        const resolved = await resolveActiveConstitutionPdfBuffer(state.fundConfig, UPLOADS_DIR);
-        pdfBuffer = resolved.buffer;
-        sourceName = resolved.sourceName;
-      }
-
-      const extracted = await extractPdfTextFromBuffer(pdfBuffer);
-      if (!extracted.text) {
-        res.status(422).json({
-          error:
-            'No selectable text could be extracted from this PDF. It may be an image-only scan.',
-        });
-        return;
-      }
-
-      if (shouldTranslate && isGroqConfigured()) {
-        const translated = await translateAndRefineCharterText({
-          extractedText: extracted.text,
-          targetLanguage,
-          sourceName,
-        });
-        res.json({
-          result: {
-            sourceName,
-            totalPages: extracted.totalPages,
-            extractedText: extracted.text,
-            translatedText: translated.translatedText,
-            targetLanguage,
-            summaryBullets: translated.summaryBullets,
-            translatedWith: 'groq',
-            model: translated.model,
-            ...(translated.truncationNotice
-              ? { truncationNotice: translated.truncationNotice }
-              : {}),
-          },
-        });
-        return;
-      }
-
-      res.json({
-        result: {
-          sourceName,
-          totalPages: extracted.totalPages,
-          extractedText: extracted.text,
-          targetLanguage,
-          summaryBullets: [],
-          translatedWith: 'raw_extract',
-        },
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to extract or translate Charter PDF.';
-      const status = message.includes('GROQ_API_KEY') ? 503 : 500;
-      res.status(status).json({ error: message });
     }
   }
 );
@@ -5790,7 +5692,6 @@ apiRouter.get(
             'Community Post Rewrite',
             'Meeting Agenda Rewrite',
             'Community Link & Spam Shield',
-            'Charter PDF Extract & Translate',
           ],
         },
         totals: {

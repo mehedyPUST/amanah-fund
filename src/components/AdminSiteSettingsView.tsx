@@ -8,10 +8,8 @@ import {
   AlertTriangle,
   BellRing,
   Briefcase,
-  Check,
   CheckCircle2,
   ClipboardCheck,
-  Copy,
   Database,
   Download,
   ExternalLink,
@@ -22,7 +20,6 @@ import {
   FileText,
   HardDrive,
   HelpCircle,
-  Languages,
   Lock,
   Mail,
   MailCheck,
@@ -39,8 +36,6 @@ import {
 } from 'lucide-react';
 import type {
   AdminSystemStatus,
-  CharterPdfExtractTranslateResult,
-  CharterTargetLanguage,
   DashboardOverview,
   DashboardSectionId,
   FundConfig,
@@ -173,14 +168,6 @@ export function AdminSiteSettingsView({
   const [constitutionBusy, setConstitutionBusy] = useState(false);
   const [showConstitutionPreview, setShowConstitutionPreview] = useState(false);
   const constitutionFileInputRef = useRef<HTMLInputElement>(null);
-  const charterExtractInputRef = useRef<HTMLInputElement>(null);
-  const [charterTargetLang, setCharterTargetLang] = useState<CharterTargetLanguage>('en');
-  const [charterExtractLoading, setCharterExtractLoading] = useState(false);
-  const [charterExtractError, setCharterExtractError] = useState<string | null>(null);
-  const [charterExtractResult, setCharterExtractResult] =
-    useState<CharterPdfExtractTranslateResult | null>(null);
-  const [charterExtractView, setCharterExtractView] = useState<'translated' | 'raw'>('translated');
-  const [copiedCharterText, setCopiedCharterText] = useState(false);
   const [rewritingThesis, setRewritingThesis] = useState(false);
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
@@ -580,37 +567,6 @@ export function AdminSiteSettingsView({
         }
       },
     });
-  }
-
-  async function runCharterExtractTranslate(file?: File, targetLanguage = charterTargetLang) {
-    setCharterExtractLoading(true);
-    setCharterExtractError(null);
-    try {
-      const res = await api.extractAndTranslateCharterPdf({
-        file,
-        targetLanguage,
-        translate: true,
-      });
-      setCharterExtractResult(res.result);
-      setCharterExtractView(res.result.translatedText ? 'translated' : 'raw');
-    } catch (err) {
-      setCharterExtractError(
-        err instanceof Error ? err.message : 'Unable to extract and translate PDF.'
-      );
-    } finally {
-      setCharterExtractLoading(false);
-    }
-  }
-
-  function handleSelectPdfForExtraction(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setCharterExtractError('Please choose a valid .pdf document.');
-      return;
-    }
-    void runCharterExtractTranslate(file, charterTargetLang);
   }
 
   const tabs: Array<{ id: SettingsTabId; label: string; Icon: typeof Settings; badge?: string | number }> = [
@@ -1373,141 +1329,6 @@ export function AdminSiteSettingsView({
                 No Constitution PDF uploaded.
               </div>
             )}
-
-            {/* Charter PDF Text Extraction & Translation (Groq AI) */}
-            <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-white/90 dark:bg-slate-950/75 p-4 space-y-3">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Charter PDF-to-Text Extraction &amp; Translation (Groq AI)</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Extract text from the published Charter or upload a new Charter PDF directly to inspect &amp; translate clauses.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <input
-                    ref={charterExtractInputRef}
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    onChange={handleSelectPdfForExtraction}
-                    className="hidden"
-                  />
-                  <select
-                    value={charterTargetLang}
-                    onChange={(e) => setCharterTargetLang(e.target.value as CharterTargetLanguage)}
-                    aria-label="Charter translation target language"
-                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
-                  >
-                    <option value="en">English</option>
-                    <option value="bn">বাংলা (Bengali)</option>
-                    <option value="ar">العربية (Arabic)</option>
-                  </select>
-                  <button
-                    type="button"
-                    disabled={charterExtractLoading}
-                    onClick={() => void runCharterExtractTranslate(undefined, charterTargetLang)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                  >
-                    <Languages className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{charterExtractLoading ? 'Processing…' : 'Extract Active PDF'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={charterExtractLoading}
-                    onClick={() => charterExtractInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/60 dark:bg-indigo-950/30 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                  >
-                    <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Extract New PDF</span>
-                  </button>
-                </div>
-              </div>
-
-              {charterExtractError && (
-                <div className="p-2.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300">
-                  {charterExtractError}
-                </div>
-              )}
-
-              {charterExtractResult && (
-                <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                    <span className="font-mono">
-                      {charterExtractResult.sourceName} · {charterExtractResult.totalPages} page(s)
-                      {charterExtractResult.model ? ` · ${charterExtractResult.model}` : ''}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {charterExtractResult.translatedText && (
-                        <button
-                          type="button"
-                          onClick={() => setCharterExtractView('translated')}
-                          className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
-                            charterExtractView === 'translated'
-                              ? 'bg-indigo-600 text-white'
-                              : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                          }`}
-                        >
-                          Translated ({charterExtractResult.targetLanguage.toUpperCase()})
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCharterExtractView('raw')}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
-                          charterExtractView === 'raw' || !charterExtractResult.translatedText
-                            ? 'bg-slate-900 dark:bg-slate-700 text-white'
-                            : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                        }`}
-                      >
-                        Raw Extracted Text
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const content =
-                            charterExtractView === 'translated' && charterExtractResult.translatedText
-                              ? charterExtractResult.translatedText
-                              : charterExtractResult.extractedText;
-                          void navigator.clipboard?.writeText(content);
-                          setCopiedCharterText(true);
-                          setTimeout(() => setCopiedCharterText(false), 1800);
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 cursor-pointer"
-                      >
-                        {copiedCharterText ? (
-                          <Check className="w-3 h-3 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                        <span>{copiedCharterText ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {charterExtractResult.summaryBullets.length > 0 && (
-                    <div className="rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3 space-y-1">
-                      <div className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
-                        Extracted Charter Summary
-                      </div>
-                      <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4">
-                        {charterExtractResult.summaryBullets.map((b, i) => (
-                          <li key={i}>{b}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 p-3 text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-                    {charterExtractView === 'translated' && charterExtractResult.translatedText
-                      ? charterExtractResult.translatedText
-                      : charterExtractResult.extractedText}
-                  </div>
-                </div>
-              )}
-            </div>
           </section>
 
           {/* Monthly Statements & Billing Reminders */}
@@ -1819,13 +1640,13 @@ export function AdminSiteSettingsView({
                   </div>
                 </div>
 
-                {/* Groq AI (Rewrite, Spam Shield & Charter Translate) */}
+                {/* Groq AI (Rewrite & Spam Shield) */}
                 {systemStatus.groqAi && (
                   <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
                     <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                        <span>Groq AI (Rewrite, Spam &amp; PDF)</span>
+                        <span>Groq AI (Rewrite &amp; Spam Shield)</span>
                       </span>
                       <span
                         className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${

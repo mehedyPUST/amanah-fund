@@ -1043,17 +1043,3 @@ export interface AiSpamCheckResult {
   model?: string;
 }
 
-export type CharterTargetLanguage = 'en' | 'bn' | 'ar';
-
-export interface CharterPdfExtractTranslateResult {
-  sourceName: string;
-  totalPages: number;
-  extractedText: string;
-  translatedText?: string;
-  targetLanguage: CharterTargetLanguage;
-  summaryBullets: string[];
-  translatedWith: 'groq' | 'raw_extract';
-  model?: string;
-  truncationNotice?: string;
-}
-

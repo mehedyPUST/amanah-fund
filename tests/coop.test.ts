@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   appendAuditLog,
@@ -69,15 +67,8 @@ import {
   extractJsonObjectFromText,
   extractUrlsFromPost,
   getGroqModel,
-  parseSectionedTranslationResponse,
-  splitTextIntoChunks,
   DEFAULT_GROQ_MODEL,
 } from '../src/server/groqService.ts';
-import {
-  DEFAULT_CONSTITUTION_PUBLIC_RELATIVE_PATH,
-  decodeBase64PdfPayload,
-  extractPdfTextFromBuffer,
-} from '../src/server/pdfTextService.ts';
 import {
   EMAIL_TEMPLATE_KEYS,
   mergeEmailTemplateCollections,
@@ -1383,7 +1374,7 @@ describe('FAQ Defaults & Sorting', () => {
   });
 });
 
-describe('Groq AI Community Spam Shield & Charter PDF Extraction', () => {
+describe('Groq AI Community Spam Shield & Resilient Completion Handling', () => {
   it('flags phishing, gambling, and malicious links while approving genuine cooperative posts', () => {
     const safeResult = analyzeCommunityPostSpamHeuristic({
       title: 'Halal Agri Venture Field Photos',
@@ -1423,43 +1414,7 @@ describe('Groq AI Community Spam Shield & Charter PDF Extraction', () => {
       'https://amanah.example.org/report',
       'https://youtu.be/abc',
     ]);
-  });
-
-  it('extracts multi-page text from the cooperative Constitution PDF and validates base64 PDFs', async () => {
-    const pdfPath = path.join(process.cwd(), DEFAULT_CONSTITUTION_PUBLIC_RELATIVE_PATH);
-    expect(fs.existsSync(pdfPath)).toBe(true);
-    const buffer = fs.readFileSync(pdfPath);
-    const extracted = await extractPdfTextFromBuffer(buffer);
-    expect(extracted.totalPages).toBeGreaterThanOrEqual(5);
-    expect(extracted.text.length).toBeGreaterThan(5000);
-    expect(extracted.text).toContain('Cooperative');
-
-    const encoded = `data:application/pdf;base64,${buffer.subarray(0, 64).toString('base64')}`;
-    const decoded = decodeBase64PdfPayload(encoded);
-    expect(decoded.subarray(0, 5).toString('latin1')).toBe('%PDF-');
-
-    expect(() => decodeBase64PdfPayload('')).toThrow(/empty/i);
     expect(getGroqModel()).toBe(process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL);
-  });
-
-  it('splits single-paragraph charter text cleanly and parses delimited translation output', () => {
-    const longSingleLine = Array.from({ length: 240 }, (_, i) => `Article ${i + 1} cooperative clause.`).join(' ');
-    const chunks = splitTextIntoChunks(longSingleLine, 4200);
-    expect(chunks.length).toBeGreaterThanOrEqual(2);
-    expect(chunks.every((c) => c.length <= 4200 && c.length > 0)).toBe(true);
-
-    const parsed = parseSectionedTranslationResponse(
-      `===TRANSLATION===\nধারা ১: আমানাহ সমবায় তহবিল সম্পূর্ণ সুদমুক্ত।\n===HIGHLIGHTS===\n- ১০০% সুদমুক্ত কর্জে হাসানা\n- ২/৩ সদস্যের ভোটে অনুমোদন`
-    );
-    expect(parsed.translatedText).toBe('ধারা ১: আমানাহ সমবায় তহবিল সম্পূর্ণ সুদমুক্ত।');
-    expect(parsed.summaryBullets).toEqual([
-      '১০০% সুদমুক্ত কর্জে হাসানা',
-      '২/৩ সদস্যের ভোটে অনুমোদন',
-    ]);
-
-    const rawFallback = parseSectionedTranslationResponse('Plain translated body without markers.');
-    expect(rawFallback.translatedText).toBe('Plain translated body without markers.');
-    expect(rawFallback.summaryBullets).toEqual([]);
   });
 
   it('extracts JSON safely and retries without response_format when Groq returns 400 json_validate_failed', async () => {
