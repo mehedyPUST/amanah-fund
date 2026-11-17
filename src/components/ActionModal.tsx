@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   HelpCircle,
   Info,
+  Loader2,
   X,
   XCircle,
 } from 'lucide-react';
@@ -45,7 +46,7 @@ export function ActionModal({
   title,
   description,
   details,
-  confirmLabel = mode === 'notice' ? 'OK, Got It' : 'Confirm',
+  confirmLabel = mode === 'notice' ? 'Done' : 'Confirm',
   cancelLabel = 'Cancel',
   busy = false,
   inputLabel,
@@ -121,12 +122,12 @@ export function ActionModal({
     };
   }, [open]);
 
-  const isCircleSuccess =
+  const isSuccessNotice =
     mode === 'notice' && (tone === 'emerald' || tone === 'teal');
 
   const Icon =
     mode === 'notice'
-      ? isCircleSuccess
+      ? isSuccessNotice
         ? Check
         : tone === 'red'
           ? XCircle
@@ -141,32 +142,74 @@ export function ActionModal({
           ? AlertTriangle
           : HelpCircle;
 
-  const iconBoxClass = isCircleSuccess
-    ? tone === 'teal'
-      ? 'w-10 h-10 rounded-full bg-teal-600 text-white border-teal-500 shadow-xs ring-4 ring-teal-100 dark:ring-teal-950/60'
-      : 'w-10 h-10 rounded-full bg-emerald-600 text-white border-emerald-500 shadow-xs ring-4 ring-emerald-100 dark:ring-emerald-950/60'
-    : tone === 'red'
-      ? 'w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400'
-      : tone === 'amber'
-        ? 'w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400'
-        : tone === 'indigo'
-          ? 'w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400'
-          : tone === 'teal'
-            ? 'w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400'
-            : tone === 'slate'
-              ? 'w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-              : 'w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400';
-
-  const confirmBtnClass =
-    tone === 'red'
-      ? 'bg-rose-600 hover:bg-rose-700 text-white'
-      : tone === 'amber'
-        ? 'bg-amber-600 hover:bg-amber-700 text-white'
-        : tone === 'indigo'
-          ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-          : tone === 'teal'
-            ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-            : 'bg-emerald-700 hover:bg-emerald-800 text-white';
+  const toneAccent = {
+    emerald: {
+      ring: 'ring-emerald-100 dark:ring-emerald-950/50',
+      glow: 'from-emerald-400/25 via-emerald-500/10 to-transparent',
+      bar: 'from-emerald-500 via-emerald-600 to-teal-500',
+      iconBg: 'bg-emerald-600',
+      iconRing: 'ring-emerald-100 dark:ring-emerald-900/40',
+      softBg: 'bg-emerald-50 dark:bg-emerald-950/40',
+      softBorder: 'border-emerald-200/80 dark:border-emerald-900/50',
+      softText: 'text-emerald-700 dark:text-emerald-300',
+      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20',
+    },
+    teal: {
+      ring: 'ring-teal-100 dark:ring-teal-950/50',
+      glow: 'from-teal-400/25 via-teal-500/10 to-transparent',
+      bar: 'from-teal-500 via-teal-600 to-emerald-500',
+      iconBg: 'bg-teal-600',
+      iconRing: 'ring-teal-100 dark:ring-teal-900/40',
+      softBg: 'bg-teal-50 dark:bg-teal-950/40',
+      softBorder: 'border-teal-200/80 dark:border-teal-900/50',
+      softText: 'text-teal-700 dark:text-teal-300',
+      btn: 'bg-teal-700 hover:bg-teal-800 text-white shadow-teal-700/20',
+    },
+    red: {
+      ring: 'ring-rose-100 dark:ring-rose-950/40',
+      glow: 'from-rose-400/20 via-rose-500/8 to-transparent',
+      bar: 'from-rose-500 via-rose-600 to-red-500',
+      iconBg: 'bg-rose-50 dark:bg-rose-950/40',
+      iconRing: 'ring-rose-100 dark:ring-rose-900/40',
+      softBg: 'bg-rose-50 dark:bg-rose-950/30',
+      softBorder: 'border-rose-200/80 dark:border-rose-900/50',
+      softText: 'text-rose-600 dark:text-rose-400',
+      btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20',
+    },
+    amber: {
+      ring: 'ring-amber-100 dark:ring-amber-950/40',
+      glow: 'from-amber-400/20 via-amber-500/8 to-transparent',
+      bar: 'from-amber-400 via-amber-500 to-orange-500',
+      iconBg: 'bg-amber-50 dark:bg-amber-950/40',
+      iconRing: 'ring-amber-100 dark:ring-amber-900/40',
+      softBg: 'bg-amber-50 dark:bg-amber-950/30',
+      softBorder: 'border-amber-200/80 dark:border-amber-900/50',
+      softText: 'text-amber-600 dark:text-amber-400',
+      btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
+    },
+    indigo: {
+      ring: 'ring-indigo-100 dark:ring-indigo-950/40',
+      glow: 'from-indigo-400/20 via-indigo-500/8 to-transparent',
+      bar: 'from-indigo-500 via-indigo-600 to-violet-500',
+      iconBg: 'bg-indigo-50 dark:bg-indigo-950/40',
+      iconRing: 'ring-indigo-100 dark:ring-indigo-900/40',
+      softBg: 'bg-indigo-50 dark:bg-indigo-950/30',
+      softBorder: 'border-indigo-200/80 dark:border-indigo-900/50',
+      softText: 'text-indigo-600 dark:text-indigo-400',
+      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20',
+    },
+    slate: {
+      ring: 'ring-slate-100 dark:ring-slate-800',
+      glow: 'from-slate-400/15 via-slate-500/5 to-transparent',
+      bar: 'from-slate-400 via-slate-500 to-slate-600',
+      iconBg: 'bg-slate-100 dark:bg-slate-800',
+      iconRing: 'ring-slate-100 dark:ring-slate-800',
+      softBg: 'bg-slate-50 dark:bg-slate-900/60',
+      softBorder: 'border-slate-200 dark:border-slate-700',
+      softText: 'text-slate-700 dark:text-slate-300',
+      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20',
+    },
+  }[tone];
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -217,135 +260,273 @@ export function ActionModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.14 }}
+            transition={{ duration: 0.18 }}
             onClick={() => {
               if (!isBusy) onCloseRef.current();
             }}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-950/55 dark:bg-slate-950/70 backdrop-blur-[2px]"
             aria-hidden="true"
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: 0.16 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 28, mass: 0.8 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-md bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto"
+            className="relative z-10 w-full max-w-[26rem] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55)] overflow-hidden my-auto"
           >
-            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div
-                    className={`border flex items-center justify-center shrink-0 ${iconBoxClass}`}
-                  >
-                    <Icon
-                      className={isCircleSuccess ? 'w-5 h-5 stroke-[2.75]' : 'w-5 h-5'}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="space-y-1 min-w-0">
-                    <h3
-                      id="action-modal-title"
-                      className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white leading-snug"
-                    >
-                      {title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
-                      {description}
-                    </p>
-                  </div>
-                </div>
+            {/* Top accent bar */}
+            <div
+              className={`h-1 w-full bg-gradient-to-r ${toneAccent.bar}`}
+              aria-hidden="true"
+            />
 
-                {!isBusy && (
-                  <button
-                    type="button"
-                    onClick={() => onCloseRef.current()}
-                    aria-label="Close dialog"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+            <form onSubmit={handleSubmit} className="relative">
+              {/* Soft radial glow behind success icon */}
+              {isSuccessNotice && (
+                <div
+                  className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-gradient-to-b ${toneAccent.glow} blur-2xl`}
+                  aria-hidden="true"
+                />
+              )}
+
+              <div className={`relative p-5 sm:p-6 ${isSuccessNotice ? 'pt-7 sm:pt-8' : ''}`}>
+                {/* ── SUCCESS NOTICE LAYOUT ── */}
+                {isSuccessNotice ? (
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    {/* Animated check badge */}
+                    <div className="relative">
+                      <motion.div
+                        initial={{ scale: 0.4, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 380,
+                          damping: 18,
+                          delay: 0.05,
+                        }}
+                        className={`relative w-16 h-16 rounded-full ${toneAccent.iconBg} text-white flex items-center justify-center shadow-lg ring-[6px] ${toneAccent.iconRing}`}
+                      >
+                        <motion.div
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ duration: 0.35, delay: 0.18, ease: 'easeOut' }}
+                        >
+                          <Check className="w-8 h-8 stroke-[2.75]" aria-hidden="true" />
+                        </motion.div>
+                      </motion.div>
+                      {/* Soft pulse ring */}
+                      <motion.div
+                        initial={{ scale: 0.85, opacity: 0.5 }}
+                        animate={{ scale: 1.35, opacity: 0 }}
+                        transition={{
+                          duration: 1.1,
+                          delay: 0.25,
+                          ease: 'easeOut',
+                        }}
+                        className={`absolute inset-0 rounded-full ${tone === 'teal' ? 'bg-teal-500/30' : 'bg-emerald-500/30'}`}
+                        aria-hidden="true"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 max-w-[20rem]">
+                      <h3
+                        id="action-modal-title"
+                        className="text-base sm:text-[1.05rem] font-semibold text-slate-900 dark:text-white tracking-tight leading-snug"
+                      >
+                        {title}
+                      </h3>
+                      {description ? (
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+                          {description}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {details && details.length > 0 && (
+                      <div
+                        className={`w-full rounded-xl border ${toneAccent.softBorder} ${toneAccent.softBg} divide-y divide-slate-200/60 dark:divide-slate-800/80 text-left overflow-hidden`}
+                      >
+                        {details.map((item) => (
+                          <div
+                            key={`${item.label}-${item.value}`}
+                            className="px-3.5 py-2.5 flex items-start justify-between gap-3"
+                          >
+                            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 shrink-0 pt-0.5">
+                              {item.label}
+                            </span>
+                            <span className="text-xs font-mono font-medium text-slate-900 dark:text-white text-right break-all">
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Close affordance (top-right) */}
+                    {!isBusy && (
+                      <button
+                        type="button"
+                        onClick={() => onCloseRef.current()}
+                        aria-label="Close dialog"
+                        className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  /* ── CONFIRM / NON-SUCCESS NOTICE LAYOUT ── */
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      <div
+                        className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
+                          tone === 'red'
+                            ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400'
+                            : tone === 'amber'
+                              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400'
+                              : tone === 'indigo'
+                                ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400'
+                                : tone === 'teal'
+                                  ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-600 dark:text-teal-400'
+                                  : tone === 'slate'
+                                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                                    : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <div className="space-y-1 min-w-0 pt-0.5">
+                        <h3
+                          id="action-modal-title"
+                          className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white leading-snug"
+                        >
+                          {title}
+                        </h3>
+                        {description ? (
+                          <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+                            {description}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {!isBusy && (
+                      <button
+                        type="button"
+                        onClick={() => onCloseRef.current()}
+                        aria-label="Close dialog"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Details for non-success layouts */}
+                {!isSuccessNotice && details && details.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/50 divide-y divide-slate-200/70 dark:divide-slate-800 text-xs overflow-hidden">
+                    {details.map((item) => (
+                      <div
+                        key={`${item.label}-${item.value}`}
+                        className="px-3.5 py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                          {item.label}
+                        </span>
+                        <span className="font-mono font-medium text-slate-900 dark:text-white text-right break-all">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Optional input (confirm mode only) */}
+                {mode === 'confirm' && inputLabel && (
+                  <div className="mt-4 space-y-1.5">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {inputLabel}
+                      {inputRequired && <span className="text-red-600 ml-1">*</span>}
+                    </label>
+                    {inputMultiline ? (
+                      <textarea
+                        rows={3}
+                        required={inputRequired}
+                        disabled={isBusy}
+                        value={inputValue}
+                        onChange={(e) => {
+                          setInputValue(e.target.value);
+                          if (inputError) setInputError(null);
+                        }}
+                        placeholder={inputPlaceholder}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-500/60 transition-shadow"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        required={inputRequired}
+                        disabled={isBusy}
+                        value={inputValue}
+                        onChange={(e) => {
+                          setInputValue(e.target.value);
+                          if (inputError) setInputError(null);
+                        }}
+                        placeholder={inputPlaceholder}
+                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-500/60 transition-shadow"
+                      />
+                    )}
+                    {inputError && (
+                      <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                        {inputError}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {details && details.length > 0 && (
-                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 divide-y divide-slate-200/70 dark:divide-slate-800 text-xs">
-                  {details.map((item) => (
-                    <div
-                      key={`${item.label}-${item.value}`}
-                      className="px-3.5 py-2 flex items-center justify-between gap-3"
-                    >
-                      <span className="text-slate-500 dark:text-slate-400 shrink-0">
-                        {item.label}
-                      </span>
-                      <span className="font-mono font-medium text-slate-900 dark:text-white text-right break-all">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {mode === 'confirm' && inputLabel && (
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {inputLabel}
-                    {inputRequired && <span className="text-red-600 ml-1">*</span>}
-                  </label>
-                  {inputMultiline ? (
-                    <textarea
-                      rows={3}
-                      required={inputRequired}
-                      disabled={isBusy}
-                      value={inputValue}
-                      onChange={(e) => {
-                        setInputValue(e.target.value);
-                        if (inputError) setInputError(null);
-                      }}
-                      placeholder={inputPlaceholder}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      required={inputRequired}
-                      disabled={isBusy}
-                      value={inputValue}
-                      onChange={(e) => {
-                        setInputValue(e.target.value);
-                        if (inputError) setInputError(null);
-                      }}
-                      placeholder={inputPlaceholder}
-                      className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                    />
-                  )}
-                  {inputError && (
-                    <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
-                      {inputError}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                {mode === 'confirm' && (
-                  <button
-                    type="button"
-                    disabled={isBusy}
-                    onClick={() => onCloseRef.current()}
-                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {cancelLabel}
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={isBusy}
-                  className={`px-4 py-2 rounded-lg text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 ${confirmBtnClass}`}
+              {/* Footer actions */}
+              <div
+                className={`px-5 sm:px-6 pb-5 sm:pb-6 ${
+                  isSuccessNotice
+                    ? 'pt-1'
+                    : 'pt-3 border-t border-slate-100 dark:border-slate-800/80'
+                }`}
+              >
+                <div
+                  className={`flex items-center gap-2.5 ${
+                    isSuccessNotice ? 'justify-center' : 'justify-end'
+                  }`}
                 >
-                  {isBusy ? 'Processing…' : confirmLabel}
-                </button>
+                  {mode === 'confirm' && (
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => onCloseRef.current()}
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {cancelLabel}
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isBusy}
+                    className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed ${
+                      isSuccessNotice ? 'min-w-[8.5rem]' : ''
+                    } ${toneAccent.btn}`}
+                  >
+                    {isBusy ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                        <span>Processing…</span>
+                      </>
+                    ) : (
+                      confirmLabel
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </motion.div>
