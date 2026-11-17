@@ -64,6 +64,7 @@ import {
   normalizeCommunityLinkUrl,
 } from '../utils/communityLinks.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import {
   CommunityEmojiPicker,
@@ -1570,7 +1571,7 @@ export function CommunityView({
           <div
             role="tablist"
             aria-label="Community views"
-            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
             {(
               [
@@ -1608,7 +1609,10 @@ export function CommunityView({
                   type="button"
                   role="tab"
                   aria-selected={active}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={(e) => {
+                    setActiveTab(tab.id);
+                    scrollFilterButtonWithNeighbors(e.currentTarget);
+                  }}
                   className={`relative px-3.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-900 dark:text-white'
@@ -2171,7 +2175,7 @@ export function CommunityView({
 
           {/* Filter Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth max-w-full pb-1">
               {(
                 [
                   { id: 'all', label: 'All Topics' },
@@ -2183,7 +2187,10 @@ export function CommunityView({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setFeedCategory(item.id)}
+                  onClick={(e) => {
+                    setFeedCategory(item.id);
+                    scrollFilterButtonWithNeighbors(e.currentTarget);
+                  }}
                   className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
                       ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
