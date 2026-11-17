@@ -569,6 +569,7 @@ export function analyzeCommunityPostSpamHeuristic(params: {
 
       if (parsed.protocol === 'http:') {
         hasCaution = true;
+        flaggedLinks.push(rawUrl);
         signals.push(`Unencrypted HTTP link (${host}) — prefer HTTPS`);
       }
     } catch {
@@ -621,6 +622,13 @@ export function analyzeCommunityPostSpamHeuristic(params: {
   };
 }
 
+export function shouldBlockCommunityPost(
+  spamCheck: Pick<AiSpamCheckResult, 'isSpam' | 'riskLevel'>,
+  hasLinks: boolean
+): boolean {
+  return Boolean(spamCheck.isSpam || (hasLinks && spamCheck.riskLevel === 'caution'));
+}
+
 export async function checkCommunityPostSpam(params: {
   title: string;
   content: string;
@@ -662,11 +670,11 @@ export async function checkCommunityPostSpam(params: {
           role: 'system',
           content:
             `You are a cooperative community trust & safety moderator for Amanah Co-op Treasury. ` +
-            `Evaluate the post title, body, and all attached/inline links for: phishing URLs, credential theft, crypto/forex/gambling scams, unsolicited commercial spam, malware links, or abusive mass solicitation. ` +
+            `Evaluate the post headline, body, and all attached/inline links for: phishing URLs, credential theft, crypto/forex/gambling scams, unsolicited commercial spam, malware/executable downloads, deceptive redirects/shorteners, or suspicious/untrusted domains. ` +
             `IMPORTANT CALIBRATION:\n` +
-            `- Genuine member posts about cooperative savings, Qard Hasan loans, Halal business projects, community photos/videos (YouTube, Google Drive, Unsplash, Pexels, Imgur, news, GitHub), or personal milestones MUST be marked "safe".\n` +
-            `- Reserve "spam" (isSpam: true) strictly for clear spam, scams, phishing, gambling/riba-loan spam, or malicious links.\n` +
-            `- Use "caution" (isSpam: false) for minor concerns like shortened links without context.\n` +
+            `- Genuine member posts about cooperative savings, Qard Hasan loans, Halal business projects, community photos/videos (YouTube, Google Drive/Docs, Unsplash, Pexels, Imgur, ImgBB, ImageKit, reputable news, GitHub, Wikipedia), or personal milestones MUST be marked "safe".\n` +
+            `- Mark "spam" (isSpam: true) for clear spam, scams, phishing, gambling/riba-loan spam, or malicious links.\n` +
+            `- Mark "caution" (isSpam: false) for suspicious links (masked shorteners, lookalike domains, unverified promotional/airdrop/signal URLs, or untrusted redirects). Always include any offending URL(s) in "flaggedLinks".\n` +
             `Respond with JSON matching: { "isSpam": boolean, "riskLevel": "safe" | "caution" | "spam", "reason": string, "flaggedLinks": string[], "signals": string[] }.`,
         },
         {

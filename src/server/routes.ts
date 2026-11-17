@@ -108,9 +108,11 @@ import { sortFaqItems } from '../utils/faqDefaults.ts';
 import { verifyPaymentReceiptImage } from './geminiService.ts';
 import {
   checkCommunityPostSpam,
+  extractUrlsFromPost,
   getGroqModel,
   isGroqConfigured,
   rewriteCooperativeText,
+  shouldBlockCommunityPost,
 } from './groqService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
@@ -7105,22 +7107,28 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       };
     }
 
+    const postUrls = extractUrlsFromPost({
+      title,
+      content,
+      links: linksResult.links,
+    });
     const spamCheck = await checkCommunityPostSpam({
       title,
       content,
       links: linksResult.links,
       strictAiRequired: false,
     });
-    if (spamCheck.isSpam) {
+    if (shouldBlockCommunityPost(spamCheck, postUrls.length > 0)) {
       await updateVaultState((draft) => {
         appendAuditLog(draft, {
           actor: viewer,
           action: 'COMMUNITY_SPAM_BLOCKED',
           resourceType: 'community',
           resourceId: 'spam-filter',
-          summary: `Blocked suspected spam post "${title}" by ${viewer.name}: ${spamCheck.reason}`,
+          summary: `Blocked ${spamCheck.riskLevel === 'caution' ? 'suspicious link' : 'suspected spam'} post "${title}" by ${viewer.name}: ${spamCheck.reason}`,
           payload: {
             title,
+            riskLevel: spamCheck.riskLevel,
             flaggedLinks: spamCheck.flaggedLinks,
             signals: spamCheck.signals,
             checkedWith: spamCheck.checkedWith,
@@ -7130,7 +7138,7 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       });
       broadcastRealtimeEvent('audit:updated', { action: 'COMMUNITY_SPAM_BLOCKED' });
       res.status(400).json({
-        error: `Post blocked by spam & link protection: ${spamCheck.reason}`,
+        error: `Post blocked by AI spam & link protection: ${spamCheck.reason}`,
         spamCheck,
       });
       return;
@@ -7342,13 +7350,21 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
       return;
     }
 
+    const effectiveTitle = title !== undefined ? title : existingForCheck.title;
+    const effectiveContent = content !== undefined ? content : existingForCheck.content;
+    const effectiveLinks = linksResult !== undefined ? linksResult.links : existingForCheck.links;
+    const editUrls = extractUrlsFromPost({
+      title: effectiveTitle,
+      content: effectiveContent,
+      links: effectiveLinks,
+    });
     const spamCheck = await checkCommunityPostSpam({
-      title: title !== undefined ? title : existingForCheck.title,
-      content: content !== undefined ? content : existingForCheck.content,
-      links: linksResult !== undefined ? linksResult.links : existingForCheck.links,
+      title: effectiveTitle,
+      content: effectiveContent,
+      links: effectiveLinks,
       strictAiRequired: false,
     });
-    if (spamCheck.isSpam) {
+    if (shouldBlockCommunityPost(spamCheck, editUrls.length > 0)) {
       await updateVaultState((draft) => {
         const postIdStr = String(id || '');
         appendAuditLog(draft, {
@@ -7356,9 +7372,10 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
           action: 'COMMUNITY_SPAM_BLOCKED',
           resourceType: 'community',
           resourceId: postIdStr,
-          summary: `Blocked suspected spam edit on post ${postIdStr} by ${viewer.name}: ${spamCheck.reason}`,
+          summary: `Blocked ${spamCheck.riskLevel === 'caution' ? 'suspicious link' : 'suspected spam'} edit on post ${postIdStr} by ${viewer.name}: ${spamCheck.reason}`,
           payload: {
             postId: postIdStr,
+            riskLevel: spamCheck.riskLevel,
             flaggedLinks: spamCheck.flaggedLinks,
             signals: spamCheck.signals,
             checkedWith: spamCheck.checkedWith,
@@ -7368,7 +7385,7 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
       });
       broadcastRealtimeEvent('audit:updated', { action: 'COMMUNITY_SPAM_BLOCKED' });
       res.status(400).json({
-        error: `Edit blocked by spam & link protection: ${spamCheck.reason}`,
+        error: `Edit blocked by AI spam & link protection: ${spamCheck.reason}`,
         spamCheck,
       });
       return;

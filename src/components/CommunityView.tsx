@@ -12,6 +12,7 @@ import {
   HeartHandshake,
   Lightbulb,
   Link2,
+  Loader2,
   Lock,
   Mail,
   MessageSquare,
@@ -54,9 +55,11 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
+  extractPostUrlList,
   getCommunityLinkHost,
   getCommunityLinkKindLabel,
   inferCommunityLinkKind,
+  isSpamCheckBlockingPost,
   MAX_COMMUNITY_POST_LINKS,
   normalizeCommunityLinkUrl,
 } from '../utils/communityLinks.ts';
@@ -225,6 +228,8 @@ export function CommunityView({
   const [checkingNewSpam, setCheckingNewSpam] = useState(false);
   const [newSpamCheckResult, setNewSpamCheckResult] = useState<AiSpamCheckResult | null>(null);
   const [newRewriteFeedback, setNewRewriteFeedback] = useState<string | null>(null);
+  const newSpamReqIdRef = useRef(0);
+  const lastNewScanKeyRef = useRef('');
 
   // Poll Builder State
   const [pollEnabled, setPollEnabled] = useState(false);
@@ -256,6 +261,8 @@ export function CommunityView({
   const [rewritingEditPost, setRewritingEditPost] = useState(false);
   const [checkingEditSpam, setCheckingEditSpam] = useState(false);
   const [editSpamCheckResult, setEditSpamCheckResult] = useState<AiSpamCheckResult | null>(null);
+  const editSpamReqIdRef = useRef(0);
+  const lastEditScanKeyRef = useRef('');
   const editContentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
@@ -576,6 +583,156 @@ export function CommunityView({
     };
   }
 
+  function buildLinkScanKey(title: string, content: string, links: CommunityPostLink[]): string {
+    return JSON.stringify({
+      title: title.trim(),
+      content: content.trim(),
+      links: links.map((l) => l.url.trim()),
+    });
+  }
+
+  const newPostUrls = useMemo(
+    () => extractPostUrlList({ title: newTitle, content: newContent, links: newLinks }),
+    [newTitle, newContent, newLinks]
+  );
+  const newHasLinks = newPostUrls.length > 0;
+  const newPostBlocked = isSpamCheckBlockingPost(newSpamCheckResult, newHasLinks);
+
+  const editPostUrls = useMemo(
+    () => extractPostUrlList({ title: editTitle, content: editContent, links: editLinks }),
+    [editTitle, editContent, editLinks]
+  );
+  const editHasLinks = editPostUrls.length > 0;
+  const editPostBlocked = isSpamCheckBlockingPost(editSpamCheckResult, editHasLinks);
+
+  const runNewPostSpamScan = useCallback(
+    async (opts: {
+      title: string;
+      content: string;
+      links: CommunityPostLink[];
+      silentOnError?: boolean;
+    }): Promise<AiSpamCheckResult | null> => {
+      const scanKey = buildLinkScanKey(opts.title, opts.content, opts.links);
+      lastNewScanKeyRef.current = scanKey;
+      const reqId = ++newSpamReqIdRef.current;
+      setCheckingNewSpam(true);
+      try {
+        const res = await api.checkCommunitySpam({
+          title: opts.title,
+          content: opts.content,
+          links: opts.links,
+        });
+        if (reqId === newSpamReqIdRef.current) {
+          setNewSpamCheckResult(res.spamCheck);
+        }
+        return res.spamCheck;
+      } catch (err) {
+        if (reqId === newSpamReqIdRef.current && !opts.silentOnError) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Link Safety Check Failed',
+            description:
+              err instanceof Error ? err.message : 'Unable to verify post links with AI.',
+          });
+        }
+        return null;
+      } finally {
+        if (reqId === newSpamReqIdRef.current) {
+          setCheckingNewSpam(false);
+        }
+      }
+    },
+    []
+  );
+
+  const runEditPostSpamScan = useCallback(
+    async (opts: {
+      title: string;
+      content: string;
+      links: CommunityPostLink[];
+      silentOnError?: boolean;
+    }): Promise<AiSpamCheckResult | null> => {
+      const scanKey = buildLinkScanKey(opts.title, opts.content, opts.links);
+      lastEditScanKeyRef.current = scanKey;
+      const reqId = ++editSpamReqIdRef.current;
+      setCheckingEditSpam(true);
+      try {
+        const res = await api.checkCommunitySpam({
+          title: opts.title,
+          content: opts.content,
+          links: opts.links,
+        });
+        if (reqId === editSpamReqIdRef.current) {
+          setEditSpamCheckResult(res.spamCheck);
+        }
+        return res.spamCheck;
+      } catch (err) {
+        if (reqId === editSpamReqIdRef.current && !opts.silentOnError) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Link Safety Check Failed',
+            description:
+              err instanceof Error ? err.message : 'Unable to verify edited post links with AI.',
+          });
+        }
+        return null;
+      } finally {
+        if (reqId === editSpamReqIdRef.current) {
+          setCheckingEditSpam(false);
+        }
+      }
+    },
+    []
+  );
+
+  // Automatically check links when inline URLs or attached links change in the New Post composer
+  useEffect(() => {
+    if (!composerOpen) return;
+    if (newPostUrls.length === 0) {
+      if (lastNewScanKeyRef.current) {
+        lastNewScanKeyRef.current = '';
+        setNewSpamCheckResult((prev) => (prev?.riskLevel === 'spam' ? prev : null));
+      }
+      return;
+    }
+    const scanKey = buildLinkScanKey(newTitle, newContent, newLinks);
+    if (scanKey === lastNewScanKeyRef.current) return;
+    const timer = window.setTimeout(() => {
+      void runNewPostSpamScan({
+        title: newTitle,
+        content: newContent,
+        links: newLinks,
+        silentOnError: true,
+      });
+    }, 550);
+    return () => window.clearTimeout(timer);
+  }, [composerOpen, newTitle, newContent, newLinks, newPostUrls.length, runNewPostSpamScan]);
+
+  // Automatically check links when inline URLs or attached links change in the Edit Post composer
+  useEffect(() => {
+    if (!editingPostId) return;
+    if (editPostUrls.length === 0) {
+      if (lastEditScanKeyRef.current) {
+        lastEditScanKeyRef.current = '';
+        setEditSpamCheckResult((prev) => (prev?.riskLevel === 'spam' ? prev : null));
+      }
+      return;
+    }
+    const scanKey = buildLinkScanKey(editTitle, editContent, editLinks);
+    if (scanKey === lastEditScanKeyRef.current) return;
+    const timer = window.setTimeout(() => {
+      void runEditPostSpamScan({
+        title: editTitle,
+        content: editContent,
+        links: editLinks,
+        silentOnError: true,
+      });
+    }, 550);
+    return () => window.clearTimeout(timer);
+  }, [editingPostId, editTitle, editContent, editLinks, editPostUrls.length, runEditPostSpamScan]);
+
   function handleAddLink(target: 'new' | 'edit') {
     if (target === 'new') {
       if (!newLinkUrl.trim()) return;
@@ -593,7 +750,12 @@ export function CommunityView({
       setNewLinkUrl('');
       setNewLinkLabel('');
       setNewLinkKind('auto');
-      setNewSpamCheckResult(null);
+      // Immediately run AI link & spam verification when a link is added
+      void runNewPostSpamScan({
+        title: newTitle,
+        content: newContent,
+        links: result.nextList,
+      });
     } else {
       if (!editLinkUrl.trim()) return;
       const result = resolveDraftLinkAddition(editLinks, editLinkUrl, editLinkLabel, editLinkKind);
@@ -610,6 +772,45 @@ export function CommunityView({
       setEditLinkUrl('');
       setEditLinkLabel('');
       setEditLinkKind('auto');
+      // Immediately run AI link & spam verification when a link is added
+      void runEditPostSpamScan({
+        title: editTitle,
+        content: editContent,
+        links: result.nextList,
+      });
+    }
+  }
+
+  function removeFlaggedLinksFromDraft(target: 'new' | 'edit') {
+    if (target === 'new') {
+      const flaggedSet = new Set(newSpamCheckResult?.flaggedLinks || []);
+      const cleanLinks =
+        flaggedSet.size > 0 ? newLinks.filter((l) => !flaggedSet.has(l.url)) : [];
+      let nextTitle = newTitle;
+      let nextContent = newContent;
+      for (const badUrl of flaggedSet) {
+        nextTitle = nextTitle.split(badUrl).join('').replace(/\s{2,}/g, ' ').trim();
+        nextContent = nextContent.split(badUrl).join('').replace(/[ \t]{2,}/g, ' ').trim();
+      }
+      setNewLinks(cleanLinks);
+      setNewTitle(nextTitle);
+      setNewContent(nextContent);
+      lastNewScanKeyRef.current = '';
+      setNewSpamCheckResult(null);
+    } else {
+      const flaggedSet = new Set(editSpamCheckResult?.flaggedLinks || []);
+      const cleanLinks =
+        flaggedSet.size > 0 ? editLinks.filter((l) => !flaggedSet.has(l.url)) : [];
+      let nextTitle = editTitle;
+      let nextContent = editContent;
+      for (const badUrl of flaggedSet) {
+        nextTitle = nextTitle.split(badUrl).join('').replace(/\s{2,}/g, ' ').trim();
+        nextContent = nextContent.split(badUrl).join('').replace(/[ \t]{2,}/g, ' ').trim();
+      }
+      setEditLinks(cleanLinks);
+      setEditTitle(nextTitle);
+      setEditContent(nextContent);
+      lastEditScanKeyRef.current = '';
       setEditSpamCheckResult(null);
     }
   }
@@ -644,6 +845,7 @@ export function CommunityView({
           ? res.result.improvements.join(' · ')
           : `Rewritten in ${aiTone} tone.`
       );
+      lastNewScanKeyRef.current = '';
       setNewSpamCheckResult(null);
     } catch (err) {
       setModal({
@@ -674,25 +876,17 @@ export function CommunityView({
       });
       return;
     }
-    setCheckingNewSpam(true);
-    try {
-      const res = await api.checkCommunitySpam({
-        title: newTitle,
-        content: newContent,
-        links: pendingLinkResult.nextList,
-      });
-      setNewSpamCheckResult(res.spamCheck);
-    } catch (err) {
-      setModal({
-        mode: 'notice',
-        tone: 'red',
-        title: 'Spam Check Failed',
-        description:
-          err instanceof Error ? err.message : 'Unable to check post content and links.',
-      });
-    } finally {
-      setCheckingNewSpam(false);
+    if (newLinkUrl.trim()) {
+      setNewLinks(pendingLinkResult.nextList);
+      setNewLinkUrl('');
+      setNewLinkLabel('');
+      setNewLinkKind('auto');
     }
+    await runNewPostSpamScan({
+      title: newTitle,
+      content: newContent,
+      links: pendingLinkResult.nextList,
+    });
   }
 
   async function handleRewriteEditPost() {
@@ -711,6 +905,7 @@ export function CommunityView({
       if (res.result.rewrittenText) {
         setEditContent(res.result.rewrittenText.slice(0, 4000));
       }
+      lastEditScanKeyRef.current = '';
       setEditSpamCheckResult(null);
     } catch (err) {
       setModal({
@@ -741,28 +936,20 @@ export function CommunityView({
       });
       return;
     }
-    setCheckingEditSpam(true);
-    try {
-      const res = await api.checkCommunitySpam({
-        title: editTitle,
-        content: editContent,
-        links: pendingLinkResult.nextList,
-      });
-      setEditSpamCheckResult(res.spamCheck);
-    } catch (err) {
-      setModal({
-        mode: 'notice',
-        tone: 'red',
-        title: 'Spam Check Failed',
-        description:
-          err instanceof Error ? err.message : 'Unable to check edited post links.',
-      });
-    } finally {
-      setCheckingEditSpam(false);
+    if (editLinkUrl.trim()) {
+      setEditLinks(pendingLinkResult.nextList);
+      setEditLinkUrl('');
+      setEditLinkLabel('');
+      setEditLinkKind('auto');
     }
+    await runEditPostSpamScan({
+      title: editTitle,
+      content: editContent,
+      links: pendingLinkResult.nextList,
+    });
   }
 
-  function handleCreatePost(e: React.FormEvent) {
+  async function handleCreatePost(e: React.FormEvent) {
     e.preventDefault();
 
     const pendingLinkResult = resolveDraftLinkAddition(
@@ -786,6 +973,33 @@ export function CommunityView({
       setNewLinkUrl('');
       setNewLinkLabel('');
       setNewLinkKind('auto');
+    }
+
+    const finalUrls = extractPostUrlList({
+      title: newTitle,
+      content: newContent,
+      links: finalLinks,
+    });
+    const scanKey = buildLinkScanKey(newTitle, newContent, finalLinks);
+
+    let effectiveSpamCheck = newSpamCheckResult;
+    if (finalUrls.length > 0 && (!effectiveSpamCheck || lastNewScanKeyRef.current !== scanKey)) {
+      effectiveSpamCheck = await runNewPostSpamScan({
+        title: newTitle,
+        content: newContent,
+        links: finalLinks,
+      });
+      if (!effectiveSpamCheck) return;
+    }
+
+    if (isSpamCheckBlockingPost(effectiveSpamCheck, finalUrls.length > 0)) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Unable to Post with Flagged Link',
+        description: `${effectiveSpamCheck!.reason} Remove or replace the spam/suspicious link before publishing.`,
+      });
+      return;
     }
 
     let pollPayload: { question: string; allowMultiple: boolean; options: string[] } | undefined;
@@ -820,7 +1034,7 @@ export function CommunityView({
           ? [
               {
                 label: 'Links',
-                value: `${finalLinks.length} ${finalLinks.length === 1 ? 'link' : 'links'} attached`,
+                value: `${finalLinks.length} ${finalLinks.length === 1 ? 'link' : 'links'} verified safe`,
               },
             ]
           : []),
@@ -851,6 +1065,7 @@ export function CommunityView({
           setPollAllowMultiple(false);
           setPollOptions(['', '']);
           setPostMentionQuery(null);
+          lastNewScanKeyRef.current = '';
           setNewSpamCheckResult(null);
           setNewRewriteFeedback(null);
           setComposerOpen(false);
@@ -893,20 +1108,22 @@ export function CommunityView({
   }
 
   function startEditPost(post: CommunityPost) {
+    const initialLinks = Array.isArray(post.links) ? post.links : [];
     setEditingPostId(post.id);
     setEditTitle(post.title);
     setEditContent(post.content);
     setEditCategory(post.category);
-    setEditLinks(Array.isArray(post.links) ? post.links : []);
+    setEditLinks(initialLinks);
     setEditLinkBuilderOpen(false);
     setEditLinkUrl('');
     setEditLinkLabel('');
     setEditLinkKind('auto');
     setEditEmojiOpen(false);
+    lastEditScanKeyRef.current = buildLinkScanKey(post.title, post.content, initialLinks);
     setEditSpamCheckResult(null);
   }
 
-  function handleSavePostEdit(postId: string) {
+  async function handleSavePostEdit(postId: string) {
     const pendingLinkResult = resolveDraftLinkAddition(
       editLinks,
       editLinkUrl,
@@ -928,6 +1145,33 @@ export function CommunityView({
       setEditLinkUrl('');
       setEditLinkLabel('');
       setEditLinkKind('auto');
+    }
+
+    const finalEditUrls = extractPostUrlList({
+      title: editTitle,
+      content: editContent,
+      links: finalEditLinks,
+    });
+    const scanKey = buildLinkScanKey(editTitle, editContent, finalEditLinks);
+
+    let effectiveSpamCheck = editSpamCheckResult;
+    if (finalEditUrls.length > 0 && (!effectiveSpamCheck || lastEditScanKeyRef.current !== scanKey)) {
+      effectiveSpamCheck = await runEditPostSpamScan({
+        title: editTitle,
+        content: editContent,
+        links: finalEditLinks,
+      });
+      if (!effectiveSpamCheck) return;
+    }
+
+    if (isSpamCheckBlockingPost(effectiveSpamCheck, finalEditUrls.length > 0)) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Unable to Save with Flagged Link',
+        description: `${effectiveSpamCheck!.reason} Remove or replace the spam/suspicious link before saving.`,
+      });
+      return;
     }
 
     setModal({
@@ -1606,35 +1850,52 @@ export function CommunityView({
 
                     {newLinks.length > 0 && (
                       <div className="space-y-1.5">
-                        {newLinks.map((item) => (
-                          <div
-                            key={item.url}
-                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs"
-                          >
-                            <div className="min-w-0">
-                              <span className="font-medium text-slate-900 dark:text-white">
-                                {item.label || getCommunityLinkHost(item.url)}
-                              </span>
-                              <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
-                              <span className="text-teal-700 dark:text-teal-400">
-                                {getCommunityLinkKindLabel(item.kind)}
-                              </span>
-                              <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                {item.url}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
-                              }
-                              aria-label="Remove link"
-                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
+                        {newLinks.map((item) => {
+                          const isFlagged = Boolean(
+                            newPostBlocked && newSpamCheckResult?.flaggedLinks.includes(item.url)
+                          );
+                          return (
+                            <div
+                              key={item.url}
+                              className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
+                                isFlagged
+                                  ? 'border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/35'
+                                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                              }`}
                             >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
+                              <div className="min-w-0">
+                                <span className="font-medium text-slate-900 dark:text-white">
+                                  {item.label || getCommunityLinkHost(item.url)}
+                                </span>
+                                <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                                <span
+                                  className={
+                                    isFlagged
+                                      ? 'text-rose-700 dark:text-rose-300 font-medium'
+                                      : 'text-teal-700 dark:text-teal-400'
+                                  }
+                                >
+                                  {isFlagged
+                                    ? 'Flagged Link'
+                                    : getCommunityLinkKindLabel(item.kind)}
+                                </span>
+                                <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                  {item.url}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
+                                }
+                                aria-label="Remove link"
+                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -1688,7 +1949,7 @@ export function CommunityView({
                   </div>
                 )}
 
-                {(newRewriteFeedback || newSpamCheckResult) && (
+                {(newRewriteFeedback || checkingNewSpam || newSpamCheckResult) && (
                   <div className="space-y-2">
                     {newRewriteFeedback && (
                       <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs text-indigo-800 dark:text-indigo-200">
@@ -1696,39 +1957,62 @@ export function CommunityView({
                         <span>AI Rewrite applied: {newRewriteFeedback}</span>
                       </div>
                     )}
-                    {newSpamCheckResult && (
+                    {checkingNewSpam && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                        <span>AI is automatically checking link safety &amp; spam risk…</span>
+                      </div>
+                    )}
+                    {!checkingNewSpam && newSpamCheckResult && (
                       <div
-                        className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${
-                          newSpamCheckResult.riskLevel === 'spam'
+                        className={`flex items-start justify-between gap-3 px-3 py-2.5 rounded-lg border text-xs ${
+                          newPostBlocked
                             ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
                             : newSpamCheckResult.riskLevel === 'caution'
                               ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
                               : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
                         }`}
                       >
-                        {newSpamCheckResult.riskLevel === 'safe' ? (
-                          <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                        ) : (
-                          <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                        )}
-                        <div className="space-y-1 min-w-0">
-                          <div className="font-semibold">
-                            {newSpamCheckResult.riskLevel === 'spam'
-                              ? 'Spam / Unsafe Link Flagged'
-                              : newSpamCheckResult.riskLevel === 'caution'
-                                ? 'Link Caution Notice'
-                                : 'Post & Links Verified Safe'}
-                            <span className="ml-1.5 font-mono text-[10px] opacity-75">
-                              ({newSpamCheckResult.checkedWith === 'groq' ? 'Groq AI' : 'Link Guard'})
-                            </span>
-                          </div>
-                          <div>{newSpamCheckResult.reason}</div>
-                          {newSpamCheckResult.flaggedLinks.length > 0 && (
-                            <div className="font-mono text-[11px] break-all">
-                              Flagged: {newSpamCheckResult.flaggedLinks.join(', ')}
-                            </div>
+                        <div className="flex items-start gap-2 min-w-0">
+                          {newSpamCheckResult.riskLevel === 'safe' ? (
+                            <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                          ) : (
+                            <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                           )}
+                          <div className="space-y-1 min-w-0">
+                            <div className="font-semibold">
+                              {newPostBlocked
+                                ? 'Posting Blocked — Spam or Suspicious Link Detected'
+                                : newSpamCheckResult.riskLevel === 'caution'
+                                  ? 'Caution Notice'
+                                  : 'Post & Links Verified Safe'}
+                              <span className="ml-1.5 font-mono text-[10px] opacity-75">
+                                ({newSpamCheckResult.checkedWith === 'groq' ? 'Groq AI' : 'Link Guard'})
+                              </span>
+                            </div>
+                            <div>{newSpamCheckResult.reason}</div>
+                            {newSpamCheckResult.flaggedLinks.length > 0 && (
+                              <div className="font-mono text-[11px] break-all">
+                                Flagged: {newSpamCheckResult.flaggedLinks.join(', ')}
+                              </div>
+                            )}
+                            {newPostBlocked && (
+                              <div className="text-[11px] font-medium">
+                                Remove or replace the flagged link to enable publishing.
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        {newPostBlocked &&
+                          (newSpamCheckResult.flaggedLinks.length > 0 || newLinks.length > 0) && (
+                            <button
+                              type="button"
+                              onClick={() => removeFlaggedLinksFromDraft('new')}
+                              className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                            >
+                              Remove Flagged Link
+                            </button>
+                          )}
                       </div>
                     )}
                   </div>
@@ -1814,10 +2098,23 @@ export function CommunityView({
                     </button>
                     <button
                       type="submit"
-                      disabled={creatingPost}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
+                      disabled={creatingPost || checkingNewSpam || newPostBlocked}
+                      title={
+                        newPostBlocked
+                          ? 'Remove the spam or suspicious link before publishing.'
+                          : checkingNewSpam
+                            ? 'Waiting for AI link verification...'
+                            : undefined
+                      }
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
                     >
-                      {creatingPost ? 'Publishing...' : 'Publish Post'}
+                      {creatingPost
+                        ? 'Publishing...'
+                        : checkingNewSpam
+                          ? 'Checking Links...'
+                          : newPostBlocked
+                            ? 'Link Blocked'
+                            : 'Publish Post'}
                     </button>
                   </div>
                 </div>
@@ -2248,34 +2545,49 @@ export function CommunityView({
                           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5">
                             {editLinks.length > 0 && (
                               <div className="space-y-1.5">
-                                {editLinks.map((item) => (
-                                  <div
-                                    key={item.url}
-                                    className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs"
-                                  >
-                                    <div className="min-w-0 truncate">
-                                      <span className="font-medium text-slate-900 dark:text-white">
-                                        {item.label || getCommunityLinkHost(item.url)}
-                                      </span>
-                                      <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
-                                      <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                                        {item.url}
-                                      </span>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setEditLinks((prev) =>
-                                          prev.filter((l) => l.url !== item.url)
-                                        )
-                                      }
-                                      aria-label="Remove link"
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
+                                {editLinks.map((item) => {
+                                  const isFlagged = Boolean(
+                                    editPostBlocked &&
+                                      editSpamCheckResult?.flaggedLinks.includes(item.url)
+                                  );
+                                  return (
+                                    <div
+                                      key={item.url}
+                                      className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5 text-xs ${
+                                        isFlagged
+                                          ? 'border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/35'
+                                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                                      }`}
                                     >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                ))}
+                                      <div className="min-w-0 truncate">
+                                        <span className="font-medium text-slate-900 dark:text-white">
+                                          {item.label || getCommunityLinkHost(item.url)}
+                                        </span>
+                                        <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                                        {isFlagged && (
+                                          <span className="text-rose-700 dark:text-rose-300 font-medium mr-1.5">
+                                            Flagged ·
+                                          </span>
+                                        )}
+                                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                          {item.url}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setEditLinks((prev) =>
+                                            prev.filter((l) => l.url !== item.url)
+                                          )
+                                        }
+                                        aria-label="Remove link"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
 
@@ -2329,31 +2641,57 @@ export function CommunityView({
                           </div>
                         )}
 
-                        {editSpamCheckResult && (
+                        {checkingEditSpam && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                            <span>AI is automatically checking edited links…</span>
+                          </div>
+                        )}
+
+                        {!checkingEditSpam && editSpamCheckResult && (
                           <div
-                            className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${
-                              editSpamCheckResult.riskLevel === 'spam'
+                            className={`flex items-start justify-between gap-2 px-3 py-2 rounded-lg border text-xs ${
+                              editPostBlocked
                                 ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
                                 : editSpamCheckResult.riskLevel === 'caution'
                                   ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
                                   : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
                             }`}
                           >
-                            {editSpamCheckResult.riskLevel === 'safe' ? (
-                              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                            ) : (
-                              <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                            )}
-                            <div className="min-w-0">
-                              <span className="font-semibold mr-1.5">
-                                {editSpamCheckResult.riskLevel === 'spam'
-                                  ? 'Spam / Unsafe Link Flagged:'
-                                  : editSpamCheckResult.riskLevel === 'caution'
-                                    ? 'Link Caution:'
-                                    : 'Verified Safe:'}
-                              </span>
-                              <span>{editSpamCheckResult.reason}</span>
+                            <div className="flex items-start gap-2 min-w-0">
+                              {editSpamCheckResult.riskLevel === 'safe' ? (
+                                <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                              ) : (
+                                <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                              )}
+                              <div className="min-w-0 space-y-0.5">
+                                <div>
+                                  <span className="font-semibold mr-1.5">
+                                    {editPostBlocked
+                                      ? 'Save Blocked — Spam or Suspicious Link:'
+                                      : editSpamCheckResult.riskLevel === 'caution'
+                                        ? 'Link Caution:'
+                                        : 'Verified Safe:'}
+                                  </span>
+                                  <span>{editSpamCheckResult.reason}</span>
+                                </div>
+                                {editPostBlocked && (
+                                  <div className="text-[11px] font-medium">
+                                    Remove the flagged link before saving changes.
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                            {editPostBlocked &&
+                              (editSpamCheckResult.flaggedLinks.length > 0 || editLinks.length > 0) && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeFlaggedLinksFromDraft('edit')}
+                                  className="px-2 py-1 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                                >
+                                  Remove Flagged Link
+                                </button>
+                              )}
                           </div>
                         )}
 
@@ -2404,11 +2742,17 @@ export function CommunityView({
                             </button>
                             <button
                               type="button"
-                              disabled={savingPostEdit}
-                              onClick={() => handleSavePostEdit(post.id)}
-                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer"
+                              disabled={savingPostEdit || checkingEditSpam || editPostBlocked}
+                              onClick={() => void handleSavePostEdit(post.id)}
+                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium cursor-pointer"
                             >
-                              {savingPostEdit ? 'Saving...' : 'Save Changes'}
+                              {savingPostEdit
+                                ? 'Saving...'
+                                : checkingEditSpam
+                                  ? 'Checking Links...'
+                                  : editPostBlocked
+                                    ? 'Link Blocked'
+                                    : 'Save Changes'}
                             </button>
                           </div>
                         </div>

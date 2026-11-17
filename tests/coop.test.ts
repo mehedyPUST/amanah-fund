@@ -58,6 +58,8 @@ import {
   getPreviousMonthKey,
 } from '../src/server/pdfSummaryService.ts';
 import {
+  extractPostUrlList,
+  isSpamCheckBlockingPost,
   normalizeAndValidatePostLinks,
   parseTextWithLinks,
 } from '../src/utils/communityLinks.ts';
@@ -67,6 +69,7 @@ import {
   extractJsonObjectFromText,
   extractUrlsFromPost,
   getGroqModel,
+  shouldBlockCommunityPost,
   DEFAULT_GROQ_MODEL,
 } from '../src/server/groqService.ts';
 import {
@@ -1415,6 +1418,26 @@ describe('Groq AI Community Spam Shield & Resilient Completion Handling', () => 
       'https://youtu.be/abc',
     ]);
     expect(getGroqModel()).toBe(process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL);
+
+    // Blocking rule: both spam AND suspicious (caution) links block posting
+    expect(shouldBlockCommunityPost(safeResult, true)).toBe(false);
+    expect(shouldBlockCommunityPost(shortenerCaution, true)).toBe(true);
+    expect(shouldBlockCommunityPost(phishingSpam, true)).toBe(true);
+    expect(shouldBlockCommunityPost({ isSpam: false, riskLevel: 'caution' }, false)).toBe(false);
+    expect(shouldBlockCommunityPost({ isSpam: true, riskLevel: 'spam' }, false)).toBe(true);
+
+    // Shared client link extraction + block matcher stays aligned with server
+    const clientUrls = extractPostUrlList({
+      title: 'Check this',
+      content: 'Visit https://bit.ly/charter-notes for info',
+      links: [{ url: 'http://untrusted.example.com/login', label: 'Login', kind: 'link' }],
+    });
+    expect(clientUrls).toEqual([
+      'https://bit.ly/charter-notes',
+      'http://untrusted.example.com/login',
+    ]);
+    expect(isSpamCheckBlockingPost(shortenerCaution, clientUrls.length > 0)).toBe(true);
+    expect(isSpamCheckBlockingPost(safeResult, true)).toBe(false);
   });
 
   it('extracts JSON safely and retries without response_format when Groq returns 400 json_validate_failed', async () => {

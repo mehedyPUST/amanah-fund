@@ -248,3 +248,32 @@ export function getCommunityLinkKindLabel(kind?: CommunityPostLinkKind): string 
       return 'Web Link';
   }
 }
+
+export function extractPostUrlList(params: {
+  title?: string;
+  content?: string;
+  links?: CommunityPostLink[];
+}): string[] {
+  const urls = new Set<string>();
+  const combined = `${params.title || ''}\n${params.content || ''}`;
+  for (const seg of parseTextWithLinks(combined)) {
+    if (seg.type === 'link') {
+      urls.add(seg.value);
+    }
+  }
+  for (const link of params.links || []) {
+    if (link?.url) {
+      urls.add(link.url.trim());
+    }
+  }
+  return Array.from(urls);
+}
+
+export function isSpamCheckBlockingPost(
+  spamCheck: { isSpam: boolean; riskLevel: 'safe' | 'caution' | 'spam' } | null | undefined,
+  hasLinks: boolean
+): boolean {
+  if (!spamCheck) return false;
+  return Boolean(spamCheck.isSpam || (hasLinks && spamCheck.riskLevel === 'caution'));
+}
+
