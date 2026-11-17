@@ -1345,7 +1345,6 @@ export function DashboardShell() {
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
-                    halalProjects={halalProjects}
                     config={overview?.config || null}
                     user={user}
                     loading={dataLoading && contributions.length === 0 && loans.length === 0}

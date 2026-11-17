@@ -20,14 +20,10 @@ import type {
   Contribution,
   DashboardSectionId,
   FundConfig,
-  HalalProject,
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
-import {
-  downloadAnnualZakatStatementPdf,
-  downloadContributionAndLoanPdfStatement,
-} from '../utils/pdfStatement.ts';
+import { downloadContributionAndLoanPdfStatement } from '../utils/pdfStatement.ts';
 import {
   escapeCsvCell,
   formatBillingMonth,
@@ -43,7 +39,6 @@ export type TransactionTabTarget = DashboardSectionId;
 interface TransactionHistoryProps {
   contributions: Contribution[];
   loans: LoanRequest[];
-  halalProjects?: HalalProject[];
   config: FundConfig | null;
   user: PublicUser;
   loading: boolean;
@@ -91,7 +86,6 @@ interface LedgerRow {
 export function TransactionHistory({
   contributions,
   loans,
-  halalProjects = [],
   config,
   user,
   loading,
@@ -384,16 +378,6 @@ export function TransactionHistory({
     });
   }
 
-  function handleDownloadZakatPdf() {
-    downloadAnnualZakatStatementPdf({
-      user,
-      config,
-      contributions,
-      loans,
-      halalProjects,
-    });
-  }
-
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -460,26 +444,14 @@ export function TransactionHistory({
           )}
 
           {!loading && (
-            <>
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Download PDF Statement</span>
-              </button>
-              {!compact && (
-                <button
-                  type="button"
-                  onClick={handleDownloadZakatPdf}
-                  className="px-3.5 py-2 rounded-lg border border-amber-200 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 dark:hover:bg-amber-950/60 text-xs font-medium text-amber-800 dark:text-amber-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
-                >
-                  <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Zakat &amp; Equity PDF</span>
-                </button>
-              )}
-            </>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Download PDF Statement</span>
+            </button>
           )}
 
           {compact && onNavigate && (
