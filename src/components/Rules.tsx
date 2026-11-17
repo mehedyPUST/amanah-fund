@@ -278,7 +278,6 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      lang={isBn ? 'bn' : 'en'}
       className={`bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
       }`}
@@ -292,15 +291,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800"
         >
           <div className="space-y-1.5">
-            {isBn && (
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-              </p>
-            )}
             <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              {isBn
-                ? 'আনুষ্ঠানিক গঠনতন্ত্র, নীতিমালা এবং নির্দেশিকা · মেয়াদ: জানুয়ারি ২০২৭ – ডিসেম্বর ২০৩৬'
-                : 'Official Constitution & Bylaws · Jan 2027 – Dec 2036'}
+              Official Constitution &amp; Bylaws · Jan 2027 – Dec 2036
             </div>
             <HeadingTag
               className={
@@ -309,14 +301,10 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   : 'text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white text-balance'
               }
             >
-              {isBn
-                ? 'সঞ্চয়, বিনিয়োগ ও সুদমুক্ত ঋণ তহবিল গঠনতন্ত্র'
-                : 'Savings, Investment & Interest-Free Loan Fund Charter'}
+              Savings, Investment &amp; Interest-Free Loan Fund Charter
             </HeadingTag>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-              {isBn
-                ? 'মূল বাংলা গঠনতন্ত্রের ধারা ১–২৫ (Savings, Investment and Interest-Free Loan Fund Cooperative Society)।'
-                : 'English translation of Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.'}
+              Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
             </p>
           </div>
 
@@ -415,9 +403,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   <div className="space-y-1">
                     <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                      {isBn
-                        ? 'আনুষ্ঠানিক সমবায় গঠনতন্ত্র পিডিএফ (ধারা ১–২৫ · ২০২৭–২০৩৬)'
-                        : 'Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)'}
+                      Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
                     </PdfHeadingTag>
                     <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
@@ -437,12 +423,12 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     {showPdfPreview ? (
                       <>
                         <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{isBn ? 'পিডিএফ লুকান' : 'Hide PDF'}</span>
+                        <span>Hide PDF</span>
                       </>
                     ) : (
                       <>
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{isBn ? 'পিডিএফ দেখুন' : 'Preview PDF'}</span>
+                        <span>Preview PDF</span>
                       </>
                     )}
                   </button>
@@ -453,7 +439,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{isBn ? 'পিডিএফ খুলুন' : 'Open PDF'}</span>
+                    <span>Open PDF</span>
                   </a>
                   <a
                     href={constitutionUrl}
@@ -461,7 +447,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}</span>
+                    <span>Download PDF</span>
                   </a>
                 </div>
               </div>
@@ -487,7 +473,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div lang={isBn ? 'bn' : 'en'} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {sections.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
             const ruleHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
@@ -569,22 +555,20 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
         <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            {isBn
-              ? 'আমানাহ-এর ২০-শেয়ার সমবায় তহবিল চক্রে (২০২৭–২০৩৬) অংশ নিতে প্রস্তুত?'
-              : "Ready to participate in Amanah's 20-share cooperative treasury cycle (2027–2036)?"}
+            Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
           </p>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              {isBn ? 'সদস্য সাইন ইন' : 'Member Sign In'}
+              Member Sign In
             </Link>
             <Link
               href="/signup"
               className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
             >
-              <span>{isBn ? 'সদস্যপদের জন্য আবেদন' : 'Apply for Membership'}</span>
+              <span>Apply for Membership</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
