@@ -33,50 +33,93 @@ function stripJsonCodeFences(raw: string): string {
   return fenced ? fenced[1].trim() : trimmed;
 }
 
+export function extractJsonObjectFromText<T>(raw: string): T {
+  const clean = stripJsonCodeFences(raw);
+  try {
+    return JSON.parse(clean) as T;
+  } catch {
+    const startIdx = clean.indexOf('{');
+    const endIdx = clean.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx > startIdx) {
+      const candidate = clean.slice(startIdx, endIdx + 1);
+      try {
+        return JSON.parse(candidate) as T;
+      } catch {
+        // Fallback: sanitize literal control newlines inside quoted strings if present
+        const sanitized = candidate.replace(/[\u0000-\u0019]+/g, ' ');
+        return JSON.parse(sanitized) as T;
+      }
+    }
+    throw new Error('Groq API returned invalid JSON output.');
+  }
+}
+
+class GroqHttpError extends Error {
+  status: number;
+  code?: string;
+  failedGeneration?: string;
+
+  constructor(message: string, status: number, code?: string, failedGeneration?: string) {
+    super(message);
+    this.name = 'GroqHttpError';
+    this.status = status;
+    this.code = code;
+    this.failedGeneration = failedGeneration;
+  }
+}
+
 async function callGroqChat(params: {
   messages: GroqMessage[];
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
+  fetchImpl?: typeof fetch;
 }): Promise<{ content: string; model: string }> {
   const apiKey = getGroqApiKey();
   if (!apiKey) {
     throw new Error('GROQ_API_KEY is not configured in the server environment.');
   }
 
+  const fetchFn = params.fetchImpl || fetch;
   const model = getGroqModel();
   const body: Record<string, unknown> = {
     model,
     messages: params.messages,
     temperature: params.temperature ?? 0.35,
-    max_tokens: params.maxTokens ?? 2048,
+    max_tokens: params.maxTokens ?? 2400,
   };
 
   if (params.jsonMode) {
     body.response_format = { type: 'json_object' };
   }
 
-  const response = await fetch(GROQ_API_ENDPOINT, {
+  const response = await fetchFn(GROQ_API_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(28000),
+    signal: AbortSignal.timeout(35000),
   });
 
   if (!response.ok) {
     let errorMessage = `Groq API request failed (${response.status}).`;
+    let errorCode: string | undefined;
+    let failedGeneration: string | undefined;
     try {
-      const errJson = (await response.json()) as { error?: { message?: string } };
+      const errJson = (await response.json()) as {
+        error?: { message?: string; code?: string; failed_generation?: string };
+      };
       if (errJson?.error?.message) {
         errorMessage = `Groq API error (${response.status}): ${errJson.error.message}`;
       }
+      errorCode = errJson?.error?.code;
+      failedGeneration = errJson?.error?.failed_generation;
     } catch {
       // Ignore parse failures on upstream error bodies
     }
-    throw new Error(errorMessage);
+    throw new GroqHttpError(errorMessage, response.status, errorCode, failedGeneration);
   }
 
   const data = (await response.json()) as {
@@ -95,32 +138,66 @@ async function callGroqChat(params: {
   };
 }
 
-async function callGroqJson<T>(params: {
+export async function callGroqJson<T>(params: {
   messages: GroqMessage[];
   temperature?: number;
   maxTokens?: number;
+  fetchImpl?: typeof fetch;
 }): Promise<{ parsed: T; model: string }> {
-  const result = await callGroqChat({
-    ...params,
-    jsonMode: true,
-  });
-
-  const clean = stripJsonCodeFences(result.content);
   try {
+    const result = await callGroqChat({
+      ...params,
+      jsonMode: true,
+    });
     return {
-      parsed: JSON.parse(clean) as T,
+      parsed: extractJsonObjectFromText<T>(result.content),
       model: result.model,
     };
-  } catch {
-    const startIdx = clean.indexOf('{');
-    const endIdx = clean.lastIndexOf('}');
-    if (startIdx !== -1 && endIdx > startIdx) {
-      return {
-        parsed: JSON.parse(clean.slice(startIdx, endIdx + 1)) as T,
-        model: result.model,
-      };
+  } catch (err) {
+    const isJsonValidationError =
+      err instanceof GroqHttpError &&
+      err.status === 400 &&
+      (err.code === 'json_validate_failed' ||
+        /validate json/i.test(err.message));
+
+    if (!isJsonValidationError) {
+      throw err;
     }
-    throw new Error('Groq API returned invalid JSON output.');
+
+    // Attempt to recover if Groq returned a nearly-valid JSON snippet in failed_generation
+    if (err.failedGeneration) {
+      try {
+        return {
+          parsed: extractJsonObjectFromText<T>(err.failedGeneration),
+          model: getGroqModel(),
+        };
+      } catch {
+        // Fall through to non-strict JSON-mode retry
+      }
+    }
+
+    // Retry cleanly without response_format=json_object so Groq's strict validator does not abort
+    const fallbackMessages: GroqMessage[] = [
+      ...params.messages,
+      {
+        role: 'system',
+        content:
+          'Output ONLY a single valid JSON object starting with { and ending with }. Escape any quotes or newlines inside JSON strings properly. Do not include markdown fences or extra commentary.',
+      },
+    ];
+
+    const retryResult = await callGroqChat({
+      messages: fallbackMessages,
+      temperature: params.temperature,
+      maxTokens: params.maxTokens,
+      jsonMode: false,
+      fetchImpl: params.fetchImpl,
+    });
+
+    return {
+      parsed: extractJsonObjectFromText<T>(retryResult.content),
+      model: retryResult.model,
+    };
   }
 }
 
@@ -171,7 +248,7 @@ export async function rewriteCooperativeText(params: {
     improvements?: string[];
   }>({
     temperature: 0.35,
-    maxTokens: 1600,
+    maxTokens: 2400,
     messages: [
       {
         role: 'system',
@@ -183,7 +260,7 @@ export async function rewriteCooperativeText(params: {
           `1. Keep the SAME language as the user's input (if Bengali/বাংলা, rewrite in natural Bangla; if English, rewrite in natural English; if mixed, preserve key Bengali terms naturally).\n` +
           `2. Never invent numbers, dates, amounts, interest/riba terms, or fake facts.\n` +
           `3. Preserve any @Name mentions, URLs, member codes (e.g. AMN-001), and emojis naturally.\n` +
-          `4. Return ONLY valid JSON with keys: "rewrittenTitle" (string, include if title was provided), "rewrittenText" (string), and "improvements" (array of 1-3 short strings describing what improved).`,
+          `4. Return a single JSON object with keys: "rewrittenTitle" (string, include if title was provided), "rewrittenText" (string with escaped \\n for line breaks), and "improvements" (array of 1-3 short strings).`,
       },
       {
         role: 'user',
@@ -294,7 +371,6 @@ export function analyzeCommunityPostSpamHeuristic(params: {
 
   const combined = `${title}\n${content}`;
 
-  // Inspect raw text for unsafe inline schemes too
   if (/(?:javascript:|data:text\/html|vbscript:)/i.test(combined)) {
     hasSpam = true;
     signals.push('Executable script URI detected in post body');
@@ -400,7 +476,6 @@ export async function checkCommunityPostSpam(params: {
 }): Promise<AiSpamCheckResult> {
   const heuristic = analyzeCommunityPostSpamHeuristic(params);
 
-  // Immediately reject obvious deterministic spam/phishing without wasting AI tokens
   if (heuristic.isSpam) {
     return heuristic;
   }
@@ -439,7 +514,7 @@ export async function checkCommunityPostSpam(params: {
             `- Genuine member posts about cooperative savings, Qard Hasan loans, Halal business projects, community photos/videos (YouTube, Google Drive, Unsplash, Pexels, Imgur, news, GitHub), or personal milestones MUST be marked "safe".\n` +
             `- Reserve "spam" (isSpam: true) strictly for clear spam, scams, phishing, gambling/riba-loan spam, or malicious links.\n` +
             `- Use "caution" (isSpam: false) for minor concerns like shortened links without context.\n` +
-            `Return ONLY valid JSON: { "isSpam": boolean, "riskLevel": "safe" | "caution" | "spam", "reason": string, "flaggedLinks": string[], "signals": string[] }.`,
+            `Respond with JSON matching: { "isSpam": boolean, "riskLevel": "safe" | "caution" | "spam", "reason": string, "flaggedLinks": string[], "signals": string[] }.`,
         },
         {
           role: 'user',
@@ -512,7 +587,29 @@ const LANGUAGE_LABELS: Record<CharterTargetLanguage, string> = {
   ar: 'Arabic (العربية)',
 };
 
-function splitTextIntoChunks(text: string, maxChunkChars = 9000): string[] {
+function splitSegmentOnBoundary(segment: string, maxLen: number): string[] {
+  const result: string[] = [];
+  let cursor = 0;
+  while (cursor < segment.length) {
+    if (cursor + maxLen >= segment.length) {
+      result.push(segment.slice(cursor).trim());
+      break;
+    }
+    const slice = segment.slice(cursor, cursor + maxLen);
+    const boundaryIdx = Math.max(
+      slice.lastIndexOf('\n'),
+      slice.lastIndexOf('। '),
+      slice.lastIndexOf('. '),
+      slice.lastIndexOf(' ')
+    );
+    const splitAt = boundaryIdx > Math.floor(maxLen * 0.5) ? boundaryIdx + 1 : maxLen;
+    result.push(segment.slice(cursor, cursor + splitAt).trim());
+    cursor += splitAt;
+  }
+  return result.filter(Boolean);
+}
+
+export function splitTextIntoChunks(text: string, maxChunkChars = 4200): string[] {
   const clean = text.trim();
   if (clean.length <= maxChunkChars) return [clean];
 
@@ -523,15 +620,14 @@ function splitTextIntoChunks(text: string, maxChunkChars = 9000): string[] {
   for (const para of paragraphs) {
     if ((current + '\n\n' + para).length > maxChunkChars && current.trim()) {
       chunks.push(current.trim());
-      current = para;
-    } else if (para.length > maxChunkChars) {
+      current = '';
+    }
+    if (para.length > maxChunkChars) {
       if (current.trim()) {
         chunks.push(current.trim());
         current = '';
       }
-      for (let i = 0; i < para.length; i += maxChunkChars) {
-        chunks.push(para.slice(i, i + maxChunkChars));
-      }
+      chunks.push(...splitSegmentOnBoundary(para, maxChunkChars));
     } else {
       current = current ? `${current}\n\n${para}` : para;
     }
@@ -542,6 +638,54 @@ function splitTextIntoChunks(text: string, maxChunkChars = 9000): string[] {
   }
 
   return chunks;
+}
+
+export function parseSectionedTranslationResponse(raw: string): {
+  translatedText: string;
+  summaryBullets: string[];
+} {
+  const trimmed = raw.trim();
+  const translationMarker = '===TRANSLATION===';
+  const highlightsMarker = '===HIGHLIGHTS===';
+
+  const tIdx = trimmed.indexOf(translationMarker);
+  const hIdx = trimmed.indexOf(highlightsMarker);
+
+  if (tIdx !== -1 || hIdx !== -1) {
+    let translatedText = '';
+    let highlightsBlock = '';
+
+    if (tIdx !== -1 && hIdx !== -1) {
+      if (tIdx < hIdx) {
+        translatedText = trimmed.slice(tIdx + translationMarker.length, hIdx).trim();
+        highlightsBlock = trimmed.slice(hIdx + highlightsMarker.length).trim();
+      } else {
+        highlightsBlock = trimmed.slice(hIdx + highlightsMarker.length, tIdx).trim();
+        translatedText = trimmed.slice(tIdx + translationMarker.length).trim();
+      }
+    } else if (tIdx !== -1) {
+      translatedText = trimmed.slice(tIdx + translationMarker.length).trim();
+    } else {
+      translatedText = trimmed.slice(0, hIdx).trim();
+      highlightsBlock = trimmed.slice(hIdx + highlightsMarker.length).trim();
+    }
+
+    const summaryBullets = highlightsBlock
+      .split('\n')
+      .map((line) => line.replace(/^[-*•\d.)\s]+/, '').trim())
+      .filter(Boolean)
+      .slice(0, 6);
+
+    return {
+      translatedText: translatedText || trimmed,
+      summaryBullets,
+    };
+  }
+
+  return {
+    translatedText: trimmed,
+    summaryBullets: [],
+  };
 }
 
 export async function translateAndRefineCharterText(params: {
@@ -562,7 +706,7 @@ export async function translateAndRefineCharterText(params: {
   const maxTotalChars = 36000;
   const truncated = cleanText.length > maxTotalChars;
   const workingText = truncated ? cleanText.slice(0, maxTotalChars) : cleanText;
-  const chunks = splitTextIntoChunks(workingText, 9000);
+  const chunks = splitTextIntoChunks(workingText, 4200);
   const langLabel = LANGUAGE_LABELS[params.targetLanguage] || 'English';
 
   const translatedParts: string[] = [];
@@ -573,21 +717,25 @@ export async function translateAndRefineCharterText(params: {
     const chunk = chunks[i];
     const isFirst = i === 0;
 
-    const { parsed, model } = await callGroqJson<{
-      translatedText?: string;
-      summaryBullets?: string[];
-    }>({
+    // Plain-text delimited output avoids Groq's strict JSON validator failing on long multiline Bengali/Arabic text
+    const { content, model } = await callGroqChat({
       temperature: 0.2,
-      maxTokens: 3200,
+      maxTokens: 4096,
+      jsonMode: false,
       messages: [
         {
           role: 'system',
           content:
             `You are a bilingual legal/cooperative charter translator for Amanah Co-op Treasury. ` +
             `You are given raw text extracted from a Cooperative Constitution PDF ("${params.sourceName}"). ` +
-            `Note: Legacy PDF font encodings (especially Bangla/Bijoy/ANSI-encoded Bengali PDFs) may contain spaced or slightly scrambled vowel signs (e.g., "বিবিয় োগ" = "বিনিয়োগ", "বনর্দ েবিকা" = "নির্দেশিকা"). ` +
-            `Reconstruct the true intended words accurately from context, preserve all article numbers, dates, amounts, and Shariah clauses faithfully, and translate/render the entire section cleanly into ${langLabel}. ` +
-            `Return ONLY valid JSON: { "translatedText": string, "summaryBullets": string[] (${isFirst ? '3 to 5 concise key charter takeaways in ' + langLabel : 'empty array or 1-2 highlights'}) }.`,
+            `Legacy PDF font encodings (especially Bangla/Bijoy-encoded Bengali PDFs) may contain spaced or slightly shifted vowel signs (e.g., "বিবিয় োগ" = "বিনিয়োগ", "বনর্দ েবিকা" = "নির্দেশিকা"). ` +
+            `Reconstruct the true intended words accurately from context, preserve all article numbers, dates, amounts, and Shariah clauses faithfully, and format the output cleanly into ${langLabel}.\n\n` +
+            `Format your response using these exact section markers:\n` +
+            `===TRANSLATION===\n` +
+            `<cleanly formatted ${langLabel} text for this section>\n` +
+            (isFirst
+              ? `\n===HIGHLIGHTS===\n- <3 to 5 concise key charter takeaways in ${langLabel}>`
+              : ''),
         },
         {
           role: 'user',
@@ -597,15 +745,13 @@ export async function translateAndRefineCharterText(params: {
     });
 
     usedModel = model;
+    const parsed = parseSectionedTranslationResponse(content);
     if (parsed.translatedText) {
-      translatedParts.push(String(parsed.translatedText).trim());
+      translatedParts.push(parsed.translatedText);
     }
-    if (Array.isArray(parsed.summaryBullets)) {
-      for (const b of parsed.summaryBullets) {
-        const cleanBullet = String(b || '').trim();
-        if (cleanBullet && allBullets.length < 6) {
-          allBullets.push(cleanBullet);
-        }
+    for (const b of parsed.summaryBullets) {
+      if (b && allBullets.length < 6) {
+        allBullets.push(b);
       }
     }
   }

@@ -65,8 +65,12 @@ import {
 } from '../src/utils/communityLinks.ts';
 import {
   analyzeCommunityPostSpamHeuristic,
+  callGroqJson,
+  extractJsonObjectFromText,
   extractUrlsFromPost,
   getGroqModel,
+  parseSectionedTranslationResponse,
+  splitTextIntoChunks,
   DEFAULT_GROQ_MODEL,
 } from '../src/server/groqService.ts';
 import {
@@ -1436,5 +1440,104 @@ describe('Groq AI Community Spam Shield & Charter PDF Extraction', () => {
 
     expect(() => decodeBase64PdfPayload('')).toThrow(/empty/i);
     expect(getGroqModel()).toBe(process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL);
+  });
+
+  it('splits single-paragraph charter text cleanly and parses delimited translation output', () => {
+    const longSingleLine = Array.from({ length: 240 }, (_, i) => `Article ${i + 1} cooperative clause.`).join(' ');
+    const chunks = splitTextIntoChunks(longSingleLine, 4200);
+    expect(chunks.length).toBeGreaterThanOrEqual(2);
+    expect(chunks.every((c) => c.length <= 4200 && c.length > 0)).toBe(true);
+
+    const parsed = parseSectionedTranslationResponse(
+      `===TRANSLATION===\nধারা ১: আমানাহ সমবায় তহবিল সম্পূর্ণ সুদমুক্ত।\n===HIGHLIGHTS===\n- ১০০% সুদমুক্ত কর্জে হাসানা\n- ২/৩ সদস্যের ভোটে অনুমোদন`
+    );
+    expect(parsed.translatedText).toBe('ধারা ১: আমানাহ সমবায় তহবিল সম্পূর্ণ সুদমুক্ত।');
+    expect(parsed.summaryBullets).toEqual([
+      '১০০% সুদমুক্ত কর্জে হাসানা',
+      '২/৩ সদস্যের ভোটে অনুমোদন',
+    ]);
+
+    const rawFallback = parseSectionedTranslationResponse('Plain translated body without markers.');
+    expect(rawFallback.translatedText).toBe('Plain translated body without markers.');
+    expect(rawFallback.summaryBullets).toEqual([]);
+  });
+
+  it('extracts JSON safely and retries without response_format when Groq returns 400 json_validate_failed', async () => {
+    const fenced = extractJsonObjectFromText<{ ok: boolean; text: string }>(
+      '```json\n{"ok":true,"text":"Line 1\nLine 2"}\n```'
+    );
+    expect(fenced.ok).toBe(true);
+    expect(fenced.text).toContain('Line 1');
+
+    const prevKey = process.env.GROQ_API_KEY;
+    process.env.GROQ_API_KEY = 'gsk_test_mock_key';
+    try {
+      const requestBodies: Array<Record<string, unknown>> = [];
+      let attempt = 0;
+      const retryFetch: typeof fetch = async (_input, init) => {
+        attempt += 1;
+        requestBodies.push(JSON.parse(String(init?.body || '{}')));
+        if (attempt === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: "Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.",
+                code: 'json_validate_failed',
+                failed_generation: '{"incomplete": ',
+              },
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            model: DEFAULT_GROQ_MODEL,
+            choices: [
+              {
+                message: {
+                  content: '```json\n{"rewrittenText":"Polished text","improvements":["Clarity"]}\n```',
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      };
+
+      const retried = await callGroqJson<{ rewrittenText: string; improvements: string[] }>({
+        messages: [{ role: 'user', content: 'Polish this' }],
+        fetchImpl: retryFetch,
+      });
+
+      expect(attempt).toBe(2);
+      expect(requestBodies[0].response_format).toEqual({ type: 'json_object' });
+      expect(requestBodies[1].response_format).toBeUndefined();
+      expect(retried.parsed.rewrittenText).toBe('Polished text');
+
+      // Also recovers directly if Groq's failed_generation actually contains valid JSON inside fences
+      const recoverFetch: typeof fetch = async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: 'Failed to validate JSON.',
+              code: 'json_validate_failed',
+              failed_generation: '```json\n{"isSpam":false,"riskLevel":"safe","reason":"Looks clean"}\n```',
+            },
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+
+      const recovered = await callGroqJson<{ isSpam: boolean; riskLevel: string }>({
+        messages: [{ role: 'user', content: 'Check spam' }],
+        fetchImpl: recoverFetch,
+      });
+      expect(recovered.parsed).toMatchObject({ isSpam: false, riskLevel: 'safe' });
+    } finally {
+      if (prevKey === undefined) {
+        delete process.env.GROQ_API_KEY;
+      } else {
+        process.env.GROQ_API_KEY = prevKey;
+      }
+    }
   });
 });
