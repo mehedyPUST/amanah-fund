@@ -377,7 +377,7 @@ export function AdminEmailTemplatesEditor({
   }, [previewRendered, fundName]);
 
   return (
-    <section className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
+    <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">

@@ -257,7 +257,7 @@ export function HalalProjectsView({
       className="space-y-6"
     >
       {/* Maturity Transition Summary */}
-      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -295,7 +295,7 @@ export function HalalProjectsView({
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
-          } amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs`}
+          } amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -747,7 +747,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-4 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement

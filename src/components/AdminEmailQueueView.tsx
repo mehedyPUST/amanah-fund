@@ -342,7 +342,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -449,7 +449,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       </section>
 
       {/* Queue Filter & List */}
-      <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
             {(

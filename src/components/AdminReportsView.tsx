@@ -367,7 +367,7 @@ export function AdminReportsView({
 
       {/* New User Signup Approval Queue (Admin) */}
       {isAdmin && (adminSection === 'all' || adminSection === 'users') && (
-        <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+        <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -461,7 +461,7 @@ export function AdminReportsView({
 
       {/* Administrative Qard Hasan Loan Review Queue */}
       {(adminSection === 'all' || adminSection === 'analytics') && (
-      <section className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -579,7 +579,7 @@ export function AdminReportsView({
           />
 
           {/* Monthly Fund Summary PDF & Email Distribution */}
-          <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+          <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -688,7 +688,7 @@ export function AdminReportsView({
           </section>
 
           {/* Automated Reporting Tools */}
-          <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs">
+          <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -724,7 +724,7 @@ export function AdminReportsView({
 
       {/* Admin Governance & Policy Controls */}
       {isAdmin && (adminSection === 'all' || adminSection === 'policy') && (
-        <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 shadow-xs">
+        <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Administrator Fund Policy & Annual Loan Quota

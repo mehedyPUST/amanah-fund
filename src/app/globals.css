@@ -243,6 +243,106 @@ html.dark .amanah-card-rose:hover {
   border-color: rgba(251, 113, 133, 0.58);
 }
 
+/*
+ * Nested surface: content lives inside Dashboard/Public shells that are already
+ * card-like. Flatten child "cards" so we don't stack card-in-card.
+ */
+[data-surface='app'] :is(
+  .amanah-card-emerald,
+  .amanah-card-violet,
+  .amanah-card-teal,
+  .amanah-card-amber,
+  .amanah-card-sky,
+  .amanah-card-rose
+) {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow: none;
+}
+html.dark [data-surface='app'] :is(
+  .amanah-card-emerald,
+  .amanah-card-violet,
+  .amanah-card-teal,
+  .amanah-card-amber,
+  .amanah-card-sky,
+  .amanah-card-rose
+) {
+  background-color: rgba(15, 23, 42, 0.45);
+  border-color: rgba(51, 65, 85, 0.65);
+}
+[data-surface='app'] :is(
+  .amanah-card-emerald,
+  .amanah-card-violet,
+  .amanah-card-teal,
+  .amanah-card-amber,
+  .amanah-card-sky,
+  .amanah-card-rose
+):hover {
+  border-color: rgba(100, 116, 139, 0.45);
+}
+html.dark [data-surface='app'] :is(
+  .amanah-card-emerald,
+  .amanah-card-violet,
+  .amanah-card-teal,
+  .amanah-card-amber,
+  .amanah-card-sky,
+  .amanah-card-rose
+):hover {
+  border-color: rgba(71, 85, 105, 0.9);
+}
+
+/* Subtle left accent so hue still reads without full tinted fill */
+[data-surface='app'] .amanah-card-emerald {
+  border-left: 3px solid rgba(16, 185, 129, 0.75);
+}
+[data-surface='app'] .amanah-card-violet {
+  border-left: 3px solid rgba(168, 85, 247, 0.7);
+}
+[data-surface='app'] .amanah-card-teal {
+  border-left: 3px solid rgba(20, 184, 166, 0.75);
+}
+[data-surface='app'] .amanah-card-amber {
+  border-left: 3px solid rgba(245, 158, 11, 0.75);
+}
+[data-surface='app'] .amanah-card-sky {
+  border-left: 3px solid rgba(14, 165, 233, 0.7);
+}
+[data-surface='app'] .amanah-card-rose {
+  border-left: 3px solid rgba(244, 63, 94, 0.7);
+}
+
+/* Tighter section spacing on small screens inside app surfaces */
+@media (max-width: 639px) {
+  [data-surface='app'] :is(
+    .amanah-card-emerald,
+    .amanah-card-violet,
+    .amanah-card-teal,
+    .amanah-card-amber,
+    .amanah-card-sky,
+    .amanah-card-rose
+  ) {
+    border-radius: 0.75rem;
+  }
+
+  [data-surface='app'] .space-y-5 > :not([hidden]) ~ :not([hidden]),
+  [data-surface='app'] .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(0.85rem * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+
+/* Flat panel utility (prefer over nested full cards for new UI) */
+.amanah-panel {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 0.75rem;
+}
+html.dark .amanah-panel {
+  border-color: rgba(51, 65, 85, 0.7);
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
 :where(.backdrop-blur-md:is(.rounded-xl, .rounded-2xl))
   p:not(.text-center):not(.text-right):not(.text-left) {
   text-align: justify;

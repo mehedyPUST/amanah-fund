@@ -503,7 +503,7 @@ export function ContributionsView({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="xl:col-span-4 amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-4 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="mb-4">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -808,7 +808,7 @@ export function ContributionsView({
           transition={{ duration: 0.25, delay: 0.04 }}
           className={`${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
-          } amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs`}
+          } amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
             <div>

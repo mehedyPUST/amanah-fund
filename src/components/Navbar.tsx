@@ -72,7 +72,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[58px] amanah-card-emerald backdrop-blur-md rounded-2xl border px-4 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-4">
+      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4">
         {/* Zone 1: Clean single-element Brand Wordmark */}
         <Link
           href="/"

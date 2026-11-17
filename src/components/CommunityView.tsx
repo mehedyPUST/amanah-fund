@@ -1508,7 +1508,7 @@ export function CommunityView({
       className="space-y-6"
     >
       {/* Top Toolbar: Mode Switch + Primary Action */}
-      <div className="amanah-card-emerald border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1638,7 +1638,7 @@ export function CommunityView({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.16 }}
                 onSubmit={handleCreatePost}
-                className="amanah-card-violet border rounded-2xl p-5 space-y-4 shadow-xs"
+                className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs"
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -2169,7 +2169,7 @@ export function CommunityView({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="amanah-card-emerald border rounded-2xl p-5 space-y-3"
+                  className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -2222,7 +2222,7 @@ export function CommunityView({
                 return (
                   <article
                     key={post.id}
-                    className={`border rounded-2xl p-5 space-y-4 transition-all duration-200 ${
+                    className={`border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 transition-all duration-200 ${
                       post.status === 'hidden'
                         ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/25'
                         : post.isPinned
@@ -3498,7 +3498,7 @@ export function CommunityView({
             transition={{ duration: 0.16 }}
             className="space-y-5"
           >
-          <div className="amanah-card-violet border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Verified Cooperative Members ({activeMembersList.length})
@@ -3524,7 +3524,7 @@ export function CommunityView({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="amanah-card-emerald border rounded-2xl p-5 space-y-4"
+                  className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4"
                 >
                   <div className="flex items-start gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -3566,7 +3566,7 @@ export function CommunityView({
                       key={member.id}
                       className={`${
                         idx % 2 === 0 ? 'amanah-card-emerald' : 'amanah-card-violet'
-                      } border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-200`}
+                      } border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-4 transition-all duration-200`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <AvatarBadge name={member.name} photoUrl={member.photoUrl} />

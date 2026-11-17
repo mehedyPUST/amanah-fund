@@ -820,7 +820,7 @@ export function DashboardShell() {
   }
 
   return (
-    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
+    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-1.5 sm:p-2.5 lg:p-3 flex flex-col gap-1.5 sm:gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -839,7 +839,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 amanah-card-emerald backdrop-blur-md rounded-2xl border px-4 sm:px-6 flex items-center justify-between gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-14 sm:h-[60px] shrink-0 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 z-30 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -1014,12 +1014,15 @@ export function DashboardShell() {
       </AnimatePresence>
 
       {/* GRID 4: Multi-Page Dashboard Content */}
-      <main className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden">
+      <main
+        data-surface="app"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden"
+      >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-4 sm:p-5"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 sm:p-4 lg:p-5"
         >
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(

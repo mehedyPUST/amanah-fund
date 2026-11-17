@@ -165,7 +165,7 @@ export function ActiveMembersView({
       className="space-y-6"
     >
       {/* Header & Summary Strip */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -301,7 +301,7 @@ export function ActiveMembersView({
 
       {/* Member Directory Table / Empty / Loading States */}
       {loading ? (
-        <section className="amanah-card-violet border rounded-2xl p-5 space-y-3">
+        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="grid grid-cols-12 gap-4 items-center py-2">
               <div className="col-span-4 flex items-center gap-3">

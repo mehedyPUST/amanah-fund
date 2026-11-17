@@ -313,7 +313,7 @@ export function NotificationsView({
       className="space-y-6"
     >
       {upcomingMeetings.length > 0 && (
-        <section className="amanah-card-teal border rounded-2xl p-5 space-y-3">
+        <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-teal-800 dark:text-teal-300">
             <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Upcoming Cooperative Meetings Scheduled by Manager ({upcomingMeetings.length})</span>
@@ -336,7 +336,7 @@ export function NotificationsView({
       )}
 
       {/* Header & Reminder / Gmail Actions */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -462,7 +462,7 @@ export function NotificationsView({
       </section>
 
       {/* Notification & Sound Preferences */}
-      <section className="amanah-card-violet border rounded-2xl p-5 shadow-xs space-y-3">
+      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
             <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />

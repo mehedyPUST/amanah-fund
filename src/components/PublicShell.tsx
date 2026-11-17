@@ -5,14 +5,14 @@ import { PublicScrollViewport } from './PublicScrollViewport.tsx';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-2.5 lg:p-3 flex flex-col">
-      <div className="max-w-[1380px] mx-auto w-full flex-1 min-h-0 flex flex-col gap-2.5 lg:gap-3">
+    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-1.5 sm:p-2.5 lg:p-3 flex flex-col">
+      <div className="max-w-[1380px] mx-auto w-full flex-1 min-h-0 flex flex-col gap-1.5 sm:gap-2.5 lg:gap-3">
         <div className="shrink-0 z-40 w-full">
           <Navbar />
         </div>
 
         <PublicScrollViewport>
-          <main className="w-full min-w-0 space-y-5 sm:space-y-6">
+          <main className="w-full min-w-0 space-y-4 sm:space-y-6">
             {children}
           </main>
 

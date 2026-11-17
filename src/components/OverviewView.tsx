@@ -111,12 +111,12 @@ export function OverviewView({
   if (loading || !overview) {
     return (
       <div className="space-y-3">
-        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
           <Skeleton width={260} height={14} />
           <Skeleton width={320} height={22} />
           <Skeleton width="80%" height={14} />
         </div>
-        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
           <Skeleton width={160} height={16} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             {[1, 2, 3, 4, 5].map((k) => (
@@ -211,7 +211,7 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-200"
+        className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs transition-all duration-200"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-1.5 max-w-3xl">
@@ -282,7 +282,7 @@ export function OverviewView({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22, delay: 0.03 }}
         aria-label="Quick Actions"
-        className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+        className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="space-y-0.5">
@@ -668,7 +668,7 @@ export function OverviewView({
         return (
           <section
             aria-label="Your Active Qard Hasan Request"
-            className="amanah-card-teal border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
@@ -820,7 +820,7 @@ export function OverviewView({
 
       {/* Admin Quick Control: Maximum Loans Per Member Per Year */}
       {isAdmin && (
-        <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -866,7 +866,7 @@ export function OverviewView({
         <MotionCard
           hue="deep-emerald"
           delay={0.02}
-          className="border rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Amanah Height (Total Raised)</span>
@@ -884,7 +884,7 @@ export function OverviewView({
         <MotionCard
           hue="violet"
           delay={0.06}
-          className="border rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Current Balance</span>
@@ -901,7 +901,7 @@ export function OverviewView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="border rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Quard Hasan Total Current</span>
@@ -920,7 +920,7 @@ export function OverviewView({
         <MotionCard
           hue="teal"
           delay={0.14}
-          className="border rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Repayments Returned (+)</span>
@@ -1064,7 +1064,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="amber"
-          className="xl:col-span-6 border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -1141,7 +1141,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="emerald"
-          className="xl:col-span-6 border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -1216,7 +1216,7 @@ export function OverviewView({
           <MotionCard
             as="section"
             hue="teal"
-            className="xl:col-span-5 border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-5 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -1271,7 +1271,7 @@ export function OverviewView({
           <MotionCard
             as="section"
             hue="teal"
-            className="xl:col-span-5 border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-5 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="space-y-4">
               <div>
@@ -1392,7 +1392,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="violet"
-          className="xl:col-span-7 border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
+          className="xl:col-span-7 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
         >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">

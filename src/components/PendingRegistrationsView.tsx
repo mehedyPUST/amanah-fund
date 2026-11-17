@@ -235,7 +235,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       className="space-y-6"
     >
       {/* Header & Controls */}
-      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs transition-all duration-200">
+      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">

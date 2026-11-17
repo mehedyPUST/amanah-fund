@@ -678,7 +678,7 @@ export function VotingView({
         </div>
       )}
 
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">

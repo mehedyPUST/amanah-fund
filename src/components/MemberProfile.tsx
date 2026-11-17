@@ -460,7 +460,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       className="space-y-6"
     >
       {/* Membership Status & Identity Summary */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -529,7 +529,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       {/* Main Split: Registration KYC Details (Read-Only) + Editable Contact Info */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Read-Only Registration Details */}
-        <section className="xl:col-span-5 amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Registration Credentials
@@ -634,7 +634,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         </section>
 
         {/* Editable Contact Information Form */}
-        <section className="xl:col-span-7 amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               Update Contact Information
@@ -834,7 +834,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       </div>
 
       {/* Instant Password Change (No Approval Needed) */}
-      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -913,7 +913,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-6 amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -1051,7 +1051,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </AnimatePresence>
         </section>
 
-        <section className="xl:col-span-6 amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-6 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

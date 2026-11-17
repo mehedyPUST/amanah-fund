@@ -594,7 +594,7 @@ export function AdminAuditLog({
       )}
 
       {/* Real-Time Site Activity Feed Panel */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">

@@ -42,7 +42,7 @@ export function MyAmanahView({
   if (loading || !overview) {
     return (
       <div className="space-y-6">
-        <div className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2 flex-1">
             <Skeleton width={200} height={14} />
             <Skeleton width={260} height={24} />
@@ -57,7 +57,7 @@ export function MyAmanahView({
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 space-y-2.5"
+              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-2.5"
             >
               <Skeleton width="55%" height={12} />
               <Skeleton width="75%" height={28} />
@@ -110,7 +110,7 @@ export function MyAmanahView({
       className="space-y-6"
     >
       {/* Identity & Eligibility Status Banner */}
-      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs transition-all duration-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300">
@@ -148,7 +148,7 @@ export function MyAmanahView({
       {/* Primary KPI Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Total Contribution */}
-        <div className="amanah-card-emerald border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Total Contribution</div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(personal.totalContributed, ccy)}
@@ -163,7 +163,7 @@ export function MyAmanahView({
         </div>
 
         {/* Last Contribution */}
-        <div className="amanah-card-violet border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="text-xs font-medium text-violet-700 dark:text-violet-400">
             Last Contribution
           </div>
@@ -216,7 +216,7 @@ export function MyAmanahView({
         </div>
 
         {/* Next Contribution Deadline */}
-        <div className="amanah-card-sky border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <div className="amanah-card-sky border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             <span>Next Contribution Deadline</span>
@@ -232,7 +232,7 @@ export function MyAmanahView({
 
       {/* Qard Hasan Personal Summary & Eligibility */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <section className="xl:col-span-7 amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
+        <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -341,7 +341,7 @@ export function MyAmanahView({
         </section>
 
         {/* Qard Hasan Eligibility Card */}
-        <section className="xl:col-span-5 amanah-card-violet border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs">
+        <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-5 shadow-xs">
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>

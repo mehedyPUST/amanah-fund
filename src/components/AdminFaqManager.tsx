@@ -197,7 +197,7 @@ export function AdminFaqManager() {
   }
 
   return (
-    <section className="amanah-card-emerald border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+    <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-4 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/75 dark:border-slate-800">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
