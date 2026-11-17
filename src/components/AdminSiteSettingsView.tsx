@@ -592,7 +592,7 @@ export function AdminSiteSettingsView({
       className="space-y-4"
     >
       {/* Header & Quick Cross-Navigation */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+      <section className="amanah-card-emerald border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -687,7 +687,7 @@ export function AdminSiteSettingsView({
 
       {/* TAB 1: POLICY & LIMITS */}
       {isAdmin && activeTab === 'policy' && (
-        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 shadow-xs">
+        <section className="amanah-card-violet border rounded-2xl p-4 sm:p-5 shadow-xs">
           {loading && !config ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 9 }).map((_, idx) => (
@@ -1148,7 +1148,7 @@ export function AdminSiteSettingsView({
       {isAdmin && activeTab === 'charter' && (
         <div className="space-y-4">
           {/* Constitution PDF Section */}
-          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-emerald border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1295,7 +1295,7 @@ export function AdminSiteSettingsView({
           </section>
 
           {/* Monthly Statements & Billing Reminders */}
-          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-teal border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1352,7 +1352,7 @@ export function AdminSiteSettingsView({
           </section>
 
           {/* Regulatory CSV Exports & Full JSON Vault Backup */}
-          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-violet border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1401,7 +1401,7 @@ export function AdminSiteSettingsView({
       {/* TAB 3: EMAIL & TEMPLATES */}
       {isAdmin && activeTab === 'email' && (
         <div className="space-y-4">
-          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <section className="amanah-card-amber border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
                 <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -1441,7 +1441,7 @@ export function AdminSiteSettingsView({
       {/* TAB 4: INTEGRATIONS & SYSTEM HEALTH */}
       {isAdmin && activeTab === 'integrations' && (
         <div className="space-y-4">
-          <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-teal border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">

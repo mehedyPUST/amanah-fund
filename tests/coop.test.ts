@@ -34,8 +34,12 @@ import {
 import {
   buildEmailTemplatePreview,
   buildTransactionSummaryEmailPayload,
+  formatSmtpErrorMessage,
+  isFatalSmtpError,
+  isSmtpAuthError,
   isSmtpConfigured,
   normalizeSmtpPass,
+  resetSmtpAuthCooldown,
   sendRegistrationApprovedEmail,
   sendRegistrationPendingAdminEmail,
 } from '../src/server/emailService.ts';
@@ -1107,6 +1111,19 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
     expect(normalizeSmtpPass('custom pass with spaces', 'smtp.custom.org')).toBe(
       'custom pass with spaces'
     );
+
+    const gmailErrMsg = formatSmtpErrorMessage(
+      new Error(
+        'Invalid login: 534-5.7.9 Please log in with your web browser and then try again. For more information, go to https://support.google.com/mail/?p=InvalidSignIn'
+      )
+    );
+    expect(gmailErrMsg).toContain('534-5.7.9');
+    expect(gmailErrMsg).toContain('App Password');
+    expect(isSmtpAuthError(gmailErrMsg)).toBe(true);
+    expect(isFatalSmtpError(gmailErrMsg)).toBe(true);
+    expect(isSmtpAuthError('535-5.7.8 Username and Password not accepted')).toBe(true);
+    expect(isFatalSmtpError('ETIMEDOUT')).toBe(true);
+    resetSmtpAuthCooldown();
 
     const payload = buildTransactionSummaryEmailPayload({
       to: 'bilal@amanahcoop.org',

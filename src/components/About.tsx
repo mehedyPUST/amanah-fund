@@ -10,7 +10,8 @@ const PILLARS: Array<{
   title: string;
   description: string;
   hue: CardHue;
-  cardClass: string;
+  iconBoxClass: string;
+  badgeClass: string;
 }> = [
   {
     index: '01.',
@@ -19,8 +20,10 @@ const PILLARS: Array<{
     description:
       'Applicants submit KYC details, nominee NID, portrait photo, existing member reference, and a ৳200 fee into a queue capped at 20 shares.',
     hue: 'emerald',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    iconBoxClass:
+      'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+    badgeClass:
+      'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
   },
   {
     index: '02.',
@@ -28,9 +31,11 @@ const PILLARS: Array<{
     title: '5-Member Shura & Savings Committees',
     description:
       'Separation of duties across Shura Management (loan review and monthly updates), Savings Accounts (joint custody), and verified Members.',
-    hue: 'teal',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    hue: 'violet',
+    iconBoxClass:
+      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+    badgeClass:
+      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
   },
   {
     index: '03.',
@@ -38,9 +43,11 @@ const PILLARS: Array<{
     title: 'AES-256-GCM & SHA-256 Audit Chain',
     description:
       'Sensitive KYC fields, Bank/MFS transaction references, and disbursement contexts are encrypted at rest and linked in a tamper-evident hash chain.',
-    hue: 'sky',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    hue: 'teal',
+    iconBoxClass:
+      'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
+    badgeClass:
+      'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
   },
   {
     index: '04.',
@@ -49,8 +56,10 @@ const PILLARS: Array<{
     description:
       'Qard Hasan loans and Halal investments require a two-thirds member majority; charter amendments require 2/3 Shura plus 1/2 member quorum.',
     hue: 'amber',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    iconBoxClass:
+      'bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 text-amber-700 dark:text-amber-300',
+    badgeClass:
+      'bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300',
   },
   {
     index: '05.',
@@ -59,8 +68,10 @@ const PILLARS: Array<{
     description:
       'Tracks ৳5,000 monthly savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs live to Google Sheets.',
     hue: 'violet',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    iconBoxClass:
+      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+    badgeClass:
+      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
   },
 ];
 
@@ -69,7 +80,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      className={`bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
+      className={`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
       }`}
     >
@@ -110,13 +121,17 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 hue={pillar.hue}
                 delay={idx * 0.03}
                 inView
-                className={`${spanClass} backdrop-blur-md rounded-xl border ${pillar.cardClass} p-5 space-y-3 shadow-xs hover:shadow-md transition-all duration-200`}
+                className={`${spanClass} backdrop-blur-md rounded-xl border p-5 space-y-3 shadow-xs hover:shadow-md transition-all duration-200`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${pillar.iconBoxClass}`}>
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <span
+                    className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full ${pillar.badgeClass}`}
+                  >
                     {pillar.index}
                   </span>
-                  <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500" aria-hidden="true" />
                 </div>
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                   {pillar.title}

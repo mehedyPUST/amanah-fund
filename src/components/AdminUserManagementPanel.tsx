@@ -501,7 +501,7 @@ export function AdminUserManagementPanel({
   }
 
   return (
-    <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+    <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">

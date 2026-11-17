@@ -40,7 +40,7 @@ export function StatisticsView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+        className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
       >
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">

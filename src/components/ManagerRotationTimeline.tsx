@@ -228,7 +228,7 @@ export function ManagerRotationTimeline({
   return (
     <section
       aria-label="Manager Rotation Visual Timeline"
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-5"
+      className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5 transition-all duration-200"
     >
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">

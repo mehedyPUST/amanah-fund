@@ -1098,7 +1098,7 @@ export function CommunityView({
       className="space-y-6"
     >
       {/* Top Toolbar: Mode Switch + Primary Action */}
-      <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="amanah-card-emerald border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1228,7 +1228,7 @@ export function CommunityView({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.16 }}
                 onSubmit={handleCreatePost}
-                className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-4 shadow-xs"
+                className="amanah-card-violet border rounded-2xl p-5 space-y-4 shadow-xs"
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -1628,7 +1628,7 @@ export function CommunityView({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-3"
+                  className="amanah-card-emerald border rounded-2xl p-5 space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -1648,7 +1648,7 @@ export function CommunityView({
               ))}
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-10 text-center space-y-3 shadow-xs">
+            <div className="amanah-card-violet border rounded-2xl p-10 text-center space-y-3">
               <MessageSquare className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -1672,7 +1672,7 @@ export function CommunityView({
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredPosts.map((post) => {
+              {filteredPosts.map((post, idx) => {
                 const isAuthor = post.authorId === user.id;
                 const canDeletePost = isAuthor || isAdmin;
                 const myReaction = post.reactions.find((r) => r.userId === user.id)?.type;
@@ -1681,12 +1681,14 @@ export function CommunityView({
                 return (
                   <article
                     key={post.id}
-                    className={`backdrop-blur-md border rounded-xl p-5 space-y-4 transition-colors shadow-xs ${
+                    className={`border rounded-2xl p-5 space-y-4 transition-all duration-200 ${
                       post.status === 'hidden'
                         ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/25'
                         : post.isPinned
-                          ? 'bg-white/75 dark:bg-slate-900/75 border-emerald-300/80 dark:border-emerald-800/80'
-                          : 'bg-white/75 dark:bg-slate-900/75 border-slate-200/80 dark:border-slate-800/80'
+                          ? 'amanah-card-emerald'
+                          : idx % 2 === 0
+                            ? 'amanah-card-violet'
+                            : 'amanah-card-emerald'
                     }`}
                   >
                     {/* Author Header & Clean Unboxed Metadata */}
@@ -2554,7 +2556,7 @@ export function CommunityView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh] shadow-xs"
+            className="amanah-card-teal border rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh]"
           >
             {/* Left Pane: Threads + Active Member Directory */}
             <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col min-h-0 max-h-72 lg:max-h-none">
@@ -2821,7 +2823,7 @@ export function CommunityView({
 
                 <form
                   onSubmit={handleSendPrivateMessage}
-                  className="p-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-end gap-2 bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm"
+                  className="p-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-end gap-2 bg-white/50 dark:bg-slate-950/40"
                 >
                   <textarea
                     rows={1}
@@ -2862,7 +2864,7 @@ export function CommunityView({
             transition={{ duration: 0.16 }}
             className="space-y-5"
           >
-          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="amanah-card-violet border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Verified Cooperative Members ({activeMembersList.length})
@@ -2888,7 +2890,7 @@ export function CommunityView({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 space-y-4"
+                  className="amanah-card-emerald border rounded-2xl p-5 space-y-4"
                 >
                   <div className="flex items-start gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -2914,21 +2916,23 @@ export function CommunityView({
                 (m.occupation || '').toLowerCase().includes(q) ||
                 (m.companyOrganization || '').toLowerCase().includes(q)
             );
-            if (list.length === 0) {
+              if (list.length === 0) {
               return (
-                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="amanah-card-violet border rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
                   No verified members match your search.
                 </div>
               );
             }
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {list.map((member) => {
+                {list.map((member, idx) => {
                   const isSelf = member.id === user.id;
                   return (
                     <div
                       key={member.id}
-                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs transition-all duration-200"
+                      className={`${
+                        idx % 2 === 0 ? 'amanah-card-emerald' : 'amanah-card-violet'
+                      } border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-200`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <AvatarBadge name={member.name} photoUrl={member.photoUrl} />

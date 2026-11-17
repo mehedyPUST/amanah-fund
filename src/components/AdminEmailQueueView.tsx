@@ -342,7 +342,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -392,7 +392,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
         {/* Summary KPI Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-3.5">
+          <div className="rounded-xl border amanah-card-violet p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
               <span>SMTP Transport</span>
               <Server className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
@@ -416,7 +416,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-lg border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 p-3.5">
+          <div className="rounded-xl border amanah-card-amber p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-amber-800/80 dark:text-amber-300/80">
               <span>Pending / Retrying</span>
               <Clock className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
@@ -426,7 +426,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-lg border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 p-3.5">
+          <div className="rounded-xl border amanah-card-rose p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-rose-800/80 dark:text-rose-300/80">
               <span>Failed (Max Retries)</span>
               <XCircle className="w-3.5 h-3.5 text-rose-600" aria-hidden="true" />
@@ -436,7 +436,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5">
+          <div className="rounded-xl border amanah-card-emerald p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-emerald-800/80 dark:text-emerald-300/80">
               <span>Recovered &amp; Sent</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -449,7 +449,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       </section>
 
       {/* Queue Filter & List */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
             {(

@@ -650,7 +650,7 @@ export function VotingView({
       {isAdmin && (
         <div
           role="note"
-          className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-xs"
+          className="amanah-card-violet p-3.5 rounded-2xl border text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-xs"
         >
           <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <span>
@@ -674,7 +674,7 @@ export function VotingView({
         </div>
       )}
 
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">

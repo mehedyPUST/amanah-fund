@@ -439,7 +439,7 @@ export function ContributionsView({
           <MotionCard
             hue="emerald"
             delay={0.02}
-            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Own Summary (Approved)</div>
             <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -452,11 +452,11 @@ export function ContributionsView({
         )}
 
         <MotionCard
-          hue="teal"
+          hue="violet"
           delay={0.06}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
+          <div className="text-xs font-medium text-violet-700 dark:text-violet-400">
             {isAdmin ? 'All Members Approved Pool' : 'Other Members Summary'}
           </div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -470,7 +470,7 @@ export function ContributionsView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs font-medium text-amber-700 dark:text-amber-400">Active Requests</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
@@ -484,7 +484,7 @@ export function ContributionsView({
         <MotionCard
           hue="rose"
           delay={0.14}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs font-medium text-rose-700 dark:text-rose-400">Denied Requests</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
@@ -503,7 +503,7 @@ export function ContributionsView({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="xl:col-span-4 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-shadow duration-200"
+            className="xl:col-span-4 amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="mb-4">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -808,7 +808,7 @@ export function ContributionsView({
           transition={{ duration: 0.25, delay: 0.04 }}
           className={`${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
-          } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs`}
+          } amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
             <div>

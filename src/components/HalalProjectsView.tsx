@@ -257,7 +257,7 @@ export function HalalProjectsView({
       className="space-y-6"
     >
       {/* Maturity Transition Summary */}
-      <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -275,15 +275,15 @@ export function HalalProjectsView({
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-lg bg-white/75 dark:bg-slate-950/75 backdrop-blur-sm border border-emerald-200/70 dark:border-emerald-900/50">
-              <div className="text-xs text-slate-500 dark:text-slate-400">Current Pool</div>
+            <div className="amanah-card-emerald p-3.5 rounded-xl border">
+              <div className="text-xs text-slate-600 dark:text-slate-400">Current Pool</div>
               <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="p-3.5 rounded-lg bg-white/75 dark:bg-slate-950/75 backdrop-blur-sm border border-amber-200/70 dark:border-amber-900/50">
-              <div className="text-xs text-slate-500 dark:text-slate-400">Pipeline Target</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+            <div className="amanah-card-violet p-3.5 rounded-xl border">
+              <div className="text-xs text-slate-600 dark:text-slate-400">Pipeline Target</div>
+              <div className="mt-1 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -295,7 +295,7 @@ export function HalalProjectsView({
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
-          } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs`}
+          } amanah-card-emerald border rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -747,7 +747,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-4 amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Propose Investment Placement

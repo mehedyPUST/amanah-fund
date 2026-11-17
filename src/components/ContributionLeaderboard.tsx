@@ -95,7 +95,7 @@ export function ContributionLeaderboard({
 
   if (loading) {
     return (
-      <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1.5">
             <Skeleton width={180} height={12} />
@@ -130,7 +130,7 @@ export function ContributionLeaderboard({
       as="section"
       hue="amber"
       aria-label="Contribution Leaderboard"
-      className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">

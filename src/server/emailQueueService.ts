@@ -9,6 +9,8 @@ import { loadVaultState, updateVaultState, type VaultState } from './db.ts';
 import {
   deliverEmailDirect,
   type EmailAttachmentInput,
+  getSmtpAuthCooldownStatus,
+  isFatalSmtpError,
   registerEmailFailureHandler,
 } from './emailService.ts';
 import { broadcastRealtimeEvent } from './realtime.ts';
@@ -264,6 +266,10 @@ export async function processDueEmailQueue(options?: {
   if (queueWorkerRunning) {
     return { processed: 0, sent: 0, failed: 0 };
   }
+  if (!options?.forceAllPending && getSmtpAuthCooldownStatus().blocked) {
+    return { processed: 0, sent: 0, failed: 0 };
+  }
+
   queueWorkerRunning = true;
   let processed = 0;
   let sent = 0;
@@ -287,7 +293,8 @@ export async function processDueEmailQueue(options?: {
       return { processed: 0, sent: 0, failed: 0 };
     }
 
-    for (const item of dueItems) {
+    for (let idx = 0; idx < dueItems.length; idx += 1) {
+      const item = dueItems[idx];
       processed += 1;
       const result = await deliverEmailDirect({
         to: item.to,
@@ -295,6 +302,7 @@ export async function processDueEmailQueue(options?: {
         text: item.text,
         html: item.html,
         attachments: decodeAttachmentsFromQueue(item.attachments),
+        bypassAuthCooldown: Boolean(options?.forceAllPending && idx === 0),
       });
 
       if (result.sent) {
@@ -313,6 +321,10 @@ export async function processDueEmailQueue(options?: {
           );
           return draft;
         });
+
+        if (isFatalSmtpError(result.reason)) {
+          break;
+        }
       }
     }
 
@@ -346,6 +358,7 @@ export async function retryEmailQueueItemNow(id: string): Promise<{
     text: target.text,
     html: target.html,
     attachments: decodeAttachmentsFromQueue(target.attachments),
+    bypassAuthCooldown: true,
   });
 
   let updatedItem: EmailQueueItem | null = null;

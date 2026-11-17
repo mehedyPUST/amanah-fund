@@ -81,6 +81,7 @@ import {
 } from './db.ts';
 import {
   buildEmailTemplatePreview,
+  getSmtpAuthCooldownStatus,
   getSmtpStatusSummary,
   isSmtpConfigured,
   sendEmail,
@@ -5615,6 +5616,7 @@ apiRouter.post(
         html: preview.html,
         category: 'template_test',
         skipQueue: !Boolean(req.body?.queueOnFailure),
+        bypassAuthCooldown: true,
       });
 
       res.json({
@@ -8816,6 +8818,9 @@ export async function runMonthlyPdfSummaryJobIfDue(): Promise<boolean> {
   if (!isSmtpConfigured()) {
     return false;
   }
+  if (getSmtpAuthCooldownStatus().blocked) {
+    return false;
+  }
 
   const state = await loadVaultState();
   if (state.fundConfig.monthlyReportAutoEmail === false) {
@@ -8824,6 +8829,16 @@ export async function runMonthlyPdfSummaryJobIfDue(): Promise<boolean> {
 
   const prevMonthKey = getPreviousMonthKey();
   if (state.fundConfig.lastMonthlyPdfSentMonth === prevMonthKey) {
+    return false;
+  }
+
+  const alreadyQueuedForMonth = (state.emailQueue || []).some(
+    (item) =>
+      item.category === 'monthly_pdf' &&
+      item.status !== 'sent' &&
+      item.subject.includes(prevMonthKey)
+  );
+  if (alreadyQueuedForMonth) {
     return false;
   }
 

@@ -278,7 +278,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div
-      className={`bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
+      className={`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs text-slate-900 dark:text-slate-100 w-full ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-9'
       }`}
     >
@@ -380,7 +380,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.2 }}
-          className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/60 p-5 space-y-4"
+          className="amanah-card-emerald rounded-xl border p-5 space-y-4"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -478,9 +478,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         <div lang={isBn ? 'bn' : 'en'} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {sections.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
-            const ruleHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
-            const ruleCardClass =
-              'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80';
+            const ruleHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
             return (
               <MotionCard
                 as="article"
@@ -488,7 +486,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 hue={ruleHue}
                 delay={idx * 0.03}
                 inView
-                className={`backdrop-blur-md border rounded-xl ${ruleCardClass} p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-200`}
+                className="backdrop-blur-md border rounded-xl p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="space-y-2.5">
                   <div className="space-y-1">

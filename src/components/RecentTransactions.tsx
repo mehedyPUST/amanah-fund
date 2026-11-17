@@ -204,7 +204,7 @@ export function RecentTransactions({
       as="section"
       hue="sky"
       aria-labelledby="recent-transactions-heading"
-      className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">

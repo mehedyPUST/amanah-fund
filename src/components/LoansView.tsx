@@ -583,7 +583,7 @@ export function LoansView({
       {!isAdmin && (
         <section
           aria-label="Member Loan Quota and Active Request Summary"
-          className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
+          className="amanah-card-emerald border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200"
         >
           {!eligibility && loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -750,7 +750,7 @@ export function LoansView({
       )}
 
       {!isAdmin && (
-        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs">
+        <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">

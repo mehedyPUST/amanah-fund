@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import {
-  ArrowRight,
+  ChevronRight,
   HelpCircle,
   MessageSquare,
   ScrollText,
@@ -20,7 +20,9 @@ const EXPLORE_PAGES: Array<{
   Icon: typeof MessageSquare;
   spanClass: string;
   hue: CardHue;
-  cardClass: string;
+  iconBoxClass: string;
+  badgeClass: string;
+  ctaClass: string;
 }> = [
   {
     href: '/community',
@@ -33,8 +35,11 @@ const EXPLORE_PAGES: Array<{
     Icon: MessageSquare,
     spanClass: 'lg:col-span-7',
     hue: 'emerald',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    iconBoxClass:
+      'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+    badgeClass:
+      'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+    ctaClass: 'text-emerald-700 dark:text-emerald-400',
   },
   {
     href: '/#how-it-works',
@@ -46,9 +51,12 @@ const EXPLORE_PAGES: Array<{
     cta: 'View Workflows',
     Icon: HelpCircle,
     spanClass: 'lg:col-span-5',
-    hue: 'teal',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    hue: 'violet',
+    iconBoxClass:
+      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+    badgeClass:
+      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
+    ctaClass: 'text-violet-700 dark:text-violet-400',
   },
   {
     href: '/#architecture',
@@ -60,9 +68,12 @@ const EXPLORE_PAGES: Array<{
     cta: 'Inspect Architecture',
     Icon: ShieldCheck,
     spanClass: 'lg:col-span-5',
-    hue: 'sky',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    hue: 'violet',
+    iconBoxClass:
+      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+    badgeClass:
+      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
+    ctaClass: 'text-violet-700 dark:text-violet-400',
   },
   {
     href: '/rules',
@@ -74,15 +85,18 @@ const EXPLORE_PAGES: Array<{
     cta: 'Read Charter',
     Icon: ScrollText,
     spanClass: 'lg:col-span-7',
-    hue: 'amber',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    hue: 'emerald',
+    iconBoxClass:
+      'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+    badgeClass:
+      'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+    ctaClass: 'text-emerald-700 dark:text-emerald-400',
   },
 ];
 
 export function HomeHighlights() {
   return (
-    <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+    <section className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-slate-800">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -111,32 +125,42 @@ export function HomeHighlights() {
                 delay={idx * 0.04}
                 inView
                 interactive
-                className={`w-full rounded-xl backdrop-blur-md border ${item.cardClass} p-5 sm:p-6 flex flex-col justify-between gap-5 shadow-xs hover:shadow-md transition-all duration-200`}
+                className="w-full rounded-xl backdrop-blur-md border p-5 sm:p-6 flex flex-col justify-between gap-5 shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                      <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
-                        {item.index}
-                      </span>
-                      <span>{item.eyebrow}</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.iconBoxClass}`}
+                      >
+                        <Icon className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white truncate">
+                          {item.label}
+                        </h3>
+                        <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          {item.eyebrow}
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      className={`font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full shrink-0 ${item.badgeClass}`}
+                    >
+                      {item.index}
                     </span>
-                    <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" aria-hidden="true" />
                   </div>
-                  <div className="space-y-1.5">
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                      {item.label}
-                    </h3>
-                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl text-justify">
-                      {item.description}
-                    </p>
-                  </div>
+                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl text-justify">
+                    {item.description}
+                  </p>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800 inline-flex items-center justify-between text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <div
+                  className={`pt-3 border-t border-slate-200/75 dark:border-slate-800/80 inline-flex items-center justify-between text-xs font-medium ${item.ctaClass}`}
+                >
                   <span>{item.cta}</span>
-                  <ArrowRight
-                    className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
+                  <ChevronRight
+                    className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-0.5"
                     aria-hidden="true"
                   />
                 </div>

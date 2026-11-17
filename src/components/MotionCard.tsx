@@ -12,17 +12,31 @@ export type CardHue =
   | 'violet'
   | 'deep-emerald';
 
-const NEUTRAL_HOVER_OVERLAY =
-  'bg-slate-900/[0.018] dark:bg-white/[0.025]';
-
 const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
-  emerald: NEUTRAL_HOVER_OVERLAY,
-  teal: NEUTRAL_HOVER_OVERLAY,
-  amber: NEUTRAL_HOVER_OVERLAY,
-  sky: NEUTRAL_HOVER_OVERLAY,
-  rose: NEUTRAL_HOVER_OVERLAY,
-  violet: NEUTRAL_HOVER_OVERLAY,
-  'deep-emerald': NEUTRAL_HOVER_OVERLAY,
+  emerald: 'bg-emerald-500/[0.03] dark:bg-emerald-400/[0.04]',
+  teal: 'bg-teal-500/[0.03] dark:bg-teal-400/[0.04]',
+  amber: 'bg-amber-500/[0.03] dark:bg-amber-400/[0.04]',
+  sky: 'bg-sky-500/[0.03] dark:bg-sky-400/[0.04]',
+  rose: 'bg-rose-500/[0.03] dark:bg-rose-400/[0.04]',
+  violet: 'bg-violet-500/[0.03] dark:bg-violet-400/[0.04]',
+  'deep-emerald': 'bg-emerald-500/[0.035] dark:bg-emerald-400/[0.045]',
+};
+
+const HUE_SURFACE_CLASS: Record<CardHue, string> = {
+  emerald:
+    'amanah-card-emerald border-emerald-400/75 dark:border-emerald-500/40 hover:border-emerald-500 dark:hover:border-emerald-400/70',
+  'deep-emerald':
+    'amanah-card-emerald border-emerald-400/80 dark:border-emerald-500/45 hover:border-emerald-500 dark:hover:border-emerald-400/75',
+  teal:
+    'amanah-card-teal border-teal-400/75 dark:border-teal-500/40 hover:border-teal-500 dark:hover:border-teal-400/70',
+  violet:
+    'amanah-card-violet border-violet-400/75 dark:border-violet-500/40 hover:border-violet-500 dark:hover:border-violet-400/70',
+  amber:
+    'amanah-card-amber border-amber-400/70 dark:border-amber-500/35 hover:border-amber-500 dark:hover:border-amber-400/65',
+  sky:
+    'amanah-card-sky border-sky-400/70 dark:border-sky-500/35 hover:border-sky-500 dark:hover:border-sky-400/65',
+  rose:
+    'amanah-card-rose border-rose-400/70 dark:border-rose-500/35 hover:border-rose-500 dark:hover:border-rose-400/65',
 };
 
 const DEPTH_VARIANTS = {
@@ -91,7 +105,7 @@ export function MotionCard({
       whileHover="hover"
       whileTap={interactive ? { scale: 0.996 } : undefined}
       variants={containerVariants}
-      className={`relative isolate ${className}`}
+      className={`relative isolate ${className} ${HUE_SURFACE_CLASS[hue]}`}
     >
       <motion.span
         aria-hidden="true"

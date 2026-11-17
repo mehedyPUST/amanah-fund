@@ -437,9 +437,9 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       {/* 4-Column Summary KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MotionCard
-          hue="sky"
+          hue="violet"
           delay={0.02}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Immutable Admin Records</span>
@@ -471,7 +471,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="emerald"
           delay={0.06}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>User Approvals &amp; Registry</span>
@@ -492,7 +492,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="teal"
           delay={0.1}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Setting Modifications</span>
@@ -513,7 +513,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="amber"
           delay={0.14}
-          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Financial &amp; Moderation</span>
@@ -533,7 +533,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       </div>
 
       {/* Main Immutable Audit Ledger Panel */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

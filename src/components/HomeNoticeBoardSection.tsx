@@ -39,30 +39,27 @@ const PRIORITY_META: Record<
     Icon: AlertTriangle,
     hue: 'rose',
     iconBox:
-      'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
+      'bg-rose-100/85 dark:bg-rose-500/15 border-rose-200/80 dark:border-rose-500/25 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    cardClass: 'backdrop-blur-md',
   },
   important: {
     label: 'Important',
     Icon: Megaphone,
     hue: 'amber',
     iconBox:
-      'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400',
+      'bg-amber-100/85 dark:bg-amber-500/15 border-amber-200/80 dark:border-amber-500/25 text-amber-700 dark:text-amber-400',
     labelClass: 'text-amber-700 dark:text-amber-400',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    cardClass: 'backdrop-blur-md',
   },
   normal: {
     label: 'Notice',
     Icon: Info,
     hue: 'emerald',
     iconBox:
-      'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
+      'bg-emerald-100/85 dark:bg-emerald-500/15 border-emerald-200/80 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400',
     labelClass: 'text-emerald-700 dark:text-emerald-400',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    cardClass: 'backdrop-blur-md',
   },
 };
 
@@ -276,8 +273,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-4 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100 space-y-5'
-          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/85 backdrop-blur-sm text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-4 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs text-slate-900 dark:text-slate-100 space-y-5'
+          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/90 backdrop-blur-sm text-slate-900 dark:text-slate-100'
       }
     >
       <div className={embedded ? 'space-y-5' : 'w-full py-10 sm:py-12 space-y-6'}>

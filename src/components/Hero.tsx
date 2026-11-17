@@ -17,8 +17,8 @@ const KEY_TERMS: Array<{
   value: string;
   sublabel: string;
   hue: CardHue;
-  cardClass: string;
   metaClass: string;
+  badgeClass: string;
 }> = [
   {
     kicker: 'Qard Hasan Ceiling',
@@ -26,39 +26,39 @@ const KEY_TERMS: Array<{
     value: '৳50,000',
     sublabel: 'Or up to 75% of personal verified savings',
     hue: 'emerald',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
-    metaClass: 'text-emerald-700 dark:text-emerald-400',
+    metaClass: 'text-emerald-700 dark:text-emerald-300',
+    badgeClass:
+      'bg-emerald-100/80 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
   },
   {
     kicker: 'Monthly Contribution',
     meta: 'Due 10th Monthly',
     value: '৳5,000',
     sublabel: 'Pooled per share with ৳50 Sadaqah late-fee isolation',
-    hue: 'teal',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
-    metaClass: 'text-teal-700 dark:text-teal-400',
+    hue: 'violet',
+    metaClass: 'text-violet-700 dark:text-violet-300',
+    badgeClass:
+      'bg-violet-100/80 dark:bg-violet-500/15 border border-violet-200/80 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
   },
   {
     kicker: 'Supermajority Quorum',
     meta: 'Secret Ballot',
     value: '2/3 Vote',
     sublabel: 'Required consensus for loans & Halal capital deployment',
-    hue: 'amber',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
-    metaClass: 'text-amber-700 dark:text-amber-400',
+    hue: 'teal',
+    metaClass: 'text-teal-700 dark:text-teal-300',
+    badgeClass:
+      'bg-teal-100/80 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
   },
   {
     kicker: 'Charter Term & Cap',
     meta: '2027–2036',
     value: '20 Shares',
     sublabel: 'Up to 10-month revolving repayment schedules',
-    hue: 'sky',
-    cardClass:
-      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
-    metaClass: 'text-teal-700 dark:text-teal-400',
+    hue: 'amber',
+    metaClass: 'text-amber-700 dark:text-amber-300',
+    badgeClass:
+      'bg-amber-100/80 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/25 text-amber-800 dark:text-amber-300',
   },
 ];
 
@@ -82,7 +82,7 @@ export function Hero({
       <MotionCard
         as="section"
         hue="emerald"
-        className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
+        className="backdrop-blur-md border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
@@ -204,13 +204,15 @@ export function Hero({
             key={metric.kicker}
             hue={metric.hue}
             delay={0.03 * idx}
-            className={`backdrop-blur-md border rounded-xl p-5 shadow-xs hover:shadow-md flex flex-col justify-between gap-3 transition-all duration-200 ${metric.cardClass}`}
+            className="backdrop-blur-md border rounded-xl p-5 shadow-xs hover:shadow-md flex flex-col justify-between gap-3 transition-all duration-200"
           >
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
                 {metric.kicker}
               </span>
-              <span className={`font-mono text-[11px] font-semibold shrink-0 ${metric.metaClass}`}>
+              <span
+                className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${metric.badgeClass}`}
+              >
                 {metric.meta}
               </span>
             </div>
@@ -240,7 +242,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       id="lifecycle"
       hue="teal"
       inView
-      className={`scroll-mt-2 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
+      className={`scroll-mt-2 backdrop-blur-md border rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >

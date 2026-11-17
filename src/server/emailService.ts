@@ -64,6 +64,13 @@ export interface TransactionEmailSummaryInput {
 let cachedTransporter: Transporter | null = null;
 let cachedConfigSignature = '';
 
+const SMTP_AUTH_COOLDOWN_MS = 10 * 60 * 1000;
+let smtpAuthBlock: {
+  signature: string;
+  reason: string;
+  blockedUntilMs: number;
+} | null = null;
+
 export function normalizeSmtpPass(rawPass: string, host: string): string {
   const trimmed = rawPass.trim();
   if (!trimmed) return '';
@@ -87,6 +94,84 @@ function getSmtpConfig(env: NodeJS.ProcessEnv = process.env) {
   return { host, port, secure, user, pass, from };
 }
 
+function computeSmtpSignature(cfg: ReturnType<typeof getSmtpConfig>): string {
+  const passHash = cfg.pass ? createHash('sha256').update(cfg.pass).digest('hex').slice(0, 12) : '0';
+  return `${cfg.host}:${cfg.port}:${cfg.secure}:${cfg.user}:${passHash}:${cfg.from}`;
+}
+
+export function isSmtpAuthError(errOrReason: unknown): boolean {
+  if (!errOrReason) return false;
+  if (typeof errOrReason === 'object') {
+    const record = errOrReason as { code?: unknown; responseCode?: unknown; message?: unknown };
+    const code = String(record.code || '').toUpperCase();
+    const responseCode = Number(record.responseCode || 0);
+    if (code === 'EAUTH' || responseCode === 534 || responseCode === 535) {
+      return true;
+    }
+    const msg = String(record.message || '');
+    return isSmtpAuthError(msg);
+  }
+  const text = String(errOrReason);
+  return /EAUTH|534-5\.7\.9|534\b|5\.7\.9|535\b|5\.7\.8|Invalid login|Username and Password not accepted|Application-specific password required|Authentication failed|Invalid credentials|Gmail SMTP rejected sign-in/i.test(
+    text
+  );
+}
+
+export function isFatalSmtpError(reason?: string): boolean {
+  if (!reason) return false;
+  if (reason === 'SMTP_NOT_CONFIGURED') return true;
+  if (isSmtpAuthError(reason)) return true;
+  return /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ESOCKET|SMTP_TIMEOUT|EHOSTUNREACH/i.test(reason);
+}
+
+export function formatSmtpErrorMessage(err: unknown): string {
+  const raw =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+      ? err
+      : 'SMTP delivery failed';
+
+  if (/534-5\.7\.9|InvalidSignIn|Application-specific password required|Please log in with your web browser/i.test(raw)) {
+    return 'Gmail SMTP rejected sign-in (534-5.7.9): Google requires 2-Step Verification and a 16-character App Password in SMTP_PASS (standard account passwords are blocked from cloud servers).';
+  }
+  if (/EAUTH|535\b|5\.7\.8|Username and Password not accepted|Invalid login/i.test(raw)) {
+    return `SMTP authentication failed: verify SMTP_USER and SMTP_PASS (use a provider App Password or SMTP API token). Raw response: ${raw}`;
+  }
+  return raw;
+}
+
+export function getSmtpAuthCooldownStatus(env: NodeJS.ProcessEnv = process.env): {
+  blocked: boolean;
+  reason?: string;
+  retryAt?: string;
+} {
+  const cfg = getSmtpConfig(env);
+  if (!cfg.host || !smtpAuthBlock) {
+    return { blocked: false };
+  }
+  const sig = computeSmtpSignature(cfg);
+  if (smtpAuthBlock.signature !== sig) {
+    smtpAuthBlock = null;
+    return { blocked: false };
+  }
+  if (Date.now() >= smtpAuthBlock.blockedUntilMs) {
+    smtpAuthBlock = null;
+    return { blocked: false };
+  }
+  return {
+    blocked: true,
+    reason: smtpAuthBlock.reason,
+    retryAt: new Date(smtpAuthBlock.blockedUntilMs).toISOString(),
+  };
+}
+
+export function resetSmtpAuthCooldown(): void {
+  smtpAuthBlock = null;
+  cachedTransporter = null;
+  cachedConfigSignature = '';
+}
+
 export function isSmtpConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
   const cfg = getSmtpConfig(env);
   return Boolean(cfg.host);
@@ -98,23 +183,27 @@ export function getSmtpStatusSummary(env: NodeJS.ProcessEnv = process.env): {
   port: number;
   secure: boolean;
   from: string | null;
+  authBlocked: boolean;
+  authError: string | null;
 } {
   const cfg = getSmtpConfig(env);
+  const cooldown = getSmtpAuthCooldownStatus(env);
   return {
     configured: Boolean(cfg.host),
     host: cfg.host || null,
     port: cfg.port,
     secure: cfg.secure,
     from: cfg.host ? cfg.from : null,
+    authBlocked: cooldown.blocked,
+    authError: cooldown.blocked ? cooldown.reason || null : null,
   };
 }
 
-function getTransporter(): { transporter: Transporter; from: string } | null {
+function getTransporter(): { transporter: Transporter; from: string; signature: string } | null {
   const cfg = getSmtpConfig();
   if (!cfg.host) return null;
 
-  const passHash = cfg.pass ? createHash('sha256').update(cfg.pass).digest('hex').slice(0, 12) : '0';
-  const sig = `${cfg.host}:${cfg.port}:${cfg.secure}:${cfg.user}:${passHash}:${cfg.from}`;
+  const sig = computeSmtpSignature(cfg);
   if (!cachedTransporter || cachedConfigSignature !== sig) {
     cachedTransporter = nodemailer.createTransport({
       host: cfg.host,
@@ -136,7 +225,7 @@ function getTransporter(): { transporter: Transporter; from: string } | null {
     cachedConfigSignature = sig;
   }
 
-  return { transporter: cachedTransporter, from: cfg.from };
+  return { transporter: cachedTransporter, from: cfg.from, signature: sig };
 }
 
 function escapeHtml(value: string): string {
@@ -166,6 +255,7 @@ export async function deliverEmailDirect(options: {
   text: string;
   html?: string;
   attachments?: EmailAttachmentInput[];
+  bypassAuthCooldown?: boolean;
 }): Promise<EmailSendResult> {
   const recipients = (Array.isArray(options.to) ? options.to : [options.to])
     .map((e) => e.trim())
@@ -178,6 +268,15 @@ export async function deliverEmailDirect(options: {
   const client = getTransporter();
   if (!client) {
     return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+  }
+
+  if (
+    !options.bypassAuthCooldown &&
+    smtpAuthBlock &&
+    smtpAuthBlock.signature === client.signature &&
+    Date.now() < smtpAuthBlock.blockedUntilMs
+  ) {
+    return { sent: false, reason: smtpAuthBlock.reason };
   }
 
   try {
@@ -193,12 +292,30 @@ export async function deliverEmailDirect(options: {
         contentType: a.contentType || 'application/octet-stream',
       })),
     });
+    smtpAuthBlock = null;
     return { sent: true, messageId: info.messageId };
   } catch (err) {
     cachedTransporter = null;
     cachedConfigSignature = '';
-    const msg = err instanceof Error ? err.message : 'SMTP delivery failed';
-    console.warn('[EmailService] Email dispatch error:', msg);
+    const msg = formatSmtpErrorMessage(err);
+    const isAuthFailure = isSmtpAuthError(err) || isSmtpAuthError(msg);
+    if (isAuthFailure) {
+      const alreadyBlocked = Boolean(
+        smtpAuthBlock &&
+          smtpAuthBlock.signature === client.signature &&
+          Date.now() < smtpAuthBlock.blockedUntilMs
+      );
+      smtpAuthBlock = {
+        signature: client.signature,
+        reason: msg,
+        blockedUntilMs: Date.now() + SMTP_AUTH_COOLDOWN_MS,
+      };
+      if (!alreadyBlocked && !process.env.VITEST) {
+        console.info('[EmailService] SMTP authentication paused for 10m:', msg);
+      }
+    } else if (!process.env.VITEST) {
+      console.warn('[EmailService] SMTP delivery deferred to retry queue:', msg);
+    }
     return { sent: false, reason: msg };
   }
 }
@@ -249,6 +366,7 @@ export async function sendEmail(options: {
   attachments?: EmailAttachmentInput[];
   category?: EmailQueueCategory;
   skipQueue?: boolean;
+  bypassAuthCooldown?: boolean;
 }): Promise<EmailSendResult> {
   const recipients = (Array.isArray(options.to) ? options.to : [options.to])
     .map((e) => e.trim())
@@ -653,9 +771,7 @@ export async function sendMonthlyPdfSummaryEmail(options: {
       if (res.reason && !errors.includes(res.reason)) {
         errors.push(res.reason);
       }
-      const fatalSmtpError =
-        res.reason === 'SMTP_NOT_CONFIGURED' ||
-        /EAUTH|Invalid login|535|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ESOCKET/i.test(res.reason || '');
+      const fatalSmtpError = isFatalSmtpError(res.reason);
       if (fatalSmtpError) {
         // Persist any remaining recipients into the retry queue without hanging on broken SMTP
         for (let j = idx + 1; j < options.recipients.length; j += 1) {
