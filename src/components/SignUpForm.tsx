@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { ConstitutionDocumentInfo, NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
@@ -100,9 +101,8 @@ export function SignUpForm() {
 
   useEffect(() => {
     if (!authChecking && user) {
-      const isMobile =
-        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
-      router.replace(isMobile ? '/dashboard' : '/');
+      setMobileBrowseMode(false);
+      router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
   }, [authChecking, user, router]);
 

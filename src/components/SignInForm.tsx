@@ -7,6 +7,7 @@ import { ArrowRight, KeyRound, Lock, ShieldCheck, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { api } from '../utils/api.ts';
+import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 
@@ -35,10 +36,17 @@ export function SignInForm() {
   } | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('forgot') === '1') {
+      setForgotOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!authChecking && user && !noticeModal?.redirectHomeOnClose) {
-      const isMobile =
-        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
-      router.replace(isMobile ? '/dashboard' : '/');
+      setMobileBrowseMode(false);
+      router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
   }, [authChecking, user, router, noticeModal]);
 
@@ -48,6 +56,8 @@ export function SignInForm() {
     setLoading(true);
     try {
       const res = await api.login(email, password);
+      const mobile = isMobileViewport();
+      setMobileBrowseMode(false);
       setNoticeModal({
         tone: 'emerald',
         title: 'Signed In Successfully',
@@ -56,7 +66,7 @@ export function SignInForm() {
           { label: 'Member Code', value: res.user.memberCode },
           { label: 'Role', value: res.user.role.toUpperCase() },
         ],
-        confirmLabel: 'Continue to Homepage',
+        confirmLabel: mobile ? 'Open Dashboard' : 'Continue to Homepage',
         redirectHomeOnClose: true,
       });
       setUser(res.user);
@@ -109,7 +119,7 @@ export function SignInForm() {
     }
   }
 
-  if (authChecking) {
+  if (authChecking || (user && !noticeModal?.redirectHomeOnClose)) {
     return (
       <div className="py-4 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs">
@@ -397,9 +407,8 @@ export function SignInForm() {
           const shouldGoHome = Boolean(noticeModal?.redirectHomeOnClose);
           setNoticeModal(null);
           if (shouldGoHome) {
-            const isMobile =
-              typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
-            router.push(isMobile ? '/dashboard' : '/');
+            setMobileBrowseMode(false);
+            router.replace(isMobileViewport() ? '/dashboard' : '/');
           }
         }}
       />

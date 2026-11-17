@@ -77,6 +77,7 @@ import type {
 } from '../types/coop.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
+import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 
 interface NavItemConfig {
   id: DashboardSectionId;
@@ -266,7 +267,10 @@ export function DashboardShell() {
 
   useEffect(() => {
     if (!authChecking && !user) {
-      router.replace('/login');
+      setMobileBrowseMode(false);
+      router.replace(isMobileViewport() ? '/' : '/login');
+    } else if (!authChecking && user) {
+      setMobileBrowseMode(false);
     }
   }, [authChecking, user, router]);
 
@@ -583,8 +587,9 @@ export function DashboardShell() {
   }, [visibleNav]);
 
   async function handleSignOut() {
+    setMobileBrowseMode(false);
     await logout();
-    router.push('/');
+    router.replace('/');
   }
 
   const handleRefreshWithAutoSync = useCallback(async () => {
@@ -657,6 +662,19 @@ export function DashboardShell() {
   if (authChecking || !user) {
     return (
       <div className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
+        {/* Mobile clean session verification / redirect screen */}
+        <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-lg mb-3">
+            <Shield className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <div className="font-display font-bold text-base text-slate-900 dark:text-white">
+            Amanah Portal
+          </div>
+          <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
+            {authChecking ? 'Verifying cooperative session…' : 'Redirecting to sign in…'}
+          </p>
+        </div>
+
         <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
           <Skeleton width={32} height={32} borderRadius={8} />
           <div className="space-y-1 flex-1">
@@ -664,7 +682,7 @@ export function DashboardShell() {
             <Skeleton width={100} height={10} />
           </div>
         </div>
-        <div className="lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -685,7 +703,7 @@ export function DashboardShell() {
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-4 space-y-3">
+        <main className="hidden lg:block lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-4 space-y-3">
           <Skeleton height={82} borderRadius={12} />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
@@ -1141,6 +1159,9 @@ export function DashboardShell() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/"
+            onClick={() => {
+              if (isMobileViewport()) setMobileBrowseMode(true);
+            }}
             title="Public Website"
             className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
           >
@@ -1320,7 +1341,10 @@ export function DashboardShell() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/?browse=1"
-                    onClick={() => setMobileNavOpen(false)}
+                    onClick={() => {
+                      setMobileBrowseMode(true);
+                      setMobileNavOpen(false);
+                    }}
                     className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Home className="w-4 h-4" />

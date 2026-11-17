@@ -92,6 +92,17 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
       );
     }
 
+    if (
+      res.status === 401 &&
+      typeof window !== 'undefined' &&
+      path !== '/api/auth/me' &&
+      path !== '/api/auth/login' &&
+      path !== '/api/auth/register' &&
+      path !== '/api/auth/logout'
+    ) {
+      window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+    }
+
     throw new Error(message);
   }
 

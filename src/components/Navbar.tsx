@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCoopSession } from './AppProviders.tsx';
+import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 
@@ -64,9 +65,10 @@ export function Navbar() {
   async function handleSignOut() {
     setSigningOut(true);
     try {
+      setMobileBrowseMode(false);
       await logout();
       setMobileOpen(false);
-      router.push('/');
+      router.replace('/');
     } finally {
       setSigningOut(false);
     }
@@ -159,6 +161,10 @@ export function Navbar() {
             <>
               <Link
                 href="/dashboard"
+                onClick={() => {
+                  setMobileBrowseMode(false);
+                  setMobileOpen(false);
+                }}
                 className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
@@ -260,7 +266,10 @@ export function Navbar() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/dashboard"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      setMobileBrowseMode(false);
+                      setMobileOpen(false);
+                    }}
                     className="w-full py-2.5 px-3 rounded-lg bg-emerald-700 text-white text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <LayoutDashboard className="w-4 h-4" aria-hidden="true" />

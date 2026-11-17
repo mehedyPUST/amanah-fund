@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Moon, Shield, Sun } from 'lucide-react';
 import { useCoopSession } from './AppProviders.tsx';
+import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 
 export function Footer() {
@@ -83,6 +84,9 @@ export function Footer() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={user ? '/dashboard' : '/login'}
+                onClick={() => {
+                  if (user) setMobileBrowseMode(false);
+                }}
                 className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
               >
                 {user ? 'Open Dashboard' : 'Sign In'}

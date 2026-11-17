@@ -15,6 +15,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
 import { api, registerTotpChallengeHandler } from '../utils/api.ts';
+import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
   connectGoogleWorkspace,
   disconnectGoogleWorkspace,
@@ -81,6 +82,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
   const reloadingRef = useRef(false);
+  const lastAuthCheckRef = useRef<number>(0);
 
   const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
@@ -188,6 +190,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUser = useCallback(async (): Promise<PublicUser | null> => {
+    lastAuthCheckRef.current = Date.now();
     try {
       const res = await api.getMe();
       setUser(res.user);
@@ -202,6 +205,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUnauthorized = () => {
+      setMobileBrowseMode(false);
+      setUser(null);
+      setAuthChecking(false);
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastAuthCheckRef.current < 45_000) return;
+      void refreshUser();
+    };
+    window.addEventListener('amanah:unauthorized', handleUnauthorized);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('amanah:unauthorized', handleUnauthorized);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [refreshUser]);
 
   const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
@@ -392,6 +415,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     try {
       await api.logout();
     } finally {
+      setMobileBrowseMode(false);
       setUser(null);
     }
   }, []);
