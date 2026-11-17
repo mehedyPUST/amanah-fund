@@ -3,13 +3,19 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, KeyRound, Lock, ShieldCheck, X } from 'lucide-react';
+import { ArrowRight, KeyRound, Lock, ShieldCheck, Smartphone, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { api } from '../utils/api.ts';
+import {
+  getRegisteredMobileAccounts,
+  setMobileAutoLogoutNotice,
+  setSelectedPinAccountId,
+} from '../utils/mobileDeviceAuth.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
 
 export function SignInForm() {
   const router = useRouter();
@@ -26,6 +32,9 @@ export function SignInForm() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
 
+  const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
+  const [usePasswordMode, setUsePasswordMode] = useState(false);
+
   const [noticeModal, setNoticeModal] = useState<{
     tone: 'emerald' | 'red';
     title: string;
@@ -41,6 +50,14 @@ export function SignInForm() {
     if (params.get('forgot') === '1') {
       setForgotOpen(true);
     }
+    const syncRegistered = () => {
+      const accounts = getRegisteredMobileAccounts();
+      setHasRegisteredPinAccount(accounts.length > 0);
+      if (accounts.length === 0) setUsePasswordMode(false);
+    };
+    syncRegistered();
+    window.addEventListener('amanah:mobile-devices-updated', syncRegistered);
+    return () => window.removeEventListener('amanah:mobile-devices-updated', syncRegistered);
   }, []);
 
   useEffect(() => {
@@ -57,6 +74,8 @@ export function SignInForm() {
     try {
       const res = await api.login(email, password);
       const mobile = isMobileViewport();
+      setMobileAutoLogoutNotice(null);
+      setSelectedPinAccountId(res.user.id);
       setMobileBrowseMode(false);
       setNoticeModal({
         tone: 'emerald',
@@ -185,87 +204,114 @@ export function SignInForm() {
 
         {/* Right Sign-In Form Column */}
         <div className="lg:col-span-6 lg:border-l lg:border-slate-200/75 lg:dark:border-slate-800 lg:pl-10 space-y-5">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Member Credentials
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Sign in using your approved cooperative email and password.
-            </p>
-          </div>
+          {hasRegisteredPinAccount && !usePasswordMode ? (
+            <MobilePinLoginPanel
+              onSuccess={(loggedInUser) => {
+                setMobileBrowseMode(false);
+                setUser(loggedInUser);
+                router.replace(isMobileViewport() ? '/dashboard' : '/');
+              }}
+              onUsePassword={() => setUsePasswordMode(true)}
+            />
+          ) : (
+            <>
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Member Credentials
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Sign in using your approved cooperative email and password.
+                </p>
+              </div>
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                role="alert"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="signin-email"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
-              >
-                Email Address
-              </label>
-              <input
-                id="signin-email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@amanahcoop.org"
-                className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-              />
-            </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="signin-email"
+                    className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="signin-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@amanahcoop.org"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                  />
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <label
-                  htmlFor="signin-password"
-                  className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <label
+                      htmlFor="signin-password"
+                      className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleOpenForgotModal}
+                      className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <KeyRound className="w-3 h-3" aria-hidden="true" />
+                      <span>Forgot Password?</span>
+                    </button>
+                  </div>
+                  <input
+                    id="signin-password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
-                  Password
-                </label>
+                  <Lock className="w-4 h-4" aria-hidden="true" />
+                  <span>{loading ? 'Signing In…' : 'Sign In'}</span>
+                </button>
+              </form>
+
+              {hasRegisteredPinAccount && (
                 <button
                   type="button"
-                  onClick={handleOpenForgotModal}
-                  className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  onClick={() => {
+                    setError(null);
+                    setUsePasswordMode(false);
+                  }}
+                  className="w-full py-2 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
-                  <KeyRound className="w-3 h-3" aria-hidden="true" />
-                  <span>Forgot Password?</span>
+                  <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Use 4-Digit Device PIN</span>
                 </button>
-              </div>
-              <input
-                id="signin-password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Lock className="w-4 h-4" aria-hidden="true" />
-              <span>{loading ? 'Signing In…' : 'Sign In'}</span>
-            </button>
-          </form>
+              )}
+            </>
+          )}
 
           <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Applying as a new member?</span>

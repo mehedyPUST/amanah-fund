@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Activity,
-  ArrowLeft,
   ArrowRight,
   BarChart3,
   Bell,
@@ -238,6 +237,27 @@ export function DashboardShell() {
     key: number;
   } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const drawerHistoryPushedRef = useRef(false);
+
+  const openMobileDrawer = useCallback(() => {
+    setMobileNavOpen(true);
+    if (typeof window !== 'undefined' && !drawerHistoryPushedRef.current) {
+      window.history.pushState(
+        { ...(window.history.state || {}), mobileDrawer: true },
+        '',
+        window.location.href
+      );
+      drawerHistoryPushedRef.current = true;
+    }
+  }, []);
+
+  const closeMobileDrawer = useCallback(() => {
+    setMobileNavOpen(false);
+    if (typeof window !== 'undefined' && drawerHistoryPushedRef.current) {
+      drawerHistoryPushedRef.current = false;
+      window.history.back();
+    }
+  }, []);
 
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [contributions, setContributions] = useState<Contribution[]>([]);
@@ -441,11 +461,30 @@ export function DashboardShell() {
       }
       if (pushHistory && typeof window !== 'undefined') {
         const url = new URL(window.location.href);
-        if (url.searchParams.get('page') !== targetId || url.searchParams.has('memberId')) {
+        const alreadyOnTarget =
+          url.searchParams.get('page') === targetId &&
+          !url.searchParams.has('memberId') &&
+          !url.searchParams.has('dm');
+
+        if (drawerHistoryPushedRef.current) {
+          drawerHistoryPushedRef.current = false;
+          if (alreadyOnTarget || (targetId === 'fund-overview' && !url.searchParams.get('page') && !url.searchParams.has('memberId') && !url.searchParams.has('dm'))) {
+            window.history.back();
+          } else {
+            url.searchParams.set('page', targetId);
+            url.searchParams.delete('memberId');
+            url.searchParams.delete('dm');
+            window.history.replaceState({ page: targetId }, '', url);
+          }
+        } else if (!alreadyOnTarget) {
           url.searchParams.set('page', targetId);
           url.searchParams.delete('memberId');
+          url.searchParams.delete('dm');
           window.history.pushState({ page: targetId }, '', url);
         }
+      } else if (closeMobile && drawerHistoryPushedRef.current && typeof window !== 'undefined') {
+        drawerHistoryPushedRef.current = false;
+        window.history.back();
       }
       if (typeof window !== 'undefined') {
         mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -549,7 +588,13 @@ export function DashboardShell() {
         ) {
           url.searchParams.set('page', 'member-profile');
           url.searchParams.set('memberId', memberId);
-          window.history.pushState({ page: 'member-profile', memberId }, '', url);
+          url.searchParams.delete('dm');
+          if (drawerHistoryPushedRef.current) {
+            drawerHistoryPushedRef.current = false;
+            window.history.replaceState({ page: 'member-profile', memberId }, '', url);
+          } else {
+            window.history.pushState({ page: 'member-profile', memberId }, '', url);
+          }
         }
         mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -560,6 +605,14 @@ export function DashboardShell() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const syncFromUrl = () => {
+      const isDrawerState = Boolean(
+        (window.history.state as { mobileDrawer?: boolean } | null)?.mobileDrawer
+      );
+      if (!isDrawerState) {
+        drawerHistoryPushedRef.current = false;
+        setMobileNavOpen(false);
+      }
+
       const params = new URLSearchParams(window.location.search);
       const requested = params.get('page') as DashboardSectionId | null;
       const requestedMemberId = params.get('memberId');
@@ -571,6 +624,7 @@ export function DashboardShell() {
         return;
       }
 
+      setViewingMemberId(null);
       const valid =
         requested && visibleNav.some((item) => item.id === requested)
           ? requested
@@ -587,6 +641,8 @@ export function DashboardShell() {
   }, [visibleNav]);
 
   async function handleSignOut() {
+    drawerHistoryPushedRef.current = false;
+    setMobileNavOpen(false);
     setMobileBrowseMode(false);
     await logout();
     router.replace('/');
@@ -942,7 +998,7 @@ export function DashboardShell() {
             label: 'Request Loan',
             Icon: FilePlus2,
             onClick: () => {
-              setMobileNavOpen(false);
+              closeMobileDrawer();
               void openLoanRequestModal();
             },
           },
@@ -1105,25 +1161,9 @@ export function DashboardShell() {
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          {activeSection === 'fund-overview' ? (
-            <span className="lg:hidden w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Shield className="w-3.5 h-3.5" aria-hidden="true" />
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                navigateToPage(
-                  activeSection === 'member-profile' ? profileReturnSection : 'fund-overview',
-                  false
-                )
-              }
-              aria-label="Back to overview"
-              className="lg:hidden min-w-[40px] min-h-[40px] -ml-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            >
-              <ArrowLeft className="w-4.5 h-4.5" aria-hidden="true" />
-            </button>
-          )}
+          <span className="lg:hidden w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Shield className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               Amanah
@@ -1209,7 +1249,7 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => setMobileNavOpen(true)}
+            onClick={openMobileDrawer}
             aria-label="Open navigation menu"
             aria-expanded={mobileNavOpen}
             className="lg:hidden min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
@@ -1262,7 +1302,7 @@ export function DashboardShell() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.16 }}
               className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
-              onClick={() => setMobileNavOpen(false)}
+              onClick={closeMobileDrawer}
               aria-hidden="true"
             />
             <motion.aside
@@ -1289,7 +1329,7 @@ export function DashboardShell() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMobileNavOpen(false)}
+                  onClick={closeMobileDrawer}
                   aria-label="Close navigation menu"
                   className="min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
                 >
@@ -1342,6 +1382,7 @@ export function DashboardShell() {
                   <Link
                     href="/?browse=1"
                     onClick={() => {
+                      drawerHistoryPushedRef.current = false;
                       setMobileBrowseMode(true);
                       setMobileNavOpen(false);
                     }}

@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Save,
   ShieldCheck,
+  Smartphone,
+  Trash2,
   User as UserIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -20,6 +22,12 @@ import Skeleton from 'react-loading-skeleton';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
+import {
+  detectDefaultMobileDeviceName,
+  getLocalDeviceForUser,
+  removeRegisteredMobileAccount,
+  saveRegisteredMobileAccount,
+} from '../utils/mobileDeviceAuth.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
@@ -64,6 +72,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
   const [totpBusy, setTotpBusy] = useState(false);
+
+  // Mobile Device 4-Digit PIN Registration state
+  const [deviceNameInput, setDeviceNameInput] = useState('');
+  const [devicePin, setDevicePin] = useState('');
+  const [devicePinConfirm, setDevicePinConfirm] = useState('');
+  const [devicePinBusy, setDevicePinBusy] = useState(false);
+  const [localDeviceId, setLocalDeviceId] = useState<string | null>(null);
 
   const [modal, setModal] = useState<
     | {
@@ -139,6 +154,17 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   useEffect(() => {
     void loadProfile();
   }, [loadProfile]);
+
+  useEffect(() => {
+    const syncLocal = () => {
+      const local = getLocalDeviceForUser(user.id);
+      setLocalDeviceId(local?.deviceId || null);
+      setDeviceNameInput((prev) => prev || local?.deviceName || detectDefaultMobileDeviceName());
+    };
+    syncLocal();
+    window.addEventListener('amanah:mobile-devices-updated', syncLocal);
+    return () => window.removeEventListener('amanah:mobile-devices-updated', syncLocal);
+  }, [user.id]);
 
   function handleSaveContactInfo(e: FormEvent) {
     e.preventDefault();
@@ -329,6 +355,135 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           });
         } finally {
           setTotpBusy(false);
+        }
+      },
+    });
+  }
+
+  function handleRegisterMobileDevice(e: FormEvent) {
+    e.preventDefault();
+    const cleanPin = devicePin.trim();
+    const cleanConfirm = devicePinConfirm.trim();
+    if (!/^\d{4}$/.test(cleanPin)) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid 4-Digit PIN',
+        description: 'Enter a 4-digit numeric PIN (digits 0–9 only).',
+      });
+      return;
+    }
+    if (cleanPin !== cleanConfirm) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'PINs Do Not Match',
+        description: 'The 4-digit PIN and confirmation PIN must match.',
+      });
+      return;
+    }
+
+    const label = deviceNameInput.trim() || detectDefaultMobileDeviceName();
+    const registeredList = profile.registeredDevices || [];
+    const matchedServerLocal =
+      localDeviceId && registeredList.some((d) => d.deviceId === localDeviceId)
+        ? localDeviceId
+        : undefined;
+
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: matchedServerLocal ? 'Update Device 4-Digit PIN?' : 'Register This Mobile Device?',
+      description: matchedServerLocal
+        ? 'Your 4-digit quick login PIN on this device will be updated immediately.'
+        : 'After signing out on this device, you can select your account and sign back in using just your 4-digit PIN.',
+      details: [
+        { label: 'Account', value: `${profile.name} (${profile.memberCode})` },
+        { label: 'Device Name', value: label },
+      ],
+      confirmLabel: matchedServerLocal ? 'Update 4-Digit PIN' : 'Register This Device',
+      run: async () => {
+        setDevicePinBusy(true);
+        try {
+          const res = await api.registerMobileDevice({
+            pin: cleanPin,
+            deviceName: label,
+            existingDeviceId: matchedServerLocal,
+          });
+          saveRegisteredMobileAccount({
+            userId: res.user.id,
+            name: res.user.name,
+            email: res.user.email,
+            memberCode: res.user.memberCode,
+            role: res.user.role,
+            photoUrl: res.user.photoUrl,
+            deviceId: res.device.deviceId,
+            deviceSecret: res.deviceSecret,
+            deviceName: res.device.deviceName,
+            registeredAt: res.device.createdAt,
+            lastUsedAt: res.device.lastUsedAt,
+          });
+          setLocalDeviceId(res.device.deviceId);
+          setUser(res.user);
+          setProfile(res.user);
+          setDevicePin('');
+          setDevicePinConfirm('');
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: matchedServerLocal ? '4-Digit PIN Updated' : 'Mobile Device Registered',
+            description:
+              'This device is now ready for 4-digit PIN sign-in after logout.',
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Device Registration Failed',
+            description:
+              err instanceof Error ? err.message : 'Could not register this mobile device.',
+          });
+        } finally {
+          setDevicePinBusy(false);
+        }
+      },
+    });
+  }
+
+  function handleRevokeMobileDevice(deviceId: string, deviceName: string) {
+    setModal({
+      mode: 'confirm',
+      tone: 'red',
+      title: 'Remove Registered Mobile Device?',
+      description: `Revoking "${deviceName}" disables 4-digit PIN quick sign-in from that device until registered again.`,
+      details: [{ label: 'Device', value: deviceName }],
+      confirmLabel: 'Remove Device',
+      run: async () => {
+        setDevicePinBusy(true);
+        try {
+          const res = await api.revokeMobileDevice(deviceId);
+          if (localDeviceId === deviceId) {
+            removeRegisteredMobileAccount(profile.id, deviceId);
+            setLocalDeviceId(null);
+          }
+          setUser(res.user);
+          setProfile(res.user);
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Mobile Device Removed',
+            description: `"${deviceName}" can no longer sign in using a 4-digit PIN.`,
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Removal Failed',
+            description:
+              err instanceof Error ? err.message : 'Could not remove registered device.',
+          });
+        } finally {
+          setDevicePinBusy(false);
         }
       },
     });
@@ -910,6 +1065,154 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </button>
         </form>
       </section>
+
+      {/* Mobile Device Registration & 4-Digit PIN Login */}
+      {(() => {
+        const devices = profile.registeredDevices || [];
+        const thisDeviceEntry = localDeviceId
+          ? devices.find((d) => d.deviceId === localDeviceId) || null
+          : null;
+        return (
+          <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <Smartphone className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>Quick Mobile Access</span>
+                </div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+                  Mobile Device &amp; 4-Digit PIN Login
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Register this device so you can sign back in after logout using your 4-digit PIN.
+                </p>
+              </div>
+              <span
+                className={`text-xs font-mono font-semibold shrink-0 ${
+                  thisDeviceEntry
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                {thisDeviceEntry ? 'THIS DEVICE ACTIVE' : `${devices.length} REGISTERED`}
+              </span>
+            </div>
+
+            <form
+              onSubmit={handleRegisterMobileDevice}
+              className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"
+            >
+              <div>
+                <label
+                  htmlFor="mobile-device-label"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Device Label
+                </label>
+                <input
+                  id="mobile-device-label"
+                  type="text"
+                  maxLength={60}
+                  value={deviceNameInput}
+                  onChange={(e) => setDeviceNameInput(e.target.value)}
+                  placeholder="e.g. My Android Phone"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="mobile-device-pin"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  {thisDeviceEntry ? 'New 4-Digit PIN' : '4-Digit PIN'}
+                </label>
+                <input
+                  id="mobile-device-pin"
+                  type="password"
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  maxLength={4}
+                  required
+                  value={devicePin}
+                  onChange={(e) => setDevicePin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="mobile-device-pin-confirm"
+                  className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Confirm 4-Digit PIN
+                </label>
+                <input
+                  id="mobile-device-pin-confirm"
+                  type="password"
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  maxLength={4}
+                  required
+                  value={devicePinConfirm}
+                  onChange={(e) =>
+                    setDevicePinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))
+                  }
+                  placeholder="••••"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={devicePinBusy}
+                className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+              >
+                {devicePinBusy
+                  ? 'Saving…'
+                  : thisDeviceEntry
+                    ? 'Update 4-Digit PIN'
+                    : 'Register This Device'}
+              </button>
+            </form>
+
+            {devices.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                {devices.map((dev) => {
+                  const isCurrent = dev.deviceId === localDeviceId;
+                  return (
+                    <div
+                      key={dev.deviceId}
+                      className="py-2.5 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                          <span className="truncate">{dev.deviceName}</span>
+                          {isCurrent && (
+                            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
+                              (This Device)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                          Last used {formatDateTime(dev.lastUsedAt)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={devicePinBusy}
+                        onClick={() => handleRevokeMobileDevice(dev.deviceId, dev.deviceName)}
+                        className="min-h-[36px] px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">

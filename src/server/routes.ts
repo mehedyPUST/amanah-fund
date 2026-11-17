@@ -35,6 +35,7 @@ import type {
   ProfileChangeRequest,
   ProfitDistributionAllocation,
   ProfitDistributionRecord,
+  RegisteredDeviceSummary,
   UploadDocumentCategory,
   UserRegistrationDetails,
   UserRole,
@@ -131,6 +132,12 @@ import {
   sendRealtimeEventToUsers,
 } from './realtime.ts';
 import { buildOtpAuthUri, generateTotpSecret, verifyTotpCode } from './totp.ts';
+import {
+  isValidFourDigitPin,
+  registerDeviceOnUser,
+  revokeDeviceOnUser,
+  verifyRegisteredDevicePinLogin,
+} from './deviceAuthService.ts';
 import { normalizeAndValidatePostLinks } from '../utils/communityLinks.ts';
 import {
   isValidEmailTemplateKey,
@@ -1001,6 +1008,235 @@ apiRouter.post('/auth/2fa/disable', requireAuth, async (req: AuthenticatedReques
     }
     console.error('2FA disable error:', err);
     res.status(500).json({ error: 'Failed to disable two-factor authentication.' });
+  }
+});
+
+apiRouter.post(
+  '/auth/devices/register',
+  requireAuth,
+  authRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const pin = String(req.body?.pin || '').trim();
+      const deviceName = String(req.body?.deviceName || '').trim();
+      const existingDeviceId = req.body?.existingDeviceId
+        ? String(req.body.existingDeviceId).trim()
+        : undefined;
+
+      if (!isValidFourDigitPin(pin)) {
+        res.status(400).json({ error: 'PIN must be exactly 4 numeric digits (e.g. 1234).' });
+        return;
+      }
+
+      let registeredDevice: RegisteredDeviceSummary | null = null;
+      let issuedSecret = '';
+      let isUpdate = false;
+      let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+
+      await updateVaultState((draft) => {
+        const user = draft.users.find((u) => u.id === viewer.id);
+        if (!user || user.status !== 'active') {
+          throw new Error('USER_NOT_ACTIVE');
+        }
+        const result = registerDeviceOnUser(user, { pin, deviceName, existingDeviceId });
+        registeredDevice = result.device;
+        issuedSecret = result.deviceSecret;
+        isUpdate = result.isUpdate;
+        updatedUser = sanitizeUser(user);
+
+        appendAuditLog(draft, {
+          actor: updatedUser,
+          action: isUpdate ? 'MOBILE_DEVICE_PIN_UPDATED' : 'MOBILE_DEVICE_REGISTERED',
+          resourceType: 'auth',
+          resourceId: result.device.deviceId,
+          summary: `${viewer.name} (${viewer.memberCode}) ${
+            isUpdate ? 'updated 4-digit PIN for' : 'registered'
+          } mobile device "${result.device.deviceName}"`,
+          payload: {
+            deviceId: result.device.deviceId,
+            deviceName: result.device.deviceName,
+            isUpdate,
+          },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('audit:updated', {
+        action: isUpdate ? 'MOBILE_DEVICE_PIN_UPDATED' : 'MOBILE_DEVICE_REGISTERED',
+        resourceType: 'auth',
+        resourceId: registeredDevice!.deviceId,
+      });
+
+      res.json({
+        device: registeredDevice,
+        deviceSecret: issuedSecret,
+        user: updatedUser,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'INVALID_PIN_FORMAT') {
+        res.status(400).json({ error: 'PIN must be exactly 4 numeric digits.' });
+        return;
+      }
+      if (err instanceof Error && err.message === 'USER_NOT_ACTIVE') {
+        res.status(403).json({ error: 'Only active members can register mobile devices.' });
+        return;
+      }
+      console.error('Register mobile device error:', err);
+      res.status(500).json({ error: 'Failed to register mobile device.' });
+    }
+  }
+);
+
+apiRouter.delete('/auth/devices/:deviceId', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const deviceId = String(req.params.deviceId || '').trim();
+    if (!deviceId) {
+      res.status(400).json({ error: 'Device ID is required.' });
+      return;
+    }
+
+    let removedName = '';
+    let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
+
+    await updateVaultState((draft) => {
+      const user = draft.users.find((u) => u.id === viewer.id);
+      if (!user) return draft;
+      const removed = revokeDeviceOnUser(user, deviceId);
+      if (!removed) {
+        throw new Error('DEVICE_NOT_FOUND');
+      }
+      removedName = removed.deviceName;
+      updatedUser = sanitizeUser(user);
+      appendAuditLog(draft, {
+        actor: updatedUser,
+        action: 'MOBILE_DEVICE_REVOKED',
+        resourceType: 'auth',
+        resourceId: deviceId,
+        summary: `${viewer.name} (${viewer.memberCode}) removed registered mobile device "${removedName}"`,
+        payload: { deviceId, deviceName: removedName },
+      });
+      return draft;
+    });
+
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'MOBILE_DEVICE_REVOKED',
+      resourceType: 'auth',
+      resourceId: deviceId,
+    });
+    res.json({ ok: true, user: updatedUser });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'DEVICE_NOT_FOUND') {
+      res.status(404).json({ error: 'Registered mobile device not found.' });
+      return;
+    }
+    console.error('Revoke mobile device error:', err);
+    res.status(500).json({ error: 'Failed to remove registered mobile device.' });
+  }
+});
+
+apiRouter.post('/auth/pin-login', authRateLimiter, async (req, res) => {
+  try {
+    const userId = String(req.body?.userId || '').trim();
+    const deviceId = String(req.body?.deviceId || '').trim();
+    const deviceSecret = String(req.body?.deviceSecret || '').trim();
+    const pin = String(req.body?.pin || '').trim();
+
+    if (!userId || !deviceId || !deviceSecret) {
+      res.status(400).json({
+        code: 'DEVICE_NOT_REGISTERED',
+        error: 'Registered mobile device credentials are required.',
+      });
+      return;
+    }
+    if (!isValidFourDigitPin(pin)) {
+      res.status(400).json({
+        code: 'INVALID_PIN_FORMAT',
+        error: 'Enter a valid 4-digit numeric PIN.',
+      });
+      return;
+    }
+
+    let failureResult: {
+      status: number;
+      code: string;
+      message: string;
+      remainingAttempts?: number;
+      lockedMinutes?: number;
+    } | null = null;
+    let sanitized: ReturnType<typeof sanitizeUser> | null = null;
+    let signedToken = '';
+    let matchedDeviceName = '';
+
+    await updateVaultState((draft) => {
+      const user = draft.users.find((u) => u.id === userId);
+      const verification = verifyRegisteredDevicePinLogin(user, { deviceId, deviceSecret, pin });
+      if ('code' in verification) {
+        const status =
+          verification.code === 'ACCOUNT_PENDING' || verification.code === 'ACCOUNT_SUSPENDED'
+            ? 403
+            : verification.code === 'PIN_LOCKED'
+              ? 429
+              : 401;
+        failureResult = {
+          status,
+          code: verification.code,
+          message: verification.message,
+          remainingAttempts: verification.remainingAttempts,
+          lockedMinutes: verification.lockedMinutes,
+        };
+        return draft;
+      }
+
+      const verifiedUser = user!;
+      matchedDeviceName = verification.device.deviceName;
+      sanitized = sanitizeUser(verifiedUser);
+      signedToken = signAuthToken(verifiedUser);
+
+      appendAuditLog(draft, {
+        actor: sanitized,
+        action: 'AUTH_PIN_LOGIN',
+        resourceType: 'auth',
+        resourceId: sanitized.id,
+        summary: `${sanitized.name} (${sanitized.role}) signed in via 4-digit PIN on "${matchedDeviceName}"`,
+        payload: {
+          email: sanitized.email,
+          role: sanitized.role,
+          deviceId,
+          deviceName: matchedDeviceName,
+        },
+      });
+      return draft;
+    });
+
+    if (failureResult) {
+      const fail = failureResult as {
+        status: number;
+        code: string;
+        message: string;
+        remainingAttempts?: number;
+        lockedMinutes?: number;
+      };
+      res.status(fail.status).json({
+        error: fail.message,
+        code: fail.code,
+        remainingAttempts: fail.remainingAttempts,
+        lockedMinutes: fail.lockedMinutes,
+      });
+      return;
+    }
+
+    setAuthCookie(req, res, signedToken);
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'AUTH_PIN_LOGIN',
+      resourceType: 'auth',
+      resourceId: sanitized!.id,
+    });
+    res.json({ user: sanitized });
+  } catch (err) {
+    console.error('PIN login error:', err);
+    res.status(500).json({ error: 'PIN authentication failed.' });
   }
 });
 

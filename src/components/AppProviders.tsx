@@ -10,12 +10,20 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { ShieldCheck, X } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import type { PublicUser } from '../types/coop.ts';
 import { api, registerTotpChallengeHandler } from '../utils/api.ts';
-import { setMobileBrowseMode } from '../utils/mobileSession.ts';
+import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
+import {
+  getMobileBackgroundHiddenAt,
+  MOBILE_MINIMIZE_LOGOUT_MS,
+  setMobileAutoLogoutNotice,
+  setMobileBackgroundHiddenAt,
+  syncLocalAccountsWithServerUser,
+} from '../utils/mobileDeviceAuth.ts';
 import {
   connectGoogleWorkspace,
   disconnectGoogleWorkspace,
@@ -66,7 +74,14 @@ export function useCoopSession(): CoopSessionContextValue {
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<PublicUser | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
+  const [user, setUserState] = useState<PublicUser | null>(null);
+  const userRef = useRef<PublicUser | null>(null);
+  userRef.current = user;
   const [authChecking, setAuthChecking] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -83,6 +98,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
   const reloadingRef = useRef(false);
   const lastAuthCheckRef = useRef<number>(0);
+  const minimizeLogoutInFlightRef = useRef(false);
+
+  const setUser = useCallback((nextUser: PublicUser | null) => {
+    setUserState(nextUser);
+    if (nextUser) {
+      syncLocalAccountsWithServerUser(nextUser);
+      setMobileBackgroundHiddenAt(null);
+      setMobileAutoLogoutNotice(null);
+    }
+  }, []);
 
   const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
@@ -193,10 +218,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
     lastAuthCheckRef.current = Date.now();
     try {
       const res = await api.getMe();
-      setUser(res.user);
+      setUserState(res.user);
+      syncLocalAccountsWithServerUser(res.user);
       return res.user;
     } catch {
-      setUser(null);
+      setUserState(null);
       return null;
     } finally {
       setAuthChecking(false);
@@ -207,25 +233,137 @@ export function AppProviders({ children }: { children: ReactNode }) {
     void refreshUser();
   }, [refreshUser]);
 
+  const logout = useCallback(async () => {
+    setMobileBackgroundHiddenAt(null);
+    try {
+      await api.logout();
+    } finally {
+      setMobileBrowseMode(false);
+      setUserState(null);
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    let bgTimerId: number | null = null;
+
+    const clearBgTimer = () => {
+      if (bgTimerId !== null) {
+        window.clearTimeout(bgTimerId);
+        bgTimerId = null;
+      }
+    };
+
+    const performMinimizeLogout = async () => {
+      if (minimizeLogoutInFlightRef.current || !userRef.current) return;
+      minimizeLogoutInFlightRef.current = true;
+      clearBgTimer();
+      setMobileBackgroundHiddenAt(null);
+      setMobileAutoLogoutNotice(
+        'Signed out automatically after 1 minute in the background.'
+      );
+      try {
+        await api.logout();
+      } catch {
+        // proceed with local logout even if offline
+      } finally {
+        setMobileBrowseMode(false);
+        setUserState(null);
+        setAuthChecking(false);
+        minimizeLogoutInFlightRef.current = false;
+        if (pathnameRef.current?.startsWith('/dashboard')) {
+          router.replace('/');
+        }
+      }
+    };
+
+    const evaluateBackgroundElapsed = (): boolean => {
+      if (!userRef.current || !isMobileViewport()) {
+        setMobileBackgroundHiddenAt(null);
+        return false;
+      }
+      const hiddenAt = getMobileBackgroundHiddenAt();
+      if (!hiddenAt) return false;
+      if (Date.now() - hiddenAt >= MOBILE_MINIMIZE_LOGOUT_MS) {
+        void performMinimizeLogout();
+        return true;
+      }
+      setMobileBackgroundHiddenAt(null);
+      return false;
+    };
+
+    // Check immediately in case mobile app was killed/reopened after >= 1 min hidden
+    if (user && isMobileViewport() && document.visibilityState === 'visible') {
+      evaluateBackgroundElapsed();
+    }
+
+    const markHiddenAndStartTimer = () => {
+      if (!userRef.current || !isMobileViewport()) return;
+      const existing = getMobileBackgroundHiddenAt();
+      const hiddenAt = existing ?? Date.now();
+      if (!existing) {
+        setMobileBackgroundHiddenAt(hiddenAt);
+      }
+      clearBgTimer();
+      const remainingMs = Math.max(0, MOBILE_MINIMIZE_LOGOUT_MS - (Date.now() - hiddenAt));
+      bgTimerId = window.setTimeout(() => {
+        if (!userRef.current || !isMobileViewport()) return;
+        const storedAt = getMobileBackgroundHiddenAt();
+        if (storedAt && Date.now() - storedAt >= MOBILE_MINIMIZE_LOGOUT_MS - 250) {
+          void performMinimizeLogout();
+        }
+      }, remainingMs + 50);
+    };
+
     const handleUnauthorized = () => {
+      clearBgTimer();
+      setMobileBackgroundHiddenAt(null);
       setMobileBrowseMode(false);
-      setUser(null);
+      setUserState(null);
       setAuthChecking(false);
     };
+
     const handleVisibility = () => {
-      if (document.visibilityState !== 'visible') return;
-      if (Date.now() - lastAuthCheckRef.current < 45_000) return;
-      void refreshUser();
+      if (document.visibilityState === 'hidden') {
+        markHiddenAndStartTimer();
+        return;
+      }
+      if (document.visibilityState === 'visible') {
+        clearBgTimer();
+        const loggedOut = evaluateBackgroundElapsed();
+        if (!loggedOut && Date.now() - lastAuthCheckRef.current >= 45_000) {
+          void refreshUser();
+        }
+      }
     };
+
+    const handlePageHide = () => {
+      markHiddenAndStartTimer();
+    };
+
+    const handlePageShowOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        clearBgTimer();
+        evaluateBackgroundElapsed();
+      }
+    };
+
     window.addEventListener('amanah:unauthorized', handleUnauthorized);
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShowOrFocus);
+    window.addEventListener('focus', handlePageShowOrFocus);
+
     return () => {
+      clearBgTimer();
       window.removeEventListener('amanah:unauthorized', handleUnauthorized);
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShowOrFocus);
+      window.removeEventListener('focus', handlePageShowOrFocus);
     };
-  }, [refreshUser]);
+  }, [user, refreshUser, router]);
 
   const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
     swRegRef.current = reg;
@@ -379,10 +517,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
     };
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
+    const isDevPreviewHost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('ais-dev-');
+
     navigator.serviceWorker
       .register('/sw.js', { scope: '/', updateViaCache: 'none' })
       .then((reg) => {
         attachRegistrationListeners(reg);
+        if (isDevPreviewHost) {
+          void reg.update().catch(() => undefined);
+          return;
+        }
         const now = Date.now();
         const isDailyDue =
           !parsedLast ||
@@ -410,15 +557,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       window.clearInterval(intervalId);
     };
   }, [attachRegistrationListeners, checkForUpdates]);
-
-  const logout = useCallback(async () => {
-    try {
-      await api.logout();
-    } finally {
-      setMobileBrowseMode(false);
-      setUser(null);
-    }
-  }, []);
 
   const handleConnectGoogle = useCallback(async () => {
     setConnectingGoogle(true);

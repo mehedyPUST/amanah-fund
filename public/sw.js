@@ -1,17 +1,25 @@
-const CACHE_NAME = 'amanah-pwa-v3';
+const CACHE_NAME = 'amanah-pwa-v4';
 const APP_SHELL_URLS = [
-  '/',
   '/manifest.webmanifest',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/apple-touch-icon.png',
 ];
 
+const IS_DEV_PREVIEW =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1' ||
+  self.location.hostname === '0.0.0.0' ||
+  self.location.hostname.startsWith('ais-dev-');
+
 self.addEventListener('install', (event) => {
-  // On initial install (no active worker yet), activate immediately;
-  // on subsequent updates, wait so the UI can present the "Update App" action cleanly.
-  if (!self.registration || !self.registration.active) {
+  // Always take over immediately in dev/preview or on initial install so stale caches never linger.
+  if (IS_DEV_PREVIEW || !self.registration || !self.registration.active) {
     self.skipWaiting();
+  }
+  if (IS_DEV_PREVIEW) {
+    event.waitUntil(Promise.resolve());
+    return;
   }
   event.waitUntil(
     caches
@@ -38,13 +46,19 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        Promise.all(
+          keys
+            .filter((k) => IS_DEV_PREVIEW || k !== CACHE_NAME)
+            .map((k) => caches.delete(k))
+        )
       )
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
+  if (IS_DEV_PREVIEW) return;
+
   const { request } = event;
   if (request.method !== 'GET') return;
 
@@ -55,6 +69,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/_next/webpack') ||
+    url.pathname.startsWith('/_next/data/') ||
     url.pathname.includes('hot-update')
   ) {
     return;
@@ -65,7 +80,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          if (res && res.ok) {
+          const ct = (res.headers.get('content-type') || '').toLowerCase();
+          if (res && res.ok && ct.includes('text/html')) {
             const copy = res.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
           }
@@ -88,16 +104,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate for fast shell loads
+  // Static assets: never cache or serve HTML responses for JS/CSS/media assets
   if (
     url.pathname.startsWith('/_next/static/') ||
     /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?|css|js|webmanifest)$/.test(url.pathname)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
+        const cachedCt = cached ? (cached.headers.get('content-type') || '').toLowerCase() : '';
+        const validCached = cached && !cachedCt.includes('text/html') ? cached : undefined;
+
         const networkFetch = fetch(request)
           .then((res) => {
-            if (res && res.ok) {
+            const ct = (res.headers.get('content-type') || '').toLowerCase();
+            if (res && res.ok && !ct.includes('text/html')) {
               const copy = res.clone();
               caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
             }
@@ -105,13 +125,13 @@ self.addEventListener('fetch', (event) => {
           })
           .catch(
             () =>
-              cached ||
+              validCached ||
               new Response('', {
                 status: 504,
                 statusText: 'Offline',
               })
           );
-        return cached || networkFetch;
+        return validCached || networkFetch;
       })
     );
   }

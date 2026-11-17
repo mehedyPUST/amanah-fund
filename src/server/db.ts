@@ -24,6 +24,17 @@ import type {
 } from '../types/coop.ts';
 import { createDefaultFaqs, sortFaqItems } from '../utils/faqDefaults.ts';
 
+export interface StoredRegisteredDevice {
+  deviceId: string;
+  deviceName: string;
+  pinHash: string;
+  deviceSecretHash: string;
+  failedAttempts: number;
+  lockedUntil?: string;
+  createdAt: string;
+  lastUsedAt: string;
+}
+
 export interface StoredUser {
   id: string;
   name: string;
@@ -40,6 +51,7 @@ export interface StoredUser {
   communityMuted?: boolean;
   totpEnabled?: boolean;
   encryptedTotpSecret?: EncryptedEnvelope;
+  registeredDevices?: StoredRegisteredDevice[];
   notificationPreferences?: NotificationPreferences;
   encryptedRegistrationDetails?: EncryptedEnvelope;
 }

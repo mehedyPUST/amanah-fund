@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft,
   Award,
   BarChart2,
   Check,
@@ -428,10 +427,49 @@ export function CommunityView({
   }, [activeTab, selectedPeerId, messages.length]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const dmPeerId = params.get('dm');
+      if (!dmPeerId) {
+        setSelectedPeerId(null);
+        setSelectedPeer(null);
+        return;
+      }
+      setActiveTab('messages');
+      setSelectedPeerId(dmPeerId);
+      const matchedThread = threads.find((t) => t.peerId === dmPeerId);
+      const matchedDir = directory.find((d) => d.id === dmPeerId);
+      if (matchedDir) {
+        setSelectedPeer(matchedDir);
+      } else if (matchedThread) {
+        setSelectedPeer({
+          id: matchedThread.peerId,
+          name: matchedThread.peerName,
+          role: matchedThread.peerRole,
+          memberCode: matchedThread.peerCode,
+          photoUrl: matchedThread.peerPhotoUrl,
+        });
+      }
+      void loadConversation(dmPeerId, false);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [threads, directory, loadConversation]);
+
+  useEffect(() => {
     if (!initialDmPeer) return;
     setActiveTab('messages');
     setSelectedPeerId(initialDmPeer.id);
     setSelectedPeer(initialDmPeer);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('dm') !== initialDmPeer.id) {
+        url.searchParams.set('page', 'community');
+        url.searchParams.set('dm', initialDmPeer.id);
+        window.history.pushState({ page: 'community', dm: initialDmPeer.id }, '', url);
+      }
+    }
     void loadConversation(initialDmPeer.id, false);
     onConsumeInitialDmPeer?.();
   }, [initialDmPeer, loadConversation, onConsumeInitialDmPeer]);
@@ -1444,6 +1482,14 @@ export function CommunityView({
     setActiveTab('messages');
     setSelectedPeerId(peer.id);
     setSelectedPeer(peer);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('dm') !== peer.id) {
+        url.searchParams.set('page', 'community');
+        url.searchParams.set('dm', peer.id);
+        window.history.pushState({ page: 'community', dm: peer.id }, '', url);
+      }
+    }
     void loadConversation(peer.id, false);
   }
 
@@ -3356,14 +3402,6 @@ export function CommunityView({
               <>
                 <div className="px-3.5 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPeerId(null)}
-                      aria-label="Back to conversations"
-                      className="lg:hidden min-w-[40px] min-h-[40px] -ml-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-                    </button>
                     <AvatarBadge
                       name={selectedPeer.name}
                       photoUrl={selectedPeer.photoUrl}

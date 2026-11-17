@@ -17,6 +17,13 @@ import {
   encryptSensitiveObject,
 } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
+import { sanitizeUser } from '../src/server/auth.ts';
+import {
+  isValidFourDigitPin,
+  registerDeviceOnUser,
+  revokeDeviceOnUser,
+  verifyRegisteredDevicePinLogin,
+} from '../src/server/deviceAuthService.ts';
 import {
   buildImageKitAuthHeader,
   buildImageKitTargetFolder,
@@ -1583,6 +1590,138 @@ describe('Groq AI Community Spam Shield & Resilient Completion Handling', () => 
       else process.env.GROQ_API_KEY = prevKey;
       if (prevModel === undefined) delete process.env.GROQ_MODEL;
       else process.env.GROQ_MODEL = prevModel;
+    }
+  });
+});
+
+describe('Mobile Device Registration & 4-Digit PIN Login', () => {
+  it('validates 4-digit numeric PIN format strictly', () => {
+    expect(isValidFourDigitPin('1234')).toBe(true);
+    expect(isValidFourDigitPin('0007')).toBe(true);
+    expect(isValidFourDigitPin('123')).toBe(false);
+    expect(isValidFourDigitPin('12345')).toBe(false);
+    expect(isValidFourDigitPin('12ab')).toBe(false);
+    expect(isValidFourDigitPin('')).toBe(false);
+  });
+
+  it('registers a mobile device, sanitizes hashes from PublicUser, and verifies 4-digit PIN login', () => {
+    const state = makeBaseState();
+    const member = state.users[1];
+
+    const reg = registerDeviceOnUser(
+      member,
+      { pin: '4829', deviceName: 'Pixel 8 Pro' },
+      '2026-04-10T10:00:00.000Z'
+    );
+
+    expect(reg.isUpdate).toBe(false);
+    expect(reg.device.deviceName).toBe('Pixel 8 Pro');
+    expect(reg.deviceSecret.length).toBeGreaterThan(20);
+
+    const sanitized = sanitizeUser(member);
+    expect(sanitized.registeredDevices).toHaveLength(1);
+    expect(sanitized.registeredDevices?.[0]).toEqual({
+      deviceId: reg.device.deviceId,
+      deviceName: 'Pixel 8 Pro',
+      createdAt: '2026-04-10T10:00:00.000Z',
+      lastUsedAt: '2026-04-10T10:00:00.000Z',
+    });
+    expect(JSON.stringify(sanitized)).not.toContain('pinHash');
+    expect(JSON.stringify(sanitized)).not.toContain('deviceSecretHash');
+
+    const badSecret = verifyRegisteredDevicePinLogin(member, {
+      deviceId: reg.device.deviceId,
+      deviceSecret: 'wrong-secret',
+      pin: '4829',
+    });
+    expect(badSecret.ok).toBe(false);
+    if ('code' in badSecret) {
+      expect(badSecret.code).toBe('DEVICE_NOT_REGISTERED');
+    }
+
+    const okLogin = verifyRegisteredDevicePinLogin(
+      member,
+      {
+        deviceId: reg.device.deviceId,
+        deviceSecret: reg.deviceSecret,
+        pin: '4829',
+      },
+      Date.parse('2026-04-10T12:00:00.000Z')
+    );
+    expect(okLogin.ok).toBe(true);
+    if ('device' in okLogin) {
+      expect(okLogin.device.lastUsedAt).toBe('2026-04-10T12:00:00.000Z');
+      expect(okLogin.device.failedAttempts).toBe(0);
+    }
+  });
+
+  it('locks device PIN after 5 failed attempts and supports revocation & re-registration update', () => {
+    const state = makeBaseState();
+    const member = state.users[1];
+    const now = Date.parse('2026-04-10T10:00:00.000Z');
+
+    const reg = registerDeviceOnUser(member, { pin: '9012', deviceName: 'iPhone 15' });
+
+    for (let i = 0; i < 4; i++) {
+      const attempt = verifyRegisteredDevicePinLogin(
+        member,
+        { deviceId: reg.device.deviceId, deviceSecret: reg.deviceSecret, pin: '0000' },
+        now + i * 1000
+      );
+      expect(attempt.ok).toBe(false);
+      if ('code' in attempt) {
+        expect(attempt.code).toBe('INVALID_PIN');
+        expect(attempt.remainingAttempts).toBe(4 - i);
+      }
+    }
+
+    const fifthAttempt = verifyRegisteredDevicePinLogin(
+      member,
+      { deviceId: reg.device.deviceId, deviceSecret: reg.deviceSecret, pin: '0000' },
+      now + 5000
+    );
+    expect(fifthAttempt.ok).toBe(false);
+    if ('code' in fifthAttempt) {
+      expect(fifthAttempt.code).toBe('PIN_LOCKED');
+    }
+
+    // Correct PIN while locked is rejected cleanly
+    const whileLocked = verifyRegisteredDevicePinLogin(
+      member,
+      { deviceId: reg.device.deviceId, deviceSecret: reg.deviceSecret, pin: '9012' },
+      now + 60_000
+    );
+    expect(whileLocked.ok).toBe(false);
+    if ('code' in whileLocked) {
+      expect(whileLocked.code).toBe('PIN_LOCKED');
+    }
+
+    // Updating PIN clears lockout & issues a fresh secret
+    const updated = registerDeviceOnUser(member, {
+      pin: '3456',
+      deviceName: 'iPhone 15',
+      existingDeviceId: reg.device.deviceId,
+    });
+    expect(updated.isUpdate).toBe(true);
+    expect(updated.device.deviceId).toBe(reg.device.deviceId);
+    const unlocked = verifyRegisteredDevicePinLogin(member, {
+      deviceId: updated.device.deviceId,
+      deviceSecret: updated.deviceSecret,
+      pin: '3456',
+    });
+    expect(unlocked.ok).toBe(true);
+
+    // Revoking device removes it immediately
+    const removed = revokeDeviceOnUser(member, reg.device.deviceId);
+    expect(removed?.deviceId).toBe(reg.device.deviceId);
+    const afterRevoke = verifyRegisteredDevicePinLogin(member, {
+      deviceId: updated.device.deviceId,
+      deviceSecret: updated.deviceSecret,
+      pin: '3456',
+    });
+    expect(afterRevoke.ok).toBe(false);
+    if ('code' in afterRevoke) {
+      expect(afterRevoke.code).toBe('DEVICE_NOT_REGISTERED');
     }
   });
 });

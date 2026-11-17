@@ -66,6 +66,13 @@ export interface UserRegistrationDetails {
   nominees?: NomineeInfo[];
 }
 
+export interface RegisteredDeviceSummary {
+  deviceId: string;
+  deviceName: string;
+  createdAt: string;
+  lastUsedAt: string;
+}
+
 export interface PublicUser {
   id: string;
   name: string;
@@ -79,6 +86,7 @@ export interface PublicUser {
   authProvider?: 'password' | 'google' | 'both';
   communityMuted?: boolean;
   totpEnabled?: boolean;
+  registeredDevices?: RegisteredDeviceSummary[];
   notificationPreferences?: NotificationPreferences;
   registrationDetails?: UserRegistrationDetails;
 }

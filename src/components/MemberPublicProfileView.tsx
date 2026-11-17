@@ -248,7 +248,7 @@ export function MemberPublicProfileView({
         <button
           type="button"
           onClick={onBack}
-          className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
+          className="hidden lg:inline-flex px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Back</span>
@@ -283,11 +283,11 @@ export function MemberPublicProfileView({
       className="space-y-6 pb-8"
     >
       {/* Top Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
+      <div className="flex flex-wrap items-center justify-end lg:justify-between gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+          className="hidden lg:inline-flex min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 items-center gap-1.5 cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Back</span>

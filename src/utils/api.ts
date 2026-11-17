@@ -40,6 +40,7 @@ import type {
   ProfileChangeRequest,
   PublicUser,
   ReceiptAiExtraction,
+  RegisteredDeviceSummary,
   UploadDocumentCategory,
   UserRole,
   UserStatus,
@@ -97,13 +98,16 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
       typeof window !== 'undefined' &&
       path !== '/api/auth/me' &&
       path !== '/api/auth/login' &&
+      path !== '/api/auth/pin-login' &&
       path !== '/api/auth/register' &&
       path !== '/api/auth/logout'
     ) {
       window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
     }
 
-    throw new Error(message);
+    const errObj = new Error(message) as Error & { code?: string };
+    if (code) errObj.code = code;
+    throw errObj;
   }
 
   return (await res.json()) as T;
@@ -173,6 +177,36 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  pinLogin: (payload: {
+    userId: string;
+    deviceId: string;
+    deviceSecret: string;
+    pin: string;
+  }) =>
+    apiRequest<{ user: PublicUser }>('/api/auth/pin-login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  registerMobileDevice: (payload: {
+    pin: string;
+    deviceName?: string;
+    existingDeviceId?: string;
+  }) =>
+    apiRequest<{
+      device: RegisteredDeviceSummary;
+      deviceSecret: string;
+      user: PublicUser;
+    }>('/api/auth/devices/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  revokeMobileDevice: (deviceId: string) =>
+    apiRequest<{ ok: boolean; user: PublicUser }>(
+      `/api/auth/devices/${encodeURIComponent(deviceId)}`,
+      {
+        method: 'DELETE',
+      }
+    ),
   forgotPassword: (email: string, reason?: string) =>
     apiRequest<{ ok: boolean; message: string; adminCount: number }>('/api/auth/forgot-password', {
       method: 'POST',

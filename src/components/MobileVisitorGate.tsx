@@ -11,13 +11,21 @@ import {
   Loader2,
   Lock,
   Shield,
+  Smartphone,
   UserPlus,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { api } from '../utils/api.ts';
+import {
+  getMobileAutoLogoutNotice,
+  getRegisteredMobileAccounts,
+  setMobileAutoLogoutNotice,
+  setSelectedPinAccountId,
+} from '../utils/mobileDeviceAuth.ts';
 import { isMobileBrowseMode, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { useCoopSession } from './AppProviders.tsx';
+import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
 
 export function MobileVisitorGate() {
   const pathname = usePathname();
@@ -25,6 +33,9 @@ export function MobileVisitorGate() {
   const { user, authChecking, setUser } = useCoopSession();
   const [isMobile, setIsMobile] = useState(false);
   const [browseMode, setBrowseMode] = useState(false);
+  const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
+  const [usePasswordMode, setUsePasswordMode] = useState(false);
+  const [autoLogoutNotice, setAutoLogoutNotice] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,11 +49,21 @@ export function MobileVisitorGate() {
     const sync = () => {
       setIsMobile(mq.matches);
       setBrowseMode(isMobileBrowseMode());
+      const accounts = getRegisteredMobileAccounts();
+      setHasRegisteredPinAccount(accounts.length > 0);
+      setAutoLogoutNotice(getMobileAutoLogoutNotice());
+      if (accounts.length === 0) {
+        setUsePasswordMode(false);
+      }
     };
     sync();
     mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, [pathname]);
+    window.addEventListener('amanah:mobile-devices-updated', sync);
+    return () => {
+      mq.removeEventListener('change', sync);
+      window.removeEventListener('amanah:mobile-devices-updated', sync);
+    };
+  }, [pathname, user]);
 
   const isAuthOrCharterPage =
     pathname === '/login' ||
@@ -56,7 +77,7 @@ export function MobileVisitorGate() {
     isMobile && !authChecking && Boolean(user) && pathname === '/' && !browseMode;
 
   // Authenticated mobile visitors go directly to the app main interface (/dashboard)
-  // unless they intentionally tapped "Public Site" from the mobile dashboard drawer.
+  // unless they intentionally tapped "Home" from the mobile dashboard drawer.
   useEffect(() => {
     if (!shouldRedirectAuthenticatedMobileHome) return;
     router.replace('/dashboard');
@@ -68,6 +89,9 @@ export function MobileVisitorGate() {
     setSubmitting(true);
     try {
       const res = await api.login(email.trim(), password);
+      setMobileAutoLogoutNotice(null);
+      setAutoLogoutNotice(null);
+      setSelectedPinAccountId(res.user.id);
       setMobileBrowseMode(false);
       setBrowseMode(false);
       setUser(res.user);
@@ -153,97 +177,131 @@ export function MobileVisitorGate() {
               </div>
 
               <div className="p-5 space-y-4">
-                {/* Registered Member Sign In Form */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                      Registered Member?
-                    </span>
-                    <Link
-                      href="/login?forgot=1"
-                      className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline py-1"
-                    >
-                      Forgot Password?
-                    </Link>
-                  </div>
-
-                  <AnimatePresence>
-                    {error && (
-                      <motion.div
-                        role="alert"
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                {hasRegisteredPinAccount && !usePasswordMode ? (
+                  <MobilePinLoginPanel
+                    compact
+                    onSuccess={(loggedInUser) => {
+                      setMobileBrowseMode(false);
+                      setBrowseMode(false);
+                      setUser(loggedInUser);
+                      router.replace('/dashboard');
+                    }}
+                    onUsePassword={() => setUsePasswordMode(true)}
+                  />
+                ) : (
+                  /* Registered Member Email & Password Sign In Form */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Registered Member?
+                      </span>
+                      <Link
+                        href="/login?forgot=1"
+                        className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline py-1"
                       >
-                        {error}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <form onSubmit={handleModalSignIn} className="space-y-3">
-                    <div>
-                      <label
-                        htmlFor="mobile-modal-email"
-                        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
-                        Email Address
-                      </label>
-                      <input
-                        id="mobile-modal-email"
-                        type="email"
-                        required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="name@amanahcoop.org"
-                        className="w-full min-h-[44px] px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-                      />
+                        Forgot Password?
+                      </Link>
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="mobile-modal-password"
-                        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="mobile-modal-password"
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          autoComplete="current-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Enter your password"
-                          className="w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" aria-hidden="true" />
-                          ) : (
-                            <Eye className="w-4 h-4" aria-hidden="true" />
-                          )}
-                        </button>
+                    {autoLogoutNotice && (
+                      <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                        <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                        <span>{autoLogoutNotice}</span>
                       </div>
-                    </div>
+                    )}
 
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer"
-                    >
-                      <Lock className="w-4 h-4" aria-hidden="true" />
-                      <span>{submitting ? 'Signing In…' : 'Sign In'}</span>
-                    </button>
-                  </form>
-                </div>
+                    <AnimatePresence>
+                      {error && (
+                        <motion.div
+                          role="alert"
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <form onSubmit={handleModalSignIn} className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor="mobile-modal-email"
+                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                        >
+                          Email Address
+                        </label>
+                        <input
+                          id="mobile-modal-email"
+                          type="email"
+                          required
+                          autoComplete="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@amanahcoop.org"
+                          className="w-full min-h-[44px] px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="mobile-modal-password"
+                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                        >
+                          Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="mobile-modal-password"
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" aria-hidden="true" />
+                            ) : (
+                              <Eye className="w-4 h-4" aria-hidden="true" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        <Lock className="w-4 h-4" aria-hidden="true" />
+                        <span>{submitting ? 'Signing In…' : 'Sign In'}</span>
+                      </button>
+                    </form>
+
+                    {hasRegisteredPinAccount && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setError(null);
+                          setUsePasswordMode(false);
+                        }}
+                        className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Use 4-Digit Device PIN</span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 <div className="h-px bg-slate-200/80 dark:bg-slate-800" aria-hidden="true" />
 

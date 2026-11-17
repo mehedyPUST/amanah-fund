@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { PublicUser, UserRole } from '../types/coop.ts';
 import { loadVaultState, type StoredUser } from './db.ts';
+import { sanitizeRegisteredDevices } from './deviceAuthService.ts';
 
 export const SESSION_COOKIE_NAME = 'amanah_session';
 
@@ -45,6 +46,7 @@ export function sanitizeUser(user: StoredUser): PublicUser {
     authProvider: 'password',
     communityMuted: Boolean(user.communityMuted),
     totpEnabled: Boolean(user.totpEnabled && user.encryptedTotpSecret),
+    registeredDevices: sanitizeRegisteredDevices(user.registeredDevices),
     notificationPreferences: {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
       ...(user.notificationPreferences || {}),
