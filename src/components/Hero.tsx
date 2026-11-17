@@ -17,24 +17,36 @@ const KEY_TERMS = [
     meta: '0% Interest',
     value: '৳50,000',
     sublabel: 'Or up to 75% of personal verified savings',
+    cardClass:
+      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+    metaClass: 'text-emerald-700 dark:text-emerald-400',
   },
   {
     kicker: 'Monthly Contribution',
     meta: 'Due 10th Monthly',
     value: '৳5,000',
     sublabel: 'Pooled per share with ৳50 Sadaqah late-fee isolation',
+    cardClass:
+      'bg-gradient-to-br from-teal-100/75 via-teal-50/40 to-white/85 dark:from-teal-950/50 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+    metaClass: 'text-teal-700 dark:text-teal-400',
   },
   {
     kicker: 'Supermajority Quorum',
     meta: 'Secret Ballot',
     value: '2/3 Vote',
     sublabel: 'Required consensus for loans & Halal capital deployment',
+    cardClass:
+      'bg-gradient-to-br from-amber-100/75 via-amber-50/40 to-white/85 dark:from-amber-950/50 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+    metaClass: 'text-amber-700 dark:text-amber-400',
   },
   {
     kicker: 'Charter Term & Cap',
     meta: '2027–2036',
     value: '20 Shares',
     sublabel: 'Up to 10-month revolving repayment schedules',
+    cardClass:
+      'bg-gradient-to-br from-sky-100/75 via-sky-50/40 to-white/85 dark:from-sky-950/50 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+    metaClass: 'text-sky-700 dark:text-sky-400',
   },
 ];
 
@@ -59,7 +71,7 @@ export function Hero({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs"
+        className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
@@ -175,13 +187,13 @@ export function Hero({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, delay: 0.03 * idx }}
-            className="amanah-card-border bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs flex flex-col justify-between gap-3"
+            className={`amanah-card-border backdrop-blur-md border rounded-xl p-5 shadow-xs flex flex-col justify-between gap-3 ${metric.cardClass}`}
           >
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
                 {metric.kicker}
               </span>
-              <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400 shrink-0">
+              <span className={`font-mono text-[11px] font-semibold shrink-0 ${metric.metaClass}`}>
                 {metric.meta}
               </span>
             </div>
@@ -208,7 +220,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
   return (
     <section
       id="lifecycle"
-      className={`scroll-mt-2 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs ${
+      className={`scroll-mt-2 bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 rounded-2xl shadow-xs ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >

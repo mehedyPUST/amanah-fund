@@ -165,6 +165,12 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {COMMUNITY_FEATURES.map((item, idx) => {
                 const Icon = item.Icon;
+                const cardClass = [
+                  'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+                  'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+                  'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+                  'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+                ][idx % 4];
                 return (
                   <motion.div
                     key={item.title}
@@ -172,7 +178,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.15 }}
                     transition={{ duration: 0.2, delay: idx * 0.04 }}
-                    className="amanah-card-border p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/50 space-y-2.5"
+                    className={`amanah-card-border p-4 rounded-xl border ${cardClass} space-y-2.5`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="w-8 h-8 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">

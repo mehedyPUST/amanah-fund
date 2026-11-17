@@ -334,6 +334,12 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {CHARTER_SECTIONS.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
+            const ruleCardClass = [
+              'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+              'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+              'bg-gradient-to-br from-sky-100/70 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+              'bg-gradient-to-br from-amber-100/70 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+            ][idx % 4];
             return (
               <motion.article
                 key={rule.code}
@@ -341,7 +347,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.18, delay: idx * 0.03 }}
-                className="border border-slate-200/80 dark:border-slate-800/80 rounded-xl bg-slate-50/70 dark:bg-slate-950/50 p-5 space-y-3 flex flex-col justify-between"
+                className={`amanah-card-border border rounded-xl ${ruleCardClass} p-5 space-y-3 flex flex-col justify-between`}
               >
                 <div className="space-y-2.5">
                   <div className="space-y-1">

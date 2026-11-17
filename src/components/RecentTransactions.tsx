@@ -201,7 +201,7 @@ export function RecentTransactions({
   return (
     <section
       aria-labelledby="recent-transactions-heading"
-      className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs transition-colors"
+      className="bg-gradient-to-br from-sky-100/70 via-sky-50/30 to-white/85 dark:from-sky-950/40 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs transition-colors"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">

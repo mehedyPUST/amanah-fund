@@ -237,12 +237,18 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             transition={{ duration: 0.16 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
-            {currentGuide.steps.map((step) => {
+            {currentGuide.steps.map((step, idx) => {
               const Icon = step.Icon;
+              const stepCardClass = [
+                'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
+                'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
+                'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
+                'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
+              ][idx % 4];
               return (
                 <div
                   key={step.number}
-                  className="amanah-card-border rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 flex flex-col justify-between gap-4"
+                  className={`amanah-card-border rounded-xl border ${stepCardClass} p-5 flex flex-col justify-between gap-4`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">

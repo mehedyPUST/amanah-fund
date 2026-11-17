@@ -127,7 +127,7 @@ export function ContributionLeaderboard({
   return (
     <section
       aria-label="Contribution Leaderboard"
-      className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
+      className="bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-colors"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">

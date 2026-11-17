@@ -502,7 +502,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.02 }}
-          className="amanah-card-border amanah-card-border-hero bg-emerald-700 dark:bg-emerald-800 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
+          className="amanah-card-border amanah-card-border-hero bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 text-white border border-emerald-600/40 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
             <span>Amanah Height (Total Raised)</span>
@@ -521,7 +521,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.06 }}
-          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Current Balance</span>
@@ -539,7 +539,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.1 }}
-          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Quard Hasan Total Current</span>
@@ -559,7 +559,7 @@ export function OverviewView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.14 }}
-          className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
+          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Repayments Returned (+)</span>
@@ -578,7 +578,7 @@ export function OverviewView({
 
       {/* This Month Treasury Pulse */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+        <div className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Contribution ({treasury.thisMonthKey})</span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -614,7 +614,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+        <div className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-4 shadow-xs">
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Due (Remaining / Target)
           </div>
@@ -631,7 +631,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+        <div className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-4 shadow-xs">
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Hasan Installment
           </div>
@@ -648,7 +648,7 @@ export function OverviewView({
           </div>
         </div>
 
-        <div className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+        <div className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Clearance</span>
             <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -684,7 +684,7 @@ export function OverviewView({
 
       {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        <section className="xl:col-span-6 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -757,7 +757,7 @@ export function OverviewView({
           )}
         </section>
 
-        <section className="xl:col-span-6 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
+        <section className="xl:col-span-6 bg-gradient-to-br from-emerald-100/70 via-emerald-50/30 to-white/85 dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -828,7 +828,7 @@ export function OverviewView({
       {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
         {isAdmin ? (
-          <section className="xl:col-span-5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs">
+          <section className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -879,7 +879,7 @@ export function OverviewView({
             </div>
           </section>
         ) : (
-          <section className="xl:col-span-5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs transition-colors">
+          <section className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs transition-colors">
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -996,7 +996,7 @@ export function OverviewView({
           </section>
         )}
 
-        <section className="xl:col-span-7 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <section className="xl:col-span-7 bg-gradient-to-br from-sky-100/70 via-sky-50/30 to-white/85 dark:from-sky-950/40 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">

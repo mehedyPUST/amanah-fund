@@ -10,6 +10,8 @@ const PILLARS = [
     title: '20-Member Shura-Approved Onboarding',
     description:
       'Applicants submit KYC details, nominee NID, portrait photo, existing member reference, and a ৳200 fee into a queue capped at 20 shares.',
+    cardClass:
+      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50',
   },
   {
     index: '02.',
@@ -17,6 +19,8 @@ const PILLARS = [
     title: '5-Member Shura & Savings Committees',
     description:
       'Separation of duties across Shura Management (loan review and monthly updates), Savings Accounts (joint custody), and verified Members.',
+    cardClass:
+      'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50',
   },
   {
     index: '03.',
@@ -24,6 +28,8 @@ const PILLARS = [
     title: 'AES-256-GCM & SHA-256 Audit Chain',
     description:
       'Sensitive KYC fields, Bank/MFS transaction references, and disbursement contexts are encrypted at rest and linked in a tamper-evident hash chain.',
+    cardClass:
+      'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50',
   },
   {
     index: '04.',
@@ -31,6 +37,8 @@ const PILLARS = [
     title: '2/3 Supermajority Consensus',
     description:
       'Qard Hasan loans and Halal investments require a two-thirds member majority; charter amendments require 2/3 Shura plus 1/2 member quorum.',
+    cardClass:
+      'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50',
   },
   {
     index: '05.',
@@ -38,6 +46,8 @@ const PILLARS = [
     title: 'VISION-36 & Sadaqah Late-Fee Ledger',
     description:
       'Tracks ৳5,000 monthly savings due by the 10th, isolates ৳50 late fees for annual January Sadaqah distribution, and syncs live to Google Sheets.',
+    cardClass:
+      'bg-gradient-to-br from-violet-100/75 via-violet-50/35 to-white/85 dark:from-violet-950/45 dark:via-violet-950/20 dark:to-slate-900/80 border-violet-200/80 dark:border-violet-900/50',
   },
 ];
 
@@ -88,7 +98,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.18, delay: idx * 0.03 }}
-                className={`${spanClass} amanah-card-border rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/55 p-5 space-y-3`}
+                className={`${spanClass} amanah-card-border rounded-xl border ${pillar.cardClass} p-5 space-y-3`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">

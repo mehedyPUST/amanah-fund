@@ -39,7 +39,7 @@ const PRIORITY_META: Record<
       'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
     cardClass:
-      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800',
+      'amanah-card-border bg-gradient-to-br from-rose-100/75 via-rose-50/35 to-white/85 dark:from-rose-950/45 dark:via-rose-950/20 dark:to-slate-900/80 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60',
   },
   important: {
     label: 'Important',
@@ -48,7 +48,7 @@ const PRIORITY_META: Record<
       'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400',
     labelClass: 'text-amber-700 dark:text-amber-400',
     cardClass:
-      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60 hover:border-amber-300 dark:hover:border-amber-800',
+      'amanah-card-border bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60',
   },
   normal: {
     label: 'Notice',
@@ -57,7 +57,7 @@ const PRIORITY_META: Record<
       'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
     labelClass: 'text-emerald-700 dark:text-emerald-400',
     cardClass:
-      'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-800/70',
+      'amanah-card-border bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border-emerald-200/70 dark:border-emerald-800/60',
   },
 };
 

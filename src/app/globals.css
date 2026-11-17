@@ -102,6 +102,29 @@ html.dark .amanah-ambient-canvas {
   position: relative;
 }
 
+:where(
+  .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
+):not([class*="bg-gradient-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not(.absolute):not(.fixed):not(.border-dashed) {
+  background-image: linear-gradient(
+    135deg,
+    rgba(209, 250, 229, 0.5) 0%,
+    rgba(236, 253, 245, 0.28) 46%,
+    rgba(255, 255, 255, 0.86) 100%
+  );
+}
+
+html.dark
+  :where(
+    .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
+  ):not([class*="bg-gradient-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not(.absolute):not(.fixed):not(.border-dashed) {
+  background-image: linear-gradient(
+    135deg,
+    rgba(6, 78, 59, 0.34) 0%,
+    rgba(15, 23, 42, 0.76) 52%,
+    rgba(15, 23, 42, 0.86) 100%
+  );
+}
+
 :is(
   .amanah-card-border,
   .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
@@ -116,7 +139,7 @@ html.dark .amanah-ambient-canvas {
   content: "";
   position: absolute;
   inset: 0;
-  padding: 3px;
+  padding: 1.5px;
   border-radius: inherit;
   background: conic-gradient(
     from var(--amanah-border-angle),
