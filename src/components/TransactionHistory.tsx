@@ -397,9 +397,9 @@ export function TransactionHistory({
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
           {!compact && isStaff && !isAdmin && (
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <div className="col-span-2 sm:col-span-1 flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               {(
                 [
                   { id: 'mine', label: 'My Transactions' },
@@ -412,7 +412,7 @@ export function TransactionHistory({
                     key={item.id}
                     type="button"
                     onClick={() => setScope(item.id)}
-                    className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`relative flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       active
                         ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -447,10 +447,10 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleDownloadPdf}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className={`px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${!compact && filteredRows.length === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Download PDF Statement</span>
+              <span>Download PDF</span>
             </button>
           )}
 
@@ -458,7 +458,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
+              className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
               <span>Full General Ledger</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -467,12 +467,12 @@ export function TransactionHistory({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-3.5 border-y border-slate-100 dark:border-slate-800">
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 py-3 sm:py-3.5 border-y border-slate-100 dark:border-slate-800">
+        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             Approved Contributions
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(counts.approvedContribTotal, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -480,11 +480,11 @@ export function TransactionHistory({
           </div>
         </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Active Loan Repayments Paid
+        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+            Loan Repayments Paid
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {formatMoney(counts.paidRepayTotal, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -493,11 +493,11 @@ export function TransactionHistory({
           </div>
         </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             Active Loan Remaining
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {formatMoney(counts.activeLoanRemaining, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -505,11 +505,11 @@ export function TransactionHistory({
           </div>
         </div>
 
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             Pending Review
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {counts.pendingCount}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -518,9 +518,9 @@ export function TransactionHistory({
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full lg:w-auto">
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit">
             {(
               [
                 { id: 'all', label: `All (${counts.total})` },
@@ -535,7 +535,7 @@ export function TransactionHistory({
                   key={tab.id}
                   type="button"
                   onClick={() => setTypeFilter(tab.id)}
-                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -558,7 +558,7 @@ export function TransactionHistory({
             aria-label="Filter transactions by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
           >
             <option value="all">All Statuses</option>
             <option value="completed">Approved / Paid / Disbursed</option>
@@ -578,7 +578,7 @@ export function TransactionHistory({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search month, bank, loan ID, Tx#…"
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+            className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
           />
         </div>
       </div>
@@ -739,36 +739,173 @@ export function TransactionHistory({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                <th className="py-2.5 px-4 font-medium">Date &amp; Period</th>
-                <th className="py-2.5 px-4 font-medium">Transaction</th>
-                <th className="py-2.5 px-4 font-medium">Bank / MFS &amp; Transaction No.</th>
-                <th className="py-2.5 px-4 font-medium">Status</th>
-                <th className="py-2.5 px-4 font-medium text-right">Amount</th>
-                <th className="py-2.5 px-4 font-medium text-right">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {displayedRows.map((row) => {
-                const isExpanded = expandedId === row.id;
-                return (
-                  <FragmentRow
-                    key={row.id}
-                    row={row}
-                    currency={ccy}
-                    isExpanded={isExpanded}
-                    onToggle={() => setExpandedId(isExpanded ? null : row.id)}
-                    onNavigate={onNavigate}
-                    onViewMemberProfile={onViewMemberProfile}
-                  />
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="lg:hidden space-y-2">
+            {displayedRows.map((row) => {
+              const isExpanded = expandedId === row.id;
+              const txNo = row.decryptedReference || row.maskedReference;
+              return (
+                <div
+                  key={row.id}
+                  className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/75 overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(isExpanded ? null : row.id)}
+                    aria-expanded={isExpanded}
+                    className="w-full p-3 flex items-start justify-between gap-2.5 text-left cursor-pointer"
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <span
+                        className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+                          row.category === 'contribution'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
+                            : row.category === 'loan_disbursement'
+                              ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60 text-teal-700 dark:text-teal-400'
+                              : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400'
+                        }`}
+                      >
+                        {row.category === 'contribution' ? (
+                          <CreditCard className="w-4 h-4" aria-hidden="true" />
+                        ) : row.category === 'loan_disbursement' ? (
+                          <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+                        ) : (
+                          <HandCoins className="w-4 h-4" aria-hidden="true" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                          {row.title}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          {row.channelLabel} · {row.providerName} · Tx #{txNo}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+                          {row.displayDate}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
+                      <span
+                        className={`text-sm font-bold font-mono tabular-nums ${
+                          row.status === 'rejected' || row.status === 'overdue'
+                            ? 'text-rose-700 dark:text-rose-400'
+                            : row.status === 'scheduled'
+                              ? 'text-slate-600 dark:text-slate-300'
+                              : row.category === 'loan_disbursement'
+                                ? 'text-teal-700 dark:text-teal-400'
+                                : 'text-emerald-700 dark:text-emerald-400'
+                        }`}
+                      >
+                        {row.category === 'loan_disbursement' ? '−' : ''}
+                        {formatMoney(row.amount, ccy)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <StatusText status={row.status} />
+                        {isExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-3 pb-3 pt-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 space-y-2 text-xs">
+                      <div className="grid grid-cols-1 gap-1.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                        {onViewMemberProfile && (
+                          <div className="font-sans">
+                            <span className="text-slate-400">Member: </span>
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(row.memberId)}
+                              className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline cursor-pointer"
+                            >
+                              {row.memberName} ({row.memberCode})
+                            </button>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-slate-400">
+                            {row.category === 'loan_disbursement' ? 'Payout Account: ' : 'Sender Account: '}
+                          </span>
+                          <span className="text-slate-800 dark:text-slate-200">
+                            {row.decryptedSenderAccount || 'Encrypted / Not yet submitted'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">
+                            {row.category === 'loan_disbursement' ? 'Disbursed By: ' : 'Verified By: '}
+                          </span>
+                          <span className="text-slate-800 dark:text-slate-200">
+                            {row.reviewerOrVerifier || 'Pending'}
+                          </span>
+                        </div>
+                        {(row.decryptedNotes || row.reviewNote) && (
+                          <div className="font-sans">
+                            <span className="text-slate-400">Note: </span>
+                            <span className="text-slate-800 dark:text-slate-200">
+                              {row.reviewNote || row.decryptedNotes}
+                            </span>
+                          </div>
+                        )}
+                        {row.entryHash && (
+                          <div>
+                            <span className="text-slate-400">Entry Hash: </span>
+                            <span className="text-slate-800 dark:text-slate-200">{shortHash(row.entryHash)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {onNavigate && row.category === 'loan_repayment' && row.status === 'scheduled' && (
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('quard-hasan')}
+                          className="w-full min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <span>Submit Repayment</span>
+                          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+                  <th className="py-2.5 px-4 font-medium">Date &amp; Period</th>
+                  <th className="py-2.5 px-4 font-medium">Transaction</th>
+                  <th className="py-2.5 px-4 font-medium">Bank / MFS &amp; Transaction No.</th>
+                  <th className="py-2.5 px-4 font-medium">Status</th>
+                  <th className="py-2.5 px-4 font-medium text-right">Amount</th>
+                  <th className="py-2.5 px-4 font-medium text-right">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {displayedRows.map((row) => {
+                  const isExpanded = expandedId === row.id;
+                  return (
+                    <FragmentRow
+                      key={row.id}
+                      row={row}
+                      currency={ccy}
+                      isExpanded={isExpanded}
+                      onToggle={() => setExpandedId(isExpanded ? null : row.id)}
+                      onNavigate={onNavigate}
+                      onViewMemberProfile={onViewMemberProfile}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {compact && filteredRows.length > displayedRows.length && onNavigate && (

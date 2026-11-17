@@ -228,7 +228,7 @@ export function ManagerRotationTimeline({
   return (
     <section
       aria-label="Manager Rotation Visual Timeline"
-      className="amanah-card-violet border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5 transition-all duration-200"
+      className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-4 sm:space-y-5 transition-all duration-200"
     >
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -242,12 +242,12 @@ export function ManagerRotationTimeline({
           </h3>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 shrink-0 w-full xl:w-auto">
           {/* Segmented Status Filter */}
           <div
             role="tablist"
             aria-label="Filter rotation timeline"
-            className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
           >
             {filterTabs.map((tab) => {
               const active = filter === tab.id;
@@ -258,7 +258,7 @@ export function ManagerRotationTimeline({
                   type="button"
                   aria-selected={active}
                   onClick={() => setFilter(tab.id)}
-                  className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -281,11 +281,11 @@ export function ManagerRotationTimeline({
           </div>
 
           {/* Layout Toggle */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-fit">
             <button
               type="button"
               onClick={() => setLayout('track')}
-              className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'track'
                   ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -304,7 +304,7 @@ export function ManagerRotationTimeline({
             <button
               type="button"
               onClick={() => setLayout('vertical')}
-              className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'vertical'
                   ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -417,7 +417,7 @@ export function ManagerRotationTimeline({
                 <button
                   type="button"
                   onClick={jumpToCurrent}
-                  className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 cursor-pointer whitespace-nowrap"
+                  className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 cursor-pointer whitespace-nowrap"
                 >
                   Focus Current
                 </button>
@@ -426,7 +426,7 @@ export function ManagerRotationTimeline({
                 type="button"
                 onClick={() => scrollTrackBy('left')}
                 aria-label="Scroll timeline left"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -434,7 +434,7 @@ export function ManagerRotationTimeline({
                 type="button"
                 onClick={() => scrollTrackBy('right')}
                 aria-label="Scroll timeline right"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -470,7 +470,7 @@ export function ManagerRotationTimeline({
                   <div
                     key={`${slot.cycleNumber}-${slot.memberId}`}
                     ref={slot.status === 'current' ? currentCardRef : undefined}
-                    className="w-[270px] sm:w-[285px] shrink-0 flex flex-col"
+                    className="w-[250px] sm:w-[285px] shrink-0 flex flex-col"
                   >
                     {/* Axis Node & Connector Row */}
                     <div className="relative flex items-center h-10 mb-2">
@@ -661,7 +661,7 @@ export function ManagerRotationTimeline({
               <div
                 key={`${slot.cycleNumber}-${slot.memberId}`}
                 ref={slot.status === 'current' ? currentCardRef : undefined}
-                className="relative flex items-stretch gap-4"
+                className="relative flex items-stretch gap-3 sm:gap-4"
               >
                 {/* Left Vertical Spine */}
                 <div className="flex flex-col items-center shrink-0 w-8">
@@ -699,7 +699,7 @@ export function ManagerRotationTimeline({
                 {/* Timeline Row Content */}
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
                   <div
-                    className={`rounded-xl border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md ${
+                    className={`rounded-xl border p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 backdrop-blur-md ${
                       slot.status === 'current'
                         ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/60 dark:bg-emerald-950/30'
                         : slot.status === 'completed'
@@ -772,7 +772,7 @@ export function ManagerRotationTimeline({
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(slot.memberId)}
-                              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                              className="min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
                             >
                               Profile
                             </button>
@@ -782,7 +782,7 @@ export function ManagerRotationTimeline({
                               type="button"
                               disabled={modalBusy}
                               onClick={() => onToggleManagerRole(slot)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap ${
+                              className={`min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap ${
                                 slot.currentRole === 'manager'
                                   ? 'border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'

@@ -518,7 +518,7 @@ export function AdminUserManagementPanel({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add New User</span>
@@ -560,12 +560,12 @@ export function AdminUserManagementPanel({
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
                   <button
                     type="button"
                     disabled={busyId === req.userId}
                     onClick={() => requestDeclinePasswordReset(req)}
-                    className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium cursor-pointer disabled:opacity-50"
+                    className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium cursor-pointer disabled:opacity-50"
                   >
                     Decline
                   </button>
@@ -583,7 +583,7 @@ export function AdminUserManagementPanel({
                         req
                       )
                     }
-                    className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs transition-colors whitespace-nowrap shrink-0"
+                    className="min-h-[44px] sm:min-h-0 justify-center px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs transition-colors whitespace-nowrap shrink-0"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Reset &amp; Email Temp Password</span>
@@ -596,7 +596,7 @@ export function AdminUserManagementPanel({
       )}
 
       {/* Summary Counts Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-3.5 border-y border-slate-100 dark:border-slate-800 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4 py-3 sm:py-3.5 border-y border-slate-100 dark:border-slate-800 text-xs">
         <div>
           <div className="text-slate-500 dark:text-slate-400">Total Accounts</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -621,7 +621,7 @@ export function AdminUserManagementPanel({
             {loading ? <Skeleton width={36} /> : stats.suspended}
           </div>
         </div>
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <div className="text-slate-500 dark:text-slate-400">Admins & Managers</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {loading ? <Skeleton width={36} /> : stats.staff}
@@ -630,9 +630,9 @@ export function AdminUserManagementPanel({
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit">
             {(
               [
                 { id: 'all', label: 'All Statuses' },
@@ -647,7 +647,7 @@ export function AdminUserManagementPanel({
                   key={s.id}
                   type="button"
                   onClick={() => setStatusFilter(s.id)}
-                  className={`relative px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-indigo-700 dark:text-indigo-300'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -670,7 +670,7 @@ export function AdminUserManagementPanel({
             aria-label="Filter users by role"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'all' | UserRole)}
-            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -690,7 +690,7 @@ export function AdminUserManagementPanel({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter name, email, code…"
             aria-label="Search users"
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+            className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
           />
         </div>
       </div>
@@ -725,7 +725,173 @@ export function AdminUserManagementPanel({
           No user accounts match the active filter criteria.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+        <>
+        {/* Mobile User Management Cards (< lg) */}
+        <div className="lg:hidden space-y-2.5">
+          {filteredMembers.map((m) => {
+            const isSelf = m.id === currentUser.id;
+            const isBusy = busyId === m.id;
+            return (
+              <div
+                key={`mobile-user-${m.id}`}
+                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-slate-900/75 space-y-2.5 text-xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                      {m.name}
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 break-all">
+                      {m.memberCode} · {m.email}
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                      Joined {formatShortDate(m.joinedAt)}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    <StatusText status={m.status} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-2 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Savings</div>
+                    <div className="font-mono tabular-nums font-semibold text-emerald-700 dark:text-emerald-400 truncate">
+                      {formatMoney(m.totalContributed, ccy)}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Loans/Yr</div>
+                    <div className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
+                      {m.loansThisYear}/{config?.maxLoansPerYear || 3}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Loan Bal.</div>
+                    <div className="font-mono tabular-nums font-semibold text-amber-700 dark:text-amber-400 truncate">
+                      {formatMoney(m.activeLoanBalance, ccy)}
+                    </div>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="space-y-2 pt-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        Role Assignment
+                      </span>
+                      <select
+                        aria-label={`Role for ${m.name}`}
+                        disabled={isBusy || isSelf}
+                        value={m.role}
+                        onChange={(e) => {
+                          const nextRole = e.target.value as UserRole;
+                          if (nextRole !== m.role) {
+                            requestQuickRoleOrStatus(
+                              m,
+                              { role: nextRole },
+                              `Updated ${m.name}'s role to ${nextRole}.`
+                            );
+                          }
+                        }}
+                        className="min-h-[38px] px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 capitalize disabled:opacity-60"
+                      >
+                        <option value="member">member</option>
+                        <option value="manager">manager</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {m.registrationDetails && (
+                        <button
+                          type="button"
+                          onClick={() => onInspectMember(m)}
+                          className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>KYC</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => openEditModal(m)}
+                        className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Edit</span>
+                      </button>
+                      {!isSelf && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              requestAdminPasswordReset({
+                                id: m.id,
+                                name: m.name,
+                                memberCode: m.memberCode,
+                                email: m.email,
+                              })
+                            }
+                            className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/70 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Reset PW</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => {
+                              const nextStatus: UserStatus =
+                                m.status === 'active' ? 'suspended' : 'active';
+                              requestQuickRoleOrStatus(
+                                m,
+                                { status: nextStatus },
+                                nextStatus === 'active'
+                                  ? `Activated ${m.name} (${m.memberCode}).`
+                                  : `Suspended ${m.name} (${m.memberCode}).`
+                              );
+                            }}
+                            className={`min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border font-medium cursor-pointer disabled:opacity-50 ${
+                              m.status === 'active'
+                                ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400'
+                                : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                            }`}
+                          >
+                            {m.status === 'active'
+                              ? 'Suspend'
+                              : m.status === 'pending_approval'
+                                ? 'Approve'
+                                : 'Activate'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => requestDeleteUser(m)}
+                            aria-label={`Delete ${m.name}`}
+                            className="min-w-[40px] min-h-[40px] px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 inline-flex items-center justify-center cursor-pointer disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+                        </>
+                      )}
+                      {isSelf && (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 px-2">
+                          Current Admin
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table (>= lg) */}
+        <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
@@ -897,6 +1063,7 @@ export function AdminUserManagementPanel({
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Modal: Add New User */}
@@ -916,9 +1083,9 @@ export function AdminUserManagementPanel({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-xl"
           >
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h4
                   id="admin-create-user-title"
@@ -931,13 +1098,13 @@ export function AdminUserManagementPanel({
                 type="button"
                 onClick={() => setCreateOpen(false)}
                 aria-label="Close modal"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateUserSubmit} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleCreateUserSubmit} className="p-4 sm:p-6 space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -1061,18 +1228,18 @@ export function AdminUserManagementPanel({
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-2 grid grid-cols-2 sm:flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createSaving}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{createSaving ? 'Creating User…' : 'Create User'}</span>
@@ -1101,13 +1268,13 @@ export function AdminUserManagementPanel({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-xl"
           >
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div>
+            <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+              <div className="min-w-0">
                 <h4
                   id="admin-edit-user-title"
-                  className="text-base font-semibold text-slate-900 dark:text-white"
+                  className="text-base font-semibold text-slate-900 dark:text-white truncate"
                 >
                   Edit User · {editingMember.name} ({editingMember.memberCode})
                 </h4>
@@ -1116,13 +1283,13 @@ export function AdminUserManagementPanel({
                 type="button"
                 onClick={() => setEditingMember(null)}
                 aria-label="Close modal"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleEditUserSubmit} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleEditUserSubmit} className="p-4 sm:p-6 space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -1261,18 +1428,18 @@ export function AdminUserManagementPanel({
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-2 grid grid-cols-2 sm:flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{editSaving ? 'Saving Changes…' : 'Save User Changes'}</span>

@@ -359,7 +359,7 @@ export function NotificationsView({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800">
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-full sm:w-fit">
             {(
               [
                 { id: 'all', label: `All (${notifications.length})` },
@@ -376,7 +376,7 @@ export function NotificationsView({
                   key={tab.id}
                   type="button"
                   onClick={() => setFilterType(tab.id)}
-                  className={`relative px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     active
                       ? 'text-white'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -396,14 +396,14 @@ export function NotificationsView({
           </div>
 
           {isStaff && (
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
               <button
                 type="button"
                 disabled={generatingReminders}
                 onClick={handleGenerateReminders}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-amber-50/50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 disabled:opacity-50 transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <Bell className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
+                <Bell className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
                 <span>
                   {generatingReminders
                     ? 'Generating Reminders…'
@@ -417,14 +417,14 @@ export function NotificationsView({
                 onClick={() => requestGmailSend(undefined)}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                <Send className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>Send Queued via Gmail ({Math.min(queuedItems.length, 15)})</span>
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 pt-1">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-full sm:w-fit max-w-full">
           {(
             [
               { id: 'all', label: 'All Topics' },
@@ -441,7 +441,7 @@ export function NotificationsView({
                 key={cat.id}
                 type="button"
                 onClick={() => setCategoryFilter(cat.id)}
-                className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                className={`relative px-2.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -474,7 +474,7 @@ export function NotificationsView({
             </span>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-2.5">
           {(
             [
               { key: 'inAppAlerts', label: 'In-App Alerts' },
@@ -483,17 +483,19 @@ export function NotificationsView({
               { key: 'emailRepayments', label: 'Repayment Reminders' },
               { key: 'emailCommunity', label: 'Community Mentions' },
             ] as const
-          ).map((item) => (
+          ).map((item, idx) => (
             <label
               key={item.key}
-              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+              className={`min-h-[44px] sm:min-h-0 flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors ${
+                idx === 4 ? 'col-span-2 lg:col-span-1' : ''
+              }`}
             >
               <span className="font-medium truncate">{item.label}</span>
               <input
                 type="checkbox"
                 checked={Boolean(prefs[item.key])}
                 onChange={() => void handleTogglePreference(item.key)}
-                className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600 focus:ring-indigo-600"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600 focus:ring-indigo-600 shrink-0"
               />
             </label>
           ))}
@@ -505,7 +507,7 @@ export function NotificationsView({
         {loading ? (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-5 space-y-2">
+              <div key={i} className="p-3.5 sm:p-5 space-y-2">
                 <Skeleton width={220} height={12} />
                 <Skeleton width="55%" height={18} />
                 <Skeleton width="85%" height={14} />
@@ -520,19 +522,19 @@ export function NotificationsView({
           visibleNotifications.map((item) => (
             <div
               key={item.id}
-              className={`p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 ${
+              className={`p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 ${
                 !item.readByRecipient ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''
               }`}
             >
               <div className="space-y-1.5 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                   <span className="font-medium text-emerald-700 dark:text-emerald-400">
                     {TYPE_LABELS[item.type] || item.type}
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                     ·
                   </span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400">
+                  <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
                     To: {item.recipientName} &lt;{item.recipientEmail}&gt;
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
@@ -558,7 +560,7 @@ export function NotificationsView({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
                 {(() => {
                   const subjLower = item.subject.toLowerCase();
                   if (

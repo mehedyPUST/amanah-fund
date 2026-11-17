@@ -254,11 +254,11 @@ export function HalalProjectsView({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="space-y-6"
+      className="space-y-4 sm:space-y-6"
     >
       {/* Maturity Transition Summary */}
       <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -266,24 +266,24 @@ export function HalalProjectsView({
                 Pre-Specified Maturity Date: {formatShortDate(overview?.config.maturityDate)}
               </span>
             </div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
               Halal Ventures &amp; 2/3 Member Voting
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {overview?.config.halalInvestmentThesis}
             </p>
           </div>
 
-          <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-            <div className="amanah-card-emerald p-3.5 rounded-xl border">
-              <div className="text-xs text-slate-600 dark:text-slate-400">Current Pool</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+          <div className="lg:col-span-4 grid grid-cols-2 gap-2.5 sm:gap-3">
+            <div className="amanah-card-emerald p-3 sm:p-3.5 rounded-xl border">
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">Current Pool</div>
+              <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="amanah-card-violet p-3.5 rounded-xl border">
-              <div className="text-xs text-slate-600 dark:text-slate-400">Pipeline Target</div>
-              <div className="mt-1 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
+            <div className="amanah-card-violet p-3 sm:p-3.5 rounded-xl border">
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">Pipeline Target</div>
+              <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -291,7 +291,7 @@ export function HalalProjectsView({
         </div>
       </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 items-start">
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
@@ -354,9 +354,9 @@ export function HalalProjectsView({
                 return (
                   <article
                     key={proj.id}
-                    className="p-4 sm:p-5 rounded-xl bg-slate-50/70 dark:bg-slate-950/65 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4"
+                    className="p-3.5 sm:p-5 rounded-xl bg-slate-50/70 dark:bg-slate-950/65 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-3 sm:space-y-4"
                   >
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
                       <div className="space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="font-medium text-slate-800 dark:text-slate-200">
@@ -472,14 +472,14 @@ export function HalalProjectsView({
                               }))
                             }
                             placeholder="Optional vote note…"
-                            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                            className="flex-1 px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                           />
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
                             <button
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'yes')}
-                              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote Yes</span>
@@ -488,7 +488,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'no')}
-                              className="px-3.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>Vote No</span>
@@ -500,7 +500,7 @@ export function HalalProjectsView({
                       <button
                         type="button"
                         onClick={() => setExpandedVotesId(isExpanded ? null : proj.id)}
-                        className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0 self-start sm:self-center"
+                        className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none border border-slate-200 dark:border-slate-700 sm:border-0 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0 self-start sm:self-center"
                       >
                         <span>Votes ({proj.votes.length})</span>
                         {isExpanded ? (
@@ -587,7 +587,7 @@ export function HalalProjectsView({
                                   distFormProjectId === proj.id ? null : proj.id
                                 )
                               }
-                              className="px-3 py-1 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
+                              className="px-3 py-1.5 sm:py-1 min-h-[38px] sm:min-h-0 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
                             >
                               {distFormProjectId === proj.id
                                 ? 'Cancel'
@@ -604,7 +604,7 @@ export function HalalProjectsView({
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.22 }}
                               onSubmit={(e) => handleDistributeProfit(e, proj)}
-                              className="p-3.5 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end overflow-hidden"
+                              className="p-3 sm:p-3.5 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end overflow-hidden"
                             >
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -617,7 +617,7 @@ export function HalalProjectsView({
                                   value={distPeriodLabel}
                                   onChange={(e) => setDistPeriodLabel(e.target.value)}
                                   placeholder="e.g. FY2026 Q2"
-                                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
                                 />
                               </div>
                               <div>
@@ -632,7 +632,7 @@ export function HalalProjectsView({
                                   value={distRealizedProfit}
                                   onChange={(e) => setDistRealizedProfit(e.target.value)}
                                   placeholder="e.g. 25000"
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
                                 />
                               </div>
                               <div>
@@ -646,13 +646,13 @@ export function HalalProjectsView({
                                   required
                                   value={distCoopSharePct}
                                   onChange={(e) => setDistCoopSharePct(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
                                 />
                               </div>
                               <button
                                 type="submit"
                                 disabled={distBusy}
-                                className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
+                                className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
                               >
                                 {distBusy ? 'Distributing…' : 'Distribute Pro-Rata'}
                               </button>
@@ -765,7 +765,7 @@ export function HalalProjectsView({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Solar Irrigation Cooperative"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
 
@@ -779,7 +779,7 @@ export function HalalProjectsView({
                   value={sector}
                   onChange={(e) => setSector(e.target.value)}
                   placeholder="e.g. Clean Energy / Agriculture"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
 
@@ -793,7 +793,7 @@ export function HalalProjectsView({
                     onChange={(e) =>
                       setShariahStructure(e.target.value as HalalProject['shariahStructure'])
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
                     <option value="Musharakah">Musharakah</option>
                     <option value="Mudarabah">Mudarabah</option>
@@ -807,7 +807,7 @@ export function HalalProjectsView({
                   <select
                     value={riskTier}
                     onChange={(e) => setRiskTier(e.target.value as HalalProject['riskTier'])}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
                     <option value="Conservative">Conservative</option>
                     <option value="Balanced">Balanced</option>
@@ -827,7 +827,7 @@ export function HalalProjectsView({
                     required
                     value={targetAllocation}
                     onChange={(e) => setTargetAllocation(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                 </div>
                 <div>
@@ -839,7 +839,7 @@ export function HalalProjectsView({
                     required
                     value={projectedAnnualReturn}
                     onChange={(e) => setProjectedAnnualReturn(e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                 </div>
               </div>
@@ -861,7 +861,7 @@ export function HalalProjectsView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? 'Submitting Proposal…' : 'Open for 2/3 Member Vote'}</span>

@@ -84,7 +84,7 @@ export function MonthlyFinancialSnapshot({
 
   if (loading) {
     return (
-      <section className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-4">
+      <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1.5">
             <Skeleton width={210} height={14} />
@@ -92,7 +92,7 @@ export function MonthlyFinancialSnapshot({
           </div>
           <Skeleton width={140} height={18} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="space-y-1.5">
               <Skeleton width="60%" height={12} />
@@ -112,7 +112,7 @@ export function MonthlyFinancialSnapshot({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-labelledby="monthly-financial-snapshot-heading"
-      className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4 sm:space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
@@ -130,24 +130,24 @@ export function MonthlyFinancialSnapshot({
           </h3>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
           {onNavigate && (
             <>
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-emerald-50/70 sm:bg-transparent dark:bg-emerald-950/30 sm:dark:bg-transparent text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>Deposits</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">
                 ·
               </span>
               <button
                 type="button"
                 onClick={() => onNavigate('quard-hasan')}
-                className="text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-amber-50/70 sm:bg-transparent dark:bg-amber-950/30 sm:dark:bg-transparent text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>Loan Activity</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -157,16 +157,16 @@ export function MonthlyFinancialSnapshot({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="space-y-1 sm:space-y-1.5 min-w-0">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <ArrowDownLeft className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Total Contributions ({snapshot.monthLabel})</span>
+            <span className="truncate">Total Contributions ({snapshot.monthLabel})</span>
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(snapshot.totalContributions, ccy)}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {snapshot.approvedCount} approved deposit{snapshot.approvedCount === 1 ? '' : 's'}
             {snapshot.pendingCount > 0 && (
               <>
@@ -179,15 +179,15 @@ export function MonthlyFinancialSnapshot({
           </div>
         </div>
 
-        <div className="space-y-1.5 md:border-l md:border-slate-100 dark:md:border-slate-800 md:pl-5">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+        <div className="space-y-1 sm:space-y-1.5 min-w-0 border-l border-slate-100 dark:border-slate-800 pl-3 md:pl-5">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">
             <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Total Withdrawn Loans ({snapshot.monthLabel})</span>
+            <span className="truncate">Withdrawn Loans ({snapshot.monthLabel})</span>
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(snapshot.totalWithdrawnLoans, ccy)}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {snapshot.withdrawnCount} disbursed loan{snapshot.withdrawnCount === 1 ? '' : 's'}
             {snapshot.awaitingDisbursementAmount > 0 && (
               <>
@@ -200,12 +200,12 @@ export function MonthlyFinancialSnapshot({
           </div>
         </div>
 
-        <div className="space-y-1.5 md:border-l md:border-slate-100 dark:md:border-slate-800 md:pl-5">
+        <div className="col-span-2 md:col-span-1 pt-2.5 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 md:pl-5 space-y-1 sm:space-y-1.5">
           <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
             Net Monthly Position
           </div>
           <div
-            className={`text-2xl font-bold font-mono tabular-nums ${
+            className={`text-lg sm:text-2xl font-bold font-mono tabular-nums ${
               snapshot.netMonthlyFlow >= 0
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : 'text-rose-700 dark:text-rose-400'

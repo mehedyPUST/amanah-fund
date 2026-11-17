@@ -35,7 +35,7 @@ export function StatisticsView({
   const monthlySeries = overview?.monthlySeries || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

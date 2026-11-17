@@ -144,6 +144,7 @@ export function ContributionsView({
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [mobilePane, setMobilePane] = useState<'form' | 'ledger'>(isAdmin ? 'ledger' : 'form');
 
   function showNotice(
     tone: 'emerald' | 'amber' | 'red' | 'slate',
@@ -356,6 +357,7 @@ export function ContributionsView({
   }
 
   function handlePrefillForCorrection(item: Contribution) {
+    setMobilePane('form');
     setBillingMonth(item.billingMonth);
     setAdvanceMode(false);
     setAdvanceMonths([item.billingMonth]);
@@ -372,8 +374,10 @@ export function ContributionsView({
       'Form Pre-Filled for Correction',
       `Loaded denied deposit (${formatBillingMonth(item.billingMonth)}) into the form. Verify your Transaction Number and receipt slip, then resubmit.`
     );
-    depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    window.setTimeout(() => senderInputRef.current?.focus(), 250);
+    window.setTimeout(() => {
+      depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      senderInputRef.current?.focus();
+    }, 250);
   }
 
   const myContributions = useMemo(
@@ -428,24 +432,27 @@ export function ContributionsView({
             if (month) {
               setBillingMonth(month);
             }
-            depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            window.setTimeout(() => senderInputRef.current?.focus(), 250);
+            setMobilePane('form');
+            window.setTimeout(() => {
+              depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              senderInputRef.current?.focus();
+            }, 250);
           }}
         />
       )}
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className={`grid grid-cols-2 ${isAdmin ? 'sm:grid-cols-3' : 'lg:grid-cols-4'} gap-2.5 sm:gap-4`}>
         {!isAdmin && (
           <MotionCard
             hue="emerald"
             delay={0.02}
-            className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
-            <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Own Summary (Approved)</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+            <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">Own Summary (Approved)</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(ownApprovedTotal, ccy)}
             </div>
-            <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 leading-snug">
               {myContributions.filter((c) => c.status === 'approved').length} approved · {ownActiveCount} active · {ownDeniedCount} denied
             </div>
           </MotionCard>
@@ -454,12 +461,12 @@ export function ContributionsView({
         <MotionCard
           hue="violet"
           delay={0.06}
-          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs font-medium text-violet-700 dark:text-violet-400">
+          <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
             {isAdmin ? 'All Members Approved Pool' : 'Other Members Summary'}
           </div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(othersApprovedTotal, ccy)}
           </div>
           <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
@@ -470,10 +477,10 @@ export function ContributionsView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs font-medium text-amber-700 dark:text-amber-400">Active Requests</div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+          <div className="text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">Active Requests</div>
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {activeCount}
           </div>
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -484,10 +491,10 @@ export function ContributionsView({
         <MotionCard
           hue="rose"
           delay={0.14}
-          className="backdrop-blur-md border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className={`backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200 ${isAdmin ? 'col-span-2 sm:col-span-1' : ''}`}
         >
-          <div className="text-xs font-medium text-rose-700 dark:text-rose-400">Denied Requests</div>
-          <div className="mt-1 text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
+          <div className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-400">Denied Requests</div>
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
             {deniedCount}
           </div>
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -496,6 +503,41 @@ export function ContributionsView({
         </MotionCard>
       </section>
 
+      {!isAdmin && (
+        <div
+          role="tablist"
+          aria-label="Contribution Workspace Switcher"
+          className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === 'form'}
+            onClick={() => setMobilePane('form')}
+            className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              mobilePane === 'form'
+                ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            Deposit Form
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === 'ledger'}
+            onClick={() => setMobilePane('ledger')}
+            className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer tabular-nums ${
+              mobilePane === 'ledger'
+                ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            History &amp; Queue ({contributions.length})
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {!isAdmin && (
           <motion.section
@@ -503,7 +545,7 @@ export function ContributionsView({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="xl:col-span-4 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+            className={`${mobilePane === 'form' ? 'block' : 'hidden lg:block'} xl:col-span-4 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200`}
           >
             <div className="mb-4">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -806,11 +848,11 @@ export function ContributionsView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.04 }}
-          className={`${
+          className={`${!isAdmin && mobilePane !== 'ledger' ? 'hidden lg:block' : 'block'} ${
             isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
           } amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs`}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                 {isReviewer
@@ -819,8 +861,8 @@ export function ContributionsView({
               </h2>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
                 <Search
                   className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
                   aria-hidden="true"
@@ -830,16 +872,16 @@ export function ContributionsView({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search member, bank, Tx#…"
-                  className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                  className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+              <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit">
                 {(
                   [
                     { id: 'all', label: `All (${contributions.length})` },
-                    { id: 'pending', label: `Active Requests (${activeCount})` },
-                    { id: 'rejected', label: `Denied Requests (${deniedCount})` },
+                    { id: 'pending', label: `Active (${activeCount})` },
+                    { id: 'rejected', label: `Denied (${deniedCount})` },
                     { id: 'approved', label: `History (${historyCount})` },
                   ] as const
                 ).map((tab) => {
@@ -849,7 +891,7 @@ export function ContributionsView({
                       key={tab.id}
                       type="button"
                       onClick={() => setFilter(tab.id)}
-                      className={`relative px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      className={`relative px-3 py-1.5 sm:px-2.5 sm:py-1 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                         active
                           ? 'text-slate-900 dark:text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -898,225 +940,407 @@ export function ContributionsView({
               No contribution records match the selected filter.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <th className="py-2.5 pr-4">Member</th>
-                    <th className="py-2.5 pr-4">Month</th>
-                    <th className="py-2.5 pr-4">Bank / MFS &amp; Transaction No.</th>
-                    <th className="py-2.5 pr-4 text-right">Amount</th>
-                    <th className="py-2.5 pr-4">Status</th>
-                    <th className="py-2.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                  {filtered.map((item) => {
-                    const isExpanded = expandedId === item.id;
-                    const txNumber =
-                      item.decryptedDetails?.referenceId || item.maskedReference;
-                    return (
-                      <tr key={item.id} className="group hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
-                        <td colSpan={6} className="p-0">
-                          <div className="grid grid-cols-12 items-center py-3 gap-2">
-                            <div className="col-span-12 sm:col-span-3 pr-2">
-                              {onViewMemberProfile ? (
-                                <button
-                                  type="button"
-                                  onClick={() => onViewMemberProfile(item.userId)}
-                                  className="font-medium text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate block text-left cursor-pointer"
-                                >
-                                  {item.memberName}
-                                </button>
-                              ) : (
-                                <div className="font-medium text-slate-900 dark:text-white truncate">
-                                  {item.memberName}
-                                </div>
-                              )}
-                              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                {item.memberCode}
-                              </div>
-                            </div>
-
-                            <div className="col-span-4 sm:col-span-2 font-mono text-xs text-slate-700 dark:text-slate-300">
-                              {formatBillingMonth(item.billingMonth)}
-                            </div>
-
-                            <div className="col-span-8 sm:col-span-3 text-xs text-slate-600 dark:text-slate-400">
-                              <span className="font-medium text-slate-800 dark:text-slate-200">
-                                {item.providerName}
-                              </span>
-                              <span aria-hidden="true"> · </span>
-                              <span className="uppercase">{item.channel}</span>
-                              <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                                Tx #{txNumber}
-                              </div>
-                            </div>
-
-                            <div className="col-span-4 sm:col-span-1 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                              {formatMoney(item.amount, ccy)}
-                            </div>
-
-                            <div className="col-span-4 sm:col-span-2 sm:pl-3">
-                              <StatusText status={item.status} />
-                            </div>
-
-                            <div className="col-span-4 sm:col-span-1 flex items-center justify-end gap-1.5">
-                              {isReviewer &&
-                                item.status === 'pending' &&
-                                (isAdmin || item.userId !== user.id ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      title="Approve contribution"
-                                      disabled={modalBusy}
-                                      onClick={() => confirmReview(item, 'approved')}
-                                      className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
-                                    >
-                                      <Check className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      title="Deny with correction note"
-                                      disabled={modalBusy}
-                                      onClick={() => confirmReview(item, 'rejected')}
-                                      className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span
-                                    title="Non-admin managers cannot approve their own deposit"
-                                    className="text-[10px] font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap"
-                                  >
-                                    Peer Review
-                                  </span>
-                                ))}
-                              <button
-                                type="button"
-                                onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                                className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                              >
-                                {isExpanded ? 'Hide' : 'Crypto'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {item.status === 'rejected' && (
-                            <div className="mb-2.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                              <div className="text-red-800 dark:text-red-300">
-                                <span className="font-semibold">
-                                  Denied by {item.reviewerName || 'Manager'}:
-                                </span>{' '}
-                                <span>{item.reviewNote || 'Correction requested by manager.'}</span>
-                              </div>
-                              {!isAdmin && item.userId === user.id && (
-                                <button
-                                  type="button"
-                                  onClick={() => handlePrefillForCorrection(item)}
-                                  className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium cursor-pointer whitespace-nowrap"
-                                >
-                                  Fix &amp; Resubmit
-                                </button>
-                              )}
+            <>
+              <div className="lg:hidden space-y-2.5">
+                {filtered.map((item) => {
+                  const isExpanded = expandedId === item.id;
+                  const txNumber = item.decryptedDetails?.referenceId || item.maskedReference;
+                  const canReviewRow =
+                    isReviewer &&
+                    item.status === 'pending' &&
+                    (isAdmin || item.userId !== user.id);
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/75 p-3.5 space-y-2.5 shadow-2xs"
+                    >
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="min-w-0">
+                          {onViewMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(item.userId)}
+                              className="font-semibold text-sm text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate block text-left cursor-pointer"
+                            >
+                              {item.memberName}
+                            </button>
+                          ) : (
+                            <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                              {item.memberName}
                             </div>
                           )}
+                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            {item.memberCode} · {formatBillingMonth(item.billingMonth)}
+                          </div>
+                        </div>
 
-                          <AnimatePresence initial={false}>
-                            {isExpanded && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden mb-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-indigo-200/70 dark:border-indigo-900/40 text-xs space-y-2"
-                              >
-                                <div className="flex flex-wrap items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
-                                  <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
-                                    <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                                    <span>Authorized Decrypted Payload &amp; Ciphertext Envelope</span>
-                                  </span>
-                                  <span className="font-mono">
-                                    Submitted {formatDateTime(item.submittedAt)}
-                                  </span>
+                        <div className="text-right shrink-0">
+                          <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                            {formatMoney(item.amount, ccy)}
+                          </div>
+                          <div className="mt-0.5">
+                            <StatusText status={item.status} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="min-w-0">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {item.providerName}
+                          </span>
+                          <span> · {item.channel.toUpperCase()}</span>
+                          <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            Tx #{txNumber}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.receiptPhotoUrl && (
+                            <a
+                              href={item.receiptPhotoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-[11px] font-medium"
+                            >
+                              <span>{isPdfFileUrl(item.receiptPhotoUrl) ? 'PDF Slip' : 'Slip'}</span>
+                              <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                            className="min-h-[36px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                          >
+                            {isExpanded ? 'Hide' : 'Crypto'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {item.status === 'rejected' && (
+                        <div className="p-2.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 space-y-2 text-xs">
+                          <div className="text-red-800 dark:text-red-300">
+                            <span className="font-semibold">
+                              Denied by {item.reviewerName || 'Manager'}:
+                            </span>{' '}
+                            <span>{item.reviewNote || 'Correction requested by manager.'}</span>
+                          </div>
+                          {!isAdmin && item.userId === user.id && (
+                            <button
+                              type="button"
+                              onClick={() => handlePrefillForCorrection(item)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer"
+                            >
+                              Fix &amp; Resubmit
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {canReviewRow && (
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmReview(item, 'approved')}
+                            className="min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Check className="w-4 h-4" aria-hidden="true" />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={modalBusy}
+                            onClick={() => confirmReview(item, 'rejected')}
+                            className="min-h-[44px] px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <X className="w-4 h-4" aria-hidden="true" />
+                            <span>Deny</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {isReviewer && item.status === 'pending' && !canReviewRow && (
+                        <div className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                          Peer Review required by another Manager or Admin
+                        </div>
+                      )}
+
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-indigo-200/70 dark:border-indigo-900/40 text-xs space-y-2"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
+                              <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
+                                <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                                <span>AES-256-GCM Envelope</span>
+                              </span>
+                              <span className="font-mono text-[11px]">{formatDateTime(item.submittedAt)}</span>
+                            </div>
+                            {item.decryptedDetails ? (
+                              <div className="grid grid-cols-1 gap-1.5 font-mono text-[11px]">
+                                <div>
+                                  <span className="text-slate-500 dark:text-slate-400">Tx#: </span>
+                                  <span className="text-slate-900 dark:text-white">{item.decryptedDetails.referenceId}</span>
                                 </div>
-
-                                {item.decryptedDetails ? (
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
-                                    <div>
-                                      <span className="text-slate-500 dark:text-slate-400 block">Transaction Number</span>
-                                      <span className="text-slate-900 dark:text-white">
-                                        {item.decryptedDetails.referenceId}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <span className="text-slate-500 dark:text-slate-400 block">Sender Account</span>
-                                      <span className="text-slate-900 dark:text-white">
-                                        {item.decryptedDetails.senderAccount}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <span className="text-slate-500 dark:text-slate-400 block">Notes</span>
-                                      <span className="text-slate-900 dark:text-white font-sans">
-                                        {item.decryptedDetails.notes || '—'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="text-slate-500 dark:text-slate-400 italic">
-                                    Decrypted details restricted to transaction owner, Manager, and Admin.
+                                <div>
+                                  <span className="text-slate-500 dark:text-slate-400">Sender: </span>
+                                  <span className="text-slate-900 dark:text-white">{item.decryptedDetails.senderAccount}</span>
+                                </div>
+                                {item.decryptedDetails.notes && (
+                                  <div>
+                                    <span className="text-slate-500 dark:text-slate-400">Notes: </span>
+                                    <span className="text-slate-900 dark:text-white font-sans">{item.decryptedDetails.notes}</span>
                                   </div>
                                 )}
-
-                                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-500 dark:text-slate-400 break-all space-y-1">
-                                  <div>
-                                    AES-256-GCM Ciphertext: {item.encryptedDetails.ciphertext.slice(0, 72)}… (IV: {item.encryptedDetails.iv.slice(0, 12)}…)
-                                  </div>
-                                  <div>SHA-256 Entry Hash: {shortHash(item.entryHash)}</div>
-                                  {item.batchGroupId && (
-                                    <div className="text-teal-700 dark:text-teal-400">
-                                      Advance Batch ID: {item.batchGroupId}
-                                    </div>
-                                  )}
-                                  {item.receiptAiSummary && (
-                                    <div className="font-sans text-emerald-700 dark:text-emerald-400">
-                                      Gemini AI Verification: {item.receiptAiSummary}
-                                    </div>
-                                  )}
-                                  {item.receiptPhotoUrl && (
-                                    <div className="pt-1 font-sans">
-                                      <a
-                                        href={item.receiptPhotoUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 text-teal-700 dark:text-teal-400 font-medium hover:underline"
-                                      >
-                                        <span>
-                                          {isPdfFileUrl(item.receiptPhotoUrl)
-                                            ? 'Open Attached Receipt PDF'
-                                            : 'Open Attached Transfer Receipt'}
-                                        </span>
-                                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                                      </a>
-                                    </div>
-                                  )}
-                                  {item.reviewerName && (
-                                    <div className="font-sans text-slate-600 dark:text-slate-300">
-                                      Reviewed by {item.reviewerName} on {formatDateTime(item.reviewedAt)} — {item.reviewNote}
-                                    </div>
-                                  )}
-                                </div>
-                              </motion.div>
+                              </div>
+                            ) : (
+                              <div className="text-slate-500 dark:text-slate-400 italic text-[11px]">
+                                Decrypted details restricted to owner, Manager, and Admin.
+                              </div>
                             )}
-                          </AnimatePresence>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800 font-mono text-[10px] text-slate-500 dark:text-slate-400 break-all space-y-1">
+                              <div>Ciphertext: {item.encryptedDetails.ciphertext.slice(0, 48)}…</div>
+                              <div>Entry Hash: {shortHash(item.entryHash)}</div>
+                              {item.reviewerName && (
+                                <div className="font-sans text-[11px] text-slate-600 dark:text-slate-300">
+                                  Reviewed by {item.reviewerName} · {item.reviewNote}
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <th className="py-2.5 pr-4">Member</th>
+                      <th className="py-2.5 pr-4">Month</th>
+                      <th className="py-2.5 pr-4">Bank / MFS &amp; Transaction No.</th>
+                      <th className="py-2.5 pr-4 text-right">Amount</th>
+                      <th className="py-2.5 pr-4">Status</th>
+                      <th className="py-2.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                    {filtered.map((item) => {
+                      const isExpanded = expandedId === item.id;
+                      const txNumber =
+                        item.decryptedDetails?.referenceId || item.maskedReference;
+                      return (
+                        <tr key={item.id} className="group hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                          <td colSpan={6} className="p-0">
+                            <div className="grid grid-cols-12 items-center py-3 gap-2">
+                              <div className="col-span-12 sm:col-span-3 pr-2">
+                                {onViewMemberProfile ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => onViewMemberProfile(item.userId)}
+                                    className="font-medium text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate block text-left cursor-pointer"
+                                  >
+                                    {item.memberName}
+                                  </button>
+                                ) : (
+                                  <div className="font-medium text-slate-900 dark:text-white truncate">
+                                    {item.memberName}
+                                  </div>
+                                )}
+                                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                                  {item.memberCode}
+                                </div>
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-2 font-mono text-xs text-slate-700 dark:text-slate-300">
+                                {formatBillingMonth(item.billingMonth)}
+                              </div>
+
+                              <div className="col-span-8 sm:col-span-3 text-xs text-slate-600 dark:text-slate-400">
+                                <span className="font-medium text-slate-800 dark:text-slate-200">
+                                  {item.providerName}
+                                </span>
+                                <span aria-hidden="true"> · </span>
+                                <span className="uppercase">{item.channel}</span>
+                                <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                  Tx #{txNumber}
+                                </div>
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-1 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+                                {formatMoney(item.amount, ccy)}
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-2 sm:pl-3">
+                                <StatusText status={item.status} />
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-1 flex items-center justify-end gap-1.5">
+                                {isReviewer &&
+                                  item.status === 'pending' &&
+                                  (isAdmin || item.userId !== user.id ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        title="Approve contribution"
+                                        disabled={modalBusy}
+                                        onClick={() => confirmReview(item, 'approved')}
+                                        className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
+                                      >
+                                        <Check className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Deny with correction note"
+                                        disabled={modalBusy}
+                                        onClick={() => confirmReview(item, 'rejected')}
+                                        className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span
+                                      title="Non-admin managers cannot approve their own deposit"
+                                      className="text-[10px] font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap"
+                                    >
+                                      Peer Review
+                                    </span>
+                                  ))}
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                                  className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                                >
+                                  {isExpanded ? 'Hide' : 'Crypto'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {item.status === 'rejected' && (
+                              <div className="mb-2.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div className="text-red-800 dark:text-red-300">
+                                  <span className="font-semibold">
+                                    Denied by {item.reviewerName || 'Manager'}:
+                                  </span>{' '}
+                                  <span>{item.reviewNote || 'Correction requested by manager.'}</span>
+                                </div>
+                                {!isAdmin && item.userId === user.id && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePrefillForCorrection(item)}
+                                    className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium cursor-pointer whitespace-nowrap"
+                                  >
+                                    Fix &amp; Resubmit
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <AnimatePresence initial={false}>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden mb-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-indigo-200/70 dark:border-indigo-900/40 text-xs space-y-2"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
+                                    <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
+                                      <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                                      <span>Authorized Decrypted Payload &amp; Ciphertext Envelope</span>
+                                    </span>
+                                    <span className="font-mono">
+                                      Submitted {formatDateTime(item.submittedAt)}
+                                    </span>
+                                  </div>
+
+                                  {item.decryptedDetails ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
+                                      <div>
+                                        <span className="text-slate-500 dark:text-slate-400 block">Transaction Number</span>
+                                        <span className="text-slate-900 dark:text-white">
+                                          {item.decryptedDetails.referenceId}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 dark:text-slate-400 block">Sender Account</span>
+                                        <span className="text-slate-900 dark:text-white">
+                                          {item.decryptedDetails.senderAccount}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 dark:text-slate-400 block">Notes</span>
+                                        <span className="text-slate-900 dark:text-white font-sans">
+                                          {item.decryptedDetails.notes || '—'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-slate-500 dark:text-slate-400 italic">
+                                      Decrypted details restricted to transaction owner, Manager, and Admin.
+                                    </div>
+                                  )}
+
+                                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-500 dark:text-slate-400 break-all space-y-1">
+                                    <div>
+                                      AES-256-GCM Ciphertext: {item.encryptedDetails.ciphertext.slice(0, 72)}… (IV: {item.encryptedDetails.iv.slice(0, 12)}…)
+                                    </div>
+                                    <div>SHA-256 Entry Hash: {shortHash(item.entryHash)}</div>
+                                    {item.batchGroupId && (
+                                      <div className="text-teal-700 dark:text-teal-400">
+                                        Advance Batch ID: {item.batchGroupId}
+                                      </div>
+                                    )}
+                                    {item.receiptAiSummary && (
+                                      <div className="font-sans text-emerald-700 dark:text-emerald-400">
+                                        Gemini AI Verification: {item.receiptAiSummary}
+                                      </div>
+                                    )}
+                                    {item.receiptPhotoUrl && (
+                                      <div className="pt-1 font-sans">
+                                        <a
+                                          href={item.receiptPhotoUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center gap-1 text-teal-700 dark:text-teal-400 font-medium hover:underline"
+                                        >
+                                          <span>
+                                            {isPdfFileUrl(item.receiptPhotoUrl)
+                                              ? 'Open Attached Receipt PDF'
+                                              : 'Open Attached Transfer Receipt'}
+                                          </span>
+                                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                                        </a>
+                                      </div>
+                                    )}
+                                    {item.reviewerName && (
+                                      <div className="font-sans text-slate-600 dark:text-slate-300">
+                                        Reviewed by {item.reviewerName} on {formatDateTime(item.reviewedAt)} — {item.reviewNote}
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </motion.section>
       </div>

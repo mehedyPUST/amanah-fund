@@ -283,11 +283,11 @@ export function MemberPublicProfileView({
       className="space-y-6 pb-8"
     >
       {/* Top Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+          className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Back</span>
@@ -298,7 +298,7 @@ export function MemberPublicProfileView({
             type="button"
             onClick={() => void loadMemberProfile(true)}
             disabled={refreshing}
-            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}
@@ -311,7 +311,7 @@ export function MemberPublicProfileView({
             <button
               type="button"
               onClick={onOpenOwnProfile}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Edit My Profile</span>
@@ -328,7 +328,7 @@ export function MemberPublicProfileView({
                   photoUrl: profile.photoUrl,
                 })
               }
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all"
+              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all"
             >
               <Mail className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Send Private Message</span>
@@ -338,7 +338,7 @@ export function MemberPublicProfileView({
       </div>
 
       {/* Member Identity & Quick Metrics Banner */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {profile.photoUrl && !photoBroken ? (
@@ -402,7 +402,7 @@ export function MemberPublicProfileView({
           <div
             role="tablist"
             aria-label="Member profile sections"
-            className="inline-flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start md:self-center shrink-0"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full md:w-auto items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start md:self-center shrink-0"
           >
             {(
               [
@@ -420,7 +420,7 @@ export function MemberPublicProfileView({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -441,10 +441,10 @@ export function MemberPublicProfileView({
         </div>
 
         {/* Top Highlight Metrics Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Approved Contributions</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Approved Contributions</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(fundSummary.totalContributed, ccy)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -453,8 +453,8 @@ export function MemberPublicProfileView({
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Cooperative Net Equity</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Cooperative Net Equity</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(fundSummary.cooperativeEquity, ccy)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -465,8 +465,8 @@ export function MemberPublicProfileView({
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Consistency &amp; Streak</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400 flex items-center gap-2">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Consistency &amp; Streak</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400 flex items-center gap-2">
               <span>{fundSummary.consistencyScore}%</span>
               {fundSummary.currentStreakMonths > 0 && (
                 <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
@@ -482,8 +482,8 @@ export function MemberPublicProfileView({
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Community Activity</div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Community Activity</div>
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
               {about.postsCount} {about.postsCount === 1 ? 'Post' : 'Posts'}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -506,7 +506,7 @@ export function MemberPublicProfileView({
               aria-label="Member Fund Summary"
               className={`${
                 showAbout ? 'xl:col-span-7' : ''
-              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -539,12 +539,12 @@ export function MemberPublicProfileView({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+                <div className="p-3 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                     Approved Deposits ({fundSummary.approvedContributionsCount})
                   </div>
-                  <div className="text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                  <div className="text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(fundSummary.totalContributed, ccy)}
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -555,14 +555,14 @@ export function MemberPublicProfileView({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
-                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                    <HandCoins className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>Qard Hasan Loans &amp; Repayments</span>
+                <div className="p-3 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <HandCoins className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span className="truncate">Qard Hasan Balance</span>
                   </div>
-                  <div className="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                  <div className="text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                     {formatMoney(fundSummary.activeLoanBalance, ccy)}{' '}
-                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                    <span className="text-[11px] sm:text-xs font-normal text-slate-500 dark:text-slate-400 block sm:inline">
                       active balance
                     </span>
                   </div>
@@ -618,36 +618,63 @@ export function MemberPublicProfileView({
                     No approved monthly contributions recorded yet.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                          <th className="py-2 px-3 font-medium">Billing Month</th>
-                          <th className="py-2 px-3 font-medium">Channel</th>
-                          <th className="py-2 px-3 font-medium">Submitted</th>
-                          <th className="py-2 px-3 font-medium text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {fundSummary.recentContributions.map((item) => (
-                          <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
-                            <td className="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-white">
-                              {item.billingMonth}
-                            </td>
-                            <td className="py-2 px-3 uppercase font-mono text-slate-600 dark:text-slate-300">
-                              {item.channel}
-                            </td>
-                            <td className="py-2 px-3 font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                  <>
+                    {/* Mobile Compact Rows (< lg) */}
+                    <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-lg">
+                      {fundSummary.recentContributions.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3 flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="font-mono font-semibold text-slate-900 dark:text-white">
+                              {item.billingMonth}{' '}
+                              <span className="uppercase text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                                · {item.channel}
+                              </span>
+                            </div>
+                            <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
                               {formatShortDate(item.submittedAt)}
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                              {formatMoney(item.amount, ccy)}
-                            </td>
+                            </div>
+                          </div>
+                          <div className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
+                            {formatMoney(item.amount, ccy)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="hidden lg:block overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                            <th className="py-2 px-3 font-medium">Billing Month</th>
+                            <th className="py-2 px-3 font-medium">Channel</th>
+                            <th className="py-2 px-3 font-medium">Submitted</th>
+                            <th className="py-2 px-3 font-medium text-right">Amount</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {fundSummary.recentContributions.map((item) => (
+                            <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                              <td className="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-white">
+                                {item.billingMonth}
+                              </td>
+                              <td className="py-2 px-3 uppercase font-mono text-slate-600 dark:text-slate-300">
+                                {item.channel}
+                              </td>
+                              <td className="py-2 px-3 font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                                {formatShortDate(item.submittedAt)}
+                              </td>
+                              <td className="py-2 px-3 text-right font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                                {formatMoney(item.amount, ccy)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </section>
@@ -659,7 +686,7 @@ export function MemberPublicProfileView({
               aria-label="About Member"
               className={`${
                 showFund ? 'xl:col-span-5' : ''
-              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs`}
             >
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -784,7 +811,7 @@ export function MemberPublicProfileView({
           aria-label="Member Community Posts"
           className="space-y-4"
         >
-          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
@@ -830,7 +857,7 @@ export function MemberPublicProfileView({
                 return (
                   <article
                     key={post.id}
-                    className={`bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border rounded-xl p-5 space-y-4 ${
+                    className={`bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border rounded-xl p-3.5 sm:p-5 space-y-4 ${
                       post.isPinned
                         ? 'border-emerald-300/80 dark:border-emerald-800/80'
                         : 'border-slate-200/80 dark:border-slate-800/80'
@@ -972,7 +999,7 @@ export function MemberPublicProfileView({
 
                     {/* Reactions */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto">
                         {REACTION_OPTIONS.map(({ type, label, Icon }) => {
                           const count = post.reactions.filter((r) => r.type === type).length;
                           const active = myReaction === type;
@@ -982,7 +1009,7 @@ export function MemberPublicProfileView({
                               type="button"
                               onClick={() => void handleToggleReaction(post.id, type)}
                               aria-pressed={active}
-                              className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                              className={`min-h-[40px] sm:min-h-0 justify-center px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                 active
                                   ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
                                   : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -1063,7 +1090,7 @@ export function MemberPublicProfileView({
                               }))
                             }
                             placeholder="Write a comment..."
-                            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           />
                           <button
                             type="submit"
@@ -1071,7 +1098,7 @@ export function MemberPublicProfileView({
                               !(commentDrafts[post.id] || '').trim() ||
                               submittingCommentPostId === post.id
                             }
-                            className="px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
                           >
                             {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
                           </button>

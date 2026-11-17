@@ -255,7 +255,7 @@ export function MemberRegistrySection({
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="space-y-6"
     >
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
+      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -266,7 +266,7 @@ export function MemberRegistrySection({
           </h2>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit shrink-0">
+        <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
           {(
             [
               { id: 'manage', label: 'Approvals & User Control' },
@@ -279,7 +279,7 @@ export function MemberRegistrySection({
                 key={tab.id}
                 type="button"
                 onClick={() => setSubTab(tab.id)}
-                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`relative min-h-[40px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-indigo-700 dark:text-indigo-300'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -310,7 +310,7 @@ export function MemberRegistrySection({
           className="space-y-6"
         >
           {pendingProfileRequests.length > 0 && (
-            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-3.5 sm:p-6 space-y-4 shadow-xs">
               <div>
                 <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                   <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -344,12 +344,12 @@ export function MemberRegistrySection({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full lg:w-auto">
                         <button
                           type="button"
                           disabled={profileBusyId === req.id || modalBusy}
                           onClick={() => confirmProfileChangeReview(req, 'rejected')}
-                          className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
+                          className="min-h-[44px] sm:min-h-0 justify-center px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                         >
                           Decline
                         </button>
@@ -357,7 +357,7 @@ export function MemberRegistrySection({
                           type="button"
                           disabled={profileBusyId === req.id || modalBusy}
                           onClick={() => confirmProfileChangeReview(req, 'approved')}
-                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                          className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                         >
                           Approve Update
                         </button>
@@ -426,17 +426,17 @@ export function MemberRegistrySection({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl max-w-2xl w-full max-h-[92dvh] overflow-y-auto shadow-xl"
           >
-            <div className="sticky top-0 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between gap-4">
-              <div>
+            <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3
                   id="registry-member-modal-title"
-                  className="text-base font-semibold text-slate-900 dark:text-white"
+                  className="text-base font-semibold text-slate-900 dark:text-white truncate"
                 >
                   Registration &amp; KYC Details · {inspectingMember.name}
                 </h3>
-                <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
                   {inspectingMember.memberCode} · {inspectingMember.email} · Applied{' '}
                   {formatDateTime(inspectingMember.joinedAt)}
                 </p>
@@ -445,13 +445,13 @@ export function MemberRegistrySection({
                 type="button"
                 onClick={() => setInspectingMember(null)}
                 aria-label="Close registration details"
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6 text-xs">
+            <div className="p-4 sm:p-6 space-y-5 text-xs">
               {(() => {
                 const reg = inspectingMember.registrationDetails;
                 const portrait = reg?.photoUrl || inspectingMember.photoUrl;
@@ -594,23 +594,23 @@ export function MemberRegistrySection({
               })()}
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2">
+            <div className="sticky bottom-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-end gap-2">
               {isAdmin && inspectingMember.status === 'pending_approval' && (
                 <>
                   <button
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmDeclinePendingMember(inspectingMember)}
-                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Decline Application</span>
+                    <span>Decline</span>
                   </button>
                   <button
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmApprovePendingMember(inspectingMember)}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                    className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Approve Signup</span>
@@ -620,7 +620,7 @@ export function MemberRegistrySection({
               <button
                 type="button"
                 onClick={() => setInspectingMember(null)}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Close
               </button>

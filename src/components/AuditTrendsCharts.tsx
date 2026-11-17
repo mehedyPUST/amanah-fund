@@ -210,7 +210,7 @@ export function AuditTrendsCharts({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="amanah-card-violet border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4 sm:space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -225,7 +225,7 @@ export function AuditTrendsCharts({
           </h2>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-fit shrink-0">
+        <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
           {(
             [
               { id: 'both', label: 'Combined View' },
@@ -239,7 +239,7 @@ export function AuditTrendsCharts({
                 key={tab.id}
                 type="button"
                 onClick={() => setChartView(tab.id)}
-                className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                className={`relative min-h-[36px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -261,37 +261,37 @@ export function AuditTrendsCharts({
 
       {/* Audit Summary Strip */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
           {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="space-y-1.5">
+            <div key={idx} className={`space-y-1.5 ${idx === 2 ? 'col-span-2 sm:col-span-1' : ''}`}>
               <Skeleton width="65%" height={12} />
               <Skeleton width="55%" height={24} />
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 border-t border-slate-100 dark:border-slate-800">
-          <div className="pt-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 pt-1 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-2 sm:pt-3 min-w-0">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
               Cumulative Approved Contributions
             </div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(totals.totalApprovedContrib, currency)}
             </div>
           </div>
-          <div className="pt-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="pt-2 sm:pt-3 min-w-0">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
               Cumulative Qard Hasan Loan Volume
             </div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
               {formatMoney(totals.totalLoanVol, currency)}
             </div>
           </div>
-          <div className="pt-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="pt-2 sm:pt-3 col-span-2 sm:col-span-1 min-w-0">
+            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
               Verified Repayments vs Volume
             </div>
-            <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(totals.totalRepaid, currency)}{' '}
               <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
                 ({totals.recoveryPct}%)
@@ -327,7 +327,7 @@ export function AuditTrendsCharts({
                 </span>
               </div>
 
-              <div className="h-64 w-full min-w-0">
+              <div className="h-56 sm:h-64 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={chartData}
@@ -401,7 +401,7 @@ export function AuditTrendsCharts({
                 </span>
               </div>
 
-              <div className="h-64 w-full min-w-0">
+              <div className="h-56 sm:h-64 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={chartData}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   Award,
   BarChart2,
   Check,
@@ -1519,11 +1520,11 @@ export function CommunityView({
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 shrink-0 w-full sm:w-auto">
           <div
             role="tablist"
             aria-label="Community views"
-            className="inline-flex items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
             {(
               [
@@ -1562,7 +1563,7 @@ export function CommunityView({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`relative px-3.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -1593,7 +1594,7 @@ export function CommunityView({
               onClick={() => {
                 setComposerOpen((prev) => !prev);
               }}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
               <span>{composerOpen ? 'Close Composer' : 'New Post'}</span>
@@ -2124,7 +2125,7 @@ export function CommunityView({
 
           {/* Filter Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-subtle">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
               {(
                 [
                   { id: 'all', label: 'All Topics' },
@@ -2137,7 +2138,7 @@ export function CommunityView({
                   key={item.id}
                   type="button"
                   onClick={() => setFeedCategory(item.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
                       ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
                       : 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
@@ -2158,7 +2159,7 @@ export function CommunityView({
                 value={feedSearch}
                 onChange={(e) => setFeedSearch(e.target.value)}
                 placeholder="Search posts, members, replies..."
-                className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
@@ -2894,7 +2895,7 @@ export function CommunityView({
 
                     {/* Reactions Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto [&>button]:min-h-[40px] sm:[&>button]:min-h-0 [&>button]:justify-center">
                         {REACTION_OPTIONS.map(({ type, label, Icon, activeClass }) => {
                           const count = post.reactions.filter((r) => r.type === type).length;
                           const active = myReaction === type;
@@ -3097,7 +3098,7 @@ export function CommunityView({
                                   ? 'Replies locked (Admin reply only)...'
                                   : 'Write a comment, emoji, or link (@Name to mention)...'
                               }
-                              className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                              className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                             />
                             <button
                               type="button"
@@ -3108,7 +3109,7 @@ export function CommunityView({
                               }
                               title="Insert emoji"
                               aria-label="Insert emoji into comment"
-                              className={`p-2 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 p-2 rounded-lg border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
                                 commentEmojiPostId === post.id
                                   ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
                                   : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -3122,7 +3123,7 @@ export function CommunityView({
                                 !(commentDrafts[post.id] || '').trim() ||
                                 submittingCommentPostId === post.id
                               }
-                              className="px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                              className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
                             >
                               {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
                             </button>
@@ -3190,10 +3191,14 @@ export function CommunityView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="amanah-card-teal border rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[540px] max-h-[72vh]"
+            className="amanah-card-teal border rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] h-[74dvh] min-h-[500px] lg:h-auto lg:min-h-[540px] lg:max-h-[72vh]"
           >
             {/* Left Pane: Threads + Active Member Directory */}
-            <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col min-h-0 max-h-72 lg:max-h-none">
+            <aside
+              className={`${
+                selectedPeerId ? 'hidden lg:flex' : 'flex'
+              } border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex-col min-h-0`}
+            >
               <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -3210,7 +3215,7 @@ export function CommunityView({
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     placeholder="Find member by name or code..."
-                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                    className="w-full min-h-[40px] sm:min-h-0 pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                   />
                 </div>
               </div>
@@ -3332,7 +3337,7 @@ export function CommunityView({
           </aside>
 
           {/* Right Pane: Active Encrypted Chat */}
-          <div className="flex flex-col min-h-0">
+          <div className={`${selectedPeerId ? 'flex' : 'hidden lg:flex'} flex-col min-h-0`}>
             {!selectedPeerId || !selectedPeer ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
                 <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
@@ -3349,8 +3354,16 @@ export function CommunityView({
               </div>
             ) : (
               <>
-                <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-950/40">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div className="px-3.5 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPeerId(null)}
+                      aria-label="Back to conversations"
+                      className="lg:hidden min-w-[40px] min-h-[40px] -ml-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                    </button>
                     <AvatarBadge
                       name={selectedPeer.name}
                       photoUrl={selectedPeer.photoUrl}
@@ -3360,12 +3373,12 @@ export function CommunityView({
                       <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {selectedPeer.name}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                         <span className="font-mono">{selectedPeer.memberCode}</span>
                         <span aria-hidden="true">·</span>
                         <span className="capitalize">{selectedPeer.role}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+                        <span aria-hidden="true" className="hidden sm:inline">·</span>
+                        <span className="hidden sm:inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
                           <UserCheck className="w-3 h-3" />
                           Verified Member
                         </span>
@@ -3377,10 +3390,10 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => onViewMemberProfile(selectedPeer.id)}
-                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
                         <User className="w-3 h-3 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                        <span>View Profile</span>
+                        <span>Profile</span>
                       </button>
                     )}
                     <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -3471,12 +3484,12 @@ export function CommunityView({
                       }
                     }}
                     placeholder={`Message ${selectedPeer.name}... (Enter to send)`}
-                    className="flex-1 px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none max-h-28"
+                    className="flex-1 min-h-[44px] px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none max-h-28"
                   />
                   <button
                     type="submit"
                     disabled={!messageInput.trim() || sendingMessage}
-                    className="px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-45 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
+                    className="min-h-[44px] px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-45 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
                   >
                     <Send className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{sendingMessage ? 'Sending...' : 'Send'}</span>
@@ -3621,7 +3634,7 @@ export function CommunityView({
                                   photoUrl: member.photoUrl,
                                 })
                               }
-                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+                              className="min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Mail className="w-3 h-3" aria-hidden="true" />
                               <span>Message</span>
@@ -3631,7 +3644,7 @@ export function CommunityView({
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(member.id)}
-                              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all"
+                              className="min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all"
                             >
                               <User className="w-3 h-3" aria-hidden="true" />
                               <span>View Profile</span>

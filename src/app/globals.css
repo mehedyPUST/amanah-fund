@@ -445,6 +445,15 @@ html.dark .amanah-panel {
   font-variant-numeric: tabular-nums;
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .react-loading-skeleton {
   --base-color: #d1ddd8;
   --highlight-color: #edf4f1;

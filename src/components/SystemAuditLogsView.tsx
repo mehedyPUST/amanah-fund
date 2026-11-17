@@ -432,24 +432,24 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
-      className="space-y-6"
+      className="space-y-4 sm:space-y-6"
     >
       {/* 4-Column Summary KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <MotionCard
           hue="violet"
           delay={0.02}
-          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Immutable Admin Records</span>
-            <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {loading && allLogs.length === 0 ? <Skeleton width={48} height={28} /> : metrics.total}
           </div>
           <div
-            className={`text-xs font-medium inline-flex items-center gap-1.5 ${
+            className={`text-[11px] sm:text-xs font-medium inline-flex items-center gap-1.5 ${
               chainValid
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : 'text-rose-700 dark:text-rose-400'
@@ -471,20 +471,20 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="emerald"
           delay={0.06}
-          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>User Approvals &amp; Registry</span>
-            <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {loading && allLogs.length === 0 ? (
               <Skeleton width={48} height={28} />
             ) : (
               metrics.userApprovals + metrics.memberGovernance
             )}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {metrics.userApprovals} onboarding · {metrics.memberGovernance} RBAC/status
           </div>
         </MotionCard>
@@ -492,20 +492,20 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="teal"
           delay={0.1}
-          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Setting Modifications</span>
-            <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {loading && allLogs.length === 0 ? (
               <Skeleton width={48} height={28} />
             ) : (
               metrics.settingChanges
             )}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             Policy quotas, maturity &amp; guarantor rules
           </div>
         </MotionCard>
@@ -513,28 +513,28 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="amber"
           delay={0.14}
-          className="border rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>Financial &amp; Moderation</span>
-            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {loading && allLogs.length === 0 ? (
               <Skeleton width={48} height={28} />
             ) : (
               metrics.financialReviews + metrics.moderationSync
             )}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
             {metrics.financialReviews} treasury · {metrics.moderationSync} sync/mod
           </div>
         </MotionCard>
       </div>
 
       {/* Main Immutable Audit Ledger Panel */}
-      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 sm:space-y-5 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1.5">
@@ -551,25 +551,25 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
             <button
               type="button"
               onClick={() => void fetchLogs(false, true)}
               disabled={loading || verifying}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loading || verifying ? 'animate-spin' : ''}`}
                 aria-hidden="true"
               />
-              <span>{verifying ? 'Verifying Chain…' : 'Verify Chain Integrity'}</span>
+              <span>{verifying ? 'Verifying…' : 'Verify Chain'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleExportImmutableJson}
               disabled={filteredLogs.length === 0}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
               <span>Export JSON Proof</span>
@@ -578,7 +578,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             <button
               type="button"
               onClick={() => window.location.assign('/api/reports/export?type=audit&scope=admin')}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
+              className="col-span-2 sm:col-span-1 px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Export Admin CSV</span>
@@ -624,7 +624,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
         {/* Filter & Search Bar */}
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit max-w-full overflow-x-auto">
+          <div className="flex flex-nowrap lg:flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit max-w-full overflow-x-auto no-scrollbar">
             {(
               [
                 { id: 'all', label: `All Admin (${metrics.total})` },
@@ -650,7 +650,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setCategoryFilter(tab.id);
                     setVisibleLimit(30);
                   }}
-                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -669,8 +669,8 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             })}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="col-span-2 sm:col-span-1">
               <label
                 htmlFor="audit-actor-filter"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
@@ -684,7 +684,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setActorFilter(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
                 <option value="all">All Administrators &amp; Managers</option>
                 {actorOptions.map((actor) => (
@@ -710,7 +710,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setDateFrom(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               />
             </div>
 
@@ -729,11 +729,11 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setDateTo(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               />
             </div>
 
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label
                 htmlFor="audit-search-input"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
@@ -754,7 +754,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setVisibleLimit(30);
                   }}
                   placeholder="Actor, setting, member ID, hash…"
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                  className="w-full pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                 />
               </div>
             </div>
@@ -763,32 +763,50 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
         {/* High-Density Immutable Audit Table */}
         {loading && allLogs.length === 0 ? (
-          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                  <th className="py-2.5 px-4 font-medium">Timestamp</th>
-                  <th className="py-2.5 px-4 font-medium">Action &amp; Category</th>
-                  <th className="py-2.5 px-4 font-medium">Administrator</th>
-                  <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
-                  <th className="py-2.5 px-4 font-medium">Immutable Proof</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Record</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i}>
-                    <td className="py-3 px-4"><Skeleton width={110} height={16} /></td>
-                    <td className="py-3 px-4"><Skeleton width={130} height={16} /></td>
-                    <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
-                    <td className="py-3 px-4"><Skeleton width={220} height={16} /></td>
-                    <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
-                    <td className="py-3 px-4 text-right"><Skeleton width={64} height={26} borderRadius={6} /></td>
+          <>
+            <div className="lg:hidden space-y-2.5">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 space-y-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <Skeleton width={130} height={14} />
+                    <Skeleton width={85} height={14} />
+                  </div>
+                  <Skeleton width="85%" height={14} />
+                  <Skeleton width="55%" height={12} />
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+                    <th className="py-2.5 px-4 font-medium">Timestamp</th>
+                    <th className="py-2.5 px-4 font-medium">Action &amp; Category</th>
+                    <th className="py-2.5 px-4 font-medium">Administrator</th>
+                    <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
+                    <th className="py-2.5 px-4 font-medium">Immutable Proof</th>
+                    <th className="py-2.5 px-4 font-medium text-right">Record</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i}>
+                      <td className="py-3 px-4"><Skeleton width={110} height={16} /></td>
+                      <td className="py-3 px-4"><Skeleton width={130} height={16} /></td>
+                      <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
+                      <td className="py-3 px-4"><Skeleton width={220} height={16} /></td>
+                      <td className="py-3 px-4"><Skeleton width={100} height={16} /></td>
+                      <td className="py-3 px-4 text-right"><Skeleton width={64} height={26} borderRadius={6} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : filteredLogs.length === 0 ? (
           <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
@@ -800,72 +818,231 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="px-4 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Reset All Filters
               </button>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                  <th className="py-2.5 px-4 font-medium whitespace-nowrap">Timestamp</th>
-                  <th className="py-2.5 px-4 font-medium whitespace-nowrap">Action &amp; Category</th>
-                  <th className="py-2.5 px-4 font-medium whitespace-nowrap">Administrator</th>
-                  <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
-                  <th className="py-2.5 px-4 font-medium whitespace-nowrap">Immutable Proof</th>
-                  <th className="py-2.5 px-4 font-medium text-right whitespace-nowrap">Record</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {displayedLogs.map((entry) => {
-                  const isOpen = expandedId === entry.id;
-                  const meta = getAdminActionMeta(entry.action);
-                  const Icon = meta.Icon;
-                  const diffs = extractChangeDiffs(entry.decryptedPayload);
-                  const verified =
-                    entry.hashVerified !== false && entry.chainLinkVerified !== false;
+          <>
+            {/* Mobile Tap-Cards (< lg) */}
+            <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white/75 dark:bg-slate-950/70">
+              {displayedLogs.map((entry) => {
+                const isOpen = expandedId === entry.id;
+                const meta = getAdminActionMeta(entry.action);
+                const Icon = meta.Icon;
+                const diffs = extractChangeDiffs(entry.decryptedPayload);
+                const verified =
+                  entry.hashVerified !== false && entry.chainLinkVerified !== false;
 
-                  return (
-                    <AdminAuditTableRow
-                      key={entry.id}
-                      entry={entry}
-                      meta={meta}
-                      Icon={Icon}
-                      diffs={diffs}
-                      verified={verified}
-                      isOpen={isOpen}
-                      onToggle={() => setExpandedId(isOpen ? null : entry.id)}
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <div key={entry.id} className="p-3.5 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 space-y-0.5">
+                        <div className={`text-xs font-semibold flex items-center gap-1.5 ${meta.tone}`}>
+                          <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          <span>{meta.categoryLabel}</span>
+                        </div>
+                        <div className="font-mono text-[11px] font-medium text-slate-700 dark:text-slate-300 break-all">
+                          {entry.action}
+                        </div>
+                      </div>
+                      <span
+                        className={`font-mono text-[10px] font-semibold inline-flex items-center gap-1 shrink-0 ${
+                          verified
+                            ? 'text-indigo-700 dark:text-indigo-400'
+                            : 'text-rose-700 dark:text-rose-400'
+                        }`}
+                      >
+                        {verified ? (
+                          <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                        )}
+                        <span>{shortHash(entry.entryHash)}</span>
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
+                      {entry.summary}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span>
+                        <strong className="font-medium text-slate-700 dark:text-slate-300">
+                          {entry.actorName}
+                        </strong>{' '}
+                        (<span className="capitalize">{entry.actorRole}</span>)
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {formatDateTime(entry.timestamp)}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isOpen ? null : entry.id)}
+                      aria-expanded={isOpen}
+                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center justify-between cursor-pointer"
+                    >
+                      <span>
+                        {isOpen
+                          ? 'Hide Cryptographic Envelope'
+                          : diffs.length > 0
+                            ? `Inspect Hash & ${diffs.length} Field Change${diffs.length === 1 ? '' : 's'}`
+                            : 'Inspect Hash & Payload'}
+                      </span>
+                      {isOpen ? (
+                        <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                      )}
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.16 }}
+                          className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-indigo-200/80 dark:border-indigo-900/50 space-y-3 text-[11px]"
+                        >
+                          <div className="space-y-1.5 font-mono text-slate-600 dark:text-slate-400 break-all">
+                            <div>
+                              <span className="text-slate-400 dark:text-slate-500">Target: </span>
+                              <span className="text-slate-800 dark:text-slate-200">
+                                {entry.resourceType}:{entry.resourceId}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 dark:text-slate-500">Record ID: </span>
+                              <span className="text-slate-800 dark:text-slate-200">{entry.id}</span>
+                            </div>
+                            <div>
+                              <span className="text-indigo-600 dark:text-indigo-400">Entry Hash: </span>
+                              <span className="text-slate-800 dark:text-slate-200">{entry.entryHash}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 dark:text-slate-500">Prev Hash: </span>
+                              <span className="text-slate-800 dark:text-slate-200">{entry.prevHash}</span>
+                            </div>
+                          </div>
+
+                          {diffs.length > 0 && (
+                            <div className="pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                              <div className="font-semibold text-slate-700 dark:text-slate-300">
+                                Modified Fields
+                              </div>
+                              {diffs.map((d) => (
+                                <div
+                                  key={d.field}
+                                  className="p-2 rounded bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono space-y-0.5 break-all"
+                                >
+                                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                                    {d.field}
+                                  </div>
+                                  <div className="text-rose-700 dark:text-rose-400">
+                                    From: {formatDiffValue(d.from)}
+                                  </div>
+                                  <div className="text-emerald-700 dark:text-emerald-400">
+                                    To: {formatDiffValue(d.to)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {entry.decryptedPayload && (
+                            <div className="pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                              <div className="font-semibold text-indigo-700 dark:text-indigo-400">
+                                Decrypted Payload Envelope
+                              </div>
+                              <div className="grid grid-cols-1 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
+                                {Object.entries(entry.decryptedPayload)
+                                  .filter(([k]) => k !== 'changes')
+                                  .map(([k, v]) => (
+                                    <div
+                                      key={k}
+                                      className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 break-all"
+                                    >
+                                      <span className="text-slate-500 dark:text-slate-400">{k}: </span>
+                                      <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table (>= lg) */}
+            <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Timestamp</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Action &amp; Category</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Administrator</th>
+                    <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Immutable Proof</th>
+                    <th className="py-2.5 px-4 font-medium text-right whitespace-nowrap">Record</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {displayedLogs.map((entry) => {
+                    const isOpen = expandedId === entry.id;
+                    const meta = getAdminActionMeta(entry.action);
+                    const Icon = meta.Icon;
+                    const diffs = extractChangeDiffs(entry.decryptedPayload);
+                    const verified =
+                      entry.hashVerified !== false && entry.chainLinkVerified !== false;
+
+                    return (
+                      <AdminAuditTableRow
+                        key={entry.id}
+                        entry={entry}
+                        meta={meta}
+                        Icon={Icon}
+                        diffs={diffs}
+                        verified={verified}
+                        isOpen={isOpen}
+                        onToggle={() => setExpandedId(isOpen ? null : entry.id)}
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Footer Count & Pagination */}
         {filteredLogs.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-mono tabular-nums">
               Showing {displayedLogs.length} of {filteredLogs.length} immutable administrative records
             </span>
 
             {hasMore && (
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setVisibleLimit((n) => n + 30)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center cursor-pointer"
                 >
                   Load 30 More
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisibleLimit(filteredLogs.length)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 inline-flex items-center justify-center cursor-pointer"
                 >
                   Show All ({filteredLogs.length})
                 </button>

@@ -53,11 +53,11 @@ export function MyAmanahView({
             <Skeleton width={150} height={36} borderRadius={8} />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-2.5"
+              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2"
             >
               <Skeleton width="55%" height={12} />
               <Skeleton width="75%" height={28} />
@@ -123,37 +123,37 @@ export function MyAmanahView({
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
           <button
             type="button"
             onClick={() => onNavigate('monthly-contribution')}
-            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+            className={`min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${!(onOpenLoanModal && isEligible) ? 'col-span-2 sm:col-span-1' : ''}`}
           >
-            <CreditCard className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-            <span>Make Contribution</span>
+            <CreditCard className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+            <span className="truncate">Make Contribution</span>
           </button>
           {onOpenLoanModal && isEligible && (
             <button
               type="button"
               onClick={onOpenLoanModal}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Apply for Qard Hasan</span>
+              <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Apply for Qard Hasan</span>
             </button>
           )}
         </div>
       </section>
 
       {/* Primary KPI Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Contribution */}
-        <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Total Contribution</div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+        <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">Total Contribution</div>
+          <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(personal.totalContributed, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 tabular-nums leading-snug">
             {personal.approvedContributionsCount} approved deposit
             {personal.approvedContributionsCount === 1 ? '' : 's'}
             {personal.pendingContributionsCount > 0
@@ -163,14 +163,14 @@ export function MyAmanahView({
         </div>
 
         {/* Last Contribution */}
-        <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-violet-700 dark:text-violet-400">
+        <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
             Last Contribution
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {personal.lastContribution ? formatMoney(personal.lastContribution.amount, ccy) : '—'}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+          <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-1.5">
             {personal.lastContribution ? (
               <>
                 <span className="font-mono">
@@ -188,10 +188,10 @@ export function MyAmanahView({
         <div
           className={`${
             personal.dueContributionAmount > 0 ? 'amanah-card-amber' : 'amanah-card-teal'
-          } rounded-2xl p-5 border shadow-xs hover:shadow-md transition-all duration-200`}
+          } rounded-xl sm:rounded-2xl p-3 sm:p-5 border shadow-xs hover:shadow-md transition-all duration-200`}
         >
           <div
-            className={`text-xs font-medium ${
+            className={`text-[11px] sm:text-xs font-medium ${
               personal.dueContributionAmount > 0
                 ? 'text-amber-800 dark:text-amber-300'
                 : 'text-teal-700 dark:text-teal-400'
@@ -200,7 +200,7 @@ export function MyAmanahView({
             Due Contribution
           </div>
           <div
-            className={`mt-2 text-2xl font-bold font-mono tabular-nums ${
+            className={`mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums ${
               personal.dueContributionAmount > 0
                 ? 'text-amber-700 dark:text-amber-400'
                 : 'text-teal-700 dark:text-teal-400'
@@ -208,7 +208,7 @@ export function MyAmanahView({
           >
             {formatMoney(personal.dueContributionAmount, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
+          <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug">
             {personal.dueContributionMonths > 0
               ? `${personal.dueContributionMonths} unpaid month(s) · Target ${formatMoney(overview.config.monthlyContributionAmount, ccy)}/mo`
               : 'Cleared up to current month'}
@@ -216,16 +216,16 @@ export function MyAmanahView({
         </div>
 
         {/* Next Contribution Deadline */}
-        <div className="amanah-card-sky border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
+        <div className="amanah-card-sky border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <div className="text-[11px] sm:text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Next Contribution Deadline</span>
+            <span className="truncate">Next Deadline</span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatShortDate(personal.nextContributionDeadline)}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
-            Overall Next Deadline: {formatShortDate(personal.nextOverallDeadline)}
+          <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono leading-snug">
+            Overall: {formatShortDate(personal.nextOverallDeadline)}
           </div>
         </div>
       </section>
@@ -249,16 +249,16 @@ export function MyAmanahView({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="amanah-card-emerald p-4 rounded-xl border">
-              <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+            <div className="amanah-card-emerald p-3 sm:p-4 rounded-xl border">
+              <div className="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                 {personal.activeLoanMainAmount > 0
-                  ? 'Active Qard Hasan (Main Amount / Due)'
+                  ? 'Active Qard Hasan (Main / Due)'
                   : myPendingLoan
                     ? 'Active Qard Hasan Request'
-                    : 'Active Qard Hasan (Main Amount / Due)'}
+                    : 'Active Qard Hasan'}
               </div>
-              <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+              <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {personal.activeLoanMainAmount > 0 ? (
                   `${formatMoney(personal.activeLoanMainAmount, ccy)} / ${formatMoney(personal.activeLoanDueAmount, ccy)}`
                 ) : myPendingLoan ? (
@@ -272,10 +272,10 @@ export function MyAmanahView({
                     <StatusText status="pending_manager_review" />
                   </>
                 ) : (
-                  'No Active Qard Hasan'
+                  'No Active Loan'
                 )}
               </div>
-              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                 {myActiveLoan
                   ? `${myActiveLoan.id} · Repaid ${formatMoney(myActiveLoan.totalRepaid, ccy)}`
                   : myPendingLoan
@@ -286,16 +286,16 @@ export function MyAmanahView({
               </div>
             </div>
 
-            <div className="amanah-card-violet p-4 rounded-xl border">
-              <div className="text-xs text-violet-700 dark:text-violet-400 font-medium">
+            <div className="amanah-card-violet p-3 sm:p-4 rounded-xl border">
+              <div className="text-[11px] sm:text-xs text-violet-700 dark:text-violet-400 font-medium">
                 Last Hasan Installment
               </div>
-              <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {personal.lastHasanInstallment
                   ? formatMoney(personal.lastHasanInstallment.amount, ccy)
                   : '—'}
               </div>
-              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-snug">
                 {personal.lastHasanInstallment
                   ? `${personal.lastHasanInstallment.loanId} #${personal.lastHasanInstallment.installmentNumber} · ${formatDateTime(personal.lastHasanInstallment.paidAt)}`
                   : 'No verified installment recorded yet'}
@@ -303,13 +303,13 @@ export function MyAmanahView({
             </div>
 
             <div
-              className={`p-4 rounded-xl border ${
+              className={`p-3 sm:p-4 rounded-xl border ${
                 personal.missedInstallmentsCount > 0 ? 'amanah-card-rose' : 'amanah-card-emerald'
               }`}
             >
-              <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">Missed Installment</div>
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium">Missed Installment</div>
               <div
-                className={`mt-1.5 text-lg font-bold font-mono tabular-nums ${
+                className={`mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums ${
                   personal.missedInstallmentsCount > 0
                     ? 'text-rose-700 dark:text-rose-400'
                     : 'text-emerald-700 dark:text-emerald-400'
@@ -319,22 +319,22 @@ export function MyAmanahView({
                   ? `${personal.missedInstallmentsCount} missed (${formatMoney(personal.missedInstallmentsAmount, ccy)})`
                   : '0 Missed'}
               </div>
-              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                 {personal.missedInstallmentsCount > 0
                   ? 'Settle overdue installments immediately.'
                   : 'All installment schedules are in good standing.'}
               </div>
             </div>
 
-            <div className="amanah-card-amber p-4 rounded-xl border">
-              <div className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-                Next Qard Hasan Deadline
+            <div className="amanah-card-amber p-3 sm:p-4 rounded-xl border">
+              <div className="text-[11px] sm:text-xs text-amber-700 dark:text-amber-400 font-medium">
+                Next Loan Deadline
               </div>
-              <div className="mt-1.5 text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {personal.nextLoanDeadline ? formatShortDate(personal.nextLoanDeadline) : '—'}
               </div>
-              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                Overall Next Deadline: {formatShortDate(personal.nextOverallDeadline)}
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-snug">
+                Overall: {formatShortDate(personal.nextOverallDeadline)}
               </div>
             </div>
           </div>

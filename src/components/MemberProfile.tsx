@@ -505,7 +505,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <button
             type="button"
             onClick={() => void loadProfile()}
-            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="w-full md:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-stretch md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh Profile</span>
@@ -537,40 +537,40 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </div>
 
           <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">Membership Status</dt>
-              <dd className={`font-semibold inline-flex items-center gap-1.5 ${statusMeta.toneClass}`}>
-                <StatusIcon className="w-3.5 h-3.5" aria-hidden="true" />
+              <dd className={`font-semibold inline-flex items-center gap-1.5 text-right ${statusMeta.toneClass}`}>
+                <StatusIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{statusMeta.label}</span>
               </dd>
             </div>
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">Member Code</dt>
-              <dd className="font-mono font-semibold text-slate-900 dark:text-white">
+              <dd className="font-mono font-semibold text-slate-900 dark:text-white text-right">
                 {profile.memberCode}
               </dd>
             </div>
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">National ID (NID)</dt>
-              <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+              <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white text-right break-all">
                 {reg?.nid || 'Not provided (Admin bootstrap)'}
               </dd>
             </div>
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">Date of Birth</dt>
-              <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
+              <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white text-right">
                 {reg?.dateOfBirth || 'Not provided'}
               </dd>
             </div>
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">Reference Member</dt>
-              <dd className="font-semibold text-slate-900 dark:text-white">
+              <dd className="font-semibold text-slate-900 dark:text-white text-right">
                 {reg?.referenceMemberName || 'Bootstrap Founding Member'}
               </dd>
             </div>
-            <div className="py-3 flex items-center justify-between gap-4">
+            <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
               <dt className="text-slate-500 dark:text-slate-400">Encrypted Mobile</dt>
-              <dd className="font-mono text-slate-900 dark:text-white">
+              <dd className="font-mono text-slate-900 dark:text-white text-right">
                 {reg?.mobile || profile.phoneMasked || 'Not set'}
               </dd>
             </div>
@@ -699,7 +699,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
 
@@ -716,7 +716,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
 
@@ -734,7 +734,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   placeholder="e.g. 017XXXXXXXX"
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
 
@@ -751,7 +751,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   value={occupation}
                   onChange={(e) => setOccupation(e.target.value)}
                   placeholder="e.g. Senior Engineer"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
             </div>
@@ -769,7 +769,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 value={companyOrganization}
                 onChange={(e) => setCompanyOrganization(e.target.value)}
                 placeholder="Organization or employer name"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
               />
             </div>
 
@@ -809,7 +809,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               />
             </div>
 
-            <div className="pt-2 flex flex-wrap items-center justify-end gap-2.5">
+            <div className="pt-2 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-end gap-2.5 [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
               <button
                 type="button"
                 onClick={() => {
@@ -826,7 +826,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
               >
                 <Save className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{saving ? 'Saving Profile…' : 'Save Contact Information'}</span>
+                <span>{saving ? 'Saving Profile…' : 'Save Contact Info'}</span>
               </button>
             </div>
           </form>
@@ -862,7 +862,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Current password"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
           <div>
@@ -880,7 +880,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="New password"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
           <div>
@@ -898,13 +898,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm new password"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
           <button
             type="submit"
             disabled={passwordBusy}
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
           >
             {passwordBusy ? 'Updating…' : 'Update Password Now'}
           </button>
@@ -953,7 +953,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     step-up verification.
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5">
                   <input
                     type="text"
                     inputMode="numeric"
@@ -963,12 +963,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     value={totpCodeInput}
                     onChange={(e) => setTotpCodeInput(e.target.value)}
                     placeholder="6-digit code"
-                    className="w-40 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full sm:w-40 min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                   <button
                     type="submit"
                     disabled={totpBusy}
-                    className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
                     {totpBusy ? 'Disabling…' : 'Disable 2FA'}
                   </button>
@@ -983,7 +983,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 type="button"
                 disabled={totpBusy}
                 onClick={() => void handleStart2faSetup()}
-                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+                className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
               >
                 <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
@@ -1016,7 +1016,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5">
                   <input
                     type="text"
                     inputMode="numeric"
@@ -1026,12 +1026,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     value={totpCodeInput}
                     onChange={(e) => setTotpCodeInput(e.target.value)}
                     placeholder="Enter 6-digit code"
-                    className="w-44 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full sm:w-44 min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                   <button
                     type="submit"
                     disabled={totpBusy}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
                     {totpBusy ? 'Verifying…' : 'Verify & Activate 2FA'}
                   </button>
@@ -1041,7 +1041,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                       setTotpSetupData(null);
                       setTotpCodeInput('');
                     }}
-                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1100,7 +1100,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             ).map((row) => (
               <label
                 key={row.key}
-                className="py-2.5 flex items-center justify-between gap-4 cursor-pointer"
+                className="py-3 min-h-[44px] flex items-center justify-between gap-4 cursor-pointer"
               >
                 <div className="min-w-0">
                   <div className="font-medium text-slate-900 dark:text-white">{row.title}</div>
@@ -1110,7 +1110,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   type="checkbox"
                   checked={Boolean(prefs[row.key])}
                   onChange={() => void handleTogglePref(row.key)}
-                  className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600 shrink-0"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600 shrink-0"
                 />
               </label>
             ))}

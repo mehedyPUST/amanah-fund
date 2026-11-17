@@ -851,7 +851,7 @@ export function ManagerDeskView({
                   hasUserSelectedTabRef.current = true;
                   setActiveTab(tab.id);
                 }}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.99] ${
+                className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.99] ${
                   active
                     ? tab.activeClass
                     : `${idleGradient} shadow-xs hover:shadow-md`
@@ -908,7 +908,7 @@ export function ManagerDeskView({
                 value={contribSearch}
                 onChange={(e) => setContribSearch(e.target.value)}
                 placeholder="Search member, bank, Tx#…"
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
           </div>
@@ -944,7 +944,7 @@ export function ManagerDeskView({
                 return (
                   <div
                     key={c.id}
-                    className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-emerald-50/20 dark:hover:bg-slate-800/30 transition-colors"
+                    className="p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 hover:bg-emerald-50/20 dark:hover:bg-slate-800/30 transition-colors"
                   >
                     <div className="space-y-1 text-xs min-w-0">
                       <div className="font-semibold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5">
@@ -991,14 +991,14 @@ export function ManagerDeskView({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full lg:w-auto">
                       {user.role === 'admin' || c.userId !== user.id ? (
                         <>
                           <button
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'approved')}
-                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Approve</span>
@@ -1007,14 +1007,14 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'rejected')}
-                            className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Deny with Note</span>
                           </button>
                         </>
                       ) : (
-                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
                           Peer / Admin Review Required
                         </span>
                       )}
@@ -1088,14 +1088,14 @@ export function ManagerDeskView({
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
                       {user.role === 'admin' || loan.borrowerId !== user.id ? (
                         <>
                           <button
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmInitiateLoanVote(loan)}
-                            className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             <Vote className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Initiate 2/3 Vote</span>
@@ -1104,13 +1104,13 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmDeclineLoanReview(loan)}
-                            className="px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             Decline
                           </button>
                         </>
                       ) : (
-                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
                           Submitted by you · Another Manager or Admin must initiate 2/3 vote
                         </span>
                       )}
@@ -1235,7 +1235,7 @@ export function ManagerDeskView({
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
-                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Stop &amp; Reveal Result</span>
@@ -1308,7 +1308,7 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmDisbursement(loan)}
-                          className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                          className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Confirm Disbursement &amp; Deduct Balance</span>
@@ -1391,7 +1391,7 @@ export function ManagerDeskView({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full lg:w-auto">
                       {user.role === 'admin' || loan.borrowerId !== user.id ? (
                         <>
                           <button
@@ -1400,7 +1400,7 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
                             }
-                            className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Accept</span>
@@ -1411,14 +1411,14 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
                             }
-                            className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Deny with Note</span>
                           </button>
                         </>
                       ) : (
-                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
                           Peer / Admin Review Required
                         </span>
                       )}
@@ -1462,10 +1462,10 @@ export function ManagerDeskView({
                   value={pollTitle}
                   onChange={(e) => setPollTitle(e.target.value)}
                   placeholder="e.g. Increase annual emergency cap?"
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Category
@@ -1473,7 +1473,7 @@ export function ManagerDeskView({
                   <select
                     value={pollCategory}
                     onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
                     <option value="general">General Decision</option>
                     <option value="policy">Policy / Rules</option>
@@ -1489,7 +1489,7 @@ export function ManagerDeskView({
                     type="date"
                     value={pollClosesAt}
                     onChange={(e) => setPollClosesAt(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                 </div>
               </div>
@@ -1502,7 +1502,7 @@ export function ManagerDeskView({
                   value={pollDesc}
                   onChange={(e) => setPollDesc(e.target.value)}
                   placeholder="Explain the cooperative decision or options..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
 
@@ -1532,7 +1532,7 @@ export function ManagerDeskView({
                         )
                       }
                       placeholder={`Option ${idx + 1}`}
-                      className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                     />
                     {pollOptions.length > 2 && (
                       <button
@@ -1540,7 +1540,7 @@ export function ManagerDeskView({
                         onClick={() =>
                           setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                         }
-                        className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                        className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer inline-flex items-center justify-center"
                         aria-label="Remove option"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1553,7 +1553,7 @@ export function ManagerDeskView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
+                className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
               >
                 Review &amp; Launch Decision Vote
               </button>
@@ -1598,7 +1598,7 @@ export function ManagerDeskView({
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
-                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Stop &amp; Reveal Result</span>
@@ -1630,7 +1630,7 @@ export function ManagerDeskView({
                           poll.totalVotesCast ?? poll.votes.length
                         )
                       }
-                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Stop &amp; Reveal Result</span>
@@ -1662,7 +1662,7 @@ export function ManagerDeskView({
                           proj.totalVotesCast ?? proj.votes.length
                         )
                       }
-                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Stop &amp; Reveal Result</span>
@@ -1701,7 +1701,7 @@ export function ManagerDeskView({
                 value={meetingTitle}
                 onChange={(e) => setMeetingTitle(e.target.value)}
                 placeholder="Meeting title (e.g. Monthly Shariah & Treasury Review)"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
@@ -1709,7 +1709,7 @@ export function ManagerDeskView({
                   required
                   value={meetingWhen}
                   onChange={(e) => setMeetingWhen(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
                 <input
                   type="text"
@@ -1717,7 +1717,7 @@ export function ManagerDeskView({
                   value={meetingWhere}
                   onChange={(e) => setMeetingWhere(e.target.value)}
                   placeholder="Room / Google Meet / Zoom link"
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
               <textarea
@@ -1725,13 +1725,13 @@ export function ManagerDeskView({
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
                 placeholder="Meeting agenda & discussion points…"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
                 <button
                   type="submit"
                   disabled={modalBusy || rewritingMeeting}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                 >
                   Schedule Meeting &amp; Notify All Members
                 </button>
@@ -1739,7 +1739,7 @@ export function ManagerDeskView({
                   type="button"
                   disabled={modalBusy || rewritingMeeting}
                   onClick={() => void handleRewriteMeeting()}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
                 >
                   <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{rewritingMeeting ? 'Rewriting...' : 'AI Rewrite Title & Agenda'}</span>
@@ -1842,12 +1842,12 @@ export function ManagerDeskView({
                         ) : null
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2">
                       <button
                         type="button"
                         disabled={modalBusy}
                         onClick={() => confirmProfileReqReview(req, 'approved')}
-                        className="px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Approve</span>
@@ -1856,7 +1856,7 @@ export function ManagerDeskView({
                         type="button"
                         disabled={modalBusy}
                         onClick={() => confirmProfileReqReview(req, 'rejected')}
-                        className="px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
+                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         <X className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Decline</span>
@@ -1928,7 +1928,7 @@ export function ManagerDeskView({
                         Saved {formatDateTime(draft.createdAt)}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
                       <button
                         type="button"
                         disabled={modalBusy}
@@ -1951,7 +1951,7 @@ export function ManagerDeskView({
                             setModalBusy(false);
                           }
                         }}
-                        className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Publish</span>
@@ -1973,7 +1973,7 @@ export function ManagerDeskView({
                             setModalBusy(false);
                           }
                         }}
-                        className="px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                       >
                         Discard
                       </button>

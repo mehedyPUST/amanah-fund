@@ -614,11 +614,11 @@ export function AdminSiteSettingsView({
           </div>
 
           {onNavigateSection && (
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-0.5 shrink-0">
               <button
                 type="button"
                 onClick={() => onNavigateSection('manager-desk')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <ClipboardCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>Governance Desk</span>
@@ -626,7 +626,7 @@ export function AdminSiteSettingsView({
               <button
                 type="button"
                 onClick={() => onNavigateSection('email-queue')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 <span>Email Queue</span>
@@ -639,7 +639,7 @@ export function AdminSiteSettingsView({
               <button
                 type="button"
                 onClick={() => onNavigateSection('site-activity')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <Activity className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                 <span>Site Activity</span>
@@ -649,7 +649,7 @@ export function AdminSiteSettingsView({
         </div>
 
         {/* Tab Bar */}
-        <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
+        <div className="flex flex-nowrap sm:flex-wrap gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 overflow-x-auto no-scrollbar max-w-full">
           {tabs.map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -657,7 +657,7 @@ export function AdminSiteSettingsView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative px-3.5 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={`relative min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -1156,12 +1156,12 @@ export function AdminSiteSettingsView({
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex flex-col-reverse sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2">
                   {isDirty && config && (
                     <button
                       type="button"
                       onClick={() => syncFormFromConfig(config)}
-                      className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
+                      className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Discard Changes</span>
@@ -1170,7 +1170,7 @@ export function AdminSiteSettingsView({
                   <button
                     type="submit"
                     disabled={modalBusy}
-                    className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                    className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
                     Review &amp; Save Site Settings
                   </button>
@@ -1229,7 +1229,7 @@ export function AdminSiteSettingsView({
                   type="button"
                   disabled={constitutionBusy || modalBusy}
                   onClick={() => constitutionFileInputRef.current?.click()}
-                  className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                  className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                 >
                   <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
@@ -1241,7 +1241,7 @@ export function AdminSiteSettingsView({
                     type="button"
                     disabled={constitutionBusy || modalBusy}
                     onClick={confirmRemoveConstitutionPdf}
-                    className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Remove</span>
@@ -1268,11 +1268,11 @@ export function AdminSiteSettingsView({
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
                     <button
                       type="button"
                       onClick={() => setShowConstitutionPreview((v) => !v)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
                     >
                       {showConstitutionPreview ? (
                         <>
@@ -1290,7 +1290,7 @@ export function AdminSiteSettingsView({
                       href={config.constitutionPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
                     >
                       <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Open</span>
@@ -1298,7 +1298,7 @@ export function AdminSiteSettingsView({
                     <a
                       href={config.constitutionPdfUrl}
                       download={config.constitutionPdfName || 'cooperative-constitution.pdf'}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
                     >
                       <Download className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Download</span>
@@ -1318,7 +1318,7 @@ export function AdminSiteSettingsView({
                       <iframe
                         src={config.constitutionPdfUrl}
                         title="Uploaded Cooperative Constitution PDF Preview"
-                        className="w-full h-[460px]"
+                        className="w-full h-72 sm:h-[460px]"
                       />
                     </motion.div>
                   )}
@@ -1356,11 +1356,11 @@ export function AdminSiteSettingsView({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={handleDownloadMonthlyPdf}
-                className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
+                className="min-h-[44px] px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
               >
                 <span>Download Monthly PDF ({reportMonth})</span>
                 <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -1370,7 +1370,7 @@ export function AdminSiteSettingsView({
                 type="button"
                 disabled={modalBusy}
                 onClick={handleConfirmEmailMonthlyPdf}
-                className="px-4 py-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-4 py-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
               >
                 <span>Email PDF to Active Members</span>
                 <Send className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -1380,7 +1380,7 @@ export function AdminSiteSettingsView({
                 type="button"
                 disabled={modalBusy}
                 onClick={handleConfirmSendReminders}
-                className="px-4 py-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-4 py-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
               >
                 <span>Dispatch Billing Reminders</span>
                 <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
@@ -1402,7 +1402,7 @@ export function AdminSiteSettingsView({
               <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
               {(
                 [
                   { id: 'contributions', label: 'Contributions CSV' },
@@ -1415,7 +1415,7 @@ export function AdminSiteSettingsView({
                   key={rep.id}
                   type="button"
                   onClick={() => downloadCsvReport(rep.id)}
-                  className="px-3.5 py-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all duration-200 flex items-center justify-between text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+                  className="min-h-[44px] px-3 sm:px-3.5 py-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all duration-200 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer text-left"
                 >
                   <span>{rep.label}</span>
                   <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -1425,7 +1425,7 @@ export function AdminSiteSettingsView({
               <a
                 href={api.getBackupJsonUrl()}
                 download
-                className="px-3.5 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
               >
                 <span>Full JSON Backup</span>
                 <FileArchive className="w-4 h-4 shrink-0" aria-hidden="true" />

@@ -250,8 +250,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 shrink-0 w-full lg:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <Search
                 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
                 aria-hidden="true"
@@ -262,7 +262,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search name, NID, address…"
                 aria-label="Search pending registrations"
-                className="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-56 sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                className="w-full sm:w-64 min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
 
@@ -270,7 +270,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
               type="button"
               onClick={() => void loadPendingRegistrations()}
               disabled={loading}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
@@ -349,7 +349,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 className={`${cardHueClass} border rounded-2xl overflow-hidden shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200`}
               >
                 {/* Applicant Header & Primary Approve / Reject Actions */}
-                <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
+                <div className="p-3.5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4 min-w-0">
                     {photoUrl && !brokenImages[photoKey] ? (
                       <a
@@ -411,12 +411,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="grid grid-cols-2 sm:flex items-center gap-2.5 shrink-0 w-full md:w-auto">
                     <button
                       type="button"
                       disabled={isBusy || modalBusy}
                       onClick={() => confirmReject(applicant)}
-                      className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -428,7 +428,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy || modalBusy}
                       onClick={() => confirmApprove(applicant)}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -439,9 +439,9 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 </div>
 
                 {/* Full KYC Details & Verification Attachments (Flat Grid, Hairline Dividers) */}
-                <div className="p-5 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <div className="p-3.5 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
                   {reg ? (
-                    <dl className="xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 text-xs">
+                    <dl className="xl:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 text-xs">
                       <div>
                         <dt className="text-slate-500 dark:text-slate-400">National ID (NID)</dt>
                         <dd className="mt-1 font-mono font-semibold tabular-nums text-slate-900 dark:text-white break-all">
@@ -488,7 +488,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </dd>
                       </div>
 
-                      <div className="sm:col-span-2 lg:col-span-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="col-span-2 lg:col-span-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <dt className="text-slate-500 dark:text-slate-400">Present Address</dt>
                           <dd className="mt-1 text-slate-900 dark:text-slate-100 leading-relaxed">
@@ -505,7 +505,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       </div>
 
                       {reg.nominees && reg.nominees.length > 0 && (
-                        <div className="sm:col-span-2 lg:col-span-3">
+                        <div className="col-span-2 lg:col-span-3">
                           <NomineeDetailsList nominees={reg.nominees} />
                         </div>
                       )}
