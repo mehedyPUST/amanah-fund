@@ -12,21 +12,17 @@ export type CardHue =
   | 'violet'
   | 'deep-emerald';
 
+const NEUTRAL_HOVER_OVERLAY =
+  'bg-slate-900/[0.018] dark:bg-white/[0.025]';
+
 const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
-  emerald:
-    'bg-gradient-to-br from-emerald-500/22 via-emerald-400/12 to-emerald-500/5 dark:from-emerald-400/22 dark:via-emerald-500/12 dark:to-emerald-900/12',
-  teal:
-    'bg-gradient-to-br from-teal-500/22 via-teal-400/12 to-teal-500/5 dark:from-teal-400/22 dark:via-teal-500/12 dark:to-teal-900/12',
-  amber:
-    'bg-gradient-to-br from-amber-500/22 via-amber-400/12 to-amber-500/5 dark:from-amber-400/22 dark:via-amber-500/12 dark:to-amber-900/12',
-  sky:
-    'bg-gradient-to-br from-sky-500/22 via-sky-400/12 to-sky-500/5 dark:from-sky-400/22 dark:via-sky-500/12 dark:to-sky-900/12',
-  rose:
-    'bg-gradient-to-br from-rose-500/22 via-rose-400/12 to-rose-500/5 dark:from-rose-400/22 dark:via-rose-500/12 dark:to-rose-900/12',
-  violet:
-    'bg-gradient-to-br from-violet-500/22 via-violet-400/12 to-violet-500/5 dark:from-violet-400/22 dark:via-violet-500/12 dark:to-violet-900/12',
-  'deep-emerald':
-    'bg-gradient-to-br from-emerald-950/38 via-emerald-900/22 to-emerald-950/32 dark:from-emerald-950/48 dark:via-emerald-900/26 dark:to-slate-950/40',
+  emerald: NEUTRAL_HOVER_OVERLAY,
+  teal: NEUTRAL_HOVER_OVERLAY,
+  amber: NEUTRAL_HOVER_OVERLAY,
+  sky: NEUTRAL_HOVER_OVERLAY,
+  rose: NEUTRAL_HOVER_OVERLAY,
+  violet: NEUTRAL_HOVER_OVERLAY,
+  'deep-emerald': NEUTRAL_HOVER_OVERLAY,
 };
 
 const DEPTH_VARIANTS = {

@@ -439,7 +439,7 @@ export function ContributionsView({
           <MotionCard
             hue="emerald"
             delay={0.02}
-            className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Own Summary (Approved)</div>
             <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -454,7 +454,7 @@ export function ContributionsView({
         <MotionCard
           hue="teal"
           delay={0.06}
-          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
             {isAdmin ? 'All Members Approved Pool' : 'Other Members Summary'}
@@ -470,7 +470,7 @@ export function ContributionsView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs font-medium text-amber-700 dark:text-amber-400">Active Requests</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
@@ -484,7 +484,7 @@ export function ContributionsView({
         <MotionCard
           hue="rose"
           delay={0.14}
-          className="bg-gradient-to-br from-rose-100/75 via-rose-50/35 to-white/85 dark:from-rose-950/45 dark:via-rose-950/20 dark:to-slate-900/80 backdrop-blur-md border border-rose-200/70 dark:border-rose-800/60 hover:border-rose-300/90 dark:hover:border-rose-700/70 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs font-medium text-rose-700 dark:text-rose-400">Denied Requests</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">

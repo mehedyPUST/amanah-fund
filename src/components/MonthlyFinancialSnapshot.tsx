@@ -84,7 +84,7 @@ export function MonthlyFinancialSnapshot({
 
   if (loading) {
     return (
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4">
+      <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1.5">
             <Skeleton width={210} height={14} />
@@ -112,7 +112,7 @@ export function MonthlyFinancialSnapshot({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-labelledby="monthly-financial-snapshot-heading"
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
+      className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">

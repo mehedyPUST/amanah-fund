@@ -479,12 +479,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           {sections.map((rule, idx) => {
             const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
             const ruleHue: CardHue = (['emerald', 'teal', 'sky', 'amber'] as const)[idx % 4];
-            const ruleCardClass = [
-              'bg-gradient-to-br from-emerald-100/70 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
-              'bg-gradient-to-br from-teal-100/70 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
-              'bg-gradient-to-br from-sky-100/70 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
-              'bg-gradient-to-br from-amber-100/70 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
-            ][idx % 4];
+            const ruleCardClass =
+              'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80';
             return (
               <MotionCard
                 as="article"

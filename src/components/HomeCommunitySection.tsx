@@ -56,7 +56,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
     <div
       className={
         embedded
-          ? 'bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100'
+          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100'
           : 'text-slate-900 dark:text-slate-100'
       }
     >
@@ -92,7 +92,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
         </div>
 
         {authChecking ? (
-          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-br from-slate-100/65 via-slate-50/35 to-white/75 dark:from-slate-800/45 dark:via-slate-900/75 dark:to-slate-950/75 backdrop-blur-md p-4 sm:p-5 space-y-5">
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md p-4 sm:p-5 space-y-5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
               <div className="flex items-start gap-3 flex-1 max-w-2xl">
                 <Skeleton width={44} height={44} borderRadius={10} />
@@ -123,7 +123,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={{ duration: 0.22 }}
-            className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md p-6 sm:p-8 shadow-sm space-y-6"
+            className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md p-6 sm:p-8 shadow-sm space-y-6"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
               <div className="flex items-start gap-4 max-w-2xl">
@@ -167,12 +167,8 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               {COMMUNITY_FEATURES.map((item, idx) => {
                 const Icon = item.Icon;
                 const cardHue: CardHue = (['emerald', 'teal', 'amber', 'sky'] as const)[idx % 4];
-                const cardClass = [
-                  'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
-                  'bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
-                  'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
-                  'bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
-                ][idx % 4];
+                const cardClass =
+                  'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80';
                 return (
                   <MotionCard
                     key={item.title}

@@ -42,7 +42,7 @@ const PRIORITY_META: Record<
       'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400',
     labelClass: 'text-rose-700 dark:text-rose-400',
     cardClass:
-      'bg-gradient-to-br from-rose-100/75 via-rose-50/35 to-white/85 dark:from-rose-950/45 dark:via-rose-950/20 dark:to-slate-900/80 backdrop-blur-md border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300/90 dark:hover:border-rose-700/70',
+      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
   },
   important: {
     label: 'Important',
@@ -52,7 +52,7 @@ const PRIORITY_META: Record<
       'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400',
     labelClass: 'text-amber-700 dark:text-amber-400',
     cardClass:
-      'bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border-amber-200/80 dark:border-amber-900/60 hover:border-amber-300/90 dark:hover:border-amber-700/70',
+      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
   },
   normal: {
     label: 'Notice',
@@ -62,7 +62,7 @@ const PRIORITY_META: Record<
       'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400',
     labelClass: 'text-emerald-700 dark:text-emerald-400',
     cardClass:
-      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
+      'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
   },
 };
 
@@ -276,8 +276,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-4 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100 space-y-5'
-          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-slate-950/60 backdrop-blur-sm text-slate-900 dark:text-slate-100'
+          ? 'scroll-mt-4 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-sm text-slate-900 dark:text-slate-100 space-y-5'
+          : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/85 backdrop-blur-sm text-slate-900 dark:text-slate-100'
       }
     >
       <div className={embedded ? 'space-y-5' : 'w-full py-10 sm:py-12 space-y-6'}>
@@ -369,7 +369,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
               onSubmit={handleSubmit}
-              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4"
+              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">

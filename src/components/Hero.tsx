@@ -27,7 +27,7 @@ const KEY_TERMS: Array<{
     sublabel: 'Or up to 75% of personal verified savings',
     hue: 'emerald',
     cardClass:
-      'bg-gradient-to-br from-emerald-100/75 via-emerald-50/40 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70',
+      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
     metaClass: 'text-emerald-700 dark:text-emerald-400',
   },
   {
@@ -37,7 +37,7 @@ const KEY_TERMS: Array<{
     sublabel: 'Pooled per share with ৳50 Sadaqah late-fee isolation',
     hue: 'teal',
     cardClass:
-      'bg-gradient-to-br from-teal-100/75 via-teal-50/40 to-white/85 dark:from-teal-950/50 dark:via-teal-950/20 dark:to-slate-900/80 border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70',
+      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
     metaClass: 'text-teal-700 dark:text-teal-400',
   },
   {
@@ -47,7 +47,7 @@ const KEY_TERMS: Array<{
     sublabel: 'Required consensus for loans & Halal capital deployment',
     hue: 'amber',
     cardClass:
-      'bg-gradient-to-br from-amber-100/75 via-amber-50/40 to-white/85 dark:from-amber-950/50 dark:via-amber-950/20 dark:to-slate-900/80 border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300/90 dark:hover:border-amber-700/70',
+      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
     metaClass: 'text-amber-700 dark:text-amber-400',
   },
   {
@@ -57,8 +57,8 @@ const KEY_TERMS: Array<{
     sublabel: 'Up to 10-month revolving repayment schedules',
     hue: 'sky',
     cardClass:
-      'bg-gradient-to-br from-sky-100/75 via-sky-50/40 to-white/85 dark:from-sky-950/50 dark:via-sky-950/20 dark:to-slate-900/80 border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300/90 dark:hover:border-sky-700/70',
-    metaClass: 'text-sky-700 dark:text-sky-400',
+      'bg-white/90 dark:bg-slate-900/85 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80',
+    metaClass: 'text-teal-700 dark:text-teal-400',
   },
 ];
 
@@ -82,7 +82,7 @@ export function Hero({
       <MotionCard
         as="section"
         hue="emerald"
-        className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/50 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
+        className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
@@ -240,7 +240,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       id="lifecycle"
       hue="teal"
       inView
-      className={`scroll-mt-2 bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/80 dark:border-teal-900/50 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
+      className={`scroll-mt-2 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >

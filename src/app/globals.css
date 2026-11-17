@@ -92,29 +92,6 @@ html.dark .amanah-ambient-canvas {
     linear-gradient(135deg, #04080f 0%, #08131d 52%, #050b12 100%);
 }
 
-:where(
-  .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
-):not([class*="bg-gradient-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not(.absolute):not(.fixed):not(.border-dashed) {
-  background-image: linear-gradient(
-    135deg,
-    rgba(209, 250, 229, 0.5) 0%,
-    rgba(236, 253, 245, 0.28) 46%,
-    rgba(255, 255, 255, 0.86) 100%
-  );
-}
-
-html.dark
-  :where(
-    .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
-  ):not([class*="bg-gradient-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not(.absolute):not(.fixed):not(.border-dashed) {
-  background-image: linear-gradient(
-    135deg,
-    rgba(6, 78, 59, 0.34) 0%,
-    rgba(15, 23, 42, 0.76) 52%,
-    rgba(15, 23, 42, 0.86) 100%
-  );
-}
-
 :where(.backdrop-blur-md:is(.rounded-xl, .rounded-2xl))
   p:not(.text-center):not(.text-right):not(.text-left) {
   text-align: justify;

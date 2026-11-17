@@ -503,7 +503,7 @@ export function AdminAuditLog({
           <MotionCard
             hue="sky"
             delay={0.02}
-            className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Total Site Events</span>
@@ -531,7 +531,7 @@ export function AdminAuditLog({
           <MotionCard
             hue="amber"
             delay={0.06}
-            className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Loan Requests &amp; Votes</span>
@@ -552,7 +552,7 @@ export function AdminAuditLog({
           <MotionCard
             hue="emerald"
             delay={0.1}
-            className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Contributions &amp; Repayments</span>
@@ -573,7 +573,7 @@ export function AdminAuditLog({
           <MotionCard
             hue="teal"
             delay={0.14}
-            className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
               <span>Settings &amp; Member Registry</span>

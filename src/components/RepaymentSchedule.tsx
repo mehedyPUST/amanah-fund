@@ -116,7 +116,7 @@ export function RepaymentSchedule({
 
   if (loading) {
     return (
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4">
+      <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1.5">
             <Skeleton width={170} height={12} />
@@ -160,7 +160,7 @@ export function RepaymentSchedule({
       as="section"
       hue="teal"
       aria-label="Repayment Schedule"
-      className="bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
         {/* Header */}

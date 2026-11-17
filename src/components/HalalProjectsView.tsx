@@ -257,7 +257,7 @@ export function HalalProjectsView({
       className="space-y-6"
     >
       {/* Maturity Transition Summary */}
-      <section className="bg-gradient-to-br from-amber-50/75 via-white/75 to-teal-50/45 dark:from-amber-950/30 dark:via-slate-900/75 dark:to-teal-950/20 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">

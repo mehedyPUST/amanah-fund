@@ -7,8 +7,11 @@ import {
   BarChart3,
   CalendarCheck,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
+  CreditCard,
   HandCoins,
+  History,
   Lock,
   Settings,
   ShieldCheck,
@@ -107,16 +110,24 @@ export function OverviewView({
   if (loading || !overview) {
     return (
       <div className="space-y-3">
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 space-y-3">
           <Skeleton width={260} height={14} />
           <Skeleton width={320} height={22} />
           <Skeleton width="80%" height={14} />
+        </div>
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 space-y-3">
+          <Skeleton width={160} height={16} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            {[1, 2, 3, 4, 5].map((k) => (
+              <Skeleton key={k} height={68} borderRadius={12} />
+            ))}
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
           {[1, 2, 3, 4].map((k) => (
             <div
               key={k}
-              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4"
+              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4"
             >
               <Skeleton width="55%" height={14} />
               <div className="mt-3">
@@ -199,7 +210,7 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs transition-colors"
+        className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs transition-colors"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-1.5 max-w-3xl">
@@ -264,6 +275,275 @@ export function OverviewView({
         </div>
       </motion.section>
 
+      {/* Quick Actions Card */}
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.22, delay: 0.03 }}
+        aria-label="Quick Actions"
+        className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+              {isAdmin ? 'Quick Actions · Governance Shortcuts' : 'Quick Actions · Member Workflows'}
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Quick Actions
+            </h3>
+          </div>
+          <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+            One-click navigation
+          </span>
+        </div>
+
+        {isAdmin ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            <button
+              type="button"
+              onClick={() => onNavigate('member-registry')}
+              className="group text-left p-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-xs transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-100">
+                  KYC &amp; Roles
+                </span>
+                <Users className="w-4 h-4 text-emerald-100 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold">Member Registry</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('manager-desk')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                  Shura Desk
+                </span>
+                <ClipboardCheck className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">Governance Desk</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('ballot')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                  2/3 Quorum{treasury.pendingVotesCount > 0 ? ` · ${treasury.pendingVotesCount}` : ''}
+                </span>
+                <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">Opinion Ballot</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('transaction-history')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Full Ledger
+                </span>
+                <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">Transaction History</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('site-settings')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2 sm:col-span-2 lg:col-span-1"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                  Configuration
+                </span>
+                <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">Site Settings</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+          </div>
+        ) : (
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 ${
+              user.role === 'manager'
+                ? 'lg:grid-cols-3 xl:grid-cols-6'
+                : 'lg:grid-cols-5'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => (onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan'))}
+              className="group text-left p-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-xs transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-100">
+                  0% Qard Hasan
+                </span>
+                <HandCoins className="w-4 h-4 text-emerald-100 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold">Request Loan</span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('monthly-contribution')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                  Monthly Savings
+                </span>
+                <CreditCard className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  View Contributions
+                </span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('ballot')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                  2/3 Quorum{treasury.pendingVotesCount > 0 ? ` · ${treasury.pendingVotesCount}` : ''}
+                </span>
+                <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  Opinion Ballot
+                </span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('my-amanah')}
+              className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Personal Equity
+                </span>
+                <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  My Amanah
+                </span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('transaction-history')}
+              className={`group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2 ${
+                user.role === 'manager' ? '' : 'sm:col-span-2 lg:col-span-1'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                  Audit Ledger
+                </span>
+                <History className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  Transaction History
+                </span>
+                <ArrowRight
+                  className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            {user.role === 'manager' && (
+              <button
+                type="button"
+                onClick={() => onNavigate('manager-desk')}
+                className="group text-left p-3.5 rounded-xl bg-slate-50/85 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer flex flex-col justify-between gap-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                    Shura Review
+                  </span>
+                  <ClipboardCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Manager Desk
+                  </span>
+                  <ArrowRight
+                    className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+      </motion.section>
+
       {/* Active or Pending Qard Hasan Request Tracker (Member / Manager Personal View) */}
       {myActiveOrPendingLoan && (() => {
         const loan = myActiveOrPendingLoan;
@@ -304,7 +584,7 @@ export function OverviewView({
         return (
           <section
             aria-label="Your Active Qard Hasan Request"
-            className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/60 rounded-xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
@@ -456,7 +736,7 @@ export function OverviewView({
 
       {/* Admin Quick Control: Maximum Loans Per Member Per Year */}
       {isAdmin && (
-        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -502,16 +782,16 @@ export function OverviewView({
         <MotionCard
           hue="deep-emerald"
           delay={0.02}
-          className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 text-white border border-emerald-500/45 hover:border-emerald-400/70 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-emerald-100">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Amanah Height (Total Raised)</span>
-            <Wallet className="w-4 h-4 text-emerald-100 shrink-0" aria-hidden="true" />
+            <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-emerald-100/90 tabular-nums">
+          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             {treasury.contributingMembersCount} contributing members · Pending{' '}
             {formatMoney(treasury.pendingContributionsAmount, ccy)}
           </div>
@@ -520,11 +800,11 @@ export function OverviewView({
         <MotionCard
           hue="teal"
           delay={0.06}
-          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Current Balance</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.currentBalance, ccy)}
@@ -537,7 +817,7 @@ export function OverviewView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Quard Hasan Total Current</span>
@@ -556,7 +836,7 @@ export function OverviewView({
         <MotionCard
           hue="sky"
           delay={0.14}
-          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>Repayments Returned (+)</span>
@@ -578,7 +858,7 @@ export function OverviewView({
         <MotionCard
           hue="emerald"
           delay={0.04}
-          className="bg-gradient-to-br from-emerald-100/75 via-emerald-50/35 to-white/85 dark:from-emerald-950/45 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Contribution ({treasury.thisMonthKey})</span>
@@ -618,7 +898,7 @@ export function OverviewView({
         <MotionCard
           hue="amber"
           delay={0.07}
-          className="bg-gradient-to-br from-amber-100/75 via-amber-50/35 to-white/85 dark:from-amber-950/45 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Due (Remaining / Target)
@@ -639,7 +919,7 @@ export function OverviewView({
         <MotionCard
           hue="sky"
           delay={0.1}
-          className="bg-gradient-to-br from-sky-100/75 via-sky-50/35 to-white/85 dark:from-sky-950/45 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             This Month Hasan Installment
@@ -660,7 +940,7 @@ export function OverviewView({
         <MotionCard
           hue="teal"
           delay={0.13}
-          className="bg-gradient-to-br from-teal-100/75 via-teal-50/35 to-white/85 dark:from-teal-950/45 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>This Month Clearance</span>
@@ -700,7 +980,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="amber"
-          className="xl:col-span-6 bg-gradient-to-br from-amber-100/70 via-amber-50/30 to-white/85 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900/80 backdrop-blur-md border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300/90 dark:hover:border-amber-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -777,7 +1057,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="emerald"
-          className="xl:col-span-6 bg-gradient-to-br from-emerald-100/70 via-emerald-50/30 to-white/85 dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-slate-900/80 backdrop-blur-md border border-emerald-200/70 dark:border-emerald-800/60 hover:border-emerald-300/90 dark:hover:border-emerald-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -852,7 +1132,7 @@ export function OverviewView({
           <MotionCard
             as="section"
             hue="teal"
-            className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-5 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -907,7 +1187,7 @@ export function OverviewView({
           <MotionCard
             as="section"
             hue="teal"
-            className="xl:col-span-5 bg-gradient-to-br from-teal-100/70 via-teal-50/30 to-white/85 dark:from-teal-950/40 dark:via-teal-950/20 dark:to-slate-900/80 backdrop-blur-md border border-teal-200/70 dark:border-teal-800/60 hover:border-teal-300/90 dark:hover:border-teal-700/70 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-5 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="space-y-4">
               <div>
@@ -1028,7 +1308,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="sky"
-          className="xl:col-span-7 bg-gradient-to-br from-sky-100/70 via-sky-50/30 to-white/85 dark:from-sky-950/40 dark:via-sky-950/20 dark:to-slate-900/80 backdrop-blur-md border border-sky-200/70 dark:border-sky-800/60 hover:border-sky-300/90 dark:hover:border-sky-700/70 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
+          className="xl:col-span-7 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300/90 dark:hover:border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
         >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">

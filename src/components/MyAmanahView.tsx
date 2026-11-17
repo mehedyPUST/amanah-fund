@@ -148,12 +148,12 @@ export function MyAmanahView({
       {/* Primary KPI Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Total Contribution */}
-        <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white rounded-xl p-5 shadow-sm">
-          <div className="text-xs font-medium text-emerald-100">Total Contribution</div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums">
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs hover:border-slate-300/90 dark:hover:border-slate-700/80 transition-colors">
+          <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Total Contribution</div>
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(personal.totalContributed, ccy)}
           </div>
-          <div className="mt-1.5 text-xs text-emerald-100/90 tabular-nums">
+          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             {personal.approvedContributionsCount} approved deposit
             {personal.approvedContributionsCount === 1 ? '' : 's'}
             {personal.pendingContributionsCount > 0
@@ -163,7 +163,7 @@ export function MyAmanahView({
         </div>
 
         {/* Last Contribution */}
-        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 shadow-xs hover:border-teal-300 dark:hover:border-teal-800/70 transition-colors">
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs hover:border-slate-300/90 dark:hover:border-slate-700/80 transition-colors">
           <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
             Last Contribution
           </div>
@@ -185,13 +185,7 @@ export function MyAmanahView({
         </div>
 
         {/* Due Contribution */}
-        <div
-          className={`rounded-xl p-5 border backdrop-blur-md shadow-xs transition-colors ${
-            personal.dueContributionAmount > 0
-              ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200/80 dark:border-amber-900/60'
-              : 'bg-white/75 dark:bg-slate-900/75 border-slate-200/80 dark:border-slate-800/80'
-          }`}
-        >
+        <div className="rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md shadow-xs hover:border-slate-300/90 dark:hover:border-slate-700/80 transition-colors">
           <div
             className={`text-xs font-medium ${
               personal.dueContributionAmount > 0
