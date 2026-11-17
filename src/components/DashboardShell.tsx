@@ -1311,7 +1311,10 @@ export function DashboardShell() {
                       loading={dataLoading && !overview}
                       pendingBadgeCount={pendingBadgeCount}
                       onNavigate={(sec) => navigateToPage(sec, false)}
+                      onOpenManagerDeskTab={openManagerDeskTab}
                       onOpenLoanModal={() => void openLoanRequestModal()}
+                      onViewMemberProfile={handleViewMemberProfile}
+                      onRefresh={handleRefreshWithAutoSync}
                     />
                   </div>
                   <div className="hidden lg:block space-y-4">
