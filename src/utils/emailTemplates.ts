@@ -184,7 +184,7 @@ export const EMAIL_TEMPLATE_META: Record<EmailTemplateKey, EmailTemplateMeta> = 
     shortLabel: 'Monthly PDF',
     audience: 'All Active Members',
     description:
-      'Attached monthly treasury statement emailed on the 1st of the month or manually from Admin Reports.',
+      'Attached monthly treasury statement emailed on the 15th of every month or manually from Admin Reports.',
     variables: [
       { key: 'recipientName', token: '{{recipientName}}', description: 'Member full name', sample: 'Bilal Hasan' },
       { key: 'monthKey', token: '{{monthKey}}', description: 'Billing period YYYY-MM', sample: '2026-11' },

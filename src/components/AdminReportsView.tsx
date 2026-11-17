@@ -590,7 +590,7 @@ export function AdminReportsView({
                   Monthly Fund Summary PDF Report
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Auto-email at month rollover is{' '}
+                  Auto-email on the 15th of every month is{' '}
                   <strong className="text-slate-800 dark:text-slate-200">
                     {config?.monthlyReportAutoEmail === false ? 'Disabled' : 'Enabled'}
                   </strong>

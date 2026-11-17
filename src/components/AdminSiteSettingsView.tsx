@@ -907,7 +907,7 @@ export function AdminSiteSettingsView({
                       onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
                       className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                     />
-                    <span>Automatically email monthly PDF fund summary at month rollover</span>
+                    <span>Automatically email monthly PDF fund summary on the 15th of every month</span>
                   </label>
                   <span className="font-mono text-slate-500 dark:text-slate-400">
                     Last emailed: {config?.lastMonthlyPdfSentMonth || 'None yet'}

@@ -56,6 +56,7 @@ import {
   buildMonthlyFundSummaryData,
   generateMonthlyFundSummaryPdfBuffer,
   getPreviousMonthKey,
+  isMonthlyPdfScheduleDue,
 } from '../src/server/pdfSummaryService.ts';
 import {
   extractPostUrlList,
@@ -1112,6 +1113,11 @@ describe('ImageKit.io media storage, semantic naming & PDF/photo validation', ()
 
     expect(getPreviousMonthKey(new Date('2027-01-02T00:00:00.000Z'))).toBe('2026-12');
     expect(getPreviousMonthKey(new Date('2027-03-15T12:00:00.000Z'))).toBe('2027-02');
+
+    expect(isMonthlyPdfScheduleDue(new Date('2027-03-01T00:00:00.000Z'))).toBe(false);
+    expect(isMonthlyPdfScheduleDue(new Date('2027-03-14T23:59:59.000Z'))).toBe(false);
+    expect(isMonthlyPdfScheduleDue(new Date('2027-03-15T00:00:00.000Z'))).toBe(true);
+    expect(isMonthlyPdfScheduleDue(new Date('2027-03-20T12:00:00.000Z'))).toBe(true);
   });
 
   it('formats transaction email summary payloads cleanly and checks SMTP env configuration', () => {

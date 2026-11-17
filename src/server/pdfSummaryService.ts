@@ -45,6 +45,12 @@ function fmtMoney(amount: number, currency: string): string {
   return `${currency} ${num}`;
 }
 
+export const MONTHLY_REPORT_SEND_DAY = 15;
+
+export function isMonthlyPdfScheduleDue(now = new Date()): boolean {
+  return now.getUTCDate() >= MONTHLY_REPORT_SEND_DAY;
+}
+
 export function getPreviousMonthKey(now = new Date()): string {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   return d.toISOString().slice(0, 7);

@@ -123,6 +123,7 @@ import {
 import {
   generateMonthlyFundSummaryPdfBuffer,
   getPreviousMonthKey,
+  isMonthlyPdfScheduleDue,
 } from './pdfSummaryService.ts';
 import {
   broadcastRealtimeEvent,
@@ -9277,7 +9278,10 @@ apiRouter.use((_req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });
 });
 
-export async function runMonthlyPdfSummaryJobIfDue(): Promise<boolean> {
+export async function runMonthlyPdfSummaryJobIfDue(now = new Date()): Promise<boolean> {
+  if (!isMonthlyPdfScheduleDue(now)) {
+    return false;
+  }
   if (String(process.env.MONTHLY_REPORT_AUTO_EMAIL || 'true').trim().toLowerCase() === 'false') {
     return false;
   }
@@ -9293,7 +9297,7 @@ export async function runMonthlyPdfSummaryJobIfDue(): Promise<boolean> {
     return false;
   }
 
-  const prevMonthKey = getPreviousMonthKey();
+  const prevMonthKey = getPreviousMonthKey(now);
   if (state.fundConfig.lastMonthlyPdfSentMonth === prevMonthKey) {
     return false;
   }
