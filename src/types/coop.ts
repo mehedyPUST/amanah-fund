@@ -995,6 +995,11 @@ export interface AdminSystemStatus {
     configured: boolean;
     model: string;
   };
+  groqAi?: {
+    configured: boolean;
+    model: string;
+    features: string[];
+  };
   totals: {
     activeMembers: number;
     pendingMembers: number;
@@ -1007,5 +1012,48 @@ export interface AdminSystemStatus {
     nodeVersion: string;
     uptimeSeconds: number;
   };
+}
+
+export type AiRewriteContext =
+  | 'community_post'
+  | 'meeting_schedule'
+  | 'notice'
+  | 'loan_purpose'
+  | 'poll'
+  | 'investment_thesis'
+  | 'faq'
+  | 'general';
+
+export type AiRewriteTone = 'clear' | 'concise' | 'formal';
+
+export interface AiRewriteResult {
+  rewrittenTitle?: string;
+  rewrittenText: string;
+  improvements: string[];
+  model: string;
+}
+
+export interface AiSpamCheckResult {
+  isSpam: boolean;
+  riskLevel: 'safe' | 'caution' | 'spam';
+  reason: string;
+  flaggedLinks: string[];
+  signals: string[];
+  checkedWith: 'groq' | 'heuristic';
+  model?: string;
+}
+
+export type CharterTargetLanguage = 'en' | 'bn' | 'ar';
+
+export interface CharterPdfExtractTranslateResult {
+  sourceName: string;
+  totalPages: number;
+  extractedText: string;
+  translatedText?: string;
+  targetLanguage: CharterTargetLanguage;
+  summaryBullets: string[];
+  translatedWith: 'groq' | 'raw_extract';
+  model?: string;
+  truncationNotice?: string;
 }
 

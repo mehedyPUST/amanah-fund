@@ -21,7 +21,10 @@ import {
   Search,
   Send,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
   Smile,
+  Sparkles,
   ThumbsUp,
   Trash2,
   Unlock,
@@ -36,6 +39,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type {
   ActiveMemberDirectoryItem,
+  AiRewriteTone,
+  AiSpamCheckResult,
   CommunityCategory,
   CommunityPost,
   CommunityPostLink,
@@ -215,6 +220,11 @@ export function CommunityView({
   const [newEmojiOpen, setNewEmojiOpen] = useState(false);
   const [creatingPost, setCreatingPost] = useState(false);
   const postContentRef = useRef<HTMLTextAreaElement | null>(null);
+  const [aiTone, setAiTone] = useState<AiRewriteTone>('clear');
+  const [rewritingNewPost, setRewritingNewPost] = useState(false);
+  const [checkingNewSpam, setCheckingNewSpam] = useState(false);
+  const [newSpamCheckResult, setNewSpamCheckResult] = useState<AiSpamCheckResult | null>(null);
+  const [newRewriteFeedback, setNewRewriteFeedback] = useState<string | null>(null);
 
   // Poll Builder State
   const [pollEnabled, setPollEnabled] = useState(false);
@@ -243,6 +253,9 @@ export function CommunityView({
   const [editLinkKind, setEditLinkKind] = useState<'auto' | CommunityPostLinkKind>('auto');
   const [editEmojiOpen, setEditEmojiOpen] = useState(false);
   const [savingPostEdit, setSavingPostEdit] = useState(false);
+  const [rewritingEditPost, setRewritingEditPost] = useState(false);
+  const [checkingEditSpam, setCheckingEditSpam] = useState(false);
+  const [editSpamCheckResult, setEditSpamCheckResult] = useState<AiSpamCheckResult | null>(null);
   const editContentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
@@ -580,6 +593,7 @@ export function CommunityView({
       setNewLinkUrl('');
       setNewLinkLabel('');
       setNewLinkKind('auto');
+      setNewSpamCheckResult(null);
     } else {
       if (!editLinkUrl.trim()) return;
       const result = resolveDraftLinkAddition(editLinks, editLinkUrl, editLinkLabel, editLinkKind);
@@ -596,6 +610,155 @@ export function CommunityView({
       setEditLinkUrl('');
       setEditLinkLabel('');
       setEditLinkKind('auto');
+      setEditSpamCheckResult(null);
+    }
+  }
+
+  async function handleRewriteNewPost() {
+    if (!newTitle.trim() && !newContent.trim()) {
+      setModal({
+        mode: 'notice',
+        tone: 'amber',
+        title: 'Write a Draft First',
+        description: 'Enter a headline or draft message before asking AI to rewrite it.',
+      });
+      return;
+    }
+    setRewritingNewPost(true);
+    setNewRewriteFeedback(null);
+    try {
+      const res = await api.rewriteWithAi({
+        context: 'community_post',
+        title: newTitle.trim() ? newTitle : undefined,
+        text: newContent,
+        tone: aiTone,
+      });
+      if (res.result.rewrittenTitle && newTitle.trim()) {
+        setNewTitle(res.result.rewrittenTitle.slice(0, 140));
+      }
+      if (res.result.rewrittenText) {
+        setNewContent(res.result.rewrittenText.slice(0, 4000));
+      }
+      setNewRewriteFeedback(
+        res.result.improvements.length > 0
+          ? res.result.improvements.join(' · ')
+          : `Rewritten in ${aiTone} tone.`
+      );
+      setNewSpamCheckResult(null);
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'AI Rewrite Unavailable',
+        description:
+          err instanceof Error ? err.message : 'Unable to rewrite community post with Groq AI.',
+      });
+    } finally {
+      setRewritingNewPost(false);
+    }
+  }
+
+  async function handleCheckNewSpam() {
+    const pendingLinkResult = resolveDraftLinkAddition(
+      newLinks,
+      newLinkUrl,
+      newLinkLabel,
+      newLinkKind
+    );
+    if (pendingLinkResult.error) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Link URL',
+        description: pendingLinkResult.error,
+      });
+      return;
+    }
+    setCheckingNewSpam(true);
+    try {
+      const res = await api.checkCommunitySpam({
+        title: newTitle,
+        content: newContent,
+        links: pendingLinkResult.nextList,
+      });
+      setNewSpamCheckResult(res.spamCheck);
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Spam Check Failed',
+        description:
+          err instanceof Error ? err.message : 'Unable to check post content and links.',
+      });
+    } finally {
+      setCheckingNewSpam(false);
+    }
+  }
+
+  async function handleRewriteEditPost() {
+    if (!editTitle.trim() && !editContent.trim()) return;
+    setRewritingEditPost(true);
+    try {
+      const res = await api.rewriteWithAi({
+        context: 'community_post',
+        title: editTitle.trim() ? editTitle : undefined,
+        text: editContent,
+        tone: aiTone,
+      });
+      if (res.result.rewrittenTitle && editTitle.trim()) {
+        setEditTitle(res.result.rewrittenTitle.slice(0, 140));
+      }
+      if (res.result.rewrittenText) {
+        setEditContent(res.result.rewrittenText.slice(0, 4000));
+      }
+      setEditSpamCheckResult(null);
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'AI Rewrite Unavailable',
+        description:
+          err instanceof Error ? err.message : 'Unable to rewrite community post with Groq AI.',
+      });
+    } finally {
+      setRewritingEditPost(false);
+    }
+  }
+
+  async function handleCheckEditSpam() {
+    const pendingLinkResult = resolveDraftLinkAddition(
+      editLinks,
+      editLinkUrl,
+      editLinkLabel,
+      editLinkKind
+    );
+    if (pendingLinkResult.error) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Invalid Link URL',
+        description: pendingLinkResult.error,
+      });
+      return;
+    }
+    setCheckingEditSpam(true);
+    try {
+      const res = await api.checkCommunitySpam({
+        title: editTitle,
+        content: editContent,
+        links: pendingLinkResult.nextList,
+      });
+      setEditSpamCheckResult(res.spamCheck);
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Spam Check Failed',
+        description:
+          err instanceof Error ? err.message : 'Unable to check edited post links.',
+      });
+    } finally {
+      setCheckingEditSpam(false);
     }
   }
 
@@ -688,6 +851,8 @@ export function CommunityView({
           setPollAllowMultiple(false);
           setPollOptions(['', '']);
           setPostMentionQuery(null);
+          setNewSpamCheckResult(null);
+          setNewRewriteFeedback(null);
           setComposerOpen(false);
           setModal({
             mode: 'notice',
@@ -738,6 +903,7 @@ export function CommunityView({
     setEditLinkLabel('');
     setEditLinkKind('auto');
     setEditEmojiOpen(false);
+    setEditSpamCheckResult(null);
   }
 
   function handleSavePostEdit(postId: string) {
@@ -1522,6 +1688,52 @@ export function CommunityView({
                   </div>
                 )}
 
+                {(newRewriteFeedback || newSpamCheckResult) && (
+                  <div className="space-y-2">
+                    {newRewriteFeedback && (
+                      <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs text-indigo-800 dark:text-indigo-200">
+                        <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                        <span>AI Rewrite applied: {newRewriteFeedback}</span>
+                      </div>
+                    )}
+                    {newSpamCheckResult && (
+                      <div
+                        className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${
+                          newSpamCheckResult.riskLevel === 'spam'
+                            ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
+                            : newSpamCheckResult.riskLevel === 'caution'
+                              ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
+                              : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
+                        }`}
+                      >
+                        {newSpamCheckResult.riskLevel === 'safe' ? (
+                          <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                        )}
+                        <div className="space-y-1 min-w-0">
+                          <div className="font-semibold">
+                            {newSpamCheckResult.riskLevel === 'spam'
+                              ? 'Spam / Unsafe Link Flagged'
+                              : newSpamCheckResult.riskLevel === 'caution'
+                                ? 'Link Caution Notice'
+                                : 'Post & Links Verified Safe'}
+                            <span className="ml-1.5 font-mono text-[10px] opacity-75">
+                              ({newSpamCheckResult.checkedWith === 'groq' ? 'Groq AI' : 'Link Guard'})
+                            </span>
+                          </div>
+                          <div>{newSpamCheckResult.reason}</div>
+                          {newSpamCheckResult.flaggedLinks.length > 0 && (
+                            <div className="font-mono text-[11px] break-all">
+                              Flagged: {newSpamCheckResult.flaggedLinks.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -1558,6 +1770,38 @@ export function CommunityView({
                         <span>Attach Poll</span>
                       </button>
                     )}
+
+                    <div className="inline-flex items-center rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 overflow-hidden">
+                      <select
+                        value={aiTone}
+                        onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
+                        aria-label="AI rewrite tone"
+                        className="px-2 py-2 bg-transparent text-[11px] font-medium text-indigo-800 dark:text-indigo-200 border-r border-indigo-200 dark:border-indigo-800/70 focus:outline-none cursor-pointer"
+                      >
+                        <option value="clear">Clear</option>
+                        <option value="concise">Concise</option>
+                        <option value="formal">Formal</option>
+                      </select>
+                      <button
+                        type="button"
+                        disabled={rewritingNewPost}
+                        onClick={() => void handleRewriteNewPost()}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{rewritingNewPost ? 'Rewriting...' : 'AI Rewrite'}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={checkingNewSpam}
+                      onClick={() => void handleCheckNewSpam()}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{checkingNewSpam ? 'Scanning...' : 'Spam & Link Check'}</span>
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -2085,8 +2329,36 @@ export function CommunityView({
                           </div>
                         )}
 
+                        {editSpamCheckResult && (
+                          <div
+                            className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${
+                              editSpamCheckResult.riskLevel === 'spam'
+                                ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
+                                : editSpamCheckResult.riskLevel === 'caution'
+                                  ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
+                                  : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
+                            }`}
+                          >
+                            {editSpamCheckResult.riskLevel === 'safe' ? (
+                              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                            )}
+                            <div className="min-w-0">
+                              <span className="font-semibold mr-1.5">
+                                {editSpamCheckResult.riskLevel === 'spam'
+                                  ? 'Spam / Unsafe Link Flagged:'
+                                  : editSpamCheckResult.riskLevel === 'caution'
+                                    ? 'Link Caution:'
+                                    : 'Verified Safe:'}
+                              </span>
+                              <span>{editSpamCheckResult.reason}</span>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => setEditEmojiOpen((prev) => !prev)}
@@ -2102,6 +2374,24 @@ export function CommunityView({
                             >
                               <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                               <span>Add Link</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={rewritingEditPost}
+                              onClick={() => void handleRewriteEditPost()}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>{rewritingEditPost ? 'Rewriting...' : 'AI Rewrite'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={checkingEditSpam}
+                              onClick={() => void handleCheckEditSpam()}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 cursor-pointer disabled:opacity-50"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>{checkingEditSpam ? 'Scanning...' : 'Spam Check'}</span>
                             </button>
                           </div>
                           <div className="flex items-center gap-2">

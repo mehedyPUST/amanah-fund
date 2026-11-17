@@ -36,6 +36,7 @@
     "react-dom": "^19.3.1",
     "react-loading-skeleton": "^3.5.0",
     "recharts": "^3.10.1",
+    "unpdf": "^2.2.1",
     "vitest": "^5.1.0"
   },
   "devDependencies": {

@@ -4,18 +4,25 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronDown,
+  Copy,
   Download,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
   Languages,
+  Sparkles,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
-import type { ConstitutionDocumentInfo } from '../types/coop.ts';
+import type {
+  CharterPdfExtractTranslateResult,
+  CharterTargetLanguage,
+  ConstitutionDocumentInfo,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
@@ -227,11 +234,37 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
   const [expandedCodes, setExpandedCodes] = useState<Record<string, boolean>>({});
+  const [showPdfExtractor, setShowPdfExtractor] = useState(false);
+  const [extractTargetLang, setExtractTargetLang] = useState<CharterTargetLanguage>('en');
+  const [extractLoading, setExtractLoading] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractResult, setExtractResult] = useState<CharterPdfExtractTranslateResult | null>(null);
+  const [extractTab, setExtractTab] = useState<'translated' | 'raw'>('translated');
+  const [copiedExtract, setCopiedExtract] = useState(false);
 
   // Language toggle is strictly for the standalone Charter page (/rules)
   const activeLang: CharterLanguage = embedded ? 'en' : lang;
   const isBn = activeLang === 'bn';
   const sections = isBn ? CHARTER_SECTIONS_BN : CHARTER_SECTIONS_EN;
+
+  async function handleExtractAndTranslate(targetLanguage = extractTargetLang) {
+    setExtractLoading(true);
+    setExtractError(null);
+    try {
+      const res = await api.extractAndTranslateCharterPdf({
+        targetLanguage,
+        translate: true,
+      });
+      setExtractResult(res.result);
+      setExtractTab(res.result.translatedText ? 'translated' : 'raw');
+    } catch (err) {
+      setExtractError(
+        err instanceof Error ? err.message : 'Unable to extract and translate Constitution PDF.'
+      );
+    } finally {
+      setExtractLoading(false);
+    }
+  }
 
   const allExpanded =
     !embedded || sections.every((section) => Boolean(expandedCodes[section.code]));
@@ -419,6 +452,24 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
                     type="button"
+                    onClick={() => {
+                      const next = !showPdfExtractor;
+                      setShowPdfExtractor(next);
+                      if (next && !extractResult && !extractLoading) {
+                        void handleExtractAndTranslate(extractTargetLang);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                      showPdfExtractor
+                        ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200'
+                        : 'border-indigo-200 dark:border-indigo-800/70 bg-white dark:bg-slate-900 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{showPdfExtractor ? 'Hide AI Reader' : 'Extract & Translate'}</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setShowPdfPreview((v) => !v)}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
@@ -453,6 +504,165 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </a>
                 </div>
               </div>
+
+              <AnimatePresence>
+                {showPdfExtractor && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-white/95 dark:bg-slate-950/90 p-4 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200/75 dark:border-slate-800">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                          <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Charter PDF Text Extraction &amp; Translation</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Extracts live text directly from the published Constitution PDF and translates or reconstructs clauses cleanly via Groq AI.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <select
+                          value={extractTargetLang}
+                          onChange={(e) => {
+                            const nextLang = e.target.value as CharterTargetLanguage;
+                            setExtractTargetLang(nextLang);
+                            void handleExtractAndTranslate(nextLang);
+                          }}
+                          aria-label="Target translation language"
+                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200"
+                        >
+                          <option value="en">Translate to English</option>
+                          <option value="bn">Translate to বাংলা (Bengali)</option>
+                          <option value="ar">Translate to العربية (Arabic)</option>
+                        </select>
+                        <button
+                          type="button"
+                          disabled={extractLoading}
+                          onClick={() => void handleExtractAndTranslate(extractTargetLang)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                        >
+                          <Languages className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{extractLoading ? 'Extracting…' : 'Extract & Translate'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {extractError && (
+                      <div className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300">
+                        {extractError}
+                      </div>
+                    )}
+
+                    {extractLoading && !extractResult && (
+                      <div className="space-y-2 py-2">
+                        <Skeleton height={16} width="55%" />
+                        <Skeleton height={84} />
+                      </div>
+                    )}
+
+                    {extractResult && (
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="font-mono">
+                            {extractResult.sourceName} · {extractResult.totalPages} page(s)
+                            {extractResult.model ? ` · ${extractResult.model}` : ''}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {extractResult.translatedText && (
+                              <button
+                                type="button"
+                                onClick={() => setExtractTab('translated')}
+                                className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
+                                  extractTab === 'translated'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                                }`}
+                              >
+                                Translated ({extractResult.targetLanguage.toUpperCase()})
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setExtractTab('raw')}
+                              className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
+                                extractTab === 'raw' || !extractResult.translatedText
+                                  ? 'bg-slate-900 dark:bg-slate-700 text-white'
+                                  : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              Raw PDF Text
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textToCopy =
+                                  extractTab === 'translated' && extractResult.translatedText
+                                    ? extractResult.translatedText
+                                    : extractResult.extractedText;
+                                void navigator.clipboard?.writeText(textToCopy);
+                                setCopiedExtract(true);
+                                setTimeout(() => setCopiedExtract(false), 1800);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                              {copiedExtract ? (
+                                <Check className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                              <span>{copiedExtract ? 'Copied' : 'Copy'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {extractResult.summaryBullets.length > 0 && (
+                          <div className="rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3 space-y-1">
+                            <div className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
+                              Key Charter Highlights
+                            </div>
+                            <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4">
+                              {extractResult.summaryBullets.map((b, i) => (
+                                <li key={i}>{b}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {extractResult.truncationNotice && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                            {extractResult.truncationNotice}
+                          </p>
+                        )}
+
+                        <div
+                          lang={
+                            extractTab === 'translated' && extractResult.translatedText
+                              ? extractResult.targetLanguage
+                              : undefined
+                          }
+                          dir={
+                            extractTab === 'translated' &&
+                            extractResult.translatedText &&
+                            extractResult.targetLanguage === 'ar'
+                              ? 'rtl'
+                              : undefined
+                          }
+                          className="max-h-80 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 p-3.5 text-xs sm:text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed"
+                        >
+                          {extractTab === 'translated' && extractResult.translatedText
+                            ? extractResult.translatedText
+                            : extractResult.extractedText}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <AnimatePresence>
                 {showPdfPreview && (

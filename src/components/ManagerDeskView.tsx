@@ -17,6 +17,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Sparkles,
   Trash2,
   UserCheck,
   Vote,
@@ -133,6 +134,7 @@ export function ManagerDeskView({
   const [meetingWhen, setMeetingWhen] = useState('');
   const [meetingWhere, setMeetingWhere] = useState('');
   const [meetingAgenda, setMeetingAgenda] = useState('');
+  const [rewritingMeeting, setRewritingMeeting] = useState(false);
 
   const pendingContributions = contributions.filter((c) => c.status === 'pending');
   const filteredPendingContributions = pendingContributions.filter((c) => {
@@ -541,6 +543,42 @@ export function ManagerDeskView({
         );
       },
     });
+  }
+
+  async function handleRewriteMeeting() {
+    if (!meetingTitle.trim() && !meetingAgenda.trim()) {
+      showNotice(
+        'amber',
+        'Enter Meeting Draft First',
+        'Write a draft meeting title or agenda points before running AI Rewrite.'
+      );
+      return;
+    }
+    setRewritingMeeting(true);
+    try {
+      const res = await api.rewriteWithAi({
+        context: 'meeting_schedule',
+        title: meetingTitle.trim() ? meetingTitle : undefined,
+        text: meetingAgenda.trim() || meetingTitle.trim(),
+        tone: 'formal',
+      });
+      if (res.result.rewrittenTitle && meetingTitle.trim()) {
+        setMeetingTitle(res.result.rewrittenTitle);
+      }
+      if (meetingAgenda.trim()) {
+        setMeetingAgenda(res.result.rewrittenText);
+      } else if (res.result.rewrittenText && !meetingTitle.trim()) {
+        setMeetingTitle(res.result.rewrittenText);
+      }
+    } catch (err) {
+      showNotice(
+        'red',
+        'AI Rewrite Unavailable',
+        err instanceof Error ? err.message : 'Unable to rewrite meeting schedule text.'
+      );
+    } finally {
+      setRewritingMeeting(false);
+    }
   }
 
   function confirmMeetingStatus(m: CoopMeeting, status: CoopMeeting['status']) {
@@ -1604,19 +1642,30 @@ export function ManagerDeskView({
                 />
               </div>
               <textarea
-                rows={2}
+                rows={3}
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
                 placeholder="Meeting agenda & discussion points…"
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
-              <button
-                type="submit"
-                disabled={modalBusy}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
-              >
-                Schedule Meeting &amp; Notify All Members
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={modalBusy || rewritingMeeting}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                >
+                  Schedule Meeting &amp; Notify All Members
+                </button>
+                <button
+                  type="button"
+                  disabled={modalBusy || rewritingMeeting}
+                  onClick={() => void handleRewriteMeeting()}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{rewritingMeeting ? 'Rewriting...' : 'AI Rewrite Title & Agenda'}</span>
+                </button>
+              </div>
             </form>
 
             {meetings.length > 0 && (

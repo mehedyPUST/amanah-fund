@@ -10,6 +10,7 @@ import {
   PinOff,
   Plus,
   RefreshCw,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -97,6 +98,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
   const [pinned, setPinned] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [rewritingNotice, setRewritingNotice] = useState(false);
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CoopNotice | null>(null);
@@ -484,7 +486,43 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   <span>Pin notice to top of board</span>
                 </label>
 
-                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    disabled={submitting || rewritingNotice}
+                    onClick={async () => {
+                      if (!title.trim() && !body.trim()) {
+                        setFormError('Enter a notice title or message before using AI Rewrite.');
+                        return;
+                      }
+                      setRewritingNotice(true);
+                      setFormError(null);
+                      try {
+                        const res = await api.rewriteWithAi({
+                          context: 'notice',
+                          title: title.trim() ? title : undefined,
+                          text: body.trim() || title.trim(),
+                          tone: 'formal',
+                        });
+                        if (res.result.rewrittenTitle && title.trim()) {
+                          setTitle(res.result.rewrittenTitle.slice(0, 160));
+                        }
+                        if (body.trim() && res.result.rewrittenText) {
+                          setBody(res.result.rewrittenText.slice(0, 2000));
+                        }
+                      } catch (err) {
+                        setFormError(
+                          err instanceof Error ? err.message : 'Unable to rewrite notice with AI.'
+                        );
+                      } finally {
+                        setRewritingNotice(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{rewritingNotice ? 'Rewriting…' : 'AI Rewrite'}</span>
+                  </button>
                   <button
                     type="button"
                     disabled={submitting}

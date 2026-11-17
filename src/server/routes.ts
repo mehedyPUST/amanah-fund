@@ -6,6 +6,9 @@ import bcrypt from 'bcryptjs';
 import { type Response, Router } from 'express';
 import QRCode from 'qrcode';
 import type {
+  AiRewriteContext,
+  AiRewriteTone,
+  CharterTargetLanguage,
   CommunityCategory,
   CommunityComment,
   CommunityPoll,
@@ -104,6 +107,18 @@ import {
 } from './emailQueueService.ts';
 import { sortFaqItems } from '../utils/faqDefaults.ts';
 import { verifyPaymentReceiptImage } from './geminiService.ts';
+import {
+  checkCommunityPostSpam,
+  getGroqModel,
+  isGroqConfigured,
+  rewriteCooperativeText,
+  translateAndRefineCharterText,
+} from './groqService.ts';
+import {
+  decodeBase64PdfPayload,
+  extractPdfTextFromBuffer,
+  resolveActiveConstitutionPdfBuffer,
+} from './pdfTextService.ts';
 import { createRateLimiter } from './rateLimit.ts';
 import {
   getImageKitConfig,
@@ -207,6 +222,13 @@ const geminiRateLimiter = createRateLimiter({
   maxRequests: 25,
   keyPrefix: 'gemini',
   message: 'AI receipt verification rate limit reached. Please wait a minute before scanning again.',
+});
+
+const groqAiRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 30,
+  keyPrefix: 'groq-ai',
+  message: 'AI assistant rate limit reached. Please wait a few seconds before trying again.',
 });
 
 async function assertStepUpTotp(req: AuthenticatedRequest, res: Response): Promise<boolean> {
@@ -1570,6 +1592,211 @@ apiRouter.post(
       const message =
         err instanceof Error ? err.message : 'Failed to analyze payment receipt with Gemini AI.';
       const status = message.includes('GEMINI_API_KEY') ? 503 : 500;
+      res.status(status).json({ error: message });
+    }
+  }
+);
+
+const ALLOWED_AI_REWRITE_CONTEXTS = new Set<AiRewriteContext>([
+  'community_post',
+  'meeting_schedule',
+  'notice',
+  'loan_purpose',
+  'poll',
+  'investment_thesis',
+  'faq',
+  'general',
+]);
+
+apiRouter.post(
+  '/ai/rewrite',
+  requireAuth,
+  groqAiRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const rawContext = String(req.body?.context || 'general').trim() as AiRewriteContext;
+      const context: AiRewriteContext = ALLOWED_AI_REWRITE_CONTEXTS.has(rawContext)
+        ? rawContext
+        : 'general';
+
+      if (
+        (context === 'meeting_schedule' || context === 'notice' || context === 'poll') &&
+        viewer.role !== 'admin' &&
+        viewer.role !== 'manager'
+      ) {
+        res.status(403).json({
+          error: 'Only administrators or fund managers can rewrite governance communications.',
+        });
+        return;
+      }
+
+      if (
+        (context === 'investment_thesis' || context === 'faq') &&
+        viewer.role !== 'admin'
+      ) {
+        res.status(403).json({
+          error: 'Only administrators can rewrite site settings or FAQ entries.',
+        });
+        return;
+      }
+
+      const text = String(req.body?.text || '').trim();
+      const title =
+        req.body?.title !== undefined ? String(req.body.title || '').trim() : undefined;
+      const toneRaw = String(req.body?.tone || 'clear').trim();
+      const tone: AiRewriteTone =
+        toneRaw === 'concise' || toneRaw === 'formal' ? toneRaw : 'clear';
+
+      if (!text && !title) {
+        res.status(400).json({ error: 'Enter text or a headline before requesting an AI rewrite.' });
+        return;
+      }
+      if (text.length > 6000 || (title && title.length > 400)) {
+        res.status(400).json({ error: 'Input exceeds maximum rewrite length.' });
+        return;
+      }
+
+      const result = await rewriteCooperativeText({
+        text,
+        title,
+        context,
+        tone,
+      });
+
+      res.json({ result });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to rewrite text with Groq AI.';
+      const status = message.includes('GROQ_API_KEY') ? 503 : 500;
+      res.status(status).json({ error: message });
+    }
+  }
+);
+
+apiRouter.post(
+  '/ai/community-spam-check',
+  requireAuth,
+  groqAiRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const title = String(req.body?.title || '').trim();
+      const content = String(req.body?.content || '').trim();
+      const linksResult = normalizeAndValidatePostLinks(req.body?.links);
+      if (linksResult.error) {
+        res.status(400).json({ error: linksResult.error });
+        return;
+      }
+
+      if (!title && !content && linksResult.links.length === 0) {
+        res.status(400).json({
+          error: 'Provide a post headline, message, or links to run the spam check.',
+        });
+        return;
+      }
+
+      const spamCheck = await checkCommunityPostSpam({
+        title,
+        content,
+        links: linksResult.links,
+        strictAiRequired: false,
+      });
+
+      res.json({ spamCheck });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to run community spam check.';
+      res.status(500).json({ error: message });
+    }
+  }
+);
+
+apiRouter.post(
+  '/ai/charter/extract-translate',
+  groqAiRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const rawFileBase64 = String(req.body?.fileBase64 || '').trim();
+      const rawTargetLang = String(req.body?.targetLanguage || 'en').trim().toLowerCase();
+      const targetLanguage: CharterTargetLanguage =
+        rawTargetLang === 'bn' || rawTargetLang === 'ar' ? rawTargetLang : 'en';
+      const shouldTranslate = req.body?.translate !== false;
+
+      let pdfBuffer: Buffer;
+      let sourceName: string;
+
+      if (rawFileBase64) {
+        const optionalUser = await resolveOptionalAuthUser(req);
+        if (!optionalUser || optionalUser.role !== 'admin') {
+          res.status(403).json({
+            error: 'Only administrators can extract custom PDF files directly.',
+          });
+          return;
+        }
+        try {
+          pdfBuffer = decodeBase64PdfPayload(rawFileBase64);
+        } catch (decodeErr) {
+          res.status(400).json({
+            error:
+              decodeErr instanceof Error ? decodeErr.message : 'Invalid Charter PDF payload.',
+          });
+          return;
+        }
+        sourceName = String(req.body?.sourceName || 'uploaded-charter.pdf').trim();
+      } else {
+        const state = await loadVaultState();
+        const resolved = await resolveActiveConstitutionPdfBuffer(state.fundConfig, UPLOADS_DIR);
+        pdfBuffer = resolved.buffer;
+        sourceName = resolved.sourceName;
+      }
+
+      const extracted = await extractPdfTextFromBuffer(pdfBuffer);
+      if (!extracted.text) {
+        res.status(422).json({
+          error:
+            'No selectable text could be extracted from this PDF. It may be an image-only scan.',
+        });
+        return;
+      }
+
+      if (shouldTranslate && isGroqConfigured()) {
+        const translated = await translateAndRefineCharterText({
+          extractedText: extracted.text,
+          targetLanguage,
+          sourceName,
+        });
+        res.json({
+          result: {
+            sourceName,
+            totalPages: extracted.totalPages,
+            extractedText: extracted.text,
+            translatedText: translated.translatedText,
+            targetLanguage,
+            summaryBullets: translated.summaryBullets,
+            translatedWith: 'groq',
+            model: translated.model,
+            ...(translated.truncationNotice
+              ? { truncationNotice: translated.truncationNotice }
+              : {}),
+          },
+        });
+        return;
+      }
+
+      res.json({
+        result: {
+          sourceName,
+          totalPages: extracted.totalPages,
+          extractedText: extracted.text,
+          targetLanguage,
+          summaryBullets: [],
+          translatedWith: 'raw_extract',
+        },
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to extract or translate Charter PDF.';
+      const status = message.includes('GROQ_API_KEY') ? 503 : 500;
       res.status(status).json({ error: message });
     }
   }
@@ -5556,6 +5783,16 @@ apiRouter.get(
           configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
           model: 'gemini-4-hydrogen',
         },
+        groqAi: {
+          configured: isGroqConfigured(),
+          model: getGroqModel(),
+          features: [
+            'Community Post Rewrite',
+            'Meeting Agenda Rewrite',
+            'Community Link & Spam Shield',
+            'Charter PDF Extract & Translate',
+          ],
+        },
         totals: {
           activeMembers: state.users.filter((u) => u.status === 'active').length,
           pendingMembers: state.users.filter((u) => u.status === 'pending_approval').length,
@@ -6967,6 +7204,37 @@ apiRouter.post('/community/posts', requireAuth, async (req: AuthenticatedRequest
       };
     }
 
+    const spamCheck = await checkCommunityPostSpam({
+      title,
+      content,
+      links: linksResult.links,
+      strictAiRequired: false,
+    });
+    if (spamCheck.isSpam) {
+      await updateVaultState((draft) => {
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'COMMUNITY_SPAM_BLOCKED',
+          resourceType: 'community',
+          resourceId: 'spam-filter',
+          summary: `Blocked suspected spam post "${title}" by ${viewer.name}: ${spamCheck.reason}`,
+          payload: {
+            title,
+            flaggedLinks: spamCheck.flaggedLinks,
+            signals: spamCheck.signals,
+            checkedWith: spamCheck.checkedWith,
+          },
+        });
+        return draft;
+      });
+      broadcastRealtimeEvent('audit:updated', { action: 'COMMUNITY_SPAM_BLOCKED' });
+      res.status(400).json({
+        error: `Post blocked by spam & link protection: ${spamCheck.reason}`,
+        spamCheck,
+      });
+      return;
+    }
+
     const now = new Date().toISOString();
     const newPost: CommunityPost = {
       id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -7159,6 +7427,49 @@ apiRouter.patch('/community/posts/:id', requireAuth, async (req: AuthenticatedRe
     }
     if (content !== undefined && (content.length < 3 || content.length > 4000)) {
       res.status(400).json({ error: 'Post content must be between 3 and 4000 characters.' });
+      return;
+    }
+
+    const preEditState = await loadVaultState();
+    const existingForCheck = preEditState.communityPosts.find((p) => p.id === id);
+    if (!existingForCheck) {
+      res.status(404).json({ error: 'Community post not found.' });
+      return;
+    }
+    if (existingForCheck.authorId !== viewer.id) {
+      res.status(403).json({ error: 'You can only edit your own posts.' });
+      return;
+    }
+
+    const spamCheck = await checkCommunityPostSpam({
+      title: title !== undefined ? title : existingForCheck.title,
+      content: content !== undefined ? content : existingForCheck.content,
+      links: linksResult !== undefined ? linksResult.links : existingForCheck.links,
+      strictAiRequired: false,
+    });
+    if (spamCheck.isSpam) {
+      await updateVaultState((draft) => {
+        const postIdStr = String(id || '');
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'COMMUNITY_SPAM_BLOCKED',
+          resourceType: 'community',
+          resourceId: postIdStr,
+          summary: `Blocked suspected spam edit on post ${postIdStr} by ${viewer.name}: ${spamCheck.reason}`,
+          payload: {
+            postId: postIdStr,
+            flaggedLinks: spamCheck.flaggedLinks,
+            signals: spamCheck.signals,
+            checkedWith: spamCheck.checkedWith,
+          },
+        });
+        return draft;
+      });
+      broadcastRealtimeEvent('audit:updated', { action: 'COMMUNITY_SPAM_BLOCKED' });
+      res.status(400).json({
+        error: `Edit blocked by spam & link protection: ${spamCheck.reason}`,
+        spamCheck,
+      });
       return;
     }
 

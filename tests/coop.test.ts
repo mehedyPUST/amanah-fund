@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   appendAuditLog,
@@ -61,6 +63,17 @@ import {
   normalizeAndValidatePostLinks,
   parseTextWithLinks,
 } from '../src/utils/communityLinks.ts';
+import {
+  analyzeCommunityPostSpamHeuristic,
+  extractUrlsFromPost,
+  getGroqModel,
+  DEFAULT_GROQ_MODEL,
+} from '../src/server/groqService.ts';
+import {
+  DEFAULT_CONSTITUTION_PUBLIC_RELATIVE_PATH,
+  decodeBase64PdfPayload,
+  extractPdfTextFromBuffer,
+} from '../src/server/pdfTextService.ts';
 import {
   EMAIL_TEMPLATE_KEYS,
   mergeEmailTemplateCollections,
@@ -1366,7 +1379,62 @@ describe('FAQ Defaults & Sorting', () => {
   });
 });
 
+describe('Groq AI Community Spam Shield & Charter PDF Extraction', () => {
+  it('flags phishing, gambling, and malicious links while approving genuine cooperative posts', () => {
+    const safeResult = analyzeCommunityPostSpamHeuristic({
+      title: 'Halal Agri Venture Field Photos',
+      content: 'Assalamu Alaikum @Bilal Hasan, uploaded our inspection photos and YouTube walkthrough.',
+      links: [
+        { url: 'https://youtu.be/dQw4w9WgXcQ', label: 'Walkthrough', kind: 'video' },
+        { url: 'https://ik.imagekit.io/amanah/site.jpg', label: 'Field Photo', kind: 'photo' },
+      ],
+    });
+    expect(safeResult.isSpam).toBe(false);
+    expect(safeResult.riskLevel).toBe('safe');
 
+    const shortenerCaution = analyzeCommunityPostSpamHeuristic({
+      title: 'Shared document link',
+      content: 'Check the file here',
+      links: [{ url: 'https://bit.ly/charter-notes', label: 'Notes', kind: 'link' }],
+    });
+    expect(shortenerCaution.isSpam).toBe(false);
+    expect(shortenerCaution.riskLevel).toBe('caution');
+    expect(shortenerCaution.flaggedLinks).toContain('https://bit.ly/charter-notes');
 
+    const phishingSpam = analyzeCommunityPostSpamHeuristic({
+      title: 'Urgent Claim Free USDT Airdrop',
+      content: 'Connect wallet to claim 100% guaranteed profit daily http://192.168.1.50/verify',
+      links: [{ url: 'https://melbet.com/promo', label: 'Bonus', kind: 'link' }],
+    });
+    expect(phishingSpam.isSpam).toBe(true);
+    expect(phishingSpam.riskLevel).toBe('spam');
+    expect(phishingSpam.flaggedLinks.length).toBeGreaterThanOrEqual(1);
 
+    const extracted = extractUrlsFromPost({
+      title: 'Update',
+      content: 'See https://amanah.example.org/report.',
+      links: [{ url: 'https://youtu.be/abc', label: 'Video', kind: 'video' }],
+    });
+    expect(extracted).toEqual([
+      'https://amanah.example.org/report',
+      'https://youtu.be/abc',
+    ]);
+  });
 
+  it('extracts multi-page text from the cooperative Constitution PDF and validates base64 PDFs', async () => {
+    const pdfPath = path.join(process.cwd(), DEFAULT_CONSTITUTION_PUBLIC_RELATIVE_PATH);
+    expect(fs.existsSync(pdfPath)).toBe(true);
+    const buffer = fs.readFileSync(pdfPath);
+    const extracted = await extractPdfTextFromBuffer(buffer);
+    expect(extracted.totalPages).toBeGreaterThanOrEqual(5);
+    expect(extracted.text.length).toBeGreaterThan(5000);
+    expect(extracted.text).toContain('Cooperative');
+
+    const encoded = `data:application/pdf;base64,${buffer.subarray(0, 64).toString('base64')}`;
+    const decoded = decodeBase64PdfPayload(encoded);
+    expect(decoded.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+
+    expect(() => decodeBase64PdfPayload('')).toThrow(/empty/i);
+    expect(getGroqModel()).toBe(process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL);
+  });
+});

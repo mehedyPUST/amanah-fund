@@ -8,6 +8,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -42,6 +43,7 @@ export function AdminFaqManager() {
   const [answerInput, setAnswerInput] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [rewritingFaq, setRewritingFaq] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -326,6 +328,42 @@ export function AdminFaqManager() {
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={submitting || rewritingFaq}
+                onClick={async () => {
+                  if (!questionInput.trim() && !answerInput.trim()) {
+                    setFormError('Enter a draft question or answer before using AI Polish.');
+                    return;
+                  }
+                  setRewritingFaq(true);
+                  setFormError(null);
+                  try {
+                    const res = await api.rewriteWithAi({
+                      context: 'faq',
+                      title: questionInput.trim() ? questionInput : undefined,
+                      text: answerInput.trim() || questionInput.trim(),
+                      tone: 'clear',
+                    });
+                    if (res.result.rewrittenTitle && questionInput.trim()) {
+                      setQuestionInput(res.result.rewrittenTitle.slice(0, 300));
+                    }
+                    if (answerInput.trim() && res.result.rewrittenText) {
+                      setAnswerInput(res.result.rewrittenText.slice(0, 4000));
+                    }
+                  } catch (err) {
+                    setFormError(
+                      err instanceof Error ? err.message : 'Unable to polish FAQ with Groq AI.'
+                    );
+                  } finally {
+                    setRewritingFaq(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{rewritingFaq ? 'Polishing...' : 'AI Polish'}</span>
+              </button>
               <button
                 type="button"
                 onClick={closeComposer}

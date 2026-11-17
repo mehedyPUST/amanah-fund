@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
     'cookie-parser',
     'nodemailer',
     'jspdf',
+    'unpdf',
   ],
   outputFileTracingIncludes: {
     '/api/**': ['./firebase-applet-config.json'],

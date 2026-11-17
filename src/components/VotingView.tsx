@@ -10,6 +10,7 @@ import {
   PlusCircle,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   ThumbsDown,
   ThumbsUp,
   UserCheck,
@@ -120,6 +121,7 @@ export function VotingView({
   const [pollOptionsText, setPollOptionsText] = useState('Approve\nReject\nAbstain');
   const [pollClosesAt, setPollClosesAt] = useState('');
   const [creatingPoll, setCreatingPoll] = useState(false);
+  const [rewritingPoll, setRewritingPoll] = useState(false);
 
   function toggleAdminLedger(id: string) {
     setExpandedAdminLedgers((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -834,7 +836,51 @@ export function VotingView({
               />
             </div>
 
-            <div className="md:col-span-2 flex justify-end gap-2">
+            <div className="md:col-span-2 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                disabled={creatingPoll || rewritingPoll}
+                onClick={async () => {
+                  if (!pollTitle.trim() && !pollDescription.trim()) {
+                    setModal({
+                      mode: 'notice',
+                      tone: 'amber',
+                      title: 'Enter Poll Draft First',
+                      description: 'Enter a poll title or context before running AI Rewrite.',
+                    });
+                    return;
+                  }
+                  setRewritingPoll(true);
+                  try {
+                    const res = await api.rewriteWithAi({
+                      context: 'poll',
+                      title: pollTitle.trim() ? pollTitle : undefined,
+                      text: pollDescription.trim() || pollTitle.trim(),
+                      tone: 'clear',
+                    });
+                    if (res.result.rewrittenTitle && pollTitle.trim()) {
+                      setPollTitle(res.result.rewrittenTitle);
+                    }
+                    if (pollDescription.trim()) {
+                      setPollDescription(res.result.rewrittenText);
+                    }
+                  } catch (err) {
+                    setModal({
+                      mode: 'notice',
+                      tone: 'red',
+                      title: 'AI Rewrite Unavailable',
+                      description:
+                        err instanceof Error ? err.message : 'Unable to rewrite poll draft with AI.',
+                    });
+                  } finally {
+                    setRewritingPoll(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{rewritingPoll ? 'Rewriting...' : 'AI Rewrite'}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setShowCreatePoll(false)}

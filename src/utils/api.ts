@@ -1,6 +1,12 @@
 import type {
   AdminSystemStatus,
+  AiRewriteContext,
+  AiRewriteResult,
+  AiRewriteTone,
+  AiSpamCheckResult,
   AuditLogEntry,
+  CharterPdfExtractTranslateResult,
+  CharterTargetLanguage,
   CommunityCategory,
   CommunityPost,
   CommunityPostLink,
@@ -956,5 +962,55 @@ export const api = {
       ? `/api/reports/monthly-pdf/download?month=${encodeURIComponent(monthKey)}`
       : '/api/reports/monthly-pdf/download',
   getBackupJsonUrl: () => '/api/reports/backup-json',
+
+  // Groq AI Features (Text Rewrite, Community Link & Spam Shield, Charter PDF Extract & Translate)
+  rewriteWithAi: (payload: {
+    context: AiRewriteContext;
+    text: string;
+    title?: string;
+    tone?: AiRewriteTone;
+  }) =>
+    apiRequest<{ result: AiRewriteResult }>('/api/ai/rewrite', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  checkCommunitySpam: (payload: {
+    title: string;
+    content: string;
+    links?: CommunityPostLink[];
+  }) =>
+    apiRequest<{ spamCheck: AiSpamCheckResult }>('/api/ai/community-spam-check', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  extractAndTranslateCharterPdf: async (payload: {
+    file?: File;
+    targetLanguage?: CharterTargetLanguage;
+    translate?: boolean;
+  }) => {
+    let fileBase64: string | undefined;
+    let sourceName: string | undefined;
+    if (payload.file) {
+      const selectedFile = payload.file;
+      fileBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Failed to read selected PDF file.'));
+        reader.readAsDataURL(selectedFile);
+      });
+      sourceName = selectedFile.name;
+    }
+    return apiRequest<{ result: CharterPdfExtractTranslateResult }>(
+      '/api/ai/charter/extract-translate',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ...(fileBase64 ? { fileBase64, sourceName } : {}),
+          targetLanguage: payload.targetLanguage || 'en',
+          translate: payload.translate !== false,
+        }),
+      }
+    );
+  },
 };
 

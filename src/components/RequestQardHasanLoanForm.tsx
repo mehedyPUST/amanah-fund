@@ -10,6 +10,7 @@ import {
   Lock,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   UserCheck,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
@@ -121,6 +122,7 @@ export function RequestQardHasanLoanForm({
   );
   const [purpose, setPurpose] = useState('');
   const [emergencyContext, setEmergencyContext] = useState('');
+  const [rewritingField, setRewritingField] = useState<'purpose' | 'context' | null>(null);
   const [channel, setChannel] = useState<'bank' | 'mfs'>('mfs');
   const [provider, setProvider] = useState<string>(MFS_PROVIDERS[0]);
   const [disbursementAccount, setDisbursementAccount] = useState('');
@@ -553,12 +555,39 @@ export function RequestQardHasanLoanForm({
         </div>
 
         <div>
-          <label
-            htmlFor={`qard-loan-purpose-${variant}`}
-            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-          >
-            Loan Purpose (Visible for Review &amp; Anonymized Voting)
-          </label>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <label
+              htmlFor={`qard-loan-purpose-${variant}`}
+              className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+            >
+              Loan Purpose (Visible for Review &amp; Anonymized Voting)
+            </label>
+            <button
+              type="button"
+              disabled={fieldsLocked || rewritingField !== null || !purpose.trim()}
+              onClick={async () => {
+                setRewritingField('purpose');
+                try {
+                  const res = await api.rewriteWithAi({
+                    context: 'loan_purpose',
+                    text: purpose,
+                    tone: 'clear',
+                  });
+                  if (res.result.rewrittenText) {
+                    setPurpose(res.result.rewrittenText);
+                  }
+                } catch {
+                  // Ignore if unconfigured; leave existing user text intact
+                } finally {
+                  setRewritingField(null);
+                }
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
+            >
+              <Sparkles className="w-3 h-3" aria-hidden="true" />
+              <span>{rewritingField === 'purpose' ? 'Polishing…' : 'AI Polish'}</span>
+            </button>
+          </div>
           <input
             id={`qard-loan-purpose-${variant}`}
             type="text"
@@ -757,12 +786,39 @@ export function RequestQardHasanLoanForm({
         </div>
 
         <div>
-          <label
-            htmlFor={`qard-loan-context-${variant}`}
-            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-          >
-            Confidential Review Notes
-          </label>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <label
+              htmlFor={`qard-loan-context-${variant}`}
+              className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+            >
+              Confidential Review Notes
+            </label>
+            <button
+              type="button"
+              disabled={fieldsLocked || rewritingField !== null || !emergencyContext.trim()}
+              onClick={async () => {
+                setRewritingField('context');
+                try {
+                  const res = await api.rewriteWithAi({
+                    context: 'loan_purpose',
+                    text: emergencyContext,
+                    tone: 'formal',
+                  });
+                  if (res.result.rewrittenText) {
+                    setEmergencyContext(res.result.rewrittenText);
+                  }
+                } catch {
+                  // Ignore if unconfigured; keep user draft
+                } finally {
+                  setRewritingField(null);
+                }
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
+            >
+              <Sparkles className="w-3 h-3" aria-hidden="true" />
+              <span>{rewritingField === 'context' ? 'Polishing…' : 'AI Polish'}</span>
+            </button>
+          </div>
           <textarea
             id={`qard-loan-context-${variant}`}
             rows={2}
