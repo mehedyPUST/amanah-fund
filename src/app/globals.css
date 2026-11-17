@@ -66,21 +66,21 @@ html.dark {
 }
 
 .amanah-ambient-canvas {
-  background-color: #d9e5e0;
+  background-color: #cfe0d9;
   background-image:
-    radial-gradient(1150px 680px at 6% -6%, rgba(16, 185, 129, 0.2), transparent 60%),
-    radial-gradient(960px 620px at 96% 4%, rgba(20, 184, 166, 0.16), transparent 58%),
-    radial-gradient(880px 540px at 52% 102%, rgba(245, 158, 11, 0.1), transparent 62%),
-    linear-gradient(135deg, #d7e4de 0%, #e1eaee 50%, #d8e5df 100%);
+    radial-gradient(1150px 680px at 6% -6%, rgba(16, 185, 129, 0.24), transparent 60%),
+    radial-gradient(960px 620px at 96% 4%, rgba(20, 184, 166, 0.2), transparent 58%),
+    radial-gradient(880px 540px at 52% 102%, rgba(245, 158, 11, 0.12), transparent 62%),
+    linear-gradient(135deg, #cde0d8 0%, #dae6eb 50%, #cfe0d9 100%);
 }
 
 html.dark .amanah-ambient-canvas {
   background-color: #050a12;
   background-image:
-    radial-gradient(1150px 680px at 6% -8%, rgba(16, 185, 129, 0.18), transparent 60%),
-    radial-gradient(960px 620px at 96% 6%, rgba(20, 184, 166, 0.14), transparent 58%),
-    radial-gradient(880px 540px at 52% 102%, rgba(245, 158, 11, 0.08), transparent 64%),
-    linear-gradient(135deg, #050911 0%, #08121b 52%, #050b12 100%);
+    radial-gradient(1150px 680px at 6% -8%, rgba(16, 185, 129, 0.2), transparent 60%),
+    radial-gradient(960px 620px at 96% 6%, rgba(20, 184, 166, 0.16), transparent 58%),
+    radial-gradient(880px 540px at 52% 102%, rgba(245, 158, 11, 0.09), transparent 64%),
+    linear-gradient(135deg, #04080f 0%, #08131d 52%, #050b12 100%);
 }
 
 @property --amanah-border-angle {
@@ -98,15 +98,15 @@ html.dark .amanah-ambient-canvas {
 :is(
   .amanah-card-border,
   .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
-):not(.absolute):not(.fixed):not(.border-dashed):not([class*="z-[65]"]) {
-  border-color: transparent;
+):not(.absolute):not(.fixed):not(.sticky):not(.border-dashed):not([class*="z-[65]"]) {
+  position: relative;
 }
 
 :is(
   .amanah-card-border,
   .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
-):not(.absolute):not(.fixed):not(.sticky):not(.border-dashed):not([class*="z-[65]"]) {
-  position: relative;
+):not(.absolute):not(.fixed):not(.border-dashed):not([class*="z-[65]"]):hover {
+  border-color: transparent;
 }
 
 :is(
@@ -116,15 +116,15 @@ html.dark .amanah-ambient-canvas {
   content: "";
   position: absolute;
   inset: 0;
-  padding: 1.5px;
+  padding: 3px;
   border-radius: inherit;
   background: conic-gradient(
     from var(--amanah-border-angle),
-    rgba(5, 150, 105, 0.78) 0deg,
-    rgba(20, 184, 166, 0.65) 90deg,
-    rgba(245, 158, 11, 0.56) 180deg,
-    rgba(14, 165, 233, 0.42) 270deg,
-    rgba(5, 150, 105, 0.78) 360deg
+    rgba(5, 150, 105, 0.96) 0deg,
+    rgba(13, 148, 136, 0.92) 90deg,
+    rgba(245, 158, 11, 0.92) 180deg,
+    rgba(14, 165, 233, 0.85) 270deg,
+    rgba(5, 150, 105, 0.96) 360deg
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -133,7 +133,18 @@ html.dark .amanah-ambient-canvas {
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
-  animation: amanah-border-spin 6s linear infinite;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  animation: amanah-border-spin 4.5s linear infinite;
+  animation-play-state: paused;
+}
+
+:is(
+  .amanah-card-border,
+  .backdrop-blur-md:is(.rounded-xl, .rounded-2xl)
+):not(.absolute):not(.fixed):not(.border-dashed):not([class*="z-[65]"]):hover::before {
+  opacity: 1;
+  animation-play-state: running;
 }
 
 html.dark
@@ -143,22 +154,22 @@ html.dark
   ):not(.absolute):not(.fixed):not(.border-dashed):not([class*="z-[65]"])::before {
   background: conic-gradient(
     from var(--amanah-border-angle),
-    rgba(52, 211, 153, 0.82) 0deg,
-    rgba(45, 212, 191, 0.65) 90deg,
-    rgba(251, 191, 36, 0.6) 180deg,
-    rgba(56, 189, 248, 0.42) 270deg,
-    rgba(52, 211, 153, 0.82) 360deg
+    rgba(52, 211, 153, 0.96) 0deg,
+    rgba(45, 212, 191, 0.92) 90deg,
+    rgba(251, 191, 36, 0.92) 180deg,
+    rgba(56, 189, 248, 0.86) 270deg,
+    rgba(52, 211, 153, 0.96) 360deg
   );
 }
 
 .amanah-card-border-hero::before {
   background: conic-gradient(
     from var(--amanah-border-angle),
-    rgba(167, 243, 208, 0.9) 0deg,
-    rgba(94, 234, 212, 0.78) 90deg,
-    rgba(253, 230, 138, 0.78) 180deg,
-    rgba(110, 231, 183, 0.55) 270deg,
-    rgba(167, 243, 208, 0.9) 360deg
+    rgba(167, 243, 208, 0.98) 0deg,
+    rgba(94, 234, 212, 0.92) 90deg,
+    rgba(253, 230, 138, 0.94) 180deg,
+    rgba(110, 231, 183, 0.88) 270deg,
+    rgba(167, 243, 208, 0.98) 360deg
   ) !important;
 }
 
