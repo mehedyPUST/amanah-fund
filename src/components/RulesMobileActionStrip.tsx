@@ -22,7 +22,7 @@ export function RulesMobileActionStrip() {
         className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors active:scale-[0.99]"
       >
         <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
-        <span>Open Member Dashboard</span>
+        <span>Dashboard</span>
       </Link>
     );
   }
@@ -41,7 +41,7 @@ export function RulesMobileActionStrip() {
         className="min-h-[44px] px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 text-center active:scale-[0.99]"
       >
         <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
-        <span>Apply to Join</span>
+        <span>Join Amanah</span>
       </Link>
     </div>
   );

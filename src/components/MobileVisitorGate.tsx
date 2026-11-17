@@ -106,7 +106,7 @@ export function MobileVisitorGate() {
             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700 dark:text-emerald-400" />
             <span>
               {shouldRedirectAuthenticatedMobileHome
-                ? 'Opening Amanah Portal…'
+                ? 'Opening Amanah Dashboard…'
                 : 'Checking session…'}
             </span>
           </div>
@@ -274,7 +274,7 @@ export function MobileVisitorGate() {
                     >
                       <span className="inline-flex items-center gap-2.5">
                         <UserPlus className="w-4.5 h-4.5" aria-hidden="true" />
-                        <span>Apply to Join</span>
+                        <span>Join Amanah</span>
                       </span>
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </Link>

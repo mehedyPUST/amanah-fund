@@ -617,13 +617,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               href="/login"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              Member Sign In
+              Sign In
             </Link>
             <Link
               href="/signup"
               className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
             >
-              <span>Apply for Membership</span>
+              <span>Join Amanah</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"

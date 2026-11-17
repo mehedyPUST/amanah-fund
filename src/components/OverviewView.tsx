@@ -265,7 +265,7 @@ export function OverviewView({
                 onClick={() => onNavigate('monthly-contribution')}
                 className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Monthly Contribution</span>
+                <span>Contributions</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -311,7 +311,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Member Registry
+                    Users &amp; Roles
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     KYC &amp; Role Permissions
@@ -369,7 +369,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Opinion Ballot
+                    Voting
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Secret 2/3 Consensus
@@ -398,7 +398,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Transaction History
+                    Transactions
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Full Audit Ledger
@@ -427,7 +427,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Site Settings &amp; Rules Configuration
+                    Site Settings
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Charter ceilings, email templates &amp; treasury controls
@@ -487,7 +487,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    View Contributions
+                    Contributions
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Monthly Savings · {formatMoney(config.monthlyContributionAmount, ccy)}
@@ -516,7 +516,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Opinion Ballot
+                    Voting
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Anonymized 2/3 Quorum
@@ -576,7 +576,7 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Transaction History
+                    Transactions
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     Verified deposits, disbursements &amp; audit ledger

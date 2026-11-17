@@ -4,7 +4,6 @@ import Link from 'next/link';
 import {
   ChevronRight,
   HelpCircle,
-  MessageSquare,
   ScrollText,
   ShieldCheck,
 } from 'lucide-react';
@@ -17,40 +16,21 @@ const EXPLORE_PAGES: Array<{
   eyebrow: string;
   description: string;
   cta: string;
-  Icon: typeof MessageSquare;
-  spanClass: string;
+  Icon: typeof HelpCircle;
   hue: CardHue;
   iconBoxClass: string;
   badgeClass: string;
   ctaClass: string;
 }> = [
   {
-    href: '/community',
-    index: '01.',
-    label: 'Community Hub',
-    eyebrow: 'Members & Discussions',
-    description:
-      'Access member feed updates, cooperative polls, the verified directory, and AES-256-GCM encrypted direct messages.',
-    cta: 'Open Community',
-    Icon: MessageSquare,
-    spanClass: 'lg:col-span-7',
-    hue: 'emerald',
-    iconBoxClass:
-      'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
-    badgeClass:
-      'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
-    ctaClass: 'text-emerald-700 dark:text-emerald-400',
-  },
-  {
     href: '/#how-it-works',
-    index: '02.',
+    index: '01.',
     label: 'How It Works',
     eyebrow: 'Role Workflows',
     description:
       'Step-by-step guides for cooperative Members, 5-member Shura Managers, and system Administrators.',
     cta: 'View Workflows',
     Icon: HelpCircle,
-    spanClass: 'lg:col-span-5',
     hue: 'violet',
     iconBoxClass:
       'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
@@ -60,31 +40,29 @@ const EXPLORE_PAGES: Array<{
   },
   {
     href: '/#architecture',
-    index: '03.',
+    index: '02.',
     label: 'Security & Architecture',
     eyebrow: 'Trust Stack',
     description:
       '20-share KYC onboarding, dual Shura and Savings committees, AES-256-GCM encrypted fields, and SHA-256 audit chains.',
     cta: 'Inspect Architecture',
     Icon: ShieldCheck,
-    spanClass: 'lg:col-span-5',
-    hue: 'violet',
+    hue: 'teal',
     iconBoxClass:
-      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+      'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
     badgeClass:
-      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
-    ctaClass: 'text-violet-700 dark:text-violet-400',
+      'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
+    ctaClass: 'text-teal-700 dark:text-teal-400',
   },
   {
     href: '/rules',
-    index: '04.',
+    index: '03.',
     label: 'Governance Charter',
     eyebrow: 'Articles 1–25 · PDF',
     description:
       'Read the official VISION-36 cooperative constitution, arrears policies, Qard Hasan ceilings, and preview the signed PDF.',
     cta: 'Read Charter',
     Icon: ScrollText,
-    spanClass: 'lg:col-span-7',
     hue: 'emerald',
     iconBoxClass:
       'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
@@ -100,10 +78,10 @@ export function HomeHighlights() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-slate-800">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            Cooperative Portal Guide
+            Cooperative Guide
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-            Dedicated guides, community, and official bylaws
+            Dedicated guides and official cooperative bylaws
           </h2>
         </div>
         <span className="font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
@@ -111,14 +89,14 @@ export function HomeHighlights() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {EXPLORE_PAGES.map((item, idx) => {
           const Icon = item.Icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`${item.spanClass} group flex`}
+              className="group flex"
             >
               <MotionCard
                 hue={item.hue}

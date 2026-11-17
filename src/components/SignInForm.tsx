@@ -66,7 +66,7 @@ export function SignInForm() {
           { label: 'Member Code', value: res.user.memberCode },
           { label: 'Role', value: res.user.role.toUpperCase() },
         ],
-        confirmLabel: mobile ? 'Open Dashboard' : 'Continue to Homepage',
+        confirmLabel: mobile ? 'Dashboard' : 'Continue to Homepage',
         redirectHomeOnClose: true,
       });
       setUser(res.user);
@@ -151,10 +151,10 @@ export function SignInForm() {
           <div className="space-y-2.5">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-              <span>Encrypted Member Portal · HttpOnly JWT</span>
+              <span>Encrypted Dashboard · HttpOnly JWT</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-              Sign in to the Amanah treasury portal
+              Sign in to the Amanah Dashboard
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
               Access your personal cooperative equity ledger, monthly contribution receipts, Qard Hasan status, and anonymized 2/3 governance ballots.
@@ -263,7 +263,7 @@ export function SignInForm() {
               className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Lock className="w-4 h-4" aria-hidden="true" />
-              <span>{loading ? 'Signing In…' : 'Sign In to Portal'}</span>
+              <span>{loading ? 'Signing In…' : 'Sign In'}</span>
             </button>
           </form>
 
@@ -273,7 +273,7 @@ export function SignInForm() {
               href="/signup"
               className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
             >
-              <span>Create Application</span>
+              <span>Join Amanah</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>

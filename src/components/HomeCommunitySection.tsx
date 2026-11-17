@@ -82,7 +82,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               href="/dashboard?page=community"
               className="group shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors whitespace-nowrap self-start md:self-auto"
             >
-              <span>Open Full Dashboard View</span>
+              <span>Dashboard</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -148,7 +148,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   href="/login"
                   className="group px-5 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition-colors inline-flex items-center gap-2 whitespace-nowrap"
                 >
-                  <span>Log In to Enter Community</span>
+                  <span>Sign In</span>
                   <ArrowRight
                     className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                     aria-hidden="true"
@@ -158,7 +158,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   href="/signup"
                   className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors whitespace-nowrap"
                 >
-                  Apply for Membership
+                  Join Amanah
                 </Link>
               </div>
             </div>

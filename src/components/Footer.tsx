@@ -53,11 +53,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/community" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  Community
-                </Link>
-              </li>
-              <li>
                 <Link href="/#faq" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                   FAQ
                 </Link>
@@ -79,7 +74,7 @@ export function Footer() {
 
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
-              Member Portal
+              Dashboard
             </h3>
             <div className="flex flex-wrap items-center gap-2">
               <Link
@@ -89,7 +84,7 @@ export function Footer() {
                 }}
                 className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
               >
-                {user ? 'Open Dashboard' : 'Sign In'}
+                {user ? 'Dashboard' : 'Sign In'}
               </Link>
               {!user && (
                 <Link

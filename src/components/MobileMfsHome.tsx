@@ -542,7 +542,7 @@ export function MobileMfsHome({
     : [
         {
           id: 'pay-monthly-contribution',
-          label: 'Pay Monthly Contribution',
+          label: 'Contributions',
           Icon: CreditCard,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
@@ -552,7 +552,7 @@ export function MobileMfsHome({
         },
         {
           id: 'apply-qard-hasan',
-          label: 'Apply for Qard Hasan',
+          label: 'Request Loan',
           Icon: FilePlus2,
           iconBgClass:
             'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
@@ -628,7 +628,7 @@ export function MobileMfsHome({
         },
         {
           id: 'manager-cycle',
-          label: 'Mgr Cycle',
+          label: 'Manager Cycle',
           Icon: CalendarClock,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -647,7 +647,7 @@ export function MobileMfsHome({
         },
         {
           id: 'email-queue',
-          label: 'Mail Queue',
+          label: 'Email Queue',
           Icon: MailWarning,
           iconBgClass:
             'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
@@ -657,7 +657,7 @@ export function MobileMfsHome({
         },
         {
           id: 'site-activity',
-          label: 'Activity',
+          label: 'Site Activity',
           Icon: Activity,
           iconBgClass:
             'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
@@ -713,7 +713,7 @@ export function MobileMfsHome({
         },
         {
           id: 'manager-cycle',
-          label: 'Mgr Cycle',
+          label: 'Manager Cycle',
           Icon: CalendarClock,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -743,7 +743,7 @@ export function MobileMfsHome({
           ? [
               {
                 id: 'manager-desk',
-                label: 'Mgr Desk',
+                label: 'Manager Desk',
                 Icon: ClipboardCheck,
                 iconBgClass:
                   'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
@@ -753,7 +753,7 @@ export function MobileMfsHome({
               },
               {
                 id: 'member-registry',
-                label: 'Registry',
+                label: 'Member Registry',
                 Icon: UserCheck,
                 iconBgClass:
                   'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',

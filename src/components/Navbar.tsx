@@ -27,10 +27,8 @@ interface PublicNavItem {
 
 const NAV_LINKS: PublicNavItem[] = [
   { href: '/', label: 'Home' },
-  { href: '/how-it-works', label: 'How It Works' },
   { href: '/about', label: 'About' },
   { href: '/rules', label: 'Rules & Charter' },
-  { href: '/community', label: 'Community' },
 ];
 
 export function Navbar() {
@@ -168,8 +166,7 @@ export function Navbar() {
                 className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="sm:hidden">Dashboard</span>
-                <span className="hidden sm:inline">Open Dashboard</span>
+                <span>Dashboard</span>
               </Link>
               <button
                 type="button"
@@ -203,21 +200,19 @@ export function Navbar() {
             </>
           )}
 
-          {isAuthenticated && (
-            <button
-              type="button"
-              onClick={() => setMobileOpen((o) => !o)}
-              aria-label="Toggle navigation menu"
-              className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
-            >
-              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label="Toggle navigation menu"
+            className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+          >
+            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
       <AnimatePresence>
-        {isAuthenticated && mobileOpen && (
+        {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}

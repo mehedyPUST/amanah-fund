@@ -668,7 +668,7 @@ export function DashboardShell() {
             <Shield className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
-            Amanah Portal
+            Amanah Dashboard
           </div>
           <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
             {authChecking ? 'Verifying cooperative session…' : 'Redirecting to sign in…'}
@@ -901,21 +901,21 @@ export function DashboardShell() {
       ? [
           {
             id: 'fund-overview',
-            label: 'Home Dashboard',
+            label: 'Overview',
             Icon: Home,
             active: activeSection === 'fund-overview',
             onClick: () => navigateToPage('fund-overview', true),
           },
           {
             id: 'transaction-history',
-            label: 'Transaction Ledger',
+            label: 'Transactions',
             Icon: History,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
           },
           {
             id: 'statistics',
-            label: 'Treasury Statistics',
+            label: 'Statistics',
             Icon: BarChart3,
             active: activeSection === 'statistics',
             onClick: () => navigateToPage('statistics', true),
@@ -924,14 +924,14 @@ export function DashboardShell() {
       : [
           {
             id: 'fund-overview',
-            label: 'Home Dashboard',
+            label: 'Overview',
             Icon: Home,
             active: activeSection === 'fund-overview',
             onClick: () => navigateToPage('fund-overview', true),
           },
           {
             id: 'monthly-contribution',
-            label: 'Pay Monthly Contribution',
+            label: 'Contributions',
             Icon: CreditCard,
             badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
             active: activeSection === 'monthly-contribution',
@@ -939,7 +939,7 @@ export function DashboardShell() {
           },
           {
             id: 'apply-qard-hasan',
-            label: 'Apply for Qard Hasan',
+            label: 'Request Loan',
             Icon: FilePlus2,
             onClick: () => {
               setMobileNavOpen(false);
@@ -948,21 +948,21 @@ export function DashboardShell() {
           },
           {
             id: 'quard-hasan',
-            label: 'Qard Hasan & Repayments',
+            label: 'Qard Hasan',
             Icon: HandCoins,
             active: activeSection === 'quard-hasan',
             onClick: () => navigateToPage('quard-hasan', true),
           },
           {
             id: 'my-amanah',
-            label: 'My Amanah Standing',
+            label: 'My Amanah',
             Icon: Wallet,
             active: activeSection === 'my-amanah',
             onClick: () => navigateToPage('my-amanah', true),
           },
           {
             id: 'transaction-history',
-            label: 'Transaction Ledger',
+            label: 'Transactions',
             Icon: History,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
@@ -972,7 +972,7 @@ export function DashboardShell() {
     const communityItems = [
       {
         id: 'ballot',
-        label: 'Voting & 2/3 Ballots',
+        label: 'Voting',
         Icon: Vote,
         badge: pendingBadgeCount('ballot'),
         active: activeSection === 'ballot',
@@ -981,7 +981,7 @@ export function DashboardShell() {
       },
       {
         id: 'community',
-        label: 'Community & Chat',
+        label: 'Community',
         Icon: MessageSquare,
         badge: pendingBadgeCount('community'),
         active: activeSection === 'community',
@@ -989,14 +989,14 @@ export function DashboardShell() {
       },
       {
         id: 'members',
-        label: 'Members Directory',
+        label: 'Members',
         Icon: Users,
         active: activeSection === 'members',
         onClick: () => navigateToPage('members', true),
       },
       {
         id: 'manager-cycle',
-        label: 'Manager Rotation Cycle',
+        label: 'Manager Cycle',
         Icon: CalendarClock,
         active: activeSection === 'manager-cycle',
         accent: 'amber' as const,
@@ -1006,7 +1006,7 @@ export function DashboardShell() {
         ? [
             {
               id: 'statistics',
-              label: 'Treasury Statistics',
+              label: 'Statistics',
               Icon: BarChart3,
               active: activeSection === 'statistics',
               onClick: () => navigateToPage('statistics', true),
@@ -1040,7 +1040,7 @@ export function DashboardShell() {
     const accountItems = [
       {
         id: 'notification',
-        label: 'Notifications & Alerts',
+        label: 'Notifications',
         Icon: Bell,
         badge: pendingBadgeCount('notification'),
         active: activeSection === 'notification',
@@ -1049,7 +1049,7 @@ export function DashboardShell() {
       },
       {
         id: 'my-profile',
-        label: 'Profile & Security (2FA)',
+        label: 'Profile',
         Icon: User,
         active: activeSection === 'my-profile',
         onClick: () => navigateToPage('my-profile', true),
@@ -1096,7 +1096,7 @@ export function DashboardShell() {
               Amanah
             </div>
             <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-              Member Portal
+              Dashboard
             </div>
           </div>
         </div>
@@ -1104,17 +1104,7 @@ export function DashboardShell() {
 
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen(true)}
-            aria-label="Open navigation menu"
-            aria-expanded={mobileNavOpen}
-            className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-          >
-            <Menu className="w-5 h-5" aria-hidden="true" />
-          </button>
-
+        <div className="flex items-center gap-2 min-w-0">
           {activeSection === 'fund-overview' ? (
             <span className="lg:hidden w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Shield className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1128,8 +1118,8 @@ export function DashboardShell() {
                   false
                 )
               }
-              aria-label="Back to main page"
-              className="lg:hidden min-w-[40px] min-h-[40px] rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label="Back to overview"
+              className="lg:hidden min-w-[40px] min-h-[40px] -ml-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-4.5 h-4.5" aria-hidden="true" />
             </button>
@@ -1216,6 +1206,16 @@ export function DashboardShell() {
               <Moon className="w-4 h-4 text-slate-600" />
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileNavOpen}
+            className="lg:hidden min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          </button>
         </div>
       </header>
 
@@ -1252,10 +1252,10 @@ export function DashboardShell() {
         </div>
       </aside>
 
-      {/* Mobile Side Navigation Drawer (slides in from the left side) */}
+      {/* Mobile Side Navigation Drawer (slides in from the right side opposite the logo) */}
       <AnimatePresence>
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1266,12 +1266,12 @@ export function DashboardShell() {
               aria-hidden="true"
             />
             <motion.aside
-              initial={{ x: '-100%' }}
+              initial={{ x: '100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              exit={{ x: '100%' }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               aria-label="Mobile dashboard menu"
-              className="relative z-10 w-72 max-w-[84vw] h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
+              className="relative z-10 w-72 max-w-[84vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
               <div className="h-14 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -1283,7 +1283,7 @@ export function DashboardShell() {
                       Amanah
                     </div>
                     <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-                      Member Portal
+                      Dashboard
                     </div>
                   </div>
                 </div>
@@ -1348,7 +1348,7 @@ export function DashboardShell() {
                     className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Home className="w-4 h-4" />
-                    <span>Public Site</span>
+                    <span>Home</span>
                   </Link>
                   <button
                     type="button"
@@ -1753,7 +1753,7 @@ export function DashboardShell() {
 
               {activeSection === 'manager-cycle' && (
                 <section id="manager-cycle" className="space-y-4 pb-8">
-                  <SectionEyebrow label="Manager Rotation Cycle" tone="amber" />
+                  <SectionEyebrow label="Manager Cycle" tone="amber" />
                   <ManagerCycleView
                     user={user}
                     config={overview?.config || null}
@@ -1896,8 +1896,8 @@ export function DashboardShell() {
           {(
             [
               {
-                id: 'home',
-                label: 'Home',
+                id: 'overview',
+                label: 'Overview',
                 Icon: Home,
                 target: 'fund-overview' as DashboardSectionId,
                 active: activeSection === 'fund-overview',
@@ -1905,8 +1905,8 @@ export function DashboardShell() {
               },
               {
                 id: 'my-amanah',
-                label: 'My Amanah',
-                Icon: Wallet,
+                label: isAdmin ? 'Transactions' : 'My Amanah',
+                Icon: isAdmin ? History : Wallet,
                 target: (isAdmin ? 'transaction-history' : 'my-amanah') as DashboardSectionId,
                 active: isAdmin
                   ? activeSection === 'transaction-history'
@@ -1923,7 +1923,7 @@ export function DashboardShell() {
               },
               {
                 id: 'notification',
-                label: 'Notification',
+                label: 'Notifications',
                 Icon: Bell,
                 target: 'notification' as DashboardSectionId,
                 active: activeSection === 'notification',

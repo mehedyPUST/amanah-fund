@@ -114,7 +114,7 @@ export function Hero({
                 {user ? (
                   <>
                     <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
-                    <span>Open Dashboard</span>
+                    <span>Dashboard</span>
                   </>
                 ) : (
                   <>
@@ -132,7 +132,7 @@ export function Hero({
                   href="/login"
                   className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0"
                 >
-                  Member Sign In
+                  Sign In
                 </Link>
               )}
 
