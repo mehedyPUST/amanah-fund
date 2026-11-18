@@ -727,12 +727,9 @@ export function DashboardShell() {
               aria-hidden="true"
               className="absolute -inset-2 rounded-3xl bg-emerald-500/15 animate-pulse"
             />
-            <AmanahLogo size="lg" className="relative shadow-lg" />
+            <AmanahLogo variant="lockup" size="xl" className="relative shadow-lg" />
           </div>
-          <div className="font-display font-bold text-base text-slate-900 dark:text-white">
-            Amanah Dashboard
-          </div>
-          <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             {authChecking ? 'Verifying cooperative session…' : 'Redirecting to sign in…'}
           </p>
         </div>

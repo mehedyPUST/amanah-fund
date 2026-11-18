@@ -1,7 +1,8 @@
-const CACHE_NAME = 'amanah-pwa-v10';
+const CACHE_NAME = 'amanah-pwa-v11';
 const APP_SHELL_URLS = [
   '/manifest.webmanifest',
   '/brand-logo.png',
+  '/brand-lockup.png',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/pwa-maskable-192x192.png',
@@ -111,15 +112,15 @@ self.addEventListener('fetch', (event) => {
     body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f8fafc;color:#0f172a;font-family:system-ui,-apple-system,sans-serif;text-align:center}
     @media (prefers-color-scheme:dark){body{background:#020617;color:#f1f5f9}.card{background:#0f172a;border-color:#1e293b}.sub{color:#94a3b8}}
     .card{max-width:360px;width:100%;padding:28px 24px;border-radius:20px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 12px 32px rgba(2,6,23,.08)}
-    .logo{width:72px;height:72px;border-radius:18px;display:block;margin:0 auto 16px;box-shadow:0 8px 20px rgba(6,78,59,.22)}
+    .logo{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto 16px;background:#fff;box-shadow:0 8px 20px rgba(11,121,90,.16)}
     h1{margin:0 0 6px;font-size:18px;font-weight:700}
     .sub{margin:0 0 20px;font-size:13px;line-height:1.5;color:#475569}
-    button{background:#059669;color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer}
+    button{background:#0b795a;color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer}
   </style>
 </head>
 <body>
   <main class="card">
-    <img class="logo" src="/brand-logo.png" alt="Amanah logo" referrerpolicy="no-referrer" />
+    <img class="logo" src="/brand-lockup.png" alt="Amanah logo" referrerpolicy="no-referrer" />
     <h1>Amanah is Offline</h1>
     <p class="sub">Reconnect to sync your encrypted cooperative ledger, member balance, and live ballots.</p>
     <button type="button" onclick="window.location.reload()">Retry Connection</button>
