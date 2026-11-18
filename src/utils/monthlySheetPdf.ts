@@ -81,7 +81,6 @@ export function exportBalanceSheetPdf({
   sheet,
   rows,
   isFiltered,
-  filterLabel,
   fundName,
   preparedBy,
 }: BalanceSheetPdfOptions): void {
@@ -122,22 +121,24 @@ export function exportBalanceSheetPdf({
       (sheet.thisMonthSummary.contributionAmount - sheet.thisMonthSummary.dueHasanaAmount) * 100
     ) / 100;
 
-  // Column widths summing strictly to contentWidth (~785.89 pt)
+  // Privacy-safe columns: Member ID only (no name, no phone number, no email)
+  // Widths sum strictly to contentWidth (~785.89 pt)
   const fixedCols = [
-    { key: 'sn', label: '#', width: 20, align: 'right' as const },
-    { key: 'name', label: 'Name', width: 102, align: 'left' as const },
-    { key: 'id', label: 'ID', width: 52, align: 'left' as const },
-    { key: 'phone', label: 'Phone', width: 72, align: 'left' as const },
-    // Prev cumulative (2 cols = 122 pt)
-    { key: 'pContrib', label: 'Contribution', width: 62, align: 'right' as const },
-    { key: 'pQard', label: 'Qard Hasan', width: 60, align: 'right' as const },
-    // Current month activity & refund (3 cols = 186 pt)
-    { key: 'cContrib', label: 'Contribution', width: 62, align: 'right' as const },
-    { key: 'cQard', label: 'Qard Drawn', width: 60, align: 'right' as const },
-    { key: 'cRefund', label: 'Refund Qard', width: 64, align: 'right' as const },
-    // Closing summary (4 cols = 231.89 pt)
-    { key: 'nContrib', label: 'Contribution', width: 64, align: 'right' as const },
-    { key: 'nDue', label: 'Qard Due', width: 60, align: 'right' as const },
+    // Member (2 cols = 88 pt)
+    { key: 'sn', label: '#', width: 24, align: 'right' as const },
+    { key: 'id', label: 'Member ID', width: 64, align: 'left' as const },
+    // Prev cumulative (3 cols = 198 pt)
+    { key: 'pContrib', label: 'Contribution', width: 68, align: 'right' as const },
+    { key: 'pQard', label: 'Qard Hasan', width: 66, align: 'right' as const },
+    { key: 'pDue', label: 'Qard Due', width: 64, align: 'right' as const },
+    // Current month activity & refund (3 cols = 198 pt)
+    { key: 'cContrib', label: 'Contribution', width: 68, align: 'right' as const },
+    { key: 'cQard', label: 'Qard Drawn', width: 64, align: 'right' as const },
+    { key: 'cRefund', label: 'Refund Qard', width: 66, align: 'right' as const },
+    // Closing summary (5 cols = 301.89 pt)
+    { key: 'nContrib', label: 'Contribution', width: 68, align: 'right' as const },
+    { key: 'nQard', label: 'Qard Hasan', width: 64, align: 'right' as const },
+    { key: 'nDue', label: 'Qard Due', width: 62, align: 'right' as const },
     { key: 'equity', label: 'Net Equity', width: 64, align: 'right' as const },
   ];
   const usedWidth = fixedCols.reduce((sum, c) => sum + c.width, 0);
@@ -161,9 +162,9 @@ export function exportBalanceSheetPdf({
   ) => {
     const col = colDefs[colIndex];
     const x = colX[colIndex];
-    const pad = options?.pad ?? 4;
+    const pad = options?.pad ?? 4.5;
     doc.setFont('helvetica', options?.bold ? 'bold' : 'normal');
-    doc.setFontSize(options?.fontSize ?? 7.3);
+    doc.setFontSize(options?.fontSize ?? 7.4);
     if (options?.color) {
       doc.setTextColor(options.color[0], options.color[1], options.color[2]);
     } else {
@@ -207,7 +208,7 @@ export function exportBalanceSheetPdf({
   doc.setFontSize(7.5);
   doc.setTextColor(203, 213, 225);
   const preparerText = preparedBy
-    ? `Prepared by: ${preparedBy.name} (${preparedBy.memberCode})  |  ${generatedAt}`
+    ? `Prepared by: ${preparedBy.memberCode}  |  ${generatedAt}`
     : `Generated: ${generatedAt}`;
   doc.text(preparerText, pageWidth - marginX - 12, y + 36, { align: 'right' });
 
@@ -234,13 +235,13 @@ export function exportBalanceSheetPdf({
       accent: [5, 150, 105] as [number, number, number],
     },
     {
-      label: `Current Month Refund Qard Hasan`,
+      label: 'Current Month Refund Qard Hasan',
       value: fmtAmount(sheet.thisMonthRepaidAmount, ccy, false),
       sub: `Drawn: ${fmtAmount(sheet.thisMonthOnly.qardHasanAmount, ccy, false)} | Close Due: ${fmtAmount(sheet.thisMonthSummary.dueHasanaAmount, ccy, false)}`,
       accent: [5, 150, 105] as [number, number, number],
     },
     {
-      label: `Closing Summary & Treasury`,
+      label: 'Closing Summary & Treasury',
       value: fmtAmount(sheet.thisMonthSummary.contributionAmount, ccy, false),
       sub: `Net Flow: ${fmtSigned(netCashFlow, ccy)} | Liquid: ${fmtAmount(netAvailableFund, ccy, false)}`,
       accent: [15, 23, 42] as [number, number, number],
@@ -277,7 +278,7 @@ export function exportBalanceSheetPdf({
     doc.setFontSize(7.2);
     doc.setTextColor(100, 116, 139);
     doc.text(
-      `Note: Displaying ${rows.length} of ${sheet.rows.length} active members (${filterLabel || 'filtered view'}). Cooperative Totals reflect all active members.`,
+      `Note: Displaying ${rows.length} of ${sheet.rows.length} active members (filtered view). Cooperative Totals reflect all active members.`,
       marginX,
       y + 6
     );
@@ -288,42 +289,47 @@ export function exportBalanceSheetPdf({
     const groupH = 15;
     const subH = 16;
 
-    const idGroupW = colDefs[0].width + colDefs[1].width + colDefs[2].width + colDefs[3].width;
-    const prevGroupW = colDefs[4].width + colDefs[5].width;
-    const currGroupW = colDefs[6].width + colDefs[7].width + colDefs[8].width;
-    const closeGroupW = colDefs[9].width + colDefs[10].width + colDefs[11].width + colDefs[12].width;
+    const idGroupW = colDefs[0].width + colDefs[1].width;
+    const prevGroupW = colDefs[2].width + colDefs[3].width + colDefs[4].width;
+    const currGroupW = colDefs[5].width + colDefs[6].width + colDefs[7].width;
+    const closeGroupW =
+      colDefs[8].width +
+      colDefs[9].width +
+      colDefs[10].width +
+      colDefs[11].width +
+      colDefs[12].width;
 
     doc.setFillColor(241, 245, 249);
     doc.rect(colX[0], startY, idGroupW, groupH, 'F');
     doc.setFillColor(241, 245, 249);
-    doc.rect(colX[4], startY, prevGroupW, groupH, 'F');
+    doc.rect(colX[2], startY, prevGroupW, groupH, 'F');
     doc.setFillColor(236, 253, 245);
-    doc.rect(colX[6], startY, currGroupW, groupH, 'F');
+    doc.rect(colX[5], startY, currGroupW, groupH, 'F');
     doc.setFillColor(241, 245, 249);
-    doc.rect(colX[9], startY, closeGroupW, groupH, 'F');
+    doc.rect(colX[8], startY, closeGroupW, groupH, 'F');
 
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.6);
     doc.rect(marginX, startY, contentWidth, groupH + subH);
 
-    doc.line(colX[4], startY, colX[4], startY + groupH + subH);
-    doc.line(colX[6], startY, colX[6], startY + groupH + subH);
-    doc.line(colX[9], startY, colX[9], startY + groupH + subH);
+    doc.line(colX[2], startY, colX[2], startY + groupH + subH);
+    doc.line(colX[5], startY, colX[5], startY + groupH + subH);
+    doc.line(colX[8], startY, colX[8], startY + groupH + subH);
     doc.line(marginX, startY + groupH, marginX + contentWidth, startY + groupH);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.1);
     doc.setTextColor(51, 65, 85);
-    doc.text('Member Details', colX[0] + 6, startY + 10.5);
-    doc.text(`Prev. Cumulative (${prevShort})`, colX[4] + prevGroupW / 2, startY + 10.5, {
+    doc.text('Member', colX[0] + idGroupW / 2, startY + 10.5, { align: 'center' });
+    doc.text(`Prev. Cumulative (${prevShort})`, colX[2] + prevGroupW / 2, startY + 10.5, {
       align: 'center',
     });
     doc.setTextColor(4, 120, 87);
-    doc.text(`Current Month & Refund (${currShort})`, colX[6] + currGroupW / 2, startY + 10.5, {
+    doc.text(`Current Month & Refund (${currShort})`, colX[5] + currGroupW / 2, startY + 10.5, {
       align: 'center',
     });
     doc.setTextColor(15, 23, 42);
-    doc.text(`Closing Summary (Rolls to ${nextShort})`, colX[9] + closeGroupW / 2, startY + 10.5, {
+    doc.text(`Closing Summary (Rolls to ${nextShort})`, colX[8] + closeGroupW / 2, startY + 10.5, {
       align: 'center',
     });
 
@@ -339,7 +345,7 @@ export function exportBalanceSheetPdf({
       drawCellText(col.label, i, startY + groupH + 11, {
         bold: true,
         fontSize: 6.9,
-        color: i === 8 ? [4, 120, 87] : [71, 85, 105],
+        color: i === 7 ? [4, 120, 87] : [71, 85, 105],
       });
     });
 
@@ -385,7 +391,7 @@ export function exportBalanceSheetPdf({
 
       // Subtle tint on Refund Qard column
       doc.setFillColor(240, 253, 244);
-      doc.rect(colX[8], y, colDefs[8].width, rowH, 'F');
+      doc.rect(colX[7], y, colDefs[7].width, rowH, 'F');
 
       // Spreadsheet gridlines
       doc.setDrawColor(226, 232, 240);
@@ -403,21 +409,23 @@ export function exportBalanceSheetPdf({
           (row.thisMonthSummary.contributionAmount - row.thisMonthSummary.dueHasanaAmount) * 100
         ) / 100;
 
-      drawCellText(String(row.serialNo), 0, baseLine, { color: [100, 116, 139], fontSize: 7 });
-      drawCellText(truncateText(row.name, 22), 1, baseLine, {
+      // Member ID only (no name, phone, or email)
+      drawCellText(String(row.serialNo), 0, baseLine, { color: [100, 116, 139], fontSize: 7.2 });
+      drawCellText(row.memberCode, 1, baseLine, {
         bold: true,
         color: [15, 23, 42],
-        fontSize: 7.3,
+        fontSize: 7.5,
       });
-      drawCellText(row.memberCode, 2, baseLine, { color: [71, 85, 105], fontSize: 7 });
-      drawCellText(truncateText(row.mobile, 15), 3, baseLine, { color: [71, 85, 105], fontSize: 7 });
 
       // Prev cumulative
-      drawCellText(fmtAmount(row.previousSummary.contributionAmount, ccy), 4, baseLine, {
+      drawCellText(fmtAmount(row.previousSummary.contributionAmount, ccy), 2, baseLine, {
         color: row.previousSummary.contributionAmount > 0 ? [30, 41, 59] : [148, 163, 184],
       });
-      drawCellText(fmtAmount(row.previousSummary.qardHasanAmount, ccy), 5, baseLine, {
+      drawCellText(fmtAmount(row.previousSummary.qardHasanAmount, ccy), 3, baseLine, {
         color: row.previousSummary.qardHasanAmount > 0 ? [30, 41, 59] : [148, 163, 184],
+      });
+      drawCellText(fmtAmount(row.previousSummary.dueHasanaAmount, ccy), 4, baseLine, {
+        color: row.previousSummary.dueHasanaAmount > 0 ? [180, 83, 9] : [148, 163, 184],
       });
 
       // Current month activity & refund
@@ -434,7 +442,7 @@ export function exportBalanceSheetPdf({
           : row.contributionPendingAmount > 0
             ? fmtAmount(row.contributionPendingAmount, ccy)
             : '-',
-        6,
+        5,
         baseLine,
         {
           bold: row.thisMonth.contributionAmount > 0,
@@ -446,22 +454,25 @@ export function exportBalanceSheetPdf({
         row.thisMonth.qardHasanAmount > 0
           ? `+${fmtAmount(row.thisMonth.qardHasanAmount, ccy, false)}`
           : '-',
-        7,
+        6,
         baseLine,
         {
           color: row.thisMonth.qardHasanAmount > 0 ? [180, 83, 9] : [148, 163, 184],
         }
       );
 
-      drawCellText(fmtAmount(row.thisMonth.repaidAmount, ccy), 8, baseLine, {
+      drawCellText(fmtAmount(row.thisMonth.repaidAmount, ccy), 7, baseLine, {
         bold: row.thisMonth.repaidAmount > 0,
         color: row.thisMonth.repaidAmount > 0 ? [5, 150, 105] : [148, 163, 184],
       });
 
       // Closing summary
-      drawCellText(fmtAmount(row.thisMonthSummary.contributionAmount, ccy, false), 9, baseLine, {
+      drawCellText(fmtAmount(row.thisMonthSummary.contributionAmount, ccy, false), 8, baseLine, {
         bold: true,
         color: [15, 23, 42],
+      });
+      drawCellText(fmtAmount(row.thisMonthSummary.qardHasanAmount, ccy), 9, baseLine, {
+        color: row.thisMonthSummary.qardHasanAmount > 0 ? [30, 41, 59] : [148, 163, 184],
       });
       drawCellText(fmtAmount(row.thisMonthSummary.dueHasanaAmount, ccy), 10, baseLine, {
         bold: row.thisMonthSummary.dueHasanaAmount > 0,
@@ -494,25 +505,29 @@ export function exportBalanceSheetPdf({
   doc.setDrawColor(203, 213, 225);
   doc.line(marginX, y, marginX, y + totH);
   doc.line(marginX + contentWidth, y, marginX + contentWidth, y + totH);
-  for (let i = 4; i < colDefs.length; i += 1) {
+  for (let i = 2; i < colDefs.length; i += 1) {
     doc.line(colX[i], y, colX[i], y + totH);
   }
 
   const totY = y + 14;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.6);
+  doc.setFontSize(7.4);
   doc.setTextColor(15, 23, 42);
-  doc.text(`Cooperative Totals (${sheet.rows.length} Active Members)`, marginX + 6, totY);
+  doc.text(`Total (${sheet.rows.length})`, marginX + 6, totY);
 
-  drawCellText(fmtAmount(sheet.previousMonthSummary.contributionAmount, ccy, false), 4, totY, {
+  drawCellText(fmtAmount(sheet.previousMonthSummary.contributionAmount, ccy, false), 2, totY, {
     bold: true,
     color: [15, 23, 42],
   });
-  drawCellText(fmtAmount(sheet.previousMonthSummary.qardHasanAmount, ccy), 5, totY, {
+  drawCellText(fmtAmount(sheet.previousMonthSummary.qardHasanAmount, ccy), 3, totY, {
     bold: true,
     color: [15, 23, 42],
   });
-  drawCellText(`+${fmtAmount(sheet.thisMonthOnly.contributionAmount, ccy, false)}`, 6, totY, {
+  drawCellText(fmtAmount(sheet.previousMonthSummary.dueHasanaAmount, ccy), 4, totY, {
+    bold: true,
+    color: [180, 83, 9],
+  });
+  drawCellText(`+${fmtAmount(sheet.thisMonthOnly.contributionAmount, ccy, false)}`, 5, totY, {
     bold: true,
     color: [5, 150, 105],
   });
@@ -520,15 +535,19 @@ export function exportBalanceSheetPdf({
     sheet.thisMonthOnly.qardHasanAmount > 0
       ? `+${fmtAmount(sheet.thisMonthOnly.qardHasanAmount, ccy, false)}`
       : '-',
-    7,
+    6,
     totY,
     { bold: true, color: [180, 83, 9] }
   );
-  drawCellText(fmtAmount(sheet.thisMonthRepaidAmount, ccy, false), 8, totY, {
+  drawCellText(fmtAmount(sheet.thisMonthRepaidAmount, ccy, false), 7, totY, {
     bold: true,
     color: [5, 150, 105],
   });
-  drawCellText(fmtAmount(sheet.thisMonthSummary.contributionAmount, ccy, false), 9, totY, {
+  drawCellText(fmtAmount(sheet.thisMonthSummary.contributionAmount, ccy, false), 8, totY, {
+    bold: true,
+    color: [15, 23, 42],
+  });
+  drawCellText(fmtAmount(sheet.thisMonthSummary.qardHasanAmount, ccy), 9, totY, {
     bold: true,
     color: [15, 23, 42],
   });
@@ -554,7 +573,7 @@ export function exportBalanceSheetPdf({
   const signatories = [
     {
       title: 'Prepared By',
-      sub: preparedBy ? `${preparedBy.name} (${preparedBy.memberCode})` : 'Cooperative Secretary',
+      sub: preparedBy ? `Member ID: ${preparedBy.memberCode}` : 'Cooperative Secretary',
     },
     {
       title: 'Verified By',
