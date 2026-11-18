@@ -65,7 +65,7 @@ import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import { translateRoleLabel } from '../i18n/messages.ts';
-import { api } from '../utils/api.ts';
+import { api, getClientSessionToken } from '../utils/api.ts';
 import type {
   Contribution,
   CoopMeeting,
@@ -365,7 +365,11 @@ export function DashboardShell() {
     if (!user) return;
     void refreshWorkspace(false);
 
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const sseToken = getClientSessionToken();
+    const sseUrl = sseToken
+      ? `/api/events?sessionToken=${encodeURIComponent(sseToken)}`
+      : '/api/events';
+    const es = new EventSource(sseUrl, { withCredentials: true });
     const handleSync = () => {
       void refreshWorkspace(true);
     };

@@ -64,7 +64,54 @@ function getClientLocaleHeader(): 'en' | 'bn' {
   return document.documentElement?.lang === 'bn' ? 'bn' : 'en';
 }
 
+const SESSION_TOKEN_STORAGE_KEY = 'amanah_session_token_v1';
+
+export function getClientSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const fromSession = window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    if (fromSession && fromSession.trim()) return fromSession.trim();
+  } catch {
+    // ignore storage errors
+  }
+  try {
+    const fromLocal = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    if (fromLocal && fromLocal.trim()) return fromLocal.trim();
+  } catch {
+    // ignore storage errors
+  }
+  return null;
+}
+
+export function setClientSessionToken(token: string | null): void {
+  if (typeof window === 'undefined') return;
+  const clean = token && token.trim() ? token.trim() : null;
+  try {
+    if (clean) {
+      window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
+    } else {
+      window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+  try {
+    if (clean) {
+      window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
+    } else {
+      window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function clearClientSessionToken(): void {
+  setClientSessionToken(null);
+}
+
 async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
+  const sessionToken = getClientSessionToken();
   const res = await fetch(path, {
     credentials: 'include',
     cache: 'no-store',
@@ -72,6 +119,7 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
     headers: {
       'Content-Type': 'application/json',
       'x-amanah-locale': getClientLocaleHeader(),
+      ...(sessionToken ? { 'X-Amanah-Session': sessionToken } : {}),
       ...(init?.headers || {}),
     },
   });
@@ -108,14 +156,16 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
     if (
       res.status === 401 &&
       typeof window !== 'undefined' &&
-      path !== '/api/auth/me' &&
       path !== '/api/auth/login' &&
       path !== '/api/auth/activate-membership' &&
       path !== '/api/auth/pin-login' &&
       path !== '/api/auth/register' &&
       path !== '/api/auth/logout'
     ) {
-      window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+      clearClientSessionToken();
+      if (path !== '/api/auth/me') {
+        window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+      }
     }
 
     const errObj = new Error(message) as Error & { code?: string };
@@ -185,9 +235,9 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ decision, reviewNote }),
     }),
-  login: (email: string, password: string) =>
-    apiRequest<
-      | { user: PublicUser; activationRequired?: false }
+  login: async (email: string, password: string) => {
+    const res = await apiRequest<
+      | { user: PublicUser; sessionToken?: string; activationRequired?: false }
       | {
           activationRequired: true;
           activationToken: string;
@@ -202,33 +252,52 @@ export const api = {
     >('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    }),
-  activateMembership: (payload: {
+    });
+    if ('user' in res && res.sessionToken) {
+      setClientSessionToken(res.sessionToken);
+    }
+    return res;
+  },
+  activateMembership: async (payload: {
     activationToken: string;
     memberCode: string;
     otp: string;
     agreedToTerms: boolean;
-  }) =>
-    apiRequest<{
+  }) => {
+    const res = await apiRequest<{
       activated: true;
       user: PublicUser;
+      sessionToken?: string;
       activatedAt: string;
       confirmationEmailSent: boolean;
       confirmationEmailReason?: string;
     }>('/api/auth/activate-membership', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }),
-  pinLogin: (payload: {
+    });
+    if (res.sessionToken) {
+      setClientSessionToken(res.sessionToken);
+    }
+    return res;
+  },
+  pinLogin: async (payload: {
     userId: string;
     deviceId: string;
     deviceSecret: string;
     pin: string;
-  }) =>
-    apiRequest<{ user: PublicUser }>('/api/auth/pin-login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  }) => {
+    const res = await apiRequest<{ user: PublicUser; sessionToken?: string }>(
+      '/api/auth/pin-login',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    if (res.sessionToken) {
+      setClientSessionToken(res.sessionToken);
+    }
+    return res;
+  },
   registerMobileDevice: (payload: {
     pin: string;
     deviceName?: string;
@@ -401,7 +470,13 @@ export const api = {
         body: JSON.stringify(payload),
       }
     ),
-  logout: () => apiRequest<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
+  logout: async () => {
+    try {
+      return await apiRequest<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });
+    } finally {
+      clearClientSessionToken();
+    }
+  },
 
   getDashboard: () => apiRequest<DashboardOverview>('/api/dashboard'),
 
@@ -1077,11 +1152,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(monthKey ? { month: monthKey } : {}),
     }),
-  getMonthlyPdfDownloadUrl: (monthKey?: string) =>
-    monthKey
-      ? `/api/reports/monthly-pdf/download?month=${encodeURIComponent(monthKey)}`
-      : '/api/reports/monthly-pdf/download',
-  getBackupJsonUrl: () => '/api/reports/backup-json',
+  getMonthlyPdfDownloadUrl: (monthKey?: string) => {
+    const params = new URLSearchParams();
+    if (monthKey) params.set('month', monthKey);
+    const token = getClientSessionToken();
+    if (token) params.set('sessionToken', token);
+    const qs = params.toString();
+    return qs ? `/api/reports/monthly-pdf/download?${qs}` : '/api/reports/monthly-pdf/download';
+  },
+  getBackupJsonUrl: () => {
+    const token = getClientSessionToken();
+    return token
+      ? `/api/reports/backup-json?sessionToken=${encodeURIComponent(token)}`
+      : '/api/reports/backup-json';
+  },
 
   // Groq AI Features (Text Rewrite & Community Link & Spam Shield)
   rewriteWithAi: (payload: {

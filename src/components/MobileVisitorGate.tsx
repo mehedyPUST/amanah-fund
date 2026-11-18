@@ -99,7 +99,12 @@ export function MobileVisitorGate() {
     pathname.startsWith('/rules/');
 
   const shouldRedirectAuthenticatedMobileHome =
-    isMobile && !authChecking && Boolean(user) && pathname === '/' && !browseMode;
+    isMobile &&
+    !authChecking &&
+    Boolean(user) &&
+    pathname === '/' &&
+    !browseMode &&
+    !confirmationModal;
 
   useEffect(() => {
     if (!shouldRedirectAuthenticatedMobileHome) return;
@@ -130,7 +135,6 @@ export function MobileVisitorGate() {
       setMobileBrowseMode(false);
       setBrowseMode(false);
       setUser(res.user);
-      router.replace('/dashboard');
     } catch (err) {
       setError(
         err instanceof Error ? err.message : tAuth('mobileGate.signInFailed')
@@ -401,7 +405,11 @@ export function MobileVisitorGate() {
                     {autoLogoutNotice && (
                       <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
                         <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-                        <span>{autoLogoutNotice}</span>
+                        <span>
+                          {autoLogoutNotice === '__AUTO_LOGOUT_1M__'
+                            ? tCommon('autoLogoutNotice')
+                            : autoLogoutNotice}
+                        </span>
                       </div>
                     )}
 

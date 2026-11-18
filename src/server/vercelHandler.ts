@@ -61,7 +61,10 @@ export async function handleVercelApiRequest(request: Request): Promise<Response
   }
 
   const socket = new Socket();
-  if (url.protocol === 'https:' || rawHeaders['x-forwarded-proto'] === 'https') {
+  const forwardedHttps = String(rawHeaders['x-forwarded-proto'] || '')
+    .split(',')
+    .some((part) => part.trim().toLowerCase() === 'https');
+  if (url.protocol === 'https:' || forwardedHttps) {
     Object.defineProperty(socket, 'encrypted', { value: true, configurable: true });
   }
   if (rawHeaders['x-forwarded-for']) {

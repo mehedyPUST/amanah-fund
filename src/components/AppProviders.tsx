@@ -24,7 +24,7 @@ import {
 } from '../i18n/config.ts';
 import { getMessagesForLocale } from '../i18n/messages.ts';
 import type { PublicUser } from '../types/coop.ts';
-import { api, registerTotpChallengeHandler } from '../utils/api.ts';
+import { api, clearClientSessionToken, registerTotpChallengeHandler } from '../utils/api.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
   getMobileBackgroundHiddenAt,
@@ -308,6 +308,7 @@ export function AppProviders({
       } catch {
         // proceed with local logout even if offline
       } finally {
+        clearClientSessionToken();
         setMobileBrowseMode(false);
         setUserState(null);
         setAuthChecking(false);
@@ -358,6 +359,7 @@ export function AppProviders({
 
     const handleUnauthorized = () => {
       clearBgTimer();
+      clearClientSessionToken();
       setMobileBackgroundHiddenAt(null);
       setMobileBrowseMode(false);
       setUserState(null);

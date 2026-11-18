@@ -26,7 +26,11 @@ import {
 } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
 import {
+  clearAuthCookie,
+  extractSessionToken,
+  isHttpsRequest,
   sanitizeUser,
+  setAuthCookie,
   signActivationChallengeToken,
   verifyActivationChallengeToken,
 } from '../src/server/auth.ts';
@@ -1928,3 +1932,101 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     expect(confirmEmail.html).toContain('AMANAH-AC-02');
   });
 });
+
+describe('Cross-Site Iframe Auth Cookie & Session Token Fallback', () => {
+  it('detects HTTPS across proxy headers and https origins', () => {
+    expect(isHttpsRequest({ secure: true, headers: {} } as never)).toBe(true);
+    expect(
+      isHttpsRequest({
+        secure: false,
+        headers: { 'x-forwarded-proto': 'HTTPS, http' },
+      } as never)
+    ).toBe(true);
+    expect(
+      isHttpsRequest({
+        secure: false,
+        headers: { origin: 'https://ais-dev-example.run.app' },
+      } as never)
+    ).toBe(true);
+    expect(
+      isHttpsRequest({
+        secure: false,
+        headers: { host: 'localhost:3000' },
+      } as never)
+    ).toBe(false);
+  });
+
+  it('sets and clears partitioned SameSite=None cookies on HTTPS requests', () => {
+    const cookieCalls: Array<{ name: string; value?: string; options: Record<string, unknown> }> =
+      [];
+    const fakeRes = {
+      cookie: (name: string, value: string, options: Record<string, unknown>) => {
+        cookieCalls.push({ name, value, options });
+      },
+      clearCookie: (name: string, options: Record<string, unknown>) => {
+        cookieCalls.push({ name, options });
+      },
+    };
+    const httpsReq = {
+      secure: false,
+      headers: { 'x-forwarded-proto': 'https, http' },
+    };
+
+    setAuthCookie(httpsReq as never, fakeRes as never, 'jwt-token-123');
+    expect(cookieCalls[0].options).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      partitioned: true,
+      path: '/',
+    });
+
+    clearAuthCookie(httpsReq as never, fakeRes as never);
+    expect(cookieCalls[1].options).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      partitioned: true,
+      path: '/',
+    });
+  });
+
+  it('extracts session token from HttpOnly cookie, X-Amanah-Session header, or SSE query fallback', () => {
+    expect(
+      extractSessionToken({
+        cookies: { amanah_session: 'cookie-jwt' },
+        headers: { 'x-amanah-session': 'header-jwt' },
+        path: '/dashboard',
+        query: {},
+      } as never)
+    ).toBe('cookie-jwt');
+
+    expect(
+      extractSessionToken({
+        cookies: {},
+        headers: { 'x-amanah-session': 'header-jwt' },
+        path: '/dashboard',
+        query: {},
+      } as never)
+    ).toBe('header-jwt');
+
+    expect(
+      extractSessionToken({
+        cookies: {},
+        headers: {},
+        path: '/events',
+        query: { sessionToken: 'sse-jwt' },
+      } as never)
+    ).toBe('sse-jwt');
+
+    expect(
+      extractSessionToken({
+        cookies: {},
+        headers: {},
+        path: '/dashboard',
+        query: { sessionToken: 'should-ignore-on-regular-api' },
+      } as never)
+    ).toBeNull();
+  });
+});
+

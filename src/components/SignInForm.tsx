@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Eye,
+  EyeOff,
   KeyRound,
   Lock,
   Phone,
@@ -49,8 +51,10 @@ export function SignInForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const redirectingRef = useRef(false);
 
   const [activationChallenge, setActivationChallenge] =
     useState<ActivationChallengeState | null>(null);
@@ -95,7 +99,8 @@ export function SignInForm() {
   }, []);
 
   useEffect(() => {
-    if (!authChecking && user && !noticeModal?.redirectHomeOnClose) {
+    if (!authChecking && user && !noticeModal?.redirectHomeOnClose && !redirectingRef.current) {
+      redirectingRef.current = true;
       setMobileBrowseMode(false);
       router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
@@ -106,7 +111,7 @@ export function SignInForm() {
     setError(null);
     setLoading(true);
     try {
-      const res = await api.login(email, password);
+      const res = await api.login(email.trim(), password);
       if (!('user' in res)) {
         setActivationChallenge({
           activationToken: res.activationToken,
@@ -503,7 +508,10 @@ export function SignInForm() {
                     required
                     autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError(null);
+                    }}
                     placeholder={tAuth('emailPlaceholder')}
                     className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
@@ -526,16 +534,37 @@ export function SignInForm() {
                       <span>{tAuth('forgotPassword')}</span>
                     </button>
                   </div>
-                  <input
-                    id="signin-password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={tAuth('passwordPlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
-                  />
+                  <div className="relative">
+                    <input
+                      id="signin-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError(null);
+                      }}
+                      placeholder={tAuth('passwordPlaceholder')}
+                      className="w-full pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={
+                        showPassword
+                          ? tAuth('mobileGate.hidePassword')
+                          : tAuth('mobileGate.showPassword')
+                      }
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -701,10 +730,13 @@ export function SignInForm() {
         confirmLabel={noticeModal?.confirmLabel || tCommon('okGotIt')}
         onClose={() => {
           const shouldGoHome = Boolean(noticeModal?.redirectHomeOnClose);
-          setNoticeModal(null);
           if (shouldGoHome) {
+            redirectingRef.current = true;
+            setNoticeModal(null);
             setMobileBrowseMode(false);
             router.replace(isMobileViewport() ? '/dashboard' : '/');
+          } else {
+            setNoticeModal(null);
           }
         }}
       />

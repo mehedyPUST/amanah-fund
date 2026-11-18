@@ -96,23 +96,70 @@ export function verifyActivationChallengeToken(
   }
 }
 
+export function isHttpsRequest(req: Request): boolean {
+  if (req.secure) return true;
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const protoValues = Array.isArray(forwardedProto)
+    ? forwardedProto.join(',')
+    : String(forwardedProto || '');
+  if (
+    protoValues
+      .split(',')
+      .some((part) => part.trim().toLowerCase() === 'https')
+  ) {
+    return true;
+  }
+  if (String(req.headers['x-forwarded-ssl'] || '').trim().toLowerCase() === 'on') {
+    return true;
+  }
+  const origin = String(req.headers.origin || '');
+  const referer = String(req.headers.referer || '');
+  return origin.startsWith('https://') || referer.startsWith('https://');
+}
+
+export function extractSessionToken(req: Request): string | null {
+  const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
+  if (typeof cookieToken === 'string' && cookieToken.trim()) {
+    return cookieToken.trim();
+  }
+
+  const headerRaw = req.headers['x-amanah-session'];
+  const headerToken = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
+  if (typeof headerToken === 'string' && headerToken.trim()) {
+    return headerToken.trim();
+  }
+
+  // Allow query token fallback strictly for SSE EventSource and direct browser file downloads
+  // that cannot attach custom headers when third-party iframe cookies are blocked.
+  if (req.path === '/events' || req.path.startsWith('/reports/')) {
+    const queryToken = req.query?.sessionToken;
+    if (typeof queryToken === 'string' && queryToken.trim()) {
+      return queryToken.trim();
+    }
+  }
+
+  return null;
+}
+
 export function setAuthCookie(req: Request, res: Response, token: string): void {
-  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const isHttps = isHttpsRequest(req);
   res.cookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: Boolean(isHttps),
+    secure: isHttps,
     sameSite: isHttps ? 'none' : 'lax',
+    ...(isHttps ? { partitioned: true } : {}),
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
 
 export function clearAuthCookie(req: Request, res: Response): void {
-  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const isHttps = isHttpsRequest(req);
   res.clearCookie(SESSION_COOKIE_NAME, {
     httpOnly: true,
-    secure: Boolean(isHttps),
+    secure: isHttps,
     sameSite: isHttps ? 'none' : 'lax',
+    ...(isHttps ? { partitioned: true } : {}),
     path: '/',
   });
 }
@@ -123,7 +170,7 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    const token = req.cookies?.[SESSION_COOKIE_NAME];
+    const token = extractSessionToken(req);
     if (!token) {
       res.status(401).json({ error: 'Authentication required. Please sign in.' });
       return;
@@ -170,7 +217,7 @@ export async function resolveOptionalAuthUser(
 ): Promise<PublicUser | null> {
   if (req.authUser) return req.authUser;
   try {
-    const token = req.cookies?.[SESSION_COOKIE_NAME];
+    const token = extractSessionToken(req);
     if (!token) return null;
     const decoded = jwt.verify(token, getJwtSecret()) as { sub?: string };
     if (!decoded?.sub) return null;

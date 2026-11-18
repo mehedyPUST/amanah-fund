@@ -336,6 +336,13 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
     }
 
     const state = await loadVaultState();
+    if (state.users.length === 0) {
+      res.status(401).json({
+        error:
+          'No member accounts exist yet. Use "Join Amanah" to register the first cooperative administrator account.',
+      });
+      return;
+    }
     const user = state.users.find((u) => u.email.toLowerCase() === email);
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password.' });
@@ -401,7 +408,7 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
       resourceType: 'auth',
       resourceId: sanitized.id,
     });
-    res.json({ user: sanitized });
+    res.json({ user: sanitized, sessionToken: token });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Authentication service failed.' });
@@ -518,6 +525,7 @@ apiRouter.post('/auth/activate-membership', authRateLimiter, async (req, res) =>
     res.json({
       activated: true,
       user: sanitized,
+      sessionToken,
       activatedAt,
       confirmationEmailSent,
       confirmationEmailReason,
@@ -1380,7 +1388,7 @@ apiRouter.post('/auth/pin-login', authRateLimiter, async (req, res) => {
       resourceType: 'auth',
       resourceId: sanitized!.id,
     });
-    res.json({ user: sanitized });
+    res.json({ user: sanitized, sessionToken: signedToken });
   } catch (err) {
     console.error('PIN login error:', err);
     res.status(500).json({ error: 'PIN authentication failed.' });
