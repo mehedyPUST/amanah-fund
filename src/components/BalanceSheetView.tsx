@@ -239,6 +239,7 @@ export function BalanceSheetView({
     row: 0,
     col: 0,
   });
+  const [markedRowUserId, setMarkedRowUserId] = useState<string | null>(null);
   const [copiedCell, setCopiedCell] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [inspectedMemberId, setInspectedMemberId] = useState<string | null>(null);
@@ -1402,9 +1403,7 @@ export function BalanceSheetView({
     selectedCell.tab === tab && selectedCell.row === row && selectedCell.col === col;
 
   const cellRingClass = (active: boolean) =>
-    active
-      ? 'ring-2 ring-inset ring-emerald-600 dark:ring-emerald-400 bg-emerald-50/60 dark:bg-emerald-950/40 relative z-10'
-      : '';
+    active ? 'ring-2 ring-inset ring-emerald-600 dark:ring-emerald-400' : '';
 
   const cellPadY = density === 'compact' ? 'py-2' : 'py-3';
 
@@ -1502,15 +1501,51 @@ export function BalanceSheetView({
 
   const workbookSection = (
     <section
-      className={`balance-sheet-printable bg-white dark:bg-slate-950 overflow-hidden ${
+      className={`relative balance-sheet-printable bg-white dark:bg-slate-950 overflow-hidden ${
         isFullScreen
           ? 'w-full h-full flex flex-col'
           : 'rounded-xl border border-slate-200/90 dark:border-slate-800'
       }`}
     >
+      {/* YouTube-style Full Screen Toggle permanently anchored at Top-Right Corner */}
+      <div className="absolute top-3 right-3 z-50 print-hidden group/fs">
+        <button
+          type="button"
+          onClick={() => setIsFullScreen((prev) => !prev)}
+          aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+          aria-pressed={isFullScreen}
+          className="h-8 w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+        >
+          {isFullScreen ? (
+            <Minimize
+              className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
+          ) : (
+            <Maximize
+              className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
+          )}
+        </button>
+
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+          />
+          {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+        </div>
+      </div>
+
       {/* 1. Spreadsheet Document Header & Period Controls */}
-      <div className="relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0 pr-11 lg:pr-0">
+      <div className="relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 pl-4 pr-14 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
           </div>
@@ -1534,7 +1569,7 @@ export function BalanceSheetView({
           </div>
         </div>
 
-        {/* Month Switcher + Export Controls + Top-Right Corner Fullscreen */}
+        {/* Month Switcher + Export Controls */}
         <div className="flex flex-wrap items-center gap-1.5 print-hidden">
           <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900 overflow-hidden">
             <button
@@ -1620,42 +1655,6 @@ export function BalanceSheetView({
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
-
-          {/* YouTube-style Full Screen Toggle in Top-Right Corner */}
-          <div className="absolute top-2.5 right-2.5 lg:static lg:pl-1.5 lg:border-l lg:border-slate-200 dark:lg:border-slate-800 group/fs shrink-0 flex items-center">
-            <button
-              type="button"
-              onClick={() => setIsFullScreen((prev) => !prev)}
-              aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
-              aria-pressed={isFullScreen}
-              className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-            >
-              {isFullScreen ? (
-                <Minimize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
-              ) : (
-                <Maximize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
-            >
-              <span
-                aria-hidden="true"
-                className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-              />
-              {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2345,31 +2344,58 @@ export function BalanceSheetView({
                     filteredRows.map((row, idx) => {
                       const rowActive =
                         selectedCell.tab === 'balance-sheet' && selectedCell.row === idx;
+                      const isRowMarked = markedRowUserId === row.userId;
                       const isSelfRow = Boolean(user?.id && row.userId === user.id);
                       const netEquity = getNetEquity(row);
-                      const zebraBg = isSelfRow
-                        ? 'bg-emerald-50/35 dark:bg-emerald-950/20'
-                        : idx % 2 === 1
-                          ? 'bg-slate-50/45 dark:bg-slate-900/35'
-                          : 'bg-white dark:bg-slate-950';
-                      const stickyBg = isSelfRow
-                        ? 'bg-[#f4fbf8] dark:bg-[#081f17] group-hover/row:bg-[#ebf8f3] dark:group-hover/row:bg-[#0b291f]'
-                        : idx % 2 === 1
-                          ? 'bg-[#fafbfc] dark:bg-[#0d1424] group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]'
-                          : 'bg-white dark:bg-slate-950 group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]';
+                      const zebraBg = isRowMarked
+                        ? 'bg-emerald-100/80 dark:bg-emerald-950/60'
+                        : isSelfRow
+                          ? 'bg-emerald-50/35 dark:bg-emerald-950/20'
+                          : idx % 2 === 1
+                            ? 'bg-slate-50/45 dark:bg-slate-900/35'
+                            : 'bg-white dark:bg-slate-950';
+                      const stickyBg = isRowMarked
+                        ? 'bg-[#dcf3e7] dark:bg-[#0d3326] group-hover/row:bg-[#d1ecde] dark:group-hover/row:bg-[#113d2e]'
+                        : isSelfRow
+                          ? 'bg-[#f4fbf8] dark:bg-[#081f17] group-hover/row:bg-[#ebf8f3] dark:group-hover/row:bg-[#0b291f]'
+                          : idx % 2 === 1
+                            ? 'bg-[#fafbfc] dark:bg-[#0d1424] group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]'
+                            : 'bg-white dark:bg-slate-950 group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]';
 
                       return (
                         <tr
                           key={row.userId}
-                          className={`group/row ${zebraBg} hover:bg-emerald-50/45 dark:hover:bg-emerald-950/25 transition-colors`}
+                          aria-selected={isRowMarked}
+                          className={`group/row ${zebraBg} ${
+                            isRowMarked
+                              ? '[&>td]:border-b-emerald-500/60 dark:[&>td]:border-b-emerald-500/50 hover:bg-emerald-100/90 dark:hover:bg-emerald-950/70'
+                              : 'hover:bg-emerald-50/45 dark:hover:bg-emerald-950/25'
+                          } transition-colors`}
                         >
-                          {/* S.N Column (starts at 1) */}
+                          {/* S.N Column (starts at 1; click to mark/highlight full row) */}
                           <td
-                            onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            className={`w-[48px] min-w-[48px] ${cellPadY} text-center font-mono tabular-nums text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer ${
-                              rowActive
-                                ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-900 dark:text-emerald-200 font-bold'
-                                : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-600 dark:text-slate-400'
+                            onClick={() => {
+                              setMarkedRowUserId((prev) =>
+                                prev === row.userId ? null : row.userId
+                              );
+                              selectSheetCell('balance-sheet', idx, 0);
+                            }}
+                            title={
+                              isRowMarked
+                                ? 'Click to clear row highlight'
+                                : 'Click to highlight entire row'
+                            }
+                            aria-label={
+                              isRowMarked
+                                ? `Clear highlight for row ${idx + 1}: ${row.name}`
+                                : `Highlight row ${idx + 1}: ${row.name}`
+                            }
+                            className={`w-[48px] min-w-[48px] ${cellPadY} text-center font-mono tabular-nums text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer transition-colors ${
+                              isRowMarked
+                                ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold'
+                                : rowActive
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-900 dark:text-emerald-200 font-bold'
+                                  : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300'
                             }`}
                           >
                             {idx + 1}
@@ -2527,7 +2553,9 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:7`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 7)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap bg-emerald-50/25 dark:bg-emerald-950/15 ${
+                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                              isRowMarked ? '' : 'bg-emerald-50/25 dark:bg-emerald-950/15'
+                            } ${
                               row.thisMonth.repaidAmount > 0
                                 ? 'font-bold text-emerald-700 dark:text-emerald-400'
                                 : 'text-slate-400 dark:text-slate-600'
