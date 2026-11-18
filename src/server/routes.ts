@@ -193,11 +193,26 @@ function computeInstallmentDueDate(anchor: Date | string, monthOffset: number): 
 }
 
 function nextMemberCode(users: StoredUser[]): string {
-  const maxNum = users.reduce((max, u) => {
-    const num = Number(u.memberCode.replace(/\D/g, ''));
-    return Number.isFinite(num) && num > max ? num : max;
-  }, 0);
-  return `AC-${String(maxNum + 1).padStart(3, '0')}`;
+  const taken = new Set<string>();
+  let maxNum = 0;
+  for (const u of users) {
+    const candidates = [u.memberCode, u.activationMeta?.memberCode].filter(Boolean) as string[];
+    for (const code of candidates) {
+      taken.add(code.trim().toUpperCase());
+      const match = code.match(/(?:AMANAH-)?AC-?(\d+)$/i) || code.match(/(\d+)$/);
+      if (match) {
+        const num = Number(match[1]);
+        if (Number.isFinite(num) && num > maxNum) maxNum = num;
+      }
+    }
+  }
+  let nextNum = Math.max(1, maxNum + 1);
+  let candidate = `AC${String(nextNum).padStart(3, '0')}`;
+  while (taken.has(candidate)) {
+    nextNum += 1;
+    candidate = `AC${String(nextNum).padStart(3, '0')}`;
+  }
+  return candidate;
 }
 
 function nextLoanId(loans: LoanRequest[], year = new Date().getUTCFullYear()): string {
@@ -5139,7 +5154,7 @@ apiRouter.post(
         }
         if (err.message === 'INVALID_MEMBER_CODE') {
           res.status(400).json({
-            error: 'Invalid Member ID format. Use letters, numbers, and hyphens (e.g. AMANAH-AC-02).',
+            error: 'Invalid Member ID format. Use letters, numbers, and hyphens (e.g. AC001, AC002).',
           });
           return;
         }

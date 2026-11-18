@@ -1881,7 +1881,7 @@ export function BalanceSheetView({
                       1
                     </th>
 
-                    {/* A: Member Name */}
+                    {/* A: Name */}
                     <th
                       scope="col"
                       className={`min-w-[176px] w-[176px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
@@ -1893,12 +1893,12 @@ export function BalanceSheetView({
                         onClick={() => handleToggleSort('name')}
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Member Name</span>
+                        <span>Name</span>
                         {renderSortIcon('name')}
                       </button>
                     </th>
 
-                    {/* B: Member ID */}
+                    {/* B: ID */}
                     <th
                       scope="col"
                       className={`min-w-[96px] w-[96px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
@@ -1910,12 +1910,12 @@ export function BalanceSheetView({
                         onClick={() => handleToggleSort('memberCode')}
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Member ID</span>
+                        <span>ID</span>
                         {renderSortIcon('memberCode')}
                       </button>
                     </th>
 
-                    {/* C: Phone Number */}
+                    {/* C: Phone */}
                     <th
                       scope="col"
                       className={`min-w-[132px] w-[132px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
@@ -1929,150 +1929,150 @@ export function BalanceSheetView({
                         onClick={() => handleToggleSort('mobile')}
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Phone Number</span>
+                        <span>Phone</span>
                         {renderSortIcon('mobile')}
                       </button>
                     </th>
 
-                    {/* D: Prev. Months Cumul. Contribution */}
-                    <th
-                      scope="col"
-                      className="min-w-[136px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSort('prevContrib')}
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                      >
-                        <span>Prev. Cumul. Contrib</span>
-                        {renderSortIcon('prevContrib')}
-                      </button>
-                    </th>
-
-                    {/* E: Prev. Month Cumul. Qard Hasan */}
-                    <th
-                      scope="col"
-                      className="min-w-[136px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSort('prevQard')}
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                      >
-                        <span>Prev. Cumul. Qard</span>
-                        {renderSortIcon('prevQard')}
-                      </button>
-                    </th>
-
-                    {/* F: Prev. Cumul. Qard Due */}
+                    {/* D: Previous Cumulative — Contribution */}
                     <th
                       scope="col"
                       className="min-w-[116px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
                     >
                       <button
                         type="button"
+                        onClick={() => handleToggleSort('prevContrib')}
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                      >
+                        <span>Contribution</span>
+                        {renderSortIcon('prevContrib')}
+                      </button>
+                    </th>
+
+                    {/* E: Previous Cumulative — Qard Hasan */}
+                    <th
+                      scope="col"
+                      className="min-w-[114px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSort('prevQard')}
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                      >
+                        <span>Qard Hasan</span>
+                        {renderSortIcon('prevQard')}
+                      </button>
+                    </th>
+
+                    {/* F: Previous Cumulative — Qard Due */}
+                    <th
+                      scope="col"
+                      className="min-w-[108px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
+                    >
+                      <button
+                        type="button"
                         onClick={() => handleToggleSort('prevDue')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Prev. Qard Due</span>
+                        <span>Qard Due</span>
                         {renderSortIcon('prevDue')}
                       </button>
                     </th>
 
-                    {/* G: Current Month Contribution */}
+                    {/* G: Current Month — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[128px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/25"
+                      className="min-w-[116px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/25"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currContrib')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Curr. Contrib</span>
+                        <span>Contribution</span>
                         {renderSortIcon('currContrib')}
                       </button>
                     </th>
 
-                    {/* H: Current Month Qard Drawn */}
+                    {/* H: Current Month — Qard Drawn */}
                     <th
                       scope="col"
-                      className="min-w-[122px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/25"
+                      className="min-w-[112px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/25"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currQard')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Curr. Qard Drawn</span>
+                        <span>Qard Drawn</span>
                         {renderSortIcon('currQard')}
                       </button>
                     </th>
 
-                    {/* I: Current Month Refund Qard Hasan */}
+                    {/* I: Current Month — Refund Qard */}
                     <th
                       scope="col"
-                      className="min-w-[146px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/80 dark:bg-emerald-950/45 text-emerald-900 dark:text-emerald-200"
+                      className="min-w-[118px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/80 dark:bg-emerald-950/45 text-emerald-900 dark:text-emerald-200"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currRefund')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-bold hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
                       >
-                        <span>Curr. Refund Qard</span>
+                        <span>Refund Qard</span>
                         {renderSortIcon('currRefund')}
                       </button>
                     </th>
 
-                    {/* J: Closing Cumul. Contribution */}
+                    {/* J: Closing Summary — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[134px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[116px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingContrib')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Closing Contrib</span>
+                        <span>Contribution</span>
                         {renderSortIcon('closingContrib')}
                       </button>
                     </th>
 
-                    {/* K: Closing Cumul. Qard Hasan */}
+                    {/* K: Closing Summary — Qard Hasan */}
                     <th
                       scope="col"
-                      className="min-w-[126px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[112px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingQard')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Closing Qard</span>
+                        <span>Qard Hasan</span>
                         {renderSortIcon('closingQard')}
                       </button>
                     </th>
 
-                    {/* L: Closing Qard Due */}
+                    {/* L: Closing Summary — Qard Due */}
                     <th
                       scope="col"
-                      className="min-w-[122px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[108px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingDue')}
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Closing Due</span>
+                        <span>Qard Due</span>
                         {renderSortIcon('closingDue')}
                       </button>
                     </th>
 
-                    {/* M: Net Member Equity */}
+                    {/* M: Closing Summary — Net Equity */}
                     <th
                       scope="col"
-                      className="min-w-[124px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[112px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
                     >
                       <button
                         type="button"
@@ -2084,10 +2084,10 @@ export function BalanceSheetView({
                       </button>
                     </th>
 
-                    {/* N: Status */}
+                    {/* N: Closing Summary — Status */}
                     <th
                       scope="col"
-                      className="min-w-[96px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[92px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
                     >
                       <button
                         type="button"

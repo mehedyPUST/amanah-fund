@@ -339,7 +339,7 @@ export function MobileVisitorGate() {
                           autoCapitalize="characters"
                           value={activationMemberId}
                           onChange={(e) => setActivationMemberId(e.target.value.toUpperCase())}
-                          placeholder="AMANAH-AC-02"
+                          placeholder="AC002"
                           className="w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono uppercase rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                         />
                       </div>

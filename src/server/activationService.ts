@@ -24,8 +24,8 @@ export function isValidSixDigitOtp(value: string): boolean {
 }
 
 /**
- * Generates the next unique official Amanah Member ID in the format AMANAH-AC-02,
- * scanning existing users (supporting both legacy AC-001 and AMANAH-AC-02 codes).
+ * Generates the next unique official Amanah Member ID in the format AC001, AC002, etc.,
+ * scanning existing users (supporting AC001, legacy AC-001, and legacy AMANAH-AC-01 codes).
  */
 export function generateNextAmanahMemberId(
   users: StoredUser[],
@@ -58,7 +58,7 @@ export function generateNextAmanahMemberId(
     if (excludeId && u.id === excludeId && u.status === 'pending_approval') continue;
     const candidates = [u.memberCode, u.activationMeta?.memberCode].filter(Boolean) as string[];
     for (const code of candidates) {
-      const match = code.match(/(?:AMANAH-)?AC-(\d+)$/i) || code.match(/(\d+)$/);
+      const match = code.match(/(?:AMANAH-)?AC-?(\d+)$/i) || code.match(/(\d+)$/);
       if (match) {
         const parsed = Number(match[1]);
         if (Number.isFinite(parsed) && parsed > maxNum) {
@@ -69,10 +69,10 @@ export function generateNextAmanahMemberId(
   }
 
   let nextNum = Math.max(1, maxNum + 1);
-  let candidate = `AMANAH-AC-${String(nextNum).padStart(2, '0')}`;
+  let candidate = `AC${String(nextNum).padStart(3, '0')}`;
   while (takenCodes.has(candidate)) {
     nextNum += 1;
-    candidate = `AMANAH-AC-${String(nextNum).padStart(2, '0')}`;
+    candidate = `AC${String(nextNum).padStart(3, '0')}`;
   }
   return candidate;
 }
@@ -286,7 +286,7 @@ export function verifyMemberActivationInState(
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Please enter both your Member ID (e.g. AMANAH-AC-02) and your 6-digit Activation OTP.',
+      message: 'Please enter both your Member ID (e.g. AC002) and your 6-digit Activation OTP.',
     };
   }
 

@@ -64,7 +64,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
   const isAdmin = user.role === 'admin';
 
   const [registrations, setRegistrations] = useState<MemberSummary[]>([]);
-  const [suggestedNextMemberCode, setSuggestedNextMemberCode] = useState('AMANAH-AC-02');
+  const [suggestedNextMemberCode, setSuggestedNextMemberCode] = useState('AC002');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('all');
@@ -146,7 +146,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
   function confirmApprove(member: MemberSummary) {
     const reg = member.registrationDetails;
-    const defaultMemberCode = suggestedNextMemberCode || 'AMANAH-AC-02';
+    const defaultMemberCode = suggestedNextMemberCode || 'AC002';
     setModal({
       mode: 'confirm',
       tone: 'emerald',

@@ -1753,9 +1753,12 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     }
   });
 
-  it('issues unique AMANAH-AC-XX Member ID & never-reused 6-digit OTP, exposes admin lookup only, and activates on final agreement', () => {
+  it('issues unique AC001/AC002 Member ID & never-reused 6-digit OTP, exposes admin lookup only, and activates on final agreement', () => {
     const state = makeBaseState();
     const admin = sanitizeUser(state.users[0]);
+
+    // Empty vault starts at AC001
+    expect(generateNextAmanahMemberId([])).toBe('AC001');
 
     // Add two pending applicants
     state.users.push(
@@ -1765,7 +1768,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
         email: 'tariq@amanahcoop.org',
         passwordHash: 'hash-1',
         role: 'member',
-        memberCode: 'AC-005',
+        memberCode: 'AC005',
         status: 'pending_approval',
         joinedAt: '2026-11-17T08:00:00.000Z',
       },
@@ -1775,7 +1778,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
         email: 'zainab@amanahcoop.org',
         passwordHash: 'hash-2',
         role: 'member',
-        memberCode: 'AC-006',
+        memberCode: 'AC006',
         status: 'pending_approval',
         joinedAt: '2026-11-17T08:05:00.000Z',
       }
@@ -1787,25 +1790,26 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
         id: 'aotp-historic-1',
         otp: '123456',
         userId: 'usr-legacy',
-        memberCode: 'AMANAH-AC-01',
+        memberCode: 'AC001',
         issuedAt: '2026-01-01T00:00:00.000Z',
         activatedAt: '2026-01-01T00:10:00.000Z',
       },
     ];
 
-    // Sequential Member ID generation (base state has AC-001..AC-004 + AC-005/006 pending)
+    // Sequential Member ID generation (base state has AC-001..AC-004 + AC005/AC006 pending)
     const suggested = generateNextAmanahMemberId(state.users, { excludeUserId: 'usr-pending-1' });
-    expect(suggested).toMatch(/^AMANAH-AC-\d{2,}$/);
+    expect(suggested).toMatch(/^AC\d{3,}$/);
+    expect(suggested).toBe('AC007');
 
-    // Issue custom AMANAH-AC-02 for applicant 1
+    // Issue custom AC010 for applicant 1 (case-insensitive normalization)
     const issued1 = issueMemberActivationInState(state, {
       targetUserId: 'usr-pending-1',
       admin,
-      customMemberCode: 'amanah-ac-02',
+      customMemberCode: 'ac010',
       nowIso: '2026-11-17T09:00:00.000Z',
     });
 
-    expect(issued1.memberCode).toBe('AMANAH-AC-02');
+    expect(issued1.memberCode).toBe('AC010');
     expect(issued1.otp).toMatch(/^\d{6}$/);
     expect(issued1.otp).not.toBe('123456');
     expect(issued1.user.status).toBe('pending_activation');
@@ -1816,23 +1820,24 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
       issueMemberActivationInState(state, {
         targetUserId: 'usr-pending-2',
         admin,
-        customMemberCode: 'AMANAH-AC-02',
+        customMemberCode: 'AC010',
       })
     ).toThrow('MEMBER_CODE_IN_USE');
 
-    // Issue for applicant 2 and confirm distinct 6-digit OTP
+    // Issue auto-generated ID for applicant 2 and confirm sequential AC011 + distinct 6-digit OTP
     const issued2 = issueMemberActivationInState(state, {
       targetUserId: 'usr-pending-2',
       admin,
       nowIso: '2026-11-17T09:05:00.000Z',
     });
+    expect(issued2.memberCode).toBe('AC011');
     expect(issued2.otp).toMatch(/^\d{6}$/);
     expect(issued2.otp).not.toBe(issued1.otp);
     expect(issued2.otp).not.toBe('123456');
 
     // Admin panel lookup returns decrypted OTP for phone support; non-admin summary strips it
     const adminView = decryptAdminActivationView(issued1.user);
-    expect(adminView?.memberCode).toBe('AMANAH-AC-02');
+    expect(adminView?.memberCode).toBe('AC010');
     expect(adminView?.otp).toBe(issued1.otp);
 
     const adminSummaries = buildMemberSummaries(state, true);
@@ -1856,15 +1861,15 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
       adminName: admin.name,
       fundName: state.fundConfig.fundName,
     });
-    expect(codesEmail.text).toContain('AMANAH-AC-02');
+    expect(codesEmail.text).toContain('AC010');
     expect(codesEmail.text).toContain(issued1.otp);
-    expect(codesEmail.html).toContain('AMANAH-AC-02');
+    expect(codesEmail.html).toContain('AC010');
     expect(codesEmail.html).toContain(issued1.otp);
 
     // Verification rejects missing agreement confirmation
     const missingAgreement = verifyMemberActivationInState(state, {
       userId: 'usr-pending-1',
-      memberCode: 'AMANAH-AC-02',
+      memberCode: 'AC010',
       otp: issued1.otp,
       agreedToTerms: false,
     });
@@ -1874,7 +1879,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     // Verification rejects wrong OTP and increments failedAttempts
     const wrongOtp = verifyMemberActivationInState(state, {
       userId: 'usr-pending-1',
-      memberCode: 'AMANAH-AC-02',
+      memberCode: 'AC010',
       otp: issued1.otp === '999999' ? '888888' : '999999',
       agreedToTerms: true,
     });
@@ -1885,7 +1890,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     // Verification rejects wrong Member ID
     const wrongCode = verifyMemberActivationInState(state, {
       userId: 'usr-pending-1',
-      memberCode: 'AMANAH-AC-99',
+      memberCode: 'AC099',
       otp: issued1.otp,
       agreedToTerms: true,
     });
@@ -1895,7 +1900,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     // Verification succeeds with case-insensitive Member ID + exact 6-digit OTP + agreement
     const activated = verifyMemberActivationInState(state, {
       userId: 'usr-pending-1',
-      memberCode: 'amanah-ac-02',
+      memberCode: 'ac010',
       otp: issued1.otp,
       agreedToTerms: true,
       nowIso: '2026-11-17T09:15:00.000Z',
@@ -1903,7 +1908,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     expect(activated.ok).toBe(true);
     if ('user' in activated) {
       expect(activated.user.status).toBe('active');
-      expect(activated.user.memberCode).toBe('AMANAH-AC-02');
+      expect(activated.user.memberCode).toBe('AC010');
       expect(activated.user.encryptedActivationOtp).toBeUndefined();
       expect(activated.user.activationMeta?.agreementAcceptedAt).toBe('2026-11-17T09:15:00.000Z');
     }
@@ -1921,7 +1926,7 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     // Re-attempting activation on already active account fails cleanly
     const replay = verifyMemberActivationInState(state, {
       userId: 'usr-pending-1',
-      memberCode: 'AMANAH-AC-02',
+      memberCode: 'AC010',
       otp: issued1.otp,
       agreedToTerms: true,
     });
@@ -1931,15 +1936,15 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     // Email #2 final confirmation payload contains official Member ID and confirmation timestamp
     const confirmEmail = buildMembershipActivatedConfirmationEmailPayload({
       memberName: issued1.user.name,
-      memberCode: 'AMANAH-AC-02',
+      memberCode: 'AC010',
       adminName: admin.name,
       fundName: state.fundConfig.fundName,
       activatedAtIso: '2026-11-17T09:15:00.000Z',
     });
-    expect(confirmEmail.subject).toContain('AMANAH-AC-02');
-    expect(confirmEmail.text).toContain('AMANAH-AC-02');
+    expect(confirmEmail.subject).toContain('AC010');
+    expect(confirmEmail.text).toContain('AC010');
     expect(confirmEmail.text).toContain('final membership agreement');
-    expect(confirmEmail.html).toContain('AMANAH-AC-02');
+    expect(confirmEmail.html).toContain('AC010');
   });
 });
 

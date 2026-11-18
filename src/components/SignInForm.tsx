@@ -416,7 +416,7 @@ export function SignInForm() {
                     spellCheck={false}
                     value={activationMemberId}
                     onChange={(e) => setActivationMemberId(e.target.value.toUpperCase())}
-                    placeholder="AMANAH-AC-02"
+                    placeholder="AC002"
                     className="w-full px-3.5 py-2.5 text-sm font-mono uppercase tracking-wider text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>

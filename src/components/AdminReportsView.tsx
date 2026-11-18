@@ -119,13 +119,13 @@ export function AdminReportsView({
     for (const m of members) {
       if (m.status === 'pending_approval') continue;
       const code = m.activationCredentials?.memberCode || m.memberCode;
-      const match = code.match(/(?:AMANAH-)?AC-(\d+)$/i) || code.match(/(\d+)$/);
+      const match = code.match(/(?:AMANAH-)?AC-?(\d+)$/i) || code.match(/(\d+)$/);
       if (match) {
         const n = Number(match[1]);
         if (Number.isFinite(n) && n > maxNum) maxNum = n;
       }
     }
-    return `AMANAH-AC-${String(Math.max(1, maxNum + 1)).padStart(2, '0')}`;
+    return `AC${String(Math.max(1, maxNum + 1)).padStart(3, '0')}`;
   }
 
   async function loadAdminData() {

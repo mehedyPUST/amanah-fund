@@ -127,7 +127,7 @@ export const EMAIL_TEMPLATE_META: Record<EmailTemplateKey, EmailTemplateMeta> = 
       'Sent to an applicant when an administrator approves their pending cooperative registration.',
     variables: [
       { key: 'memberName', token: '{{memberName}}', description: 'Approved member name', sample: 'Nadia Karim' },
-      { key: 'memberCode', token: '{{memberCode}}', description: 'Assigned member code', sample: 'AC-014' },
+      { key: 'memberCode', token: '{{memberCode}}', description: 'Assigned member code', sample: 'AC014' },
       { key: 'adminName', token: '{{adminName}}', description: 'Approving admin name', sample: 'Amina Rahman' },
       { key: 'fundName', token: '{{fundName}}', description: 'Cooperative fund name', sample: 'Amanah Cooperative Treasury' },
     ],
@@ -141,7 +141,7 @@ export const EMAIL_TEMPLATE_META: Record<EmailTemplateKey, EmailTemplateMeta> = 
       'Alerts active cooperative administrators whenever a new prospective member submits KYC signup.',
     variables: [
       { key: 'applicantName', token: '{{applicantName}}', description: 'Applicant full name', sample: 'Nadia Karim' },
-      { key: 'applicantCode', token: '{{applicantCode}}', description: 'Assigned applicant code', sample: 'AC-014' },
+      { key: 'applicantCode', token: '{{applicantCode}}', description: 'Assigned applicant code', sample: 'AC014' },
       { key: 'applicantEmail', token: '{{applicantEmail}}', description: 'Applicant email', sample: 'nadia@example.org' },
       { key: 'mobile', token: '{{mobile}}', description: 'Applicant mobile number', sample: '+8801700000014' },
       { key: 'referenceMemberName', token: '{{referenceMemberName}}', description: 'Referrer name', sample: 'Bilal Hasan' },
@@ -157,7 +157,7 @@ export const EMAIL_TEMPLATE_META: Record<EmailTemplateKey, EmailTemplateMeta> = 
       'Delivers the one-time temporary credential when an admin resets a member password.',
     variables: [
       { key: 'memberName', token: '{{memberName}}', description: 'Member full name', sample: 'Tariq Mahmud' },
-      { key: 'memberCode', token: '{{memberCode}}', description: 'Member code', sample: 'AC-007' },
+      { key: 'memberCode', token: '{{memberCode}}', description: 'Member code', sample: 'AC007' },
       { key: 'tempPassword', token: '{{tempPassword}}', description: 'Generated temporary password', sample: 'Amn-7F4A92C1' },
       { key: 'adminName', token: '{{adminName}}', description: 'Issuing admin name', sample: 'Amina Rahman' },
       { key: 'fundName', token: '{{fundName}}', description: 'Cooperative fund name', sample: 'Amanah Cooperative Treasury' },
@@ -172,7 +172,7 @@ export const EMAIL_TEMPLATE_META: Record<EmailTemplateKey, EmailTemplateMeta> = 
       'Notifies active administrators when a member submits a forgotten-password help request.',
     variables: [
       { key: 'memberName', token: '{{memberName}}', description: 'Member full name', sample: 'Tariq Mahmud' },
-      { key: 'memberCode', token: '{{memberCode}}', description: 'Member code', sample: 'AC-007' },
+      { key: 'memberCode', token: '{{memberCode}}', description: 'Member code', sample: 'AC007' },
       { key: 'memberEmail', token: '{{memberEmail}}', description: 'Member email', sample: 'tariq@example.org' },
       { key: 'reason', token: '{{reason}}', description: 'Member note or reason', sample: 'Switched phones and forgot saved password.' },
       { key: 'fundName', token: '{{fundName}}', description: 'Cooperative fund name', sample: 'Amanah Cooperative Treasury' },

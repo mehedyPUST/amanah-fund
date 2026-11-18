@@ -125,19 +125,19 @@ export function exportBalanceSheetPdf({
   // Column widths summing strictly to contentWidth (~785.89 pt)
   const fixedCols = [
     { key: 'sn', label: '#', width: 20, align: 'right' as const },
-    { key: 'name', label: 'Member Name', width: 102, align: 'left' as const },
-    { key: 'id', label: 'Member ID', width: 52, align: 'left' as const },
-    { key: 'phone', label: 'Phone Number', width: 72, align: 'left' as const },
+    { key: 'name', label: 'Name', width: 102, align: 'left' as const },
+    { key: 'id', label: 'ID', width: 52, align: 'left' as const },
+    { key: 'phone', label: 'Phone', width: 72, align: 'left' as const },
     // Prev cumulative (2 cols = 122 pt)
-    { key: 'pContrib', label: 'Prev Contrib', width: 62, align: 'right' as const },
-    { key: 'pQard', label: 'Prev Qard', width: 60, align: 'right' as const },
+    { key: 'pContrib', label: 'Contribution', width: 62, align: 'right' as const },
+    { key: 'pQard', label: 'Qard Hasan', width: 60, align: 'right' as const },
     // Current month activity & refund (3 cols = 186 pt)
-    { key: 'cContrib', label: 'Curr Contrib', width: 62, align: 'right' as const },
+    { key: 'cContrib', label: 'Contribution', width: 62, align: 'right' as const },
     { key: 'cQard', label: 'Qard Drawn', width: 60, align: 'right' as const },
     { key: 'cRefund', label: 'Refund Qard', width: 64, align: 'right' as const },
     // Closing summary (4 cols = 231.89 pt)
-    { key: 'nContrib', label: 'Close Contrib', width: 64, align: 'right' as const },
-    { key: 'nDue', label: 'Close Due', width: 60, align: 'right' as const },
+    { key: 'nContrib', label: 'Contribution', width: 64, align: 'right' as const },
+    { key: 'nDue', label: 'Qard Due', width: 60, align: 'right' as const },
     { key: 'equity', label: 'Net Equity', width: 64, align: 'right' as const },
   ];
   const usedWidth = fixedCols.reduce((sum, c) => sum + c.width, 0);
