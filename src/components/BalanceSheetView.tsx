@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -19,6 +20,7 @@ import {
   FileDown,
   FileSpreadsheet,
   LayoutGrid,
+  Maximize2,
   Phone,
   Printer,
   RefreshCw,
@@ -42,6 +44,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
+import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 import { exportBalanceSheetPdf } from '../utils/monthlySheetPdf.ts';
 import { BalanceSheetMemberModal } from './BalanceSheetMemberModal.tsx';
 
@@ -201,7 +204,39 @@ export function BalanceSheetView({
   const [copiedCell, setCopiedCell] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [inspectedMemberId, setInspectedMemberId] = useState<string | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
+  const fullScreenTokenRef = useRef<symbol | null>(null);
+  if (!fullScreenTokenRef.current) {
+    fullScreenTokenRef.current = Symbol('BalanceSheetFullScreen');
+  }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useBodyScrollLock(isFullScreen);
+
+  useEffect(() => {
+    if (!isFullScreen || !fullScreenTokenRef.current) return;
+    const token = fullScreenTokenRef.current;
+    const unregister = registerTopModal(token);
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape' && isTopModal(token)) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsFullScreen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      unregister();
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [isFullScreen]);
 
   const sheetQuery = useQuery({
     queryKey: queryKeys.dashboard.balanceSheet(selectedMonth),
@@ -1306,14 +1341,11 @@ export function BalanceSheetView({
     setSelectedCell({ tab, row, col });
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Compact High-Level Current Month Variables Strip (Always Visible Above Sheet) */}
-      {sheet && (
-        <section
-          aria-label="Current month balance sheet summary"
-          className="balance-sheet-printable grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 overflow-hidden"
-        >
+  const kpiSummaryStrip = sheet ? (
+    <section
+      aria-label="Current month balance sheet summary"
+      className="balance-sheet-printable grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 overflow-hidden"
+    >
           <div className="px-4 py-3.5 flex flex-col justify-between gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Prev. Months Cumul. Contribution
@@ -1384,12 +1416,18 @@ export function BalanceSheetView({
             </div>
           </div>
         </section>
-      )}
+  ) : null;
 
-      {/* Main Google Sheets-Style Balance Sheet Workbook */}
-      <section className="balance-sheet-printable rounded-xl border border-slate-300/90 dark:border-slate-700/90 bg-white dark:bg-slate-950 overflow-hidden">
-        {/* 1. Google Sheets Document Title & Actions Bar */}
-        <div className="bg-[#f8fafc] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+  const workbookSection = (
+    <section
+      className={`balance-sheet-printable bg-white dark:bg-slate-950 overflow-hidden ${
+        isFullScreen
+          ? 'w-full h-full flex flex-col'
+          : 'rounded-xl border border-slate-300/90 dark:border-slate-700/90'
+      }`}
+    >
+      {/* 1. Google Sheets Document Title & Actions Bar */}
+      <div className="relative z-40 shrink-0 bg-[#f8fafc] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
               <FileSpreadsheet className="w-5 h-5" />
@@ -1496,11 +1534,47 @@ export function BalanceSheetView({
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
             </button>
+
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block" />
+
+            {/* Full Screen Toggle / Exit X Button with Directive Tooltip */}
+            <div className="relative group">
+              {isFullScreen ? (
+                <button
+                  type="button"
+                  onClick={() => setIsFullScreen(false)}
+                  aria-label="Exit full screen view (Esc)"
+                  className="h-8 w-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 hover:border-rose-300 dark:hover:border-rose-700 inline-flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsFullScreen(true)}
+                  aria-label="Open Balance Sheet in full screen view"
+                  className="h-8 w-8 rounded-md border border-slate-300/90 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              )}
+
+              <div
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-all duration-150"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+                />
+                {isFullScreen ? 'Exit full screen (Esc)' : 'Open sheet in full screen'}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* 2. Google Sheets Formatting & Filter Toolbar */}
-        <div className="bg-[#edf2fa]/80 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
+        <div className="shrink-0 bg-[#edf2fa]/80 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
           <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
             {/* Quick Search */}
             <div className="relative w-full sm:w-64">
@@ -1625,7 +1699,7 @@ export function BalanceSheetView({
         </div>
 
         {/* 3. Authentic Google Sheets Formula Bar (Name Box + fx) */}
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center h-9 print-hidden">
+        <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center h-9 print-hidden">
           <div
             title="Selected cell reference"
             className="w-[72px] shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/70 flex items-center justify-center font-mono text-xs font-bold text-slate-800 dark:text-slate-100 select-all"
@@ -1719,7 +1793,11 @@ export function BalanceSheetView({
           <>
             {/* Mobile Cards Fallback (Only when mobile user explicitly toggles Cards) */}
             {mobileViewMode === 'cards' && (
-              <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
+              <div
+                className={`md:hidden divide-y divide-slate-200 dark:divide-slate-800 ${
+                  isFullScreen ? 'flex-1 min-h-0 overflow-y-auto' : ''
+                }`}
+              >
                 {filteredRows.length === 0 ? (
                   <div className="p-8 text-center">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -1822,7 +1900,7 @@ export function BalanceSheetView({
               onKeyDown={handleGridKeyDown}
               className={`${
                 mobileViewMode === 'cards' ? 'hidden md:block' : 'block'
-              } overflow-auto max-h-[68vh] focus:outline-none`}
+              } overflow-auto ${isFullScreen ? 'flex-1 min-h-0' : 'max-h-[68vh]'} focus:outline-none`}
             >
               <table className="w-full border-collapse text-xs select-none">
                 <thead className="sticky top-0 z-30">
@@ -2196,6 +2274,7 @@ export function BalanceSheetView({
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    setIsFullScreen(false);
                                     onViewMemberProfile(row.userId);
                                   }}
                                   onDoubleClick={(e) => e.stopPropagation()}
@@ -2566,7 +2645,7 @@ export function BalanceSheetView({
           <div
             tabIndex={0}
             onKeyDown={handleGridKeyDown}
-            className="overflow-auto max-h-[68vh] focus:outline-none"
+            className={`overflow-auto ${isFullScreen ? 'flex-1 min-h-0' : 'max-h-[68vh]'} focus:outline-none`}
           >
             <table className="w-full border-collapse text-xs select-none">
               <thead className="sticky top-0 z-30">
@@ -2712,7 +2791,7 @@ export function BalanceSheetView({
         )}
 
         {/* 5. Google Sheets Bottom Sheet Tabs & Status Bar */}
-        <div className="bg-[#f0f4f9] dark:bg-slate-900 border-t border-slate-300/90 dark:border-slate-700/90 px-2.5 pt-1 pb-1 flex flex-wrap items-center justify-between gap-2 print-hidden">
+        <div className="shrink-0 bg-[#f0f4f9] dark:bg-slate-900 border-t border-slate-300/90 dark:border-slate-700/90 px-2.5 pt-1 pb-1 flex flex-wrap items-center justify-between gap-2 print-hidden">
           <div className="flex items-center gap-1" role="tablist" aria-label="Balance Sheet tabs">
             <button
               type="button"
@@ -2785,6 +2864,32 @@ export function BalanceSheetView({
           )}
         </div>
       </section>
+  );
+
+  return (
+    <div className="space-y-4">
+      {kpiSummaryStrip}
+
+      {isFullScreen && mounted ? (
+        <>
+          <div
+            aria-hidden="true"
+            className="min-h-[68vh] rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/30"
+          />
+          {createPortal(
+            <div
+              role="region"
+              aria-label="Full screen Balance Sheet"
+              className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col"
+            >
+              {workbookSection}
+            </div>,
+            document.body
+          )}
+        </>
+      ) : (
+        workbookSection
+      )}
 
       <BalanceSheetMemberModal
         row={inspectedMemberRow}
@@ -2803,7 +2908,14 @@ export function BalanceSheetView({
             setSelectedCell({ tab: 'balance-sheet', row: nextIdx, col: 0 });
           }
         }}
-        onViewMemberProfile={onViewMemberProfile}
+        onViewMemberProfile={
+          onViewMemberProfile
+            ? (targetId) => {
+                setIsFullScreen(false);
+                onViewMemberProfile(targetId);
+              }
+            : undefined
+        }
       />
     </div>
   );
