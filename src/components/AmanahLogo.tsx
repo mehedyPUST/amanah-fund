@@ -22,7 +22,7 @@ export function AmanahLogo({
   const src = variant === 'lockup' ? '/brand-lockup.png' : '/brand-logo.png';
   return (
     <span
-      className={`inline-flex items-center justify-center overflow-hidden bg-white ring-1 ring-emerald-800/15 dark:ring-white/25 shadow-xs shrink-0 select-none ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex items-center justify-center overflow-hidden bg-[#007a57] ring-1 ring-emerald-500/30 shadow-xs shrink-0 select-none ${SIZE_CLASSES[size]} ${className}`}
     >
       <img
         src={src}
