@@ -404,6 +404,8 @@ export const api = {
       hasMembers: boolean;
       activeMembersCount: number;
       storageEngine: string;
+      storageReason?: string;
+      connectionErrorCode?: string;
     }>('/api/auth/bootstrap-status'),
   getReferenceMembers: () =>
     apiRequest<{

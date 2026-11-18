@@ -28,7 +28,14 @@ import {
   hydrateLoanForViewer,
 } from './coopService.ts';
 import { decryptSensitiveObject } from './crypto.ts';
-import { getStorageEngine, loadVaultState, type StoredPrivateMessage, type VaultState } from './db.ts';
+import {
+  getStorageDiagnostic,
+  loadVaultState,
+  type StorageEngine,
+  type StorageReason,
+  type StoredPrivateMessage,
+  type VaultState,
+} from './db.ts';
 
 export async function getServerSessionUser(): Promise<PublicUser | null> {
   try {
@@ -70,12 +77,17 @@ export function buildNoticesFromState(state: VaultState): { notices: CoopNotice[
 export function buildBootstrapStatusFromState(state: VaultState): {
   hasMembers: boolean;
   activeMembersCount: number;
-  storageEngine: 'mongodb_atlas' | 'encrypted_local_vault';
+  storageEngine: StorageEngine;
+  storageReason: StorageReason;
+  connectionErrorCode?: string;
 } {
+  const diag = getStorageDiagnostic();
   return {
     hasMembers: state.users.length > 0,
     activeMembersCount: state.users.filter((u) => u.status === 'active').length,
-    storageEngine: getStorageEngine(),
+    storageEngine: diag.storageEngine,
+    storageReason: diag.storageReason,
+    ...(diag.connectionErrorCode ? { connectionErrorCode: diag.connectionErrorCode } : {}),
   };
 }
 

@@ -88,6 +88,7 @@ import {
   maskReference,
 } from './crypto.ts';
 import {
+  getStorageDiagnostic,
   getStorageEngine,
   loadVaultState,
   type StoredPrivateMessage,
@@ -847,10 +848,13 @@ apiRouter.get('/constitution', async (_req, res) => {
 apiRouter.get('/auth/bootstrap-status', async (_req, res) => {
   try {
     const state = await loadVaultState();
+    const diag = getStorageDiagnostic();
     res.json({
       hasMembers: state.users.length > 0,
       activeMembersCount: state.users.filter((u) => u.status === 'active').length,
-      storageEngine: getStorageEngine(),
+      storageEngine: diag.storageEngine,
+      storageReason: diag.storageReason,
+      ...(diag.connectionErrorCode ? { connectionErrorCode: diag.connectionErrorCode } : {}),
     });
   } catch (err) {
     console.error('Bootstrap status error:', err);

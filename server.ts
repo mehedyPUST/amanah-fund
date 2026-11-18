@@ -1,5 +1,5 @@
-import 'dotenv/config';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
 import express from 'express';
 import next from 'next';
 import { initDatabase } from './src/server/db.ts';
@@ -9,6 +9,9 @@ import {
   runMonthlyPdfSummaryJobIfDue,
   syncOverdueInstallments,
 } from './src/server/routes.ts';
+
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 async function startServer() {
   const dev = process.env.NODE_ENV !== 'production';

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { makeQueryClient } from '../src/lib/queryClient.ts';
 import { queryKeys } from '../src/lib/queryKeys.ts';
 import { sanitizeUser } from '../src/server/auth.ts';
-import type { VaultState } from '../src/server/db.ts';
+import { parseMongoUri, type VaultState } from '../src/server/db.ts';
 import {
   buildBootstrapStatusFromState,
   buildConstitutionFromState,
@@ -157,5 +157,22 @@ describe('TanStack Query SSR dehydration & CSR hydration', () => {
     expect(hydratedOverview?.treasury.activeMembersCount).toBe(1);
     expect(hydratedNotices?.notices).toHaveLength(1);
     expect(hydratedNotices?.notices[0]?.title).toBe('January Savings Open');
+  });
+
+  it('sanitizes quoted MONGODB_URI values and classifies invalid/missing URIs cleanly', () => {
+    expect(parseMongoUri(undefined)).toEqual({ uri: null, reason: 'missing_uri' });
+    expect(parseMongoUri('   ')).toEqual({ uri: null, reason: 'missing_uri' });
+    expect(parseMongoUri('mongodb+srv://<username>:<db_password>@cluster.mongodb.net/')).toEqual({
+      uri: null,
+      reason: 'placeholder_uri',
+    });
+    expect(parseMongoUri('https://example.com/db')).toEqual({
+      uri: null,
+      reason: 'invalid_uri_scheme',
+    });
+    expect(parseMongoUri('  "mongodb+srv://user:pass@cluster0.abc.mongodb.net/?retryWrites=true"  ')).toEqual({
+      uri: 'mongodb+srv://user:pass@cluster0.abc.mongodb.net/?retryWrites=true',
+      reason: null,
+    });
   });
 });

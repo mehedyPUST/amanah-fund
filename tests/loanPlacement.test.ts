@@ -106,6 +106,11 @@ function createTestVault(): VaultState {
 vi.mock('../src/server/db.ts', () => ({
   initDatabase: async () => 'encrypted_local_vault' as const,
   getStorageEngine: () => 'encrypted_local_vault' as const,
+  getStorageDiagnostic: () => ({
+    storageEngine: 'encrypted_local_vault' as const,
+    storageReason: 'missing_uri' as const,
+    connectionErrorCode: null,
+  }),
   loadVaultState: async () => structuredClone(mockState),
   updateVaultState: async (mutator: (state: VaultState) => VaultState | Promise<VaultState>) => {
     const next = await mutator(structuredClone(mockState));

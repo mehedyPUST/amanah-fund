@@ -116,12 +116,92 @@ const VAULT_DIR = process.env.VERCEL
   : path.resolve(/* turbopackIgnore: true */ process.cwd(), 'data');
 const VAULT_FILE = path.join(/* turbopackIgnore: true */ VAULT_DIR, 'amanah-coop-vault.json');
 
-let mongoClient: MongoClient | null = null;
-let mongoDb: Db | null = null;
-let storageEngine: 'mongodb_atlas' | 'encrypted_local_vault' = 'encrypted_local_vault';
-let initialized = false;
-let memoryState: VaultState | null = null;
-let vaultWriteQueue: Promise<void> = Promise.resolve();
+export type StorageEngine = 'mongodb_atlas' | 'encrypted_local_vault';
+
+export type StorageReason =
+  | 'connected'
+  | 'missing_uri'
+  | 'placeholder_uri'
+  | 'invalid_uri_scheme'
+  | 'connection_failed';
+
+export interface StorageDiagnostic {
+  storageEngine: StorageEngine;
+  storageReason: StorageReason;
+  connectionErrorCode: string | null;
+}
+
+interface AmanahDbRuntime {
+  mongoClient: MongoClient | null;
+  mongoDb: Db | null;
+  storageEngine: StorageEngine;
+  storageReason: StorageReason;
+  connectionErrorCode: string | null;
+  initialized: boolean;
+  lastMongoAttemptAt: number;
+  initPromise: Promise<StorageEngine> | null;
+  memoryState: VaultState | null;
+  vaultWriteQueue: Promise<void>;
+}
+
+const MONGO_RETRY_COOLDOWN_MS = 15_000;
+
+const globalForDb = globalThis as typeof globalThis & {
+  __amanahDbRuntime?: AmanahDbRuntime;
+};
+
+const runtime: AmanahDbRuntime =
+  globalForDb.__amanahDbRuntime ??
+  (globalForDb.__amanahDbRuntime = {
+    mongoClient: null,
+    mongoDb: null,
+    storageEngine: 'encrypted_local_vault',
+    storageReason: 'missing_uri',
+    connectionErrorCode: null,
+    initialized: false,
+    lastMongoAttemptAt: 0,
+    initPromise: null,
+    memoryState: null,
+    vaultWriteQueue: Promise.resolve(),
+  });
+
+export function parseMongoUri(rawUri: string | undefined): {
+  uri: string | null;
+  reason: Exclude<StorageReason, 'connected' | 'connection_failed'> | null;
+} {
+  if (!rawUri) {
+    return { uri: null, reason: 'missing_uri' };
+  }
+  let cleaned = rawUri.trim();
+  if (
+    (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+    (cleaned.startsWith("'") && cleaned.endsWith("'"))
+  ) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  if (!cleaned) {
+    return { uri: null, reason: 'missing_uri' };
+  }
+  if (/<(username|password|db_password|cluster)>/i.test(cleaned)) {
+    return { uri: null, reason: 'placeholder_uri' };
+  }
+  if (!/^mongodb(\+srv)?:\/\//i.test(cleaned)) {
+    return { uri: null, reason: 'invalid_uri_scheme' };
+  }
+  return { uri: cleaned, reason: null };
+}
+
+function extractSafeErrorCode(err: unknown): string {
+  if (!err || typeof err !== 'object') return 'UNKNOWN_ERROR';
+  const e = err as { name?: unknown; code?: unknown; codeName?: unknown };
+  const codeName = typeof e.codeName === 'string' && e.codeName.trim() ? e.codeName.trim() : null;
+  const code =
+    typeof e.code === 'string' || typeof e.code === 'number' ? String(e.code).trim() : null;
+  const name = typeof e.name === 'string' && e.name.trim() ? e.name.trim() : null;
+  if (name && codeName) return `${name}:${codeName}`;
+  if (name && code) return `${name}:${code}`;
+  return name || codeName || code || 'CONNECTION_ERROR';
+}
 
 /** Empty cooperative vault — no demo users, loans, or sample content.
  *  Fund defaults are starting values only; admins change them in Site Settings.
@@ -294,66 +374,99 @@ function normalizeVaultState(state: VaultState): VaultState {
 }
 
 function readLocalVault(): VaultState {
-  if (memoryState) return structuredClone(memoryState);
+  if (runtime.memoryState) return structuredClone(runtime.memoryState);
   if (!fs.existsSync(VAULT_DIR)) {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   }
   if (!fs.existsSync(VAULT_FILE)) {
     const empty = createEmptyVaultState();
     fs.writeFileSync(VAULT_FILE, JSON.stringify(empty, null, 2), 'utf8');
-    memoryState = empty;
+    runtime.memoryState = empty;
     return structuredClone(empty);
   }
   const raw = fs.readFileSync(VAULT_FILE, 'utf8');
   const parsed = JSON.parse(raw) as VaultState;
   const { changed } = purgeOrphanRecords(parsed);
-  memoryState = normalizeVaultState(parsed);
+  runtime.memoryState = normalizeVaultState(parsed);
   if (changed) {
-    fs.writeFileSync(VAULT_FILE, JSON.stringify(memoryState, null, 2), 'utf8');
+    fs.writeFileSync(VAULT_FILE, JSON.stringify(runtime.memoryState, null, 2), 'utf8');
   }
-  return structuredClone(memoryState);
+  return structuredClone(runtime.memoryState);
 }
 
 function writeLocalVault(state: VaultState): void {
-  memoryState = structuredClone(state);
+  runtime.memoryState = structuredClone(state);
   if (!fs.existsSync(VAULT_DIR)) {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   }
   fs.writeFileSync(VAULT_FILE, JSON.stringify(state, null, 2), 'utf8');
 }
 
-export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local_vault'> {
-  if (initialized) return storageEngine;
+export async function initDatabase(): Promise<StorageEngine> {
+  if (runtime.mongoDb && runtime.storageEngine === 'mongodb_atlas') {
+    return runtime.storageEngine;
+  }
 
-  const uri = process.env.MONGODB_URI;
-  if (uri && uri.startsWith('mongodb') && !uri.includes('<username>')) {
-    try {
-      mongoClient = new MongoClient(uri, { serverSelectionTimeoutMS: 4500 });
-      await mongoClient.connect();
-      mongoDb = mongoClient.db('amanah_coop');
-      storageEngine = 'mongodb_atlas';
+  const parsedUri = parseMongoUri(process.env.MONGODB_URI);
 
-      const existingConfig = await mongoDb.collection<FundConfig>('fundConfig').findOne({
-        id: 'default-config',
-      });
-      if (!existingConfig) {
-        const empty = createEmptyVaultState();
-        await mongoDb.collection('fundConfig').insertOne(empty.fundConfig);
-        if (empty.faqs && empty.faqs.length > 0) {
-          const faqsCount = await mongoDb.collection('faqs').countDocuments({});
-          if (faqsCount === 0) {
-            await mongoDb.collection('faqs').insertMany(empty.faqs);
+  if (runtime.initialized) {
+    if (!parsedUri.uri) {
+      runtime.storageReason = parsedUri.reason ?? 'missing_uri';
+      return runtime.storageEngine;
+    }
+    // Allow automatic recovery from transient Atlas cold-start / network timeouts
+    if (Date.now() - runtime.lastMongoAttemptAt < MONGO_RETRY_COOLDOWN_MS) {
+      return runtime.storageEngine;
+    }
+  }
+
+  if (runtime.initPromise) {
+    return runtime.initPromise;
+  }
+
+  const runInit = async (): Promise<StorageEngine> => {
+    const dbName = (process.env.MONGODB_DB_NAME || '').trim() || 'amanah_coop';
+
+    if (parsedUri.uri) {
+      runtime.lastMongoAttemptAt = Date.now();
+      let candidateClient: MongoClient | null = null;
+      try {
+        candidateClient = new MongoClient(parsedUri.uri, {
+          serverSelectionTimeoutMS: 10_000,
+          connectTimeoutMS: 10_000,
+          socketTimeoutMS: 20_000,
+          maxPoolSize: 5,
+          minPoolSize: 0,
+        });
+        await candidateClient.connect();
+        const db = candidateClient.db(dbName);
+        runtime.mongoClient = candidateClient;
+        runtime.mongoDb = db;
+        runtime.storageEngine = 'mongodb_atlas';
+        runtime.storageReason = 'connected';
+        runtime.connectionErrorCode = null;
+
+        const existingConfig = await db.collection<FundConfig>('fundConfig').findOne({
+          id: 'default-config',
+        });
+        if (!existingConfig) {
+          const empty = createEmptyVaultState();
+          await db.collection('fundConfig').insertOne(empty.fundConfig);
+          if (empty.faqs && empty.faqs.length > 0) {
+            const faqsCount = await db.collection('faqs').countDocuments({});
+            if (faqsCount === 0) {
+              await db.collection('faqs').insertMany(empty.faqs);
+            }
           }
+        } else if (!existingConfig.faqsSeeded) {
+          const faqsCount = await db.collection('faqs').countDocuments({});
+          if (faqsCount === 0) {
+            await db.collection('faqs').insertMany(createDefaultFaqs());
+          }
+          await db
+            .collection('fundConfig')
+            .updateOne({ id: 'default-config' }, { $set: { faqsSeeded: true } });
         }
-      } else if (!existingConfig.faqsSeeded) {
-        const faqsCount = await mongoDb.collection('faqs').countDocuments({});
-        if (faqsCount === 0) {
-          await mongoDb.collection('faqs').insertMany(createDefaultFaqs());
-        }
-        await mongoDb
-          .collection('fundConfig')
-          .updateOne({ id: 'default-config' }, { $set: { faqsSeeded: true } });
-      }
 
       // One-time migration: remove historical demo seed accounts & related rows.
       // Real production members are never matched by these exact seed identifiers.
@@ -375,89 +488,121 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         'usr-mem-4',
         'usr-pending-1',
       ];
-      await Promise.allSettled([
-        mongoDb.collection('users').deleteMany({
-          $or: [
-            { email: { $in: DEMO_EMAILS } },
-            { id: { $in: DEMO_USER_IDS } },
-          ],
-        }),
-        mongoDb.collection('contributions').deleteMany({
-          userId: { $in: DEMO_USER_IDS },
-        }),
-        mongoDb.collection('loans').deleteMany({
-          borrowerId: { $in: DEMO_USER_IDS },
-        }),
-        mongoDb.collection('emailNotifications').deleteMany({
-          $or: [
-            { recipientEmail: { $in: DEMO_EMAILS } },
-            { recipientUserId: { $in: DEMO_USER_IDS } },
-          ],
-        }),
-        mongoDb.collection('auditLogs').deleteMany({
-          actorId: { $in: DEMO_USER_IDS },
-        }),
-        mongoDb.collection('halalProjects').deleteMany({
-          id: { $in: ['halal-proj-1', 'halal-proj-2', 'halal-proj-3'] },
-        }),
-      ]);
-      // No demo users or sample content are inserted. First signup becomes admin.
-      await Promise.allSettled([
-        mongoDb.collection('users').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('users').createIndex({ email: 1 }),
-        mongoDb.collection('contributions').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('contributions').createIndex({ userId: 1, billingMonth: 1 }),
-        mongoDb.collection('loans').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('loans').createIndex({ borrowerId: 1, status: 1 }),
-        mongoDb.collection('halalProjects').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('emailNotifications').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('emailNotifications').createIndex({ recipientUserId: 1, createdAt: -1 }),
-        mongoDb.collection('auditLogs').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('auditLogs').createIndex({ timestamp: -1 }),
-        mongoDb.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('communityPosts').createIndex({ createdAt: -1 }),
-        mongoDb.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
-        mongoDb.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('decisionPolls').createIndex({ createdAt: -1 }),
-        mongoDb.collection('meetings').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('meetings').createIndex({ scheduledFor: 1 }),
-        mongoDb.collection('notices').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('notices').createIndex({ createdAt: -1 }),
-        mongoDb.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
-        mongoDb.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
-        mongoDb.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
-        mongoDb.collection('emailQueue').createIndex({ createdAt: -1 }),
-        mongoDb.collection('faqs').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('faqs').createIndex({ sortOrder: 1 }),
-        mongoDb.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
-        mongoDb.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
-      ]);
+        await Promise.allSettled([
+          db.collection('users').deleteMany({
+            $or: [
+              { email: { $in: DEMO_EMAILS } },
+              { id: { $in: DEMO_USER_IDS } },
+            ],
+          }),
+          db.collection('contributions').deleteMany({
+            userId: { $in: DEMO_USER_IDS },
+          }),
+          db.collection('loans').deleteMany({
+            borrowerId: { $in: DEMO_USER_IDS },
+          }),
+          db.collection('emailNotifications').deleteMany({
+            $or: [
+              { recipientEmail: { $in: DEMO_EMAILS } },
+              { recipientUserId: { $in: DEMO_USER_IDS } },
+            ],
+          }),
+          db.collection('auditLogs').deleteMany({
+            actorId: { $in: DEMO_USER_IDS },
+          }),
+          db.collection('halalProjects').deleteMany({
+            id: { $in: ['halal-proj-1', 'halal-proj-2', 'halal-proj-3'] },
+          }),
+        ]);
+        // No demo users or sample content are inserted. First signup becomes admin.
+        await Promise.allSettled([
+          db.collection('users').createIndex({ id: 1 }, { unique: true }),
+          db.collection('users').createIndex({ email: 1 }),
+          db.collection('contributions').createIndex({ id: 1 }, { unique: true }),
+          db.collection('contributions').createIndex({ userId: 1, billingMonth: 1 }),
+          db.collection('loans').createIndex({ id: 1 }, { unique: true }),
+          db.collection('loans').createIndex({ borrowerId: 1, status: 1 }),
+          db.collection('halalProjects').createIndex({ id: 1 }, { unique: true }),
+          db.collection('emailNotifications').createIndex({ id: 1 }, { unique: true }),
+          db.collection('emailNotifications').createIndex({ recipientUserId: 1, createdAt: -1 }),
+          db.collection('auditLogs').createIndex({ id: 1 }, { unique: true }),
+          db.collection('auditLogs').createIndex({ timestamp: -1 }),
+          db.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
+          db.collection('communityPosts').createIndex({ createdAt: -1 }),
+          db.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
+          db.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
+          db.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
+          db.collection('decisionPolls').createIndex({ createdAt: -1 }),
+          db.collection('meetings').createIndex({ id: 1 }, { unique: true }),
+          db.collection('meetings').createIndex({ scheduledFor: 1 }),
+          db.collection('notices').createIndex({ id: 1 }, { unique: true }),
+          db.collection('notices').createIndex({ createdAt: -1 }),
+          db.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
+          db.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
+          db.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
+          db.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
+          db.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
+          db.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
+          db.collection('emailQueue').createIndex({ createdAt: -1 }),
+          db.collection('faqs').createIndex({ id: 1 }, { unique: true }),
+          db.collection('faqs').createIndex({ sortOrder: 1 }),
+          db.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
+          db.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
+        ]);
 
-      initialized = true;
-      return storageEngine;
-    } catch (err) {
-      console.warn('[DB] MongoDB Atlas connection failed, falling back to encrypted local vault:', err);
-      mongoClient = null;
-      mongoDb = null;
+        runtime.initialized = true;
+        return runtime.storageEngine;
+      } catch (err) {
+        const safeCode = extractSafeErrorCode(err);
+        console.warn(
+          `[DB] MongoDB Atlas connection failed (${safeCode}); falling back to encrypted local vault (will retry automatically):`,
+          err instanceof Error ? err.message : safeCode
+        );
+        if (candidateClient) {
+          await candidateClient.close().catch(() => undefined);
+        }
+        runtime.mongoClient = null;
+        runtime.mongoDb = null;
+        runtime.storageEngine = 'encrypted_local_vault';
+        runtime.storageReason = 'connection_failed';
+        runtime.connectionErrorCode = safeCode;
+        readLocalVault();
+        runtime.initialized = true;
+        return runtime.storageEngine;
+      }
     }
-  }
 
-  storageEngine = 'encrypted_local_vault';
-  readLocalVault();
-  initialized = true;
-  return storageEngine;
+    runtime.mongoClient = null;
+    runtime.mongoDb = null;
+    runtime.storageEngine = 'encrypted_local_vault';
+    runtime.storageReason = parsedUri.reason ?? 'missing_uri';
+    runtime.connectionErrorCode = null;
+    readLocalVault();
+    runtime.initialized = true;
+    return runtime.storageEngine;
+  };
+
+  runtime.initPromise = runInit().finally(() => {
+    runtime.initPromise = null;
+  });
+  return runtime.initPromise;
 }
 
-export function getStorageEngine(): 'mongodb_atlas' | 'encrypted_local_vault' {
-  return storageEngine;
+export function getStorageEngine(): StorageEngine {
+  return runtime.storageEngine;
+}
+
+export function getStorageDiagnostic(): StorageDiagnostic {
+  return {
+    storageEngine: runtime.storageEngine,
+    storageReason: runtime.storageReason,
+    connectionErrorCode: runtime.connectionErrorCode,
+  };
 }
 
 export async function loadVaultState(): Promise<VaultState> {
   await initDatabase();
+  const mongoDb = runtime.mongoDb;
   if (mongoDb) {
     const [
       users,
@@ -557,6 +702,7 @@ export function updateVaultState(
     const current = await loadVaultState();
     const next = await mutator(structuredClone(current));
 
+    const mongoDb = runtime.mongoDb;
     if (mongoDb) {
       await Promise.all([
         syncCollectionById(mongoDb, 'users', current.users, next.users),
@@ -630,8 +776,8 @@ export function updateVaultState(
     return next;
   };
 
-  const result = vaultWriteQueue.then(run, run);
-  vaultWriteQueue = result.then(
+  const result = runtime.vaultWriteQueue.then(run, run);
+  runtime.vaultWriteQueue = result.then(
     () => undefined,
     () => undefined
   );
