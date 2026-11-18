@@ -10,11 +10,11 @@ import {
   Menu,
   Moon,
   RefreshCw,
-  Shield,
   Sun,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
@@ -81,9 +81,11 @@ export function Navbar() {
           onClick={() => setMobileOpen(false)}
           className="inline-flex items-center gap-2.5 shrink-0 group whitespace-nowrap md:justify-self-start"
         >
-          <span className="w-7 h-7 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105">
-            <Shield className="w-3.5 h-3.5" aria-hidden="true" />
-          </span>
+          <AmanahLogo
+            size="xs"
+            decorative
+            className="transition-transform duration-150 group-hover:scale-105"
+          />
           <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0">
             Amanah
           </span>

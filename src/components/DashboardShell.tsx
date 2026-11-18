@@ -39,6 +39,7 @@ import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
 import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
@@ -721,8 +722,12 @@ export function DashboardShell() {
       <div className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
         {/* Mobile clean session verification / redirect screen */}
         <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-lg mb-3">
-            <Shield className="w-6 h-6" aria-hidden="true" />
+          <div className="relative mb-4">
+            <span
+              aria-hidden="true"
+              className="absolute -inset-2 rounded-3xl bg-emerald-500/15 animate-pulse"
+            />
+            <AmanahLogo size="lg" className="relative shadow-lg" />
           </div>
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
             Amanah Dashboard
@@ -732,11 +737,15 @@ export function DashboardShell() {
           </p>
         </div>
 
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-3 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
-          <Skeleton width={32} height={32} borderRadius={8} />
-          <div className="space-y-1 flex-1">
-            <Skeleton width={80} height={14} />
-            <Skeleton width={100} height={10} />
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+          <AmanahLogo size="sm" decorative />
+          <div className="min-w-0">
+            <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
+              Amanah
+            </div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
+              {authChecking ? 'Verifying session…' : 'Redirecting…'}
+            </div>
           </div>
         </div>
         <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
@@ -1145,9 +1154,7 @@ export function DashboardShell() {
       {/* GRID 1 */}
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <Shield className="w-4 h-4" aria-hidden="true" />
-          </span>
+          <AmanahLogo size="sm" decorative />
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               Amanah
@@ -1162,9 +1169,7 @@ export function DashboardShell() {
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="lg:hidden w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <Shield className="w-3.5 h-3.5" aria-hidden="true" />
-          </span>
+          <AmanahLogo size="xs" className="lg:hidden" decorative />
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               Amanah
@@ -1305,9 +1310,7 @@ export function DashboardShell() {
             >
               <div className="h-14 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <Shield className="w-4 h-4" aria-hidden="true" />
-                  </span>
+                  <AmanahLogo size="sm" decorative />
                   <div className="min-w-0">
                     <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
                       Amanah

@@ -66,7 +66,7 @@ async function startServer() {
   app.use('/api', express.json({ limit: '16mb' }), cookieParser(), apiRouter);
 
   app.get('/favicon.ico', (_req, res) => {
-    res.redirect(307, '/icon');
+    res.sendFile('favicon.ico', { root: 'public' });
   });
 
   // Delegate all Next.js App Router pages, assets, and RSC requests to Next.js

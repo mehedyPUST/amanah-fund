@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { usePWAInstall } from '../utils/usePWAInstall.ts';
 import { ActionModal } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 
 interface PWAInstallButtonProps {
   compact?: boolean;
@@ -89,9 +90,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
-                        <Smartphone className="w-5 h-5" aria-hidden="true" />
-                      </div>
+                      <AmanahLogo size="sm" className="w-9 h-9 rounded-xl" decorative />
                       <div>
                         <h3
                           id="pwa-install-guide-title"

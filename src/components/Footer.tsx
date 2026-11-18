@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Moon, Shield, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
@@ -15,9 +16,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center">
-                <Shield className="w-3.5 h-3.5" aria-hidden="true" />
-              </span>
+              <AmanahLogo size="xs" decorative />
               <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
                 Amanah
               </span>
