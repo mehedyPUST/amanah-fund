@@ -22,6 +22,7 @@ import { sortFaqItems } from '../utils/faqDefaults.ts';
 import { SESSION_COOKIE_NAME, verifySessionTokenToUser } from './auth.ts';
 import {
   buildDashboardOverview,
+  buildMonthlySheetData,
   hydrateContributionForViewer,
   hydrateDecisionPollForViewer,
   hydrateHalalProjectForViewer,
@@ -357,6 +358,9 @@ export async function prefetchDashboardPageState(): Promise<DehydratedState> {
 
     const state = await loadVaultState();
     const bundle = buildDashboardBundleFromState(state, user);
+    const now = new Date();
+    const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    const currentMonthlySheet = buildMonthlySheetData(state, currentMonthKey);
 
     await Promise.all([
       queryClient.prefetchQuery({
@@ -398,6 +402,10 @@ export async function prefetchDashboardPageState(): Promise<DehydratedState> {
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboard.profileChangeRequests(),
         queryFn: async () => bundle.profileChangeRequests,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.dashboard.monthlySheet(currentMonthKey),
+        queryFn: async () => currentMonthlySheet,
       }),
     ]);
   } catch (err) {

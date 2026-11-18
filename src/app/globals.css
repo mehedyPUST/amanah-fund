@@ -555,3 +555,30 @@ html.dark ::-webkit-scrollbar-thumb:active {
 .scrollbar-subtle::-webkit-scrollbar-thumb {
   border-width: 1.5px;
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  header,
+  aside,
+  nav,
+  footer,
+  .print-hidden {
+    display: none !important;
+  }
+
+  .monthly-sheet-printable {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
+}
