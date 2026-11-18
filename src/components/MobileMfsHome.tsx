@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
   FilePlus2,
+  FileSpreadsheet,
   HandCoins,
   History,
   Lock,
@@ -646,6 +647,15 @@ export function MobileMfsHome({
           onClick: () => onNavigate('statistics'),
         },
         {
+          id: 'monthly-sheet',
+          label: tNav('monthlySheet'),
+          Icon: FileSpreadsheet,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          onClick: () => onNavigate('monthly-sheet'),
+        },
+        {
           id: 'manager-cycle',
           label: tNav('managerCycle'),
           Icon: CalendarClock,
@@ -729,6 +739,15 @@ export function MobileMfsHome({
             'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
           iconColorClass: 'text-emerald-700 dark:text-emerald-400',
           onClick: () => onNavigate('statistics'),
+        },
+        {
+          id: 'monthly-sheet',
+          label: tNav('monthlySheet'),
+          Icon: FileSpreadsheet,
+          iconBgClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
+          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+          onClick: () => onNavigate('monthly-sheet'),
         },
         {
           id: 'manager-cycle',

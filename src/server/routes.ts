@@ -68,6 +68,7 @@ import {
   buildManagerCycleSchedule,
   buildMemberPublicProfile,
   buildMemberSummaries,
+  buildMonthlySheetData,
   computeRequiredApprovals,
   escapeCsvCell,
   evaluateLoanEligibility,
@@ -9910,6 +9911,22 @@ apiRouter.delete(
 // ---------------------------------------------------------------------------
 // 11. Monthly PDF Summary Reports, Auto-Email Scheduler & JSON Backup
 // ---------------------------------------------------------------------------
+
+apiRouter.get('/reports/monthly-sheet', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const monthParam = String(req.query?.month || '').trim();
+    if (monthParam && !/^\d{4}-\d{2}$/.test(monthParam)) {
+      res.status(400).json({ error: 'Month parameter must use YYYY-MM format.' });
+      return;
+    }
+    const state = await loadVaultState();
+    const sheet = buildMonthlySheetData(state, monthParam || undefined);
+    res.json({ sheet });
+  } catch (err) {
+    console.error('Monthly sheet build error:', err);
+    res.status(500).json({ error: 'Failed to load monthly member sheet.' });
+  }
+});
 
 apiRouter.get('/reports/monthly-pdf/download', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {

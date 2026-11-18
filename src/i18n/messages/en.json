@@ -185,6 +185,7 @@
     "notifications": "Notifications",
     "community": "Community",
     "members": "Members",
+    "monthlySheet": "Monthly Sheet",
     "managerCycle": "Manager Cycle",
     "profile": "My Profile",
     "memberProfile": "Member Profile",
@@ -4607,5 +4608,53 @@
         "desc": "Notify when another verified member mentions you in Community."
       }
     }
+  },
+  "MonthlySheet": {
+    "eyebrow": "Cooperative Monthly Ledger Sheet",
+    "title": "Monthly Member Summary Sheet",
+    "monthPrefix": "Month - {month}",
+    "prevMonthAria": "Previous month",
+    "nextMonthAria": "Next month",
+    "selectMonthAria": "Select month",
+    "searchPlaceholder": "Search member, ID, mobile, email…",
+    "searchAria": "Search monthly sheet rows",
+    "filterAll": "All ({count})",
+    "filterPaid": "Paid ({count})",
+    "filterDue": "Due ({count})",
+    "filterQardHasan": "Qard Hasana ({count})",
+    "exportCsv": "Export CSV",
+    "printSheet": "Print Sheet",
+    "colSn": "S.N",
+    "colMemberName": "Member name",
+    "colMemberId": "Member ID",
+    "colMobileNo": "Mobile No",
+    "colEmail": "Email",
+    "colContribution": "Contribution",
+    "colQardHasana": "Qard Hasana",
+    "colDueHasana": "Due Hasana",
+    "previousMonthSummary": "Previous month Summary",
+    "thisMonthSummary": "This month summary",
+    "previousPlusThisMonth": "previous + this month",
+    "thisMonthShort": "This month: {value}",
+    "fundSummary": "Fund summary",
+    "fundHeight": "Fund Height",
+    "totalLabel": "Total",
+    "yes": "Yes",
+    "no": "No",
+    "dueLabel": "Due",
+    "pendingLabel": "Pending",
+    "partialLabel": "Partial",
+    "emptyTitle": "No members match the selected filter",
+    "emptyDesc": "Adjust your search or status filter, or register active cooperative members to populate the monthly sheet.",
+    "loadFailed": "Failed to load monthly member sheet.",
+    "viewToggleSheet": "Sheet View",
+    "viewToggleCards": "Card View",
+    "csvSuccess": "Monthly sheet CSV exported.",
+    "summaryCards": {
+      "prevTitle": "Previous Month Cumulative",
+      "thisTitle": "This Month Cumulative",
+      "fundTitle": "All-Time Fund Totals"
+    }
   }
 }
+

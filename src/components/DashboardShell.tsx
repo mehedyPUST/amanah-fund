@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   CreditCard,
   FilePlus2,
+  FileSpreadsheet,
   HandCoins,
   History,
   Home,
@@ -53,6 +54,7 @@ import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { MobileMfsHome } from './MobileMfsHome.tsx';
+import { MonthlySheetView } from './MonthlySheetView.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
@@ -101,6 +103,7 @@ const MEMBER_NAV_ITEMS: NavItemConfig[] = [
   { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
   { id: 'members', label: 'Members', Icon: Users, group: 'member' },
+  { id: 'monthly-sheet', label: 'Monthly Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
 ];
@@ -116,6 +119,7 @@ const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
   { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
   { id: 'members', label: 'Members', Icon: Users, group: 'member' },
+  { id: 'monthly-sheet', label: 'Monthly Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
@@ -146,6 +150,7 @@ const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
   'manager-desk': 'amber',
   'my-profile': 'emerald',
   members: 'emerald',
+  'monthly-sheet': 'emerald',
   'member-profile': 'emerald',
   community: 'emerald',
   'member-registry': 'emerald',
@@ -993,6 +998,13 @@ export function DashboardShell() {
             active: activeSection === 'statistics',
             onClick: () => navigateToPage('statistics', true),
           },
+          {
+            id: 'monthly-sheet',
+            label: tNav('monthlySheet'),
+            Icon: FileSpreadsheet,
+            active: activeSection === 'monthly-sheet',
+            onClick: () => navigateToPage('monthly-sheet', true),
+          },
         ]
       : [
           {
@@ -1039,6 +1051,13 @@ export function DashboardShell() {
             Icon: History,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
+          },
+          {
+            id: 'monthly-sheet',
+            label: tNav('monthlySheet'),
+            Icon: FileSpreadsheet,
+            active: activeSection === 'monthly-sheet',
+            onClick: () => navigateToPage('monthly-sheet', true),
           },
         ];
 
@@ -1797,6 +1816,17 @@ export function DashboardShell() {
                 <section id="members" className="space-y-4 pb-8">
                   <SectionEyebrow label={tNav('members')} tone="emerald" />
                   <ActiveMembersView
+                    user={user}
+                    config={overview?.config || null}
+                    onViewMemberProfile={handleViewMemberProfile}
+                  />
+                </section>
+              )}
+
+              {activeSection === 'monthly-sheet' && (
+                <section id="monthly-sheet" className="space-y-4 pb-8">
+                  <SectionEyebrow label={tNav('monthlySheet')} tone="emerald" />
+                  <MonthlySheetView
                     user={user}
                     config={overview?.config || null}
                     onViewMemberProfile={handleViewMemberProfile}

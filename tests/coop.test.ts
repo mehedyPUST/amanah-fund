@@ -6,6 +6,7 @@ import {
   buildManagerCycleSchedule,
   buildMemberPublicProfile,
   buildMemberSummaries,
+  buildMonthlySheetData,
   computeRequiredApprovals,
   evaluateLoanEligibility,
   extractMentionedUsers,
@@ -2029,4 +2030,136 @@ describe('Cross-Site Iframe Auth Cookie & Session Token Fallback', () => {
     ).toBeNull();
   });
 });
+
+describe('Monthly Sheet Report builder', () => {
+  it('computes previous month cumulative, this month summary, member rows, and fund summary accurately', () => {
+    const state = makeBaseState();
+    const nowYear = new Date().getUTCFullYear();
+    const prevMonth = `${nowYear}-01`;
+    const targetMonth = `${nowYear}-02`;
+
+    // Add February approved contribution for Bilal (u-2); Fatima (u-3) remains due
+    state.contributions.push({
+      id: 'c-feb-2',
+      userId: 'u-2',
+      memberName: 'Bilal Hasan',
+      memberCode: 'AC-002',
+      billingMonth: targetMonth,
+      amount: 5000,
+      channel: 'mfs',
+      providerName: 'bKash',
+      maskedReference: '••••9012',
+      encryptedDetails: encryptSensitiveObject({ referenceId: 'BK9012', senderAccount: '01700005678' }),
+      status: 'approved',
+      submittedAt: `${targetMonth}-10T10:00:00.000Z`,
+      entryHash: 'hash-cfeb2',
+    });
+
+    // Active loan for Bilal disbursed in January, installment 1 paid in February
+    state.loans.push({
+      id: 'loan-sheet-1',
+      borrowerId: 'u-2',
+      borrowerName: 'Bilal Hasan',
+      borrowerCode: 'AC-002',
+      amount: 6000,
+      installmentMonths: 3,
+      monthlyInstallment: 2000,
+      purpose: 'Medical bill',
+      encryptedSensitiveNotes: encryptSensitiveObject({
+        emergencyContext: 'Clinic',
+        disbursementAccount: '01700005678',
+        channel: 'mfs',
+        provider: 'bKash',
+      }),
+      status: 'active',
+      eligibilitySnapshot: evaluateLoanEligibility(state, 'u-2'),
+      votes: [],
+      requiredApprovals: 2,
+      totalEligibleVoters: 2,
+      disbursedAt: `${prevMonth}-20T00:00:00.000Z`,
+      installments: [
+        {
+          installmentNumber: 1,
+          dueDate: `${targetMonth}-15`,
+          amount: 2000,
+          paidAmount: 2000,
+          paidAt: `${targetMonth}-14T00:00:00.000Z`,
+          status: 'paid',
+        },
+        {
+          installmentNumber: 2,
+          dueDate: `${nowYear}-03-15`,
+          amount: 2000,
+          paidAmount: 0,
+          status: 'scheduled',
+        },
+        {
+          installmentNumber: 3,
+          dueDate: `${nowYear}-04-15`,
+          amount: 2000,
+          paidAmount: 0,
+          status: 'scheduled',
+        },
+      ],
+      totalRepaid: 2000,
+      remainingBalance: 4000,
+      requestedAt: `${prevMonth}-18T00:00:00.000Z`,
+      entryHash: 'hash-ls1',
+    });
+
+    const sheet = buildMonthlySheetData(state, targetMonth);
+    expect(sheet.month).toBe(targetMonth);
+    expect(sheet.monthlyTarget).toBe(5000);
+
+    // Previous month (Jan): contributions = 10000 (u-1) + 5000 (u-2) = 15000; Qard Hasan = 6000; Due = 6000
+    expect(sheet.previousMonthSummary).toEqual({
+      contributionAmount: 15000,
+      qardHasanAmount: 6000,
+      dueHasanaAmount: 6000,
+    });
+
+    // This month only (Feb): contribution = 5000; new loan = 0; net due change = -2000
+    expect(sheet.thisMonthOnly).toEqual({
+      contributionAmount: 5000,
+      qardHasanAmount: 0,
+      dueHasanaAmount: -2000,
+    });
+
+    // This month cumulative summary: 20000 contrib, 6000 loan, 4000 remaining due
+    expect(sheet.thisMonthSummary).toEqual({
+      contributionAmount: 20000,
+      qardHasanAmount: 6000,
+      dueHasanaAmount: 4000,
+    });
+
+    // Fund summary totals
+    expect(sheet.fundSummary).toEqual({
+      fundHeight: 20000,
+      totalQardHasan: 6000,
+      totalDueHasana: 4000,
+    });
+
+    // Member rows exclude admin (u-1) and pending (u-pending), keep Bilal & Fatima in memberCode order
+    expect(sheet.rows).toHaveLength(2);
+    expect(sheet.rows[0]).toMatchObject({
+      serialNo: 1,
+      memberCode: 'AC-002',
+      contributionStatus: 'paid',
+      contributionAmount: 5000,
+      hasQardHasan: true,
+      qardHasanAmount: 6000,
+      dueHasanaAmount: 4000,
+    });
+    expect(sheet.rows[1]).toMatchObject({
+      serialNo: 2,
+      memberCode: 'AC-003',
+      contributionStatus: 'due',
+      contributionAmount: 0,
+      hasQardHasan: false,
+      qardHasanAmount: 0,
+      dueHasanaAmount: 0,
+    });
+  });
+});
+
 

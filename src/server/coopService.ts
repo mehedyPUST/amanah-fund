@@ -19,6 +19,8 @@ import type {
   MemberSummary,
   MonthClearanceEntry,
   MonthlyCashflowPoint,
+  MonthlySheetData,
+  MonthlySheetMemberRow,
   NomineeGender,
   NomineeInfo,
   NotificationType,
@@ -1695,6 +1697,238 @@ export function validateAndNormalizeNominees(
 
   return { ok: true, nominees: normalized };
 }
+
+export function buildMonthlySheetData(
+  state: VaultState,
+  requestedMonth?: string
+): MonthlySheetData {
+  const now = new Date();
+  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const month =
+    requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth.trim())
+      ? requestedMonth.trim()
+      : currentMonthKey;
+
+  const monthlyTarget = state.fundConfig.monthlyContributionAmount || 5000;
+  const approvedContribs = state.contributions.filter((c) => c.status === 'approved');
+  const pendingContribs = state.contributions.filter((c) => c.status === 'pending');
+
+  const disbursedLoans = state.loans.filter(
+    (l) => l.status === 'active' || l.status === 'repaid'
+  );
+
+  const getLoanMonth = (loan: LoanRequest): string =>
+    (loan.disbursedAt || loan.approvedAt || loan.requestedAt || '').slice(0, 7);
+
+  const getPaidThroughMonth = (loan: LoanRequest, targetMonth: string): number => {
+    let repaid = 0;
+    for (const inst of loan.installments || []) {
+      if (inst.status === 'paid') {
+        const paidMonth = (inst.paidAt || '').slice(0, 7);
+        if (!paidMonth || paidMonth <= targetMonth) {
+          repaid += inst.paidAmount || inst.amount || 0;
+        }
+      }
+    }
+    return Math.round(repaid * 100) / 100;
+  };
+
+  // Collect all relevant months so users can browse cleanly
+  const monthSet = new Set<string>([currentMonthKey, month]);
+  for (const c of state.contributions) {
+    if (/^\d{4}-\d{2}$/.test(c.billingMonth)) {
+      monthSet.add(c.billingMonth);
+    }
+  }
+  for (const l of disbursedLoans) {
+    const lm = getLoanMonth(l);
+    if (/^\d{4}-\d{2}$/.test(lm)) {
+      monthSet.add(lm);
+    }
+  }
+  const availableMonths = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+
+  // Contributing active members (non-admin), sorted by memberCode ascending
+  const activeMembers = state.users
+    .filter((u) => u.status === 'active' && u.role !== 'admin')
+    .sort((a, b) => a.memberCode.localeCompare(b.memberCode));
+
+  const rows: MonthlySheetMemberRow[] = activeMembers.map((member, index) => {
+    let reg: UserRegistrationDetails | undefined;
+    if (member.encryptedRegistrationDetails) {
+      try {
+        reg = decryptSensitiveObject<UserRegistrationDetails>(member.encryptedRegistrationDetails);
+      } catch {
+        reg = undefined;
+      }
+    }
+    const mobile = reg?.mobile || member.phoneMasked || '—';
+
+    const memberMonthContribs = state.contributions.filter(
+      (c) => c.userId === member.id && c.billingMonth === month
+    );
+    const approvedAmt = memberMonthContribs
+      .filter((c) => c.status === 'approved')
+      .reduce((sum, c) => sum + c.amount, 0);
+    const pendingAmt = memberMonthContribs
+      .filter((c) => c.status === 'pending')
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    let contributionStatus: MonthlySheetMemberRow['contributionStatus'] = 'due';
+    if (approvedAmt >= monthlyTarget) {
+      contributionStatus = 'paid';
+    } else if (approvedAmt > 0) {
+      contributionStatus = 'partial';
+    } else if (pendingAmt > 0) {
+      contributionStatus = 'pending';
+    }
+
+    // Loans for this member disbursed on or before `month`
+    const memberLoansUpToMonth = disbursedLoans.filter((l) => {
+      if (l.borrowerId !== member.id) return false;
+      const lm = getLoanMonth(l);
+      return lm ? lm <= month : true;
+    });
+
+    let activeLoanForMonth: LoanRequest | undefined;
+    let totalDueAsOfMonth = 0;
+    let installmentDueThisMonth = 0;
+
+    for (const loan of memberLoansUpToMonth) {
+      const paidThrough = getPaidThroughMonth(loan, month);
+      const remainingAtMonth = Math.max(0, Math.round((loan.amount - paidThrough) * 100) / 100);
+      if (remainingAtMonth > 0) {
+        totalDueAsOfMonth += remainingAtMonth;
+        if (!activeLoanForMonth) {
+          activeLoanForMonth = loan;
+        }
+      } else {
+        const completedMonth = (loan.completedAt || '').slice(0, 7);
+        if (completedMonth === month && !activeLoanForMonth) {
+          activeLoanForMonth = loan;
+        }
+      }
+
+      for (const inst of loan.installments || []) {
+        const dueYm = (inst.dueDate || '').slice(0, 7);
+        if (
+          dueYm &&
+          dueYm <= month &&
+          inst.status !== 'paid'
+        ) {
+          installmentDueThisMonth += Math.max(0, (inst.amount || 0) - (inst.paidAmount || 0));
+        }
+      }
+    }
+
+    const hasQardHasan = Boolean(activeLoanForMonth);
+    const qardHasanAmount = activeLoanForMonth ? activeLoanForMonth.amount : 0;
+
+    return {
+      serialNo: index + 1,
+      userId: member.id,
+      name: member.name,
+      memberCode: member.memberCode,
+      role: member.role,
+      mobile,
+      email: member.email,
+      contributionStatus,
+      contributionAmount: Math.round(approvedAmt * 100) / 100,
+      contributionPendingAmount: Math.round(pendingAmt * 100) / 100,
+      contributionTarget: monthlyTarget,
+      hasQardHasan,
+      qardHasanAmount: Math.round(qardHasanAmount * 100) / 100,
+      activeLoanId: activeLoanForMonth?.id,
+      dueHasanaAmount: Math.round(totalDueAsOfMonth * 100) / 100,
+      installmentDueThisMonth: Math.round(installmentDueThisMonth * 100) / 100,
+    };
+  });
+
+  // Previous month cumulative summary (strictly < month)
+  const prevContributionAmount = approvedContribs
+    .filter((c) => c.billingMonth < month)
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  const thisMonthContributionAmount = approvedContribs
+    .filter((c) => c.billingMonth === month)
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  let prevQardHasanAmount = 0;
+  let thisMonthQardHasanAmount = 0;
+  let prevDueHasanaAmount = 0;
+  let endOfMonthDueHasanaAmount = 0;
+
+  for (const loan of disbursedLoans) {
+    const lm = getLoanMonth(loan);
+    if (!lm || lm < month) {
+      prevQardHasanAmount += loan.amount;
+    } else if (lm === month) {
+      thisMonthQardHasanAmount += loan.amount;
+    }
+
+    // Remaining due entering `month`: disbursed < month minus paid strictly < month
+    if (!lm || lm < month) {
+      let paidBeforeMonth = 0;
+      for (const inst of loan.installments || []) {
+        if (inst.status === 'paid') {
+          const paidMonth = (inst.paidAt || '').slice(0, 7);
+          if (paidMonth && paidMonth < month) {
+            paidBeforeMonth += inst.paidAmount || inst.amount || 0;
+          }
+        }
+      }
+      prevDueHasanaAmount += Math.max(0, loan.amount - paidBeforeMonth);
+    }
+
+    // Remaining due at end of `month`: disbursed <= month minus paid <= month
+    if (!lm || lm <= month) {
+      const paidThrough = getPaidThroughMonth(loan, month);
+      endOfMonthDueHasanaAmount += Math.max(0, loan.amount - paidThrough);
+    }
+  }
+
+  // All-time fund totals matching DashboardOverview
+  const fundHeight = approvedContribs.reduce((sum, c) => sum + c.amount, 0);
+  const totalQardHasan = disbursedLoans.reduce((sum, l) => sum + l.amount, 0);
+  const totalDueHasana = state.loans
+    .filter((l) => l.status === 'active')
+    .reduce((sum, l) => sum + l.remainingBalance, 0);
+
+  // Include pending contributions in nothing misleading — keep all figures strictly verified
+  void pendingContribs;
+
+  return {
+    month,
+    currency: state.fundConfig.currency,
+    monthlyTarget,
+    availableMonths,
+    previousMonthSummary: {
+      contributionAmount: Math.round(prevContributionAmount * 100) / 100,
+      qardHasanAmount: Math.round(prevQardHasanAmount * 100) / 100,
+      dueHasanaAmount: Math.round(prevDueHasanaAmount * 100) / 100,
+    },
+    thisMonthOnly: {
+      contributionAmount: Math.round(thisMonthContributionAmount * 100) / 100,
+      qardHasanAmount: Math.round(thisMonthQardHasanAmount * 100) / 100,
+      dueHasanaAmount:
+        Math.round((endOfMonthDueHasanaAmount - prevDueHasanaAmount) * 100) / 100,
+    },
+    thisMonthSummary: {
+      contributionAmount:
+        Math.round((prevContributionAmount + thisMonthContributionAmount) * 100) / 100,
+      qardHasanAmount:
+        Math.round((prevQardHasanAmount + thisMonthQardHasanAmount) * 100) / 100,
+      dueHasanaAmount: Math.round(endOfMonthDueHasanaAmount * 100) / 100,
+    },
+    fundSummary: {
+      fundHeight: Math.round(fundHeight * 100) / 100,
+      totalQardHasan: Math.round(totalQardHasan * 100) / 100,
+      totalDueHasana: Math.round(totalDueHasana * 100) / 100,
+    },
+    rows,
+  };
+}
+
 
 
 

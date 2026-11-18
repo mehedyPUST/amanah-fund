@@ -32,6 +32,7 @@ import type {
   ManagerCycleSchedule,
   MemberPublicProfile,
   MemberSummary,
+  MonthlySheetData,
   NomineeInfo,
   NoticePriority,
   NotificationPreferences,
@@ -1135,7 +1136,13 @@ export const api = {
       body: JSON.stringify(tempPassword ? { tempPassword } : {}),
     }),
 
-  // Monthly Fund Summary PDF & Fund JSON Backup
+  // Monthly Sheet Ledger & Monthly Fund Summary PDF
+  getMonthlySheet: (month?: string) =>
+    apiRequest<{ sheet: MonthlySheetData }>(
+      month
+        ? `/api/reports/monthly-sheet?month=${encodeURIComponent(month)}`
+        : '/api/reports/monthly-sheet'
+    ),
   emailMonthlyPdfSummary: (monthKey?: string) =>
     apiRequest<{
       ok: boolean;

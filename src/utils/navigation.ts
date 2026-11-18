@@ -39,6 +39,8 @@ export function getDashboardSectionLabel(
       return nav.community;
     case 'members':
       return nav.members;
+    case 'monthly-sheet':
+      return nav.monthlySheet;
     case 'manager-cycle':
       return nav.managerCycle;
     case 'my-profile':

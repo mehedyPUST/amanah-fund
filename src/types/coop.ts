@@ -20,6 +20,7 @@ export type DashboardSectionId =
   | 'member-profile'
   | 'manager-cycle'
   | 'members'
+  | 'monthly-sheet'
   | 'email-queue';
 
 export interface EncryptedEnvelope {
@@ -1076,4 +1077,46 @@ export interface AiSpamCheckResult {
   checkedWith: 'groq' | 'heuristic';
   model?: string;
 }
+
+export interface MonthlySheetMemberRow {
+  serialNo: number;
+  userId: string;
+  name: string;
+  memberCode: string;
+  role: UserRole;
+  mobile: string;
+  email: string;
+  contributionStatus: 'paid' | 'partial' | 'pending' | 'due';
+  contributionAmount: number;
+  contributionPendingAmount: number;
+  contributionTarget: number;
+  hasQardHasan: boolean;
+  qardHasanAmount: number;
+  activeLoanId?: string;
+  dueHasanaAmount: number;
+  installmentDueThisMonth: number;
+}
+
+export interface MonthlySheetSummaryMetrics {
+  contributionAmount: number;
+  qardHasanAmount: number;
+  dueHasanaAmount: number;
+}
+
+export interface MonthlySheetData {
+  month: string; // YYYY-MM
+  currency: FundConfig['currency'];
+  monthlyTarget: number;
+  availableMonths: string[];
+  previousMonthSummary: MonthlySheetSummaryMetrics;
+  thisMonthOnly: MonthlySheetSummaryMetrics;
+  thisMonthSummary: MonthlySheetSummaryMetrics; // previous + this month
+  fundSummary: {
+    fundHeight: number;
+    totalQardHasan: number;
+    totalDueHasana: number;
+  };
+  rows: MonthlySheetMemberRow[];
+}
+
 

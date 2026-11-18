@@ -185,6 +185,7 @@
     "notifications": "নোটিফিকেশন",
     "community": "কমিউনিটি",
     "members": "সদস্যবৃন্দ",
+    "monthlySheet": "মাসিক শিট",
     "managerCycle": "ম্যানেজার চক্র",
     "profile": "আমার প্রোফাইল",
     "memberProfile": "সদস্য প্রোফাইল",
@@ -4607,5 +4608,53 @@
         "desc": "অন্য যাচাইকৃত সদস্য কমিউনিটিতে আপনাকে মেনশন করলে জানান।"
       }
     }
+  },
+  "MonthlySheet": {
+    "eyebrow": "সমবায় মাসিক খতিয়ান শিট",
+    "title": "মাসিক সদস্য সারসংক্ষেপ শিট",
+    "monthPrefix": "মাস - {month}",
+    "prevMonthAria": "পূর্ববর্তী মাস",
+    "nextMonthAria": "পরবর্তী মাস",
+    "selectMonthAria": "মাস নির্বাচন করুন",
+    "searchPlaceholder": "সদস্য, আইডি, মোবাইল বা ইমেইল খুঁজুন…",
+    "searchAria": "মাসিক শিটে খুঁজুন",
+    "filterAll": "সব ({count})",
+    "filterPaid": "পরিশোধিত ({count})",
+    "filterDue": "বকেয়া ({count})",
+    "filterQardHasan": "কর্জে হাসানা ({count})",
+    "exportCsv": "সিএসভি ডাউনলোড",
+    "printSheet": "প্রিন্ট শিট",
+    "colSn": "ক্রম",
+    "colMemberName": "সদস্যের নাম",
+    "colMemberId": "সদস্য আইডি",
+    "colMobileNo": "মোবাইল নং",
+    "colEmail": "ইমেইল",
+    "colContribution": "মাসিক জমা",
+    "colQardHasana": "কর্জে হাসানা",
+    "colDueHasana": "বকেয়া হাসানা",
+    "previousMonthSummary": "পূর্ববর্তী মাসের সারসংক্ষেপ",
+    "thisMonthSummary": "চলতি মাসের সারসংক্ষেপ",
+    "previousPlusThisMonth": "পূর্ববর্তী + চলতি মাস",
+    "thisMonthShort": "এই মাসে: {value}",
+    "fundSummary": "তহবিলের সারসংক্ষেপ",
+    "fundHeight": "তহবিল উচ্চতা",
+    "totalLabel": "মোট",
+    "yes": "হ্যাঁ",
+    "no": "না",
+    "dueLabel": "বকেয়া",
+    "pendingLabel": "অপেক্ষমাণ",
+    "partialLabel": "আংশিক",
+    "emptyTitle": "ফিল্টারের সাথে কোনো সদস্য মেলেনি",
+    "emptyDesc": "অনুসন্ধান বা ফিল্টার পরিবর্তন করুন, অথবা মাসিক শিট দেখতে সক্রিয় সদস্য যুক্ত করুন।",
+    "loadFailed": "মাসিক সদস্য শিট লোড করা যায়নি।",
+    "viewToggleSheet": "শিট ভিউ",
+    "viewToggleCards": "কার্ড ভিউ",
+    "csvSuccess": "মাসিক শিট সিএসভি ডাউনলোড হয়েছে।",
+    "summaryCards": {
+      "prevTitle": "পূর্ববর্তী মাসের ক্রমপুঞ্জিত হিসাব",
+      "thisTitle": "চলতি মাসের ক্রমপুঞ্জিত হিসাব",
+      "fundTitle": "সর্বমোট তহবিল হিসাব"
+    }
   }
 }
+
