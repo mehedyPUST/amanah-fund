@@ -17,9 +17,9 @@ import {
   Trash2,
   XCircle,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
-  EmailQueueCategory,
   EmailQueueStats,
   EmailQueueStatus,
 } from '../types/coop.ts';
@@ -52,34 +52,29 @@ type QueueModalState =
       details?: ActionModalDetailItem[];
     };
 
-const CATEGORY_LABELS: Record<EmailQueueCategory, string> = {
-  transaction: 'Transaction',
-  registration: 'Registration',
-  password_reset: 'Password Reset',
-  monthly_pdf: 'Monthly PDF',
-  template_test: 'Template Test',
-  general: 'General',
-};
-
-function formatCountdown(nextAttemptAt: string, status: EmailQueueStatus): string {
-  if (status === 'sent') return 'Delivered';
-  if (status === 'failed') return 'Max retries reached';
-  const targetMs = Date.parse(nextAttemptAt);
-  if (Number.isNaN(targetMs)) return 'Scheduled';
-  const diffMs = targetMs - Date.now();
-  if (diffMs <= 5_000) return 'Due next worker cycle (<1m)';
-  const totalSec = Math.ceil(diffMs / 1000);
-  const mins = Math.floor(totalSec / 60);
-  const secs = totalSec % 60;
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remMins = mins % 60;
-    return `Next retry in ${hrs}h ${remMins}m`;
-  }
-  return mins > 0 ? `Next retry in ${mins}m ${secs}s` : `Next retry in ${secs}s`;
-}
-
 export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewProps) {
+  const t = useTranslations('Admin.emailQueue');
+
+  const formatCountdown = (nextAttemptAt: string, status: EmailQueueStatus): string => {
+    if (status === 'sent') return t('countdown.delivered');
+    if (status === 'failed') return t('countdown.maxRetries');
+    const targetMs = Date.parse(nextAttemptAt);
+    if (Number.isNaN(targetMs)) return t('countdown.scheduled');
+    const diffMs = targetMs - Date.now();
+    if (diffMs <= 5_000) return t('countdown.dueNextCycle');
+    const totalSec = Math.ceil(diffMs / 1000);
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    if (mins >= 60) {
+      const hrs = Math.floor(mins / 60);
+      const remMins = mins % 60;
+      return t('countdown.nextRetryHoursMins', { hrs, mins: remMins });
+    }
+    return mins > 0
+      ? t('countdown.nextRetryMinsSecs', { mins, secs })
+      : t('countdown.nextRetrySecs', { secs });
+  };
+
   const [items, setItems] = useState<MonitorItem[]>([]);
   const [stats, setStats] = useState<EmailQueueStats>({
     total: 0,
@@ -164,20 +159,24 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
         tone: res.sent > 0 ? 'emerald' : res.processed === 0 ? 'amber' : 'red',
         title:
           res.processed === 0
-            ? 'No Pending Emails to Process'
+            ? t('processEmptyTitle')
             : res.failed === 0
-            ? 'Email Queue Processed Successfully'
-            : 'Queue Sweep Completed With Warnings',
+            ? t('processSuccessTitle')
+            : t('processWarningTitle'),
         description:
           res.processed === 0
-            ? 'There are currently no pending or retrying emails waiting in the queue.'
-            : `Processed ${res.processed} queued email(s): ${res.sent} delivered, ${res.failed} still failing.`,
+            ? t('processEmptyDesc')
+            : t('processResultDesc', {
+                processed: res.processed,
+                sent: res.sent,
+                failed: res.failed,
+              }),
         details: [
-          { label: 'Delivered', value: String(res.sent) },
-          { label: 'Still Failing', value: String(res.failed) },
+          { label: t('detailDelivered'), value: String(res.sent) },
+          { label: t('detailStillFailing'), value: String(res.failed) },
           {
-            label: 'SMTP Status',
-            value: res.smtpConfigured ? 'Configured' : 'Not Configured',
+            label: t('detailSmtpStatus'),
+            value: res.smtpConfigured ? t('smtpConfigured') : t('smtpNotConfigured'),
           },
         ],
       });
@@ -185,8 +184,8 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Queue Processing Failed',
-        description: err instanceof Error ? err.message : 'Unable to process queued emails.',
+        title: t('processFailedTitle'),
+        description: err instanceof Error ? err.message : t('processFailedDesc'),
       });
     } finally {
       setBatchBusy(false);
@@ -197,28 +196,31 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Retry All Failed & Pending Emails?',
-      description:
-        'Resets retry counters on all failed and retrying entries and dispatches them immediately via Nodemailer SMTP.',
+      title: t('retryAllTitle'),
+      description: t('retryAllDesc'),
       details: [
-        { label: 'Emails to Retry', value: String(attentionCount) },
+        { label: t('detailEmailsToRetry'), value: String(attentionCount) },
         {
-          label: 'SMTP Configuration',
-          value: smtpConfigured ? 'Ready' : 'Not Configured',
+          label: t('detailSmtpConfig'),
+          value: smtpConfigured ? t('smtpReady') : t('smtpNotConfigured'),
         },
       ],
-      confirmLabel: 'Retry All Now',
+      confirmLabel: t('retryAllConfirm'),
       run: async () => {
         const res = await api.retryAllEmailQueue();
         await Promise.all([loadQueue(true), onRefreshWorkspace()]);
         setModal({
           mode: 'notice',
           tone: res.sent > 0 && res.failed === 0 ? 'emerald' : res.failed > 0 ? 'amber' : 'emerald',
-          title: 'Batch Retry Complete',
-          description: `Retried ${res.queuedCount} queued email(s): ${res.sent} delivered, ${res.failed} failed.`,
+          title: t('retryAllDoneTitle'),
+          description: t('retryAllDoneDesc', {
+            queued: res.queuedCount,
+            sent: res.sent,
+            failed: res.failed,
+          }),
           details: [
-            { label: 'Delivered', value: String(res.sent) },
-            { label: 'Failed', value: String(res.failed) },
+            { label: t('detailDelivered'), value: String(res.sent) },
+            { label: t('detailFailed'), value: String(res.failed) },
           ],
         });
       },
@@ -233,21 +235,21 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       setModal({
         mode: 'notice',
         tone: res.sent ? 'emerald' : 'red',
-        title: res.sent ? 'Queued Email Delivered' : 'Retry Attempt Failed',
+        title: res.sent ? t('singleRetrySuccessTitle') : t('singleRetryFailTitle'),
         description: res.sent
-          ? `Successfully delivered "${item.subject}" to ${item.to.join(', ')}.`
-          : `Delivery attempt failed for ${item.to.join(', ')}. The entry remains tracked in the queue.`,
+          ? t('singleRetrySuccessDesc', { subject: item.subject, recipients: item.to.join(', ') })
+          : t('singleRetryFailDesc', { recipients: item.to.join(', ') }),
         details: [
-          { label: 'Recipients', value: item.to.join(', ') },
-          ...(res.reason ? [{ label: 'SMTP Response', value: res.reason }] : []),
+          { label: t('detailRecipients'), value: item.to.join(', ') },
+          ...(res.reason ? [{ label: t('detailSmtpResponse'), value: res.reason }] : []),
         ],
       });
     } catch (err) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Retry Error',
-        description: err instanceof Error ? err.message : 'Unable to retry email.',
+        title: t('retryErrorTitle'),
+        description: err instanceof Error ? err.message : t('retryErrorDesc'),
       });
     } finally {
       setBusyId(null);
@@ -258,23 +260,22 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Discard Queued Email?',
-      description:
-        'Removing this entry stops future retry attempts for it permanently. Use this if the recipient mailbox is invalid or superseded.',
+      title: t('discardTitle'),
+      description: t('discardDesc'),
       details: [
-        { label: 'Subject', value: item.subject },
-        { label: 'Recipients', value: item.to.join(', ') },
-        { label: 'Attempts', value: `${item.attempts}/${item.maxAttempts}` },
+        { label: t('detailSubject'), value: item.subject },
+        { label: t('detailRecipients'), value: item.to.join(', ') },
+        { label: t('detailAttempts'), value: `${item.attempts}/${item.maxAttempts}` },
       ],
-      confirmLabel: 'Discard Entry',
+      confirmLabel: t('discardConfirm'),
       run: async () => {
         await api.deleteEmailQueueItem(item.id);
         await Promise.all([loadQueue(true), onRefreshWorkspace()]);
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Queue Entry Removed',
-          description: 'The selected email entry has been removed from the persistent queue.',
+          title: t('discardedTitle'),
+          description: t('discardedDesc'),
         });
       },
     });
@@ -284,19 +285,18 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Clear Delivered Email History?',
-      description:
-        'Clears completed ("sent") records from the queue monitor. Pending, retrying, and failed items will not be removed.',
-      details: [{ label: 'Delivered Logs', value: String(stats.sent) }],
-      confirmLabel: 'Clear Delivered Logs',
+      title: t('clearSentTitle'),
+      description: t('clearSentDesc'),
+      details: [{ label: t('detailDeliveredLogs'), value: String(stats.sent) }],
+      confirmLabel: t('clearSentConfirm'),
       run: async () => {
         const res = await api.clearSentEmailQueue();
         await loadQueue(true);
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Delivered Logs Cleared',
-          description: `Removed ${res.removedCount} delivered email record(s) from the queue history.`,
+          title: t('clearedTitle'),
+          description: t('clearedDesc', { count: res.removedCount }),
         });
       },
     });
@@ -307,17 +307,17 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       mode: 'notice',
       tone: item.status === 'failed' ? 'red' : item.status === 'sent' ? 'emerald' : 'amber',
       title: item.subject,
-      description: item.textPreview || '(Empty message body)',
+      description: item.textPreview || t('emptyMessageBody'),
       details: [
-        { label: 'Queue ID', value: item.id },
-        { label: 'Status', value: item.status.toUpperCase() },
-        { label: 'Category', value: CATEGORY_LABELS[item.category] || item.category },
-        { label: 'Recipients', value: item.to.join(', ') },
-        { label: 'Attempts', value: `${item.attempts} / ${item.maxAttempts}` },
+        { label: t('detailQueueId'), value: item.id },
+        { label: t('detailStatus'), value: t(`statuses.${item.status}` as const) },
+        { label: t('detailCategory'), value: t(`categories.${item.category}` as const) },
+        { label: t('detailRecipients'), value: item.to.join(', ') },
+        { label: t('detailAttempts'), value: `${item.attempts} / ${item.maxAttempts}` },
         ...(item.attachmentFilenames.length > 0
-          ? [{ label: 'Attachments', value: item.attachmentFilenames.join(', ') }]
+          ? [{ label: t('detailAttachments'), value: item.attachmentFilenames.join(', ') }]
           : []),
-        ...(item.lastError ? [{ label: 'Last Error', value: item.lastError }] : []),
+        ...(item.lastError ? [{ label: t('detailLastError'), value: item.lastError }] : []),
       ],
     });
   };
@@ -331,8 +331,8 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Queue Action Failed',
-        description: err instanceof Error ? err.message : 'Unable to complete email queue action.',
+        title: t('actionFailedTitle'),
+        description: err instanceof Error ? err.message : t('actionFailedDesc'),
       });
     } finally {
       setModalBusy(false);
@@ -347,15 +347,13 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <MailWarning className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Persistent Database Retry Queue · Automated Backoff Worker (60s)</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Email Queue Monitor
+              {t('title')}
             </h1>
             <p className="text-xs text-slate-600 dark:text-slate-400 max-w-2xl">
-              Every failed Nodemailer delivery is persisted in the database and automatically
-              retried with exponential backoff (1m → 3m → 10m → 30m, up to 5 attempts). Inspect
-              errors or trigger immediate manual retries below.
+              {t('subtitle')}
             </p>
           </div>
 
@@ -367,7 +365,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               className="px-3 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-              <span>Refresh</span>
+              <span>{t('refresh')}</span>
             </button>
             <button
               type="button"
@@ -376,7 +374,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
             >
               <Play className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Process Pending</span>
+              <span>{t('processPending')}</span>
             </button>
             <button
               type="button"
@@ -385,7 +383,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               className="col-span-2 sm:col-span-1 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Retry All ({attentionCount})</span>
+              <span>{t('retryAllBtn', { count: attentionCount })}</span>
             </button>
           </div>
         </div>
@@ -394,7 +392,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
           <div className="rounded-xl border amanah-card-violet p-3 sm:p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <span>SMTP Transport</span>
+              <span>{t('kpiSmtp')}</span>
               <Server className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             </div>
             <div className="mt-1.5 flex items-center gap-1.5">
@@ -402,14 +400,14 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                   <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                    Configured
+                    {t('smtpConfigured')}
                   </span>
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
                   <span className="text-xs sm:text-sm font-semibold text-amber-700 dark:text-amber-400">
-                    Not Configured
+                    {t('smtpNotConfigured')}
                   </span>
                 </>
               )}
@@ -418,7 +416,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
           <div className="rounded-xl border amanah-card-amber p-3 sm:p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-amber-800/80 dark:text-amber-300/80">
-              <span>Pending / Retrying</span>
+              <span>{t('kpiPendingRetrying')}</span>
               <Clock className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
             </div>
             <div className="mt-1 text-lg sm:text-xl font-bold font-mono tabular-nums text-amber-900 dark:text-amber-200">
@@ -428,7 +426,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
           <div className="rounded-xl border amanah-card-rose p-3 sm:p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-rose-800/80 dark:text-rose-300/80">
-              <span>Failed (Max Retries)</span>
+              <span>{t('kpiFailed')}</span>
               <XCircle className="w-3.5 h-3.5 text-rose-600" aria-hidden="true" />
             </div>
             <div className="mt-1 text-lg sm:text-xl font-bold font-mono tabular-nums text-rose-900 dark:text-rose-200">
@@ -438,7 +436,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
           <div className="rounded-xl border amanah-card-emerald p-3 sm:p-3.5">
             <div className="flex items-center justify-between text-[11px] font-medium text-emerald-800/80 dark:text-emerald-300/80">
-              <span>Recovered &amp; Sent</span>
+              <span>{t('kpiRecovered')}</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             </div>
             <div className="mt-1 text-lg sm:text-xl font-bold font-mono tabular-nums text-emerald-900 dark:text-emerald-200">
@@ -454,12 +452,12 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
           <div className="flex flex-nowrap md:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 md:pb-0">
             {(
               [
-                { id: 'attention', label: `Needs Attention (${attentionCount})` },
-                { id: 'failed', label: `Failed (${stats.failed})` },
-                { id: 'retrying', label: `Retrying (${stats.retrying})` },
-                { id: 'pending', label: `Pending (${stats.pending})` },
-                { id: 'sent', label: `Sent (${stats.sent})` },
-                { id: 'all', label: `All (${stats.total})` },
+                { id: 'attention', label: t('tabAttention', { count: attentionCount }) },
+                { id: 'failed', label: t('tabFailed', { count: stats.failed }) },
+                { id: 'retrying', label: t('tabRetrying', { count: stats.retrying }) },
+                { id: 'pending', label: t('tabPending', { count: stats.pending }) },
+                { id: 'sent', label: t('tabSent', { count: stats.sent }) },
+                { id: 'all', label: t('tabAll', { count: stats.total }) },
               ] as Array<{ id: StatusFilter; label: string }>
             ).map((tab) => (
               <button
@@ -487,7 +485,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search recipient, subject, error..."
+                placeholder={t('searchPlaceholder')}
                 className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
               />
             </div>
@@ -498,7 +496,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-700 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center gap-1 cursor-pointer shrink-0"
               >
                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Clear Sent</span>
+                <span>{t('clearSentBtn')}</span>
               </button>
             )}
           </div>
@@ -515,13 +513,13 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             <Inbox className="w-8 h-8 text-slate-400 mx-auto" aria-hidden="true" />
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
               {statusFilter === 'attention'
-                ? 'No Failed or Pending Emails'
-                : 'No Matching Queue Entries'}
+                ? t('emptyAttentionTitle')
+                : t('emptyFilteredTitle')}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               {statusFilter === 'attention'
-                ? 'All recent Nodemailer dispatches have succeeded or been resolved cleanly.'
-                : 'Try switching filters or clearing the search box.'}
+                ? t('emptyAttentionDesc')
+                : t('emptyFilteredDesc')}
             </p>
           </div>
         ) : (
@@ -545,13 +543,13 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                       <span
                         className={`px-2 py-0.5 rounded-md border text-[11px] font-semibold uppercase tracking-wide ${statusBadgeClass}`}
                       >
-                        {item.status}
+                        {t(`statuses.${item.status}` as const)}
                       </span>
                       <span className="px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        {CATEGORY_LABELS[item.category] || item.category}
+                        {t(`categories.${item.category}` as const)}
                       </span>
                       <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                        Attempt {item.attempts}/{item.maxAttempts}
+                        {t('attemptBadge', { attempts: item.attempts, max: item.maxAttempts })}
                       </span>
                       <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                         · {formatCountdown(item.nextAttemptAt, item.status)}
@@ -565,16 +563,16 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
                       <span>
                         <strong className="font-medium text-slate-700 dark:text-slate-300">
-                          To:
+                          {t('toLabel')}
                         </strong>{' '}
                         <span className="font-mono">{item.to.join(', ')}</span>
                       </span>
                       <span>
-                        Queued: {formatDateTime(item.createdAt)}
+                        {t('queuedLabel', { date: formatDateTime(item.createdAt) })}
                       </span>
                       {item.sentAt && (
                         <span className="text-emerald-700 dark:text-emerald-400">
-                          Sent: {formatDateTime(item.sentAt)}
+                          {t('sentLabel', { date: formatDateTime(item.sentAt) })}
                         </span>
                       )}
                       {item.attachmentFilenames.length > 0 && (
@@ -587,7 +585,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
                     {item.lastError && (
                       <div className="rounded-lg border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 px-3 py-2 text-[11px] font-mono text-rose-800 dark:text-rose-300 break-words">
-                        Error: {item.lastError}
+                        {t('errorLabel', { error: item.lastError })}
                       </div>
                     )}
                   </div>
@@ -599,7 +597,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                       className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Details</span>
+                      <span>{t('detailsBtn')}</span>
                     </button>
                     {item.status !== 'sent' && (
                       <button
@@ -612,7 +610,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                           className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`}
                           aria-hidden="true"
                         />
-                        <span>{isBusy ? 'Retrying...' : 'Retry Now'}</span>
+                        <span>{isBusy ? t('retryingBtn') : t('retryNowBtn')}</span>
                       </button>
                     )}
                     <button
@@ -622,7 +620,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                       className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white text-xs font-medium text-rose-700 dark:text-rose-400 inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Discard</span>
+                      <span>{t('discardBtn')}</span>
                     </button>
                   </div>
                 </div>
@@ -639,7 +637,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

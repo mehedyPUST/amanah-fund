@@ -60,6 +60,7 @@ export function ContributionGoalTracker({
   onSubmitContribution,
 }: ContributionGoalTrackerProps) {
   const t = useTranslations('Contributions.goalTracker');
+  const tCommon = useTranslations('Common');
   const monthLabels = [
     t('months.m0'),
     t('months.m1'),
@@ -329,12 +330,12 @@ export function ContributionGoalTracker({
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {t('monthlyPaceTarget')}{' '}
             <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
-              {formatMoney(Math.round(monthlyPaceTarget), ccy)}/mo
+              {tCommon('perMonthShort', { amount: formatMoney(Math.round(monthlyPaceTarget), ccy) })}
             </span>
             <span aria-hidden="true"> · </span>
             {t('coopStandard')}{' '}
             <span className="font-mono tabular-nums">
-              {formatMoney(defaultYearlyGoal, ccy)}/yr
+              {tCommon('perYearShort', { amount: formatMoney(defaultYearlyGoal, ccy) })}
             </span>
             {customGoal !== null && (
               <>
@@ -922,7 +923,7 @@ export function ContributionGoalTracker({
                         ? item.reviewNote
                         : item.reviewerName
                           ? t('verifiedBy', { name: item.reviewerName })
-                          : `Hash ${shortHash(item.entryHash)}`}
+                          : tCommon('hashPrefix', { hash: shortHash(item.entryHash) })}
                     </td>
                   </tr>
                 ))}

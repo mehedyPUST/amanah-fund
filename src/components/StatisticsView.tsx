@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { BarChart3 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
@@ -31,6 +32,7 @@ export function StatisticsView({
   loading,
   onNavigate,
 }: StatisticsViewProps) {
+  const t = useTranslations('Statistics');
   const ccy = overview?.config.currency || 'BDT';
   const monthlySeries = overview?.monthlySeries || [];
 
@@ -45,16 +47,16 @@ export function StatisticsView({
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Treasury Analytics &amp; Cashflow Telemetry</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Statistics &amp; Fund Performance
+            {t('heading')}
           </h2>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
           <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            Pool Liquidity:{' '}
+            {t('poolLiquidity')}{' '}
             <strong className="text-emerald-700 dark:text-emerald-400">
               {loading && !overview ? (
                 <Skeleton width={90} height={14} inline />

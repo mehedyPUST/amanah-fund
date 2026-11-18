@@ -302,9 +302,7 @@ export function AppProviders({
       minimizeLogoutInFlightRef.current = true;
       clearBgTimer();
       setMobileBackgroundHiddenAt(null);
-      setMobileAutoLogoutNotice(
-        'Signed out automatically after 1 minute in the background.'
-      );
+      setMobileAutoLogoutNotice('__AUTO_LOGOUT_1M__');
       try {
         await api.logout();
       } catch {

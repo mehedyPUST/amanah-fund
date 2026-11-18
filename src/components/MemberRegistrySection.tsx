@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -80,6 +81,8 @@ export function MemberRegistrySection({
   onRefresh,
   onViewMemberProfile,
 }: MemberRegistrySectionProps) {
+  const t = useTranslations('Admin.memberRegistry');
+  const tCommon = useTranslations('Common');
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isAdmin = user.role === 'admin';
 
@@ -109,8 +112,8 @@ export function MemberRegistrySection({
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        tCommon('actionCouldNotComplete'),
+        err instanceof Error ? err.message : tCommon('unexpectedError')
       );
     } finally {
       setModalBusy(false);
@@ -133,13 +136,13 @@ export function MemberRegistrySection({
     } catch (err) {
       showNotice(
         'red',
-        'Could Not Load Member Registry',
-        err instanceof Error ? err.message : 'Failed to load member registry.'
+        t('loadFailedTitle'),
+        err instanceof Error ? err.message : t('loadFailedDesc')
       );
     } finally {
       setLoading(false);
     }
-  }, [isStaff]);
+  }, [isStaff, t]);
 
   useEffect(() => {
     void loadMembers();
@@ -150,18 +153,17 @@ export function MemberRegistrySection({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Approve & Issue Activation Codes (${member.name})?`,
-      description:
-        'Approving assigns the official Amanah Member ID below and generates a unique, never-before-used 6-digit Activation OTP emailed to the applicant.',
+      title: t('approveTitle', { name: member.name }),
+      description: t('approveDesc'),
       details: [
-        { label: 'Applicant', value: member.name },
-        { label: 'Email', value: member.email },
+        { label: t('detailApplicant'), value: member.name },
+        { label: t('detailEmail'), value: member.email },
       ],
-      inputLabel: 'Official Member ID to Assign',
-      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputLabel: t('inputMemberIdLabel'),
+      inputPlaceholder: t('inputMemberIdPh'),
       inputRequired: true,
       initialInputValue: suggestedCode,
-      confirmLabel: 'Generate Codes & Send Email',
+      confirmLabel: t('approveConfirmBtn'),
       run: async (memberCodeInput: string) => {
         const res = await api.issueMemberActivation(member.id, {
           memberCode: memberCodeInput.trim() || undefined,
@@ -172,17 +174,25 @@ export function MemberRegistrySection({
         await Promise.all([onRefresh(), loadMembers()]);
         showNotice(
           'emerald',
-          'Activation Codes Issued',
+          t('issuedTitle'),
           res.emailSent
-            ? `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Both codes have been emailed to ${member.email} and saved in the approval panel for phone support.`
-            : `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Email could not be sent${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes below over the phone or retry email.`,
+            ? t('issuedEmailDesc', {
+                code: res.memberCode,
+                name: member.name,
+                email: member.email,
+              })
+            : t('issuedNoEmailDesc', {
+                code: res.memberCode,
+                name: member.name,
+                reason: res.emailReason ? ` (${res.emailReason})` : '',
+              }),
           [
-            { label: 'Applicant', value: member.name },
-            { label: 'Official Member ID', value: res.memberCode },
-            { label: '6-Digit Activation OTP', value: res.otp },
+            { label: t('detailApplicant'), value: member.name },
+            { label: t('detailOfficialId'), value: res.memberCode },
+            { label: t('detailOtp'), value: res.otp },
             {
-              label: 'Email Dispatch',
-              value: res.emailSent ? `Sent to ${member.email}` : 'Not Delivered (Phone Support Ready)',
+              label: t('detailDispatch'),
+              value: res.emailSent ? t('sentToEmail', { email: member.email }) : t('notDeliveredPhoneReady'),
             },
           ]
         );
@@ -200,20 +210,23 @@ export function MemberRegistrySection({
       await Promise.all([onRefresh(), loadMembers()]);
       showNotice(
         res.emailSent ? 'emerald' : 'amber',
-        res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+        res.emailSent ? t('emailResentTitle') : t('emailFailedTitle'),
         res.emailSent
-          ? `Resent Member ID (${res.memberCode}) and 6-digit Activation OTP to ${member.email}.`
-          : `Could not send email to ${member.email}${res.emailReason ? ` (${res.emailReason})` : ''}. You can still read these codes to the member over the phone.`,
+          ? t('resentDesc', { code: res.memberCode, email: member.email })
+          : t('resendFailedDesc', {
+              email: member.email,
+              reason: res.emailReason ? ` (${res.emailReason})` : '',
+            }),
         [
-          { label: 'Official Member ID', value: res.memberCode },
-          { label: '6-Digit Activation OTP', value: res.otp },
+          { label: t('detailOfficialId'), value: res.memberCode },
+          { label: t('detailOtp'), value: res.otp },
         ]
       );
     } catch (err) {
       showNotice(
         'red',
-        'Resend Failed',
-        err instanceof Error ? err.message : 'Failed to resend activation email.'
+        t('resendFailedTitle'),
+        err instanceof Error ? err.message : t('resendFailedFallback')
       );
     } finally {
       setModalBusy(false);
@@ -224,13 +237,13 @@ export function MemberRegistrySection({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: `Decline Application (${member.name})?`,
-      description: 'Declining rejects and removes this pending membership registration.',
+      title: t('declineTitle', { name: member.name }),
+      description: t('declineDesc'),
       details: [
-        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
-        { label: 'Email', value: member.email },
+        { label: t('detailApplicant'), value: `${member.name} (${member.memberCode})` },
+        { label: t('detailEmail'), value: member.email },
       ],
-      confirmLabel: 'Decline Application',
+      confirmLabel: t('declineConfirmBtn'),
       run: async () => {
         const res = await api.declinePendingMember(member.id);
         setMembers(res.members);
@@ -238,8 +251,8 @@ export function MemberRegistrySection({
         await Promise.all([onRefresh(), loadMembers()]);
         showNotice(
           'amber',
-          'Pending Registration Declined',
-          `Pending member registration for ${member.name} (${member.memberCode}) was declined and removed.`
+          t('declinedNoticeTitle'),
+          t('declinedNoticeDesc', { name: member.name, code: member.memberCode })
         );
       },
     });
@@ -258,13 +271,13 @@ export function MemberRegistrySection({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Approve Profile Update (${req.memberName})?`,
-        description: 'Applying immediately updates the member’s encrypted profile record.',
+        title: t('approveProfileTitle', { name: req.memberName }),
+        description: t('approveProfileDesc'),
         details: [
-          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
-          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+          { label: t('detailMember'), value: `${req.memberName} (${req.memberCode})` },
+          { label: t('detailChanges'), value: changesSummary || t('profileUpdateFallback') },
         ],
-        confirmLabel: 'Approve Update',
+        confirmLabel: t('approveProfileConfirm'),
         run: async () => {
           setProfileBusyId(req.id);
           try {
@@ -272,8 +285,8 @@ export function MemberRegistrySection({
             await Promise.all([onRefresh(), loadMembers()]);
             showNotice(
               'emerald',
-              'Profile Update Approved',
-              `${req.memberName}'s profile changes have been applied.`
+              t('profileApprovedTitle'),
+              t('profileApprovedDesc', { name: req.memberName })
             );
           } finally {
             setProfileBusyId(null);
@@ -284,18 +297,17 @@ export function MemberRegistrySection({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Decline Profile Update (${req.memberName})?`,
-        description:
-          'Provide a clear correction note explaining why this profile modification request is declined.',
+        title: t('declineProfileTitle', { name: req.memberName }),
+        description: t('declineProfileDesc'),
         details: [
-          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
-          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+          { label: t('detailMember'), value: `${req.memberName} (${req.memberCode})` },
+          { label: t('detailChanges'), value: changesSummary || t('profileUpdateFallback') },
         ],
-        inputLabel: 'Reason for Declining (min 3 chars)',
-        inputPlaceholder: 'Explain why this update could not be approved…',
+        inputLabel: t('declineProfileInputLabel'),
+        inputPlaceholder: t('declineProfileInputPh'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Decline Profile Update',
+        confirmLabel: t('declineProfileConfirm'),
         run: async (note) => {
           setProfileBusyId(req.id);
           try {
@@ -303,8 +315,8 @@ export function MemberRegistrySection({
             await Promise.all([onRefresh(), loadMembers()]);
             showNotice(
               'amber',
-              'Profile Update Declined',
-              `Profile update request from ${req.memberName} was declined with your feedback note.`
+              t('profileDeclinedTitle'),
+              t('profileDeclinedDesc', { name: req.memberName })
             );
           } finally {
             setProfileBusyId(null);
@@ -329,19 +341,22 @@ export function MemberRegistrySection({
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Admin Governance · Member Lifecycle</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Member Registry ({members.length} accounts · {pendingCount} pending review ·{' '}
-            {awaitingActivationCount} awaiting activation)
+            {t('heading', {
+              total: members.length,
+              pending: pendingCount,
+              awaiting: awaitingActivationCount,
+            })}
           </h2>
         </div>
 
         <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
           {(
             [
-              { id: 'manage', label: 'Approvals & User Control' },
-              { id: 'directory', label: 'Verified Member Directory' },
+              { id: 'manage', label: t('tabManage') },
+              { id: 'directory', label: t('tabDirectory') },
             ] as const
           ).map((tab) => {
             const active = subTab === tab.id;
@@ -385,10 +400,10 @@ export function MemberRegistrySection({
               <div>
                 <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                   <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>Admin &amp; Manager Approval Queue</span>
+                  <span>{t('queueEyebrow')}</span>
                 </div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                  Pending Profile Update Requests ({pendingProfileRequests.length})
+                  {t('queueTitle', { count: pendingProfileRequests.length })}
                 </h3>
               </div>
 
@@ -422,7 +437,7 @@ export function MemberRegistrySection({
                           onClick={() => confirmProfileChangeReview(req, 'rejected')}
                           className="min-h-[44px] sm:min-h-0 justify-center px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                         >
-                          Decline
+                          {t('declineBtn')}
                         </button>
                         <button
                           type="button"
@@ -430,7 +445,7 @@ export function MemberRegistrySection({
                           onClick={() => confirmProfileChangeReview(req, 'approved')}
                           className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                         >
-                          Approve Update
+                          {t('approveUpdateBtn')}
                         </button>
                       </div>
                     </div>
@@ -505,17 +520,17 @@ export function MemberRegistrySection({
                   id="registry-member-modal-title"
                   className="text-base font-semibold text-slate-900 dark:text-white truncate"
                 >
-                  Registration &amp; KYC Details · {inspectingMember.name}
+                  {t('modalTitle', { name: inspectingMember.name })}
                 </h3>
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
-                  {inspectingMember.memberCode} · {inspectingMember.email} · Applied{' '}
-                  {formatDateTime(inspectingMember.joinedAt)}
+                  {inspectingMember.memberCode} · {inspectingMember.email} ·{' '}
+                  {t('appliedPrefix', { date: formatDateTime(inspectingMember.joinedAt) })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectingMember(null)}
-                aria-label="Close registration details"
+                aria-label={t('closeModalAria')}
                 className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0"
               >
                 <X className="w-4 h-4" />
@@ -534,16 +549,16 @@ export function MemberRegistrySection({
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 font-semibold text-indigo-800 dark:text-indigo-300">
                             <Phone className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Activation Codes (Phone Support Lookup)</span>
+                            <span>{t('phoneSupportHeading')}</span>
                           </div>
                           <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                            Issued {formatDateTime(act.issuedAt)}
+                            {t('issuedAt', { date: formatDateTime(act.issuedAt) })}
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
                             <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                              Official Member ID
+                              {t('detailOfficialId')}
                             </div>
                             <div className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400 mt-0.5">
                               {act.memberCode}
@@ -551,10 +566,10 @@ export function MemberRegistrySection({
                           </div>
                           <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
                             <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                              6-Digit Activation OTP
+                              {t('detailOtp')}
                             </div>
                             <div className="font-mono font-bold text-sm tracking-[0.22em] text-indigo-700 dark:text-indigo-300 mt-0.5">
-                              {act.otp || 'Unavailable'}
+                              {act.otp || t('otpUnavailable')}
                             </div>
                           </div>
                         </div>
@@ -563,7 +578,7 @@ export function MemberRegistrySection({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          Applicant Photo
+                          {t('applicantPhoto')}
                         </div>
                         {portrait ? (
                           <a
@@ -581,14 +596,14 @@ export function MemberRegistrySection({
                           </a>
                         ) : (
                           <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            No photo uploaded
+                            {t('noPhoto')}
                           </div>
                         )}
                       </div>
 
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          Agreement Paper (Optional)
+                          {t('agreementPaper')}
                         </div>
                         {reg?.agreementPhotoUrl ? (
                           isPdfFileUrl(reg.agreementPhotoUrl) ? (
@@ -600,7 +615,7 @@ export function MemberRegistrySection({
                             >
                               <FileText className="w-6 h-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                               <span className="text-xs font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1">
-                                <span>Open Signed Agreement PDF</span>
+                                <span>{t('openAgreementPdf')}</span>
                                 <ExternalLink className="w-3 h-3" aria-hidden="true" />
                               </span>
                             </a>
@@ -621,7 +636,7 @@ export function MemberRegistrySection({
                           )
                         ) : (
                           <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            Not provided (optional)
+                            {t('notProvidedOptional')}
                           </div>
                         )}
                       </div>
@@ -630,54 +645,54 @@ export function MemberRegistrySection({
                     {reg ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Date of Birth</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('dob')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.dateOfBirth}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Reference (Existing Member)
+                            {t('referenceMember')}
                           </div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.referenceMemberName}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Mobile Number</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('mobile')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.mobile}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">National ID (NID)</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('nid')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.nid}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Occupation</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('occupation')}</div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.occupation}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Company / Organization
+                            {t('company')}
                           </div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.companyOrganization}
                           </div>
                         </div>
                         <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Present Address</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('presentAddress')}</div>
                           <div className="mt-0.5 text-slate-900 dark:text-white">
                             {reg.presentAddress}
                           </div>
                         </div>
                         <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Permanent Address
+                            {t('permanentAddress')}
                           </div>
                           <div className="mt-0.5 text-slate-900 dark:text-white">
                             {reg.permanentAddress}
@@ -686,7 +701,7 @@ export function MemberRegistrySection({
                       </div>
                     ) : (
                       <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                        No extended KYC registration payload stored for this account.
+                        {t('noExtendedKyc')}
                       </div>
                     )}
                     {reg?.nominees && reg.nominees.length > 0 && (
@@ -707,7 +722,7 @@ export function MemberRegistrySection({
                     className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Decline</span>
+                    <span>{t('declineBtn')}</span>
                   </button>
                   <button
                     type="button"
@@ -716,7 +731,7 @@ export function MemberRegistrySection({
                     className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Approve &amp; Issue Codes</span>
+                    <span>{t('approveIssueBtn')}</span>
                   </button>
                 </>
               )}
@@ -728,7 +743,7 @@ export function MemberRegistrySection({
                   className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Resend Activation Email</span>
+                  <span>{t('resendActivationBtn')}</span>
                 </button>
               )}
               <button
@@ -736,7 +751,7 @@ export function MemberRegistrySection({
                 onClick={() => setInspectingMember(null)}
                 className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Close
+                {tCommon('close')}
               </button>
             </div>
           </motion.div>
@@ -751,7 +766,7 @@ export function MemberRegistrySection({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

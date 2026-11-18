@@ -14,6 +14,9 @@ import {
   ListTree,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLocale, useTranslations } from 'next-intl';
+import type { AppLocale } from '../i18n/config.ts';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type { ManagerCycleSchedule, ManagerCycleSlot } from '../types/coop.ts';
 import { formatShortDate } from '../utils/format.ts';
 
@@ -49,7 +52,23 @@ function getInitials(name: string): string {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-function getRelativeTenureMeta(slot: ManagerCycleSlot, todayUtcMs: number) {
+type TimingKey =
+  | 'endedToday'
+  | 'endedDaysAgo'
+  | 'finalDayTenure'
+  | 'daysRemaining'
+  | 'startsToday'
+  | 'startsTomorrow'
+  | 'startsInDays';
+
+function getRelativeTenureMeta(slot: ManagerCycleSlot, todayUtcMs: number): {
+  totalDays: number;
+  elapsedDays: number;
+  remainingDays: number;
+  progressPct: number;
+  timingKey: TimingKey;
+  timingDays: number;
+} {
   const startMs = parseUtcDateMs(slot.startDate);
   const endMs = parseUtcDateMs(slot.endDate);
   const totalDays = Math.max(1, Math.round((endMs - startMs) / MS_PER_DAY) + 1);
@@ -61,7 +80,8 @@ function getRelativeTenureMeta(slot: ManagerCycleSlot, todayUtcMs: number) {
       elapsedDays: totalDays,
       remainingDays: 0,
       progressPct: 100,
-      timingLabel: daysAgo === 0 ? 'Ended today' : `Ended ${daysAgo}d ago`,
+      timingKey: daysAgo === 0 ? 'endedToday' : 'endedDaysAgo',
+      timingDays: daysAgo,
     };
   }
 
@@ -77,8 +97,8 @@ function getRelativeTenureMeta(slot: ManagerCycleSlot, todayUtcMs: number) {
       elapsedDays,
       remainingDays,
       progressPct,
-      timingLabel:
-        remainingDays === 0 ? 'Final day of tenure' : `${remainingDays}d remaining`,
+      timingKey: remainingDays === 0 ? 'finalDayTenure' : 'daysRemaining',
+      timingDays: remainingDays,
     };
   }
 
@@ -88,12 +108,13 @@ function getRelativeTenureMeta(slot: ManagerCycleSlot, todayUtcMs: number) {
     elapsedDays: 0,
     remainingDays: totalDays,
     progressPct: 0,
-    timingLabel:
+    timingKey:
       daysUntilStart === 0
-        ? 'Starts today'
+        ? 'startsToday'
         : daysUntilStart === 1
-          ? 'Starts tomorrow'
-          : `Starts in ${daysUntilStart}d`,
+          ? 'startsTomorrow'
+          : 'startsInDays',
+    timingDays: daysUntilStart,
   };
 }
 
@@ -147,6 +168,9 @@ export function ManagerRotationTimeline({
   onViewMemberProfile,
   onToggleManagerRole,
 }: ManagerRotationTimelineProps) {
+  const tCycle = useTranslations('ManagerCycle');
+  const t = useTranslations('ManagerCycle.timeline');
+  const locale = useLocale() as AppLocale;
   const [filter, setFilter] = useState<TimelineFilter>('all');
   const [layout, setLayout] = useState<TimelineLayout>('track');
   const [selectedCycleNumber, setSelectedCycleNumber] = useState<number | null>(
@@ -154,6 +178,17 @@ export function ManagerRotationTimeline({
   );
   const trackScrollRef = useRef<HTMLDivElement | null>(null);
   const currentCardRef = useRef<HTMLDivElement | null>(null);
+
+  function formatTiming(meta: ReturnType<typeof getRelativeTenureMeta>) {
+    if (
+      meta.timingKey === 'endedDaysAgo' ||
+      meta.timingKey === 'daysRemaining' ||
+      meta.timingKey === 'startsInDays'
+    ) {
+      return t(meta.timingKey, { days: meta.timingDays });
+    }
+    return t(meta.timingKey);
+  }
 
   const todayUtcMs = useMemo(() => getTodayUtcMs(), []);
 
@@ -219,15 +254,15 @@ export function ManagerRotationTimeline({
   }
 
   const filterTabs: Array<{ id: TimelineFilter; label: string; count: number }> = [
-    { id: 'all', label: 'All Turns', count: counts.all },
-    { id: 'completed', label: 'Historical', count: counts.completed },
-    { id: 'current', label: 'Current', count: counts.current },
-    { id: 'upcoming', label: 'Future', count: counts.upcoming },
+    { id: 'all', label: t('allTurns'), count: counts.all },
+    { id: 'completed', label: t('historical'), count: counts.completed },
+    { id: 'current', label: t('current'), count: counts.current },
+    { id: 'upcoming', label: t('future'), count: counts.upcoming },
   ];
 
   return (
     <section
-      aria-label="Manager Rotation Visual Timeline"
+      aria-label={t('regionAria')}
       className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-4 sm:space-y-5 transition-all duration-200"
     >
       {/* Header & Controls */}
@@ -235,10 +270,10 @@ export function ManagerRotationTimeline({
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <GitCommitHorizontal className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Chronological Stewardship Timeline</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-            Historical, Current &amp; Future Manager Timeline
+            {t('heading')}
           </h3>
         </div>
 
@@ -246,7 +281,7 @@ export function ManagerRotationTimeline({
           {/* Segmented Status Filter */}
           <div
             role="tablist"
-            aria-label="Filter rotation timeline"
+            aria-label={t('filterAria')}
             className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
           >
             {filterTabs.map((tab) => {
@@ -299,7 +334,7 @@ export function ManagerRotationTimeline({
                 />
               )}
               <Columns3 className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
-              <span className="relative z-10">Track</span>
+              <span className="relative z-10">{t('layoutTrack')}</span>
             </button>
             <button
               type="button"
@@ -318,7 +353,7 @@ export function ManagerRotationTimeline({
                 />
               )}
               <ListTree className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
-              <span className="relative z-10">Chronology</span>
+              <span className="relative z-10">{t('layoutChronology')}</span>
             </button>
           </div>
         </div>
@@ -329,17 +364,17 @@ export function ManagerRotationTimeline({
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400">
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-            <span>Historical ({counts.completed})</span>
+            <span>{t('legendHistorical', { count: counts.completed })}</span>
           </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
           <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
             <Crown className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Current Active ({counts.current})</span>
+            <span>{t('legendCurrentActive', { count: counts.current })}</span>
           </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
           <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
             <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Future Scheduled ({counts.upcoming})</span>
+            <span>{t('legendFutureScheduled', { count: counts.upcoming })}</span>
           </span>
         </div>
 
@@ -347,10 +382,17 @@ export function ManagerRotationTimeline({
           <div className="flex-1 max-w-md space-y-1.5">
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="text-slate-600 dark:text-slate-300 truncate">
-                Active Turn: <strong className="font-semibold text-slate-900 dark:text-white">{schedule.currentSlot.memberName}</strong>
+                {t('activeTurnPrefix')}{' '}
+                <strong className="font-semibold text-slate-900 dark:text-white">
+                  {schedule.currentSlot.memberName}
+                </strong>
               </span>
               <span className="font-mono tabular-nums text-[11px] text-emerald-700 dark:text-emerald-400 shrink-0">
-                Day {currentTenureMeta.elapsedDays} of {currentTenureMeta.totalDays} · {currentTenureMeta.progressPct}%
+                {t('dayOfTotalPct', {
+                  elapsed: currentTenureMeta.elapsedDays,
+                  total: currentTenureMeta.totalDays,
+                  pct: currentTenureMeta.progressPct,
+                })}
               </span>
             </div>
             <div
@@ -359,7 +401,7 @@ export function ManagerRotationTimeline({
               aria-valuenow={currentTenureMeta.progressPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Current manager tenure progress"
+              aria-label={t('progressAria')}
             >
               <motion.div
                 initial={{ scaleX: 0 }}
@@ -380,17 +422,17 @@ export function ManagerRotationTimeline({
           <div className="space-y-1">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               {filter === 'completed'
-                ? 'No historical manager turns completed yet'
+                ? t('emptyCompletedTitle')
                 : filter === 'current'
-                  ? 'No active tenure matches today’s date'
+                  ? t('emptyCurrentTitle')
                   : filter === 'upcoming'
-                    ? 'No upcoming turns scheduled'
-                    : 'No members in the rotation pool'}
+                    ? t('emptyUpcomingTitle')
+                    : t('emptyDefaultTitle')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               {filter === 'completed'
-                ? 'Once the current cycle finishes its tenure window, completed turns will appear in this historical timeline.'
-                : 'Try switching back to All Turns to inspect the full cooperative stewardship sequence.'}
+                ? t('emptyCompletedDesc')
+                : t('emptyDefaultDesc')}
             </p>
           </div>
           {filter !== 'all' && (
@@ -399,7 +441,7 @@ export function ManagerRotationTimeline({
               onClick={() => setFilter('all')}
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
             >
-              Show All Turns
+              {t('showAllTurns')}
             </button>
           )}
         </div>
@@ -409,8 +451,10 @@ export function ManagerRotationTimeline({
           {/* Scroll Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-              Showing {filteredSlots.length} cycle{filteredSlots.length === 1 ? '' : 's'} ·{' '}
-              {schedule.cycleMonths} month{schedule.cycleMonths === 1 ? '' : 's'} per tenure
+              {t('showingCyclesMeta', {
+                count: filteredSlots.length,
+                months: schedule.cycleMonths,
+              })}
             </div>
             <div className="flex items-center gap-1.5">
               {schedule.currentSlot && (
@@ -419,13 +463,13 @@ export function ManagerRotationTimeline({
                   onClick={jumpToCurrent}
                   className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 cursor-pointer whitespace-nowrap"
                 >
-                  Focus Current
+                  {t('focusCurrent')}
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => scrollTrackBy('left')}
-                aria-label="Scroll timeline left"
+                aria-label={t('scrollLeftAria')}
                 className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -433,7 +477,7 @@ export function ManagerRotationTimeline({
               <button
                 type="button"
                 onClick={() => scrollTrackBy('right')}
-                aria-label="Scroll timeline right"
+                aria-label={t('scrollRightAria')}
                 className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -484,7 +528,10 @@ export function ManagerRotationTimeline({
                       <button
                         type="button"
                         onClick={() => setSelectedCycleNumber(slot.cycleNumber)}
-                        aria-label={`Select Cycle #${slot.cycleNumber} (${slot.memberName})`}
+                        aria-label={t('selectCycleAria', {
+                          num: slot.cycleNumber,
+                          name: slot.memberName,
+                        })}
                         className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border transition-transform cursor-pointer ${
                           slot.status === 'current'
                             ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm scale-105'
@@ -529,7 +576,7 @@ export function ManagerRotationTimeline({
                           {/* Cycle & Status Typography Line (Zero Pills) */}
                           <div className="flex items-center justify-between gap-2 text-xs">
                             <span className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
-                              Cycle #{slot.cycleNumber}
+                              {tCycle('cycleNumber', { num: slot.cycleNumber })}
                             </span>
                             <span
                               className={`font-medium ${
@@ -543,12 +590,12 @@ export function ManagerRotationTimeline({
                               }`}
                             >
                               {slot.status === 'current'
-                                ? 'Current Tenure'
+                                ? t('statusCurrentTenure')
                                 : slot.status === 'completed'
-                                  ? 'Historical'
+                                  ? t('statusHistorical')
                                   : isNext
-                                    ? 'Next Up'
-                                    : 'Future'}
+                                    ? t('statusNextUp')
+                                    : t('statusFuture')}
                             </span>
                           </div>
 
@@ -564,12 +611,12 @@ export function ManagerRotationTimeline({
                                 {slot.memberName}
                                 {isSelf && (
                                   <span className="ml-1.5 text-xs font-mono font-normal text-emerald-700 dark:text-emerald-400">
-                                    (You)
+                                    {tCycle('youSuffix')}
                                   </span>
                                 )}
                               </div>
                               <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                                {slot.memberCode} · <span className="capitalize">{slot.currentRole}</span>
+                                {slot.memberCode} · <span>{translateRoleLabel(slot.currentRole, locale)}</span>
                               </div>
                             </div>
                           </div>
@@ -577,14 +624,14 @@ export function ManagerRotationTimeline({
                           {/* Expected Tenure Date Window */}
                           <div className="pt-2.5 border-t border-slate-200/70 dark:border-slate-800 space-y-1">
                             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                              Expected Tenure Date
+                              {t('expectedTenureDate')}
                             </div>
                             <div className="text-xs font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                               {formatShortDate(slot.startDate)} → {formatShortDate(slot.endDate)}
                             </div>
                             <div className="flex items-center justify-between gap-2 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                              <span>{meta.timingLabel}</span>
-                              <span>{meta.totalDays}d</span>
+                              <span>{formatTiming(meta)}</span>
+                              <span>{t('totalDaysShort', { days: meta.totalDays })}</span>
                             </div>
                             {slot.status === 'current' && (
                               <div className="pt-1">
@@ -614,7 +661,7 @@ export function ManagerRotationTimeline({
                                 }}
                                 className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                               >
-                                <span>Profile</span>
+                                <span>{tCycle('profileBtn')}</span>
                                 <ArrowRight className="w-3 h-3" aria-hidden="true" />
                               </button>
                             ) : (
@@ -634,7 +681,9 @@ export function ManagerRotationTimeline({
                                     : 'text-slate-700 dark:text-slate-300'
                                 }`}
                               >
-                                {slot.currentRole === 'manager' ? 'Revert Role' : 'Make Manager'}
+                                {slot.currentRole === 'manager'
+                                  ? t('revertRoleShort')
+                                  : t('makeManagerShort')}
                               </button>
                             )}
                           </div>
@@ -716,7 +765,7 @@ export function ManagerRotationTimeline({
                       <div className="min-w-0 space-y-0.5">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
-                            Cycle #{slot.cycleNumber}
+                            {tCycle('cycleNumber', { num: slot.cycleNumber })}
                           </span>
                           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                           <span
@@ -731,24 +780,25 @@ export function ManagerRotationTimeline({
                             }`}
                           >
                             {slot.status === 'current'
-                              ? 'Current Active Manager'
+                              ? t('statusCurrentActiveManager')
                               : slot.status === 'completed'
-                                ? 'Historical Tenure'
+                                ? t('statusHistoricalTenure')
                                 : isNext
-                                  ? 'Next in Rotation'
-                                  : 'Future Scheduled'}
+                                  ? t('statusNextInRotation')
+                                  : t('statusFutureScheduled')}
                           </span>
                         </div>
                         <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {slot.memberName}
                           {isSelf && (
                             <span className="ml-1.5 text-xs font-mono font-normal text-emerald-700 dark:text-emerald-400">
-                              (You)
+                              {tCycle('youSuffix')}
                             </span>
                           )}
                         </div>
                         <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          {slot.memberCode} · Current role: <span className="capitalize">{slot.currentRole}</span>
+                          {slot.memberCode} · {t('currentRolePrefix')}{' '}
+                          <span>{translateRoleLabel(slot.currentRole, locale)}</span>
                         </div>
                       </div>
                     </div>
@@ -756,13 +806,13 @@ export function ManagerRotationTimeline({
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 shrink-0">
                       <div className="sm:text-right space-y-0.5">
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Expected Tenure Date
+                          {t('expectedTenureDate')}
                         </div>
                         <div className="text-xs font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                           {formatShortDate(slot.startDate)} → {formatShortDate(slot.endDate)}
                         </div>
                         <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                          {meta.timingLabel} · {meta.totalDays} days
+                          {formatTiming(meta)} · {t('totalDaysWord', { days: meta.totalDays })}
                         </div>
                       </div>
 
@@ -774,7 +824,7 @@ export function ManagerRotationTimeline({
                               onClick={() => onViewMemberProfile(slot.memberId)}
                               className="min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
                             >
-                              Profile
+                              {tCycle('profileBtn')}
                             </button>
                           )}
                           {isAdmin && onToggleManagerRole && (
@@ -788,7 +838,9 @@ export function ManagerRotationTimeline({
                                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                               }`}
                             >
-                              {slot.currentRole === 'manager' ? 'Revert' : 'Activate'}
+                              {slot.currentRole === 'manager'
+                                ? t('revertShort')
+                                : t('activateShort')}
                             </button>
                           )}
                         </div>

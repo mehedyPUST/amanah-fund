@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   AlertTriangle,
   Edit3,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type { CoopNotice, NoticePriority } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { ActionModal } from './ActionModal.tsx';
@@ -24,10 +26,9 @@ import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 type NoticeFilter = 'all' | 'pinned' | 'urgent' | 'important';
 
-const PRIORITY_META: Record<
+const PRIORITY_STYLE_META: Record<
   NoticePriority,
   {
-    label: string;
     Icon: typeof Info;
     hue: CardHue;
     iconBox: string;
@@ -36,7 +37,6 @@ const PRIORITY_META: Record<
   }
 > = {
   urgent: {
-    label: 'Urgent',
     Icon: AlertTriangle,
     hue: 'rose',
     iconBox:
@@ -45,7 +45,6 @@ const PRIORITY_META: Record<
     cardClass: 'backdrop-blur-md',
   },
   important: {
-    label: 'Important',
     Icon: Megaphone,
     hue: 'amber',
     iconBox:
@@ -54,7 +53,6 @@ const PRIORITY_META: Record<
     cardClass: 'backdrop-blur-md',
   },
   normal: {
-    label: 'Notice',
     Icon: Info,
     hue: 'emerald',
     iconBox:
@@ -64,24 +62,20 @@ const PRIORITY_META: Record<
   },
 };
 
-function formatNoticeDate(iso: string): string {
+function formatNoticeDate(iso: string, locale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 }
 
-function formatRoleLabel(role: CoopNotice['authorRole']): string {
-  if (role === 'admin') return 'Admin';
-  if (role === 'manager') return 'Manager';
-  return 'Member';
-}
-
 export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolean }) {
-  const { user, authChecking } = useCoopSession();
+  const { user, authChecking, locale } = useCoopSession();
+  const t = useTranslations('Public.notices');
+  const tCommon = useTranslations('Common');
   const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
   const canManage = isActiveMember && (user?.role === 'admin' || user?.role === 'manager');
 
@@ -103,19 +97,22 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CoopNotice | null>(null);
 
-  const loadNotices = useCallback(async (silent = false) => {
-    if (!isActiveMember) return;
-    if (!silent) setLoading(true);
-    setError(null);
-    try {
-      const data = await api.getNotices();
-      setNotices(Array.isArray(data.notices) ? data.notices : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cooperative notices.');
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [isActiveMember]);
+  const loadNotices = useCallback(
+    async (silent = false) => {
+      if (!isActiveMember) return;
+      if (!silent) setLoading(true);
+      setError(null);
+      try {
+        const data = await api.getNotices();
+        setNotices(Array.isArray(data.notices) ? data.notices : []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('loadFailed'));
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [isActiveMember, t]
+  );
 
   useEffect(() => {
     if (!isActiveMember) {
@@ -185,11 +182,11 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
     const cleanTitle = title.trim();
     const cleanBody = body.trim();
     if (cleanTitle.length < 3 || cleanTitle.length > 160) {
-      setFormError('Notice title must be between 3 and 160 characters.');
+      setFormError(t('titleLengthError'));
       return;
     }
     if (cleanBody.length < 3 || cleanBody.length > 2000) {
-      setFormError('Notice message must be between 3 and 2000 characters.');
+      setFormError(t('bodyLengthError'));
       return;
     }
 
@@ -228,7 +225,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       setComposerOpen(false);
       setEditingNotice(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Unable to save notice.');
+      setFormError(err instanceof Error ? err.message : t('saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -249,7 +246,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
           })
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update notice pin status.');
+      setError(err instanceof Error ? err.message : t('pinUpdateFailed'));
     } finally {
       setBusyId(null);
     }
@@ -265,16 +262,27 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       setNotices((prev) => prev.filter((item) => item.id !== targetId));
       setDeleteTarget(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete notice.');
+      setError(err instanceof Error ? err.message : t('deleteFailed'));
     } finally {
       setBusyId(null);
     }
   }
 
-  // Strictly hidden for unauthenticated visitors and pending/inactive accounts
   if (!isActiveMember) {
     return null;
   }
+
+  const getPriorityBadgeLabel = (p: NoticePriority) => {
+    if (p === 'urgent') return t('priorityUrgent');
+    if (p === 'important') return t('priorityImportant');
+    return t('priorityNotice');
+  };
+
+  const getPriorityButtonLabel = (level: NoticePriority) => {
+    if (level === 'urgent') return t('priorityUrgent');
+    if (level === 'important') return t('priorityImportant');
+    return t('priorityNormal');
+  };
 
   return (
     <section
@@ -289,10 +297,10 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div className="space-y-1">
             <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Members Only · Official Announcements
+              {t('eyebrow')}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Cooperative Notice Board
+              {t('heading')}
             </h2>
           </div>
 
@@ -300,14 +308,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
             <div
               className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1"
               role="tablist"
-              aria-label="Filter notices"
+              aria-label={t('filterAria')}
             >
               {(
                 [
-                  { id: 'all', label: `All (${notices.length})` },
-                  { id: 'pinned', label: 'Pinned' },
-                  { id: 'urgent', label: 'Urgent' },
-                  { id: 'important', label: 'Important' },
+                  { id: 'all', label: t('tabAll', { count: notices.length }) },
+                  { id: 'pinned', label: t('tabPinned') },
+                  { id: 'urgent', label: t('tabUrgent') },
+                  { id: 'important', label: t('tabImportant') },
                 ] as const
               ).map((tab) => (
                 <button
@@ -336,12 +344,12 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                 {composerOpen ? (
                   <>
                     <X className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Close Editor</span>
+                    <span>{t('closeEditor')}</span>
                   </>
                 ) : (
                   <>
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Post Notice</span>
+                    <span>{t('postNotice')}</span>
                   </>
                 )}
               </button>
@@ -361,7 +369,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-800 bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-300 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors shrink-0 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Retry</span>
+              <span>{tCommon('retry')}</span>
             </button>
           </div>
         )}
@@ -378,13 +386,13 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                  {editingNotice ? 'Edit Cooperative Notice' : 'Publish Official Notice'}
+                  {editingNotice ? t('editTitle') : t('publishTitle')}
                 </h3>
                 <button
                   type="button"
                   onClick={closeComposer}
                   disabled={submitting}
-                  aria-label="Close notice form"
+                  aria-label={t('closeFormAria')}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -406,7 +414,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     htmlFor="notice-title"
                     className="block text-xs font-medium text-slate-700 dark:text-slate-300"
                   >
-                    Notice Title
+                    {t('labelTitle')}
                   </label>
                   <input
                     id="notice-title"
@@ -417,14 +425,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     disabled={submitting}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Monthly Contribution Cutoff & Shariah Review"
+                    placeholder={t('titlePlaceholder')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
                   />
                 </div>
 
                 <div className="md:col-span-5 space-y-1.5">
                   <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Priority Level
+                    {t('labelPriority')}
                   </span>
                   <div className="grid grid-cols-3 gap-1.5">
                     {(['normal', 'important', 'urgent'] as const).map((level) => (
@@ -433,7 +441,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                         type="button"
                         disabled={submitting}
                         onClick={() => setPriority(level)}
-                        className={`py-2.5 px-2 rounded-lg border text-xs font-medium capitalize transition-colors cursor-pointer ${
+                        className={`py-2.5 px-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                           priority === level
                             ? level === 'urgent'
                               ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
@@ -443,7 +451,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                       >
-                        {level}
+                        {getPriorityButtonLabel(level)}
                       </button>
                     ))}
                   </div>
@@ -456,7 +464,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     htmlFor="notice-body"
                     className="font-medium text-slate-700 dark:text-slate-300"
                   >
-                    Message
+                    {t('labelMessage')}
                   </label>
                   <span className="font-mono text-slate-500 dark:text-slate-400">{body.length}/2000</span>
                 </div>
@@ -469,7 +477,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   disabled={submitting}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="Write the official cooperative announcement for verified members..."
+                  placeholder={t('messagePlaceholder')}
                   className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
                 />
               </div>
@@ -483,7 +491,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     onChange={(e) => setPinned(e.target.checked)}
                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500"
                   />
-                  <span>Pin notice to top of board</span>
+                  <span>{t('pinToTop')}</span>
                 </label>
 
                 <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
@@ -492,7 +500,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     disabled={submitting || rewritingNotice}
                     onClick={async () => {
                       if (!title.trim() && !body.trim()) {
-                        setFormError('Enter a notice title or message before using AI Rewrite.');
+                        setFormError(t('aiEmptyError'));
                         return;
                       }
                       setRewritingNotice(true);
@@ -511,9 +519,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                           setBody(res.result.rewrittenText.slice(0, 2000));
                         }
                       } catch (err) {
-                        setFormError(
-                          err instanceof Error ? err.message : 'Unable to rewrite notice with AI.'
-                        );
+                        setFormError(err instanceof Error ? err.message : t('aiFailed'));
                       } finally {
                         setRewritingNotice(false);
                       }
@@ -521,7 +527,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{rewritingNotice ? 'Rewriting…' : 'AI Rewrite'}</span>
+                    <span>{rewritingNotice ? t('rewriting') : t('aiRewrite')}</span>
                   </button>
                   <button
                     type="button"
@@ -529,7 +535,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     onClick={closeComposer}
                     className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
@@ -537,10 +543,10 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 hover:from-emerald-800 hover:via-emerald-700 hover:to-emerald-600 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
                   >
                     {submitting
-                      ? 'Saving…'
+                      ? tCommon('saving')
                       : editingNotice
-                        ? 'Save Changes'
-                        : 'Publish Notice'}
+                        ? tCommon('saveChanges')
+                        : t('publishBtn')}
                   </button>
                 </div>
               </div>
@@ -569,9 +575,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
         ) : filteredNotices.length === 0 ? (
           <div className="bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 text-center space-y-2">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {notices.length === 0
-                ? 'No official notices posted yet.'
-                : 'No notices match this filter.'}
+              {notices.length === 0 ? t('emptyAll') : t('emptyFiltered')}
             </p>
             {canManage && notices.length === 0 && !composerOpen && (
               <button
@@ -580,14 +584,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium hover:bg-emerald-100/70 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Post First Notice</span>
+                <span>{t('postFirst')}</span>
               </button>
             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {filteredNotices.map((notice, idx) => {
-              const meta = PRIORITY_META[notice.priority] || PRIORITY_META.normal;
+              const meta = PRIORITY_STYLE_META[notice.priority] || PRIORITY_STYLE_META.normal;
               const PriorityIcon = meta.Icon;
               const isEdited = Boolean(
                 notice.updatedAt &&
@@ -617,22 +621,24 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                               <>
                                 <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
                                   <Pin className="w-3 h-3" aria-hidden="true" />
-                                  Pinned
+                                  {t('pinnedBadge')}
                                 </span>
                                 <span aria-hidden="true">·</span>
                               </>
                             )}
-                            <span className={`font-semibold ${meta.labelClass}`}>{meta.label}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>
-                              {notice.authorName} ({formatRoleLabel(notice.authorRole)})
+                            <span className={`font-semibold ${meta.labelClass}`}>
+                              {getPriorityBadgeLabel(notice.priority)}
                             </span>
                             <span aria-hidden="true">·</span>
-                            <span>{formatNoticeDate(notice.createdAt)}</span>
+                            <span>
+                              {notice.authorName} ({translateRoleLabel(notice.authorRole, locale)})
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatNoticeDate(notice.createdAt, locale)}</span>
                             {isEdited && (
                               <>
                                 <span aria-hidden="true">·</span>
-                                <span className="italic">Edited</span>
+                                <span className="italic">{t('editedBadge')}</span>
                               </>
                             )}
                           </div>
@@ -648,8 +654,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                             type="button"
                             disabled={rowBusy}
                             onClick={() => void handleTogglePin(notice)}
-                            title={notice.pinned ? 'Unpin notice' : 'Pin notice to top'}
-                            aria-label={notice.pinned ? 'Unpin notice' : 'Pin notice to top'}
+                            title={notice.pinned ? t('unpinTitle') : t('pinTitle')}
+                            aria-label={notice.pinned ? t('unpinTitle') : t('pinTitle')}
                             className={`p-1.5 rounded-lg border transition-colors cursor-pointer disabled:opacity-50 ${
                               notice.pinned
                                 ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
@@ -666,8 +672,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                             type="button"
                             disabled={rowBusy}
                             onClick={() => openEditComposer(notice)}
-                            title="Edit notice"
-                            aria-label="Edit notice"
+                            title={t('editBtnTitle')}
+                            aria-label={t('editBtnTitle')}
                             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
                           >
                             <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -676,8 +682,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                             type="button"
                             disabled={rowBusy}
                             onClick={() => setDeleteTarget(notice)}
-                            title="Delete notice"
-                            aria-label="Delete notice"
+                            title={t('deleteBtnTitle')}
+                            aria-label={t('deleteBtnTitle')}
                             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-200 dark:hover:border-rose-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -701,17 +707,17 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
         open={Boolean(deleteTarget)}
         mode="confirm"
         tone="red"
-        title="Delete Cooperative Notice"
-        description="This will permanently remove the announcement from the member notice board."
+        title={t('deleteModalTitle')}
+        description={t('deleteModalDesc')}
         details={
           deleteTarget
             ? [
-                { label: 'Title', value: deleteTarget.title },
-                { label: 'Posted By', value: deleteTarget.authorName },
+                { label: t('detailTitle'), value: deleteTarget.title },
+                { label: t('detailPostedBy'), value: deleteTarget.authorName },
               ]
             : undefined
         }
-        confirmLabel="Delete Notice"
+        confirmLabel={t('deleteModalConfirm')}
         busy={Boolean(deleteTarget && busyId === deleteTarget.id)}
         onConfirm={handleConfirmDelete}
         onClose={() => {

@@ -102,6 +102,7 @@ function MobileBottomSheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const tCommon = useTranslations('Common');
   useBodyScrollLock(open);
 
   useEffect(() => {
@@ -160,7 +161,7 @@ function MobileBottomSheet({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label={`Close ${title}`}
+                aria-label={tCommon('closeItem', { title })}
                 className="min-w-[44px] min-h-[44px] -mr-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
               >
                 <X className="w-5 h-5" />

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { motion } from 'motion/react';
 import {
   AlertTriangle,
@@ -39,6 +40,8 @@ export function MyAmanahView({
   onNavigate,
   onOpenLoanModal,
 }: MyAmanahViewProps) {
+  const t = useTranslations('MyAmanah');
+
   if (loading || !overview) {
     return (
       <div className="space-y-6">
@@ -116,7 +119,7 @@ export function MyAmanahView({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300">
               <Wallet className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
-            <span>My Amanah · Personal Treasury Standing</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {user.name} · <span className="font-mono text-sm text-emerald-700 dark:text-emerald-300">{user.memberCode}</span>
@@ -130,7 +133,7 @@ export function MyAmanahView({
             className={`min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${!(onOpenLoanModal && isEligible) ? 'col-span-2 sm:col-span-1' : ''}`}
           >
             <CreditCard className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
-            <span className="truncate">Make Contribution</span>
+            <span className="truncate">{t('makeContribution')}</span>
           </button>
           {onOpenLoanModal && isEligible && (
             <button
@@ -139,7 +142,7 @@ export function MyAmanahView({
               className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">Apply for Qard Hasan</span>
+              <span className="truncate">{t('applyQardHasan')}</span>
             </button>
           )}
         </div>
@@ -147,25 +150,27 @@ export function MyAmanahView({
 
       {/* Primary KPI Grid */}
       <section className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
-        {/* Total Contribution */}
         <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">Total Contribution</div>
+          <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            {t('totalContribution')}
+          </div>
           <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(personal.totalContributed, ccy)}
           </div>
           <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 tabular-nums leading-snug">
-            {personal.approvedContributionsCount} approved deposit
-            {personal.approvedContributionsCount === 1 ? '' : 's'}
+            {t('approvedDepositsCount', {
+              count: personal.approvedContributionsCount,
+              label: personal.approvedContributionsCount === 1 ? t('depositSingular') : t('depositPlural'),
+            })}
             {personal.pendingContributionsCount > 0
-              ? ` · ${personal.pendingContributionsCount} pending`
+              ? t('pendingSuffix', { count: personal.pendingContributionsCount })
               : ''}
           </div>
         </div>
 
-        {/* Last Contribution */}
         <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
-            Last Contribution
+            {t('lastContribution')}
           </div>
           <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {personal.lastContribution ? formatMoney(personal.lastContribution.amount, ccy) : '—'}
@@ -179,12 +184,11 @@ export function MyAmanahView({
                 <StatusText status={personal.lastContribution.status} />
               </>
             ) : (
-              <span>No contribution submitted yet</span>
+              <span>{t('noContributionYet')}</span>
             )}
           </div>
         </div>
 
-        {/* Due Contribution */}
         <div
           className={`${
             personal.dueContributionAmount > 0 ? 'amanah-card-amber' : 'amanah-card-teal'
@@ -197,7 +201,7 @@ export function MyAmanahView({
                 : 'text-teal-700 dark:text-teal-400'
             }`}
           >
-            Due Contribution
+            {t('dueContribution')}
           </div>
           <div
             className={`mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums ${
@@ -210,22 +214,24 @@ export function MyAmanahView({
           </div>
           <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug">
             {personal.dueContributionMonths > 0
-              ? `${personal.dueContributionMonths} unpaid month(s) · Target ${formatMoney(overview.config.monthlyContributionAmount, ccy)}/mo`
-              : 'Cleared up to current month'}
+              ? t('unpaidMonthsTarget', {
+                  months: personal.dueContributionMonths,
+                  amount: formatMoney(overview.config.monthlyContributionAmount, ccy),
+                })
+              : t('clearedCurrentMonth')}
           </div>
         </div>
 
-        {/* Next Contribution Deadline */}
         <div className="amanah-card-sky border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div className="text-[11px] sm:text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">Next Deadline</span>
+            <span className="truncate">{t('nextDeadline')}</span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatShortDate(personal.nextContributionDeadline)}
           </div>
           <div className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono leading-snug">
-            Overall: {formatShortDate(personal.nextOverallDeadline)}
+            {t('overallDeadline', { date: formatShortDate(personal.nextOverallDeadline) })}
           </div>
         </div>
       </section>
@@ -236,7 +242,7 @@ export function MyAmanahView({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Qard Hasan &amp; Installment Standing
+                {t('activeQardSectionTitle')}
               </h3>
             </div>
             <button
@@ -244,7 +250,7 @@ export function MyAmanahView({
               onClick={() => onNavigate('quard-hasan')}
               className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
-              <span>Manage Repayments</span>
+              <span>{t('manageRepayments')}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
@@ -253,10 +259,10 @@ export function MyAmanahView({
             <div className="amanah-card-emerald p-3 sm:p-4 rounded-xl border">
               <div className="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                 {personal.activeLoanMainAmount > 0
-                  ? 'Active Qard Hasan (Main / Due)'
+                  ? t('activeLoanMainDue')
                   : myPendingLoan
-                    ? 'Active Qard Hasan Request'
-                    : 'Active Qard Hasan'}
+                    ? t('activeLoanRequest')
+                    : t('activeLoan')}
               </div>
               <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {personal.activeLoanMainAmount > 0 ? (
@@ -272,23 +278,32 @@ export function MyAmanahView({
                     <StatusText status="pending_manager_review" />
                   </>
                 ) : (
-                  'No Active Loan'
+                  t('noActiveLoan')
                 )}
               </div>
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                 {myActiveLoan
-                  ? `${myActiveLoan.id} · Repaid ${formatMoney(myActiveLoan.totalRepaid, ccy)}`
+                  ? t('repaidPrefix', {
+                      id: myActiveLoan.id,
+                      amount: formatMoney(myActiveLoan.totalRepaid, ccy),
+                    })
                   : myPendingLoan
-                    ? `${myPendingLoan.id} · ${myPendingLoan.installmentMonths} months · ${myPendingLoan.purpose}`
+                    ? t('monthsTerm', {
+                        id: myPendingLoan.id,
+                        months: myPendingLoan.installmentMonths,
+                        purpose: myPendingLoan.purpose,
+                      })
                     : hasActiveOrPending && eligibility.activeLoanId
-                      ? 'Active/pending request registered on your account'
-                      : `Lifetime repaid: ${formatMoney(personal.totalRepaidPersonal, ccy)}`}
+                      ? t('activePendingOnAccount')
+                      : t('lifetimeRepaid', {
+                          amount: formatMoney(personal.totalRepaidPersonal, ccy),
+                        })}
               </div>
             </div>
 
             <div className="amanah-card-violet p-3 sm:p-4 rounded-xl border">
               <div className="text-[11px] sm:text-xs text-violet-700 dark:text-violet-400 font-medium">
-                Last Hasan Installment
+                {t('lastHasanInstallment')}
               </div>
               <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {personal.lastHasanInstallment
@@ -298,7 +313,7 @@ export function MyAmanahView({
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-snug">
                 {personal.lastHasanInstallment
                   ? `${personal.lastHasanInstallment.loanId} #${personal.lastHasanInstallment.installmentNumber} · ${formatDateTime(personal.lastHasanInstallment.paidAt)}`
-                  : 'No verified installment recorded yet'}
+                  : t('noInstallmentRecorded')}
               </div>
             </div>
 
@@ -307,7 +322,9 @@ export function MyAmanahView({
                 personal.missedInstallmentsCount > 0 ? 'amanah-card-rose' : 'amanah-card-emerald'
               }`}
             >
-              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium">Missed Installment</div>
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium">
+                {t('missedInstallment')}
+              </div>
               <div
                 className={`mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums ${
                   personal.missedInstallmentsCount > 0
@@ -316,25 +333,28 @@ export function MyAmanahView({
                 }`}
               >
                 {personal.missedInstallmentsCount > 0
-                  ? `${personal.missedInstallmentsCount} missed (${formatMoney(personal.missedInstallmentsAmount, ccy)})`
-                  : '0 Missed'}
+                  ? t('missedCountAmount', {
+                      count: personal.missedInstallmentsCount,
+                      amount: formatMoney(personal.missedInstallmentsAmount, ccy),
+                    })
+                  : t('zeroMissed')}
               </div>
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                 {personal.missedInstallmentsCount > 0
-                  ? 'Settle overdue installments immediately.'
-                  : 'All installment schedules are in good standing.'}
+                  ? t('settleOverdueNote')
+                  : t('allScheduleGood')}
               </div>
             </div>
 
             <div className="amanah-card-amber p-3 sm:p-4 rounded-xl border">
               <div className="text-[11px] sm:text-xs text-amber-700 dark:text-amber-400 font-medium">
-                Next Loan Deadline
+                {t('nextLoanDeadline')}
               </div>
               <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                 {personal.nextLoanDeadline ? formatShortDate(personal.nextLoanDeadline) : '—'}
               </div>
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-snug">
-                Overall: {formatShortDate(personal.nextOverallDeadline)}
+                {t('overallDeadline', { date: formatShortDate(personal.nextOverallDeadline) })}
               </div>
             </div>
           </div>
@@ -346,21 +366,21 @@ export function MyAmanahView({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Qard Hasan Eligibility
+                  {t('eligibilityTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Automated quota and active-loan clearance evaluation
+                  {t('eligibilitySub')}
                 </p>
               </div>
               {isEligible ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Eligible</span>
+                  <span>{t('eligibleBadge')}</span>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-700 dark:text-rose-400 shrink-0">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Not Eligible</span>
+                  <span>{t('notEligibleBadge')}</span>
                 </span>
               )}
             </div>
@@ -371,12 +391,12 @@ export function MyAmanahView({
                 <div className="space-y-1">
                   <div className="font-semibold">
                     {quotaReached && hasActiveOrPending
-                      ? 'Not Eligible — Annual Quota Reached & Active/Pending Qard Hasan Exists'
+                      ? t('reasonQuotaAndActive')
                       : quotaReached
-                        ? 'Not Eligible — Annual Qard Hasan Quota Reached'
+                        ? t('reasonQuota')
                         : hasActiveOrPending
-                          ? 'Not Eligible — Active or Pending Qard Hasan Exists'
-                          : 'Not Eligible for New Qard Hasan'}
+                          ? t('reasonActive')
+                          : t('reasonDefault')}
                   </div>
                   <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
                     {eligibility.reasons[0]}
@@ -387,7 +407,7 @@ export function MyAmanahView({
 
             <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Active / Pending Loan</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t('activePendingLoanRow')}</dt>
                 <dd
                   className={`font-semibold ${
                     eligibility.noActiveLoan
@@ -395,11 +415,13 @@ export function MyAmanahView({
                       : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
-                  {eligibility.noActiveLoan ? 'None (Clear)' : eligibility.activeLoanId || 'Present'}
+                  {eligibility.noActiveLoan
+                    ? t('noneClear')
+                    : eligibility.activeLoanId || t('presentFallback')}
                 </dd>
               </div>
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Annual Quota Usage</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t('annualQuotaRow')}</dt>
                 <dd
                   className={`font-mono font-semibold ${
                     eligibility.quotaAvailable
@@ -407,11 +429,14 @@ export function MyAmanahView({
                       : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
-                  {eligibility.loansUsedThisYear} / {eligibility.maxLoansPerYear} used
+                  {t('usedRatio', {
+                    used: eligibility.loansUsedThisYear,
+                    max: eligibility.maxLoansPerYear,
+                  })}
                 </dd>
               </div>
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Overdue Installments</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t('overdueInstallmentsRow')}</dt>
                 <dd
                   className={`font-semibold ${
                     eligibility.noOverdueInstallments
@@ -420,12 +445,12 @@ export function MyAmanahView({
                   }`}
                 >
                   {eligibility.noOverdueInstallments
-                    ? 'Clear (0)'
-                    : `${eligibility.overdueCount || 1} Overdue`}
+                    ? t('clearZero')
+                    : t('overdueCount', { count: eligibility.overdueCount || 1 })}
                 </dd>
               </div>
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Cooperative Net Equity</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t('coopNetEquityRow')}</dt>
                 <dd className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
                   {formatMoney(personal.cooperativeEquity, ccy)}
                 </dd>
@@ -436,14 +461,14 @@ export function MyAmanahView({
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-              <span>0% Riba · Mudarabah/Qard Hasan</span>
+              <span>{t('zeroRibaFooter')}</span>
             </span>
             <button
               type="button"
               onClick={() => onNavigate('quard-hasan')}
               className="font-medium text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
             >
-              Open Qard Hasan →
+              {t('openQardHasanArrow')}
             </button>
           </div>
         </section>

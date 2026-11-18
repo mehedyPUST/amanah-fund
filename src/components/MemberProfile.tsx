@@ -18,7 +18,10 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import type { AppLocale } from '../i18n/config.ts';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
@@ -38,6 +41,9 @@ interface MemberProfileProps {
 }
 
 export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
+  const t = useTranslations('Profile');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale() as AppLocale;
   const { setUser } = useCoopSession();
 
   const [profile, setProfile] = useState<PublicUser>(user);
@@ -143,13 +149,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Profile Load Failed',
-        description: err instanceof Error ? err.message : 'Failed to load member profile details.',
+        title: t('loadFailedTitle'),
+        description: err instanceof Error ? err.message : t('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
-  }, [populateForm, user.id]);
+  }, [populateForm, t, user.id]);
 
   useEffect(() => {
     void loadProfile();
@@ -173,8 +179,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Missing Required Contact Fields',
-        description: 'Mobile number, present address, and permanent address are required.',
+        title: t('missingContactTitle'),
+        description: t('missingContactDesc'),
       });
       return;
     }
@@ -184,19 +190,19 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       tone: 'emerald',
       title:
         user.role === 'admin'
-          ? 'Save Encrypted Profile Details?'
-          : 'Submit Profile Update for Approval?',
+          ? t('confirmSaveAdminTitle')
+          : t('confirmSaveMemberTitle'),
       description:
         user.role === 'admin'
-          ? 'Your updated contact information will be encrypted with AES-256-GCM and saved immediately.'
-          : 'Profile edits are encrypted and routed to an Admin or Manager for approval before taking effect.',
+          ? t('confirmSaveAdminDesc')
+          : t('confirmSaveMemberDesc'),
       details: [
-        { label: 'Full Name', value: name.trim() },
-        { label: 'Email', value: email.trim() },
-        { label: 'Mobile', value: mobile.trim() },
-        { label: 'Occupation', value: occupation.trim() || '—' },
+        { label: t('detailFullName'), value: name.trim() },
+        { label: t('detailEmail'), value: email.trim() },
+        { label: t('detailMobile'), value: mobile.trim() },
+        { label: t('detailOccupation'), value: occupation.trim() || '—' },
       ],
-      confirmLabel: user.role === 'admin' ? 'Save Contact Info' : 'Submit Profile Update',
+      confirmLabel: user.role === 'admin' ? t('confirmSaveAdminBtn') : t('confirmSaveMemberBtn'),
       run: async () => {
         setSaving(true);
         try {
@@ -215,10 +221,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             setModal({
               mode: 'notice',
               tone: 'emerald',
-              title: 'Profile Update Submitted',
-              description:
-                res.message ||
-                'Your profile edits have been submitted for Admin/Manager approval. Changes take effect once approved.',
+              title: t('updateSubmittedTitle'),
+              description: res.message || t('updateSubmittedDesc'),
             });
           } else {
             populateForm(res.user);
@@ -227,18 +231,17 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             setModal({
               mode: 'notice',
               tone: 'emerald',
-              title: 'Profile Saved',
-              description:
-                'Your contact information has been encrypted and saved to your profile.',
+              title: t('profileSavedTitle'),
+              description: t('profileSavedDesc'),
             });
           }
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Profile Save Failed',
+            title: t('saveFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Could not update contact information.',
+              err instanceof Error ? err.message : t('saveFailedDesc'),
           });
         } finally {
           setSaving(false);
@@ -253,8 +256,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Password Too Short',
-        description: 'New password must be at least 8 characters long.',
+        title: t('passwordShortTitle'),
+        description: t('passwordShortDesc'),
       });
       return;
     }
@@ -262,18 +265,17 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Passwords Do Not Match',
-        description: 'New password and confirmation do not match.',
+        title: t('passwordMismatchTitle'),
+        description: t('passwordMismatchDesc'),
       });
       return;
     }
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Update Account Password?',
-      description:
-        'Your password updates immediately without Admin or Manager approval. Confirm changing your password now.',
-      confirmLabel: 'Update Password',
+      title: t('confirmPasswordTitle'),
+      description: t('confirmPasswordDesc'),
+      confirmLabel: t('confirmPasswordBtn'),
       run: async () => {
         setPasswordBusy(true);
         try {
@@ -285,15 +287,15 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Password Updated',
-            description: 'Password updated immediately (no Manager or Admin approval required).',
+            title: t('passwordUpdatedTitle'),
+            description: t('passwordUpdatedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Password Update Failed',
-            description: err instanceof Error ? err.message : 'Could not change password.',
+            title: t('passwordFailedTitle'),
+            description: err instanceof Error ? err.message : t('passwordFailedDesc'),
           });
         } finally {
           setPasswordBusy(false);
@@ -312,8 +314,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: '2FA Setup Failed',
-        description: err instanceof Error ? err.message : 'Failed to initialize 2FA setup.',
+        title: t('totpSetupFailedTitle'),
+        description: err instanceof Error ? err.message : t('totpSetupFailedDesc'),
       });
     } finally {
       setTotpBusy(false);
@@ -325,11 +327,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Activate Two-Factor Authentication?',
-      description:
-        'Enabling TOTP requires a 6-digit authenticator code for sensitive treasury actions.',
-      details: [{ label: 'Verification Code', value: totpCodeInput.trim() }],
-      confirmLabel: 'Verify & Enable 2FA',
+      title: t('confirmEnable2faTitle'),
+      description: t('confirmEnable2faDesc'),
+      details: [{ label: t('detailVerificationCode'), value: totpCodeInput.trim() }],
+      confirmLabel: t('confirmEnable2faBtn'),
       run: async () => {
         setTotpBusy(true);
         try {
@@ -342,16 +343,15 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: '2FA Enabled',
-            description:
-              'Two-factor authentication (TOTP) is now active for high-privilege actions.',
+            title: t('enabled2faTitle'),
+            description: t('enabled2faDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Verification Failed',
-            description: err instanceof Error ? err.message : 'Invalid verification code.',
+            title: t('verifyFailedTitle'),
+            description: err instanceof Error ? err.message : t('verifyFailedDesc'),
           });
         } finally {
           setTotpBusy(false);
@@ -368,8 +368,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid 4-Digit PIN',
-        description: 'Enter a 4-digit numeric PIN (digits 0–9 only).',
+        title: t('invalidPinTitle'),
+        description: t('invalidPinDesc'),
       });
       return;
     }
@@ -377,8 +377,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'PINs Do Not Match',
-        description: 'The 4-digit PIN and confirmation PIN must match.',
+        title: t('pinMismatchTitle'),
+        description: t('pinMismatchDesc'),
       });
       return;
     }
@@ -393,15 +393,15 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: matchedServerLocal ? 'Update Device 4-Digit PIN?' : 'Register This Mobile Device?',
+      title: matchedServerLocal ? t('confirmUpdatePinTitle') : t('confirmRegisterDeviceTitle'),
       description: matchedServerLocal
-        ? 'Your 4-digit quick login PIN on this device will be updated immediately.'
-        : 'After signing out on this device, you can select your account and sign back in using just your 4-digit PIN.',
+        ? t('confirmUpdatePinDesc')
+        : t('confirmRegisterDeviceDesc'),
       details: [
-        { label: 'Account', value: `${profile.name} (${profile.memberCode})` },
-        { label: 'Device Name', value: label },
+        { label: t('detailAccount'), value: `${profile.name} (${profile.memberCode})` },
+        { label: t('detailDeviceName'), value: label },
       ],
-      confirmLabel: matchedServerLocal ? 'Update 4-Digit PIN' : 'Register This Device',
+      confirmLabel: matchedServerLocal ? t('confirmUpdatePinBtn') : t('confirmRegisterDeviceBtn'),
       run: async () => {
         setDevicePinBusy(true);
         try {
@@ -431,17 +431,16 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: matchedServerLocal ? '4-Digit PIN Updated' : 'Mobile Device Registered',
-            description:
-              'This device is now ready for 4-digit PIN sign-in after logout.',
+            title: matchedServerLocal ? t('pinUpdatedTitle') : t('deviceRegisteredTitle'),
+            description: t('deviceRegisteredDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Device Registration Failed',
+            title: t('deviceRegFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Could not register this mobile device.',
+              err instanceof Error ? err.message : t('deviceRegFailedDesc'),
           });
         } finally {
           setDevicePinBusy(false);
@@ -454,10 +453,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Remove Registered Mobile Device?',
-      description: `Revoking "${deviceName}" disables 4-digit PIN quick sign-in from that device until registered again.`,
-      details: [{ label: 'Device', value: deviceName }],
-      confirmLabel: 'Remove Device',
+      title: t('confirmRemoveDeviceTitle'),
+      description: t('confirmRemoveDeviceDesc', { deviceName }),
+      details: [{ label: t('detailDevice'), value: deviceName }],
+      confirmLabel: t('confirmRemoveDeviceBtn'),
       run: async () => {
         setDevicePinBusy(true);
         try {
@@ -471,16 +470,16 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Mobile Device Removed',
-            description: `"${deviceName}" can no longer sign in using a 4-digit PIN.`,
+            title: t('deviceRemovedTitle'),
+            description: t('deviceRemovedDesc', { deviceName }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Removal Failed',
+            title: t('deviceRemoveFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Could not remove registered device.',
+              err instanceof Error ? err.message : t('deviceRemoveFailedDesc'),
           });
         } finally {
           setDevicePinBusy(false);
@@ -494,10 +493,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Disable Two-Factor Authentication?',
-      description:
-        'Disabling TOTP removes step-up authenticator protection from your account. Confirm disabling 2FA.',
-      confirmLabel: 'Disable 2FA',
+      title: t('confirmDisable2faTitle'),
+      description: t('confirmDisable2faDesc'),
+      confirmLabel: t('confirmDisable2faBtn'),
       run: async () => {
         setTotpBusy(true);
         try {
@@ -509,15 +507,15 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: '2FA Disabled',
-            description: 'Two-factor authentication has been disabled.',
+            title: t('disabled2faTitle'),
+            description: t('disabled2faDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Could Not Disable 2FA',
-            description: err instanceof Error ? err.message : 'Invalid authenticator code.',
+            title: t('disable2faFailedTitle'),
+            description: err instanceof Error ? err.message : t('disable2faFailedDesc'),
           });
         } finally {
           setTotpBusy(false);
@@ -540,9 +538,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Preference Save Failed',
+        title: t('prefFailedTitle'),
         description:
-          err instanceof Error ? err.message : 'Could not save notification preference.',
+          err instanceof Error ? err.message : t('prefFailedDesc'),
       });
     } finally {
       setPrefsBusy(false);
@@ -556,10 +554,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const statusMeta =
     profile.status === 'active'
       ? {
-          label: 'Verified Member',
-          shortLabel: 'Verified',
-          description:
-            'Your KYC registration is verified and active. You can submit monthly contributions, vote on 2/3 governance ballots, and request Qard Hasan loans.',
+          label: t('status.active.label'),
+          shortLabel: t('status.active.short'),
+          description: t('status.active.desc'),
           Icon: CheckCircle2,
           toneClass: 'text-emerald-700 dark:text-emerald-400',
           boxClass:
@@ -567,10 +564,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         }
       : profile.status === 'pending_approval'
         ? {
-            label: 'Pending Verification',
-            shortLabel: 'Pending',
-            description:
-              'Your membership registration is currently pending administrator verification.',
+            label: t('status.pending_approval.label'),
+            shortLabel: t('status.pending_approval.short'),
+            description: t('status.pending_approval.desc'),
             Icon: Clock,
             toneClass: 'text-amber-700 dark:text-amber-400',
             boxClass:
@@ -578,19 +574,18 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           }
         : profile.status === 'pending_activation'
           ? {
-              label: 'Awaiting Activation',
-              shortLabel: 'Unactivated',
-              description:
-                'Your application is approved. Sign in with your Member ID and 6-digit Activation OTP to confirm your final membership agreement.',
+              label: t('status.pending_activation.label'),
+              shortLabel: t('status.pending_activation.short'),
+              description: t('status.pending_activation.desc'),
               Icon: Clock,
               toneClass: 'text-indigo-700 dark:text-indigo-400',
               boxClass:
                 'bg-indigo-50/80 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/60',
             }
           : {
-              label: 'Suspended',
-              shortLabel: 'Suspended',
-              description: 'This membership account is currently suspended. Contact an administrator.',
+              label: t('status.suspended.label'),
+              shortLabel: t('status.suspended.short'),
+              description: t('status.suspended.desc'),
               Icon: AlertCircle,
               toneClass: 'text-rose-700 dark:text-rose-400',
               boxClass: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60',
@@ -638,7 +633,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               >
                 <img
                   src={portraitUrl}
-                  alt={`${profile.name} portrait`}
+                  alt={t('portraitAlt', { name: profile.name })}
                   referrerPolicy="no-referrer"
                   onError={() => setPhotoBroken(true)}
                   className="w-full h-full object-cover"
@@ -653,7 +648,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <UserIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Member Profile &amp; Verification Status</span>
+                <span>{t('eyebrow')}</span>
               </div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
                 {profile.name}
@@ -661,9 +656,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
                 <span>{profile.memberCode}</span>
                 <span aria-hidden="true">·</span>
-                <span className="capitalize font-sans">{profile.role}</span>
+                <span className="capitalize font-sans">{translateRoleLabel(profile.role, locale)}</span>
                 <span aria-hidden="true">·</span>
-                <span>Joined {formatDateTime(profile.joinedAt)}</span>
+                <span>{t('joinedPrefix', { date: formatDateTime(profile.joinedAt) })}</span>
               </div>
             </div>
           </div>
@@ -674,7 +669,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             className="w-full md:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-stretch md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Refresh Profile</span>
+            <span>{t('refreshProfile')}</span>
           </button>
         </div>
 
@@ -683,7 +678,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <StatusIcon className={`w-5 h-5 shrink-0 mt-0.5 ${statusMeta.toneClass}`} aria-hidden="true" />
           <div className="space-y-0.5 min-w-0">
             <div className={`text-xs font-semibold ${statusMeta.toneClass}`}>
-              Membership Status: {statusMeta.label} ({statusMeta.shortLabel})
+              {t('membershipStatusLine', {
+                label: statusMeta.label,
+                short: statusMeta.shortLabel,
+              })}
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
               {statusMeta.description}
@@ -698,46 +696,46 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Registration Credentials
+              {t('credentialsTitle')}
             </h3>
           </div>
 
           <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">Membership Status</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldStatus')}</dt>
               <dd className={`font-semibold inline-flex items-center gap-1.5 text-right ${statusMeta.toneClass}`}>
                 <StatusIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{statusMeta.label}</span>
               </dd>
             </div>
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">Member Code</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldMemberCode')}</dt>
               <dd className="font-mono font-semibold text-slate-900 dark:text-white text-right">
                 {profile.memberCode}
               </dd>
             </div>
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">National ID (NID)</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldNid')}</dt>
               <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white text-right break-all">
-                {reg?.nid || 'Not provided (Admin bootstrap)'}
+                {reg?.nid || t('nidNotProvided')}
               </dd>
             </div>
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">Date of Birth</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldDob')}</dt>
               <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white text-right">
-                {reg?.dateOfBirth || 'Not provided'}
+                {reg?.dateOfBirth || t('notProvided')}
               </dd>
             </div>
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">Reference Member</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldReferenceMember')}</dt>
               <dd className="font-semibold text-slate-900 dark:text-white text-right">
-                {reg?.referenceMemberName || 'Bootstrap Founding Member'}
+                {reg?.referenceMemberName || t('referenceBootstrap')}
               </dd>
             </div>
             <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-              <dt className="text-slate-500 dark:text-slate-400">Encrypted Mobile</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{t('fieldEncryptedMobile')}</dt>
               <dd className="font-mono text-slate-900 dark:text-white text-right">
-                {reg?.mobile || profile.phoneMasked || 'Not set'}
+                {reg?.mobile || profile.phoneMasked || t('notSet')}
               </dd>
             </div>
           </dl>
@@ -746,7 +744,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700 dark:text-slate-300">
-                  Signed Agreement Paper
+                  {t('signedAgreementTitle')}
                 </span>
                 <a
                   href={agreementUrl}
@@ -754,7 +752,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   rel="noreferrer"
                   className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
                 >
-                  <span>{isPdfFileUrl(agreementUrl) ? 'Open Agreement PDF' : 'Open Full Image'}</span>
+                  <span>{isPdfFileUrl(agreementUrl) ? t('openAgreementPdf') : t('openFullImage')}</span>
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </a>
               </div>
@@ -771,10 +769,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     </div>
                     <div>
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Signed Cooperative Agreement (PDF)
+                        {t('signedAgreementPdfCardTitle')}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Stored on ImageKit.io document vault
+                        {t('storedOnImageKit')}
                       </div>
                     </div>
                   </div>
@@ -784,7 +782,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 aspect-[16/10]">
                   <img
                     src={agreementUrl}
-                    alt={`${profile.name} signed cooperative agreement`}
+                    alt={t('signedAgreementAlt', { name: profile.name })}
                     referrerPolicy="no-referrer"
                     onError={() => setAgreementBroken(true)}
                     className="w-full h-full object-cover"
@@ -803,11 +801,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Update Contact Information
+              {t('updateContactTitle')}
             </h3>
             {user.role !== 'admin' && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Edits require Admin or Manager approval.
+                {t('editsRequireApproval')}
               </p>
             )}
           </div>
@@ -821,14 +819,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="space-y-0.5">
                     <div className="font-semibold">
-                      Pending Profile Update Request ({formatDateTime(pendingReq.requestedAt)})
+                      {t('pendingUpdateTitle', { date: formatDateTime(pendingReq.requestedAt) })}
                     </div>
                     <p>
-                      Requested changes to{' '}
-                      <span className="font-mono">
-                        {Object.keys(pendingReq.requestedChanges).join(', ')}
-                      </span>{' '}
-                      are awaiting Admin or Manager review.
+                      {t('pendingUpdateDesc', {
+                        fields: Object.keys(pendingReq.requestedChanges).join(', '),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -840,9 +836,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="space-y-0.5">
                     <div className="font-semibold">
-                      Previous Profile Update Declined by {latestReq.reviewerName || 'Reviewer'}
+                      {t('declinedUpdateTitle', {
+                        reviewer: latestReq.reviewerName || t('reviewerFallback'),
+                      })}
                     </div>
-                    {latestReq.reviewNote && <p>Note: {latestReq.reviewNote}</p>}
+                    {latestReq.reviewNote && (
+                      <p>{t('declineNote', { note: latestReq.reviewNote })}</p>
+                    )}
                   </div>
                 </div>
               );
@@ -857,7 +857,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="profile-name"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Full Name
+                  {t('labelFullName')}
                 </label>
                 <input
                   id="profile-name"
@@ -874,7 +874,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="profile-email"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Email Address
+                  {t('labelEmail')}
                 </label>
                 <input
                   id="profile-email"
@@ -891,7 +891,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="profile-mobile"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Mobile Number
+                  {t('labelMobile')}
                 </label>
                 <input
                   id="profile-mobile"
@@ -899,7 +899,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   required
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
-                  placeholder="e.g. 017XXXXXXXX"
+                  placeholder={t('placeholderMobile')}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
@@ -909,14 +909,14 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="profile-occupation"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Occupation
+                  {t('labelOccupation')}
                 </label>
                 <input
                   id="profile-occupation"
                   type="text"
                   value={occupation}
                   onChange={(e) => setOccupation(e.target.value)}
-                  placeholder="e.g. Senior Engineer"
+                  placeholder={t('placeholderOccupation')}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
@@ -927,14 +927,14 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 htmlFor="profile-company"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Company / Organization
+                {t('labelCompany')}
               </label>
               <input
                 id="profile-company"
                 type="text"
                 value={companyOrganization}
                 onChange={(e) => setCompanyOrganization(e.target.value)}
-                placeholder="Organization or employer name"
+                placeholder={t('placeholderCompany')}
                 className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
               />
             </div>
@@ -944,7 +944,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 htmlFor="profile-present-address"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Present Address
+                {t('labelPresentAddress')}
               </label>
               <textarea
                 id="profile-present-address"
@@ -952,7 +952,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 required
                 value={presentAddress}
                 onChange={(e) => setPresentAddress(e.target.value)}
-                placeholder="Current residential address"
+                placeholder={t('placeholderPresentAddress')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
               />
             </div>
@@ -962,7 +962,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 htmlFor="profile-permanent-address"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Permanent Address
+                {t('labelPermanentAddress')}
               </label>
               <textarea
                 id="profile-permanent-address"
@@ -970,7 +970,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 required
                 value={permanentAddress}
                 onChange={(e) => setPermanentAddress(e.target.value)}
-                placeholder="Permanent home address"
+                placeholder={t('placeholderPermanentAddress')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
               />
             </div>
@@ -983,7 +983,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 }}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
               >
-                Reset Changes
+                {t('resetChanges')}
               </button>
 
               <button
@@ -992,7 +992,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
               >
                 <Save className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{saving ? 'Saving Profile…' : 'Save Contact Info'}</span>
+                <span>{saving ? t('savingProfile') : t('saveContactInfo')}</span>
               </button>
             </div>
           </form>
@@ -1005,10 +1005,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Instant Security Credential Update</span>
+              <span>{t('passwordEyebrow')}</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-              Change Password (No Approval Needed)
+              {t('passwordHeading')}
             </h3>
           </div>
         </div>
@@ -1019,7 +1019,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               htmlFor="current-password"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Current Password
+              {t('labelCurrentPassword')}
             </label>
             <input
               id="current-password"
@@ -1027,7 +1027,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password"
+              placeholder={t('placeholderCurrentPassword')}
               className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
@@ -1036,7 +1036,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               htmlFor="new-password"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              New Password (min 8 chars)
+              {t('labelNewPassword')}
             </label>
             <input
               id="new-password"
@@ -1045,7 +1045,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               minLength={8}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password"
+              placeholder={t('placeholderNewPassword')}
               className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
@@ -1054,7 +1054,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               htmlFor="confirm-password"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Confirm New Password
+              {t('labelConfirmPassword')}
             </label>
             <input
               id="confirm-password"
@@ -1063,7 +1063,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
+              placeholder={t('placeholderConfirmPassword')}
               className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />
           </div>
@@ -1072,7 +1072,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             disabled={passwordBusy}
             className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
           >
-            {passwordBusy ? 'Updating…' : 'Update Password Now'}
+            {passwordBusy ? t('updatingPassword') : t('updatePasswordNow')}
           </button>
         </form>
       </section>
@@ -1089,13 +1089,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               <div>
                 <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                   <Smartphone className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>Quick Mobile Access</span>
+                  <span>{t('mobileEyebrow')}</span>
                 </div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                  Mobile Device &amp; 4-Digit PIN Login
+                  {t('mobileHeading')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Register this device so you can sign back in after logout using your 4-digit PIN.
+                  {t('mobileSubheading')}
                 </p>
               </div>
               <span
@@ -1105,7 +1105,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
-                {thisDeviceEntry ? 'THIS DEVICE ACTIVE' : `${devices.length} REGISTERED`}
+                {thisDeviceEntry
+                  ? t('thisDeviceActiveBadge')
+                  : t('registeredCountBadge', { count: devices.length })}
               </span>
             </div>
 
@@ -1118,7 +1120,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="mobile-device-label"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Device Label
+                  {t('labelDeviceLabel')}
                 </label>
                 <input
                   id="mobile-device-label"
@@ -1126,7 +1128,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   maxLength={60}
                   value={deviceNameInput}
                   onChange={(e) => setDeviceNameInput(e.target.value)}
-                  placeholder="e.g. My Android Phone"
+                  placeholder={t('placeholderDeviceLabel')}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -1135,7 +1137,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="mobile-device-pin"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  {thisDeviceEntry ? 'New 4-Digit PIN' : '4-Digit PIN'}
+                  {thisDeviceEntry ? t('labelNewPin') : t('labelPin')}
                 </label>
                 <input
                   id="mobile-device-pin"
@@ -1155,7 +1157,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   htmlFor="mobile-device-pin-confirm"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Confirm 4-Digit PIN
+                  {t('labelConfirmPin')}
                 </label>
                 <input
                   id="mobile-device-pin-confirm"
@@ -1178,10 +1180,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
               >
                 {devicePinBusy
-                  ? 'Saving…'
+                  ? t('savingPin')
                   : thisDeviceEntry
-                    ? 'Update 4-Digit PIN'
-                    : 'Register This Device'}
+                    ? t('confirmUpdatePinBtn')
+                    : t('confirmRegisterDeviceBtn')}
               </button>
             </form>
 
@@ -1199,12 +1201,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           <span className="truncate">{dev.deviceName}</span>
                           {isCurrent && (
                             <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
-                              (This Device)
+                              {t('thisDeviceTag')}
                             </span>
                           )}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                          Last used {formatDateTime(dev.lastUsedAt)}
+                          {t('lastUsed', { date: formatDateTime(dev.lastUsedAt) })}
                         </div>
                       </div>
                       <button
@@ -1214,7 +1216,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         className="min-h-[36px] px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Remove</span>
+                        <span>{tCommon('remove')}</span>
                       </button>
                     </div>
                   );
@@ -1232,10 +1234,10 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <KeyRound className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Step-Up Two-Factor Authentication (TOTP)</span>
+                <span>{t('totpEyebrow')}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                Authenticator App Protection
+                {t('totpHeading')}
               </h3>
             </div>
             <span
@@ -1245,7 +1247,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {profile.totpEnabled ? 'ENABLED' : 'OFF'}
+              {profile.totpEnabled ? t('totpEnabledBadge') : t('totpOffBadge')}
             </span>
           </div>
 
@@ -1262,10 +1264,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               >
                 <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/60 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
                   <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>
-                    2FA is active. Enter your current 6-digit code below only if you need to disable
-                    step-up verification.
-                  </span>
+                  <span>{t('totpActiveNotice')}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5">
                   <input
@@ -1276,7 +1275,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     required
                     value={totpCodeInput}
                     onChange={(e) => setTotpCodeInput(e.target.value)}
-                    placeholder="6-digit code"
+                    placeholder={t('placeholder6Digit')}
                     className="w-full sm:w-40 min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                   <button
@@ -1284,7 +1283,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     disabled={totpBusy}
                     className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    {totpBusy ? 'Disabling…' : 'Disable 2FA'}
+                    {totpBusy ? t('disabling2fa') : t('confirmDisable2faBtn')}
                   </button>
                 </div>
               </motion.form>
@@ -1300,7 +1299,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
               >
                 <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{totpBusy ? 'Generating Secret…' : 'Enable 2FA Authenticator'}</span>
+                <span>{totpBusy ? t('generatingSecret') : t('enable2faBtn')}</span>
               </motion.button>
             ) : (
               <motion.form
@@ -1315,14 +1314,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 <div className="flex flex-col sm:flex-row items-start gap-4 p-3.5 rounded-lg bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60">
                   <img
                     src={totpSetupData.qrDataUrl}
-                    alt="2FA Authenticator QR Code"
+                    alt={t('qrAlt')}
                     referrerPolicy="no-referrer"
                     className="w-32 h-32 rounded-lg border border-slate-200 dark:border-slate-700 bg-white p-1 shrink-0"
                   />
                   <div className="space-y-2 text-xs min-w-0">
                     <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                      Scan this QR code in Google Authenticator, Authy, or 1Password, or enter the
-                      Base32 setup key manually:
+                      {t('qrInstructions')}
                     </p>
                     <div className="font-mono text-[11px] px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white break-all select-all">
                       {totpSetupData.secret}
@@ -1339,7 +1337,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     required
                     value={totpCodeInput}
                     onChange={(e) => setTotpCodeInput(e.target.value)}
-                    placeholder="Enter 6-digit code"
+                    placeholder={t('placeholderEnter6Digit')}
                     className="w-full sm:w-44 min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   />
                   <button
@@ -1347,7 +1345,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     disabled={totpBusy}
                     className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    {totpBusy ? 'Verifying…' : 'Verify & Activate 2FA'}
+                    {totpBusy ? t('verifying2fa') : t('verifyActivate2fa')}
                   </button>
                   <button
                     type="button"
@@ -1357,7 +1355,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     }}
                     className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                 </div>
               </motion.form>
@@ -1370,16 +1368,16 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Bell className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Alerts &amp; Sound Controls</span>
+                <span>{t('alertsEyebrow')}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                Alert &amp; Sound Preferences
+                {t('alertsHeading')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Customize real-time chimes and email digest categories.
+                {t('alertsSubheading')}
               </p>
             </div>
-            {prefsBusy && <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">Saving…</span>}
+            {prefsBusy && <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">{tCommon('saving')}</span>}
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -1387,28 +1385,28 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               [
                 {
                   key: 'inAppAlerts',
-                  title: 'In-App Treasury Alerts',
-                  desc: 'Show live decision banners and notification badges inside the dashboard.',
+                  title: t('prefRows.inAppAlerts.title'),
+                  desc: t('prefRows.inAppAlerts.desc'),
                 },
                 {
                   key: 'soundEnabled',
-                  title: 'Subtle In-App Sound Chime',
-                  desc: 'Play a gentle two-tone chime when new notifications or private messages arrive.',
+                  title: t('prefRows.soundEnabled.title'),
+                  desc: t('prefRows.soundEnabled.desc'),
                 },
                 {
                   key: 'emailBallots',
-                  title: '2/3 Ballots & Guarantor Co-Sign Notices',
-                  desc: 'Receive notices when a loan needs guarantor co-signature or member vote.',
+                  title: t('prefRows.emailBallots.title'),
+                  desc: t('prefRows.emailBallots.desc'),
                 },
                 {
                   key: 'emailRepayments',
-                  title: 'Installment & Overdue Repayment Reminders',
-                  desc: 'Alert before installment due dates and when installments become overdue.',
+                  title: t('prefRows.emailRepayments.title'),
+                  desc: t('prefRows.emailRepayments.desc'),
                 },
                 {
                   key: 'emailCommunity',
-                  title: 'Community @Mentions & Moderation Updates',
-                  desc: 'Notify when another verified member mentions you in Community.',
+                  title: t('prefRows.emailCommunity.title'),
+                  desc: t('prefRows.emailCommunity.desc'),
                 },
               ] as const
             ).map((row) => (
@@ -1439,7 +1437,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         busy={modalBusy}
         onConfirm={
           modal?.mode === 'confirm'

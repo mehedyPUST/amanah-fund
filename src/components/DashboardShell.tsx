@@ -1315,7 +1315,7 @@ export function DashboardShell() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              aria-label="Mobile dashboard menu"
+              aria-label={tCommon('dashboardMenuAria')}
               className="relative z-10 w-72 max-w-[84vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
               <div className="h-14 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">

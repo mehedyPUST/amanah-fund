@@ -40,6 +40,7 @@ export function MobilePinLoginPanel({
   compact = false,
 }: MobilePinLoginPanelProps) {
   const tAuth = useTranslations('Auth');
+  const tCommon = useTranslations('Common');
   const [accounts, setAccounts] = useState<LocalRegisteredAccount[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [accountPickerOpen, setAccountPickerOpen] = useState(false);
@@ -141,7 +142,11 @@ export function MobilePinLoginPanel({
             className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2"
           >
             <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>{autoLogoutNotice}</span>
+            <span>
+              {autoLogoutNotice === '__AUTO_LOGOUT_1M__'
+                ? tCommon('autoLogoutNotice')
+                : autoLogoutNotice}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

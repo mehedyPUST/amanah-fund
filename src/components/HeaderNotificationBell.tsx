@@ -229,7 +229,10 @@ export function HeaderNotificationBell({
         list.push({
           id: `loan-approved-${l.id}`,
           kind: 'approved_loan',
-          title: l.borrowerId === user.id ? 'Your Loan Was Approved' : 'Approved Loan Ready to Disburse',
+          title:
+            l.borrowerId === user.id
+              ? tNotif('bell.yourLoanApproved')
+              : tNotif('bell.approvedLoanReadyDisburse'),
           detail: `${l.id} · ${l.borrowerName} · ${formatMoney(l.amount, ccy)}`,
           timestampLabel: formatDateTime(l.approvedAt || l.requestedAt),
           targetTab: isStaff ? 'manager-desk' : 'quard-hasan',
@@ -247,7 +250,7 @@ export function HeaderNotificationBell({
             id: `notif-${n.id}`,
             notificationId: n.id,
             kind: 'contribution_reminder',
-            title: 'Pending Contribution Reminder',
+            title: tNotif('bell.pendingContributionReminder'),
             detail: n.subject,
             timestampLabel: formatDateTime(n.createdAt),
             targetTab: 'monthly-contribution',
@@ -271,9 +274,9 @@ export function HeaderNotificationBell({
         list.push({
           id: `due-contrib-${currentMonth}`,
           kind: 'contribution_reminder',
-          title: `${currentMonthLabel} Contribution Due`,
-          detail: `Monthly deposit of ${formatMoney(targetAmount, ccy)} has not been submitted yet.`,
-          timestampLabel: 'Current billing cycle',
+          title: tNotif('bell.contributionDueTitle', { month: currentMonthLabel }),
+          detail: tNotif('bell.contributionDueDetail', { amount: formatMoney(targetAmount, ccy) }),
+          timestampLabel: tNotif('bell.currentBillingCycle'),
           targetTab: 'monthly-contribution',
           billingMonth: currentMonth,
         });
@@ -281,8 +284,11 @@ export function HeaderNotificationBell({
         list.push({
           id: `pending-contrib-${myPendingContribs[0].id}`,
           kind: 'contribution_reminder',
-          title: 'Contribution Pending Verification',
-          detail: `${formatBillingMonth(myPendingContribs[0].billingMonth)} deposit (${formatMoney(myPendingContribs[0].amount, ccy)}) awaiting review.`,
+          title: tNotif('bell.contributionPendingVerification'),
+          detail: tNotif('bell.contributionPendingDetail', {
+            month: formatBillingMonth(myPendingContribs[0].billingMonth),
+            amount: formatMoney(myPendingContribs[0].amount, ccy),
+          }),
           timestampLabel: formatDateTime(myPendingContribs[0].submittedAt),
           targetTab: 'monthly-contribution',
         });
@@ -291,12 +297,17 @@ export function HeaderNotificationBell({
 
     if (isStaff && (overview?.treasury.pendingLoansReviewCount || 0) > 0) {
       const count = overview?.treasury.pendingLoansReviewCount || 0;
+      const deskLabel =
+        user.role === 'admin' ? tNotif('view.governanceDesk') : tNotif('view.managerDesk');
       list.push({
         id: 'staff-pending-loan-reviews',
         kind: 'approved_loan',
-        title: 'Qard Hasan Awaiting Vote Initiation',
-        detail: `${count} Qard Hasan request${count === 1 ? '' : 's'} waiting in ${user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'} to initiate 2/3 ballot.`,
-        timestampLabel: user.role === 'admin' ? 'Governance Desk queue' : 'Manager Desk queue',
+        title: tNotif('bell.loansAwaitingVoteTitle'),
+        detail: tNotif('bell.loansAwaitingVoteDetail', { count, desk: deskLabel }),
+        timestampLabel:
+          user.role === 'admin'
+            ? tNotif('bell.governanceDeskQueue')
+            : tNotif('bell.managerDeskQueue'),
         targetTab: 'manager-desk',
         managerDeskTab: 'qard-hasan',
       });
@@ -307,9 +318,9 @@ export function HeaderNotificationBell({
       list.push({
         id: 'staff-pending-contribs',
         kind: 'contribution_reminder',
-        title: 'Deposits Awaiting Manager Verification',
-        detail: `${count} member contribution${count === 1 ? '' : 's'} queued for approval.`,
-        timestampLabel: 'Manager Desk queue',
+        title: tNotif('bell.depositsAwaitingVerificationTitle'),
+        detail: tNotif('bell.depositsAwaitingVerificationDetail', { count }),
+        timestampLabel: tNotif('bell.managerDeskQueue'),
         targetTab: 'manager-desk',
         managerDeskTab: 'contributions',
       });

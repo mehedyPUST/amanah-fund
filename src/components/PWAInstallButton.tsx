@@ -120,43 +120,45 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                   {guideMode === 'iframe' || (isInIframe && !hasNativePrompt) ? (
                     <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       <p>
-                        Browsers block direct app installation inside embedded preview frames. Open
-                        Amanah in its own browser tab, then click <strong>Install App</strong> or
-                        use your browser address bar install icon.
+                        {tPwa('iframeBlockedPrefix')}{' '}
+                        <strong>{tPwa('installApp')}</strong> {tPwa('iframeBlockedSuffix')}
                       </p>
                       <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 space-y-1.5 text-[11px]">
                         <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                           <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>Manifest &amp; Service Worker verified active</span>
+                          <span>{tPwa('swVerifiedActive')}</span>
                         </div>
                         <div className="text-slate-500 dark:text-slate-400">
-                          Standalone mode works immediately once opened in a top-level tab.
+                          {tPwa('standaloneTopTabNote')}
                         </div>
                       </div>
                     </div>
                   ) : isIOS || guideMode === 'ios' ? (
                     <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed list-decimal list-inside">
                       <li>
-                        Tap the <strong>Share</strong> icon in Safari&apos;s toolbar.
+                        {tPwa('iosStep1Prefix')}{' '}
+                        <strong>{tPwa('iosStep1Highlight')}</strong> {tPwa('iosStep1Suffix')}
                       </li>
                       <li>
-                        Scroll down and tap <strong>Add to Home Screen</strong>.
+                        {tPwa('iosStep2Prefix')}{' '}
+                        <strong>{tPwa('iosStep2Highlight')}</strong>.
                       </li>
                       <li>
-                        Tap <strong>Add</strong> in the top-right corner to launch Amanah as a
-                        standalone app.
+                        {tPwa('iosStep3Prefix')}{' '}
+                        <strong>{tPwa('iosStep3Highlight')}</strong> {tPwa('iosStep3Suffix')}
                       </li>
                     </ol>
                   ) : (
                     <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed list-decimal list-inside">
                       <li>
-                        In Chrome or Edge desktop, click the <strong>Install</strong> icon in the
-                        address bar or open <strong>⋮ Menu → Cast, save, and share → Install page
-                        as app</strong>.
+                        {tPwa('desktopStepPrefix')}{' '}
+                        <strong>{tPwa('desktopStepHighlight1')}</strong> {tPwa('desktopStepMid')}{' '}
+                        <strong>{tPwa('desktopStepHighlight2')}</strong>.
                       </li>
                       <li>
-                        On Android Chrome, tap <strong>⋮ Menu → Install app</strong> (or{' '}
-                        <strong>Add to Home screen</strong>).
+                        {tPwa('androidStepPrefix')}{' '}
+                        <strong>{tPwa('androidStepHighlight1')}</strong> ({tPwa('androidStepOr')}{' '}
+                        <strong>{tPwa('androidStepHighlight2')}</strong>).
                       </li>
                     </ol>
                   )}

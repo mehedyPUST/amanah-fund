@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { FaqCategory, FaqItem } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -26,6 +27,8 @@ import { formatDateTime } from '../utils/format.ts';
 import { ActionModal } from './ActionModal.tsx';
 
 export function AdminFaqManager() {
+  const t = useTranslations('Admin.faq');
+  const tFaq = useTranslations('Public.faq');
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +58,11 @@ export function AdminFaqManager() {
       const data = await api.getFaqs();
       setFaqs(sortFaqItems(Array.isArray(data.faqs) ? data.faqs : []));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load FAQs.');
+      setError(err instanceof Error ? err.message : t('loadFailed'));
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadFaqs(false);
@@ -79,6 +82,7 @@ export function AdminFaqManager() {
     const q = searchQuery.trim().toLowerCase();
     return faqs.filter((item) => {
       const meta = FAQ_CATEGORY_META[item.category] || FAQ_CATEGORY_META.membership;
+      const localizedCat = tFaq(`categories.${item.category}` as const);
       const matchesCat = activeCategory === 'all' || item.category === activeCategory;
       if (!matchesCat) return false;
       if (!q) return true;
@@ -86,10 +90,11 @@ export function AdminFaqManager() {
         item.question.toLowerCase().includes(q) ||
         item.answer.toLowerCase().includes(q) ||
         meta.label.toLowerCase().includes(q) ||
+        localizedCat.toLowerCase().includes(q) ||
         (item.articleRef || '').toLowerCase().includes(q)
       );
     });
-  }, [faqs, activeCategory, searchQuery]);
+  }, [faqs, activeCategory, searchQuery, tFaq]);
 
   function openCreateComposer() {
     setEditingFaq(null);
@@ -127,15 +132,15 @@ export function AdminFaqManager() {
     const cleanArticleRef = articleRefInput.trim();
 
     if (cleanQuestion.length < 5 || cleanQuestion.length > 300) {
-      setFormError('Question must be between 5 and 300 characters.');
+      setFormError(t('questionLengthError'));
       return;
     }
     if (cleanAnswer.length < 5 || cleanAnswer.length > 4000) {
-      setFormError('Answer must be between 5 and 4000 characters.');
+      setFormError(t('answerLengthError'));
       return;
     }
     if (cleanArticleRef.length > 80) {
-      setFormError('Charter / policy reference must be 80 characters or fewer.');
+      setFormError(t('articleRefLengthError'));
       return;
     }
 
@@ -145,7 +150,7 @@ export function AdminFaqManager() {
       if (editingFaq) {
         const res = await api.updateFaq(editingFaq.id, {
           category: categoryInput,
-          articleRef: cleanArticleRef || 'Charter Policy',
+          articleRef: cleanArticleRef || tFaq('charterPolicyFallback'),
           question: cleanQuestion,
           answer: cleanAnswer,
         });
@@ -153,7 +158,7 @@ export function AdminFaqManager() {
       } else {
         const res = await api.createFaq({
           category: categoryInput,
-          articleRef: cleanArticleRef || 'Charter Policy',
+          articleRef: cleanArticleRef || tFaq('charterPolicyFallback'),
           question: cleanQuestion,
           answer: cleanAnswer,
         });
@@ -163,7 +168,7 @@ export function AdminFaqManager() {
       setEditingFaq(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Unable to save FAQ entry.');
+      setFormError(err instanceof Error ? err.message : t('saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -189,7 +194,7 @@ export function AdminFaqManager() {
       setDeleteTarget(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete FAQ item.');
+      setError(err instanceof Error ? err.message : t('deleteFailed'));
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
@@ -202,13 +207,13 @@ export function AdminFaqManager() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <HelpCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Public Knowledge Base · {faqs.length} FAQ Entry(s)</span>
+            <span>{t('eyebrow', { count: faqs.length })}</span>
           </div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Manage Frequently Asked Questions
+            {t('title')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Add, edit, or delete questions and answers displayed on the Home, About, How It Works, and Rules &amp; Charter pages.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -220,7 +225,7 @@ export function AdminFaqManager() {
             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            <span>Refresh</span>
+            <span>{t('refresh')}</span>
           </button>
           <button
             type="button"
@@ -228,7 +233,7 @@ export function AdminFaqManager() {
             className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Add FAQ</span>
+            <span>{t('addFaq')}</span>
           </button>
         </div>
       </div>
@@ -246,13 +251,13 @@ export function AdminFaqManager() {
           >
             <div className="flex items-center justify-between gap-3">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {editingFaq ? 'Edit FAQ Entry' : 'Create New FAQ Entry'}
+                {editingFaq ? t('editEntryTitle') : t('createEntryTitle')}
               </h4>
               <button
                 type="button"
                 onClick={closeComposer}
                 disabled={submitting}
-                aria-label="Close FAQ composer"
+                aria-label={t('closeComposerAria')}
                 className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -268,7 +273,7 @@ export function AdminFaqManager() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Topic Category
+                  {t('labelCategory')}
                 </label>
                 <select
                   value={categoryInput}
@@ -277,21 +282,21 @@ export function AdminFaqManager() {
                 >
                   {FAQ_CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
                     <option key={cat.key} value={cat.key}>
-                      {cat.label}
+                      {tFaq(`categories.${cat.key}` as const)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Charter / Policy Reference (Optional)
+                  {t('labelArticleRef')}
                 </label>
                 <input
                   type="text"
                   maxLength={80}
                   value={articleRefInput}
                   onChange={(e) => setArticleRefInput(e.target.value)}
-                  placeholder="e.g. Article 10 or Charter Policy"
+                  placeholder={t('articleRefPlaceholder')}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -299,7 +304,7 @@ export function AdminFaqManager() {
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Question
+                {t('labelQuestion')}
               </label>
               <input
                 type="text"
@@ -307,14 +312,14 @@ export function AdminFaqManager() {
                 maxLength={300}
                 value={questionInput}
                 onChange={(e) => setQuestionInput(e.target.value)}
-                placeholder="Enter the FAQ question..."
+                placeholder={t('questionPlaceholder')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Answer
+                {t('labelAnswer')}
               </label>
               <textarea
                 rows={4}
@@ -322,7 +327,7 @@ export function AdminFaqManager() {
                 maxLength={4000}
                 value={answerInput}
                 onChange={(e) => setAnswerInput(e.target.value)}
-                placeholder="Write a clear, charter-backed answer..."
+                placeholder={t('answerPlaceholder')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 leading-relaxed"
               />
             </div>
@@ -333,7 +338,7 @@ export function AdminFaqManager() {
                 disabled={submitting || rewritingFaq}
                 onClick={async () => {
                   if (!questionInput.trim() && !answerInput.trim()) {
-                    setFormError('Enter a draft question or answer before using AI Polish.');
+                    setFormError(t('aiPolishEmptyError'));
                     return;
                   }
                   setRewritingFaq(true);
@@ -353,7 +358,7 @@ export function AdminFaqManager() {
                     }
                   } catch (err) {
                     setFormError(
-                      err instanceof Error ? err.message : 'Unable to polish FAQ with Groq AI.'
+                      err instanceof Error ? err.message : t('aiPolishFailed')
                     );
                   } finally {
                     setRewritingFaq(false);
@@ -362,7 +367,7 @@ export function AdminFaqManager() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{rewritingFaq ? 'Polishing...' : 'AI Polish'}</span>
+                <span>{rewritingFaq ? t('polishing') : t('aiPolish')}</span>
               </button>
               <button
                 type="button"
@@ -370,14 +375,14 @@ export function AdminFaqManager() {
                 disabled={submitting}
                 className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
                 className="px-4 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
               >
-                {submitting ? 'Saving...' : editingFaq ? 'Save FAQ Update' : 'Publish FAQ'}
+                {submitting ? t('saving') : editingFaq ? t('saveUpdate') : t('publishFaq')}
               </button>
             </div>
           </motion.form>
@@ -400,7 +405,7 @@ export function AdminFaqManager() {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                {cat.label}
+                {tFaq(`categories.${cat.key}` as const)}
               </button>
             );
           })}
@@ -415,7 +420,7 @@ export function AdminFaqManager() {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search FAQs..."
+            placeholder={t('searchPlaceholder')}
             className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs"
           />
         </div>
@@ -438,8 +443,8 @@ export function AdminFaqManager() {
         <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 p-6 text-center space-y-2">
           <p className="text-xs text-slate-600 dark:text-slate-400">
             {faqs.length === 0
-              ? 'No FAQ entries exist yet.'
-              : 'No FAQ entries match the selected filter.'}
+              ? t('emptyAll')
+              : t('emptyFiltered')}
           </p>
           <button
             type="button"
@@ -447,14 +452,13 @@ export function AdminFaqManager() {
             className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Add FAQ</span>
+            <span>{t('addFaq')}</span>
           </button>
         </div>
       ) : (
         <div className="space-y-2.5">
           {filteredFaqs.map((item, idx) => {
             const isOpen = Boolean(openIds[item.id]);
-            const meta = FAQ_CATEGORY_META[item.category] || FAQ_CATEGORY_META.membership;
             return (
               <div
                 key={item.id}
@@ -473,7 +477,7 @@ export function AdminFaqManager() {
                           {String(idx + 1).padStart(2, '0')}.
                         </span>
                         <span className="font-medium text-slate-700 dark:text-slate-300">
-                          {meta.label}
+                          {tFaq(`categories.${item.category}` as const)}
                         </span>
                         {item.articleRef && (
                           <>
@@ -485,7 +489,7 @@ export function AdminFaqManager() {
                           <>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono">
-                              Updated {formatDateTime(item.updatedAt)}
+                              {t('updatedAt', { date: formatDateTime(item.updatedAt) })}
                             </span>
                           </>
                         )}
@@ -510,7 +514,7 @@ export function AdminFaqManager() {
                       className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span className="hidden sm:inline">Edit</span>
+                      <span className="hidden sm:inline">{t('edit')}</span>
                     </button>
                     <button
                       type="button"
@@ -518,7 +522,7 @@ export function AdminFaqManager() {
                       className="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white text-xs font-medium text-rose-700 dark:text-rose-400 inline-flex items-center gap-1 cursor-pointer transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span className="hidden sm:inline">Delete</span>
+                      <span className="hidden sm:inline">{t('delete')}</span>
                     </button>
                   </div>
                 </div>
@@ -548,20 +552,20 @@ export function AdminFaqManager() {
         open={Boolean(deleteTarget)}
         mode="confirm"
         tone="red"
-        title="Delete FAQ Question & Answer"
-        description="Removing this FAQ immediately hides it from all public and member information pages."
+        title={t('deleteModalTitle')}
+        description={t('deleteModalDesc')}
         details={
           deleteTarget
             ? [
                 {
-                  label: 'Category',
-                  value: (FAQ_CATEGORY_META[deleteTarget.category] || FAQ_CATEGORY_META.membership).label,
+                  label: t('detailCategory'),
+                  value: tFaq(`categories.${deleteTarget.category}` as const),
                 },
-                { label: 'Question', value: deleteTarget.question },
+                { label: t('detailQuestion'), value: deleteTarget.question },
               ]
             : undefined
         }
-        confirmLabel="Delete FAQ"
+        confirmLabel={t('deleteModalConfirm')}
         busy={deleting}
         onConfirm={confirmDeleteFaq}
         onClose={() => {

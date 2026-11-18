@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'motion/react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
@@ -29,6 +30,7 @@ export function MonthlyFinancialSnapshot({
   loading = false,
   onNavigate,
 }: MonthlyFinancialSnapshotProps) {
+  const t = useTranslations('Common.snapshot');
   const ccy = config?.currency || 'BDT';
 
   const snapshot = useMemo(() => {
@@ -120,13 +122,13 @@ export function MonthlyFinancialSnapshot({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
               <CalendarDays className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
-            <span>Current Month Cash Position · {snapshot.monthLabel}</span>
+            <span>{t('currentMonthPosition', { month: snapshot.monthLabel })}</span>
           </div>
           <h3
             id="monthly-financial-snapshot-heading"
             className="text-base font-semibold text-slate-900 dark:text-white"
           >
-            Monthly Financial Snapshot
+            {t('heading')}
           </h3>
         </div>
 
@@ -138,7 +140,7 @@ export function MonthlyFinancialSnapshot({
                 onClick={() => onNavigate('monthly-contribution')}
                 className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-emerald-50/70 sm:bg-transparent dark:bg-emerald-950/30 sm:dark:bg-transparent text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
-                <span>Deposits</span>
+                <span>{t('deposits')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
               <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">
@@ -149,7 +151,7 @@ export function MonthlyFinancialSnapshot({
                 onClick={() => onNavigate('quard-hasan')}
                 className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-amber-50/70 sm:bg-transparent dark:bg-amber-950/30 sm:dark:bg-transparent text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
-                <span>Loan Activity</span>
+                <span>{t('loanActivity')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </>
@@ -161,18 +163,23 @@ export function MonthlyFinancialSnapshot({
         <div className="space-y-1 sm:space-y-1.5 min-w-0">
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <ArrowDownLeft className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">Total Contributions ({snapshot.monthLabel})</span>
+            <span className="truncate">{t('totalContributions', { month: snapshot.monthLabel })}</span>
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(snapshot.totalContributions, ccy)}
           </div>
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-            {snapshot.approvedCount} approved deposit{snapshot.approvedCount === 1 ? '' : 's'}
+            {t('approvedDepositsCount', {
+              count: snapshot.approvedCount,
+              label: snapshot.approvedCount === 1 ? t('depositSingular') : t('depositPlural'),
+            })}
             {snapshot.pendingCount > 0 && (
               <>
                 <span aria-hidden="true"> · </span>
                 <span className="text-amber-700 dark:text-amber-400">
-                  {formatMoney(snapshot.pendingContributionsAmount, ccy)} pending
+                  {t('pendingAmount', {
+                    amount: formatMoney(snapshot.pendingContributionsAmount, ccy),
+                  })}
                 </span>
               </>
             )}
@@ -182,18 +189,23 @@ export function MonthlyFinancialSnapshot({
         <div className="space-y-1 sm:space-y-1.5 min-w-0 border-l border-slate-100 dark:border-slate-800 pl-3 md:pl-5">
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">
             <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">Withdrawn Loans ({snapshot.monthLabel})</span>
+            <span className="truncate">{t('withdrawnLoans', { month: snapshot.monthLabel })}</span>
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(snapshot.totalWithdrawnLoans, ccy)}
           </div>
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-            {snapshot.withdrawnCount} disbursed loan{snapshot.withdrawnCount === 1 ? '' : 's'}
+            {t('disbursedLoansCount', {
+              count: snapshot.withdrawnCount,
+              label: snapshot.withdrawnCount === 1 ? t('loanSingular') : t('loanPlural'),
+            })}
             {snapshot.awaitingDisbursementAmount > 0 && (
               <>
                 <span aria-hidden="true"> · </span>
                 <span className="text-teal-700 dark:text-teal-400">
-                  {formatMoney(snapshot.awaitingDisbursementAmount, ccy)} awaiting release
+                  {t('awaitingRelease', {
+                    amount: formatMoney(snapshot.awaitingDisbursementAmount, ccy),
+                  })}
                 </span>
               </>
             )}
@@ -202,7 +214,7 @@ export function MonthlyFinancialSnapshot({
 
         <div className="col-span-2 md:col-span-1 pt-2.5 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 md:pl-5 space-y-1 sm:space-y-1.5">
           <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
-            Net Monthly Position
+            {t('netMonthlyPosition')}
           </div>
           <div
             className={`text-lg sm:text-2xl font-bold font-mono tabular-nums ${
@@ -215,9 +227,7 @@ export function MonthlyFinancialSnapshot({
             {formatMoney(Math.abs(snapshot.netMonthlyFlow), ccy)}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            {snapshot.netMonthlyFlow >= 0
-              ? 'Contributions exceed loan withdrawals this month'
-              : 'Loan withdrawals exceed contributions this month'}
+            {snapshot.netMonthlyFlow >= 0 ? t('surplusDesc') : t('deficitDesc')}
           </div>
         </div>
       </div>
@@ -229,7 +239,7 @@ export function MonthlyFinancialSnapshot({
             <span className="inline-flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600 shrink-0" aria-hidden="true" />
               <span>
-                Contributions{' '}
+                {t('contributions')}{' '}
                 <strong className="font-mono tabular-nums text-slate-800 dark:text-slate-200">
                   ({snapshot.contribSharePct}%)
                 </strong>
@@ -238,7 +248,7 @@ export function MonthlyFinancialSnapshot({
             <span className="inline-flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 shrink-0" aria-hidden="true" />
               <span>
-                Withdrawn Loans{' '}
+                {t('withdrawnLoansShort')}{' '}
                 <strong className="font-mono tabular-nums text-slate-800 dark:text-slate-200">
                   ({snapshot.loanSharePct}%)
                 </strong>
@@ -246,13 +256,16 @@ export function MonthlyFinancialSnapshot({
             </span>
           </div>
           <span className="font-mono tabular-nums">
-            Total flow: {formatMoney(snapshot.totalVolume, ccy)}
+            {t('totalFlow', { amount: formatMoney(snapshot.totalVolume, ccy) })}
           </span>
         </div>
 
         <div
           role="img"
-          aria-label={`Monthly contributions (${snapshot.contribSharePct}%) versus withdrawn loans (${snapshot.loanSharePct}%)`}
+          aria-label={t('ratioBarAria', {
+            contribPct: snapshot.contribSharePct,
+            loanPct: snapshot.loanSharePct,
+          })}
           className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex"
         >
           {snapshot.totalVolume > 0 && (

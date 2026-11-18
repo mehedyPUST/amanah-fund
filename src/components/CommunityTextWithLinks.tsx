@@ -1,11 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ExternalLink, FileText, Image as ImageIcon, Link2, Video } from 'lucide-react';
 import type { CommunityPostLink, CommunityPostLinkKind } from '../types/coop.ts';
 import {
   COMMUNITY_EMOJIS,
   getCommunityLinkHost,
-  getCommunityLinkKindLabel,
   normalizeCommunityLinkUrl,
   parseTextWithLinks,
 } from '../utils/communityLinks.ts';
@@ -59,6 +59,7 @@ export function CommunityPostLinksList({
   links?: CommunityPostLink[];
   legacyImageUrl?: string;
 }) {
+  const tLinks = useTranslations('Community.links');
   const combined: CommunityPostLink[] = [...(Array.isArray(links) ? links : [])];
   if (legacyImageUrl) {
     const parsedLegacy = normalizeCommunityLinkUrl(legacyImageUrl);
@@ -68,7 +69,7 @@ export function CommunityPostLinksList({
     ) {
       combined.push({
         url: parsedLegacy.toString(),
-        label: 'Shared Photo Link',
+        label: tLinks('sharedPhotoLabel'),
         kind: 'photo',
       });
     }
@@ -76,12 +77,25 @@ export function CommunityPostLinksList({
 
   if (combined.length === 0) return null;
 
+  const getKindLabel = (kind?: CommunityPostLinkKind) => {
+    switch (kind) {
+      case 'photo':
+        return tLinks('kindPhoto');
+      case 'video':
+        return tLinks('kindVideo');
+      case 'document':
+        return tLinks('kindDocument');
+      default:
+        return tLinks('kindLink');
+    }
+  };
+
   return (
     <div className="space-y-2">
       {combined.map((item) => {
         const Icon = getLinkIcon(item.kind);
         const host = getCommunityLinkHost(item.url);
-        const kindLabel = getCommunityLinkKindLabel(item.kind);
+        const kindLabel = getKindLabel(item.kind);
         return (
           <a
             key={item.url}
@@ -123,27 +137,33 @@ export function CommunityEmojiPicker({
   onSelect: (emoji: string) => void;
   compact?: boolean;
 }) {
+  const tLinks = useTranslations('Community.links');
+  const tEmojis = useTranslations('Community.emojis');
+
   return (
     <div
       role="group"
-      aria-label="Insert emoji"
+      aria-label={tLinks('insertEmojiAria')}
       className={`rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-sm p-2.5 ${
         compact ? 'max-w-sm' : ''
       }`}
     >
       <div className="flex flex-wrap gap-1">
-        {COMMUNITY_EMOJIS.map((item) => (
-          <button
-            key={item.emoji}
-            type="button"
-            title={item.label}
-            aria-label={`Insert ${item.label} emoji`}
-            onClick={() => onSelect(item.emoji)}
-            className="w-8 h-8 rounded-lg text-base hover:bg-emerald-50 dark:hover:bg-emerald-950/50 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-          >
-            {item.emoji}
-          </button>
-        ))}
+        {COMMUNITY_EMOJIS.map((item) => {
+          const localizedLabel = tEmojis(item.label);
+          return (
+            <button
+              key={item.emoji}
+              type="button"
+              title={localizedLabel}
+              aria-label={tLinks('insertNamedEmojiAria', { label: localizedLabel })}
+              onClick={() => onSelect(item.emoji)}
+              className="w-8 h-8 rounded-lg text-base hover:bg-emerald-50 dark:hover:bg-emerald-950/50 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+            >
+              {item.emoji}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

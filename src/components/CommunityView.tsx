@@ -38,6 +38,9 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { useLocale, useTranslations } from 'next-intl';
+import type { AppLocale } from '../i18n/config.ts';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type {
   ActiveMemberDirectoryItem,
   AiRewriteTone,
@@ -57,7 +60,6 @@ import { api } from '../utils/api.ts';
 import {
   extractPostUrlList,
   getCommunityLinkHost,
-  getCommunityLinkKindLabel,
   inferCommunityLinkKind,
   isSpamCheckBlockingPost,
   MAX_COMMUNITY_POST_LINKS,
@@ -100,34 +102,29 @@ const CATEGORIES: CommunityCategory[] = [
 
 const REACTION_OPTIONS: Array<{
   type: CommunityReactionType;
-  label: string;
   Icon: typeof ThumbsUp;
   activeClass: string;
 }> = [
   {
     type: 'like',
-    label: 'Like',
     Icon: ThumbsUp,
     activeClass:
       'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300',
   },
   {
     type: 'support',
-    label: 'Support',
     Icon: HeartHandshake,
     activeClass:
       'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300',
   },
   {
     type: 'celebrate',
-    label: 'Celebrate',
     Icon: Award,
     activeClass:
       'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300',
   },
   {
     type: 'helpful',
-    label: 'Helpful',
     Icon: Lightbulb,
     activeClass:
       'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300',
@@ -199,6 +196,9 @@ export function CommunityView({
   initialDmPeer,
   onConsumeInitialDmPeer,
 }: CommunityViewProps) {
+  const t = useTranslations('Community');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale() as AppLocale;
   const isAdmin = user.role === 'admin';
   const [activeTab, setActiveTab] = useState<'feed' | 'messages' | 'members'>('feed');
   const [activeMembersList, setActiveMembersList] = useState<ActiveMemberDirectoryItem[]>([]);
@@ -327,13 +327,13 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Community Feed Unavailable',
-        description: err instanceof Error ? err.message : 'Failed to load community posts.',
+        title: t('feedUnavailableTitle'),
+        description: err instanceof Error ? err.message : t('feedUnavailableDesc'),
       });
     } finally {
       if (!silent) setPostsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadThreads = useCallback(
     async (silent = false) => {
@@ -345,12 +345,12 @@ export function CommunityView({
         setTotalUnread(res.totalUnread);
         onUnreadDmChange?.(res.totalUnread);
       } catch (err) {
-        setDmError(err instanceof Error ? err.message : 'Failed to load private conversations.');
+        setDmError(err instanceof Error ? err.message : t('threadsUnavailableDesc'));
       } finally {
         if (!silent) setThreadsLoading(false);
       }
     },
-    [onUnreadDmChange]
+    [onUnreadDmChange, t]
   );
 
   const loadConversation = useCallback(
@@ -363,12 +363,12 @@ export function CommunityView({
         setMessages(res.messages);
         await loadThreads(true);
       } catch (err) {
-        setDmError(err instanceof Error ? err.message : 'Failed to load conversation.');
+        setDmError(err instanceof Error ? err.message : t('conversationUnavailableDesc'));
       } finally {
         if (!silent) setMessagesLoading(false);
       }
     },
-    [loadThreads]
+    [loadThreads, t]
   );
 
   const loadActiveMembers = useCallback(async (silent = false) => {
@@ -578,6 +578,19 @@ export function CommunityView({
     });
   }
 
+  function getLocalizedLinkKindLabel(kind?: CommunityPostLinkKind): string {
+    switch (kind) {
+      case 'photo':
+        return t('links.kindPhoto');
+      case 'video':
+        return t('links.kindVideo');
+      case 'document':
+        return t('links.kindDocument');
+      default:
+        return t('links.kindLink');
+    }
+  }
+
   function resolveDraftLinkAddition(
     currentList: CommunityPostLink[],
     rawUrl: string,
@@ -591,21 +604,21 @@ export function CommunityView({
     if (currentList.length >= MAX_COMMUNITY_POST_LINKS) {
       return {
         nextList: currentList,
-        error: `You can attach up to ${MAX_COMMUNITY_POST_LINKS} links per post.`,
+        error: t('maxLinksError', { max: MAX_COMMUNITY_POST_LINKS }),
       };
     }
     const parsed = normalizeCommunityLinkUrl(trimmed);
     if (!parsed) {
       return {
         nextList: currentList,
-        error: 'Enter a valid http:// or https:// URL to share a photo, video, or web content.',
+        error: t('invalidUrlError'),
       };
     }
     const finalUrl = parsed.toString();
     if (currentList.some((item) => item.url === finalUrl)) {
       return {
         nextList: currentList,
-        error: 'This link has already been added to the post.',
+        error: t('duplicateLinkError'),
       };
     }
     const cleanLabel = rawLabel.trim().slice(0, 80);
@@ -671,9 +684,9 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Link Safety Check Failed',
+            title: t('linkSafetyFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Unable to verify post links with AI.',
+              err instanceof Error ? err.message : t('linkSafetyVerifyError'),
           });
         }
         return null;
@@ -683,7 +696,7 @@ export function CommunityView({
         }
       }
     },
-    []
+    [t]
   );
 
   const runEditPostSpamScan = useCallback(
@@ -712,9 +725,9 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Link Safety Check Failed',
+            title: t('linkSafetyFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Unable to verify edited post links with AI.',
+              err instanceof Error ? err.message : t('linkSafetyVerifyEditError'),
           });
         }
         return null;
@@ -724,7 +737,7 @@ export function CommunityView({
         }
       }
     },
-    []
+    [t]
   );
 
   // Automatically check links when inline URLs or attached links change in the New Post composer
@@ -781,7 +794,7 @@ export function CommunityView({
         setModal({
           mode: 'notice',
           tone: 'red',
-          title: 'Invalid Link URL',
+          title: t('invalidLinkTitle'),
           description: result.error,
         });
         return;
@@ -803,7 +816,7 @@ export function CommunityView({
         setModal({
           mode: 'notice',
           tone: 'red',
-          title: 'Invalid Link URL',
+          title: t('invalidLinkTitle'),
           description: result.error,
         });
         return;
@@ -860,8 +873,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'amber',
-        title: 'Write a Draft First',
-        description: 'Enter a headline or draft message before asking AI to rewrite it.',
+        title: t('writeDraftTitle'),
+        description: t('writeDraftDesc'),
       });
       return;
     }
@@ -880,10 +893,16 @@ export function CommunityView({
       if (res.result.rewrittenText) {
         setNewContent(res.result.rewrittenText.slice(0, 4000));
       }
+      const localizedTone =
+        aiTone === 'concise'
+          ? t('toneConcise')
+          : aiTone === 'formal'
+            ? t('toneFormal')
+            : t('toneClear');
       setNewRewriteFeedback(
         res.result.improvements.length > 0
           ? res.result.improvements.join(' · ')
-          : `Rewritten in ${aiTone} tone.`
+          : t('rewrittenToneFeedback', { tone: localizedTone })
       );
       lastNewScanKeyRef.current = '';
       setNewSpamCheckResult(null);
@@ -891,9 +910,9 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'AI Rewrite Unavailable',
+        title: t('aiRewriteUnavailableTitle'),
         description:
-          err instanceof Error ? err.message : 'Unable to rewrite community post with Groq AI.',
+          err instanceof Error ? err.message : t('aiRewriteUnavailableDesc'),
       });
     } finally {
       setRewritingNewPost(false);
@@ -911,7 +930,7 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Link URL',
+        title: t('invalidLinkTitle'),
         description: pendingLinkResult.error,
       });
       return;
@@ -951,9 +970,9 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'AI Rewrite Unavailable',
+        title: t('aiRewriteUnavailableTitle'),
         description:
-          err instanceof Error ? err.message : 'Unable to rewrite community post with Groq AI.',
+          err instanceof Error ? err.message : t('aiRewriteUnavailableDesc'),
       });
     } finally {
       setRewritingEditPost(false);
@@ -971,7 +990,7 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Link URL',
+        title: t('invalidLinkTitle'),
         description: pendingLinkResult.error,
       });
       return;
@@ -1002,7 +1021,7 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Link URL',
+        title: t('invalidLinkTitle'),
         description: pendingLinkResult.error,
       });
       return;
@@ -1036,8 +1055,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Unable to Post with Flagged Link',
-        description: `${effectiveSpamCheck!.reason} Remove or replace the spam/suspicious link before publishing.`,
+        title: t('blockedFlaggedTitle'),
+        description: t('blockedFlaggedDesc', { reason: effectiveSpamCheck!.reason }),
       });
       return;
     }
@@ -1049,8 +1068,8 @@ export function CommunityView({
         setModal({
           mode: 'notice',
           tone: 'red',
-          title: 'Invalid Community Poll',
-          description: 'Attached poll requires a question and at least 2 non-empty options.',
+          title: t('invalidPollTitle'),
+          description: t('invalidPollDesc'),
         });
         return;
       }
@@ -1064,22 +1083,22 @@ export function CommunityView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Publish Community Post?',
-      description: 'Confirm publishing this text post to the verified Amanah Member Community.',
+      title: t('confirmPublishTitle'),
+      description: t('confirmPublishDesc'),
       details: [
-        { label: 'Topic', value: newCategory },
-        { label: 'Headline', value: newTitle.trim() },
-        ...(pollPayload ? [{ label: 'Attached Poll', value: pollPayload.question }] : []),
+        { label: t('detailTopic'), value: t(`categories.${newCategory}`) },
+        { label: t('detailHeadline'), value: newTitle.trim() },
+        ...(pollPayload ? [{ label: t('detailAttachedPoll'), value: pollPayload.question }] : []),
         ...(finalLinks.length > 0
           ? [
               {
-                label: 'Links',
-                value: `${finalLinks.length} ${finalLinks.length === 1 ? 'link' : 'links'} verified safe`,
+                label: t('detailLinks'),
+                value: t('linksVerifiedSafe', { count: finalLinks.length }),
               },
             ]
           : []),
       ],
-      confirmLabel: 'Publish Post',
+      confirmLabel: t('publishPostBtn'),
       run: async () => {
         setCreatingPost(true);
         try {
@@ -1112,15 +1131,15 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Post Published',
-            description: 'Post published to the Amanah Community.',
+            title: t('postPublishedTitle'),
+            description: t('postPublishedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Publish Failed',
-            description: err instanceof Error ? err.message : 'Failed to publish post.',
+            title: t('publishFailedTitle'),
+            description: err instanceof Error ? err.message : t('publishFailedDesc'),
           });
         } finally {
           setCreatingPost(false);
@@ -1139,8 +1158,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Poll Vote Failed',
-        description: err instanceof Error ? err.message : 'Failed to record poll vote.',
+        title: t('pollVoteFailedTitle'),
+        description: err instanceof Error ? err.message : t('pollVoteFailedDesc'),
       });
     } finally {
       setVotingPollId(null);
@@ -1174,7 +1193,7 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Link URL',
+        title: t('invalidLinkTitle'),
         description: pendingLinkResult.error,
       });
       return;
@@ -1208,8 +1227,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Unable to Save with Flagged Link',
-        description: `${effectiveSpamCheck!.reason} Remove or replace the spam/suspicious link before saving.`,
+        title: t('blockedSaveTitle'),
+        description: t('blockedSaveDesc', { reason: effectiveSpamCheck!.reason }),
       });
       return;
     }
@@ -1217,13 +1236,13 @@ export function CommunityView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Save Post Changes?',
-      description: 'Confirm saving your edited post content.',
+      title: t('confirmSaveEditTitle'),
+      description: t('confirmSaveEditDesc'),
       details: [
-        { label: 'Topic', value: editCategory },
-        { label: 'Headline', value: editTitle.trim() },
+        { label: t('detailTopic'), value: t(`categories.${editCategory}`) },
+        { label: t('detailHeadline'), value: editTitle.trim() },
       ],
-      confirmLabel: 'Save Changes',
+      confirmLabel: tCommon('saveChanges'),
       run: async () => {
         setSavingPostEdit(true);
         try {
@@ -1238,15 +1257,15 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Post Updated',
-            description: 'Your changes have been saved.',
+            title: t('postUpdatedTitle'),
+            description: t('postUpdatedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Update Failed',
-            description: err instanceof Error ? err.message : 'Failed to save changes.',
+            title: t('updateFailedTitle'),
+            description: err instanceof Error ? err.message : t('updateFailedDesc'),
           });
         } finally {
           setSavingPostEdit(false);
@@ -1261,19 +1280,19 @@ export function CommunityView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: isAdminModeration ? 'Remove Post as Administrator?' : 'Delete Community Post?',
+      title: isAdminModeration ? t('confirmAdminRemovePostTitle') : t('confirmDeletePostTitle'),
       description: isAdminModeration
-        ? `Confirm removing "${post.title}" by ${post.authorName}.`
-        : `Delete your post "${post.title}"? This action cannot be undone.`,
+        ? t('confirmAdminRemovePostDesc', { title: post.title, author: post.authorName })
+        : t('confirmDeletePostDesc', { title: post.title }),
       details: [
-        { label: 'Author', value: `${post.authorName} (${post.authorCode})` },
-        { label: 'Topic', value: post.category },
+        { label: t('detailAuthor'), value: `${post.authorName} (${post.authorCode})` },
+        { label: t('detailTopic'), value: t(`categories.${post.category}`) },
       ],
-      confirmLabel: isAdminModeration ? 'Remove Post' : 'Delete Post',
+      confirmLabel: isAdminModeration ? t('removePostBtn') : t('deletePostBtn'),
       ...(isAdminModeration
         ? {
-            inputLabel: 'Moderation note sent to author (optional)',
-            inputPlaceholder: 'Reason for removing post…',
+            inputLabel: t('moderationNoteInputLabel'),
+            inputPlaceholder: t('moderationNotePlaceholder'),
             inputRequired: false,
           }
         : {}),
@@ -1285,15 +1304,15 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Post Deleted',
-            description: 'The community post has been removed.',
+            title: t('postDeletedTitle'),
+            description: t('postDeletedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Delete Failed',
-            description: err instanceof Error ? err.message : 'Failed to delete post.',
+            title: t('deleteFailedTitle'),
+            description: err instanceof Error ? err.message : t('deleteFailedDesc'),
           });
         } finally {
           setModerationBusyId(null);
@@ -1310,8 +1329,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Reaction Failed',
-        description: err instanceof Error ? err.message : 'Failed to update reaction.',
+        title: t('reactionFailedTitle'),
+        description: err instanceof Error ? err.message : t('reactionFailedDesc'),
       });
     }
   }
@@ -1328,8 +1347,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Comment Failed',
-        description: err instanceof Error ? err.message : 'Failed to add comment.',
+        title: t('commentFailedTitle'),
+        description: err instanceof Error ? err.message : t('commentFailedDesc'),
       });
     } finally {
       setSubmittingCommentPostId(null);
@@ -1348,8 +1367,8 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Comment Update Failed',
-        description: err instanceof Error ? err.message : 'Failed to update comment.',
+        title: t('commentUpdateFailedTitle'),
+        description: err instanceof Error ? err.message : t('commentUpdateFailedDesc'),
       });
     }
   }
@@ -1358,10 +1377,10 @@ export function CommunityView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Delete Comment?',
-      description: 'Confirm removing this comment from the discussion thread.',
-      details: [{ label: 'Author', value: authorName }],
-      confirmLabel: 'Delete Comment',
+      title: t('confirmDeleteCommentTitle'),
+      description: t('confirmDeleteCommentDesc'),
+      details: [{ label: t('detailAuthor'), value: authorName }],
+      confirmLabel: t('deleteCommentBtn'),
       run: async () => {
         try {
           const res = await api.deleteCommunityComment(postId, commentId);
@@ -1369,15 +1388,15 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Comment Removed',
-            description: 'The comment has been deleted.',
+            title: t('commentRemovedTitle'),
+            description: t('commentRemovedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Delete Failed',
-            description: err instanceof Error ? err.message : 'Failed to delete comment.',
+            title: t('deleteFailedTitle'),
+            description: err instanceof Error ? err.message : t('commentDeleteFailedDesc'),
           });
         }
       },
@@ -1388,16 +1407,19 @@ export function CommunityView({
     post: CommunityPost,
     action: 'pin' | 'unpin' | 'lock' | 'unlock' | 'hide' | 'restore'
   ) {
+    const actionTitle = t(`moderationActions.${action}.title`);
+    const actionConfirm = t(`moderationActions.${action}.confirm`);
+    const actionVerb = t(`moderationActions.${action}.verb`);
     setModal({
       mode: 'confirm',
       tone: action === 'hide' || action === 'lock' ? 'amber' : 'emerald',
-      title: `${action.charAt(0).toUpperCase() + action.slice(1)} Community Post?`,
-      description: `Confirm applying moderation action "${action}" to this post.`,
+      title: actionTitle,
+      description: t('confirmModerateDesc', { action: actionVerb }),
       details: [
-        { label: 'Post', value: post.title },
-        { label: 'Author', value: `${post.authorName} (${post.authorCode})` },
+        { label: t('detailPost'), value: post.title },
+        { label: t('detailAuthor'), value: `${post.authorName} (${post.authorCode})` },
       ],
-      confirmLabel: `Confirm ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      confirmLabel: actionConfirm,
       run: async () => {
         setModerationBusyId(post.id);
         try {
@@ -1412,15 +1434,15 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Moderation Applied',
-            description: `Moderation action "${action}" applied.`,
+            title: t('moderationAppliedTitle'),
+            description: t('moderationAppliedDesc', { action: actionVerb }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Moderation Failed',
-            description: err instanceof Error ? err.message : 'Moderation action failed.',
+            title: t('moderationFailedTitle'),
+            description: err instanceof Error ? err.message : t('moderationFailedDesc'),
           });
         } finally {
           setModerationBusyId(null);
@@ -1438,13 +1460,11 @@ export function CommunityView({
       mode: 'confirm',
       tone: currentlyMuted ? 'emerald' : 'red',
       title: currentlyMuted
-        ? `Restore Posting for ${authorName}?`
-        : `Mute ${authorName} in Community?`,
-      description: currentlyMuted
-        ? 'Restoring privileges allows this member to create posts and comments again.'
-        : 'Muting restricts this member from creating new posts or comments in Community.',
-      details: [{ label: 'Member', value: authorName }],
-      confirmLabel: currentlyMuted ? 'Unmute Member' : 'Mute Member',
+        ? t('confirmUnmuteTitle', { name: authorName })
+        : t('confirmMuteTitle', { name: authorName }),
+      description: currentlyMuted ? t('confirmUnmuteDesc') : t('confirmMuteDesc'),
+      details: [{ label: t('detailMember'), value: authorName }],
+      confirmLabel: currentlyMuted ? t('unmuteMemberBtn') : t('muteMemberBtn'),
       run: async () => {
         setModerationBusyId(authorId);
         try {
@@ -1454,17 +1474,17 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: currentlyMuted ? 'Member Unmuted' : 'Member Muted',
+            title: currentlyMuted ? t('memberUnmutedTitle') : t('memberMutedTitle'),
             description: !currentlyMuted
-              ? `${authorName} has been muted from posting or commenting in Community.`
-              : `${authorName}'s Community privileges have been restored.`,
+              ? t('memberMutedDesc', { name: authorName })
+              : t('memberUnmutedDesc', { name: authorName }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Mute Update Failed',
-            description: err instanceof Error ? err.message : 'Failed to update mute status.',
+            title: t('muteFailedTitle'),
+            description: err instanceof Error ? err.message : t('muteFailedDesc'),
           });
         } finally {
           setModerationBusyId(null);
@@ -1510,7 +1530,7 @@ export function CommunityView({
       setMessageInput('');
       await loadThreads(true);
     } catch (err) {
-      setDmError(err instanceof Error ? err.message : 'Failed to send message.');
+      setDmError(err instanceof Error ? err.message : t('sendMessageError'));
     } finally {
       setSendingMessage(false);
     }
@@ -1520,9 +1540,9 @@ export function CommunityView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Delete Private Message?',
-      description: 'Confirm permanently deleting this encrypted direct message for both participants.',
-      confirmLabel: 'Delete Message',
+      title: t('confirmDeleteDmTitle'),
+      description: t('confirmDeleteDmDesc'),
+      confirmLabel: t('deleteDmBtn'),
       run: async () => {
         setDmError(null);
         try {
@@ -1532,16 +1552,16 @@ export function CommunityView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Message Deleted',
-            description: 'The private message has been deleted.',
+            title: t('dmDeletedTitle'),
+            description: t('dmDeletedDesc'),
           });
         } catch (err) {
-          setDmError(err instanceof Error ? err.message : 'Failed to delete message.');
+          setDmError(err instanceof Error ? err.message : t('dmDeleteFailedDesc'));
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Delete Failed',
-            description: err instanceof Error ? err.message : 'Failed to delete message.',
+            title: t('deleteFailedTitle'),
+            description: err instanceof Error ? err.message : t('dmDeleteFailedDesc'),
           });
         }
       },
@@ -1560,38 +1580,38 @@ export function CommunityView({
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Verified Member Network · AES-256-GCM Direct Chat</span>
+            <span>{t('toolbarEyebrow')}</span>
           </div>
           <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-            Amanah Member Community
+            {t('toolbarHeading')}
           </h2>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 shrink-0 w-full sm:w-auto">
           <div
             role="tablist"
-            aria-label="Community views"
+            aria-label={t('tabsAria')}
             className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
             {(
               [
                 {
                   id: 'feed',
-                  label: 'Discussion Feed',
+                  label: t('tabFeed'),
                   Icon: MessageSquare,
                   badge: posts.filter((p) => p.status === 'active').length,
                   badgeClass: 'text-slate-500 dark:text-slate-400',
                 },
                 {
                   id: 'messages',
-                  label: 'Private Messages',
+                  label: t('tabMessages'),
                   Icon: Mail,
                   badge: totalUnread > 0 ? totalUnread : null,
                   badgeClass: 'font-semibold text-indigo-700 dark:text-indigo-400',
                 },
                 {
                   id: 'members',
-                  label: 'Members',
+                  label: t('tabMembers'),
                   Icon: Users,
                   badge:
                     activeMembersList.length > 0
@@ -1647,7 +1667,7 @@ export function CommunityView({
               className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-              <span>{composerOpen ? 'Close Composer' : 'New Post'}</span>
+              <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
             </button>
           )}
         </div>
@@ -1671,10 +1691,9 @@ export function CommunityView({
             >
               <VolumeX className="w-4 h-4 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
               <div>
-                <p className="font-semibold">Community posting privileges are muted</p>
+                <p className="font-semibold">{t('mutedBannerTitle')}</p>
                 <p className="text-amber-800 dark:text-amber-300 mt-0.5">
-                  An administrator has temporarily restricted creating new posts and comments on your
-                  account. You may still read discussions and use Private Messages.
+                  {t('mutedBannerDesc')}
                 </p>
               </div>
             </div>
@@ -1693,10 +1712,10 @@ export function CommunityView({
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Create Community Post
+                    {t('createPostHeading')}
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Posting as {user.name} · <span className="font-mono">{user.memberCode}</span>
+                    {t('postingAs', { name: user.name })} <span className="font-mono">{user.memberCode}</span>
                   </span>
                 </div>
 
@@ -1706,7 +1725,7 @@ export function CommunityView({
                       htmlFor="post-category"
                       className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
                     >
-                      Topic
+                      {t('labelTopic')}
                     </label>
                     <select
                       id="post-category"
@@ -1716,7 +1735,7 @@ export function CommunityView({
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat} value={cat}>
-                          {cat}
+                          {t(`categories.${cat}`)}
                         </option>
                       ))}
                     </select>
@@ -1726,7 +1745,7 @@ export function CommunityView({
                       htmlFor="post-title"
                       className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
                     >
-                      Headline
+                      {t('labelHeadline')}
                     </label>
                     <input
                       id="post-title"
@@ -1736,7 +1755,7 @@ export function CommunityView({
                       maxLength={140}
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      placeholder="Share a proposal insight, cooperative update, or question..."
+                      placeholder={t('placeholderHeadline')}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     />
                   </div>
@@ -1747,7 +1766,7 @@ export function CommunityView({
                     htmlFor="post-content"
                     className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
                   >
-                    Message (type <span className="font-mono">@Name</span> to mention a member)
+                    {t('labelMessagePre')} <span className="font-mono">@Name</span> {t('labelMessagePost')}
                   </label>
                   <textarea
                     ref={postContentRef}
@@ -1762,13 +1781,13 @@ export function CommunityView({
                       setNewContent(val);
                       setPostMentionQuery(extractTrailingMentionQuery(val));
                     }}
-                    placeholder="Write clearly for verified Amanah members, use emojis, or paste photo/video links..."
+                    placeholder={t('placeholderPostBody')}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
                   />
                   {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
                     <div
                       role="listbox"
-                      aria-label="Mention member suggestions"
+                      aria-label={t('mentionSuggestionsAria')}
                       className="mt-1 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
                     >
                       {filterMentionMatches(postMentionQuery).map((m) => (
@@ -1799,21 +1818,21 @@ export function CommunityView({
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
                         <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Community Poll</span>
+                        <span>{t('communityPollTitle')}</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setPollEnabled(false)}
                         className="text-xs text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                       >
-                        Remove Poll
+                        {t('removePoll')}
                       </button>
                     </div>
                     <input
                       type="text"
                       value={pollQuestion}
                       onChange={(e) => setPollQuestion(e.target.value)}
-                      placeholder="Poll question (e.g. Best date for monthly Amanah review call?)"
+                      placeholder={t('placeholderPollQuestion')}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs sm:text-sm"
                     />
                     <div className="space-y-2">
@@ -1827,7 +1846,7 @@ export function CommunityView({
                                 prev.map((v, i) => (i === idx ? e.target.value : v))
                               )
                             }
-                            placeholder={`Option ${idx + 1}`}
+                            placeholder={t('placeholderPollOption', { num: idx + 1 })}
                             className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs"
                           />
                           {pollOptions.length > 2 && (
@@ -1836,7 +1855,7 @@ export function CommunityView({
                               onClick={() =>
                                 setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                               }
-                              aria-label="Remove option"
+                              aria-label={t('removeOptionAria')}
                               className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -1853,10 +1872,10 @@ export function CommunityView({
                           className="text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Add Option</span>
+                          <span>{t('addOption')}</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Max 6 options</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('maxPollOptions')}</span>
                       )}
                       <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                         <input
@@ -1865,7 +1884,7 @@ export function CommunityView({
                           onChange={(e) => setPollAllowMultiple(e.target.checked)}
                           className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600"
                         />
-                        <span>Allow multiple choices</span>
+                        <span>{t('allowMultipleChoices')}</span>
                       </label>
                     </div>
                   </div>
@@ -1885,7 +1904,7 @@ export function CommunityView({
                       <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                         <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                         <span>
-                          Share Links ({newLinks.length}/{MAX_COMMUNITY_POST_LINKS})
+                          {t('shareLinksCount', { count: newLinks.length, max: MAX_COMMUNITY_POST_LINKS })}
                         </span>
                       </span>
                       {linkBuilderOpen && (
@@ -1894,7 +1913,7 @@ export function CommunityView({
                           onClick={() => setLinkBuilderOpen(false)}
                           className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                         >
-                          Hide
+                          {tCommon('hide')}
                         </button>
                       )}
                     </div>
@@ -1927,8 +1946,8 @@ export function CommunityView({
                                   }
                                 >
                                   {isFlagged
-                                    ? 'Flagged Link'
-                                    : getCommunityLinkKindLabel(item.kind)}
+                                    ? t('flaggedLink')
+                                    : getLocalizedLinkKindLabel(item.kind)}
                                 </span>
                                 <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                   {item.url}
@@ -1939,7 +1958,7 @@ export function CommunityView({
                                 onClick={() =>
                                   setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
                                 }
-                                aria-label="Remove link"
+                                aria-label={t('removeLinkAria')}
                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -1962,7 +1981,7 @@ export function CommunityView({
                               handleAddLink('new');
                             }
                           }}
-                          placeholder="https://... (photo, video, or article URL)"
+                          placeholder={t('placeholderLinkUrl')}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
                         />
                         <input
@@ -1970,7 +1989,7 @@ export function CommunityView({
                           maxLength={80}
                           value={newLinkLabel}
                           onChange={(e) => setNewLinkLabel(e.target.value)}
-                          placeholder="Label (optional)"
+                          placeholder={t('placeholderLinkLabel')}
                           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
                         />
                         <select
@@ -1978,14 +1997,14 @@ export function CommunityView({
                           onChange={(e) =>
                             setNewLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
                           }
-                          aria-label="Link content type"
+                          aria-label={t('linkKindAria')}
                           className="px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
                         >
-                          <option value="auto">Auto Type</option>
-                          <option value="photo">Photo Link</option>
-                          <option value="video">Video Link</option>
-                          <option value="document">Document</option>
-                          <option value="link">Web Link</option>
+                          <option value="auto">{t('linkTypeAuto')}</option>
+                          <option value="photo">{t('linkTypePhoto')}</option>
+                          <option value="video">{t('linkTypeVideo')}</option>
+                          <option value="document">{t('linkTypeDoc')}</option>
+                          <option value="link">{t('linkTypeWeb')}</option>
                         </select>
                         <button
                           type="button"
@@ -1993,7 +2012,7 @@ export function CommunityView({
                           disabled={!newLinkUrl.trim()}
                           className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-teal-600 hover:bg-slate-800 dark:hover:bg-teal-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer"
                         >
-                          Add
+                          {t('addLinkBtn')}
                         </button>
                       </div>
                     )}
@@ -2005,13 +2024,13 @@ export function CommunityView({
                     {newRewriteFeedback && (
                       <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs text-indigo-800 dark:text-indigo-200">
                         <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                        <span>AI Rewrite applied: {newRewriteFeedback}</span>
+                        <span>{t('aiRewriteApplied', { feedback: newRewriteFeedback })}</span>
                       </div>
                     )}
                     {checkingNewSpam && (
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
                         <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
-                        <span>AI is automatically checking link safety &amp; spam risk…</span>
+                        <span>{t('checkingSpamNotice')}</span>
                       </div>
                     )}
                     {!checkingNewSpam && newSpamCheckResult && (
@@ -2033,23 +2052,23 @@ export function CommunityView({
                           <div className="space-y-1 min-w-0">
                             <div className="font-semibold">
                               {newPostBlocked
-                                ? 'Posting Blocked — Spam or Suspicious Link Detected'
+                                ? t('spamBlockedTitle')
                                 : newSpamCheckResult.riskLevel === 'caution'
-                                  ? 'Caution Notice'
-                                  : 'Post & Links Verified Safe'}
+                                  ? t('spamCautionTitle')
+                                  : t('spamSafeTitle')}
                               <span className="ml-1.5 font-mono text-[10px] opacity-75">
-                                ({newSpamCheckResult.checkedWith === 'groq' ? 'Groq AI' : 'Link Guard'})
+                                ({newSpamCheckResult.checkedWith === 'groq' ? t('checkedWithGroq') : t('checkedWithGuard')})
                               </span>
                             </div>
                             <div>{newSpamCheckResult.reason}</div>
                             {newSpamCheckResult.flaggedLinks.length > 0 && (
                               <div className="font-mono text-[11px] break-all">
-                                Flagged: {newSpamCheckResult.flaggedLinks.join(', ')}
+                                {t('flaggedListPrefix', { list: newSpamCheckResult.flaggedLinks.join(', ') })}
                               </div>
                             )}
                             {newPostBlocked && (
                               <div className="text-[11px] font-medium">
-                                Remove or replace the flagged link to enable publishing.
+                                {t('removeFlaggedHint')}
                               </div>
                             )}
                           </div>
@@ -2061,7 +2080,7 @@ export function CommunityView({
                               onClick={() => removeFlaggedLinksFromDraft('new')}
                               className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
                             >
-                              Remove Flagged Link
+                              {t('removeFlaggedBtn')}
                             </button>
                           )}
                       </div>
@@ -2081,7 +2100,7 @@ export function CommunityView({
                       }`}
                     >
                       <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                      <span>Emoji</span>
+                      <span>{t('emojiBtn')}</span>
                     </button>
                     <button
                       type="button"
@@ -2093,7 +2112,7 @@ export function CommunityView({
                       }`}
                     >
                       <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                      <span>Add Link</span>
+                      <span>{t('addLinkToggle')}</span>
                     </button>
                     {!pollEnabled && (
                       <button
@@ -2102,7 +2121,7 @@ export function CommunityView({
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 cursor-pointer transition-colors"
                       >
                         <BarChart2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                        <span>Attach Poll</span>
+                        <span>{t('attachPollBtn')}</span>
                       </button>
                     )}
 
@@ -2110,12 +2129,12 @@ export function CommunityView({
                       <select
                         value={aiTone}
                         onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
-                        aria-label="AI rewrite tone"
+                        aria-label={t('aiToneAria')}
                         className="px-2 py-2 bg-transparent text-[11px] font-medium text-indigo-800 dark:text-indigo-200 border-r border-indigo-200 dark:border-indigo-800/70 focus:outline-none cursor-pointer"
                       >
-                        <option value="clear">Clear</option>
-                        <option value="concise">Concise</option>
-                        <option value="formal">Formal</option>
+                        <option value="clear">{t('toneClear')}</option>
+                        <option value="concise">{t('toneConcise')}</option>
+                        <option value="formal">{t('toneFormal')}</option>
                       </select>
                       <button
                         type="button"
@@ -2124,7 +2143,7 @@ export function CommunityView({
                         className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                       >
                         <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{rewritingNewPost ? 'Rewriting...' : 'AI Rewrite'}</span>
+                        <span>{rewritingNewPost ? t('rewriting') : t('aiRewrite')}</span>
                       </button>
                     </div>
 
@@ -2135,7 +2154,7 @@ export function CommunityView({
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{checkingNewSpam ? 'Scanning...' : 'Spam & Link Check'}</span>
+                      <span>{checkingNewSpam ? t('scanning') : t('spamLinkCheck')}</span>
                     </button>
                   </div>
 
@@ -2145,27 +2164,27 @@ export function CommunityView({
                       onClick={() => setComposerOpen(false)}
                       className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                     >
-                      Cancel
+                      {tCommon('cancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={creatingPost || checkingNewSpam || newPostBlocked}
                       title={
                         newPostBlocked
-                          ? 'Remove the spam or suspicious link before publishing.'
+                          ? t('blockedTitleTooltip')
                           : checkingNewSpam
-                            ? 'Waiting for AI link verification...'
+                            ? t('checkingLinksTooltip')
                             : undefined
                       }
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
                     >
                       {creatingPost
-                        ? 'Publishing...'
+                        ? t('publishing')
                         : checkingNewSpam
-                          ? 'Checking Links...'
+                          ? t('checkingLinksBtn')
                           : newPostBlocked
-                            ? 'Link Blocked'
-                            : 'Publish Post'}
+                            ? t('linkBlockedBtn')
+                            : t('publishPostBtn')}
                     </button>
                   </div>
                 </div>
@@ -2178,10 +2197,10 @@ export function CommunityView({
             <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth max-w-full pb-1">
               {(
                 [
-                  { id: 'all', label: 'All Topics' },
-                  { id: 'pinned', label: 'Pinned' },
-                  ...CATEGORIES.map((c) => ({ id: c, label: c })),
-                  ...(isAdmin ? [{ id: 'hidden' as const, label: 'Hidden (Admin)' }] : []),
+                  { id: 'all', label: t('filterAllTopics') },
+                  { id: 'pinned', label: t('filterPinned') },
+                  ...CATEGORIES.map((c) => ({ id: c, label: t(`categories.${c}`) })),
+                  ...(isAdmin ? [{ id: 'hidden' as const, label: t('filterHiddenAdmin') }] : []),
                 ] as Array<{ id: typeof feedCategory; label: string }>
               ).map((item) => (
                 <button
@@ -2211,7 +2230,7 @@ export function CommunityView({
                 type="search"
                 value={feedSearch}
                 onChange={(e) => setFeedSearch(e.target.value)}
-                placeholder="Search posts, members, replies..."
+                placeholder={t('searchFeedPlaceholder')}
                 className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
@@ -2247,12 +2266,12 @@ export function CommunityView({
               <MessageSquare className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  No community discussions found
+                  {t('emptyFeedTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                   {feedSearch || feedCategory !== 'all'
-                    ? 'Try clearing your topic filter or search query.'
-                    : 'Start the first discussion on cooperative initiatives, Qard Hasan proposals, or upcoming Halal ventures.'}
+                    ? t('emptyFeedFiltered')
+                    : t('emptyFeedDefault')}
                 </p>
               </div>
               {!user.communityMuted && !composerOpen && (
@@ -2261,7 +2280,7 @@ export function CommunityView({
                   onClick={() => setComposerOpen(true)}
                   className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer"
                 >
-                  Create First Post
+                  {t('createFirstPost')}
                 </button>
               )}
             </div>
@@ -2293,7 +2312,7 @@ export function CommunityView({
                           <button
                             type="button"
                             onClick={() => onViewMemberProfile(post.authorId)}
-                            title={`View ${post.authorName}'s profile`}
+                            title={t('viewAuthorProfileTitle', { name: post.authorName })}
                             className="shrink-0 cursor-pointer rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
                             <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
@@ -2323,7 +2342,7 @@ export function CommunityView({
                               ·
                             </span>
                             <span className="capitalize text-slate-600 dark:text-slate-400">
-                              {post.authorRole}
+                              {translateRoleLabel(post.authorRole, locale)}
                             </span>
                             {post.authorMuted && isAdmin && (
                               <>
@@ -2332,14 +2351,14 @@ export function CommunityView({
                                 </span>
                                 <span className="text-amber-700 dark:text-amber-400 font-medium inline-flex items-center gap-1">
                                   <VolumeX className="w-3 h-3" />
-                                  Muted
+                                  {t('mutedBadge')}
                                 </span>
                               </>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                             <span className={`font-medium ${getTopicToneClass(post.category)}`}>
-                              {post.category}
+                              {t(`categories.${post.category}`)}
                             </span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono tabular-nums">
@@ -2348,7 +2367,7 @@ export function CommunityView({
                             {post.updatedAt && (
                               <>
                                 <span aria-hidden="true">·</span>
-                                <span>Edited</span>
+                                <span>{t('edited')}</span>
                               </>
                             )}
                             {post.isPinned && (
@@ -2356,7 +2375,7 @@ export function CommunityView({
                                 <span aria-hidden="true">·</span>
                                 <span className="text-emerald-700 dark:text-emerald-400 font-medium inline-flex items-center gap-1">
                                   <Pin className="w-3 h-3" />
-                                  Pinned
+                                  {t('pinned')}
                                 </span>
                               </>
                             )}
@@ -2365,7 +2384,7 @@ export function CommunityView({
                                 <span aria-hidden="true">·</span>
                                 <span className="text-amber-700 dark:text-amber-400 font-medium inline-flex items-center gap-1">
                                   <Lock className="w-3 h-3" />
-                                  Replies Locked
+                                  {t('repliesLocked')}
                                 </span>
                               </>
                             )}
@@ -2374,7 +2393,7 @@ export function CommunityView({
                                 <span aria-hidden="true">·</span>
                                 <span className="text-red-700 dark:text-red-400 font-medium inline-flex items-center gap-1">
                                   <EyeOff className="w-3 h-3" />
-                                  Hidden from Members
+                                  {t('hiddenFromMembers')}
                                 </span>
                               </>
                             )}
@@ -2391,7 +2410,7 @@ export function CommunityView({
                             className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                           >
                             <User className="w-3 h-3" />
-                            <span>Profile</span>
+                            <span>{t('profileBtn')}</span>
                           </button>
                         )}
                         {!isAuthor && (
@@ -2409,7 +2428,7 @@ export function CommunityView({
                             className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                           >
                             <Mail className="w-3 h-3" />
-                            <span>Message</span>
+                            <span>{t('messageBtn')}</span>
                           </button>
                         )}
 
@@ -2420,7 +2439,7 @@ export function CommunityView({
                             className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
+                            <span>{tCommon('edit')}</span>
                           </button>
                         )}
 
@@ -2432,18 +2451,18 @@ export function CommunityView({
                               onClick={() =>
                                 requestModeratePost(post, post.isPinned ? 'unpin' : 'pin')
                               }
-                              title={post.isPinned ? 'Unpin post' : 'Pin post to top'}
+                              title={post.isPinned ? t('unpinTitle') : t('pinTitle')}
                               className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                             >
                               {post.isPinned ? (
                                 <>
                                   <PinOff className="w-3 h-3" />
-                                  <span>Unpin</span>
+                                  <span>{t('unpinBtn')}</span>
                                 </>
                               ) : (
                                 <>
                                   <Pin className="w-3 h-3" />
-                                  <span>Pin</span>
+                                  <span>{t('pinBtn')}</span>
                                 </>
                               )}
                             </button>
@@ -2458,19 +2477,19 @@ export function CommunityView({
                                 )
                               }
                               title={
-                                post.commentsLocked ? 'Unlock comments' : 'Lock comments on post'
+                                post.commentsLocked ? t('unlockTitle') : t('lockTitle')
                               }
                               className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                             >
                               {post.commentsLocked ? (
                                 <>
                                   <Unlock className="w-3 h-3" />
-                                  <span>Unlock</span>
+                                  <span>{t('unlockBtn')}</span>
                                 </>
                               ) : (
                                 <>
                                   <Lock className="w-3 h-3" />
-                                  <span>Lock</span>
+                                  <span>{t('lockBtn')}</span>
                                 </>
                               )}
                             </button>
@@ -2486,20 +2505,20 @@ export function CommunityView({
                               }
                               title={
                                 post.status === 'hidden'
-                                  ? 'Restore post visibility'
-                                  : 'Hide post from members'
+                                  ? t('restoreTitle')
+                                  : t('hideTitle')
                               }
                               className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                             >
                               {post.status === 'hidden' ? (
                                 <>
                                   <Eye className="w-3 h-3" />
-                                  <span>Restore</span>
+                                  <span>{t('restoreBtn')}</span>
                                 </>
                               ) : (
                                 <>
                                   <EyeOff className="w-3 h-3" />
-                                  <span>Hide</span>
+                                  <span>{t('hideBtn')}</span>
                                 </>
                               )}
                             </button>
@@ -2517,20 +2536,20 @@ export function CommunityView({
                                 }
                                 title={
                                   post.authorMuted
-                                    ? 'Restore author posting privileges'
-                                    : 'Mute author in Community'
+                                    ? t('unmuteTitle')
+                                    : t('muteTitle')
                                 }
                                 className="px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
                               >
                                 {post.authorMuted ? (
                                   <>
                                     <Volume2 className="w-3 h-3" />
-                                    <span>Unmute</span>
+                                    <span>{t('unmuteBtn')}</span>
                                   </>
                                 ) : (
                                   <>
                                     <VolumeX className="w-3 h-3" />
-                                    <span>Mute Author</span>
+                                    <span>{t('muteAuthorBtn')}</span>
                                   </>
                                 )}
                               </button>
@@ -2546,7 +2565,7 @@ export function CommunityView({
                             className="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3 h-3" />
-                            <span>Delete</span>
+                            <span>{tCommon('delete')}</span>
                           </button>
                         )}
                       </div>
@@ -2563,7 +2582,7 @@ export function CommunityView({
                           >
                             {CATEGORIES.map((cat) => (
                               <option key={cat} value={cat}>
-                                {cat}
+                                {t(`categories.${cat}`)}
                               </option>
                             ))}
                           </select>
@@ -2620,7 +2639,7 @@ export function CommunityView({
                                         <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
                                         {isFlagged && (
                                           <span className="text-rose-700 dark:text-rose-300 font-medium mr-1.5">
-                                            Flagged ·
+                                            {t('flaggedInline')}
                                           </span>
                                         )}
                                         <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
@@ -2634,7 +2653,7 @@ export function CommunityView({
                                             prev.filter((l) => l.url !== item.url)
                                           )
                                         }
-                                        aria-label="Remove link"
+                                        aria-label={t('removeLinkAria')}
                                         className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
                                       >
                                         <X className="w-3.5 h-3.5" />
@@ -2657,7 +2676,7 @@ export function CommunityView({
                                       handleAddLink('edit');
                                     }
                                   }}
-                                  placeholder="https://... (photo, video, or web URL)"
+                                  placeholder={t('placeholderEditLinkUrl')}
                                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                                 />
                                 <input
@@ -2665,7 +2684,7 @@ export function CommunityView({
                                   maxLength={80}
                                   value={editLinkLabel}
                                   onChange={(e) => setEditLinkLabel(e.target.value)}
-                                  placeholder="Label (optional)"
+                                  placeholder={t('placeholderLinkLabel')}
                                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                                 />
                                 <select
@@ -2673,14 +2692,14 @@ export function CommunityView({
                                   onChange={(e) =>
                                     setEditLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
                                   }
-                                  aria-label="Link content type"
+                                  aria-label={t('linkKindAria')}
                                   className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                                 >
-                                  <option value="auto">Auto</option>
-                                  <option value="photo">Photo</option>
-                                  <option value="video">Video</option>
-                                  <option value="document">Document</option>
-                                  <option value="link">Web</option>
+                                  <option value="auto">{t('linkShortAuto')}</option>
+                                  <option value="photo">{t('linkShortPhoto')}</option>
+                                  <option value="video">{t('linkShortVideo')}</option>
+                                  <option value="document">{t('linkShortDoc')}</option>
+                                  <option value="link">{t('linkShortWeb')}</option>
                                 </select>
                                 <button
                                   type="button"
@@ -2688,7 +2707,7 @@ export function CommunityView({
                                   disabled={!editLinkUrl.trim()}
                                   className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-teal-600 text-white text-xs font-medium cursor-pointer disabled:opacity-45"
                                 >
-                                  Add
+                                  {t('addLinkBtn')}
                                 </button>
                               </div>
                             )}
@@ -2698,7 +2717,7 @@ export function CommunityView({
                         {checkingEditSpam && (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
-                            <span>AI is automatically checking edited links…</span>
+                            <span>{t('checkingEditSpamNotice')}</span>
                           </div>
                         )}
 
@@ -2722,16 +2741,16 @@ export function CommunityView({
                                 <div>
                                   <span className="font-semibold mr-1.5">
                                     {editPostBlocked
-                                      ? 'Save Blocked — Spam or Suspicious Link:'
+                                      ? t('saveBlockedInline')
                                       : editSpamCheckResult.riskLevel === 'caution'
-                                        ? 'Link Caution:'
-                                        : 'Verified Safe:'}
+                                        ? t('linkCautionInline')
+                                        : t('verifiedSafeInline')}
                                   </span>
                                   <span>{editSpamCheckResult.reason}</span>
                                 </div>
                                 {editPostBlocked && (
                                   <div className="text-[11px] font-medium">
-                                    Remove the flagged link before saving changes.
+                                    {t('removeFlaggedBeforeSave')}
                                   </div>
                                 )}
                               </div>
@@ -2743,7 +2762,7 @@ export function CommunityView({
                                   onClick={() => removeFlaggedLinksFromDraft('edit')}
                                   className="px-2 py-1 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
                                 >
-                                  Remove Flagged Link
+                                  {t('removeFlaggedBtn')}
                                 </button>
                               )}
                           </div>
@@ -2757,7 +2776,7 @@ export function CommunityView({
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                             >
                               <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                              <span>Emoji</span>
+                              <span>{t('emojiBtn')}</span>
                             </button>
                             <button
                               type="button"
@@ -2765,7 +2784,7 @@ export function CommunityView({
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                             >
                               <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                              <span>Add Link</span>
+                              <span>{t('addLinkToggle')}</span>
                             </button>
                             <button
                               type="button"
@@ -2774,7 +2793,7 @@ export function CommunityView({
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50"
                             >
                               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>{rewritingEditPost ? 'Rewriting...' : 'AI Rewrite'}</span>
+                              <span>{rewritingEditPost ? t('rewriting') : t('aiRewrite')}</span>
                             </button>
                             <button
                               type="button"
@@ -2783,7 +2802,7 @@ export function CommunityView({
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 cursor-pointer disabled:opacity-50"
                             >
                               <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>{checkingEditSpam ? 'Scanning...' : 'Spam Check'}</span>
+                              <span>{checkingEditSpam ? t('scanning') : t('spamCheckShort')}</span>
                             </button>
                           </div>
                           <div className="flex items-center gap-2">
@@ -2792,7 +2811,7 @@ export function CommunityView({
                               onClick={() => setEditingPostId(null)}
                               className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
                             >
-                              Cancel
+                              {tCommon('cancel')}
                             </button>
                             <button
                               type="button"
@@ -2801,12 +2820,12 @@ export function CommunityView({
                               className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium cursor-pointer"
                             >
                               {savingPostEdit
-                                ? 'Saving...'
+                                ? tCommon('saving')
                                 : checkingEditSpam
-                                  ? 'Checking Links...'
+                                  ? t('checkingLinksBtn')
                                   : editPostBlocked
-                                    ? 'Link Blocked'
-                                    : 'Save Changes'}
+                                    ? t('linkBlockedBtn')
+                                    : tCommon('saveChanges')}
                             </button>
                           </div>
                         </div>
@@ -2849,8 +2868,8 @@ export function CommunityView({
                                       <span>{poll.question}</span>
                                     </div>
                                     <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                                      {totalVotes} vote{totalVotes === 1 ? '' : 's'}
-                                      {poll.allowMultiple ? ' · Multi-select' : ''}
+                                      {t('pollVotes', { count: totalVotes })}
+                                      {poll.allowMultiple ? t('pollMultiSelect') : ''}
                                     </span>
                                   </div>
 
@@ -2927,8 +2946,8 @@ export function CommunityView({
                                         className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors"
                                       >
                                         {votingPollId === post.id
-                                          ? 'Saving Vote…'
-                                          : 'Submit Selected Choices'}
+                                          ? t('savingVote')
+                                          : t('submitSelectedChoices')}
                                       </button>
                                     </div>
                                   )}
@@ -2939,8 +2958,10 @@ export function CommunityView({
                         )}
                         {post.status === 'hidden' && post.moderationReason && (
                           <div className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg px-3 py-2">
-                            Moderation note ({post.moderatedByName || 'Admin'}):{' '}
-                            {post.moderationReason}
+                            {t('moderationNoteBanner', {
+                              by: post.moderatedByName || t('adminFallback'),
+                              reason: post.moderationReason,
+                            })}
                           </div>
                         )}
                       </div>
@@ -2949,7 +2970,7 @@ export function CommunityView({
                     {/* Reactions Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                       <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto [&>button]:min-h-[40px] sm:[&>button]:min-h-0 [&>button]:justify-center">
-                        {REACTION_OPTIONS.map(({ type, label, Icon, activeClass }) => {
+                        {REACTION_OPTIONS.map(({ type, Icon, activeClass }) => {
                           const count = post.reactions.filter((r) => r.type === type).length;
                           const active = myReaction === type;
                           return (
@@ -2965,7 +2986,7 @@ export function CommunityView({
                               }`}
                             >
                               <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>{label}</span>
+                              <span>{t(`reactions.${type}`)}</span>
                               {count > 0 && (
                                 <span className="font-mono tabular-nums text-[11px]">{count}</span>
                               )}
@@ -2975,8 +2996,7 @@ export function CommunityView({
                       </div>
 
                       <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                        {post.comments.length}{' '}
-                        {post.comments.length === 1 ? 'comment' : 'comments'}
+                        {t('commentsCount', { count: post.comments.length })}
                       </div>
                     </div>
 
@@ -3023,7 +3043,7 @@ export function CommunityView({
                                         <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                                           ·
                                         </span>
-                                        <span className="text-slate-500 dark:text-slate-400">Edited</span>
+                                        <span className="text-slate-500 dark:text-slate-400">{t('edited')}</span>
                                       </>
                                     )}
                                   </div>
@@ -3043,7 +3063,7 @@ export function CommunityView({
                                         }
                                         className="text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                                       >
-                                        Message
+                                        {t('messageBtn')}
                                       </button>
                                     )}
                                     {isCommentAuthor && !isEditingComment && (
@@ -3055,7 +3075,7 @@ export function CommunityView({
                                         }}
                                         className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                                       >
-                                        Edit
+                                        {tCommon('edit')}
                                       </button>
                                     )}
                                     {canDeleteComment && (
@@ -3070,7 +3090,7 @@ export function CommunityView({
                                         }
                                         className="text-red-600 dark:text-red-400 hover:underline cursor-pointer"
                                       >
-                                        {isAdmin && !isCommentAuthor ? 'Remove' : 'Delete'}
+                                        {isAdmin && !isCommentAuthor ? tCommon('remove') : tCommon('delete')}
                                       </button>
                                     )}
                                   </div>
@@ -3092,14 +3112,14 @@ export function CommunityView({
                                         }
                                         className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium cursor-pointer"
                                       >
-                                        Save
+                                        {tCommon('save')}
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => setEditingCommentId(null)}
                                         className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
                                       >
-                                        Cancel
+                                        {tCommon('cancel')}
                                       </button>
                                     </div>
                                   </div>
@@ -3118,7 +3138,7 @@ export function CommunityView({
                       {post.commentsLocked && !isAdmin ? (
                         <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pt-1">
                           <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                          <span>Replies to this discussion have been locked by an administrator.</span>
+                          <span>{t('repliesLockedNotice')}</span>
                         </div>
                       ) : user.communityMuted ? null : (
                         <div className="space-y-1.5 pt-1">
@@ -3148,8 +3168,8 @@ export function CommunityView({
                               }}
                               placeholder={
                                 post.commentsLocked
-                                  ? 'Replies locked (Admin reply only)...'
-                                  : 'Write a comment, emoji, or link (@Name to mention)...'
+                                  ? t('placeholderCommentLocked')
+                                  : t('placeholderComment')
                               }
                               className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                             />
@@ -3160,8 +3180,8 @@ export function CommunityView({
                                   prev === post.id ? null : post.id
                                 )
                               }
-                              title="Insert emoji"
-                              aria-label="Insert emoji into comment"
+                              title={t('insertEmojiTitle')}
+                              aria-label={t('insertEmojiAria')}
                               className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 p-2 rounded-lg border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
                                 commentEmojiPostId === post.id
                                   ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
@@ -3178,7 +3198,7 @@ export function CommunityView({
                               }
                               className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
                             >
-                              {submittingCommentPostId === post.id ? 'Posting...' : 'Comment'}
+                              {submittingCommentPostId === post.id ? t('postingComment') : t('postComment')}
                             </button>
                           </form>
                           {commentEmojiPostId === post.id && (
@@ -3196,7 +3216,7 @@ export function CommunityView({
                             filterMentionMatches(commentMentionTarget.query).length > 0 && (
                               <div
                                 role="listbox"
-                                aria-label="Mention member in comment"
+                                aria-label={t('mentionCommentAria')}
                                 className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
                               >
                                 {filterMentionMatches(commentMentionTarget.query).map((m) => (
@@ -3255,10 +3275,10 @@ export function CommunityView({
               <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Direct Conversations
+                    {t('directConversations')}
                   </span>
                   <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    {directory.length} active
+                    {t('activeCount', { count: directory.length })}
                   </span>
                 </div>
                 <div className="relative">
@@ -3267,7 +3287,7 @@ export function CommunityView({
                     type="search"
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
-                    placeholder="Find member by name or code..."
+                    placeholder={t('findMemberPlaceholder')}
                     className="w-full min-h-[40px] sm:min-h-0 pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                   />
                 </div>
@@ -3291,7 +3311,7 @@ export function CommunityView({
                   {filteredThreads.length > 0 && (
                     <div>
                       <div className="px-3.5 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-950/40">
-                        Recent Threads
+                        {t('recentThreads')}
                       </div>
                       {filteredThreads.map((thread) => {
                         const active = selectedPeerId === thread.peerId;
@@ -3326,12 +3346,12 @@ export function CommunityView({
                                 </span>
                                 {thread.unreadCount > 0 && (
                                   <span className="font-mono tabular-nums text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
-                                    {thread.unreadCount} new
+                                    {t('unreadNew', { count: thread.unreadCount })}
                                   </span>
                                 )}
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                {thread.lastMessageSenderId === user.id ? 'You: ' : ''}
+                                {thread.lastMessageSenderId === user.id ? t('youPrefix') : ''}
                                 {thread.lastMessageBody}
                               </p>
                             </div>
@@ -3344,7 +3364,7 @@ export function CommunityView({
                   {otherDirectoryMembers.length > 0 && (
                     <div>
                       <div className="px-3.5 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-950/40">
-                        Registered Members
+                        {t('registeredMembers')}
                       </div>
                       {otherDirectoryMembers.map((member) => {
                         const active = selectedPeerId === member.id;
@@ -3370,7 +3390,7 @@ export function CommunityView({
                               </div>
                               <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                 <span className="font-mono">{member.memberCode}</span> ·{' '}
-                                <span className="capitalize">{member.role}</span>
+                                <span className="capitalize">{translateRoleLabel(member.role, locale)}</span>
                               </div>
                             </div>
                           </button>
@@ -3381,7 +3401,7 @@ export function CommunityView({
 
                   {filteredThreads.length === 0 && otherDirectoryMembers.length === 0 && (
                     <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                      No other active registered members match your search.
+                      {t('noDirMatch')}
                     </div>
                   )}
                 </>
@@ -3398,10 +3418,10 @@ export function CommunityView({
                 </div>
                 <div className="space-y-1 max-w-sm">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Encrypted Direct Messaging
+                    {t('emptyDmTitle')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Select a member on the left to start a private conversation.
+                    {t('emptyDmDesc')}
                   </p>
                 </div>
               </div>
@@ -3421,11 +3441,11 @@ export function CommunityView({
                       <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                         <span className="font-mono">{selectedPeer.memberCode}</span>
                         <span aria-hidden="true">·</span>
-                        <span className="capitalize">{selectedPeer.role}</span>
+                        <span className="capitalize">{translateRoleLabel(selectedPeer.role, locale)}</span>
                         <span aria-hidden="true" className="hidden sm:inline">·</span>
                         <span className="hidden sm:inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
                           <UserCheck className="w-3 h-3" />
-                          Verified Member
+                          {t('verifiedMemberBadge')}
                         </span>
                       </div>
                     </div>
@@ -3438,12 +3458,12 @@ export function CommunityView({
                         className="min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
                         <User className="w-3 h-3 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                        <span>Profile</span>
+                        <span>{t('profileBtn')}</span>
                       </button>
                     )}
                     <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 shrink-0">
                       <Lock className="w-3 h-3" />
-                      AES-256-GCM
+                      {t('aesBadge')}
                     </span>
                   </div>
                 </div>
@@ -3462,7 +3482,7 @@ export function CommunityView({
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 py-12">
-                      No messages yet. Say Assalamu Alaikum to {selectedPeer.name}.
+                      {t('noMessagesYet', { name: selectedPeer.name })}
                     </div>
                   ) : (
                     messages.map((msg) => {
@@ -3487,21 +3507,21 @@ export function CommunityView({
                               <>
                                 {msg.readAt ? (
                                   <span
-                                    title={`Read ${formatDateTime(msg.readAt)}`}
+                                    title={t('readAt', { date: formatDateTime(msg.readAt) })}
                                     className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"
                                   >
-                                    <CheckCheck className="w-3.5 h-3.5" aria-label="Read" />
-                                    <span>Read {formatDateTime(msg.readAt)}</span>
+                                    <CheckCheck className="w-3.5 h-3.5" aria-label={t('readAria')} />
+                                    <span>{t('readAt', { date: formatDateTime(msg.readAt) })}</span>
                                   </span>
                                 ) : (
-                                  <Check className="w-3.5 h-3.5" aria-label="Sent" />
+                                  <Check className="w-3.5 h-3.5" aria-label={t('sentAria')} />
                                 )}
                                 <button
                                   type="button"
                                   onClick={() => requestDeletePrivateMessage(msg.id)}
                                   className="font-sans hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                                 >
-                                  Delete
+                                  {tCommon('delete')}
                                 </button>
                               </>
                             )}
@@ -3528,7 +3548,7 @@ export function CommunityView({
                         void handleSendPrivateMessage();
                       }
                     }}
-                    placeholder={`Message ${selectedPeer.name}... (Enter to send)`}
+                    placeholder={t('dmPlaceholder', { name: selectedPeer.name })}
                     className="flex-1 min-h-[44px] px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none max-h-28"
                   />
                   <button
@@ -3537,7 +3557,7 @@ export function CommunityView({
                     className="min-h-[44px] px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-45 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
                   >
                     <Send className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{sendingMessage ? 'Sending...' : 'Send'}</span>
+                    <span>{sendingMessage ? t('sending') : t('send')}</span>
                   </button>
                 </form>
               </>
@@ -3559,7 +3579,7 @@ export function CommunityView({
           <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Verified Cooperative Members ({activeMembersList.length})
+                {t('verifiedMembersCount', { count: activeMembersList.length })}
               </h3>
             </div>
             <div className="relative w-full sm:w-72 shrink-0">
@@ -3571,7 +3591,7 @@ export function CommunityView({
                 type="search"
                 value={directorySearch}
                 onChange={(e) => setDirectorySearch(e.target.value)}
-                placeholder="Search name, code, occupation..."
+                placeholder={t('searchMembersPlaceholder')}
                 className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
@@ -3611,7 +3631,7 @@ export function CommunityView({
               if (list.length === 0) {
               return (
                 <div className="amanah-card-violet border rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                  No verified members match your search.
+                  {t('noVerifiedMatch')}
                 </div>
               );
             }
@@ -3635,16 +3655,16 @@ export function CommunityView({
                             </span>
                             {isSelf && (
                               <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                                (You)
+                                {t('youTag')}
                               </span>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="font-mono">{member.memberCode}</span>
                             <span aria-hidden="true">·</span>
-                            <span className="capitalize">{member.role}</span>
+                            <span className="capitalize">{translateRoleLabel(member.role, locale)}</span>
                             <span aria-hidden="true">·</span>
-                            <span>Joined {formatShortDate(member.joinedAt)}</span>
+                            <span>{t('joinedShort', { date: formatShortDate(member.joinedAt) })}</span>
                           </div>
                           {(member.occupation || member.companyOrganization) && (
                             <div className="text-xs text-slate-600 dark:text-slate-300 truncate pt-0.5">
@@ -3659,7 +3679,7 @@ export function CommunityView({
                       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                         <div className="text-xs">
                           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            Contributed
+                            {t('contributedLabel')}
                           </div>
                           <div className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                             {formatMoney(member.totalContributed, currency)}
@@ -3682,7 +3702,7 @@ export function CommunityView({
                               className="min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Mail className="w-3 h-3" aria-hidden="true" />
-                              <span>Message</span>
+                              <span>{t('messageBtn')}</span>
                             </button>
                           )}
                           {onViewMemberProfile && (
@@ -3692,7 +3712,7 @@ export function CommunityView({
                               className="min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all"
                             >
                               <User className="w-3 h-3" aria-hidden="true" />
-                              <span>View Profile</span>
+                              <span>{t('viewProfileBtn')}</span>
                             </button>
                           )}
                         </div>
@@ -3713,7 +3733,7 @@ export function CommunityView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : undefined}

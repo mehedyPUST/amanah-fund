@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { motion } from 'motion/react';
 import { CheckCircle2, Globe, Loader2 } from 'lucide-react';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
@@ -17,13 +18,15 @@ export function GoogleSignInButton({
   onConnect,
   onDisconnect,
 }: GoogleSignInButtonProps) {
+  const t = useTranslations('Common.googleWorkspace');
+
   if (workspace.connected) {
     return (
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <span>
-            Google Workspace:{' '}
+            {t('connectedAs')}{' '}
             <strong className="font-medium text-slate-900 dark:text-white">{workspace.email}</strong>
           </span>
         </span>
@@ -32,7 +35,7 @@ export function GoogleSignInButton({
           onClick={onDisconnect}
           className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 dark:hover:bg-rose-950/30 dark:hover:text-rose-300 dark:hover:border-rose-800/60 transition-colors cursor-pointer"
         >
-          Disconnect Google
+          {t('disconnect')}
         </button>
       </div>
     );
@@ -51,7 +54,7 @@ export function GoogleSignInButton({
       ) : (
         <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
       )}
-      <span>{connecting ? 'Connecting Google Sheets…' : 'Connect Google Sheets'}</span>
+      <span>{connecting ? t('connecting') : t('connect')}</span>
     </motion.button>
   );
 }

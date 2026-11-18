@@ -57,7 +57,7 @@ export function VotingView({
 }: VotingViewProps) {
   const t = useTranslations('Voting');
   const tCommon = useTranslations('Common');
-  const tStatus = useTranslations('Statuses');
+  const tStatus = useTranslations('Status');
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';

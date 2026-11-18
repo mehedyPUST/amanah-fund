@@ -117,8 +117,8 @@ export function ManagerDeskView({
 }: ManagerDeskViewProps) {
   const t = useTranslations('ManagerDesk');
   const tCommon = useTranslations('Common');
-  const tRoles = useTranslations('Roles');
-  const tStatuses = useTranslations('Statuses');
+  const tRoles = useTranslations('Common.roles');
+  const tStatuses = useTranslations('Status');
   const ccy = config?.currency || 'BDT';
   const roleLabel = (role: string) => (tRoles.has(role) ? tRoles(role) : role);
   const statusLabel = (status: string) =>

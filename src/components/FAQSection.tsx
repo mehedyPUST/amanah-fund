@@ -80,12 +80,12 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       const data = await api.getFaqs();
       setFaqs(sortFaqItems(Array.isArray(data.faqs) ? data.faqs : []));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load FAQs.');
+      setLoadError(err instanceof Error ? err.message : tFaq('loadFailed'));
       setFaqs((prev) => (prev.length > 0 ? prev : createDefaultFaqs()));
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [tFaq]);
 
   useEffect(() => {
     void loadFaqs(false);
@@ -197,15 +197,15 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
     const cleanArticleRef = articleRefInput.trim();
 
     if (cleanQuestion.length < 5 || cleanQuestion.length > 300) {
-      setFormError('Question must be between 5 and 300 characters.');
+      setFormError(tFaq('questionLengthError'));
       return;
     }
     if (cleanAnswer.length < 5 || cleanAnswer.length > 4000) {
-      setFormError('Answer must be between 5 and 4000 characters.');
+      setFormError(tFaq('answerLengthError'));
       return;
     }
     if (cleanArticleRef.length > 80) {
-      setFormError('Charter / policy reference must be 80 characters or fewer.');
+      setFormError(tFaq('articleRefLengthError'));
       return;
     }
 
@@ -215,7 +215,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       if (editingFaq) {
         const res = await api.updateFaq(editingFaq.id, {
           category: categoryInput,
-          articleRef: cleanArticleRef || 'Charter Policy',
+          articleRef: cleanArticleRef || tFaq('charterPolicyFallback'),
           question: cleanQuestion,
           answer: cleanAnswer,
         });
@@ -223,7 +223,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       } else {
         const res = await api.createFaq({
           category: categoryInput,
-          articleRef: cleanArticleRef || 'Charter Policy',
+          articleRef: cleanArticleRef || tFaq('charterPolicyFallback'),
           question: cleanQuestion,
           answer: cleanAnswer,
         });
@@ -233,7 +233,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       setEditingFaq(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Unable to save FAQ entry.');
+      setFormError(err instanceof Error ? err.message : tFaq('saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -259,7 +259,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       setDeleteTarget(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to delete FAQ item.');
+      setLoadError(err instanceof Error ? err.message : tFaq('deleteFailed'));
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
@@ -632,8 +632,8 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                       <button
                         type="button"
                         onClick={() => openEditComposer(item)}
-                        title="Edit FAQ"
-                        aria-label={`Edit FAQ: ${item.question}`}
+                        title={tFaq('editTitle')}
+                        aria-label={tFaq('editAria', { question: item.question })}
                         className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:border-emerald-400 dark:hover:border-emerald-600 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -641,8 +641,8 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(item)}
-                        title="Delete FAQ"
-                        aria-label={`Delete FAQ: ${item.question}`}
+                        title={tFaq('deleteTitle')}
+                        aria-label={tFaq('deleteAria', { question: item.question })}
                         className="w-7 h-7 rounded-lg border border-rose-200/80 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-600 hover:border-rose-600 text-rose-600 dark:text-rose-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />

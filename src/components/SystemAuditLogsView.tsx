@@ -22,7 +22,10 @@ import {
   UserX,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import type { AppLocale } from '../i18n/config.ts';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type { AuditLogEntry, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, shortHash } from '../utils/format.ts';
@@ -103,11 +106,23 @@ function isAdministrativeLog(entry: AuditLogEntry): boolean {
   return entry.actorRole === 'admin' || entry.actorRole === 'manager';
 }
 
-function getAdminActionMeta(action: string) {
+type AdminActionCategoryKey =
+  | 'userApproval'
+  | 'settingModification'
+  | 'memberGovernance'
+  | 'financialAuthorization'
+  | 'moderationAction'
+  | 'systemDispatch';
+
+function getAdminActionMeta(action: string): {
+  categoryKey: AdminActionCategoryKey;
+  tone: string;
+  Icon: typeof Settings;
+} {
   if (USER_APPROVAL_ACTIONS.has(action)) {
     const isRejected = action === 'MEMBER_SIGNUP_REJECTED';
     return {
-      categoryLabel: 'User Approval',
+      categoryKey: 'userApproval',
       tone: isRejected
         ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
@@ -116,7 +131,7 @@ function getAdminActionMeta(action: string) {
   }
   if (SETTING_CHANGE_ACTIONS.has(action)) {
     return {
-      categoryLabel: 'Setting Modification',
+      categoryKey: 'settingModification',
       tone: 'text-teal-700 dark:text-teal-400',
       Icon: Settings,
     };
@@ -124,7 +139,7 @@ function getAdminActionMeta(action: string) {
   if (MEMBER_GOVERNANCE_ACTIONS.has(action)) {
     const isRevoke = action === 'MEMBER_SUSPENDED' || action === 'MEMBER_REMOVED_BY_ADMIN';
     return {
-      categoryLabel: 'Member Governance',
+      categoryKey: 'memberGovernance',
       tone: isRevoke ? 'text-rose-700 dark:text-rose-400' : 'text-indigo-700 dark:text-indigo-400',
       Icon: isRevoke ? UserX : KeyRound,
     };
@@ -132,7 +147,7 @@ function getAdminActionMeta(action: string) {
   if (FINANCIAL_REVIEW_ACTIONS.has(action)) {
     const isRejected = action.endsWith('_REJECTED');
     return {
-      categoryLabel: 'Financial Authorization',
+      categoryKey: 'financialAuthorization',
       tone: isRejected
         ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
@@ -141,13 +156,13 @@ function getAdminActionMeta(action: string) {
   }
   if (action.startsWith('COMMUNITY_')) {
     return {
-      categoryLabel: 'Moderation Action',
+      categoryKey: 'moderationAction',
       tone: 'text-amber-700 dark:text-amber-400',
       Icon: MessageSquare,
     };
   }
   return {
-    categoryLabel: 'System Dispatch & Export',
+    categoryKey: 'systemDispatch',
     tone: 'text-indigo-700 dark:text-indigo-400',
     Icon: ScrollText,
   };
@@ -178,6 +193,9 @@ function formatDiffValue(val: unknown): string {
 }
 
 export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
+  const t = useTranslations('Admin.systemAudit');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale() as AppLocale;
   const canViewSystemLogs = user.role === 'admin' || user.role === 'manager';
 
   const [allLogs, setAllLogs] = useState<AuditLogEntry[]>([]);
@@ -228,20 +246,20 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           const verified = res.integrity?.verifiedEntries ?? res.logs.length;
           setVerificationNote(
             res.chainValid
-              ? `SHA-256 hash chain verified across ${verified}/${total} immutable ledger blocks.`
-              : `Hash chain discrepancy detected on ${res.integrity?.brokenLinks.length || 1} record(s).`
+              ? t('verifySuccess', { verified, total })
+              : t('verifyMismatch', { count: res.integrity?.brokenLinks.length || 1 })
           );
         }
       } catch (err) {
         if (!silent) {
-          setError(err instanceof Error ? err.message : 'Failed to load system audit logs.');
+          setError(err instanceof Error ? err.message : t('loadError'));
         }
       } finally {
         if (!silent) setLoading(false);
         if (showVerifyBanner) setVerifying(false);
       }
     },
-    [canViewSystemLogs]
+    [canViewSystemLogs, t]
   );
 
   useEffect(() => {
@@ -408,11 +426,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-          Administrator Access Required
+          {t('accessRequiredTitle')}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          System Audit Logs and immutable governance records are restricted to cooperative
-          administrators and authorized managers.
+          {t('accessRequiredDesc')}
         </p>
       </div>
     );
@@ -442,7 +459,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-            <span>Immutable Admin Records</span>
+            <span>{t('kpiImmutableRecords')}</span>
             <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -462,8 +479,11 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             )}
             <span className="font-mono tabular-nums">
               {chainValid
-                ? `Append-only · ${integrity?.verifiedEntries ?? allLogs.length}/${integrity?.totalEntries ?? allLogs.length} verified`
-                : 'Chain Integrity Alert'}
+                ? t('appendOnlyVerified', {
+                    verified: integrity?.verifiedEntries ?? allLogs.length,
+                    total: integrity?.totalEntries ?? allLogs.length,
+                  })
+                : t('chainIntegrityAlert')}
             </span>
           </div>
         </MotionCard>
@@ -474,7 +494,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-            <span>User Approvals &amp; Registry</span>
+            <span>{t('kpiUserApprovals')}</span>
             <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -485,7 +505,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             )}
           </div>
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-            {metrics.userApprovals} onboarding · {metrics.memberGovernance} RBAC/status
+            {t('onboardingAndRbac', {
+              approvals: metrics.userApprovals,
+              gov: metrics.memberGovernance,
+            })}
           </div>
         </MotionCard>
 
@@ -495,7 +518,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-            <span>Setting Modifications</span>
+            <span>{t('kpiSettingMods')}</span>
             <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -506,7 +529,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             )}
           </div>
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Policy quotas, maturity &amp; guarantor rules
+            {t('settingSubtitle')}
           </div>
         </MotionCard>
 
@@ -516,7 +539,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-            <span>Financial &amp; Moderation</span>
+            <span>{t('kpiFinancialMod')}</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -527,7 +550,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             )}
           </div>
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-            {metrics.financialReviews} treasury · {metrics.moderationSync} sync/mod
+            {t('treasuryAndMod', {
+              fin: metrics.financialReviews,
+              mod: metrics.moderationSync,
+            })}
           </div>
         </MotionCard>
       </div>
@@ -539,15 +565,15 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Append-Only Cryptographic Ledger</span>
+                <span>{t('ledgerEyebrow')}</span>
               </span>
               <span aria-hidden="true">·</span>
-              <span>SHA-256 Linked Blocks</span>
+              <span>{t('sha256Linked')}</span>
               <span aria-hidden="true">·</span>
-              <span>AES-256-GCM Envelopes</span>
+              <span>{t('aesEnvelopes')}</span>
             </div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              System Audit Logs · Administrative Actions &amp; Setting History
+              {t('heading')}
             </h2>
           </div>
 
@@ -562,7 +588,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loading || verifying ? 'animate-spin' : ''}`}
                 aria-hidden="true"
               />
-              <span>{verifying ? 'Verifying…' : 'Verify Chain'}</span>
+              <span>{verifying ? t('verifying') : t('verifyChain')}</span>
             </button>
 
             <button
@@ -572,7 +598,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-              <span>Export JSON Proof</span>
+              <span>{t('exportJsonProof')}</span>
             </button>
 
             <button
@@ -581,7 +607,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               className="col-span-2 sm:col-span-1 px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Export Admin CSV</span>
+              <span>{t('exportAdminCsv')}</span>
             </button>
           </div>
         </div>
@@ -608,7 +634,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               onClick={() => setVerificationNote(null)}
               className="text-xs underline cursor-pointer shrink-0"
             >
-              Dismiss
+              {t('dismiss')}
             </button>
           </div>
         )}
@@ -627,18 +653,18 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
           <div className="flex flex-nowrap lg:flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit max-w-full overflow-x-auto no-scrollbar">
             {(
               [
-                { id: 'all', label: `All Admin (${metrics.total})` },
-                { id: 'user_approvals', label: `User Approvals (${metrics.userApprovals})` },
-                { id: 'setting_changes', label: `Setting Changes (${metrics.settingChanges})` },
+                { id: 'all', label: t('tabAllAdmin', { count: metrics.total }) },
+                { id: 'user_approvals', label: t('tabUserApprovals', { count: metrics.userApprovals }) },
+                { id: 'setting_changes', label: t('tabSettingChanges', { count: metrics.settingChanges }) },
                 {
                   id: 'member_governance',
-                  label: `Member Governance (${metrics.memberGovernance})`,
+                  label: t('tabMemberGovernance', { count: metrics.memberGovernance }),
                 },
                 {
                   id: 'financial_reviews',
-                  label: `Financial Reviews (${metrics.financialReviews})`,
+                  label: t('tabFinancialReviews', { count: metrics.financialReviews }),
                 },
-                { id: 'moderation_sync', label: `Moderation & Sync (${metrics.moderationSync})` },
+                { id: 'moderation_sync', label: t('tabModerationSync', { count: metrics.moderationSync }) },
               ] as const
             ).map((tab) => {
               const active = categoryFilter === tab.id;
@@ -675,7 +701,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 htmlFor="audit-actor-filter"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                Administrator / Actor
+                {t('actorFilterLabel')}
               </label>
               <select
                 id="audit-actor-filter"
@@ -686,10 +712,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 }}
                 className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
-                <option value="all">All Administrators &amp; Managers</option>
+                <option value="all">{t('allAdminsManagers')}</option>
                 {actorOptions.map((actor) => (
                   <option key={actor.id} value={actor.id}>
-                    {actor.name} ({actor.role})
+                    {actor.name} ({translateRoleLabel(actor.role, locale)})
                   </option>
                 ))}
               </select>
@@ -700,7 +726,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 htmlFor="audit-date-from"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                From Date
+                {t('fromDateLabel')}
               </label>
               <input
                 id="audit-date-from"
@@ -719,7 +745,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 htmlFor="audit-date-to"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                To Date
+                {t('toDateLabel')}
               </label>
               <input
                 id="audit-date-to"
@@ -738,7 +764,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 htmlFor="audit-search-input"
                 className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                Search Action, Target, or Hash
+                {t('searchLabel')}
               </label>
               <div className="relative">
                 <Search
@@ -753,7 +779,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setSearchQuery(e.target.value);
                     setVisibleLimit(30);
                   }}
-                  placeholder="Actor, setting, member ID, hash…"
+                  placeholder={t('searchPlaceholder')}
                   className="w-full pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
                 />
               </div>
@@ -784,12 +810,12 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                    <th className="py-2.5 px-4 font-medium">Timestamp</th>
-                    <th className="py-2.5 px-4 font-medium">Action &amp; Category</th>
-                    <th className="py-2.5 px-4 font-medium">Administrator</th>
-                    <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
-                    <th className="py-2.5 px-4 font-medium">Immutable Proof</th>
-                    <th className="py-2.5 px-4 font-medium text-right">Record</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colTimestamp')}</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colActionCategory')}</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colAdministrator')}</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colSummaryTarget')}</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colImmutableProof')}</th>
+                    <th className="py-2.5 px-4 font-medium text-right">{t('colRecord')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -810,9 +836,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         ) : filteredLogs.length === 0 ? (
           <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              {adminLogs.length === 0
-                ? 'No administrative audit records recorded yet.'
-                : 'No administrative audit entries match your current filters.'}
+              {adminLogs.length === 0 ? t('emptyNone') : t('emptyFiltered')}
             </div>
             {hasActiveFilters && (
               <button
@@ -820,7 +844,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 onClick={handleResetFilters}
                 className="px-4 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Reset All Filters
+                {tCommon('resetFilters')}
               </button>
             )}
           </div>
@@ -842,7 +866,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                       <div className="min-w-0 space-y-0.5">
                         <div className={`text-xs font-semibold flex items-center gap-1.5 ${meta.tone}`}>
                           <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                          <span>{meta.categoryLabel}</span>
+                          <span>{t(`categories.${meta.categoryKey}`)}</span>
                         </div>
                         <div className="font-mono text-[11px] font-medium text-slate-700 dark:text-slate-300 break-all">
                           {entry.action}
@@ -873,7 +897,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                         <strong className="font-medium text-slate-700 dark:text-slate-300">
                           {entry.actorName}
                         </strong>{' '}
-                        (<span className="capitalize">{entry.actorRole}</span>)
+                        (<span>{translateRoleLabel(entry.actorRole, locale)}</span>)
                       </span>
                       <span className="font-mono tabular-nums">
                         {formatDateTime(entry.timestamp)}
@@ -888,10 +912,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     >
                       <span>
                         {isOpen
-                          ? 'Hide Cryptographic Envelope'
+                          ? t('hideEnvelope')
                           : diffs.length > 0
-                            ? `Inspect Hash & ${diffs.length} Field Change${diffs.length === 1 ? '' : 's'}`
-                            : 'Inspect Hash & Payload'}
+                            ? t('inspectWithDiffs', { count: diffs.length })
+                            : t('inspectPayload')}
                       </span>
                       {isOpen ? (
                         <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
@@ -911,21 +935,21 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                         >
                           <div className="space-y-1.5 font-mono text-slate-600 dark:text-slate-400 break-all">
                             <div>
-                              <span className="text-slate-400 dark:text-slate-500">Target: </span>
+                              <span className="text-slate-400 dark:text-slate-500">{t('targetLabel')} </span>
                               <span className="text-slate-800 dark:text-slate-200">
                                 {entry.resourceType}:{entry.resourceId}
                               </span>
                             </div>
                             <div>
-                              <span className="text-slate-400 dark:text-slate-500">Record ID: </span>
+                              <span className="text-slate-400 dark:text-slate-500">{t('recordIdLabel')} </span>
                               <span className="text-slate-800 dark:text-slate-200">{entry.id}</span>
                             </div>
                             <div>
-                              <span className="text-indigo-600 dark:text-indigo-400">Entry Hash: </span>
+                              <span className="text-indigo-600 dark:text-indigo-400">{t('entryHashLabel')} </span>
                               <span className="text-slate-800 dark:text-slate-200">{entry.entryHash}</span>
                             </div>
                             <div>
-                              <span className="text-slate-400 dark:text-slate-500">Prev Hash: </span>
+                              <span className="text-slate-400 dark:text-slate-500">{t('prevHashLabel')} </span>
                               <span className="text-slate-800 dark:text-slate-200">{entry.prevHash}</span>
                             </div>
                           </div>
@@ -933,7 +957,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                           {diffs.length > 0 && (
                             <div className="pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
                               <div className="font-semibold text-slate-700 dark:text-slate-300">
-                                Modified Fields
+                                {t('modifiedFields')}
                               </div>
                               {diffs.map((d) => (
                                 <div
@@ -944,10 +968,10 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                                     {d.field}
                                   </div>
                                   <div className="text-rose-700 dark:text-rose-400">
-                                    From: {formatDiffValue(d.from)}
+                                    {t('fromLabel', { val: formatDiffValue(d.from) })}
                                   </div>
                                   <div className="text-emerald-700 dark:text-emerald-400">
-                                    To: {formatDiffValue(d.to)}
+                                    {t('toLabel', { val: formatDiffValue(d.to) })}
                                   </div>
                                 </div>
                               ))}
@@ -957,7 +981,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                           {entry.decryptedPayload && (
                             <div className="pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
                               <div className="font-semibold text-indigo-700 dark:text-indigo-400">
-                                Decrypted Payload Envelope
+                                {t('decryptedEnvelope')}
                               </div>
                               <div className="grid grid-cols-1 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
                                 {Object.entries(entry.decryptedPayload)
@@ -987,12 +1011,12 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Timestamp</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Action &amp; Category</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Administrator</th>
-                    <th className="py-2.5 px-4 font-medium">Summary &amp; Target</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">Immutable Proof</th>
-                    <th className="py-2.5 px-4 font-medium text-right whitespace-nowrap">Record</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colTimestamp')}</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colActionCategory')}</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colAdministrator')}</th>
+                    <th className="py-2.5 px-4 font-medium">{t('colSummaryTarget')}</th>
+                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colImmutableProof')}</th>
+                    <th className="py-2.5 px-4 font-medium text-right whitespace-nowrap">{t('colRecord')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1027,7 +1051,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         {filteredLogs.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-mono tabular-nums">
-              Showing {displayedLogs.length} of {filteredLogs.length} immutable administrative records
+              {t('showingRecords', { shown: displayedLogs.length, total: filteredLogs.length })}
             </span>
 
             {hasMore && (
@@ -1037,14 +1061,14 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   onClick={() => setVisibleLimit((n) => n + 30)}
                   className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center cursor-pointer"
                 >
-                  Load 30 More
+                  {t('loadMore')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisibleLimit(filteredLogs.length)}
                   className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 inline-flex items-center justify-center cursor-pointer"
                 >
-                  Show All ({filteredLogs.length})
+                  {t('showAllCount', { total: filteredLogs.length })}
                 </button>
               </div>
             )}
@@ -1065,13 +1089,17 @@ function AdminAuditTableRow({
   onToggle,
 }: {
   entry: AuditLogEntry;
-  meta: { categoryLabel: string; tone: string };
+  meta: { categoryKey: AdminActionCategoryKey; tone: string };
   Icon: typeof Settings;
   diffs: ChangeDiffEntry[];
   verified: boolean;
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations('Admin.systemAudit');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale() as AppLocale;
+
   return (
     <>
       <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
@@ -1087,7 +1115,7 @@ function AdminAuditTableRow({
         <td className="py-3 px-4 align-top whitespace-nowrap">
           <div className={`font-medium flex items-center gap-1.5 ${meta.tone}`}>
             <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>{meta.categoryLabel}</span>
+            <span>{t(`categories.${meta.categoryKey}`)}</span>
           </div>
           <div className="font-mono text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
             {entry.action}
@@ -1096,8 +1124,8 @@ function AdminAuditTableRow({
 
         <td className="py-3 px-4 align-top whitespace-nowrap">
           <div className="font-medium text-slate-900 dark:text-white">{entry.actorName}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 capitalize mt-0.5">
-            {entry.actorRole} · <span className="font-mono">{entry.actorId}</span>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {translateRoleLabel(entry.actorRole, locale)} · <span className="font-mono">{entry.actorId}</span>
           </div>
         </td>
 
@@ -1113,7 +1141,7 @@ function AdminAuditTableRow({
                   ·
                 </span>
                 <span className="text-teal-700 dark:text-teal-400">
-                  {diffs.length} field{diffs.length === 1 ? '' : 's'} modified
+                  {t('fieldsModified', { count: diffs.length })}
                 </span>
               </>
             )}
@@ -1133,7 +1161,7 @@ function AdminAuditTableRow({
             ) : (
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             )}
-            <span>{verified ? 'SHA-256 Verified' : 'Hash Mismatch'}</span>
+            <span>{verified ? t('sha256Verified') : t('hashMismatch')}</span>
           </div>
           <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {shortHash(entry.entryHash)}
@@ -1147,7 +1175,7 @@ function AdminAuditTableRow({
             aria-expanded={isOpen}
             className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
-            <span>{isOpen ? 'Hide' : 'Inspect'}</span>
+            <span>{isOpen ? tCommon('hide') : t('inspectBtn')}</span>
             {isOpen ? (
               <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
@@ -1170,20 +1198,20 @@ function AdminAuditTableRow({
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 break-all">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500">Audit Record ID: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('auditRecordId')} </span>
                     <span className="text-slate-800 dark:text-slate-200">{entry.id}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500">Previous Block Hash: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('prevBlockHash')} </span>
                     <span className="text-slate-800 dark:text-slate-200">{entry.prevHash}</span>
                   </div>
                   <div className="md:col-span-2">
-                    <span className="text-indigo-600 dark:text-indigo-400">SHA-256 Entry Hash: </span>
+                    <span className="text-indigo-600 dark:text-indigo-400">{t('sha256EntryHash')} </span>
                     <span className="text-slate-800 dark:text-slate-200">{entry.entryHash}</span>
                   </div>
                   <div className="md:col-span-2">
                     <span className="text-indigo-600 dark:text-indigo-400">
-                      AES-256-GCM Ciphertext ({entry.encryptedPayload.keyVersion}):{' '}
+                      {t('aesCiphertext', { ver: entry.encryptedPayload.keyVersion })}{' '}
                     </span>
                     <span className="text-slate-700 dark:text-slate-300">
                       {entry.encryptedPayload.ciphertext.slice(0, 84)}…
@@ -1194,15 +1222,15 @@ function AdminAuditTableRow({
                 {diffs.length > 0 && (
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
                     <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                      Modified Fields (Before vs. After)
+                      {t('modifiedFieldsHeader')}
                     </div>
                     <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
                       <table className="w-full text-left border-collapse text-[11px] font-mono">
                         <thead>
                           <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                            <th className="py-1.5 px-3 font-medium">Field</th>
-                            <th className="py-1.5 px-3 font-medium">Previous Value</th>
-                            <th className="py-1.5 px-3 font-medium">New Value</th>
+                            <th className="py-1.5 px-3 font-medium">{t('colField')}</th>
+                            <th className="py-1.5 px-3 font-medium">{t('colPrevValue')}</th>
+                            <th className="py-1.5 px-3 font-medium">{t('colNewValue')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1228,7 +1256,7 @@ function AdminAuditTableRow({
                 {entry.decryptedPayload && (
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
                     <div className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400">
-                      Decrypted Payload Envelope
+                      {t('decryptedEnvelope')}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
                       {Object.entries(entry.decryptedPayload)

@@ -86,8 +86,8 @@ export function AdminUserManagementPanel({
 }: AdminUserManagementPanelProps) {
   const t = useTranslations('Admin.users');
   const tCommon = useTranslations('Common');
-  const tRoles = useTranslations('Roles');
-  const tStatuses = useTranslations('Statuses');
+  const tRoles = useTranslations('Common.roles');
+  const tStatuses = useTranslations('Status');
   const isAdmin = currentUser.role === 'admin';
   const ccy = config?.currency || 'BDT';
 

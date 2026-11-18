@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
   Download,
@@ -63,6 +64,8 @@ export function AdminReportsView({
   onDisconnectGoogle,
   onRefresh,
 }: AdminReportsViewProps) {
+  const t = useTranslations('Admin.reports');
+  const tCommon = useTranslations('Common');
   const isAdmin = user.role === 'admin';
   const ccy = config?.currency || 'BDT';
 
@@ -136,8 +139,8 @@ export function AdminReportsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Failed to Load Admin Records',
-        description: err instanceof Error ? err.message : 'Failed to load admin records.',
+        title: t('loadFailedTitle'),
+        description: err instanceof Error ? err.message : t('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
@@ -164,17 +167,19 @@ export function AdminReportsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Update Cooperative Fund Policy?',
-      description:
-        'Confirm saving these governance limits and treasury policy parameters for all cooperative members.',
+      title: t('confirmPolicyTitle'),
+      description: t('confirmPolicyDesc'),
       details: [
-        { label: 'Loans / Member / Year', value: `${maxLoansPerYear}` },
-        { label: 'Halal Maturity Date', value: maturityDate },
-        { label: 'Monthly Target', value: formatMoney(Number(monthlyContributionAmount || 0), currency) },
-        { label: 'Max Loan Cap', value: formatMoney(Number(maxLoanAmount || 0), currency) },
-        { label: 'Currency', value: currency },
+        { label: t('loansPerMemberYear'), value: `${maxLoansPerYear}` },
+        { label: t('halalMaturityDate'), value: maturityDate },
+        {
+          label: t('monthlyTarget'),
+          value: formatMoney(Number(monthlyContributionAmount || 0), currency),
+        },
+        { label: t('maxLoanCap'), value: formatMoney(Number(maxLoanAmount || 0), currency) },
+        { label: t('currency'), value: currency },
       ],
-      confirmLabel: 'Save Policy',
+      confirmLabel: t('savePolicyBtn'),
       run: async () => {
         setSavingPolicy(true);
         try {
@@ -190,15 +195,18 @@ export function AdminReportsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Cooperative Policy Updated',
-            description: `Cooperative policy updated (annual loan limit: ${maxLoansPerYear}/year, maturity: ${maturityDate}).`,
+            title: t('policyUpdatedTitle'),
+            description: t('policyUpdatedDesc', {
+              limit: maxLoansPerYear,
+              maturity: maturityDate,
+            }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Policy Save Failed',
-            description: err instanceof Error ? err.message : 'Failed to save cooperative policy.',
+            title: t('policyFailedTitle'),
+            description: err instanceof Error ? err.message : t('policyFailedDesc'),
           });
         } finally {
           setSavingPolicy(false);
@@ -212,18 +220,17 @@ export function AdminReportsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Approve & Issue Activation Codes?',
-      description:
-        'Approving assigns the official Member ID below and generates a unique, never-before-used 6-digit Activation OTP emailed to the applicant and saved in this panel for phone support.',
+      title: t('approveTitle'),
+      description: t('approveDesc'),
       details: [
-        { label: 'Applicant', value: member.name },
-        { label: 'Email', value: member.email },
+        { label: t('applicant'), value: member.name },
+        { label: t('email'), value: member.email },
       ],
-      inputLabel: 'Official Member ID to Assign',
-      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputLabel: t('memberIdInputLabel'),
+      inputPlaceholder: t('memberIdInputPlaceholder'),
       inputRequired: true,
       initialInputValue: suggestedCode,
-      confirmLabel: 'Generate Codes & Send Email',
+      confirmLabel: t('generateSendBtn'),
       run: async (memberCodeInput: string) => {
         try {
           const res = await api.issueMemberActivation(member.id, {
@@ -236,22 +243,30 @@ export function AdminReportsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Activation Codes Issued',
+            title: t('codesIssuedTitle'),
             description: res.emailSent
-              ? `Assigned Member ID ${res.memberCode} and unique 6-digit OTP to ${member.name}. Emailed to ${member.email} and visible in this panel for phone support.`
-              : `Assigned Member ID ${res.memberCode} and unique 6-digit OTP to ${member.name}. Email could not be sent${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes over the phone.`,
+              ? t('codesIssuedEmailSent', {
+                  code: res.memberCode,
+                  name: member.name,
+                  email: member.email,
+                })
+              : t('codesIssuedEmailFailed', {
+                  code: res.memberCode,
+                  name: member.name,
+                  reason: res.emailReason ? ` (${res.emailReason})` : '',
+                }),
             details: [
-              { label: 'Applicant', value: member.name },
-              { label: 'Official Member ID', value: res.memberCode },
-              { label: '6-Digit Activation OTP', value: res.otp },
+              { label: t('applicant'), value: member.name },
+              { label: t('officialMemberId'), value: res.memberCode },
+              { label: t('activationOtp6'), value: res.otp },
             ],
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Approval Failed',
-            description: err instanceof Error ? err.message : 'Failed to issue activation codes.',
+            title: t('approvalFailedTitle'),
+            description: err instanceof Error ? err.message : t('approvalFailedDesc'),
           });
         }
       },
@@ -267,21 +282,23 @@ export function AdminReportsView({
       setModal({
         mode: 'notice',
         tone: res.emailSent ? 'emerald' : 'amber',
-        title: res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+        title: res.emailSent ? t('resendEmailTitle') : t('emailDeliveryFailedTitle'),
         description: res.emailSent
-          ? `Resent Member ID (${res.memberCode}) and 6-digit OTP to ${member.email}.`
-          : `Could not deliver email${res.emailReason ? ` (${res.emailReason})` : ''}. Share the codes below over the phone.`,
+          ? t('resendEmailSent', { code: res.memberCode, email: member.email })
+          : t('resendEmailFailed', {
+              reason: res.emailReason ? ` (${res.emailReason})` : '',
+            }),
         details: [
-          { label: 'Official Member ID', value: res.memberCode },
-          { label: '6-Digit Activation OTP', value: res.otp },
+          { label: t('officialMemberId'), value: res.memberCode },
+          { label: t('activationOtp6'), value: res.otp },
         ],
       });
     } catch (err) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Resend Failed',
-        description: err instanceof Error ? err.message : 'Failed to resend activation email.',
+        title: t('resendFailedTitle'),
+        description: err instanceof Error ? err.message : t('resendFailedDesc'),
       });
     } finally {
       setModalBusy(false);
@@ -292,14 +309,13 @@ export function AdminReportsView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Decline Pending Registration?',
-      description:
-        'Declining removes this pending signup application from the verification queue.',
+      title: t('declineTitle'),
+      description: t('declineDesc'),
       details: [
-        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
-        { label: 'Email', value: member.email },
+        { label: t('applicant'), value: `${member.name} (${member.memberCode})` },
+        { label: t('email'), value: member.email },
       ],
-      confirmLabel: 'Decline Application',
+      confirmLabel: t('declineBtn'),
       run: async () => {
         try {
           const res = await api.declinePendingMember(member.id);
@@ -309,16 +325,15 @@ export function AdminReportsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Application Declined',
-            description: `Pending registration for ${member.name} (${member.memberCode}) declined and removed.`,
+            title: t('declinedTitle'),
+            description: t('declinedDesc', { name: member.name, code: member.memberCode }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Decline Failed',
-            description:
-              err instanceof Error ? err.message : 'Failed to decline pending registration.',
+            title: t('declineFailedTitle'),
+            description: err instanceof Error ? err.message : t('declineFailedDesc'),
           });
         }
       },
@@ -335,20 +350,14 @@ export function AdminReportsView({
     setModal({
       mode: 'confirm',
       tone: decision === 'approve' ? 'emerald' : 'red',
-      title:
-        decision === 'approve'
-          ? 'Approve Qard Hasan Loan for Disbursement?'
-          : 'Decline Qard Hasan Loan Request?',
-      description:
-        decision === 'approve'
-          ? 'Administrative approval moves this loan into the disbursement queue.'
-          : 'Declining ends administrative review and notifies the borrower.',
+      title: decision === 'approve' ? t('loanApproveTitle') : t('loanDeclineTitle'),
+      description: decision === 'approve' ? t('loanApproveDesc') : t('loanDeclineDesc'),
       details: [
-        { label: 'Loan ID', value: loan.id },
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+        { label: t('loanId'), value: loan.id },
+        { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('principal'), value: formatMoney(loan.amount, ccy) },
       ],
-      confirmLabel: decision === 'approve' ? 'Approve for Disbursement' : 'Decline Loan',
+      confirmLabel: decision === 'approve' ? t('approveDisburseBtn') : t('declineLoanBtn'),
       run: async () => {
         setLoanReviewBusyId(loan.id);
         try {
@@ -357,18 +366,18 @@ export function AdminReportsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: decision === 'approve' ? 'Loan Approved' : 'Loan Declined',
+            title: decision === 'approve' ? t('loanApprovedTitle') : t('loanDeclinedTitle'),
             description:
               decision === 'approve'
-                ? `Qard Hasan loan ${loan.id} approved for treasury disbursement.`
-                : `Qard Hasan loan ${loan.id} declined during administrative review.`,
+                ? t('loanApprovedDesc', { id: loan.id })
+                : t('loanDeclinedDesc', { id: loan.id }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Loan Review Failed',
-            description: err instanceof Error ? err.message : 'Failed to review loan request.',
+            title: t('loanReviewFailedTitle'),
+            description: err instanceof Error ? err.message : t('loanReviewFailedDesc'),
           });
         } finally {
           setLoanReviewBusyId(null);
@@ -395,15 +404,15 @@ export function AdminReportsView({
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
       <div className="flex flex-wrap items-center justify-between gap-3 amanah-card-violet border rounded-2xl px-4 py-3 shadow-xs">
         <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
-          Admin Panel Workspace
+          {t('workspaceTitle')}
         </div>
         <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
           {(
             [
-              { id: 'all', label: 'All Sections' },
-              { id: 'users', label: `Manage Users (${members.length})` },
-              { id: 'analytics', label: 'Loans & Analytics' },
-              { id: 'policy', label: 'Policy & Audit Logs' },
+              { id: 'all', label: t('sectionAll') },
+              { id: 'users', label: t('sectionUsers', { count: members.length }) },
+              { id: 'analytics', label: t('sectionAnalytics') },
+              { id: 'policy', label: t('sectionPolicy') },
             ] as const
           ).map((sec) => {
             const active = adminSection === sec.id;
@@ -439,17 +448,17 @@ export function AdminReportsView({
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
-                <span>Pending Member Signup Approvals</span>
+                <span>{t('pendingApprovalsEyebrow')}</span>
               </div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                New Registration Verification Queue ({pendingMembers.length})
+                {t('regQueueTitle', { count: pendingMembers.length })}
               </h2>
             </div>
           </div>
 
           {pendingMembers.length === 0 ? (
             <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
-              All member registrations have been reviewed.
+              {t('allReviewed')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -467,7 +476,7 @@ export function AdminReportsView({
                       {avatar ? (
                         <img
                           src={avatar}
-                          alt={`${pm.name} portrait`}
+                          alt={t('portraitAlt', { name: pm.name })}
                           referrerPolicy="no-referrer"
                           className="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800"
                         />
@@ -489,23 +498,24 @@ export function AdminReportsView({
                                 : 'text-amber-700 dark:text-amber-400'
                             }`}
                           >
-                            · {isAwaitingActivation ? 'Awaiting Activation' : 'Pending Review'}
+                            · {isAwaitingActivation ? t('awaitingActivation') : t('pendingReview')}
                           </span>
                         </div>
                         <div className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
-                          {pm.email} · Mobile {reg?.mobile || pm.phoneMasked || '••••'} · Applied{' '}
-                          {formatDateTime(pm.joinedAt)}
+                          {pm.email} · {t('mobileShort', { phone: reg?.mobile || pm.phoneMasked || '••••' })} ·{' '}
+                          {t('appliedShort', { date: formatDateTime(pm.joinedAt) })}
                         </div>
                         {isAwaitingActivation && act && (
                           <div className="text-xs font-mono text-indigo-700 dark:text-indigo-300 pt-0.5">
-                            Member ID: <strong>{act.memberCode}</strong> · 6-Digit OTP:{' '}
-                            <strong className="tracking-widest">{act.otp || 'Unavailable'}</strong>
+                            {t('memberIdShort')} <strong>{act.memberCode}</strong> · {t('otp6Short')}{' '}
+                            <strong className="tracking-widest">{act.otp || t('unavailable')}</strong>
                           </div>
                         )}
                         {reg && (
                           <div className="text-xs text-slate-600 dark:text-slate-300 truncate">
-                            Ref: <span className="font-medium">{reg.referenceMemberName}</span> ·{' '}
-                            {reg.occupation} at {reg.companyOrganization} · NID {reg.nid}
+                            {t('refShort')} <span className="font-medium">{reg.referenceMemberName}</span> ·{' '}
+                            {t('atOrg', { occupation: reg.occupation, org: reg.companyOrganization })} ·{' '}
+                            {t('nidShort', { nid: reg.nid })}
                           </div>
                         )}
                       </div>
@@ -518,7 +528,7 @@ export function AdminReportsView({
                         className="px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>View Details</span>
+                        <span>{t('viewDetails')}</span>
                       </button>
                       <button
                         type="button"
@@ -526,7 +536,7 @@ export function AdminReportsView({
                         className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{isAwaitingActivation ? 'Remove' : 'Decline'}</span>
+                        <span>{isAwaitingActivation ? t('removeBtn') : t('declineShortBtn')}</span>
                       </button>
                       {isAwaitingActivation ? (
                         <button
@@ -535,7 +545,7 @@ export function AdminReportsView({
                           className="px-3.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all duration-200"
                         >
                           <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Resend Email</span>
+                          <span>{t('resendEmailBtn')}</span>
                         </button>
                       ) : (
                         <button
@@ -544,7 +554,7 @@ export function AdminReportsView({
                           className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                         >
                           <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Issue Codes</span>
+                          <span>{t('issueCodesBtn')}</span>
                         </button>
                       )}
                     </div>
@@ -563,17 +573,17 @@ export function AdminReportsView({
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <HandCoins className="w-4 h-4" aria-hidden="true" />
-              <span>Administrative Qard Hasan Review</span>
+              <span>{t('loanReviewEyebrow')}</span>
             </div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-              Pending Loan Requests ({pendingReviewLoans.length})
+              {t('pendingLoansTitle', { count: pendingReviewLoans.length })}
             </h2>
           </div>
         </div>
 
         {pendingReviewLoans.length === 0 ? (
           <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
-            No pending Qard Hasan loan requests awaiting administrative review.
+            {t('noPendingLoans')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -595,22 +605,27 @@ export function AdminReportsView({
                       </span>
                       <span aria-hidden="true">·</span>
                       <span className="font-mono">
-                        Votes {approvals}/{loan.requiredApprovals}
+                        {t('votesFraction', { yes: approvals, req: loan.requiredApprovals })}
                       </span>
                     </div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">
-                      {formatMoney(loan.amount, ccy)} · {loan.installmentMonths} monthly installments
-                      ({formatMoney(loan.monthlyInstallment, ccy)}/mo)
+                      {t('installmentsLine', {
+                        amount: formatMoney(loan.amount, ccy),
+                        months: loan.installmentMonths,
+                        perMonth: formatMoney(loan.monthlyInstallment, ccy),
+                      })}
                     </div>
                     <p className="text-xs text-slate-700 dark:text-slate-300">{loan.purpose}</p>
                     {loan.decryptedSensitiveNotes && (
                       <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                        Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
-                        {loan.decryptedSensitiveNotes.provider} ·{' '}
-                        {loan.decryptedSensitiveNotes.disbursementAccount}
+                        {t('payoutPrefix', {
+                          channel: loan.decryptedSensitiveNotes.channel.toUpperCase(),
+                          provider: loan.decryptedSensitiveNotes.provider,
+                          account: loan.decryptedSensitiveNotes.disbursementAccount,
+                        })}
                         {loan.decryptedSensitiveNotes.emergencyContext &&
                         loan.decryptedSensitiveNotes.emergencyContext !== loan.purpose
-                          ? ` · Notes: ${loan.decryptedSensitiveNotes.emergencyContext}`
+                          ? ` · ${t('notesPrefix', { notes: loan.decryptedSensitiveNotes.emergencyContext })}`
                           : ''}
                       </div>
                     )}
@@ -626,7 +641,7 @@ export function AdminReportsView({
                           className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                         >
                           <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Decline</span>
+                          <span>{t('declineShortBtn')}</span>
                         </button>
                         <button
                           type="button"
@@ -635,12 +650,12 @@ export function AdminReportsView({
                           className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Approve for Disbursement</span>
+                          <span>{t('approveDisburseBtn')}</span>
                         </button>
                       </>
                     ) : (
                       <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                        Peer / Admin Review Required
+                        {t('peerReviewRequired')}
                       </span>
                     )}
                   </div>
@@ -681,19 +696,19 @@ export function AdminReportsView({
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                   <FileText className="w-4 h-4" aria-hidden="true" />
-                  <span>Monthly PDF Fund Statement &amp; Automated Dispatch</span>
+                  <span>{t('monthlyPdfEyebrow')}</span>
                 </div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Monthly Fund Summary PDF Report
+                  {t('monthlyPdfHeading')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Auto-email on the 15th of every month is{' '}
+                  {t('autoEmailNoticePrefix')}{' '}
                   <strong className="text-slate-800 dark:text-slate-200">
-                    {config?.monthlyReportAutoEmail === false ? 'Disabled' : 'Enabled'}
+                    {config?.monthlyReportAutoEmail === false ? t('disabled') : t('enabled')}
                   </strong>
-                  {' · '}Last automated month emailed:{' '}
+                  {' · '}{t('lastAutomatedEmailed')}{' '}
                   <span className="font-mono text-slate-800 dark:text-slate-200">
-                    {config?.lastMonthlyPdfSentMonth || 'None yet'}
+                    {config?.lastMonthlyPdfSentMonth || t('noneYet')}
                   </span>
                 </p>
               </div>
@@ -701,7 +716,7 @@ export function AdminReportsView({
               <div className="flex flex-wrap items-center gap-2.5">
                 <input
                   type="month"
-                  aria-label="Summary month"
+                  aria-label={t('summaryMonthAria')}
                   value={pdfMonthKey}
                   onChange={(e) => setPdfMonthKey(e.target.value)}
                   className="px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
@@ -712,7 +727,7 @@ export function AdminReportsView({
                   className="px-3.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800/70 bg-teal-50/70 dark:bg-teal-950/30 hover:bg-teal-100/80 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-700 dark:text-teal-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Download Monthly PDF</span>
+                  <span>{t('downloadMonthlyPdf')}</span>
                 </a>
                 {isAdmin && (
                   <button
@@ -722,14 +737,13 @@ export function AdminReportsView({
                       setModal({
                         mode: 'confirm',
                         tone: 'emerald',
-                        title: `Email Monthly PDF Summary (${pdfMonthKey})?`,
-                        description:
-                          'Generates the Monthly Cooperative Fund Summary PDF attachment and emails it to all active members.',
+                        title: t('confirmEmailPdfTitle', { month: pdfMonthKey }),
+                        description: t('confirmEmailPdfDesc'),
                         details: [
-                          { label: 'Target Month', value: pdfMonthKey },
-                          { label: 'Attachment', value: `amanah-monthly-summary-${pdfMonthKey}.pdf` },
+                          { label: t('targetMonth'), value: pdfMonthKey },
+                          { label: t('attachment'), value: `amanah-monthly-summary-${pdfMonthKey}.pdf` },
                         ],
-                        confirmLabel: 'Send Monthly PDF Emails',
+                        confirmLabel: t('sendMonthlyPdfBtn'),
                         run: async () => {
                           setEmailingPdf(true);
                           try {
@@ -742,19 +756,22 @@ export function AdminReportsView({
                               tone: res.sentCount > 0 ? 'emerald' : 'amber',
                               title:
                                 res.sentCount > 0
-                                  ? 'Monthly PDF Summaries Emailed'
-                                  : 'Monthly PDF Email Dispatch Summary',
+                                  ? t('pdfEmailedTitle')
+                                  : t('pdfSummaryTitle'),
                               description: res.skipped
-                                ? firstError || 'SMTP is not configured on the server.'
+                                ? firstError || t('smtpMissingFallback')
                                 : res.sentCount === 0 && firstError
-                                  ? `SMTP delivery error: ${firstError}`
-                                  : `Dispatched monthly PDF summary to ${res.sentCount} of ${totalTargets} active member(s).`,
+                                  ? t('smtpErrorLine', { error: firstError })
+                                  : t('dispatchedSummary', {
+                                      sent: res.sentCount,
+                                      total: totalTargets,
+                                    }),
                               details: [
-                                { label: 'Month', value: res.monthKey },
-                                { label: 'Delivered', value: `${res.sentCount}` },
-                                { label: 'Failed / Skipped', value: `${res.failedCount}` },
+                                { label: t('month'), value: res.monthKey },
+                                { label: t('delivered'), value: `${res.sentCount}` },
+                                { label: t('failedSkipped'), value: `${res.failedCount}` },
                                 ...(firstError && res.sentCount === 0
-                                  ? [{ label: 'SMTP Detail', value: firstError }]
+                                  ? [{ label: t('smtpDetail'), value: firstError }]
                                   : []),
                               ],
                             });
@@ -762,11 +779,11 @@ export function AdminReportsView({
                             setModal({
                               mode: 'notice',
                               tone: 'red',
-                              title: 'PDF Dispatch Failed',
+                              title: t('pdfFailedTitle'),
                               description:
                                 err instanceof Error
                                   ? err.message
-                                  : 'Failed to email monthly PDF summary.',
+                                  : t('pdfFailedDesc'),
                             });
                           } finally {
                             setEmailingPdf(false);
@@ -777,7 +794,7 @@ export function AdminReportsView({
                     className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap shrink-0 transition-colors"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{emailingPdf ? 'Sending…' : 'Email PDF to Active Members'}</span>
+                    <span>{emailingPdf ? t('sendingPdf') : t('emailPdfBtn')}</span>
                   </button>
                 )}
               </div>
@@ -789,7 +806,7 @@ export function AdminReportsView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Automated Regulatory & Compliance Reports
+                  {t('complianceHeading')}
                 </h2>
               </div>
               <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -798,10 +815,10 @@ export function AdminReportsView({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {(
                 [
-                  { id: 'contributions', label: 'Contributions Ledger CSV' },
-                  { id: 'loans', label: 'Qard Hasan Portfolio CSV' },
-                  { id: 'members', label: 'Member Standing CSV' },
-                  { id: 'audit', label: 'Encrypted Audit Trail CSV' },
+                  { id: 'contributions', label: t('csvContributions') },
+                  { id: 'loans', label: t('csvLoans') },
+                  { id: 'members', label: t('csvMembers') },
+                  { id: 'audit', label: t('csvAudit') },
                 ] as const
               ).map((rep) => (
                 <button
@@ -824,7 +841,7 @@ export function AdminReportsView({
         <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Administrator Fund Policy & Annual Loan Quota
+              {t('policyHeading')}
             </h3>
           </div>
 
@@ -832,7 +849,7 @@ export function AdminReportsView({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Loans / Member / Year
+                  {t('loansPerMemberYear')}
                 </label>
                 <input
                   type="number"
@@ -847,7 +864,7 @@ export function AdminReportsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Halal Maturity Date
+                  {t('halalMaturityDate')}
                 </label>
                 <input
                   type="date"
@@ -860,7 +877,7 @@ export function AdminReportsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Monthly Target ({ccy})
+                  {t('monthlyTargetLabel', { currency: ccy })}
                 </label>
                 <input
                   type="number"
@@ -874,7 +891,7 @@ export function AdminReportsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Max Loan Cap ({ccy})
+                  {t('maxLoanCapLabel', { currency: ccy })}
                 </label>
                 <input
                   type="number"
@@ -888,7 +905,7 @@ export function AdminReportsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Currency
+                  {t('currency')}
                 </label>
                 <select
                   value={currency}
@@ -905,7 +922,7 @@ export function AdminReportsView({
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Post-Maturity Halal Investment Mandate
+                {t('halalMandateLabel')}
               </label>
               <textarea
                 rows={2}
@@ -921,7 +938,7 @@ export function AdminReportsView({
                 disabled={savingPolicy}
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50"
               >
-                {savingPolicy ? 'Saving Policy…' : 'Save Cooperative Policy'}
+                {savingPolicy ? t('savingPolicy') : t('saveCoopPolicyBtn')}
               </button>
             </div>
           </form>
@@ -980,17 +997,17 @@ export function AdminReportsView({
                   id="member-reg-modal-title"
                   className="text-base font-semibold text-slate-900 dark:text-white"
                 >
-                  Registration Details · {inspectingMember.name}
+                  {t('regModalTitle', { name: inspectingMember.name })}
                 </h3>
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                  {inspectingMember.memberCode} · {inspectingMember.email} · Applied{' '}
-                  {formatDateTime(inspectingMember.joinedAt)}
+                  {inspectingMember.memberCode} · {inspectingMember.email} ·{' '}
+                  {t('appliedLabel', { date: formatDateTime(inspectingMember.joinedAt) })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectingMember(null)}
-                aria-label="Close registration details"
+                aria-label={t('closeRegDetailsAria')}
                 className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -1007,7 +1024,7 @@ export function AdminReportsView({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          Applicant Photo
+                          {t('applicantPhoto')}
                         </div>
                         {portrait ? (
                           <a
@@ -1018,21 +1035,21 @@ export function AdminReportsView({
                           >
                             <img
                               src={portrait}
-                              alt={`${inspectingMember.name} photo`}
+                              alt={t('photoAlt', { name: inspectingMember.name })}
                               referrerPolicy="no-referrer"
                               className="w-full h-full object-cover"
                             />
                           </a>
                         ) : (
                           <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            No photo uploaded
+                            {t('noPhotoUploaded')}
                           </div>
                         )}
                       </div>
 
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          Agreement Paper (Optional)
+                          {t('agreementPaper')}
                         </div>
                         {reg?.agreementPhotoUrl ? (
                           isPdfFileUrl(reg.agreementPhotoUrl) ? (
@@ -1044,7 +1061,7 @@ export function AdminReportsView({
                             >
                               <FileText className="w-6 h-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                               <span className="text-xs font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1">
-                                <span>Open Signed Agreement PDF</span>
+                                <span>{t('openSignedPdf')}</span>
                                 <ExternalLink className="w-3 h-3" aria-hidden="true" />
                               </span>
                             </a>
@@ -1057,7 +1074,7 @@ export function AdminReportsView({
                             >
                               <img
                                 src={reg.agreementPhotoUrl}
-                                alt={`${inspectingMember.name} signed agreement`}
+                                alt={t('signedAgreementAlt', { name: inspectingMember.name })}
                                 referrerPolicy="no-referrer"
                                 className="w-full h-full object-cover"
                               />
@@ -1065,7 +1082,7 @@ export function AdminReportsView({
                           )
                         ) : (
                           <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            Not provided (optional)
+                            {t('notProvidedOptional')}
                           </div>
                         )}
                       </div>
@@ -1074,54 +1091,54 @@ export function AdminReportsView({
                     {reg ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Date of Birth</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('dob')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.dateOfBirth}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Reference (Existing Member)
+                            {t('referenceMember')}
                           </div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.referenceMemberName}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Mobile Number</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('mobileNumber')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.mobile}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">National ID (NID)</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('nidLabel')}</div>
                           <div className="mt-0.5 font-mono font-semibold text-slate-900 dark:text-white">
                             {reg.nid}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Occupation</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('occupation')}</div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.occupation}
                           </div>
                         </div>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Company / Organization
+                            {t('companyOrg')}
                           </div>
                           <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
                             {reg.companyOrganization}
                           </div>
                         </div>
                         <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-slate-500 dark:text-slate-400">Present Address</div>
+                          <div className="text-slate-500 dark:text-slate-400">{t('presentAddress')}</div>
                           <div className="mt-0.5 text-slate-900 dark:text-white">
                             {reg.presentAddress}
                           </div>
                         </div>
                         <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">
-                            Permanent Address
+                            {t('permanentAddress')}
                           </div>
                           <div className="mt-0.5 text-slate-900 dark:text-white">
                             {reg.permanentAddress}
@@ -1130,7 +1147,7 @@ export function AdminReportsView({
                       </div>
                     ) : (
                       <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                        No extended KYC registration payload stored for this bootstrap account.
+                        {t('noExtendedKyc')}
                       </div>
                     )}
                     {reg?.nominees && reg.nominees.length > 0 && (
@@ -1150,7 +1167,7 @@ export function AdminReportsView({
                     className="px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Decline Application</span>
+                    <span>{t('declineBtn')}</span>
                   </button>
                   <button
                     type="button"
@@ -1158,7 +1175,7 @@ export function AdminReportsView({
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
                     <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Approve &amp; Issue Codes</span>
+                    <span>{t('approveIssueBtn')}</span>
                   </button>
                 </>
               )}
@@ -1169,7 +1186,7 @@ export function AdminReportsView({
                   className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Resend Activation Email</span>
+                  <span>{t('resendEmailBtn')}</span>
                 </button>
               )}
               <button
@@ -1177,7 +1194,7 @@ export function AdminReportsView({
                 onClick={() => setInspectingMember(null)}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Close
+                {tCommon('close')}
               </button>
             </div>
           </motion.div>
@@ -1192,7 +1209,7 @@ export function AdminReportsView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

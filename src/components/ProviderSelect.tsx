@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { isTopModal, registerTopModal } from '../utils/modalLock.ts';
@@ -30,9 +31,11 @@ export function ProviderSelect({
   value,
   onChange,
   disabled = false,
-  placeholder = 'Search bank or wallet…',
+  placeholder,
   compact = false,
 }: ProviderSelectProps) {
+  const t = useTranslations('Common.providerSelect');
+  const resolvedPlaceholder = placeholder || t('searchPlaceholder');
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -129,7 +132,7 @@ export function ProviderSelect({
         }}
         className={`w-full ${btnPadding} rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-left flex items-center justify-between gap-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed`}
       >
-        <span className="truncate">{value || options[0] || 'Select provider'}</span>
+        <span className="truncate">{value || options[0] || t('selectFallback')}</span>
         <ChevronDown
           className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
             open ? 'rotate-180' : ''
@@ -167,7 +170,7 @@ export function ProviderSelect({
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={placeholder}
+                    placeholder={resolvedPlaceholder}
                     className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                   />
                 </div>
@@ -178,7 +181,7 @@ export function ProviderSelect({
                 >
                   {filtered.length === 0 ? (
                     <li className="px-3 py-3 text-slate-500 dark:text-slate-400 text-center">
-                      No bank or wallet matched &ldquo;{query}&rdquo;
+                      {t('noMatch', { query })}
                     </li>
                   ) : (
                     filtered.map((opt) => {

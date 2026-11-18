@@ -12,6 +12,7 @@ import {
   Send,
   Sparkles,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type {
   EmailTemplateCollection,
   EmailTemplateFormat,
@@ -87,6 +88,7 @@ export function AdminEmailTemplatesEditor({
   adminEmail,
   onRefresh,
 }: AdminEmailTemplatesEditorProps) {
+  const t = useTranslations('Admin.emailTemplates');
   const [activeKey, setActiveKey] = useState<EmailTemplateKey>('transactionSummary');
   const [draftMap, setDraftMap] = useState<Record<EmailTemplateKey, EmailTemplateFormat>>(() =>
     buildDraftMapFromConfig(config?.emailTemplates)
@@ -211,18 +213,17 @@ export function AdminEmailTemplatesEditor({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Save Nodemailer Email Formats?',
-      description:
-        'Updated subject lines, greetings, body messages, footer notes, and banner colors will immediately apply to automated cooperative emails.',
+      title: t('saveTitle'),
+      description: t('saveDesc'),
       details: [
-        { label: 'Active Format', value: activeMeta.label },
+        { label: t('detailActiveFormat'), value: t(`templates.${activeKey}.label` as const) },
         {
-          label: 'Modified Templates',
-          value: `${dirtyCount || 1} template${dirtyCount === 1 ? '' : 's'}`,
+          label: t('detailModifiedTemplates'),
+          value: t('modifiedCount', { count: dirtyCount || 1 }),
         },
-        { label: 'Header Accent', value: headerTop.toUpperCase() },
+        { label: t('detailHeaderAccent'), value: headerTop.toUpperCase() },
       ],
-      confirmLabel: 'Save Email Formats',
+      confirmLabel: t('saveConfirm'),
       run: async () => {
         await api.updateConfig({
           emailTemplates: buildPayloadFromDraftMap(draftMap),
@@ -231,12 +232,11 @@ export function AdminEmailTemplatesEditor({
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Email Formats Saved',
-          description:
-            'Your customized Nodemailer formats have been saved and activated for all future cooperative dispatches.',
+          title: t('savedTitle'),
+          description: t('savedDesc'),
           details: [
-            { label: 'Template', value: activeMeta.label },
-            { label: 'Subject Format', value: activeDraft.subject },
+            { label: t('detailTemplate'), value: t(`templates.${activeKey}.label` as const) },
+            { label: t('detailSubjectFormat'), value: activeDraft.subject },
           ],
         });
       },
@@ -247,14 +247,13 @@ export function AdminEmailTemplatesEditor({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: `Reset "${activeMeta.shortLabel}" Format to Default?`,
-      description:
-        'This restores the default Nodemailer subject, greeting, body text, footer note, and accent color for this email type.',
+      title: t('resetTitle', { name: t(`templates.${activeKey}.shortLabel` as const) }),
+      description: t('resetDesc'),
       details: [
-        { label: 'Template', value: activeMeta.label },
-        { label: 'Default Color', value: activeDefault.headerColor.toUpperCase() },
+        { label: t('detailTemplate'), value: t(`templates.${activeKey}.label` as const) },
+        { label: t('detailDefaultColor'), value: activeDefault.headerColor.toUpperCase() },
       ],
-      confirmLabel: 'Reset to Default',
+      confirmLabel: t('resetConfirm'),
       run: async () => {
         const nextMap: Record<EmailTemplateKey, EmailTemplateFormat> = {
           ...draftMap,
@@ -270,8 +269,8 @@ export function AdminEmailTemplatesEditor({
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Format Restored to Default',
-          description: `"${activeMeta.label}" has been reset to its default cooperative email format.`,
+          title: t('resetDoneTitle'),
+          description: t('resetDoneDesc', { name: t(`templates.${activeKey}.label` as const) }),
         });
       },
     });
@@ -281,16 +280,15 @@ export function AdminEmailTemplatesEditor({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Send Test "${activeMeta.shortLabel}" Email`,
-      description:
-        'Dispatches a [TEST] email using your current draft format (even before saving) with realistic sample cooperative values.',
+      title: t('sendTestTitle', { name: t(`templates.${activeKey}.shortLabel` as const) }),
+      description: t('sendTestDesc'),
       details: [
-        { label: 'Template', value: activeMeta.label },
-        { label: 'Default Recipient', value: adminEmail || 'Admin Email' },
+        { label: t('detailTemplate'), value: t(`templates.${activeKey}.label` as const) },
+        { label: t('detailDefaultRecipient'), value: adminEmail || t('adminEmailFallback') },
       ],
-      confirmLabel: 'Send Test Email',
-      inputLabel: 'Recipient Email Address (leave blank to use your admin email)',
-      inputPlaceholder: adminEmail || 'admin@cooperative.org',
+      confirmLabel: t('sendTestConfirm'),
+      inputLabel: t('recipientInputLabel'),
+      inputPlaceholder: adminEmail || t('recipientInputPlaceholder'),
       inputRequired: false,
       run: async (inputValue) => {
         const targetEmail = inputValue.trim() || adminEmail;
@@ -304,24 +302,24 @@ export function AdminEmailTemplatesEditor({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Test Email Dispatched',
-            description: `Sample "${activeMeta.label}" email was sent via Nodemailer SMTP.`,
+            title: t('testSentTitle'),
+            description: t('testSentDesc', { name: t(`templates.${activeKey}.label` as const) }),
             details: [
-              { label: 'Recipient', value: result.recipientEmail },
-              { label: 'Subject', value: result.subject },
+              { label: t('detailRecipient'), value: result.recipientEmail },
+              { label: t('detailSubject'), value: result.subject },
             ],
           });
         } else {
           setModal({
             mode: 'notice',
             tone: 'amber',
-            title: 'Test Email Not Sent',
+            title: t('testNotSentTitle'),
             description: result.smtpConfigured
-              ? `SMTP attempted delivery to ${result.recipientEmail} but returned an error.`
-              : 'SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) are not configured yet.',
+              ? t('testNotSentSmtpError', { email: result.recipientEmail })
+              : t('testNotSentNotConfigured'),
             details: [
-              { label: 'Recipient', value: result.recipientEmail },
-              { label: 'Reason', value: result.reason || 'SMTP_NOT_CONFIGURED' },
+              { label: t('detailRecipient'), value: result.recipientEmail },
+              { label: t('detailReason'), value: result.reason || 'SMTP_NOT_CONFIGURED' },
             ],
           });
         }
@@ -338,8 +336,8 @@ export function AdminEmailTemplatesEditor({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Action Could Not Be Completed',
-        description: err instanceof Error ? err.message : 'Unexpected email template error.',
+        title: t('actionFailedTitle'),
+        description: err instanceof Error ? err.message : t('actionFailedDesc'),
       });
     } finally {
       setModalBusy(false);
@@ -351,30 +349,30 @@ export function AdminEmailTemplatesEditor({
       case 'transactionSummary':
         return previewSampleVars.eventTitle;
       case 'registrationApproved':
-        return 'Membership Approved — Welcome';
+        return t('previewHeadingRegApproved');
       case 'registrationPendingAdmin':
-        return 'New Registration Pending Approval';
+        return t('previewHeadingRegPending');
       case 'tempPassword':
-        return 'Temporary Password Issued';
+        return t('previewHeadingTempPassword');
       case 'passwordResetAdminAlert':
-        return 'Password Reset Request Received';
+        return t('previewHeadingPwResetAlert');
       case 'monthlyPdfSummary':
-        return `Monthly Fund Summary · ${previewSampleVars.monthKey}`;
+        return t('previewHeadingMonthlyPdf', { month: previewSampleVars.monthKey });
     }
-  }, [activeKey, previewSampleVars]);
+  }, [activeKey, previewSampleVars, t]);
 
   const plainTextPreview = useMemo(() => {
     return [
-      `Subject: ${previewRendered.subject}`,
+      t('plainSubject', { subject: previewRendered.subject }),
       '',
       previewRendered.greeting,
       '',
       previewRendered.introBody,
       '',
       ...(previewRendered.footerNote ? [previewRendered.footerNote, ''] : []),
-      `Cooperative Fund: ${fundName}`,
+      t('plainFund', { fundName }),
     ].join('\n');
-  }, [previewRendered, fundName]);
+  }, [previewRendered, fundName, t]);
 
   return (
     <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
@@ -382,14 +380,13 @@ export function AdminEmailTemplatesEditor({
         <div>
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Mail className="w-4 h-4" aria-hidden="true" />
-            <span>Automated SMTP Communications · Admin Only</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-            Nodemailer Email Format Editor
+            {t('title')}
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-            Customize the subject line, greeting, body message, footer note, and header accent color
-            for all six cooperative Nodemailer alerts and receipts.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -402,7 +399,7 @@ export function AdminEmailTemplatesEditor({
               className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 dark:hover:bg-rose-950/30 dark:hover:text-rose-300 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Reset Format</span>
+              <span>{t('resetFormatBtn')}</span>
             </button>
           )}
           <button
@@ -412,7 +409,7 @@ export function AdminEmailTemplatesEditor({
             className="px-3 py-2 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-800 dark:text-teal-300 inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Send Test Email</span>
+            <span>{t('sendTestBtn')}</span>
           </button>
           <button
             type="button"
@@ -421,7 +418,7 @@ export function AdminEmailTemplatesEditor({
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{anyUnsavedChanges ? 'Save Email Formats' : 'Saved'}</span>
+            <span>{anyUnsavedChanges ? t('saveFormatsBtn') : t('savedBtn')}</span>
           </button>
         </div>
       </div>
@@ -429,7 +426,6 @@ export function AdminEmailTemplatesEditor({
       {/* Template selector buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {EMAIL_TEMPLATE_KEYS.map((key) => {
-          const meta = EMAIL_TEMPLATE_META[key];
           const isSelected = key === activeKey;
           const isDirty = !areFormatsEqual(draftMap[key], savedMap[key]);
           const isCustomized = !areFormatsEqual(draftMap[key], DEFAULT_EMAIL_TEMPLATES[key]);
@@ -446,10 +442,10 @@ export function AdminEmailTemplatesEditor({
               }`}
             >
               <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-semibold truncate">{meta.shortLabel}</span>
+                <span className="text-xs font-semibold truncate">{t(`templates.${key}.shortLabel` as const)}</span>
                 {isDirty ? (
                   <span
-                    title="Unsaved draft edits"
+                    title={t('unsavedTooltip')}
                     className="w-2 h-2 rounded-full bg-amber-500 shrink-0"
                   />
                 ) : isCustomized ? (
@@ -460,7 +456,7 @@ export function AdminEmailTemplatesEditor({
                 ) : null}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                {meta.audience}
+                {t(`templates.${key}.audience` as const)}
               </div>
             </button>
           );
@@ -473,18 +469,18 @@ export function AdminEmailTemplatesEditor({
           <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                {activeMeta.label}
+                {t(`templates.${activeKey}.label` as const)}
               </div>
               <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200/70 dark:border-teal-800/70">
                 {activeHasUnsaved
-                  ? 'Unsaved Changes'
+                  ? t('badgeUnsaved')
                   : activeIsCustomized
-                  ? 'Custom Format Active'
-                  : 'Default Format'}
+                  ? t('badgeCustom')
+                  : t('badgeDefault')}
               </span>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              {activeMeta.description}
+              {t(`templates.${activeKey}.description` as const)}
             </p>
           </div>
 
@@ -494,7 +490,7 @@ export function AdminEmailTemplatesEditor({
                 htmlFor="email-tpl-subject"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Subject Line
+                {t('labelSubject')}
               </label>
               <input
                 ref={subjectRef}
@@ -513,7 +509,7 @@ export function AdminEmailTemplatesEditor({
                 htmlFor="email-tpl-greeting"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Greeting Line
+                {t('labelGreeting')}
               </label>
               <input
                 ref={greetingRef}
@@ -532,7 +528,7 @@ export function AdminEmailTemplatesEditor({
                 htmlFor="email-tpl-intro"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Main Message Body
+                {t('labelBody')}
               </label>
               <textarea
                 ref={introRef}
@@ -551,7 +547,7 @@ export function AdminEmailTemplatesEditor({
                 htmlFor="email-tpl-footer"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Footer Note
+                {t('labelFooter')}
               </label>
               <textarea
                 ref={footerRef}
@@ -569,18 +565,19 @@ export function AdminEmailTemplatesEditor({
             <div className="pt-1">
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
                 <Palette className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                <span>Email Header Accent Color</span>
+                <span>{t('labelAccentColor')}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {EMAIL_HEADER_COLOR_PRESETS.map((preset) => {
                   const selected =
                     sanitizeEmailHeaderColor(activeDraft.headerColor) === preset.hex;
+                  const colorName = t(`colors.${preset.label}` as const);
                   return (
                     <button
                       key={preset.hex}
                       type="button"
                       onClick={() => updateActiveField('headerColor', preset.hex)}
-                      title={`${preset.label} (${preset.hex})`}
+                      title={`${colorName} (${preset.hex})`}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
                         selected
                           ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
@@ -591,14 +588,14 @@ export function AdminEmailTemplatesEditor({
                         className="w-3 h-3 rounded-sm border border-black/10"
                         style={{ backgroundColor: preset.hex }}
                       />
-                      <span>{preset.label}</span>
+                      <span>{colorName}</span>
                     </button>
                   );
                 })}
                 <label className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-mono text-slate-600 dark:text-slate-300 cursor-pointer">
                   <input
                     type="color"
-                    aria-label="Custom header accent color"
+                    aria-label={t('customColorAria')}
                     value={sanitizeEmailHeaderColor(activeDraft.headerColor)}
                     onChange={(e) => updateActiveField('headerColor', e.target.value)}
                     className="w-5 h-5 border-0 bg-transparent p-0 cursor-pointer"
@@ -612,14 +609,14 @@ export function AdminEmailTemplatesEditor({
             <div className="pt-1">
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                <span>Insert Dynamic Placeholder (targets active field)</span>
+                <span>{t('insertTokenHeading')}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {activeMeta.variables.map((variable) => (
                   <button
                     key={variable.key}
                     type="button"
-                    title={`${variable.description} (e.g. ${variable.sample})`}
+                    title={`${variable.description} (${t('sampleNoteLabel', { sample: variable.sample })})`}
                     onClick={() => insertToken(variable.token)}
                     className="px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[11px] font-mono text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer"
                   >
@@ -636,7 +633,7 @@ export function AdminEmailTemplatesEditor({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
               <Eye className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-              <span>Live Sample Email Preview</span>
+              <span>{t('previewTitle')}</span>
             </div>
             <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-950">
               <button
@@ -648,7 +645,7 @@ export function AdminEmailTemplatesEditor({
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                HTML View
+                {t('htmlView')}
               </button>
               <button
                 type="button"
@@ -660,7 +657,7 @@ export function AdminEmailTemplatesEditor({
                 }`}
               >
                 <FileText className="w-3 h-3" aria-hidden="true" />
-                <span>Plain Text</span>
+                <span>{t('plainText')}</span>
               </button>
             </div>
           </div>
@@ -668,7 +665,7 @@ export function AdminEmailTemplatesEditor({
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950 p-3 sm:p-4">
             <div className="mb-3 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
               <span className="font-semibold text-slate-500 dark:text-slate-400 mr-1.5">
-                Subject:
+                {t('subjectPrefix')}
               </span>
               <span className="font-medium text-slate-900 dark:text-white break-words">
                 {previewRendered.subject}
@@ -702,25 +699,25 @@ export function AdminEmailTemplatesEditor({
                   {activeKey === 'transactionSummary' && (
                     <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Transaction Type</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewTxType')}</span>
                         <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.transactionType}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Reference ID</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewRefId')}</span>
                         <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.referenceId}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Amount</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewAmount')}</span>
                         <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.amount}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
-                        <span className="text-slate-500 dark:text-slate-400">Status</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewStatus')}</span>
                         <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.statusLabel}
                         </span>
@@ -731,7 +728,7 @@ export function AdminEmailTemplatesEditor({
                   {activeKey === 'registrationApproved' && (
                     <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 px-4 py-3">
                       <div className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                        Assigned Member Code
+                        {t('previewMemberCode')}
                       </div>
                       <div className="text-base font-mono font-bold text-emerald-950 dark:text-emerald-200 mt-0.5">
                         {previewSampleVars.memberCode}
@@ -742,7 +739,7 @@ export function AdminEmailTemplatesEditor({
                   {activeKey === 'tempPassword' && (
                     <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 px-4 py-3">
                       <div className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                        Temporary Password
+                        {t('previewTempPassword')}
                       </div>
                       <div className="text-base font-mono font-bold text-emerald-950 dark:text-emerald-200 mt-0.5">
                         {previewSampleVars.tempPassword}
@@ -753,19 +750,19 @@ export function AdminEmailTemplatesEditor({
                   {activeKey === 'registrationPendingAdmin' && (
                     <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Email</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewEmail')}</span>
                         <span className="font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.applicantEmail}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Mobile</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewMobile')}</span>
                         <span className="font-mono font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.mobile}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
-                        <span className="text-slate-500 dark:text-slate-400">Reference</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewReference')}</span>
                         <span className="font-semibold text-slate-900 dark:text-white">
                           {previewSampleVars.referenceMemberName}
                         </span>
@@ -778,33 +775,33 @@ export function AdminEmailTemplatesEditor({
                       className="bg-slate-50 dark:bg-slate-950 px-3 py-2 text-[11px] text-slate-700 dark:text-slate-300"
                       style={{ borderLeft: `3px solid ${headerTop}` }}
                     >
-                      Note: {previewSampleVars.reason}
+                      {t('previewNote', { reason: previewSampleVars.reason })}
                     </div>
                   )}
 
                   {activeKey === 'monthlyPdfSummary' && (
                     <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 text-[11px]">
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Amanah Height</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewAmanahHeight')}</span>
                         <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.amanahHeight}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Current Available Balance</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewAvailableBalance')}</span>
                         <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.currentBalance}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400">Active Qard Hasan Total</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('previewActiveLoanTotal')}</span>
                         <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.activeLoanTotal}
                         </span>
                       </div>
                       <div className="flex justify-between px-3 py-2">
                         <span className="text-slate-500 dark:text-slate-400">
-                          Month Collected ({previewSampleVars.monthKey})
+                          {t('previewMonthCollected', { month: previewSampleVars.monthKey })}
                         </span>
                         <span className="font-mono font-bold text-slate-900 dark:text-white">
                           {previewSampleVars.monthlyCollected}
@@ -832,7 +829,7 @@ export function AdminEmailTemplatesEditor({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
   CreditCard,
@@ -63,7 +64,10 @@ const MEMBER_ACCESS_ACTIONS = new Set([
   'MEMBER_RBAC_UPDATED',
 ]);
 
-function classifyAction(action: string): {
+function classifyAction(
+  action: string,
+  t: (key: string) => string
+): {
   category: Exclude<MemberAuditFilter, 'all'> | 'other';
   label: string;
   toneClass: string;
@@ -76,10 +80,10 @@ function classifyAction(action: string): {
     return {
       category: 'contributions',
       label: isApproved
-        ? 'Contribution Verified'
+        ? t('contribVerified')
         : isRejected
-          ? 'Contribution Denied'
-          : 'Contribution Submitted',
+          ? t('contribDenied')
+          : t('contribSubmitted'),
       toneClass: isRejected
         ? 'text-rose-700 dark:text-rose-400'
         : isApproved
@@ -104,14 +108,14 @@ function classifyAction(action: string): {
       category: 'loans',
       label:
         action === 'LOAN_REQUEST_CREATED'
-          ? 'Qard Hasan Requested'
+          ? t('loanRequested')
           : action === 'LOAN_DISBURSED'
-            ? 'Qard Hasan Disbursed'
+            ? t('loanDisbursed')
             : isRejected
-              ? 'Loan Request Declined'
+              ? t('loanDeclined')
               : isPositive
-                ? 'Loan Request Approved'
-                : 'Loan Workflow Update',
+                ? t('loanApproved')
+                : t('loanWorkflowUpdate'),
       toneClass: isRejected
         ? 'text-rose-700 dark:text-rose-400'
         : isPositive
@@ -132,10 +136,10 @@ function classifyAction(action: string): {
     return {
       category: 'repayments',
       label: isRejected
-        ? 'Repayment Denied'
+        ? t('repayDenied')
         : isVerified
-          ? 'Repayment Verified'
-          : 'Installment Submitted',
+          ? t('repayVerified')
+          : t('installmentSubmitted'),
       toneClass: isRejected
         ? 'text-rose-700 dark:text-rose-400'
         : isVerified
@@ -153,7 +157,7 @@ function classifyAction(action: string): {
   if (MEMBER_ACCESS_ACTIONS.has(action)) {
     return {
       category: 'members',
-      label: action.includes('PROFILE') ? 'Profile Change Activity' : 'Membership Activity',
+      label: action.includes('PROFILE') ? t('profileChangeActivity') : t('membershipActivity'),
       toneClass: 'text-indigo-700 dark:text-indigo-400',
       iconBgClass: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60',
       Icon: UserCheck,
@@ -163,7 +167,7 @@ function classifyAction(action: string): {
   if (action.startsWith('COMMUNITY_')) {
     return {
       category: 'other',
-      label: 'Community Event',
+      label: t('communityEvent'),
       toneClass: 'text-teal-700 dark:text-teal-400',
       iconBgClass: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
       Icon: MessageSquare,
@@ -172,7 +176,7 @@ function classifyAction(action: string): {
 
   return {
     category: 'other',
-    label: 'Cooperative Event',
+    label: t('coopEvent'),
     toneClass: 'text-slate-700 dark:text-slate-300',
     iconBgClass: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
     Icon: KeyRound,
@@ -180,6 +184,7 @@ function classifyAction(action: string): {
 }
 
 export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidgetProps) {
+  const t = useTranslations('Admin.auditWidget');
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [chainValid, setChainValid] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -189,21 +194,24 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
   const [limit, setLimit] = useState(12);
   const syncTimerRef = useRef<number | null>(null);
 
-  const loadLogs = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setError(null);
-    try {
-      const res = await api.getAuditLogs();
-      setLogs(res.logs);
-      setChainValid(res.chainValid);
-    } catch (err) {
-      if (!silent) {
-        setError(err instanceof Error ? err.message : 'Unable to load member audit log.');
+  const loadLogs = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setError(null);
+      try {
+        const res = await api.getAuditLogs();
+        setLogs(res.logs);
+        setChainValid(res.chainValid);
+      } catch (err) {
+        if (!silent) {
+          setError(err instanceof Error ? err.message : t('loadFailed'));
+        }
+      } finally {
+        if (!silent) setLoading(false);
       }
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, []);
+    },
+    [t]
+  );
 
   useEffect(() => {
     void loadLogs(false);
@@ -254,7 +262,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
     let members = 0;
 
     for (const entry of memberActivityLogs) {
-      const cat = classifyAction(entry.action).category;
+      const cat = classifyAction(entry.action, (k) => t(k)).category;
       if (cat === 'contributions') contributions += 1;
       else if (cat === 'loans') loans += 1;
       else if (cat === 'repayments') repayments += 1;
@@ -268,12 +276,12 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       repayments,
       members,
     };
-  }, [memberActivityLogs]);
+  }, [memberActivityLogs, t]);
 
   const filteredLogs = useMemo(() => {
     const q = search.trim().toLowerCase();
     return memberActivityLogs.filter((entry) => {
-      const meta = classifyAction(entry.action);
+      const meta = classifyAction(entry.action, (k) => t(k));
       if (filter !== 'all' && meta.category !== filter) return false;
       if (!q) return true;
       return (
@@ -283,7 +291,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
         meta.label.toLowerCase().includes(q)
       );
     });
-  }, [memberActivityLogs, filter, search]);
+  }, [memberActivityLogs, filter, search, t]);
 
   const visibleLogs = filteredLogs.slice(0, limit);
 
@@ -292,7 +300,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
-      aria-label="Member Audit Log"
+      aria-label={t('ariaLabel')}
       className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4"
     >
       <div className="space-y-3.5">
@@ -301,7 +309,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <ScrollText className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Oversight Feed</span>
+              <span>{t('oversightFeed')}</span>
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
               <span
                 className={`font-mono text-[11px] ${
@@ -310,11 +318,11 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
                     : 'text-rose-700 dark:text-rose-400'
                 }`}
               >
-                {chainValid ? 'SHA-256 Verified' : 'Integrity Check'}
+                {chainValid ? t('shaVerified') : t('integrityCheck')}
               </span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Member Audit Log
+              {t('heading')}
             </h3>
           </div>
 
@@ -322,7 +330,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             type="button"
             onClick={() => void loadLogs(false)}
             disabled={loading}
-            aria-label="Refresh member audit log"
+            aria-label={t('refreshAria')}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -333,11 +341,11 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
         <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
           {(
             [
-              { id: 'all', label: 'All', count: counts.all },
-              { id: 'contributions', label: 'Deposits', count: counts.contributions },
-              { id: 'loans', label: 'Loans', count: counts.loans },
-              { id: 'repayments', label: 'Repayments', count: counts.repayments },
-              { id: 'members', label: 'Access', count: counts.members },
+              { id: 'all', label: t('tabAll'), count: counts.all },
+              { id: 'contributions', label: t('tabDeposits'), count: counts.contributions },
+              { id: 'loans', label: t('tabLoans'), count: counts.loans },
+              { id: 'repayments', label: t('tabRepayments'), count: counts.repayments },
+              { id: 'members', label: t('tabAccess'), count: counts.members },
             ] as const
           ).map((tab) => {
             const active = filter === tab.id;
@@ -381,7 +389,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter by member, loan ID, or action…"
+            placeholder={t('searchPlaceholder')}
             className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
           />
         </div>
@@ -409,12 +417,12 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
           </div>
         ) : visibleLogs.length === 0 ? (
           <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-500 dark:text-slate-400">
-            No matching member activities recorded in this category yet.
+            {t('emptyFiltered')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg max-h-[300px] overflow-y-auto scrollbar-subtle">
             {visibleLogs.map((entry) => {
-              const meta = classifyAction(entry.action);
+              const meta = classifyAction(entry.action, (k) => t(k));
               const Icon = meta.Icon;
               const canOpenProfile =
                 Boolean(onViewMemberProfile) &&
@@ -476,14 +484,14 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       {filteredLogs.length > visibleLogs.length && (
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span className="font-mono tabular-nums">
-            Showing {visibleLogs.length} of {filteredLogs.length}
+            {t('showingCount', { shown: visibleLogs.length, total: filteredLogs.length })}
           </span>
           <button
             type="button"
             onClick={() => setLimit((n) => n + 15)}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
           >
-            Load more
+            {t('loadMore')}
           </button>
         </div>
       )}

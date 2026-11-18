@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { DashboardOverview, HalalProject, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -53,6 +54,8 @@ export function HalalProjectsView({
   loading,
   onRefresh,
 }: HalalProjectsViewProps) {
+  const t = useTranslations('HalalProjects');
+  const tCommon = useTranslations('Common');
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const ccy = overview?.config.currency || 'BDT';
 
@@ -61,7 +64,7 @@ export function HalalProjectsView({
   const [shariahStructure, setShariahStructure] =
     useState<HalalProject['shariahStructure']>('Musharakah');
   const [targetAllocation, setTargetAllocation] = useState('50000');
-  const [projectedAnnualReturn, setProjectedAnnualReturn] = useState('10% – 13% p.a.');
+  const [projectedAnnualReturn, setProjectedAnnualReturn] = useState(() => t('defaultReturnRange'));
   const [riskTier, setRiskTier] = useState<HalalProject['riskTier']>('Balanced');
   const [shariahScholarNote, setShariahScholarNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -72,7 +75,7 @@ export function HalalProjectsView({
   const [expandedDistId, setExpandedDistId] = useState<string | null>(null);
 
   const [distFormProjectId, setDistFormProjectId] = useState<string | null>(null);
-  const [distPeriodLabel, setDistPeriodLabel] = useState('Q1 Dividend');
+  const [distPeriodLabel, setDistPeriodLabel] = useState(() => t('defaultPeriodLabel'));
   const [distRealizedProfit, setDistRealizedProfit] = useState('');
   const [distCoopSharePct, setDistCoopSharePct] = useState('70');
   const [distBusy, setDistBusy] = useState(false);
@@ -97,12 +100,26 @@ export function HalalProjectsView({
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        tCommon('actionCouldNotComplete'),
+        err instanceof Error ? err.message : tCommon('unexpectedError')
       );
     } finally {
       setModalBusy(false);
     }
+  }
+
+  function translateStructure(val: HalalProject['shariahStructure']) {
+    if (val === 'Musharakah' || val === 'Mudarabah' || val === 'Murabahah') {
+      return t(`structures.${val}`);
+    }
+    return val;
+  }
+
+  function translateRiskTier(val: HalalProject['riskTier']) {
+    if (val === 'Conservative' || val === 'Balanced' || val === 'Growth') {
+      return t(`riskTiers.${val}`);
+    }
+    return val;
   }
 
   function handleSubmit(e: FormEvent) {
@@ -111,8 +128,8 @@ export function HalalProjectsView({
     if (!Number.isFinite(numericAllocation) || numericAllocation < 1000) {
       showNotice(
         'red',
-        'Invalid Allocation Amount',
-        'Target allocation must be at least 1,000.'
+        t('invalidAllocationTitle'),
+        t('invalidAllocationDesc')
       );
       return;
     }
@@ -120,17 +137,19 @@ export function HalalProjectsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Confirm Halal Investment Proposal?',
-      description:
-        'Submitting opens this Shariah-compliant venture for real-time 2/3 member voting.',
+      title: t('confirmProposalTitle'),
+      description: t('confirmProposalDesc'),
       details: [
-        { label: 'Project Title', value: title.trim() },
-        { label: 'Sector', value: sector.trim() },
-        { label: 'Contract & Risk', value: `${shariahStructure} · ${riskTier}` },
-        { label: 'Target Allocation', value: formatMoney(numericAllocation, ccy) },
-        { label: 'Projected Return', value: projectedAnnualReturn.trim() },
+        { label: t('projectTitle'), value: title.trim() },
+        { label: t('sector'), value: sector.trim() },
+        {
+          label: t('contractAndRisk'),
+          value: `${translateStructure(shariahStructure)} · ${translateRiskTier(riskTier)}`,
+        },
+        { label: t('targetAllocation'), value: formatMoney(numericAllocation, ccy) },
+        { label: t('projectedReturn'), value: projectedAnnualReturn.trim() },
       ],
-      confirmLabel: 'Open for 2/3 Member Vote',
+      confirmLabel: t('openForVoteBtn'),
       run: async () => {
         setSubmitting(true);
         try {
@@ -149,8 +168,8 @@ export function HalalProjectsView({
           await onRefresh();
           showNotice(
             'emerald',
-            'Investment Placement Proposed',
-            'Project proposal published and opened for real-time 2/3 member voting.'
+            t('proposedTitle'),
+            t('proposedDesc')
           );
         } finally {
           setSubmitting(false);
@@ -161,19 +180,22 @@ export function HalalProjectsView({
 
   function handlePlacementVote(proj: HalalProject, decision: 'yes' | 'no') {
     const comment = (voteComments[proj.id] || '').trim();
+    const decisionWord = decision === 'yes' ? t('yesWord') : t('noWord');
     setModal({
       mode: 'confirm',
       tone: decision === 'yes' ? 'emerald' : 'red',
-      title: `Confirm "${decision.toUpperCase()}" Vote?`,
-      description:
-        'Your vote is cryptographically signed and sealed for the cooperative 2/3 majority tally.',
+      title: t('confirmVoteTitle', { decision: decisionWord }),
+      description: t('confirmVoteDesc'),
       details: [
-        { label: 'Venture', value: proj.title },
-        { label: 'Contract', value: `${proj.shariahStructure} · ${formatMoney(proj.targetAllocation, ccy)}` },
-        { label: 'Decision', value: decision.toUpperCase() },
-        ...(comment ? [{ label: 'Vote Note', value: comment }] : []),
+        { label: t('venture'), value: proj.title },
+        {
+          label: t('contract'),
+          value: `${translateStructure(proj.shariahStructure)} · ${formatMoney(proj.targetAllocation, ccy)}`,
+        },
+        { label: t('decision'), value: decisionWord },
+        ...(comment ? [{ label: t('voteNote'), value: comment }] : []),
       ],
-      confirmLabel: decision === 'yes' ? 'Confirm Vote Yes' : 'Confirm Vote No',
+      confirmLabel: decision === 'yes' ? t('confirmVoteYes') : t('confirmVoteNo'),
       run: async () => {
         setVotingId(proj.id);
         try {
@@ -183,10 +205,19 @@ export function HalalProjectsView({
           await onRefresh();
           showNotice(
             'emerald',
-            p.votingStatus === 'approved' ? 'Placement Approved (2/3 Quorum)' : 'Vote Recorded',
+            p.votingStatus === 'approved' ? t('placementApprovedTitle') : t('voteRecordedTitle'),
             p.votingStatus === 'approved'
-              ? `Vote "${decision.toUpperCase()}" recorded. "${p.title}" reached 2/3 majority (${yesCount}/${p.totalEligibleVoters}) and is now Approved!`
-              : `Your "${decision.toUpperCase()}" vote has been recorded (${yesCount}/${p.requiredApprovals} required).`
+              ? t('voteRecordedApprovedDesc', {
+                  decision: decisionWord,
+                  title: p.title,
+                  yesCount,
+                  total: p.totalEligibleVoters,
+                })
+              : t('voteRecordedPendingDesc', {
+                  decision: decisionWord,
+                  yesCount,
+                  required: p.requiredApprovals,
+                })
           );
         } finally {
           setVotingId(null);
@@ -202,8 +233,8 @@ export function HalalProjectsView({
     if (!Number.isFinite(profit) || profit <= 0 || !Number.isFinite(sharePct) || sharePct <= 0) {
       showNotice(
         'red',
-        'Invalid Distribution Values',
-        'Enter a valid realized profit and cooperative share percentage.'
+        t('invalidDistTitle'),
+        t('invalidDistDesc')
       );
       return;
     }
@@ -212,15 +243,17 @@ export function HalalProjectsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Distribute Halal Profit (${proj.title})?`,
-      description:
-        'Distributes the realized cooperative profit share pro-rata across active verified members based on contribution weight.',
+      title: t('confirmDistTitle', { title: proj.title }),
+      description: t('confirmDistDesc'),
       details: [
-        { label: 'Period Label', value: distPeriodLabel.trim() },
-        { label: 'Realized Profit', value: formatMoney(profit, ccy) },
-        { label: 'Co-op Share', value: `${sharePct}% (${formatMoney(estPool, ccy)})` },
+        { label: t('periodLabel'), value: distPeriodLabel.trim() },
+        { label: t('realizedProfit'), value: formatMoney(profit, ccy) },
+        {
+          label: t('coopShare'),
+          value: t('coopShareValue', { pct: sharePct, amount: formatMoney(estPool, ccy) }),
+        },
       ],
-      confirmLabel: 'Confirm Pro-Rata Distribution',
+      confirmLabel: t('confirmDistBtn'),
       run: async () => {
         setDistBusy(true);
         try {
@@ -235,10 +268,14 @@ export function HalalProjectsView({
           await onRefresh();
           showNotice(
             'emerald',
-            'Profit Distributed Pro-Rata',
+            t('distDoneTitle'),
             latestDist
-              ? `Distributed ${formatMoney(latestDist.distributablePool, ccy)} (${latestDist.periodLabel}) proportionally across ${latestDist.allocations.length} active cooperative members.`
-              : 'Profit distribution recorded across active cooperative members.'
+              ? t('distDoneDesc', {
+                  amount: formatMoney(latestDist.distributablePool, ccy),
+                  period: latestDist.periodLabel,
+                  count: latestDist.allocations.length,
+                })
+              : t('distDoneFallbackDesc')
           );
         } finally {
           setDistBusy(false);
@@ -263,11 +300,11 @@ export function HalalProjectsView({
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>
-                Pre-Specified Maturity Date: {formatShortDate(overview?.config.maturityDate)}
+                {t('maturityDatePrefix', { date: formatShortDate(overview?.config.maturityDate) })}
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-              Halal Ventures &amp; 2/3 Member Voting
+              {t('heading')}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {overview?.config.halalInvestmentThesis}
@@ -276,13 +313,13 @@ export function HalalProjectsView({
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-2.5 sm:gap-3">
             <div className="amanah-card-emerald p-3 sm:p-3.5 rounded-xl border">
-              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">Current Pool</div>
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{t('currentPool')}</div>
               <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
             <div className="amanah-card-violet p-3 sm:p-3.5 rounded-xl border">
-              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">Pipeline Target</div>
+              <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{t('pipelineTarget')}</div>
               <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
                 {formatMoney(totalTarget, ccy)}
               </div>
@@ -300,11 +337,11 @@ export function HalalProjectsView({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Proposed & Approved Investment Placements
+                {t('proposedSectionTitle')}
               </h3>
             </div>
             <span className="text-xs font-mono text-indigo-700 dark:text-indigo-400">
-              Live 2/3 Majority Tallies
+              {t('liveTallies')}
             </span>
           </div>
 
@@ -330,7 +367,7 @@ export function HalalProjectsView({
             </div>
           ) : projects.length === 0 ? (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No Halal investment projects proposed yet.
+              {t('emptyProjects')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -360,12 +397,12 @@ export function HalalProjectsView({
                       <div className="space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="font-medium text-slate-800 dark:text-slate-200">
-                            {proj.shariahStructure}
+                            {translateStructure(proj.shariahStructure)}
                           </span>
                           <span aria-hidden="true">·</span>
                           <span>{proj.sector}</span>
                           <span aria-hidden="true">·</span>
-                          <span>{proj.riskTier} Risk</span>
+                          <span>{t('riskSuffix', { tier: translateRiskTier(proj.riskTier) })}</span>
                           <span aria-hidden="true">·</span>
                           <StatusText status={votingStatusLabel} />
                         </div>
@@ -376,17 +413,19 @@ export function HalalProjectsView({
                           {proj.shariahScholarNote}
                         </p>
                         <div className="pt-0.5 flex flex-wrap items-center gap-3 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                          <span>Allocation: {formatMoney(proj.targetAllocation, ccy)}</span>
+                          <span>{t('allocationLine', { amount: formatMoney(proj.targetAllocation, ccy) })}</span>
                           <span aria-hidden="true">·</span>
                           <span className="text-emerald-700 dark:text-emerald-400">
-                            Yield: {proj.projectedAnnualReturn}
+                            {t('yieldLine', { rate: proj.projectedAnnualReturn })}
                           </span>
                           {typeof proj.realizedProfitTotal === 'number' &&
                             proj.realizedProfitTotal > 0 && (
                               <>
                                 <span aria-hidden="true">·</span>
                                 <span className="text-amber-700 dark:text-amber-400">
-                                  Realized Pool: {formatMoney(proj.realizedProfitTotal, ccy)}
+                                  {t('realizedPoolLine', {
+                                    amount: formatMoney(proj.realizedProfitTotal, ccy),
+                                  })}
                                 </span>
                               </>
                             )}
@@ -397,10 +436,10 @@ export function HalalProjectsView({
                       <div className="md:w-64 shrink-0 space-y-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-medium text-slate-700 dark:text-slate-300">
-                            2/3 Majority Progress
+                            {t('majorityProgress')}
                           </span>
                           <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                            {yesVotes} / {reqApprovals} Yes
+                            {t('yesFraction', { yes: yesVotes, req: reqApprovals })}
                           </span>
                         </div>
                         <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -419,11 +458,9 @@ export function HalalProjectsView({
                           />
                         </div>
                         <div className="flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                          <span>
-                            Yes: {yesVotes} ({yesPctOfMembers}%)
-                          </span>
-                          <span>No: {noVotes}</span>
-                          <span>{totalEligible} members</span>
+                          <span>{t('yesStat', { yes: yesVotes, pct: yesPctOfMembers })}</span>
+                          <span>{t('noStat', { no: noVotes })}</span>
+                          <span>{t('membersCount', { count: totalEligible })}</span>
                         </div>
                       </div>
                     </div>
@@ -448,16 +485,19 @@ export function HalalProjectsView({
                             }
                           >
                             {proj.votingStatus === 'approved'
-                              ? `Approved by 2/3 majority (${yesVotes} of ${totalEligible} members voted Yes)`
-                              : `Rejected (${noVotes} No votes made 2/3 majority unreachable)`}
+                              ? t('approvedSummary', { yes: yesVotes, total: totalEligible })
+                              : t('rejectedSummary', { no: noVotes })}
                           </span>
                         </div>
                       ) : myVote ? (
                         <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
                           <Vote className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
                           <span>
-                            You voted <strong className="uppercase">{myVote.decision}</strong> on{' '}
-                            {formatDateTime(myVote.castAt)} (Sig: {shortHash(myVote.signatureHash)})
+                            {t('youVotedOn', {
+                              decision: myVote.decision === 'yes' ? t('yesWord') : t('noWord'),
+                              date: formatDateTime(myVote.castAt),
+                              sig: shortHash(myVote.signatureHash),
+                            })}
                           </span>
                         </div>
                       ) : (
@@ -471,7 +511,7 @@ export function HalalProjectsView({
                                 [proj.id]: e.target.value,
                               }))
                             }
-                            placeholder="Optional vote note…"
+                            placeholder={t('voteNotePlaceholder')}
                             className="flex-1 px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                           />
                           <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
@@ -482,7 +522,7 @@ export function HalalProjectsView({
                               className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Vote Yes</span>
+                              <span>{t('voteYes')}</span>
                             </button>
                             <button
                               type="button"
@@ -491,7 +531,7 @@ export function HalalProjectsView({
                               className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Vote No</span>
+                              <span>{t('voteNo')}</span>
                             </button>
                           </div>
                         </div>
@@ -502,7 +542,7 @@ export function HalalProjectsView({
                         onClick={() => setExpandedVotesId(isExpanded ? null : proj.id)}
                         className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none border border-slate-200 dark:border-slate-700 sm:border-0 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0 self-start sm:self-center"
                       >
-                        <span>Votes ({proj.votes.length})</span>
+                        <span>{t('votesCount', { count: proj.votes.length })}</span>
                         {isExpanded ? (
                           <ChevronUp className="w-3.5 h-3.5" />
                         ) : (
@@ -522,7 +562,7 @@ export function HalalProjectsView({
                         >
                           <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                             {proj.votes.length === 0 ? (
-                              <div className="text-xs text-slate-500 dark:text-slate-400">No votes cast yet.</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">{t('noVotesYet')}</div>
                             ) : (
                               proj.votes.map((v) => {
                                 const isSelf = Boolean(v.isSelf || v.voterId === user.id);
@@ -539,7 +579,7 @@ export function HalalProjectsView({
                                       <div className="font-medium text-slate-900 dark:text-white">
                                         {v.voterName}{' '}
                                         <span className="text-slate-500 dark:text-slate-400 font-normal">
-                                          · {isSelf ? 'Your Ballot' : 'Anonymized'}
+                                          · {isSelf ? t('yourBallot') : t('anonymized')}
                                         </span>
                                       </div>
                                       {v.comment && (
@@ -548,7 +588,7 @@ export function HalalProjectsView({
                                         </p>
                                       )}
                                       <div className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">
-                                        Sig {shortHash(v.signatureHash)}
+                                        {t('sigShort', { sig: shortHash(v.signatureHash) })}
                                       </div>
                                     </div>
                                     <span
@@ -558,7 +598,7 @@ export function HalalProjectsView({
                                           : 'text-rose-700 dark:text-rose-400'
                                       }`}
                                     >
-                                      {v.decision}
+                                      {v.decision === 'yes' ? t('yesWord') : t('noWord')}
                                     </span>
                                   </div>
                                 );
@@ -576,7 +616,7 @@ export function HalalProjectsView({
                           <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
                             <Coins className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                             <span>
-                              Profit Distributions ({(proj.distributions || []).length})
+                              {t('profitDistributionsCount', { count: (proj.distributions || []).length })}
                             </span>
                           </div>
                           {isStaff && (
@@ -590,8 +630,8 @@ export function HalalProjectsView({
                               className="px-3 py-1.5 sm:py-1 min-h-[38px] sm:min-h-0 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
                             >
                               {distFormProjectId === proj.id
-                                ? 'Cancel'
-                                : 'Record & Distribute Profit'}
+                                ? tCommon('cancel')
+                                : t('recordDistributeBtn')}
                             </button>
                           )}
                         </div>
@@ -608,7 +648,7 @@ export function HalalProjectsView({
                             >
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                  Period Label
+                                  {t('periodLabel')}
                                 </label>
                                 <input
                                   type="text"
@@ -616,13 +656,13 @@ export function HalalProjectsView({
                                   minLength={2}
                                   value={distPeriodLabel}
                                   onChange={(e) => setDistPeriodLabel(e.target.value)}
-                                  placeholder="e.g. FY2026 Q2"
+                                  placeholder={t('periodPlaceholder')}
                                   className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
                                 />
                               </div>
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                  Realized Profit ({ccy})
+                                  {t('realizedProfitLabel', { currency: ccy })}
                                 </label>
                                 <input
                                   type="number"
@@ -631,13 +671,13 @@ export function HalalProjectsView({
                                   required
                                   value={distRealizedProfit}
                                   onChange={(e) => setDistRealizedProfit(e.target.value)}
-                                  placeholder="e.g. 25000"
+                                  placeholder={t('realizedProfitPlaceholder')}
                                   className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
                                 />
                               </div>
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                  Co-op Share (%)
+                                  {t('coopSharePctLabel')}
                                 </label>
                                 <input
                                   type="number"
@@ -654,7 +694,7 @@ export function HalalProjectsView({
                                 disabled={distBusy}
                                 className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
                               >
-                                {distBusy ? 'Distributing…' : 'Distribute Pro-Rata'}
+                                {distBusy ? t('distributing') : t('distributeProRataBtn')}
                               </button>
                             </motion.form>
                           )}
@@ -679,7 +719,11 @@ export function HalalProjectsView({
                                         ·
                                       </span>
                                       <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                                        Pool: {formatMoney(dist.distributablePool, ccy)} ({dist.coopSharePct}% of {formatMoney(dist.realizedProfit, ccy)})
+                                        {t('poolLine', {
+                                          pool: formatMoney(dist.distributablePool, ccy),
+                                          pct: dist.coopSharePct,
+                                          profit: formatMoney(dist.realizedProfit, ccy),
+                                        })}
                                       </span>
                                       <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                                         ·
@@ -691,7 +735,10 @@ export function HalalProjectsView({
                                     <div className="flex items-center gap-3">
                                       {myAlloc && (
                                         <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
-                                          Your Share: {formatMoney(myAlloc.payoutAmount, ccy)} ({myAlloc.contributionWeightPct}%)
+                                          {t('yourShareLine', {
+                                            amount: formatMoney(myAlloc.payoutAmount, ccy),
+                                            pct: myAlloc.contributionWeightPct,
+                                          })}
                                         </span>
                                       )}
                                       <button
@@ -701,7 +748,7 @@ export function HalalProjectsView({
                                         }
                                         className="text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1 cursor-pointer"
                                       >
-                                        <span>{isDistOpen ? 'Hide' : 'Breakdown'}</span>
+                                        <span>{isDistOpen ? tCommon('hide') : t('breakdown')}</span>
                                         {isDistOpen ? (
                                           <ChevronUp className="w-3 h-3" />
                                         ) : (
@@ -750,35 +797,35 @@ export function HalalProjectsView({
           <section className="xl:col-span-4 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Propose Investment Placement
+                {t('proposeCardTitle')}
               </h3>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Project Title
+                  {t('projectTitle')}
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Solar Irrigation Cooperative"
+                  placeholder={t('projectTitlePlaceholder')}
                   className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Sector
+                  {t('sector')}
                 </label>
                 <input
                   type="text"
                   required
                   value={sector}
                   onChange={(e) => setSector(e.target.value)}
-                  placeholder="e.g. Clean Energy / Agriculture"
+                  placeholder={t('sectorPlaceholder')}
                   className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -786,7 +833,7 @@ export function HalalProjectsView({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Contract
+                    {t('contractLabel')}
                   </label>
                   <select
                     value={shariahStructure}
@@ -795,23 +842,23 @@ export function HalalProjectsView({
                     }
                     className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
-                    <option value="Musharakah">Musharakah</option>
-                    <option value="Mudarabah">Mudarabah</option>
-                    <option value="Murabahah">Murabahah</option>
+                    <option value="Musharakah">{t('structures.Musharakah')}</option>
+                    <option value="Mudarabah">{t('structures.Mudarabah')}</option>
+                    <option value="Murabahah">{t('structures.Murabahah')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Risk Tier
+                    {t('riskTierLabel')}
                   </label>
                   <select
                     value={riskTier}
                     onChange={(e) => setRiskTier(e.target.value as HalalProject['riskTier'])}
                     className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
-                    <option value="Conservative">Conservative</option>
-                    <option value="Balanced">Balanced</option>
-                    <option value="Growth">Growth</option>
+                    <option value="Conservative">{t('riskTiers.Conservative')}</option>
+                    <option value="Balanced">{t('riskTiers.Balanced')}</option>
+                    <option value="Growth">{t('riskTiers.Growth')}</option>
                   </select>
                 </div>
               </div>
@@ -819,7 +866,7 @@ export function HalalProjectsView({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Allocation ({ccy})
+                    {t('allocationCurrencyLabel', { currency: ccy })}
                   </label>
                   <input
                     type="number"
@@ -832,7 +879,7 @@ export function HalalProjectsView({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Projected Return
+                    {t('projectedReturnLabel')}
                   </label>
                   <input
                     type="text"
@@ -846,14 +893,14 @@ export function HalalProjectsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Shariah Screening Note
+                  {t('shariahNoteLabel')}
                 </label>
                 <textarea
                   rows={2}
                   required
                   value={shariahScholarNote}
                   onChange={(e) => setShariahScholarNote(e.target.value)}
-                  placeholder="Asset-backed structure & compliance basis"
+                  placeholder={t('shariahNotePlaceholder')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -864,13 +911,13 @@ export function HalalProjectsView({
                 className="w-full min-h-[44px] py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
-                <span>{submitting ? 'Submitting Proposal…' : 'Open for 2/3 Member Vote'}</span>
+                <span>{submitting ? t('submittingProposal') : t('openForVoteBtn')}</span>
               </button>
             </form>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
-              <span>Requires 2/3 member Yes votes for approval.</span>
+              <span>{t('requiresTwoThirds')}</span>
             </div>
           </section>
         )}
@@ -883,7 +930,7 @@ export function HalalProjectsView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import {
   Activity,
@@ -87,13 +88,16 @@ type SettingsModalState =
       details?: ActionModalDetailItem[];
     };
 
-function formatUptime(seconds: number): string {
+function formatUptime(
+  seconds: number,
+  t: (key: 'uptimeDays' | 'uptimeHours' | 'uptimeMins', values?: Record<string, number>) => string
+): string {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${Math.max(1, m)}m`;
+  if (d > 0) return t('uptimeDays', { d, h, m });
+  if (h > 0) return t('uptimeHours', { h, m });
+  return t('uptimeMins', { m: Math.max(1, m) });
 }
 
 export function AdminSiteSettingsView({
@@ -109,6 +113,8 @@ export function AdminSiteSettingsView({
   onRefresh,
   onNavigateSection,
 }: AdminSiteSettingsViewProps) {
+  const t = useTranslations('Admin.siteSettings');
+  const tCommon = useTranslations('Common');
   const isAdmin = user.role === 'admin';
   const ccy = config?.currency || 'BDT';
 
@@ -116,7 +122,7 @@ export function AdminSiteSettingsView({
 
   // Policy form fields
   const [fundName, setFundName] = useState(
-    config?.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund'
+    config?.fundName || t('defaultFundName')
   );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
   const [maturityDate, setMaturityDate] = useState(config?.maturityDate || '2036-12-31');
@@ -164,7 +170,7 @@ export function AdminSiteSettingsView({
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
 
   // Charter & Compliance state
-  const [constitutionTitle, setConstitutionTitle] = useState('Cooperative Charter 2027-2036');
+  const [constitutionTitle, setConstitutionTitle] = useState(() => t('defaultConstitutionTitle'));
   const [constitutionBusy, setConstitutionBusy] = useState(false);
   const [showConstitutionPreview, setShowConstitutionPreview] = useState(false);
   const constitutionFileInputRef = useRef<HTMLInputElement>(null);
@@ -179,7 +185,7 @@ export function AdminSiteSettingsView({
   const [modalBusy, setModalBusy] = useState(false);
 
   const syncFormFromConfig = useCallback((cfg: FundConfig) => {
-    setFundName(cfg.fundName || 'Amanah — Savings, Investment & Interest-Free Loan Fund');
+    setFundName(cfg.fundName || t('defaultFundName'));
     setCurrency(cfg.currency);
     setMaturityDate(cfg.maturityDate);
     setMembershipIntakeDeadline(cfg.membershipIntakeDeadline || '2027-07-31');
@@ -200,7 +206,7 @@ export function AdminSiteSettingsView({
     setManagerCycleStartDate(cfg.managerCycleStartDate || '2027-01-01');
     setMonthlyReportAutoEmail(cfg.monthlyReportAutoEmail ?? true);
     setHalalThesis(cfg.halalInvestmentThesis);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (config) {
@@ -296,8 +302,8 @@ export function AdminSiteSettingsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Action Failed',
-        description: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('actionFailed'),
+        description: err instanceof Error ? err.message : t('unexpectedError'),
       });
     } finally {
       setModalBusy(false);
@@ -314,8 +320,8 @@ export function AdminSiteSettingsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Manager Cycle Duration',
-        description: 'Manager rotation interval must be between 1 and 36 months.',
+        title: t('invalidCycleTitle'),
+        description: t('invalidCycleDesc'),
       });
       return;
     }
@@ -331,9 +337,8 @@ export function AdminSiteSettingsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Quorum Ratio',
-        description:
-          'Voting quorum numerator and denominator must be integers between 1 and 10, with numerator ≤ denominator.',
+        title: t('invalidQuorumTitle'),
+        description: t('invalidQuorumDesc'),
       });
       return;
     }
@@ -341,28 +346,39 @@ export function AdminSiteSettingsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Confirm Cooperative Site Settings Update',
-      description:
-        'Saving immediately updates cooperative treasury limits, Manager cycle rotation, quorum threshold, and member loan eligibility rules.',
+      title: t('confirmPolicyTitle'),
+      description: t('confirmPolicyDesc'),
       details: [
-        { label: 'Cooperative Name', value: fundName.trim() },
-        { label: 'Currency & Monthly Target', value: `${monthlyContributionAmount} ${currency}` },
+        { label: t('detailCoopName'), value: fundName.trim() },
+        { label: t('detailCurrencyTarget'), value: `${monthlyContributionAmount} ${currency}` },
         {
-          label: 'Max Loan & Annual Quota',
-          value: `${maxLoanAmount} ${currency} · ${maxLoansPerYear}/yr`,
+          label: t('detailMaxLoanQuota'),
+          value: t('perYearValue', {
+            amount: maxLoanAmount,
+            currency,
+            count: maxLoansPerYear,
+          }),
         },
         {
-          label: 'Voting Quorum Rule',
-          value: `${quorumNum}/${quorumDen} (${previewRequiredVotes} of ${Math.max(1, activeMembersCount)} active members)`,
+          label: t('detailQuorumRule'),
+          value: t('quorumMembersValue', {
+            num: quorumNum,
+            den: quorumDen,
+            req: previewRequiredVotes,
+            total: Math.max(1, activeMembersCount),
+          }),
         },
-        { label: 'Manager Cycle Interval', value: `Every ${cycleMonthsNum} Month(s)` },
-        { label: 'Intake & Maturity Dates', value: `${formatShortDate(membershipIntakeDeadline)} → ${formatShortDate(maturityDate)}` },
+        { label: t('detailCycleInterval'), value: t('everyNMonths', { count: cycleMonthsNum }) },
         {
-          label: 'Monthly PDF Auto-Email',
-          value: monthlyReportAutoEmail ? 'Enabled' : 'Disabled',
+          label: t('detailIntakeMaturity'),
+          value: `${formatShortDate(membershipIntakeDeadline)} → ${formatShortDate(maturityDate)}`,
+        },
+        {
+          label: t('detailMonthlyAutoEmail'),
+          value: monthlyReportAutoEmail ? t('enabled') : t('disabled'),
         },
       ],
-      confirmLabel: 'Save Site Settings',
+      confirmLabel: t('confirmSavePolicyBtn'),
       run: async () => {
         await api.updateConfig({
           fundName,
@@ -391,8 +407,13 @@ export function AdminSiteSettingsView({
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Site Settings Saved',
-          description: `Policy updated (${fundName.trim()}, ${quorumNum}/${quorumDen} quorum, ${cycleMonthsNum}-month manager cycle).`,
+          title: t('policySavedTitle'),
+          description: t('policySavedDesc', {
+            name: fundName.trim(),
+            num: quorumNum,
+            den: quorumDen,
+            months: cycleMonthsNum,
+          }),
         });
       },
     });
@@ -410,35 +431,41 @@ export function AdminSiteSettingsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Email Monthly PDF Summary (${reportMonth})`,
-      description:
-        'Generates the official monthly treasury & Amanah PDF statement and emails it to all active cooperative members via configured SMTP.',
+      title: t('confirmEmailPdfTitle', { month: reportMonth }),
+      description: t('confirmEmailPdfDesc'),
       details: [
-        { label: 'Billing Month', value: reportMonth },
-        { label: 'Active Recipients', value: `${activeMembersCount} member(s)` },
+        { label: t('detailBillingMonth'), value: reportMonth },
+        { label: t('detailActiveRecipients'), value: t('memberCount', { count: activeMembersCount }) },
         {
-          label: 'SMTP Status',
+          label: t('detailSmtpStatus'),
           value: systemStatus?.smtp.configured
-            ? `Ready (${systemStatus.smtp.host})`
-            : 'SMTP not configured (will check server config)',
+            ? t('smtpReady', { host: systemStatus.smtp.host || '' })
+            : t('smtpNotConfigured'),
         },
       ],
-      confirmLabel: 'Send Monthly PDF Email',
+      confirmLabel: t('confirmSendEmailPdfBtn'),
       run: async () => {
         const res = await api.emailMonthlyPdfSummary(reportMonth);
         await Promise.all([onRefresh(), fetchSystemStatus()]);
         setModal({
-          mode: res.ok ? 'notice' : 'notice',
+          mode: 'notice',
           tone: res.ok ? 'emerald' : res.skipped ? 'amber' : 'red',
           title: res.ok
-            ? 'Monthly PDF Dispatched'
+            ? t('pdfDispatchedTitle')
             : res.skipped
-              ? 'SMTP Delivery Skipped'
-              : 'PDF Email Completed with Issues',
+              ? t('pdfSkippedTitle')
+              : t('pdfPartialTitle'),
           description: res.ok
-            ? `Sent ${reportMonth} monthly PDF statement to ${res.sentCount} of ${res.totalRecipients ?? res.totalMembers} active member(s).`
+            ? t('pdfDispatchedDesc', {
+                month: reportMonth,
+                sent: res.sentCount,
+                total: res.totalRecipients ?? res.totalMembers,
+              })
             : res.reason ||
-              `Sent ${res.sentCount}, failed ${res.failedCount}. Verify SMTP settings in Integrations & Health.`,
+              t('pdfPartialDesc', {
+                sent: res.sentCount,
+                failed: res.failedCount,
+              }),
         });
       },
     });
@@ -448,25 +475,24 @@ export function AdminSiteSettingsView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: `Dispatch Payment Reminders (${reportMonth})`,
-      description:
-        'Queues in-app notifications and reminder records for members with unpaid contributions or due loan installments for the selected month.',
+      title: t('confirmRemindersTitle', { month: reportMonth }),
+      description: t('confirmRemindersDesc'),
       details: [
-        { label: 'Target Month', value: reportMonth },
-        { label: 'Due Day Rule', value: `Day ${config?.monthlyDueDay ?? 10} of month` },
+        { label: t('detailTargetMonth'), value: reportMonth },
+        { label: t('detailDueDayRule'), value: t('dueDayRuleValue', { day: config?.monthlyDueDay ?? 10 }) },
       ],
-      confirmLabel: 'Dispatch Reminders',
+      confirmLabel: t('confirmRemindersBtn'),
       run: async () => {
         const res = await api.sendReminders(reportMonth);
         await onRefresh();
         setModal({
           mode: 'notice',
           tone: 'emerald',
-          title: 'Billing Reminders Processed',
+          title: t('remindersDoneTitle'),
           description:
             res.createdCount > 0
-              ? `Created ${res.createdCount} reminder notification(s) for ${reportMonth}.`
-              : `All active members are already reminded or up to date for ${reportMonth}.`,
+              ? t('remindersCreatedDesc', { count: res.createdCount, month: reportMonth })
+              : t('remindersUpToDateDesc', { month: reportMonth }),
         });
       },
     });
@@ -483,8 +509,8 @@ export function AdminSiteSettingsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid File Type',
-        description: 'Official Cooperative Constitution must be uploaded as a genuine PDF (.pdf) document.',
+        title: t('invalidFileTypeTitle'),
+        description: t('invalidFileTypeDesc'),
       });
       return;
     }
@@ -492,8 +518,8 @@ export function AdminSiteSettingsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'File Too Large',
-        description: 'Constitution PDF must be smaller than 10 MB.',
+        title: t('fileTooLargeTitle'),
+        description: t('fileTooLargeDesc'),
       });
       return;
     }
@@ -507,16 +533,15 @@ export function AdminSiteSettingsView({
       mode: 'confirm',
       tone: 'emerald',
       title: config?.constitutionPdfUrl
-        ? 'Replace Cooperative Constitution PDF'
-        : 'Publish Cooperative Constitution PDF',
-      description:
-        'The PDF will be automatically renamed semantically, uploaded to governance media storage, and published immediately on the Rules & Charter & Join Amanah pages.',
+        ? t('confirmReplaceConstitution')
+        : t('confirmPublishConstitution'),
+      description: t('confirmConstitutionDesc'),
       details: [
-        { label: 'Selected File', value: file.name },
-        { label: 'File Size', value: sizeLabel },
-        { label: 'Semantic Title', value: constitutionTitle.trim() || file.name },
+        { label: t('detailSelectedFile'), value: file.name },
+        { label: t('detailFileSize'), value: sizeLabel },
+        { label: t('detailSemanticTitle'), value: constitutionTitle.trim() || file.name },
       ],
-      confirmLabel: 'Upload & Publish PDF',
+      confirmLabel: t('confirmUploadPdfBtn'),
       run: async () => {
         setConstitutionBusy(true);
         try {
@@ -528,8 +553,11 @@ export function AdminSiteSettingsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Constitution PDF Published',
-            description: `Saved as ${uploaded.constitutionPdfName} (${uploaded.provider}) and published to the Rules & Charter & Join Amanah pages.`,
+            title: t('constitutionPublishedTitle'),
+            description: t('constitutionPublishedDesc', {
+              name: uploaded.constitutionPdfName || '',
+              provider: uploaded.provider,
+            }),
           });
         } finally {
           setConstitutionBusy(false);
@@ -543,13 +571,12 @@ export function AdminSiteSettingsView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Remove Published Constitution PDF',
-      description:
-        'Removing this document unlinks the Constitution PDF from the public Rules & Charter and Join Amanah pages until a new PDF is uploaded.',
+      title: t('confirmRemoveConstitutionTitle'),
+      description: t('confirmRemoveConstitutionDesc'),
       details: [
-        { label: 'Current File', value: config.constitutionPdfName || 'cooperative-constitution.pdf' },
+        { label: t('detailCurrentFile'), value: config.constitutionPdfName || 'cooperative-constitution.pdf' },
       ],
-      confirmLabel: 'Remove Constitution PDF',
+      confirmLabel: t('confirmRemoveConstitutionBtn'),
       run: async () => {
         setConstitutionBusy(true);
         try {
@@ -559,8 +586,8 @@ export function AdminSiteSettingsView({
           setModal({
             mode: 'notice',
             tone: 'amber',
-            title: 'Constitution PDF Removed',
-            description: 'The cooperative Constitution PDF link has been cleared from Site Settings.',
+            title: t('constitutionRemovedTitle'),
+            description: t('constitutionRemovedDesc'),
           });
         } finally {
           setConstitutionBusy(false);
@@ -569,15 +596,27 @@ export function AdminSiteSettingsView({
     });
   }
 
-  const tabs: Array<{ id: SettingsTabId; label: string; Icon: typeof Settings; badge?: string | number }> = [
-    { id: 'policy', label: 'Policy & Limits', Icon: Settings, badge: isDirty ? 'Unsaved' : undefined },
-    { id: 'charter', label: 'Charter & Reports', Icon: FileText },
-    { id: 'faqs', label: 'FAQ Manager', Icon: HelpCircle },
-    { id: 'email', label: 'Email & Templates', Icon: Mail },
-    { id: 'integrations', label: 'Integrations & Health', Icon: Server },
+  const tabs: Array<{
+    id: SettingsTabId;
+    label: string;
+    Icon: typeof Settings;
+    badge?: string | number;
+    isUnsaved?: boolean;
+  }> = [
+    {
+      id: 'policy',
+      label: t('tabs.policy'),
+      Icon: Settings,
+      badge: isDirty ? t('unsavedBadge') : undefined,
+      isUnsaved: isDirty,
+    },
+    { id: 'charter', label: t('tabs.charter'), Icon: FileText },
+    { id: 'faqs', label: t('tabs.faqs'), Icon: HelpCircle },
+    { id: 'email', label: t('tabs.email'), Icon: Mail },
+    { id: 'integrations', label: t('tabs.integrations'), Icon: Server },
     {
       id: 'ventures',
-      label: 'Halal Ventures',
+      label: t('tabs.ventures'),
       Icon: Briefcase,
       badge: projects.length > 0 ? projects.length : undefined,
     },
@@ -601,15 +640,15 @@ export function AdminSiteSettingsView({
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Settings className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Admin Governance · Cooperative Configuration</span>
+              <span>{t('headerEyebrow')}</span>
               {config?.updatedAt && (
                 <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                  · Updated {formatDateTime(config.updatedAt)} by {config.updatedBy}
+                  {t('updatedMeta', { date: formatDateTime(config.updatedAt), by: config.updatedBy })}
                 </span>
               )}
             </div>
             <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white truncate">
-              {config?.fundName || 'Site Settings & Cooperative Project Parameters'}
+              {config?.fundName || t('headingFallback')}
             </h2>
           </div>
 
@@ -621,7 +660,7 @@ export function AdminSiteSettingsView({
                 className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <ClipboardCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                <span>Governance Desk</span>
+                <span>{t('navGovernanceDesk')}</span>
               </button>
               <button
                 type="button"
@@ -629,7 +668,7 @@ export function AdminSiteSettingsView({
                 className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span>Email Queue</span>
+                <span>{t('navEmailQueue')}</span>
                 {queueAttentionCount > 0 && (
                   <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono text-[10px]">
                     {queueAttentionCount}
@@ -642,7 +681,7 @@ export function AdminSiteSettingsView({
                 className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <Activity className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                <span>Site Activity</span>
+                <span>{t('navSiteActivity')}</span>
               </button>
             </div>
           )}
@@ -675,7 +714,7 @@ export function AdminSiteSettingsView({
                 {tab.badge !== undefined && (
                   <span
                     className={`relative z-10 px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                      tab.badge === 'Unsaved'
+                      tab.isUnsaved
                         ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                         : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
@@ -707,17 +746,17 @@ export function AdminSiteSettingsView({
               <div className="space-y-3">
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    1. Cooperative Identity, Timeline &amp; Capacity
+                    {t('group1Title')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Core branding, currency unit, intake cutoff, and maturity horizon.
+                    {t('group1Desc')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   <div className="sm:col-span-2 lg:col-span-1">
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Cooperative / Fund Name
+                      {t('labelFundName')}
                     </label>
                     <input
                       type="text"
@@ -730,23 +769,23 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Treasury Currency
+                      {t('labelCurrency')}
                     </label>
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as FundConfig['currency'])}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                     >
-                      <option value="BDT">BDT (৳)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="MYR">MYR (RM)</option>
-                      <option value="GBP">GBP (£)</option>
+                      <option value="BDT">{t('currencyOptions.BDT')}</option>
+                      <option value="USD">{t('currencyOptions.USD')}</option>
+                      <option value="MYR">{t('currencyOptions.MYR')}</option>
+                      <option value="GBP">{t('currencyOptions.GBP')}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Membership Intake Deadline
+                      {t('labelIntakeDeadline')}
                     </label>
                     <input
                       type="date"
@@ -759,7 +798,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Halal Maturity Date
+                      {t('labelMaturityDate')}
                     </label>
                     <input
                       type="date"
@@ -772,7 +811,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Max Members / Shares Cap
+                      {t('labelMaxMembers')}
                     </label>
                     <input
                       type="number"
@@ -787,7 +826,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Registration / Join Fee ({ccy})
+                      {t('labelJoinFee', { currency: ccy })}
                     </label>
                     <input
                       type="number"
@@ -803,7 +842,7 @@ export function AdminSiteSettingsView({
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                      Post-Maturity Halal Investment Mandate
+                      {t('labelInvestmentMandate')}
                     </label>
                     <button
                       type="button"
@@ -823,9 +862,9 @@ export function AdminSiteSettingsView({
                           setModal({
                             mode: 'notice',
                             tone: 'red',
-                            title: 'AI Rewrite Unavailable',
+                            title: t('aiRewriteUnavailableTitle'),
                             description:
-                              err instanceof Error ? err.message : 'Unable to polish investment mandate.',
+                              err instanceof Error ? err.message : t('aiRewriteUnavailableDesc'),
                           });
                         } finally {
                           setRewritingThesis(false);
@@ -834,7 +873,7 @@ export function AdminSiteSettingsView({
                       className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
                     >
                       <Sparkles className="w-3 h-3" aria-hidden="true" />
-                      <span>{rewritingThesis ? 'Polishing…' : 'AI Polish'}</span>
+                      <span>{rewritingThesis ? t('polishing') : t('aiPolish')}</span>
                     </button>
                   </div>
                   <textarea
@@ -850,14 +889,14 @@ export function AdminSiteSettingsView({
               <div className="space-y-3">
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    2. Monthly Contributions, Due Date &amp; Auto-Statements
+                    {t('group2Title')}
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Monthly Target ({ccy})
+                      {t('labelMonthlyTarget', { currency: ccy })}
                     </label>
                     <input
                       type="number"
@@ -871,7 +910,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Monthly Due Day (1–28)
+                      {t('labelDueDay')}
                     </label>
                     <input
                       type="number"
@@ -886,7 +925,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Late Payment Fee ({ccy})
+                      {t('labelLateFee', { currency: ccy })}
                     </label>
                     <input
                       type="number"
@@ -907,10 +946,10 @@ export function AdminSiteSettingsView({
                       onChange={(e) => setMonthlyReportAutoEmail(e.target.checked)}
                       className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                     />
-                    <span>Automatically email monthly PDF fund summary on the 15th of every month</span>
+                    <span>{t('autoEmailCheckbox')}</span>
                   </label>
                   <span className="font-mono text-slate-500 dark:text-slate-400">
-                    Last emailed: {config?.lastMonthlyPdfSentMonth || 'None yet'}
+                    {t('lastEmailed', { month: config?.lastMonthlyPdfSentMonth || t('noneYet') })}
                   </span>
                 </div>
               </div>
@@ -919,14 +958,14 @@ export function AdminSiteSettingsView({
               <div className="space-y-3">
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    3. Qard Hasan Lending Limits &amp; Ballot Quorum
+                    {t('group3Title')}
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Max Loan Cap ({ccy})
+                      {t('labelMaxLoanCap', { currency: ccy })}
                     </label>
                     <input
                       type="number"
@@ -941,7 +980,7 @@ export function AdminSiteSettingsView({
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Loans / Year
+                        {t('labelLoansPerYear')}
                       </label>
                       <input
                         type="number"
@@ -955,7 +994,7 @@ export function AdminSiteSettingsView({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Max Months
+                        {t('labelMaxMonths')}
                       </label>
                       <input
                         type="number"
@@ -971,7 +1010,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Loan Savings Cap (% of Savings)
+                      {t('labelLoanSavingsCapPct')}
                     </label>
                     <input
                       type="number"
@@ -986,7 +1025,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Guarantor Threshold ({ccy})
+                      {t('labelGuarantorThreshold', { currency: ccy })}
                     </label>
                     <input
                       type="number"
@@ -1000,7 +1039,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Required Co-Signers (Above Threshold)
+                      {t('labelRequiredCoSigners')}
                     </label>
                     <input
                       type="number"
@@ -1017,7 +1056,7 @@ export function AdminSiteSettingsView({
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Approval Quorum Ratio
+                        {t('labelQuorumRatio')}
                       </label>
                       <div className="flex items-center gap-1">
                         {(
@@ -1052,7 +1091,7 @@ export function AdminSiteSettingsView({
                         min={1}
                         max={10}
                         required
-                        aria-label="Quorum numerator"
+                        aria-label={t('quorumNumeratorAria')}
                         value={voteThresholdNumerator}
                         onChange={(e) => setVoteThresholdNumerator(e.target.value)}
                         className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
@@ -1063,7 +1102,7 @@ export function AdminSiteSettingsView({
                         min={1}
                         max={10}
                         required
-                        aria-label="Quorum denominator"
+                        aria-label={t('quorumDenominatorAria')}
                         value={voteThresholdDenominator}
                         onChange={(e) => setVoteThresholdDenominator(e.target.value)}
                         className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
@@ -1075,10 +1114,11 @@ export function AdminSiteSettingsView({
                 <div className="p-2.5 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
                   <Vote className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>
-                    With <strong className="font-mono">{previewQuorumNum}/{previewQuorumDen}</strong>{' '}
-                    quorum across <strong className="font-mono">{activeMembersCount}</strong> active
-                    member(s), ballots require{' '}
-                    <strong className="font-mono">{previewRequiredVotes}</strong> approval vote(s).
+                    {t('quorumSummary', {
+                      ratio: `${previewQuorumNum}/${previewQuorumDen}`,
+                      active: activeMembersCount,
+                      required: previewRequiredVotes,
+                    })}
                   </span>
                 </div>
               </div>
@@ -1087,7 +1127,7 @@ export function AdminSiteSettingsView({
               <div className="space-y-3">
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    4. Manager Rotation Schedule
+                    {t('group4Title')}
                   </h3>
                 </div>
 
@@ -1095,7 +1135,7 @@ export function AdminSiteSettingsView({
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Manager Rotation Cycle (Months)
+                        {t('labelCycleMonths')}
                       </label>
                       <div className="flex items-center gap-1">
                         {[3, 6, 12].map((preset) => (
@@ -1109,7 +1149,7 @@ export function AdminSiteSettingsView({
                                 : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700'
                             }`}
                           >
-                            {preset}m
+                            {t('presetMonthsShort', { count: preset })}
                           </button>
                         ))}
                       </div>
@@ -1127,7 +1167,7 @@ export function AdminSiteSettingsView({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Manager Cycle Anchor Start Date
+                      {t('labelCycleStartDate')}
                     </label>
                     <input
                       type="date"
@@ -1146,12 +1186,12 @@ export function AdminSiteSettingsView({
                   {isDirty ? (
                     <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                      <span>You have unsaved configuration changes</span>
+                      <span>{t('unsavedChangesNotice')}</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
-                      <span>All settings match the active cooperative policy</span>
+                      <span>{t('allMatchedNotice')}</span>
                     </span>
                   )}
                 </div>
@@ -1164,7 +1204,7 @@ export function AdminSiteSettingsView({
                       className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Discard Changes</span>
+                      <span>{t('discardChanges')}</span>
                     </button>
                   )}
                   <button
@@ -1172,7 +1212,7 @@ export function AdminSiteSettingsView({
                     disabled={modalBusy}
                     className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
-                    Review &amp; Save Site Settings
+                    {t('savePolicyBtn')}
                   </button>
                 </div>
               </div>
@@ -1189,13 +1229,13 @@ export function AdminSiteSettingsView({
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Charter Document · Cooperative Governance Storage</span>
+                <span>{t('charterEyebrow')}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Official Cooperative Constitution PDF
+                {t('charterHeading')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Automatically renamed semantically and published to the Rules &amp; Charter &amp; Join Amanah pages.
+                {t('charterDesc')}
               </p>
             </div>
 
@@ -1205,14 +1245,14 @@ export function AdminSiteSettingsView({
                   htmlFor="constitution-semantic-title"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Document Title (Used for Semantic Filename)
+                  {t('labelDocTitle')}
                 </label>
                 <input
                   id="constitution-semantic-title"
                   type="text"
                   value={constitutionTitle}
                   onChange={(e) => setConstitutionTitle(e.target.value)}
-                  placeholder="e.g. Cooperative Charter 2027-2036"
+                  placeholder={t('placeholderDocTitle')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -1233,7 +1273,7 @@ export function AdminSiteSettingsView({
                 >
                   <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
-                    {config?.constitutionPdfUrl ? 'Upload Replacement PDF' : 'Upload Constitution PDF'}
+                    {config?.constitutionPdfUrl ? t('uploadReplacementPdf') : t('uploadConstitutionPdf')}
                   </span>
                 </button>
                 {config?.constitutionPdfUrl && (
@@ -1244,7 +1284,7 @@ export function AdminSiteSettingsView({
                     className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Remove</span>
+                    <span>{tCommon('remove')}</span>
                   </button>
                 )}
               </div>
@@ -1262,9 +1302,11 @@ export function AdminSiteSettingsView({
                     </div>
                     <p className="text-[11px] text-emerald-800/85 dark:text-emerald-300/85">
                       {config.constitutionUploadedAt
-                        ? `Published ${formatShortDate(config.constitutionUploadedAt)}`
-                        : 'Published'}
-                      {config.constitutionUploadedBy ? ` by ${config.constitutionUploadedBy}` : ''}
+                        ? t('publishedDate', { date: formatShortDate(config.constitutionUploadedAt) })
+                        : t('publishedOnly')}
+                      {config.constitutionUploadedBy
+                        ? t('publishedBy', { name: config.constitutionUploadedBy })
+                        : ''}
                     </p>
                   </div>
 
@@ -1277,12 +1319,12 @@ export function AdminSiteSettingsView({
                       {showConstitutionPreview ? (
                         <>
                           <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Hide Preview</span>
+                          <span>{t('hidePreview')}</span>
                         </>
                       ) : (
                         <>
                           <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Preview</span>
+                          <span>{t('preview')}</span>
                         </>
                       )}
                     </button>
@@ -1293,7 +1335,7 @@ export function AdminSiteSettingsView({
                       className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
                     >
                       <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Open</span>
+                      <span>{t('open')}</span>
                     </a>
                     <a
                       href={config.constitutionPdfUrl}
@@ -1301,7 +1343,7 @@ export function AdminSiteSettingsView({
                       className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
                     >
                       <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Download</span>
+                      <span>{tCommon('download')}</span>
                     </a>
                   </div>
                 </div>
@@ -1317,7 +1359,7 @@ export function AdminSiteSettingsView({
                     >
                       <iframe
                         src={config.constitutionPdfUrl}
-                        title="Uploaded Cooperative Constitution PDF Preview"
+                        title={t('iframePreviewTitle')}
                         className="w-full h-72 sm:h-[460px]"
                       />
                     </motion.div>
@@ -1326,7 +1368,7 @@ export function AdminSiteSettingsView({
               </div>
             ) : (
               <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
-                No Constitution PDF uploaded.
+                {t('noConstitutionPdf')}
               </div>
             )}
           </section>
@@ -1336,15 +1378,15 @@ export function AdminSiteSettingsView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Monthly Summary Statements &amp; Billing Reminders
+                  {t('monthlyStatementsTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Generate the monthly treasury PDF statement, email it to members, or dispatch contribution &amp; installment reminders.
+                  {t('monthlyStatementsDesc')}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <label htmlFor="report-month-picker" className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                  Month:
+                  {t('monthLabel')}
                 </label>
                 <input
                   id="report-month-picker"
@@ -1362,7 +1404,7 @@ export function AdminSiteSettingsView({
                 onClick={handleDownloadMonthlyPdf}
                 className="min-h-[44px] px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
               >
-                <span>Download Monthly PDF ({reportMonth})</span>
+                <span>{t('downloadMonthlyPdf', { month: reportMonth })}</span>
                 <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
               </button>
 
@@ -1372,7 +1414,7 @@ export function AdminSiteSettingsView({
                 onClick={handleConfirmEmailMonthlyPdf}
                 className="min-h-[44px] px-4 py-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
               >
-                <span>Email PDF to Active Members</span>
+                <span>{t('emailPdfMembers')}</span>
                 <Send className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
               </button>
 
@@ -1382,7 +1424,7 @@ export function AdminSiteSettingsView({
                 onClick={handleConfirmSendReminders}
                 className="min-h-[44px] px-4 py-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
               >
-                <span>Dispatch Billing Reminders</span>
+                <span>{t('dispatchBillingReminders')}</span>
                 <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
               </button>
             </div>
@@ -1393,10 +1435,10 @@ export function AdminSiteSettingsView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Regulatory CSV Ledgers &amp; Treasury Vault Backup
+                  {t('csvBackupTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Export structured ledger spreadsheets or download a complete cooperative JSON backup.
+                  {t('csvBackupDesc')}
                 </p>
               </div>
               <FileSpreadsheet className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -1405,10 +1447,10 @@ export function AdminSiteSettingsView({
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
               {(
                 [
-                  { id: 'contributions', label: 'Contributions CSV' },
-                  { id: 'loans', label: 'Qard Hasan CSV' },
-                  { id: 'members', label: 'Member Standing CSV' },
-                  { id: 'audit', label: 'Audit Trail CSV' },
+                  { id: 'contributions', label: t('csvContributions') },
+                  { id: 'loans', label: t('csvLoans') },
+                  { id: 'members', label: t('csvMembers') },
+                  { id: 'audit', label: t('csvAudit') },
                 ] as const
               ).map((rep) => (
                 <button
@@ -1427,7 +1469,7 @@ export function AdminSiteSettingsView({
                 download
                 className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
               >
-                <span>Full JSON Backup</span>
+                <span>{t('fullJsonBackup')}</span>
                 <FileArchive className="w-4 h-4 shrink-0" aria-hidden="true" />
               </a>
             </div>
@@ -1443,16 +1485,23 @@ export function AdminSiteSettingsView({
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
                 <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                 <span>
-                  SMTP Delivery:{' '}
                   {systemStatus?.smtp.configured
-                    ? `Active (${systemStatus.smtp.host}:${systemStatus.smtp.port})`
-                    : 'Not configured on server'}
+                    ? t('smtpDeliveryActive', {
+                        host: systemStatus.smtp.host || '',
+                        port: systemStatus.smtp.port || '',
+                      })
+                    : t('smtpDeliveryUnconfigured')}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {systemStatus
-                  ? `Email queue: ${systemStatus.smtp.queueStats.sent} sent · ${systemStatus.smtp.queueStats.pending + systemStatus.smtp.queueStats.retrying} pending/retrying · ${systemStatus.smtp.queueStats.failed} failed`
-                  : 'Customize cooperative HTML email subjects, greetings, accent colors, and dispatch test emails.'}
+                  ? t('emailQueueStats', {
+                      sent: systemStatus.smtp.queueStats.sent,
+                      pending:
+                        systemStatus.smtp.queueStats.pending + systemStatus.smtp.queueStats.retrying,
+                      failed: systemStatus.smtp.queueStats.failed,
+                    })
+                  : t('emailTemplatesHint')}
               </p>
             </div>
             {onNavigateSection && (
@@ -1462,7 +1511,7 @@ export function AdminSiteSettingsView({
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span>Manage Email Queue</span>
+                <span>{t('manageEmailQueue')}</span>
               </button>
             )}
           </section>
@@ -1482,10 +1531,10 @@ export function AdminSiteSettingsView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Runtime Integrations &amp; Security Health
+                  {t('integrationsTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Live server readiness for database storage, AES-256-GCM encryption, SMTP mailer, media vault, and AI verification.
+                  {t('integrationsDesc')}
                 </p>
               </div>
               <button
@@ -1495,7 +1544,7 @@ export function AdminSiteSettingsView({
                 className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loadingStatus ? 'animate-spin' : ''}`} aria-hidden="true" />
-                <span>Refresh Status</span>
+                <span>{t('refreshStatus')}</span>
               </button>
             </div>
 
@@ -1512,19 +1561,23 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Database className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                      <span>Primary Vault Storage</span>
+                      <span>{t('cardVaultTitle')}</span>
                     </span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                      ONLINE
+                      {t('statusOnline')}
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {systemStatus.storageEngine === 'mongodb_atlas'
-                      ? 'MongoDB Atlas Cluster'
-                      : 'Encrypted Local JSON Vault'}
+                      ? t('storageMongo')
+                      : t('storageLocal')}
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    {systemStatus.totals.contributionsCount} savings · {systemStatus.totals.loansCount} loans · {systemStatus.totals.auditLogsCount} audit logs
+                    {t('storageTotals', {
+                      savings: systemStatus.totals.contributionsCount,
+                      loans: systemStatus.totals.loansCount,
+                      audits: systemStatus.totals.auditLogsCount,
+                    })}
                   </div>
                 </div>
 
@@ -1533,7 +1586,7 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                      <span>AES-256-GCM Encryption</span>
+                      <span>{t('cardEncryptionTitle')}</span>
                     </span>
                     <span
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
@@ -1545,19 +1598,19 @@ export function AdminSiteSettingsView({
                       }`}
                     >
                       {systemStatus.encryption.mode === 'custom_aes256'
-                        ? 'DEDICATED KEY'
+                        ? t('encDedicated')
                         : systemStatus.encryption.mode === 'jwt_derived'
-                          ? 'JWT DERIVED'
-                          : 'DEV FALLBACK'}
+                          ? t('encJwt')
+                          : t('encDev')}
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {systemStatus.encryption.configured
-                      ? 'Production Key Configured'
-                      : 'Set ENCRYPTION_KEY (64 hex)'}
+                      ? t('encProdConfigured')
+                      : t('encSetKey')}
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Encrypts NID, nominee details, TOTP secrets &amp; DMs.
+                    {t('encDesc')}
                   </div>
                 </div>
 
@@ -1566,7 +1619,7 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
-                      <span>SMTP Mailer</span>
+                      <span>{t('cardSmtpTitle')}</span>
                     </span>
                     <span
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
@@ -1575,16 +1628,19 @@ export function AdminSiteSettingsView({
                           : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
                       }`}
                     >
-                      {systemStatus.smtp.configured ? 'CONFIGURED' : 'UNCONFIGURED'}
+                      {systemStatus.smtp.configured ? t('statusConfigured') : t('statusUnconfigured')}
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                     {systemStatus.smtp.host
                       ? `${systemStatus.smtp.host}:${systemStatus.smtp.port}`
-                      : 'No SMTP host configured'}
+                      : t('noSmtpHost')}
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                    Queue: {systemStatus.smtp.queueStats.sent} sent · {systemStatus.smtp.queueStats.failed} failed
+                    {t('smtpQueueMeta', {
+                      sent: systemStatus.smtp.queueStats.sent,
+                      failed: systemStatus.smtp.queueStats.failed,
+                    })}
                   </div>
                 </div>
 
@@ -1593,7 +1649,7 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <HardDrive className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                      <span>KYC &amp; Charter Media</span>
+                      <span>{t('cardMediaTitle')}</span>
                     </span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
                       {systemStatus.mediaStorage.provider.toUpperCase()}
@@ -1601,15 +1657,15 @@ export function AdminSiteSettingsView({
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {systemStatus.mediaStorage.provider === 'imagekit'
-                      ? 'ImageKit.io CDN'
+                      ? t('mediaImageKit')
                       : systemStatus.mediaStorage.provider === 'imgbb'
-                        ? 'ImgBB Image Host'
-                        : 'Local Fallback Storage'}
+                        ? t('mediaImgbb')
+                        : t('mediaLocal')}
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                     {systemStatus.mediaStorage.folder
-                      ? `Folder: ${systemStatus.mediaStorage.folder}`
-                      : 'External CDN folder not set'}
+                      ? t('mediaFolder', { folder: systemStatus.mediaStorage.folder })
+                      : t('mediaFolderUnset')}
                   </div>
                 </div>
 
@@ -1618,7 +1674,7 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                      <span>Receipt OCR &amp; AI Check</span>
+                      <span>{t('cardGeminiTitle')}</span>
                     </span>
                     <span
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
@@ -1627,16 +1683,16 @@ export function AdminSiteSettingsView({
                           : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
                       }`}
                     >
-                      {systemStatus.geminiAi.configured ? 'READY' : 'OFF'}
+                      {systemStatus.geminiAi.configured ? t('statusReady') : t('statusOff')}
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {systemStatus.geminiAi.configured
-                      ? 'Receipt Extraction Active'
-                      : 'GEMINI_API_KEY Not Set'}
+                      ? t('geminiActive')
+                      : t('geminiNotSet')}
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    Model: {systemStatus.geminiAi.model}
+                    {t('modelLabel', { model: systemStatus.geminiAi.model })}
                   </div>
                 </div>
 
@@ -1646,7 +1702,7 @@ export function AdminSiteSettingsView({
                     <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                        <span>Groq AI (Rewrite &amp; Spam Shield)</span>
+                        <span>{t('cardGroqTitle')}</span>
                       </span>
                       <span
                         className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
@@ -1655,16 +1711,16 @@ export function AdminSiteSettingsView({
                             : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
                         }`}
                       >
-                        {systemStatus.groqAi.configured ? 'READY' : 'OFF'}
+                        {systemStatus.groqAi.configured ? t('statusReady') : t('statusOff')}
                       </span>
                     </div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-white">
                       {systemStatus.groqAi.configured
-                        ? 'Groq AI Copilots Active'
-                        : 'GROQ_API_KEY Not Set'}
+                        ? t('groqActive')
+                        : t('groqNotSet')}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                      Model: {systemStatus.groqAi.model}
+                      {t('modelLabel', { model: systemStatus.groqAi.model })}
                     </div>
                   </div>
                 )}
@@ -1674,17 +1730,20 @@ export function AdminSiteSettingsView({
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
-                      <span>Runtime &amp; Members</span>
+                      <span>{t('cardRuntimeTitle')}</span>
                     </span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-700 dark:text-teal-300">
                       {systemStatus.runtime.nodeVersion}
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {systemStatus.totals.activeMembers} Active · {systemStatus.totals.pendingMembers} Pending
+                    {t('runtimeMembers', {
+                      active: systemStatus.totals.activeMembers,
+                      pending: systemStatus.totals.pendingMembers,
+                    })}
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    Process uptime: {formatUptime(systemStatus.runtime.uptimeSeconds)}
+                    {t('processUptime', { uptime: formatUptime(systemStatus.runtime.uptimeSeconds, t) })}
                   </div>
                 </div>
               </div>
@@ -1723,7 +1782,7 @@ export function AdminSiteSettingsView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

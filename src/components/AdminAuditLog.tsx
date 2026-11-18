@@ -26,7 +26,10 @@ import {
   XCircle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import type { AppLocale } from '../i18n/config.ts';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type { AuditLogEntry, PublicUser, UserRole } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, shortHash } from '../utils/format.ts';
@@ -115,7 +118,7 @@ function getAuditVisualMeta(action: string) {
     action === 'MEMBER_CREATED_BY_ADMIN'
   ) {
     return {
-      label: 'Member Approved & Active',
+      labelKey: 'memberApproved' as const,
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: UserCheck,
@@ -127,7 +130,7 @@ function getAuditVisualMeta(action: string) {
     action === 'MEMBER_SUSPENDED'
   ) {
     return {
-      label: 'Member Declined / Access Revoked',
+      labelKey: 'memberDeclined' as const,
       tone: 'text-rose-700 dark:text-rose-400',
       iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
       Icon: UserX,
@@ -140,7 +143,7 @@ function getAuditVisualMeta(action: string) {
     action === 'REPAYMENT_REJECTED'
   ) {
     return {
-      label: 'Rejected Request',
+      labelKey: 'rejectedRequest' as const,
       tone: 'text-rose-700 dark:text-rose-400',
       iconBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60',
       Icon: XCircle,
@@ -148,7 +151,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'LOAN_REQUEST_CREATED') {
     return {
-      label: 'New Loan Request',
+      labelKey: 'newLoanRequest' as const,
       tone: 'text-amber-700 dark:text-amber-400',
       iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: HandCoins,
@@ -161,7 +164,7 @@ function getAuditVisualMeta(action: string) {
     action === 'LOAN_REPAID_COMPLETED'
   ) {
     return {
-      label: 'Loan Status Update',
+      labelKey: 'loanStatusUpdate' as const,
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: HandCoins,
@@ -169,7 +172,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'LOAN_VOTE_CAST' || action === 'INVESTMENT_VOTE_CAST' || action === 'HALAL_PROJECT_CREATED') {
     return {
-      label: 'Anonymized Ballot Event',
+      labelKey: 'anonymizedBallot' as const,
       tone: 'text-amber-700 dark:text-amber-400',
       iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: HandCoins,
@@ -177,7 +180,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'CONTRIBUTION_SUBMITTED' || action === 'REPAYMENT_SUBMITTED') {
     return {
-      label: 'Payment Submitted',
+      labelKey: 'paymentSubmitted' as const,
       tone: 'text-amber-700 dark:text-amber-400',
       iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: CreditCard,
@@ -185,7 +188,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'CONTRIBUTION_APPROVED' || action === 'REPAYMENT_VERIFIED') {
     return {
-      label: 'Contribution / Payment Verified',
+      labelKey: 'contributionVerified' as const,
       tone: 'text-emerald-700 dark:text-emerald-400',
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60',
       Icon: CheckCircle2,
@@ -193,7 +196,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'FUND_POLICY_UPDATED') {
     return {
-      label: 'System Settings Update',
+      labelKey: 'systemSettingsUpdate' as const,
       tone: 'text-teal-700 dark:text-teal-400',
       iconBg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
       Icon: Settings,
@@ -201,7 +204,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'MEMBER_SIGNUP_REQUESTED') {
     return {
-      label: 'New Member Application',
+      labelKey: 'newMemberApplication' as const,
       tone: 'text-amber-700 dark:text-amber-400',
       iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60',
       Icon: UserCheck,
@@ -209,7 +212,7 @@ function getAuditVisualMeta(action: string) {
   }
   if (action === 'AUTH_LOGIN' || action === 'MEMBER_RBAC_UPDATED' || action === 'MEMBER_PROFILE_UPDATED') {
     return {
-      label: 'Security & Member Access',
+      labelKey: 'securityMemberAccess' as const,
       tone: 'text-indigo-700 dark:text-indigo-400',
       iconBg: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60',
       Icon: KeyRound,
@@ -221,7 +224,7 @@ function getAuditVisualMeta(action: string) {
       action === 'COMMUNITY_POST_HIDE' ||
       action === 'COMMUNITY_MEMBER_MUTED';
     return {
-      label: isModerationRemoval ? 'Community Moderation' : 'Community Activity',
+      labelKey: isModerationRemoval ? ('communityModeration' as const) : ('communityActivity' as const),
       tone: isModerationRemoval
         ? 'text-rose-700 dark:text-rose-400'
         : 'text-emerald-700 dark:text-emerald-400',
@@ -232,7 +235,7 @@ function getAuditVisualMeta(action: string) {
     };
   }
   return {
-    label: 'System & Ledger Sync',
+    labelKey: 'systemLedgerSync' as const,
     tone: 'text-teal-700 dark:text-teal-400',
     iconBg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
     Icon: Settings,
@@ -247,7 +250,17 @@ export function AdminAuditLog({
   onRefreshExternal,
   compactHeader = false,
 }: AdminAuditLogProps) {
+  const t = useTranslations('Admin.audit');
+  const locale = useLocale() as AppLocale;
   const canViewAuditLogs = user.role === 'admin' || user.role === 'manager';
+
+  const getVisualMeta = (action: string) => {
+    const raw = getAuditVisualMeta(action);
+    return {
+      ...raw,
+      label: t(`labels.${raw.labelKey}` as const),
+    };
+  };
 
   const [logs, setLogs] = useState<AuditLogEntry[]>(initialLogs || []);
   const [chainValid, setChainValid] = useState<boolean>(initialChainValid ?? true);
@@ -332,7 +345,7 @@ export function AdminAuditLog({
         }
       } catch (err) {
         if (!silent) {
-          setError(err instanceof Error ? err.message : 'Failed to load site activity feed.');
+          setError(err instanceof Error ? err.message : t('loadFailed'));
         }
       } finally {
         if (!silent) {
@@ -477,11 +490,10 @@ export function AdminAuditLog({
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-          Administrator Access Required
+          {t('accessRequiredTitle')}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Real-time site activity and cryptographic hash-chain inspection are restricted to
-          cooperative administrators.
+          {t('accessRequiredDesc')}
         </p>
       </div>
     );
@@ -506,7 +518,7 @@ export function AdminAuditLog({
             className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Total Site Events</span>
+              <span>{t('kpiTotalEvents')}</span>
               <ScrollText className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
             </div>
             <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -524,7 +536,7 @@ export function AdminAuditLog({
               ) : (
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               )}
-              <span>{chainValid ? 'SHA-256 Chain Verified' : 'Chain Integrity Alert'}</span>
+              <span>{chainValid ? t('chainVerified') : t('chainAlert')}</span>
             </div>
           </MotionCard>
 
@@ -534,7 +546,7 @@ export function AdminAuditLog({
             className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Loan Requests &amp; Votes</span>
+              <span>{t('kpiLoanEvents')}</span>
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
             </div>
             <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -545,7 +557,7 @@ export function AdminAuditLog({
               )}
             </div>
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Applications, 2/3 ballots, reviews &amp; payouts
+              {t('kpiLoanDesc')}
             </div>
           </MotionCard>
 
@@ -555,7 +567,7 @@ export function AdminAuditLog({
             className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Contributions &amp; Repayments</span>
+              <span>{t('kpiContributionEvents')}</span>
               <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
             </div>
             <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -566,7 +578,7 @@ export function AdminAuditLog({
               )}
             </div>
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Monthly Bank/MFS deposits &amp; installments
+              {t('kpiContributionDesc')}
             </div>
           </MotionCard>
 
@@ -576,7 +588,7 @@ export function AdminAuditLog({
             className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-              <span>Settings &amp; Member Registry</span>
+              <span>{t('kpiSettingsEvents')}</span>
               <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" aria-hidden="true" />
             </div>
             <div className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -587,7 +599,10 @@ export function AdminAuditLog({
               )}
             </div>
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              {metrics.systemSettingsEvents} policy/sync · {metrics.userEvents} member events
+              {t('kpiSettingsBreakdown', {
+                policyCount: metrics.systemSettingsEvents,
+                userCount: metrics.userEvents,
+              })}
             </div>
           </MotionCard>
         </div>
@@ -600,7 +615,7 @@ export function AdminAuditLog({
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                <span>Real-Time Site Activity Feed</span>
+                <span>{t('feedTitle')}</span>
               </h2>
 
               <span
@@ -616,12 +631,12 @@ export function AdminAuditLog({
                 <Radio className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>
                   {streamPaused
-                    ? 'Stream Paused'
+                    ? t('streamPaused')
                     : streamStatus === 'live'
-                      ? 'Live Stream Active'
+                      ? t('streamLive')
                       : streamStatus === 'reconnecting'
-                        ? 'Reconnecting…'
-                        : 'Connecting…'}
+                        ? t('streamReconnecting')
+                        : t('streamConnecting')}
                 </span>
               </span>
 
@@ -641,13 +656,13 @@ export function AdminAuditLog({
                 ) : (
                   <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                 )}
-                <span>{chainValid ? 'SHA-256 Verified' : 'Chain Alert'}</span>
+                <span>{chainValid ? t('shaVerified') : t('shaAlert')}</span>
               </span>
             </div>
 
             {lastSyncedAt && (
               <p className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                Last synced {formatDateTime(lastSyncedAt)}
+                {t('lastSynced', { date: formatDateTime(lastSyncedAt) })}
               </p>
             )}
           </div>
@@ -672,12 +687,12 @@ export function AdminAuditLog({
               {streamPaused ? (
                 <>
                   <Play className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Resume Live</span>
+                  <span>{t('resumeLive')}</span>
                 </>
               ) : (
                 <>
                   <Pause className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Pause Feed</span>
+                  <span>{t('pauseFeed')}</span>
                 </>
               )}
             </button>
@@ -689,7 +704,7 @@ export function AdminAuditLog({
               className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <span>{t('refresh')}</span>
             </button>
 
             <button
@@ -698,7 +713,7 @@ export function AdminAuditLog({
               className="col-span-2 sm:col-span-1 px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Export Audit CSV</span>
+              <span>{t('exportCsv')}</span>
             </button>
           </div>
         </div>
@@ -706,8 +721,7 @@ export function AdminAuditLog({
         {streamPaused && queuedLiveEvents > 0 && (
           <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
             <span>
-              {queuedLiveEvents} new activity event{queuedLiveEvents === 1 ? '' : 's'} received
-              while paused.
+              {t('queuedPausedEvents', { count: queuedLiveEvents })}
             </span>
             <button
               type="button"
@@ -717,7 +731,7 @@ export function AdminAuditLog({
               }}
               className="px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-medium cursor-pointer shrink-0"
             >
-              Sync Now
+              {t('syncNow')}
             </button>
           </div>
         )}
@@ -736,12 +750,12 @@ export function AdminAuditLog({
           <div className="flex flex-nowrap xl:flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar w-full xl:w-fit">
             {(
               [
-                { id: 'all', label: `All Activity (${metrics.total})` },
-                { id: 'loan_changes', label: `Loans & Ballots (${metrics.loanStatusEvents})` },
-                { id: 'contributions', label: `Contributions & Payments (${metrics.contributionEvents})` },
-                { id: 'system_settings', label: `System Settings (${metrics.systemSettingsEvents})` },
-                { id: 'user_access', label: `Member Registry (${metrics.userEvents})` },
-                { id: 'rejections', label: `Rejections (${metrics.rejectedEvents})` },
+                { id: 'all', label: t('tabAll', { count: metrics.total }) },
+                { id: 'loan_changes', label: t('tabLoans', { count: metrics.loanStatusEvents }) },
+                { id: 'contributions', label: t('tabContributions', { count: metrics.contributionEvents }) },
+                { id: 'system_settings', label: t('tabSettings', { count: metrics.systemSettingsEvents }) },
+                { id: 'user_access', label: t('tabMembers', { count: metrics.userEvents }) },
+                { id: 'rejections', label: t('tabRejections', { count: metrics.rejectedEvents }) },
               ] as const
             ).map((tab) => {
               const active = categoryFilter === tab.id;
@@ -774,7 +788,7 @@ export function AdminAuditLog({
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <select
-              aria-label="Filter by actor role"
+              aria-label={t('filterRoleAria')}
               value={roleFilter}
               onChange={(e) => {
                 setRoleFilter(e.target.value as 'all' | UserRole);
@@ -782,10 +796,10 @@ export function AdminAuditLog({
               }}
               className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
             >
-              <option value="all">All Actor Roles</option>
-              <option value="admin">Admin Only</option>
-              <option value="manager">Manager Only</option>
-              <option value="member">Member Only</option>
+              <option value="all">{t('roleAll')}</option>
+              <option value="admin">{t('roleAdmin')}</option>
+              <option value="manager">{t('roleManager')}</option>
+              <option value="member">{t('roleMember')}</option>
             </select>
 
             <div className="relative flex-1 sm:flex-initial sm:w-64">
@@ -800,7 +814,7 @@ export function AdminAuditLog({
                   setSearchQuery(e.target.value);
                   setVisibleLimit(25);
                 }}
-                placeholder="Search actor, action, ID, summary…"
+                placeholder={t('searchPlaceholder')}
                 className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
@@ -827,10 +841,10 @@ export function AdminAuditLog({
         ) : filteredLogs.length === 0 ? (
           <div className="p-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 text-center space-y-1.5">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              No matching site activity records found
+              {t('emptyTitle')}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Adjust your category filter, role filter, or search query to inspect other events.
+              {t('emptyDesc')}
             </p>
           </div>
         ) : (
@@ -838,7 +852,7 @@ export function AdminAuditLog({
             {displayedLogs.map((entry) => {
               const isOpen = expandedLogId === entry.id;
               const isJustArrived = newEntryIds.includes(entry.id);
-              const visual = getAuditVisualMeta(entry.action);
+              const visual = getVisualMeta(entry.action);
               const Icon = visual.Icon;
 
               return (
@@ -862,7 +876,7 @@ export function AdminAuditLog({
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                           {isJustArrived && (
                             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                              LIVE
+                              {t('liveBadge')}
                             </span>
                           )}
                           <span className={`font-semibold ${visual.tone}`}>{visual.label}</span>
@@ -886,18 +900,18 @@ export function AdminAuditLog({
 
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                           <span>
-                            Actor:{' '}
+                            {t('actorLabel')}{' '}
                             <strong className="font-medium text-slate-700 dark:text-slate-300">
                               {entry.actorName}
                             </strong>{' '}
-                            (<span className="capitalize">{entry.actorRole}</span>)
+                            (<span>{translateRoleLabel(entry.actorRole, locale)}</span>)
                           </span>
                           <span aria-hidden="true">·</span>
                           <span className="font-mono tabular-nums">
                             {formatDateTime(entry.timestamp)}
                           </span>
                           <span aria-hidden="true">·</span>
-                          <span className="font-mono">Hash {shortHash(entry.entryHash)}</span>
+                          <span className="font-mono">{t('hashLabel', { hash: shortHash(entry.entryHash) })}</span>
                         </div>
                       </div>
                     </div>
@@ -907,7 +921,7 @@ export function AdminAuditLog({
                       onClick={() => setExpandedLogId(isOpen ? null : entry.id)}
                       className="w-full sm:w-auto px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer self-start"
                     >
-                      <span>{isOpen ? 'Hide Envelope' : 'Inspect Hash & Payload'}</span>
+                      <span>{isOpen ? t('hideEnvelope') : t('inspectEnvelope')}</span>
                       {isOpen ? (
                         <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
                       ) : (
@@ -927,20 +941,20 @@ export function AdminAuditLog({
                       >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-slate-600 dark:text-slate-400 break-all">
                           <div>
-                            <span className="text-slate-400 dark:text-slate-500">Audit ID:</span>{' '}
+                            <span className="text-slate-400 dark:text-slate-500">{t('auditId')}</span>{' '}
                             {entry.id}
                           </div>
                           <div>
-                            <span className="text-slate-400 dark:text-slate-500">Prev Hash:</span>{' '}
+                            <span className="text-slate-400 dark:text-slate-500">{t('prevHash')}</span>{' '}
                             {shortHash(entry.prevHash)}
                           </div>
                           <div className="md:col-span-2">
-                            <span className="text-indigo-600 dark:text-indigo-400">Entry SHA-256:</span>{' '}
+                            <span className="text-indigo-600 dark:text-indigo-400">{t('entrySha')}</span>{' '}
                             {entry.entryHash}
                           </div>
                           <div className="md:col-span-2">
                             <span className="text-indigo-600 dark:text-indigo-400">
-                              AES-256-GCM Ciphertext:
+                              {t('ciphertext')}
                             </span>{' '}
                             {entry.encryptedPayload.ciphertext.slice(0, 72)}…
                           </div>
@@ -949,7 +963,7 @@ export function AdminAuditLog({
                         {entry.decryptedPayload && (
                           <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                             <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-400 mb-1.5">
-                              Decrypted Audit Metadata
+                              {t('decryptedMetadata')}
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
                               {Object.entries(entry.decryptedPayload).map(([k, v]) => (
@@ -977,7 +991,7 @@ export function AdminAuditLog({
         {filteredLogs.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-mono tabular-nums">
-              Showing {displayedLogs.length} of {filteredLogs.length} matching activity entries
+              {t('showingCount', { shown: displayedLogs.length, total: filteredLogs.length })}
             </span>
 
             {hasMoreLogs && (
@@ -987,14 +1001,14 @@ export function AdminAuditLog({
                   onClick={() => setVisibleLimit((n) => n + 25)}
                   className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center cursor-pointer"
                 >
-                  Load 25 More
+                  {t('loadMore')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisibleLimit(filteredLogs.length)}
                   className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 inline-flex items-center justify-center cursor-pointer"
                 >
-                  Show All ({filteredLogs.length})
+                  {t('showAll', { count: filteredLogs.length })}
                 </button>
               </div>
             )}

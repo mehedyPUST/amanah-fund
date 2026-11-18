@@ -521,7 +521,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   >
                     <iframe
                       src={constitutionUrl}
-                      title="Savings, Investment and Interest-Free Loan Fund Cooperative Society Constitution PDF"
+                      title={tRules('pdfIframeTitle')}
                       className="w-full h-[540px]"
                     />
                   </motion.div>

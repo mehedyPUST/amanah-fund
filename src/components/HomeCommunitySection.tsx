@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
   BarChart2,
@@ -17,40 +18,38 @@ import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-const COMMUNITY_FEATURES = [
-  {
-    index: '01',
-    Icon: MessageSquare,
-    title: 'Member Feed & Discussions',
-    detail:
-      'Share updates, Qard Hasan insights, Halal venture ideas, and announcements across the cooperative.',
-  },
-  {
-    index: '02',
-    Icon: BarChart2,
-    title: 'Community Polls & Replies',
-    detail:
-      'Create single or multi-choice polls, mention members with @handles, and react to helpful posts.',
-  },
-  {
-    index: '03',
-    Icon: Users,
-    title: 'Verified Member Directory',
-    detail:
-      'Browse active members and inspect their community posts, about details, and fund contribution summary.',
-  },
-  {
-    index: '04',
-    Icon: ShieldCheck,
-    title: 'Encrypted Private Messages',
-    detail:
-      'Message verified cooperative members directly inside AES-256-GCM encrypted one-on-one threads.',
-  },
-];
-
 export function HomeCommunitySection({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const { user, authChecking } = useCoopSession();
+  const t = useTranslations('Public.communityGate');
+  const tNav = useTranslations('Navigation');
+
+  const communityFeatures = [
+    {
+      index: '01',
+      Icon: MessageSquare,
+      title: t('feature1Title'),
+      detail: t('feature1Desc'),
+    },
+    {
+      index: '02',
+      Icon: BarChart2,
+      title: t('feature2Title'),
+      detail: t('feature2Desc'),
+    },
+    {
+      index: '03',
+      Icon: Users,
+      title: t('feature3Title'),
+      detail: t('feature3Desc'),
+    },
+    {
+      index: '04',
+      Icon: ShieldCheck,
+      title: t('feature4Title'),
+      detail: t('feature4Desc'),
+    },
+  ];
 
   return (
     <div
@@ -60,20 +59,14 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
           : 'text-slate-900 dark:text-slate-100'
       }
     >
-      <div
-        className={
-          embedded
-            ? 'space-y-5'
-            : 'w-full py-6 sm:py-8 space-y-6'
-        }
-      >
+      <div className={embedded ? 'space-y-5' : 'w-full py-6 sm:py-8 space-y-6'}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div className="max-w-3xl space-y-1">
             <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Member Community
+              {t('eyebrow')}
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-              Cooperative Community Hub
+              {t('heading')}
             </h2>
           </div>
 
@@ -82,7 +75,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               href="/dashboard?page=community"
               className="group shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors whitespace-nowrap self-start md:self-auto"
             >
-              <span>Dashboard</span>
+              <span>{tNav('dashboard')}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -132,13 +125,13 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                 </div>
                 <div className="space-y-1.5">
                   <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    Registered Members Only
+                    {t('lockedEyebrow')}
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                    Log In to Enter the Community
+                    {t('lockedTitle')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
-                    Discussions, polls, and direct messages are private to verified Amanah members.
+                    {t('lockedDesc')}
                   </p>
                 </div>
               </div>
@@ -148,7 +141,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   href="/login"
                   className="group px-5 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition-colors inline-flex items-center gap-2 whitespace-nowrap"
                 >
-                  <span>Sign In</span>
+                  <span>{tNav('signIn')}</span>
                   <ArrowRight
                     className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                     aria-hidden="true"
@@ -158,13 +151,13 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   href="/signup"
                   className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors whitespace-nowrap"
                 >
-                  Join Amanah
+                  {tNav('joinAmanah')}
                 </Link>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {COMMUNITY_FEATURES.map((item, idx) => {
+              {communityFeatures.map((item, idx) => {
                 const Icon = item.Icon;
                 const cardHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
                 const iconBoxClass =
@@ -177,7 +170,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                         : 'border-emerald-200/80 dark:border-emerald-500/25 bg-emerald-100/85 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
                 return (
                   <MotionCard
-                    key={item.title}
+                    key={item.index}
                     hue={cardHue}
                     delay={idx * 0.04}
                     inView
@@ -210,10 +203,10 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Membership Verification Required
+                  {t('verificationTitle')}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Community access unlocks automatically once an Administrator approves your member registration.
+                  {t('verificationDesc')}
                 </p>
               </div>
             </div>
@@ -221,7 +214,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               href="/dashboard"
               className="px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 whitespace-nowrap self-start sm:self-auto transition-colors"
             >
-              Check Account Status
+              {t('checkAccountStatus')}
             </Link>
           </div>
         ) : (
