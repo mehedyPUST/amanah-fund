@@ -21,7 +21,10 @@ export default function AppLoading() {
           />
         </div>
 
-        <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+        <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          Amanah
+        </h1>
+        <p className="mt-1 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
           Qard Hasan &amp; Halal Cooperative Treasury
         </p>
 

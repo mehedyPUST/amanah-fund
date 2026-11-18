@@ -14,6 +14,7 @@ import {
 } from '../utils/mobileDeviceAuth.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { ActionModal } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
 
@@ -167,10 +168,13 @@ export function SignInForm() {
       >
         {/* Left Institutional Context Column */}
         <div className="lg:col-span-6 space-y-6">
-          <div className="space-y-2.5">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-              <span>Encrypted Dashboard · HttpOnly JWT</span>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <AmanahLogo size="md" decorative className="shadow-sm" />
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Encrypted Dashboard · HttpOnly JWT</span>
+              </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
               Sign in to the Amanah Dashboard

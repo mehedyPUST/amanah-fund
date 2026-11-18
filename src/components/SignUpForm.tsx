@@ -24,6 +24,7 @@ import { api } from '../utils/api.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 
 interface NomineeDraft {
@@ -458,14 +459,17 @@ export function SignUpForm() {
         className="max-w-4xl w-full mx-auto bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-6">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
+          <div className="flex items-start sm:items-center gap-3.5">
+            <AmanahLogo size="md" decorative className="shadow-sm mt-0.5 sm:mt-0" />
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Membership Application
+              </h1>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Membership Application
-            </h1>
           </div>
           <Link
             href="/login"

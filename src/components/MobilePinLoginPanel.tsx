@@ -25,6 +25,7 @@ import {
   syncLocalAccountsWithServerUser,
   type LocalRegisteredAccount,
 } from '../utils/mobileDeviceAuth.ts';
+import { AmanahLogo } from './AmanahLogo.tsx';
 
 interface MobilePinLoginPanelProps {
   onSuccess: (user: PublicUser) => void;
@@ -146,7 +147,8 @@ export function MobilePinLoginPanel({
       {/* Selected Registered Account Card */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <AmanahLogo size="xs" decorative className="w-5 h-5 rounded-md" />
             <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Registered Device · 4-Digit PIN</span>
           </span>

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, HandCoins, LayoutDashboard, Shield } from 'lucide-react';
+import { ArrowRight, HandCoins, LayoutDashboard } from 'lucide-react';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
@@ -165,8 +166,8 @@ export function Hero({
           <div className="lg:col-span-5 flex">
             <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950">
               {heroImgFailed ? (
-                <div className="w-full h-full p-8 bg-gradient-to-br from-emerald-950/15 via-slate-100 to-teal-950/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-center gap-2.5">
-                  <Shield className="w-10 h-10 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+                <div className="w-full h-full p-8 bg-gradient-to-br from-emerald-950/15 via-slate-100 to-teal-950/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-center gap-3">
+                  <AmanahLogo size="lg" decorative className="shadow-md" />
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     Amanah Cooperative Sanctuary
                   </div>

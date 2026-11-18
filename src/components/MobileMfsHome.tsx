@@ -47,6 +47,7 @@ import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { RepaymentSchedule } from './RepaymentSchedule.tsx';
@@ -845,10 +846,17 @@ export function MobileMfsHome({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
-            <div className="text-[11px] text-emerald-100/85 truncate mt-0.5 capitalize">
-              {user.name} · <span className="font-mono">{user.memberCode}</span> · {user.role}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AmanahLogo
+              size="sm"
+              decorative
+              className="ring-1 ring-white/25 shadow-sm"
+            />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
+              <div className="text-[11px] text-emerald-100/85 truncate mt-0.5 capitalize">
+                {user.name} · <span className="font-mono">{user.memberCode}</span> · {user.role}
+              </div>
             </div>
           </div>
 
