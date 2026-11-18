@@ -109,7 +109,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
   useEffect(() => {
     void loadQueue(false);
 
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const onQueueUpdated = () => {
       void loadQueue(true);
     };

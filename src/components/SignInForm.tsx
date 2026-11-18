@@ -480,6 +480,7 @@ export function SignInForm() {
           ) : hasRegisteredPinAccount && !usePasswordMode ? (
             <MobilePinLoginPanel
               onSuccess={(loggedInUser) => {
+                redirectingRef.current = true;
                 setMobileBrowseMode(false);
                 setUser(loggedInUser);
                 router.replace(isMobileViewport() ? '/dashboard' : '/');

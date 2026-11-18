@@ -390,7 +390,7 @@ export function CommunityView({
   }, [loadPosts, loadThreads, loadActiveMembers]);
 
   useEffect(() => {
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleCommunity = () => {
       void loadPosts(true);
     };

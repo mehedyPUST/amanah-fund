@@ -67,7 +67,7 @@ import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import { translateRoleLabel } from '../i18n/messages.ts';
-import { api, getClientSessionToken } from '../utils/api.ts';
+import { api } from '../utils/api.ts';
 import type {
   Contribution,
   CoopMeeting,
@@ -295,11 +295,13 @@ export function DashboardShell() {
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
   const autoSyncBusyRef = useRef(false);
+  const signingOutRef = useRef(false);
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
   const soundEnabledRef = useRef(false);
   soundEnabledRef.current = Boolean(user?.notificationPreferences?.soundEnabled);
 
   useEffect(() => {
+    if (signingOutRef.current) return;
     if (!authChecking && !user) {
       setMobileBrowseMode(false);
       router.replace(isMobileViewport() ? '/' : '/login');
@@ -372,11 +374,7 @@ export function DashboardShell() {
     if (!activeUserId) return;
     void refreshWorkspace(false);
 
-    const sseToken = getClientSessionToken();
-    const sseUrl = sseToken
-      ? `/api/events?sessionToken=${encodeURIComponent(sseToken)}`
-      : '/api/events';
-    const es = new EventSource(sseUrl, { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleSync = () => {
       void refreshWorkspace(true);
     };
@@ -658,6 +656,7 @@ export function DashboardShell() {
   }, [visibleNav]);
 
   async function handleSignOut() {
+    signingOutRef.current = true;
     drawerHistoryPushedRef.current = false;
     setMobileNavOpen(false);
     setMobileBrowseMode(false);

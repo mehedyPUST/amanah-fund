@@ -23,7 +23,13 @@ import {
 } from '../i18n/config.ts';
 import { getMessagesForLocale } from '../i18n/messages.ts';
 import type { PublicUser } from '../types/coop.ts';
-import { api, clearClientSessionToken, registerTotpChallengeHandler } from '../utils/api.ts';
+import {
+  api,
+  clearClientSessionToken,
+  registerTotpChallengeHandler,
+  SESSION_TOKEN_STORAGE_KEY,
+  syncClientSessionTokenFromStorage,
+} from '../utils/api.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
   setMobileAutoLogoutNotice,
@@ -318,11 +324,33 @@ export function AppProviders({
       }
     };
 
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== SESSION_TOKEN_STORAGE_KEY) return;
+      const nextToken = event.newValue && event.newValue.trim() ? event.newValue.trim() : null;
+      if (!nextToken) {
+        if (event.oldValue) {
+          sessionVersionRef.current += 1;
+          syncClientSessionTokenFromStorage(null);
+          setMobileBackgroundHiddenAt(null);
+          setMobileBrowseMode(false);
+          setUserState(null);
+          setAuthChecking(false);
+        }
+        return;
+      }
+      if (nextToken !== event.oldValue) {
+        syncClientSessionTokenFromStorage(nextToken);
+        void refreshUser();
+      }
+    };
+
     window.addEventListener('amanah:unauthorized', handleUnauthorized);
+    window.addEventListener('storage', handleStorage);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.removeEventListener('amanah:unauthorized', handleUnauthorized);
+      window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [refreshUser]);

@@ -376,7 +376,7 @@ export function AdminAuditLog({
   useEffect(() => {
     if (!canViewAuditLogs) return;
 
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const scheduleSilentSync = () => {
       if (streamPausedRef.current) {
         setQueuedLiveEvents((n) => n + 1);
@@ -709,7 +709,7 @@ export function AdminAuditLog({
 
             <button
               type="button"
-              onClick={() => window.location.assign('/api/reports/export?type=audit')}
+              onClick={() => window.location.assign(api.getCsvReportExportUrl('audit'))}
               className="col-span-2 sm:col-span-1 px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />

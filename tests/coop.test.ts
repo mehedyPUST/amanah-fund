@@ -108,6 +108,14 @@ import {
 } from '../src/utils/emailTemplates.ts';
 import { BANK_PROVIDERS } from '../src/utils/format.ts';
 import { createDefaultFaqs, sortFaqItems } from '../src/utils/faqDefaults.ts';
+import {
+  api,
+  clearClientSessionToken,
+  getClientSessionToken,
+  SESSION_TOKEN_STORAGE_KEY,
+  setClientSessionToken,
+  syncClientSessionTokenFromStorage,
+} from '../src/utils/api.ts';
 import type { LoanRequest, PublicUser } from '../src/types/coop.ts';
 
 function makeBaseState(): VaultState {
@@ -2189,5 +2197,109 @@ describe('Monthly Sheet Report builder', () => {
     });
   });
 });
+
+describe('Client session token persistence & 401 guard', () => {
+  function createMockStorage() {
+    const store = new Map<string, string>();
+    return {
+      getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+      setItem: (key: string, val: string) => {
+        store.set(key, String(val));
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+    };
+  }
+
+  it('prefers localStorage over stale sessionStorage, builds tokenized SSE/CSV URLs, and verifies 401 before clearing live sessions', async () => {
+    const origWindow = (globalThis as { window?: unknown }).window;
+    const origDocument = (globalThis as { document?: unknown }).document;
+    const origFetch = globalThis.fetch;
+
+    const localStorage = createMockStorage();
+    const sessionStorage = createMockStorage();
+    const dispatchedEvents: string[] = [];
+
+    (globalThis as { window: unknown }).window = {
+      localStorage,
+      sessionStorage,
+      dispatchEvent: (evt: { type?: string }) => {
+        if (evt?.type) dispatchedEvents.push(evt.type);
+        return true;
+      },
+    };
+    (globalThis as { document: unknown }).document = {
+      documentElement: { lang: 'en' },
+    };
+
+    try {
+      // 1. localStorage wins over stale per-tab sessionStorage
+      sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, 'stale-tab-token');
+      localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, 'fresh-shared-token');
+      expect(getClientSessionToken()).toBe('fresh-shared-token');
+      expect(sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY)).toBe('fresh-shared-token');
+
+      // 2. SSE and CSV export URLs carry sessionToken for iframe compatibility
+      expect(api.getEventsStreamUrl()).toBe('/api/events?sessionToken=fresh-shared-token');
+      expect(api.getCsvReportExportUrl('audit', 'admin')).toBe(
+        '/api/reports/export?type=audit&scope=admin&sessionToken=fresh-shared-token'
+      );
+
+      // 3. Cross-tab storage sync updates memory/sessionStorage without mutating localStorage
+      syncClientSessionTokenFromStorage('cross-tab-token');
+      expect(sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY)).toBe('cross-tab-token');
+      setClientSessionToken('live-session-jwt');
+
+      // 4. Stray 401 on a data route does NOT wipe session if /api/auth/me confirms valid session
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/contributions') {
+          return new Response(JSON.stringify({ error: 'Temporary 401' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        if (url === '/api/auth/me') {
+          return new Response(JSON.stringify({ user: { id: 'u-1' } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }) as typeof fetch;
+
+      await expect(api.getContributions()).rejects.toThrow('Temporary 401');
+      expect(getClientSessionToken()).toBe('live-session-jwt');
+      expect(dispatchedEvents).toEqual([]);
+
+      // 5. Genuine expired session (both data route and /api/auth/me return 401) clears token & emits amanah:unauthorized
+      globalThis.fetch = (async () => {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }) as typeof fetch;
+
+      await expect(api.getContributions()).rejects.toThrow('Session expired');
+      expect(getClientSessionToken()).toBeNull();
+      expect(dispatchedEvents).toEqual(['amanah:unauthorized']);
+    } finally {
+      clearClientSessionToken();
+      if (origWindow === undefined) {
+        delete (globalThis as { window?: unknown }).window;
+      } else {
+        (globalThis as { window?: unknown }).window = origWindow;
+      }
+      if (origDocument === undefined) {
+        delete (globalThis as { document?: unknown }).document;
+      } else {
+        (globalThis as { document?: unknown }).document = origDocument;
+      }
+      globalThis.fetch = origFetch;
+    }
+  });
+});
+
 
 

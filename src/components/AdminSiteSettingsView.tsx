@@ -420,7 +420,7 @@ export function AdminSiteSettingsView({
   }
 
   function downloadCsvReport(type: 'contributions' | 'loans' | 'members' | 'audit') {
-    window.location.assign(`/api/reports/export?type=${type}`);
+    window.location.assign(api.getCsvReportExportUrl(type));
   }
 
   function handleDownloadMonthlyPdf() {

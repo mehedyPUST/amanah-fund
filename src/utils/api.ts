@@ -65,11 +65,28 @@ function getClientLocaleHeader(): 'en' | 'bn' {
   return document.documentElement?.lang === 'bn' ? 'bn' : 'en';
 }
 
-const SESSION_TOKEN_STORAGE_KEY = 'amanah_session_token_v1';
+export const SESSION_TOKEN_STORAGE_KEY = 'amanah_session_token_v1';
 let memorySessionToken: string | null = null;
+let pendingSessionCheck: Promise<boolean> | null = null;
 
 export function getClientSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
+  // Read localStorage first so cross-tab logins/logouts take precedence over per-tab sessionStorage.
+  try {
+    const fromLocal = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    if (fromLocal && fromLocal.trim()) {
+      const clean = fromLocal.trim();
+      memorySessionToken = clean;
+      try {
+        window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
+      } catch {
+        // ignore storage errors
+      }
+      return memorySessionToken;
+    }
+  } catch {
+    // ignore storage errors
+  }
   try {
     const fromSession = window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
     if (fromSession && fromSession.trim()) {
@@ -79,16 +96,22 @@ export function getClientSessionToken(): string | null {
   } catch {
     // ignore storage errors
   }
+  return memorySessionToken;
+}
+
+export function syncClientSessionTokenFromStorage(token: string | null): void {
+  if (typeof window === 'undefined') return;
+  const clean = token && token.trim() ? token.trim() : null;
+  memorySessionToken = clean;
   try {
-    const fromLocal = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
-    if (fromLocal && fromLocal.trim()) {
-      memorySessionToken = fromLocal.trim();
-      return memorySessionToken;
+    if (clean) {
+      window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
+    } else {
+      window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
     }
   } catch {
     // ignore storage errors
   }
-  return memorySessionToken;
 }
 
 export function setClientSessionToken(token: string | null): void {
@@ -117,6 +140,38 @@ export function setClientSessionToken(token: string | null): void {
 
 export function clearClientSessionToken(): void {
   setClientSessionToken(null);
+}
+
+async function confirmSessionInvalidOnServer(tokenUsedForRequest: string | null): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (pendingSessionCheck) return pendingSessionCheck;
+
+  pendingSessionCheck = (async () => {
+    try {
+      const activeToken = getClientSessionToken();
+      if (activeToken !== tokenUsedForRequest) {
+        return false;
+      }
+      const res = await fetch('/api/auth/me', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'x-amanah-locale': getClientLocaleHeader(),
+          ...(activeToken ? { 'X-Amanah-Session': activeToken } : {}),
+        },
+      });
+      // Only confirm unauthorized when /api/auth/me explicitly returns 401
+      // and no fresh login swapped the token while verifying.
+      return res.status === 401 && getClientSessionToken() === tokenUsedForRequest;
+    } catch {
+      // Network/transient failure must never log out a live session
+      return false;
+    } finally {
+      pendingSessionCheck = null;
+    }
+  })();
+
+  return pendingSessionCheck;
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
@@ -176,9 +231,14 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
     ) {
       const currentToken = getClientSessionToken();
       if (currentToken === tokenUsedForRequest) {
-        clearClientSessionToken();
-        if (path !== '/api/auth/me') {
-          window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+        if (path === '/api/auth/me') {
+          clearClientSessionToken();
+        } else {
+          const confirmedInvalid = await confirmSessionInvalidOnServer(tokenUsedForRequest);
+          if (confirmedInvalid && getClientSessionToken() === tokenUsedForRequest) {
+            clearClientSessionToken();
+            window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+          }
         }
       }
     }
@@ -1198,6 +1258,21 @@ export const api = {
     if (token) params.set('sessionToken', token);
     const qs = params.toString();
     return qs ? `/api/reports/monthly-pdf/download?${qs}` : '/api/reports/monthly-pdf/download';
+  },
+  getCsvReportExportUrl: (
+    type: 'contributions' | 'loans' | 'members' | 'audit',
+    scope?: 'admin'
+  ) => {
+    const params = new URLSearchParams();
+    params.set('type', type);
+    if (scope) params.set('scope', scope);
+    const token = getClientSessionToken();
+    if (token) params.set('sessionToken', token);
+    return `/api/reports/export?${params.toString()}`;
+  },
+  getEventsStreamUrl: () => {
+    const token = getClientSessionToken();
+    return token ? `/api/events?sessionToken=${encodeURIComponent(token)}` : '/api/events';
   },
   getBackupJsonUrl: () => {
     const token = getClientSessionToken();

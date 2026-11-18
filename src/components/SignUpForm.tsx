@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -105,9 +105,11 @@ export function SignUpForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [bootstrapActivated, setBootstrapActivated] = useState(false);
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
-    if (!authChecking && user && !successModalOpen) {
+    if (!authChecking && user && !successModalOpen && !redirectingRef.current) {
+      redirectingRef.current = true;
       setMobileBrowseMode(false);
       router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
@@ -1318,9 +1320,12 @@ export function SignUpForm() {
         description={successMessage || t('submittedFallback')}
         confirmLabel={bootstrapActivated ? t('openDashboardNow') : tCommon('okGotIt')}
         onClose={() => {
-          setSuccessModalOpen(false);
           if (bootstrapActivated) {
+            redirectingRef.current = true;
+            setSuccessModalOpen(false);
             router.replace('/dashboard');
+          } else {
+            setSuccessModalOpen(false);
           }
         }}
       />

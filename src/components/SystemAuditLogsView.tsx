@@ -268,7 +268,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
   useEffect(() => {
     if (!canViewSystemLogs) return;
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const scheduleSync = () => {
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
@@ -603,7 +603,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
             <button
               type="button"
-              onClick={() => window.location.assign('/api/reports/export?type=audit&scope=admin')}
+              onClick={() => window.location.assign(api.getCsvReportExportUrl('audit', 'admin'))}
               className="col-span-2 sm:col-span-1 px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />

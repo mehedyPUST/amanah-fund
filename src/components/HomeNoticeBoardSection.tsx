@@ -129,7 +129,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
     };
     window.addEventListener('amanah:refresh', handleGlobalRefresh);
 
-    const source = new EventSource('/api/events');
+    const source = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleNoticeUpdate = () => {
       void loadNotices(true);
     };

@@ -152,7 +152,7 @@ export function MemberPublicProfileView({
   }, [loadMemberProfile]);
 
   useEffect(() => {
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleSync = () => {
       void loadMemberProfile(true);
     };

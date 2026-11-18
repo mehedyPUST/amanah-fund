@@ -341,7 +341,7 @@ export function AdminReportsView({
   }
 
   function downloadCsvReport(type: 'contributions' | 'loans' | 'members' | 'audit') {
-    window.location.assign(`/api/reports/export?type=${type}`);
+    window.location.assign(api.getCsvReportExportUrl(type));
   }
 
   const [loanReviewBusyId, setLoanReviewBusyId] = useState<string | null>(null);

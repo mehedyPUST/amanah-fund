@@ -100,7 +100,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
 
     let source: EventSource | null = null;
     if (isActiveMember) {
-      source = new EventSource('/api/events', { withCredentials: true });
+      source = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
       source.addEventListener('faq:updated', handleLocalRefresh);
     }
 

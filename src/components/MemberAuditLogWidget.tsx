@@ -216,7 +216,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
   useEffect(() => {
     void loadLogs(false);
 
-    const es = new EventSource('/api/events', { withCredentials: true });
+    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const scheduleSync = () => {
       if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
       syncTimerRef.current = window.setTimeout(() => {
