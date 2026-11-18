@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type {
   DecisionPoll,
   FundConfig,
@@ -54,11 +55,21 @@ export function VotingView({
   onRefresh,
   onViewMemberProfile,
 }: VotingViewProps) {
+  const t = useTranslations('Voting');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Statuses');
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isVerifiedMember = user.status === 'active';
   const canCastBallot = isVerifiedMember && !isAdmin;
+
+  const formatCategory = (cat: DecisionPoll['category']) => {
+    if (cat === 'policy') return t('catPolicy');
+    if (cat === 'qard_hasan') return t('catQardHasan');
+    if (cat === 'project') return t('catProject');
+    return t('catGeneral');
+  };
 
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'loans' | 'investments' | 'polls'>(
     'all'
@@ -99,18 +110,18 @@ export function VotingView({
   }, []);
 
   function formatCountdown(deadlineIso: string | undefined): string {
-    if (!deadlineIso) return 'No deadline set';
-    if (!nowTick) return 'Loading...';
+    if (!deadlineIso) return t('noDeadline');
+    if (!nowTick) return t('loading');
     const ms = new Date(deadlineIso).getTime() - nowTick;
-    if (ms <= 0) return 'Deadline passed';
+    if (ms <= 0) return t('deadlinePassed');
     const totalSec = Math.floor(ms / 1000);
     const d = Math.floor(totalSec / 86400);
     const h = Math.floor((totalSec % 86400) / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (d > 0) return `${d}d ${h}h ${m}m ${s}s`;
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    return `${m}m ${s}s`;
+    if (d > 0) return t('countdownDHMS', { d, h, m, s });
+    if (h > 0) return t('countdownHMS', { h, m, s });
+    return t('countdownMS', { m, s });
   }
 
   // Create decision poll drawer state (Manager/Admin)
@@ -132,8 +143,8 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Ballot Restricted for Administrators',
-        description: 'Administrators oversee ballot integrity and do not cast member votes.',
+        title: t('adminRestrictedTitle'),
+        description: t('adminRestrictedDesc'),
       });
       return;
     }
@@ -141,9 +152,8 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'amber',
-        title: 'Verified Membership Required',
-        description:
-          'Only verified active cooperative members can vote on Qard Hasan loan requests.',
+        title: t('verifiedRequiredTitle'),
+        description: t('verifiedRequiredDesc'),
       });
       return;
     }
@@ -152,43 +162,42 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'amber',
-        title: 'Voting Deadline Passed',
-        description: 'The ballot window has closed. You can no longer cast or change your vote.',
+        title: t('deadlinePassedTitle'),
+        description: t('deadlinePassedDesc'),
       });
       return;
     }
     const isChange = Boolean(loan?.votes.some((v) => v.isSelf || v.voterId === user.id));
+    const choiceLabel = decision === 'upvote' ? t('upvote') : t('downvote');
     setModal({
       mode: 'confirm',
       tone: decision === 'upvote' ? 'emerald' : 'red',
       title: isChange
-        ? `Change Ballot to ${decision === 'upvote' ? 'Upvote' : 'Downvote'}?`
-        : `Cast Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} Ballot?`,
-      description: isChange
-        ? 'Your previous sealed ballot will be replaced. You may change again until the deadline or until results are revealed.'
-        : 'Your ballot is cryptographically signed and sealed until Manager reveals the tally. You may change it until the deadline.',
+        ? t('changeBallotTitle', { choice: choiceLabel })
+        : t('castSecretBallotTitle', { choice: choiceLabel }),
+      description: isChange ? t('changeBallotDesc') : t('castBallotDesc'),
       details: [
-        { label: 'Loan ID', value: loanId },
+        { label: t('detailLoanId'), value: loanId },
         ...(loan
           ? [
-              { label: 'Applicant', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-              { label: 'Amount', value: formatMoney(loan.amount, ccy) },
-              { label: 'Purpose', value: loan.purpose },
+              { label: t('detailApplicant'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: t('detailAmount'), value: formatMoney(loan.amount, ccy) },
+              { label: t('detailPurpose'), value: loan.purpose },
               {
-                label: 'Repayment',
+                label: t('detailRepayment'),
                 value: `${loan.installmentMonths} × ${formatMoney(loan.monthlyInstallment, ccy)}`,
               },
             ]
           : []),
-        { label: 'Ballot Choice', value: decision.toUpperCase() },
+        { label: t('detailBallotChoice'), value: choiceLabel },
       ],
       confirmLabel: isChange
         ? decision === 'upvote'
-          ? 'Change to Upvote'
-          : 'Change to Downvote'
+          ? t('changeToUpvote')
+          : t('changeToDownvote')
         : decision === 'upvote'
-          ? 'Confirm Upvote'
-          : 'Confirm Downvote',
+          ? t('confirmUpvote')
+          : t('confirmDownvote'),
       run: async () => {
         setBusyId(loanId);
         try {
@@ -197,17 +206,17 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: isChange ? 'Ballot Updated' : 'Secret Ballot Recorded',
+            title: isChange ? t('ballotUpdatedTitle') : t('secretBallotRecordedTitle'),
             description: isChange
-              ? `Your ballot on ${loanId} was changed to ${decision.toUpperCase()}. Results stay sealed until reveal.`
-              : `Your secret ${decision.toUpperCase()} ballot has been recorded on ${loanId}. You may change it until the deadline.`,
+              ? t('ballotUpdatedDesc', { loanId, choice: choiceLabel })
+              : t('ballotRecordedDesc', { loanId, choice: choiceLabel }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Vote Submission Failed',
-            description: err instanceof Error ? err.message : 'Failed to submit vote.',
+            title: t('voteFailedTitle'),
+            description: err instanceof Error ? err.message : t('voteFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -220,14 +229,13 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Extend Voting Deadline?',
-      description:
-        'Add more time before results are revealed. Members can continue casting or changing ballots until the new deadline.',
-      details: [{ label: 'Loan ID', value: loanId }],
-      inputLabel: 'Additional hours',
-      inputPlaceholder: 'e.g. 24',
+      title: t('extendDeadlineTitle'),
+      description: t('extendDeadlineDesc'),
+      details: [{ label: t('detailLoanId'), value: loanId }],
+      inputLabel: t('additionalHoursLabel'),
+      inputPlaceholder: t('additionalHoursPlaceholder'),
       inputRequired: true,
-      confirmLabel: 'Extend Deadline',
+      confirmLabel: t('extendDeadlineBtn'),
       run: async (hoursInput) => {
         const hours = Math.min(720, Math.max(1, Math.round(Number(hoursInput) || 24)));
         setBusyId(`extend-${loanId}`);
@@ -237,15 +245,15 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Deadline Extended',
-            description: `Ballot window for ${loanId} extended by ${hours} hours.`,
+            title: t('deadlineExtendedTitle'),
+            description: t('deadlineExtendedDesc', { loanId, hours }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Extend Failed',
-            description: err instanceof Error ? err.message : 'Failed to extend deadline.',
+            title: t('extendFailedTitle'),
+            description: err instanceof Error ? err.message : t('extendFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -258,28 +266,30 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Stop Voting & Reveal Ballot Result?',
-      description:
-        'This closes secret balloting on this loan proposal and publishes final upvote/downvote tallies to all members.',
-      details: [{ label: 'Loan ID', value: loanId }],
-      confirmLabel: 'Stop & Reveal Result',
+      title: t('revealLoanTitle'),
+      description: t('revealLoanDesc'),
+      details: [{ label: t('detailLoanId'), value: loanId }],
+      confirmLabel: t('stopRevealBtn'),
       run: async () => {
         setBusyId(`reveal-${loanId}`);
         try {
           const res = await api.revealLoanVote(loanId);
           await onRefresh();
+          const statusDisplay = tStatus.has(res.loan.status as never)
+            ? tStatus(res.loan.status as never)
+            : res.loan.status.replace(/_/g, ' ');
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Ballot Result Revealed',
-            description: `Vote results for ${loanId} are now stopped & revealed (${res.loan.status.replace(/_/g, ' ')}).`,
+            title: t('ballotRevealedTitle'),
+            description: t('ballotRevealedDesc', { loanId, status: statusDisplay }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Reveal Failed',
-            description: err instanceof Error ? err.message : 'Failed to reveal loan vote results.',
+            title: t('revealFailedTitle'),
+            description: err instanceof Error ? err.message : t('revealLoanFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -293,23 +303,23 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Ballot Restricted for Administrators',
-        description: 'Administrators oversee ballot integrity and do not cast member votes.',
+        title: t('adminRestrictedTitle'),
+        description: t('adminRestrictedDesc'),
       });
       return;
     }
     const proj = projects.find((p) => p.id === projectId);
+    const choiceLabel = decision === 'yes' ? t('yesLabel') : t('noLabel');
     setModal({
       mode: 'confirm',
       tone: decision === 'yes' ? 'emerald' : 'red',
-      title: `Seal "${decision.toUpperCase()}" Investment Ballot?`,
-      description:
-        'Confirm your secret placement vote. Tallies stay hidden until revealed by Manager/Admin.',
+      title: t('sealInvestmentTitle', { choice: choiceLabel }),
+      description: t('sealInvestmentDesc'),
       details: [
-        ...(proj ? [{ label: 'Project', value: proj.title }] : []),
-        { label: 'Decision', value: decision.toUpperCase() },
+        ...(proj ? [{ label: t('detailProject'), value: proj.title }] : []),
+        { label: t('detailDecision'), value: choiceLabel },
       ],
-      confirmLabel: decision === 'yes' ? 'Confirm Vote Yes' : 'Confirm Vote No',
+      confirmLabel: decision === 'yes' ? t('confirmVoteYes') : t('confirmVoteNo'),
       run: async () => {
         setBusyId(projectId);
         try {
@@ -318,15 +328,15 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Investment Ballot Sealed',
-            description: `Your "${decision.toUpperCase()}" ballot on "${res.project.title}" has been sealed in the ballot box.`,
+            title: t('investmentSealedTitle'),
+            description: t('investmentSealedDesc', { choice: choiceLabel, title: res.project.title }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Ballot Failed',
-            description: err instanceof Error ? err.message : 'Failed to submit placement vote.',
+            title: t('ballotFailedTitle'),
+            description: err instanceof Error ? err.message : t('placementVoteFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -340,11 +350,10 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Stop Investment Vote & Reveal Result?',
-      description:
-        'Closing voting reveals the final Yes/No tally for this Halal investment placement proposal.',
-      details: [{ label: 'Proposal', value: proj?.title || projectId }],
-      confirmLabel: 'Stop & Reveal Result',
+      title: t('revealProjectTitle'),
+      description: t('revealProjectDesc'),
+      details: [{ label: t('detailProposal'), value: proj?.title || projectId }],
+      confirmLabel: t('stopRevealBtn'),
       run: async () => {
         setBusyId(`reveal-proj-${projectId}`);
         try {
@@ -353,16 +362,16 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Investment Vote Revealed',
-            description: `Investment vote results for "${res.project.title}" are now stopped & revealed.`,
+            title: t('investmentRevealedTitle'),
+            description: t('investmentRevealedDesc', { title: res.project.title }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Reveal Failed',
+            title: t('revealFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Failed to reveal investment vote results.',
+              err instanceof Error ? err.message : t('revealProjectFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -377,8 +386,8 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'amber',
-        title: 'Select a Ballot Option',
-        description: 'Please select an option before submitting your ballot.',
+        title: t('selectOptionTitle'),
+        description: t('selectOptionDesc'),
       });
       return;
     }
@@ -387,13 +396,13 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Submit Secret Decision Ballot?',
-      description: 'Confirm casting your sealed vote on this cooperative decision poll.',
+      title: t('submitDecisionBallotTitle'),
+      description: t('submitDecisionBallotDesc'),
       details: [
-        { label: 'Poll', value: poll?.title || pollId },
-        { label: 'Selected Option', value: optionLabel },
+        { label: t('detailPoll'), value: poll?.title || pollId },
+        { label: t('detailSelectedOption'), value: optionLabel },
       ],
-      confirmLabel: 'Cast Secret Vote',
+      confirmLabel: t('castSecretVoteBtn'),
       run: async () => {
         setBusyId(`poll-${pollId}`);
         try {
@@ -402,16 +411,15 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Decision Ballot Recorded',
-            description:
-              'Your secret decision ballot has been recorded. Tallies remain hidden until Manager/Admin reveals results.',
+            title: t('decisionRecordedTitle'),
+            description: t('decisionRecordedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Vote Failed',
-            description: err instanceof Error ? err.message : 'Failed to submit decision vote.',
+            title: t('pollVoteFailedTitle'),
+            description: err instanceof Error ? err.message : t('pollVoteFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -425,10 +433,10 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Close Poll & Reveal Verified Tallies?',
-      description: 'Closing this decision poll makes verified tallies visible to all members.',
-      details: [{ label: 'Poll', value: poll?.title || pollId }],
-      confirmLabel: 'Close & Reveal Poll',
+      title: t('revealPollTitle'),
+      description: t('revealPollDesc'),
+      details: [{ label: t('detailPoll'), value: poll?.title || pollId }],
+      confirmLabel: t('closeRevealPollBtn'),
       run: async () => {
         setBusyId(`reveal-poll-${pollId}`);
         try {
@@ -437,17 +445,16 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Decision Poll Revealed',
-            description:
-              'Decision poll closed and verified results are now visible to all members.',
+            title: t('pollRevealedTitle'),
+            description: t('pollRevealedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Reveal Failed',
+            title: t('revealFailedTitle'),
             description:
-              err instanceof Error ? err.message : 'Failed to reveal decision poll results.',
+              err instanceof Error ? err.message : t('revealPollFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -466,23 +473,22 @@ export function VotingView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Invalid Poll Configuration',
-        description:
-          'Provide a clear poll title and at least two ballot options (one per line or comma-separated).',
+        title: t('invalidPollTitle'),
+        description: t('invalidPollDesc'),
       });
       return;
     }
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Launch Secret Decision Poll?',
-      description: 'Members will be notified to cast secret ballots once launched.',
+      title: t('launchPollTitle'),
+      description: t('launchPollDesc'),
       details: [
-        { label: 'Title', value: pollTitle.trim() },
-        { label: 'Category', value: pollCategory.replace(/_/g, ' ') },
-        { label: 'Options', value: parsedOptions.join(' / ') },
+        { label: t('detailTitle'), value: pollTitle.trim() },
+        { label: t('detailCategory'), value: formatCategory(pollCategory) },
+        { label: t('detailOptions'), value: parsedOptions.join(' / ') },
       ],
-      confirmLabel: 'Launch Poll',
+      confirmLabel: t('launchPollBtn'),
       run: async () => {
         setCreatingPoll(true);
         try {
@@ -501,15 +507,15 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Decision Poll Launched',
-            description: 'Decision poll launched and cooperative members have been notified.',
+            title: t('pollLaunchedTitle'),
+            description: t('pollLaunchedDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Poll Creation Failed',
-            description: err instanceof Error ? err.message : 'Failed to launch decision poll.',
+            title: t('pollCreateFailedTitle'),
+            description: err instanceof Error ? err.message : t('pollCreateFailedDesc'),
           });
         } finally {
           setCreatingPoll(false);
@@ -523,21 +529,20 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Confirm Qard Hasan Disbursement?',
-      description:
-        'Confirming deducts principal from available treasury liquidity, signs a SHA-256 disbursement voucher, and notifies the borrower.',
+      title: t('disburseTitle'),
+      description: t('disburseDesc'),
       details: [
-        { label: 'Loan ID', value: loanId },
+        { label: t('detailLoanId'), value: loanId },
         ...(loan
           ? [
-              { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-              { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+              { label: t('detailBorrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: t('detailPrincipal'), value: formatMoney(loan.amount, ccy) },
             ]
           : []),
       ],
-      confirmLabel: 'Confirm & Disburse',
-      inputLabel: 'Disbursement Transaction Number (TrxID / Bank Ref)',
-      inputPlaceholder: 'e.g. TRX-99887766 or Bank Ref (auto-generated if blank)',
+      confirmLabel: t('confirmDisburseBtn'),
+      inputLabel: t('disburseTxLabel'),
+      inputPlaceholder: t('disburseTxPlaceholder'),
       inputRequired: false,
       run: async (txInput) => {
         setBusyId(loanId);
@@ -550,15 +555,15 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Qard Hasan Disbursed',
-            description: `Qard Hasan disbursement confirmed for ${loanId}. Fund balance deducted and borrower notified.`,
+            title: t('disbursedTitle'),
+            description: t('disbursedDesc', { loanId }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Disbursement Failed',
-            description: err instanceof Error ? err.message : 'Failed to disburse loan.',
+            title: t('disburseFailedTitle'),
+            description: err instanceof Error ? err.message : t('disburseFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -572,24 +577,18 @@ export function VotingView({
     setModal({
       mode: 'confirm',
       tone: decision === 'accept' ? 'emerald' : 'red',
-      title:
-        decision === 'accept'
-          ? 'Accept Guarantor Co-Signature?'
-          : 'Decline Guarantor Co-Signature?',
-      description:
-        decision === 'accept'
-          ? 'Co-signing vouches for this member loan request in the cooperative ledger.'
-          : 'Declining informs the borrower and stops this guarantor nomination.',
+      title: decision === 'accept' ? t('acceptGuarantorTitle') : t('declineGuarantorTitle'),
+      description: decision === 'accept' ? t('acceptGuarantorDesc') : t('declineGuarantorDesc'),
       details: [
-        { label: 'Loan ID', value: loanId },
+        { label: t('detailLoanId'), value: loanId },
         ...(loan
           ? [
-              { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-              { label: 'Amount', value: formatMoney(loan.amount, ccy) },
+              { label: t('detailBorrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+              { label: t('detailAmount'), value: formatMoney(loan.amount, ccy) },
             ]
           : []),
       ],
-      confirmLabel: decision === 'accept' ? 'Accept Co-Sign' : 'Decline Request',
+      confirmLabel: decision === 'accept' ? t('acceptCoSignBtn') : t('declineRequestBtn'),
       run: async () => {
         setBusyId(loanId);
         try {
@@ -598,18 +597,18 @@ export function VotingView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: decision === 'accept' ? 'Co-Signature Recorded' : 'Co-Signature Declined',
+            title: decision === 'accept' ? t('coSignRecordedTitle') : t('coSignDeclinedTitle'),
             description:
               decision === 'accept'
-                ? `Guarantor co-signature recorded on ${loanId}.`
-                : `Guarantor co-signature declined for ${loanId}.`,
+                ? t('coSignRecordedDesc', { loanId })
+                : t('coSignDeclinedDesc', { loanId }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Guarantor Response Failed',
-            description: err instanceof Error ? err.message : 'Failed to respond as guarantor.',
+            title: t('guarantorFailedTitle'),
+            description: err instanceof Error ? err.message : t('guarantorFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -658,9 +657,7 @@ export function VotingView({
         >
           <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <span>
-            <strong>Administrator Ballot Audit View:</strong> Only Administrators can inspect
-            individual member votes in the confidential audit ledger. Admins do not cast member
-            ballots.
+            <strong>{t('adminAuditBannerTitle')}</strong> {t('adminAuditBannerDesc')}
           </span>
         </div>
       )}
@@ -672,8 +669,13 @@ export function VotingView({
         >
           <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>
-            Voting is restricted to verified active members. Your account status is currently{' '}
-            <strong className="uppercase">{user.status.replace(/_/g, ' ')}</strong>.
+            {t('restrictedAccountPrefix')}{' '}
+            <strong className="uppercase">
+              {tStatus.has(user.status as never)
+                ? tStatus(user.status as never)
+                : user.status.replace(/_/g, ' ')}
+            </strong>
+            .
           </span>
         </div>
       )}
@@ -682,10 +684,10 @@ export function VotingView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Voting — Qard Hasan, Investment &amp; Decision Polls
+              {t('mainHeading')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Secret ballots stay sealed until revealed by a manager.
+              {t('mainSubtitle')}
             </p>
           </div>
 
@@ -697,17 +699,17 @@ export function VotingView({
                 className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
               >
                 <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{showCreatePoll ? 'Close Poll Form' : 'Initiate Decision Poll'}</span>
+                <span>{showCreatePoll ? t('closePollForm') : t('initiateDecisionPoll')}</span>
               </button>
             )}
 
             <div className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-fit items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               {(
                 [
-                  { id: 'all', label: 'All Ballots' },
-                  { id: 'loans', label: `Qard Hasan (${pendingOrApprovedLoans.length})` },
-                  { id: 'polls', label: `Decision Polls (${openPolls.length})` },
-                  { id: 'investments', label: `Investments (${openProjects.length})` },
+                  { id: 'all', label: t('tabAll') },
+                  { id: 'loans', label: t('tabLoansCount', { count: pendingOrApprovedLoans.length }) },
+                  { id: 'polls', label: t('tabPollsCount', { count: openPolls.length }) },
+                  { id: 'investments', label: t('tabInvestmentsCount', { count: openProjects.length }) },
                 ] as const
               ).map((tab) => {
                 const active = categoryFilter === tab.id;
@@ -752,7 +754,7 @@ export function VotingView({
                 htmlFor="poll-title"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Decision Poll Title
+                {t('pollTitleLabel')}
               </label>
               <input
                 id="poll-title"
@@ -760,7 +762,7 @@ export function VotingView({
                 required
                 value={pollTitle}
                 onChange={(e) => setPollTitle(e.target.value)}
-                placeholder="e.g. Approve Eid Emergency Qard Hasan Buffer"
+                placeholder={t('pollTitlePlaceholder')}
                 className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
@@ -771,7 +773,7 @@ export function VotingView({
                   htmlFor="poll-category"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Category
+                  {t('pollCategoryLabel')}
                 </label>
                 <select
                   id="poll-category"
@@ -779,10 +781,10 @@ export function VotingView({
                   onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 >
-                  <option value="general">General Decision</option>
-                  <option value="policy">Policy / Rules</option>
-                  <option value="qard_hasan">Qard Hasan Matter</option>
-                  <option value="project">Project / Venture</option>
+                  <option value="general">{t('catGeneral')}</option>
+                  <option value="policy">{t('catPolicy')}</option>
+                  <option value="qard_hasan">{t('catQardHasan')}</option>
+                  <option value="project">{t('catProject')}</option>
                 </select>
               </div>
               <div>
@@ -790,7 +792,7 @@ export function VotingView({
                   htmlFor="poll-closes"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Optional Closing Date
+                  {t('pollClosingLabel')}
                 </label>
                 <input
                   id="poll-closes"
@@ -807,14 +809,14 @@ export function VotingView({
                 htmlFor="poll-desc"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Context / Description
+                {t('pollContextLabel')}
               </label>
               <textarea
                 id="poll-desc"
                 rows={3}
                 value={pollDescription}
                 onChange={(e) => setPollDescription(e.target.value)}
-                placeholder="Background context for cooperative members…"
+                placeholder={t('pollContextPlaceholder')}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
@@ -824,7 +826,7 @@ export function VotingView({
                 htmlFor="poll-opts"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Ballot Options (one per line)
+                {t('pollOptionsLabel')}
               </label>
               <textarea
                 id="poll-opts"
@@ -845,8 +847,8 @@ export function VotingView({
                     setModal({
                       mode: 'notice',
                       tone: 'amber',
-                      title: 'Enter Poll Draft First',
-                      description: 'Enter a poll title or context before running AI Rewrite.',
+                      title: t('enterDraftFirstTitle'),
+                      description: t('enterDraftFirstDesc'),
                     });
                     return;
                   }
@@ -868,9 +870,9 @@ export function VotingView({
                     setModal({
                       mode: 'notice',
                       tone: 'red',
-                      title: 'AI Rewrite Unavailable',
+                      title: t('aiRewriteUnavailableTitle'),
                       description:
-                        err instanceof Error ? err.message : 'Unable to rewrite poll draft with AI.',
+                        err instanceof Error ? err.message : t('aiRewriteUnavailableDesc'),
                     });
                   } finally {
                     setRewritingPoll(false);
@@ -879,21 +881,21 @@ export function VotingView({
                 className="col-span-2 sm:col-span-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{rewritingPoll ? 'Rewriting...' : 'AI Rewrite'}</span>
+                <span>{rewritingPoll ? t('rewriting') : t('aiRewrite')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowCreatePoll(false)}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 type="submit"
                 disabled={creatingPoll}
                 className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
               >
-                {creatingPoll ? 'Launching…' : 'Launch Secret Poll'}
+                {creatingPoll ? t('launching') : t('launchSecretPoll')}
               </button>
             </div>
             </motion.form>
@@ -905,7 +907,7 @@ export function VotingView({
         <section className="bg-amber-50/75 dark:bg-amber-950/30 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-3.5 sm:p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
-            <span>Awaiting Your Guarantor Co-Signature ({guarantorPendingForMe.length})</span>
+            <span>{t('awaitingGuarantorHeading', { count: guarantorPendingForMe.length })}</span>
           </div>
           <div className="divide-y divide-amber-200/70 dark:divide-amber-900/40">
             {guarantorPendingForMe.map((loan) => (
@@ -940,7 +942,7 @@ export function VotingView({
                     onClick={() => void handleGuarantorRespond(loan.id, 'accept')}
                     className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    Accept Co-Sign
+                    {t('acceptCoSignBtn')}
                   </button>
                   <button
                     type="button"
@@ -948,7 +950,7 @@ export function VotingView({
                     onClick={() => void handleGuarantorRespond(loan.id, 'decline')}
                     className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    Decline
+                    {t('decline')}
                   </button>
                 </div>
               </div>
@@ -984,16 +986,16 @@ export function VotingView({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Qard Hasan Approval Voting
+                  {t('loanVotingHeading')}
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                  {pendingOrApprovedLoans.length} active
+                  {t('activeCount', { count: pendingOrApprovedLoans.length })}
                 </span>
               </div>
 
               {pendingOrApprovedLoans.length === 0 ? (
                 <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No Qard Hasan proposals are currently open for voting or awaiting disbursement.
+                  {t('emptyLoans')}
                 </div>
               ) : (
                 pendingOrApprovedLoans.map((loan) => {
@@ -1034,13 +1036,15 @@ export function VotingView({
                               {loan.id}
                             </span>
                             <span aria-hidden="true">·</span>
-                            <span>Requested {formatDateTime(loan.requestedAt)}</span>
+                            <span>{t('requestedAt', { date: formatDateTime(loan.requestedAt) })}</span>
                             <span aria-hidden="true">·</span>
                             <StatusText status={loan.status} />
                             {!isRevealed && loan.status === 'pending_vote' && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
                                 <Lock className="w-3 h-3" aria-hidden="true" />
-                                <span>{deadlinePassed ? 'Deadline Passed' : 'Poll Ongoing'}</span>
+                                <span>
+                                  {deadlinePassed ? t('deadlinePassedBadge') : t('pollOngoingBadge')}
+                                </span>
                               </span>
                             )}
                           </div>
@@ -1062,18 +1066,22 @@ export function VotingView({
                             {loan.purpose}
                           </p>
                           <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                            Repayment Plan: {loan.installmentMonths} monthly installments of{' '}
-                            {formatMoney(loan.monthlyInstallment, ccy)} (0% interest)
+                            {t('repaymentPlanLine', {
+                              months: loan.installmentMonths,
+                              amount: formatMoney(loan.monthlyInstallment, ccy),
+                            })}
                           </div>
                           {loan.guarantors && loan.guarantors.length > 0 && (
                             <div className="text-xs text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1.5">
                               <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                               <span>
-                                Co-signed by{' '}
-                                {loan.guarantors
-                                  .filter((g) => g.status === 'accepted')
-                                  .map((g) => `${g.memberName} (${g.memberCode})`)
-                                  .join(', ') || 'guarantor(s)'}
+                                {t('coSignedBy', {
+                                  names:
+                                    loan.guarantors
+                                      .filter((g) => g.status === 'accepted')
+                                      .map((g) => `${g.memberName} (${g.memberCode})`)
+                                      .join(', ') || t('guarantorsFallback'),
+                                })}
                               </span>
                             </div>
                           )}
@@ -1082,28 +1090,28 @@ export function VotingView({
                           {loan.status === 'pending_vote' && !isRevealed && (
                             <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 divide-y divide-slate-200/70 dark:divide-slate-800 text-xs">
                               <div className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
-                                Applicant Application Details
+                                {t('applicantDetailsHeading')}
                               </div>
                               {[
                                 {
-                                  label: 'Applicant',
+                                  label: t('detailApplicant'),
                                   value: `${loan.borrowerName} (${loan.borrowerCode})`,
                                 },
-                                { label: 'Principal', value: formatMoney(loan.amount, ccy) },
+                                { label: t('detailPrincipal'), value: formatMoney(loan.amount, ccy) },
                                 {
-                                  label: 'Schedule',
+                                  label: t('scheduleLabel'),
                                   value: `${loan.installmentMonths} × ${formatMoney(loan.monthlyInstallment, ccy)}`,
                                 },
-                                { label: 'Purpose', value: loan.purpose },
+                                { label: t('detailPurpose'), value: loan.purpose },
                                 {
-                                  label: 'Requested',
+                                  label: t('requestedLabel'),
                                   value: formatDateTime(loan.requestedAt),
                                 },
                                 {
-                                  label: 'Eligibility snapshot',
+                                  label: t('eligibilitySnapshotLabel'),
                                   value: loan.eligibilitySnapshot?.eligible
-                                    ? 'Eligible at application'
-                                    : loan.eligibilitySnapshot?.reasons?.[0] || 'Recorded',
+                                    ? t('eligibleAtApplication')
+                                    : loan.eligibilitySnapshot?.reasons?.[0] || t('recordedFallback'),
                                 },
                               ].map((row) => (
                                 <div
@@ -1127,7 +1135,7 @@ export function VotingView({
                             <div className="flex items-center justify-between gap-2 text-xs pb-2 border-b border-slate-200 dark:border-slate-800">
                               <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
                                 <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                                <span>Deadline</span>
+                                <span>{t('deadlineLabel')}</span>
                               </span>
                               <span
                                 className={`font-mono tabular-nums font-semibold ${
@@ -1144,10 +1152,13 @@ export function VotingView({
                             <>
                               <div className="flex items-center justify-between text-xs">
                                 <span className="font-medium text-slate-700 dark:text-slate-300">
-                                  {isRevealed ? 'Revealed Vote Result' : 'Admin Confidential Tally'}
+                                  {isRevealed ? t('revealedVoteResult') : t('adminConfidentialTally')}
                                 </span>
                                 <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                                  {approveCount} / {loan.requiredApprovals} upvotes
+                                  {t('upvotesProgress', {
+                                    count: approveCount,
+                                    required: loan.requiredApprovals,
+                                  })}
                                 </span>
                               </div>
                               <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -1161,15 +1172,18 @@ export function VotingView({
                               </div>
                               <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums">
                                 <span className="text-emerald-700 dark:text-emerald-400">
-                                  Upvotes: {approveCount}
+                                  {t('upvotesCount', { count: approveCount })}
                                 </span>
                                 <span className="text-rose-700 dark:text-rose-400">
-                                  Downvotes: {rejectCount}
+                                  {t('downvotesCount', { count: rejectCount })}
                                 </span>
                                 <span className="text-slate-500 dark:text-slate-400">
                                   {remainingNeeded > 0
-                                    ? `${totalCast} cast (${loan.totalEligibleVoters} active)`
-                                    : `Quorum met (${loan.totalEligibleVoters} active)`}
+                                    ? t('castOfActive', {
+                                        cast: totalCast,
+                                        eligible: loan.totalEligibleVoters,
+                                      })
+                                    : t('quorumMetActive', { eligible: loan.totalEligibleVoters })}
                                 </span>
                               </div>
                             </>
@@ -1177,11 +1191,11 @@ export function VotingView({
                             <div className="space-y-2 text-xs">
                               <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
                                 <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                                <span>Secret Ballot — Results Hidden</span>
+                                <span>{t('secretBallotHidden')}</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px]">
                                 <span className="text-slate-600 dark:text-slate-300">
-                                  Ballots cast
+                                  {t('ballotsCastLabel')}
                                 </span>
                                 <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                                   {totalCast} / {loan.totalEligibleVoters}
@@ -1210,8 +1224,8 @@ export function VotingView({
                                 <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>
                                   {busyId === `extend-${loan.id}`
-                                    ? 'Extending…'
-                                    : 'Extend Deadline'}
+                                    ? t('extending')
+                                    : t('extendDeadlineBtn')}
                                 </span>
                               </button>
                               <button
@@ -1223,8 +1237,8 @@ export function VotingView({
                                 <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>
                                   {busyId === `reveal-${loan.id}`
-                                    ? 'Revealing Result…'
-                                    : 'Stop Voting & Reveal Result'}
+                                    ? t('revealingResult')
+                                    : t('stopVotingRevealResult')}
                                 </span>
                               </button>
                             </div>
@@ -1242,8 +1256,9 @@ export function VotingView({
                           >
                             <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>
-                              {ledgerExpanded ? 'Hide' : 'Inspect'} Confidential Admin Vote Ledger (
-                              {adminLedger.length})
+                              {ledgerExpanded
+                                ? t('hideAdminVoteLedger', { count: adminLedger.length })
+                                : t('inspectAdminVoteLedger', { count: adminLedger.length })}
                             </span>
                           </button>
 
@@ -1288,7 +1303,7 @@ export function VotingView({
                                             : 'text-red-700 dark:text-red-400'
                                         }`}
                                       >
-                                        {isUp ? 'Upvoted' : 'Downvoted'}
+                                        {isUp ? t('upvotedLabel') : t('downvotedLabel')}
                                       </div>
                                       <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
                                         {shortHash(v.signatureHash)}
@@ -1309,12 +1324,12 @@ export function VotingView({
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                               <Vote className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                               <span>
-                                Your ballot:{' '}
+                                {t('yourBallotPrefix')}{' '}
                                 <strong className="uppercase">
-                                  {myVote.decision === 'approve' ? 'Upvote' : 'Downvote'}
+                                  {myVote.decision === 'approve' ? t('upvote') : t('downvote')}
                                 </strong>{' '}
-                                · {formatDateTime(myVote.castAt)} (Sig:{' '}
-                                {shortHash(myVote.signatureHash)})
+                                · {formatDateTime(myVote.castAt)}{' '}
+                                {t('sigPrefix', { hash: shortHash(myVote.signatureHash) })}
                               </span>
                             </div>
                           )}
@@ -1327,7 +1342,7 @@ export function VotingView({
                                 onChange={(e) =>
                                   setComments((prev) => ({ ...prev, [loan.id]: e.target.value }))
                                 }
-                                placeholder="Optional secret rationale (visible only to Admin audit)…"
+                                placeholder={t('optionalRationalePlaceholder')}
                                 className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
                               />
                               <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
@@ -1338,7 +1353,7 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>{myVote ? 'Change to Upvote' : 'Upvote'}</span>
+                                  <span>{myVote ? t('changeToUpvote') : t('upvote')}</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1347,14 +1362,14 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>{myVote ? 'Change to Downvote' : 'Downvote'}</span>
+                                  <span>{myVote ? t('changeToDownvote') : t('downvote')}</span>
                                 </button>
                               </div>
                             </div>
                           ) : (
                             !myVote && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Voting closed. Awaiting manager reveal.
+                                {t('votingClosedAwaitingReveal')}
                               </p>
                             )
                           )}
@@ -1366,10 +1381,12 @@ export function VotingView({
                           <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium inline-flex items-center gap-1.5">
                             <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                             <span>
-                              Approved for Qard Hasan disbursement ({approveCount}/
-                              {loan.totalEligibleVoters} upvotes). Confirming deducts{' '}
-                              {formatMoney(loan.amount, ccy)} from central fund balance and notifies{' '}
-                              {loan.borrowerName}.
+                              {t('approvedForDisbursementMsg', {
+                                approve: approveCount,
+                                total: loan.totalEligibleVoters,
+                                amount: formatMoney(loan.amount, ccy),
+                                name: loan.borrowerName,
+                              })}
                             </span>
                           </div>
                           {isStaff && (
@@ -1385,12 +1402,12 @@ export function VotingView({
                                 className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                               >
                                 {busyId === loan.id
-                                  ? 'Disbursing…'
-                                  : 'Confirm & Deduct from Fund'}
+                                  ? t('disbursing')
+                                  : t('confirmDeductFromFund')}
                               </button>
                             ) : (
                               <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 whitespace-nowrap">
-                                Peer / Admin Disbursement Required
+                                {t('peerAdminDisburseRequired')}
                               </span>
                             )
                           )}
@@ -1408,16 +1425,16 @@ export function VotingView({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Cooperative Decision Polls
+                  {t('decisionPollsHeading')}
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                  {openPolls.length} ongoing
+                  {t('ongoingCount', { count: openPolls.length })}
                 </span>
               </div>
 
               {openPolls.length === 0 ? (
                 <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No cooperative decision polls are currently open.
+                  {t('emptyPolls')}
                 </div>
               ) : (
                 openPolls.map((poll) => {
@@ -1440,16 +1457,16 @@ export function VotingView({
                         <div className="space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <span className="font-medium text-emerald-700 dark:text-emerald-400 uppercase">
-                              {poll.category.replace(/_/g, ' ')}
+                              {formatCategory(poll.category)}
                             </span>
                             <span aria-hidden="true">·</span>
-                            <span>Initiated by {poll.createdByName}</span>
+                            <span>{t('initiatedBy', { name: poll.createdByName })}</span>
                             <span aria-hidden="true">·</span>
                             <StatusText status={poll.status} />
                             {!isRevealed && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
                                 <Lock className="w-3 h-3" aria-hidden="true" />
-                                <span>Poll Ongoing</span>
+                                <span>{t('pollOngoingBadge')}</span>
                               </span>
                             )}
                           </div>
@@ -1465,7 +1482,9 @@ export function VotingView({
 
                         <div className="lg:w-72 shrink-0 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500 dark:text-slate-400">Ballots Cast</span>
+                            <span className="text-slate-500 dark:text-slate-400">
+                              {t('ballotsCastHeading')}
+                            </span>
                             <span className="font-mono font-semibold text-slate-900 dark:text-white">
                               {totalCast}
                             </span>
@@ -1473,7 +1492,7 @@ export function VotingView({
                           {!canSeeTally && (
                             <p className="text-[11px] text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                               <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                              <span>Results hidden while poll is ongoing.</span>
+                              <span>{t('resultsHiddenOngoing')}</span>
                             </p>
                           )}
                           {isStaff && !isRevealed && (
@@ -1486,8 +1505,8 @@ export function VotingView({
                               <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>
                                 {busyId === `reveal-poll-${poll.id}`
-                                  ? 'Revealing…'
-                                  : 'Stop Voting & Reveal Results'}
+                                  ? t('revealing')
+                                  : t('stopVotingRevealResults')}
                               </span>
                             </button>
                           )}
@@ -1537,8 +1556,9 @@ export function VotingView({
                           >
                             <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>
-                              {ledgerExpanded ? 'Hide' : 'Inspect'} Admin Vote Audit Ledger (
-                              {adminLedger.length})
+                              {ledgerExpanded
+                                ? t('hidePollAdminLedger', { count: adminLedger.length })
+                                : t('inspectPollAdminLedger', { count: adminLedger.length })}
                             </span>
                           </button>
                           {ledgerExpanded && (
@@ -1577,10 +1597,11 @@ export function VotingView({
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                               <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                               <span>
-                                Your ballot was recorded for{' '}
-                                <strong>{myOptionLabel}</strong> on{' '}
-                                {formatDateTime(myVote.castAt)} (Sig:{' '}
-                                {shortHash(myVote.signatureHash)}).
+                                {t('pollBallotRecorded', {
+                                  option: myOptionLabel || '',
+                                  date: formatDateTime(myVote.castAt),
+                                  hash: shortHash(myVote.signatureHash),
+                                })}
                               </span>
                             </div>
                           ) : (
@@ -1621,7 +1642,7 @@ export function VotingView({
                                       [poll.id]: e.target.value,
                                     }))
                                   }
-                                  placeholder="Optional confidential note…"
+                                  placeholder={t('optionalNotePlaceholder')}
                                   className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                                 />
                                 <button
@@ -1630,7 +1651,7 @@ export function VotingView({
                                   onClick={() => void handlePollVote(poll.id)}
                                   className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
-                                  Submit Secret Vote
+                                  {t('submitSecretVote')}
                                 </button>
                               </div>
                             </div>
@@ -1649,16 +1670,16 @@ export function VotingView({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Halal Investment Placement Proposals (Yes / No)
+                  {t('investmentsHeading')}
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {openProjects.length} open for vote
+                  {t('openForVoteCount', { count: openProjects.length })}
                 </span>
               </div>
 
               {openProjects.length === 0 ? (
                 <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No proposed investment placements are currently open for voting.
+                  {t('emptyInvestments')}
                 </div>
               ) : (
                 openProjects.map((proj) => {
@@ -1687,7 +1708,7 @@ export function VotingView({
                         <div className="space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                              Investment Placement · {proj.shariahStructure}
+                              {t('investmentPlacementPrefix', { structure: proj.shariahStructure })}
                             </span>
                             <span aria-hidden="true">·</span>
                             <span>{proj.sector}</span>
@@ -1696,7 +1717,7 @@ export function VotingView({
                             {!isRevealed && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">
                                 <Lock className="w-3 h-3" aria-hidden="true" />
-                                <span>Poll Ongoing</span>
+                                <span>{t('pollOngoingBadge')}</span>
                               </span>
                             )}
                           </div>
@@ -1707,7 +1728,10 @@ export function VotingView({
                             {proj.shariahScholarNote}
                           </p>
                           <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                            Projected Return: {proj.projectedAnnualReturn} · Risk: {proj.riskTier}
+                            {t('projectedReturnRisk', {
+                              ret: proj.projectedAnnualReturn,
+                              risk: proj.riskTier,
+                            })}
                           </div>
                         </div>
 
@@ -1716,10 +1740,14 @@ export function VotingView({
                             <>
                               <div className="flex items-center justify-between text-xs">
                                 <span className="font-medium text-slate-700 dark:text-slate-300">
-                                  {isRevealed ? 'Revealed Tally' : 'Admin Tally'}
+                                  {isRevealed ? t('revealedTally') : t('adminTally')}
                                 </span>
                                 <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                                  {yesVotes} / {reqApprovals} Yes ({yesPct}%)
+                                  {t('yesTallyProgress', {
+                                    yes: yesVotes,
+                                    req: reqApprovals,
+                                    pct: yesPct,
+                                  })}
                                 </span>
                               </div>
                               <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -1732,20 +1760,19 @@ export function VotingView({
                                 />
                               </div>
                               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                                <span>Yes: {yesVotes}</span>
-                                <span>No: {noVotes}</span>
-                                <span>{totalEligible} active</span>
+                                <span>{t('yesCount', { count: yesVotes })}</span>
+                                <span>{t('noCount', { count: noVotes })}</span>
+                                <span>{t('activeVotersCount', { count: totalEligible })}</span>
                               </div>
                             </>
                           ) : (
                             <div className="space-y-1 text-xs">
                               <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
                                 <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                                <span>Poll Ongoing</span>
+                                <span>{t('pollOngoingBadge')}</span>
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {totalCast} secret ballot{totalCast === 1 ? '' : 's'} submitted.
-                                Results stay sealed until revealed.
+                                {t('secretBallotsSubmitted', { count: totalCast })}
                               </p>
                             </div>
                           )}
@@ -1760,8 +1787,8 @@ export function VotingView({
                               <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>
                                 {busyId === `reveal-proj-${proj.id}`
-                                  ? 'Revealing…'
-                                  : 'Stop Voting & Reveal Result'}
+                                  ? t('revealing')
+                                  : t('stopVotingRevealResult')}
                               </span>
                             </button>
                           )}
@@ -1777,8 +1804,9 @@ export function VotingView({
                           >
                             <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>
-                              {ledgerExpanded ? 'Hide' : 'Inspect'} Confidential Admin Ledger (
-                              {adminLedger.length})
+                              {ledgerExpanded
+                                ? t('hideProjectAdminLedger', { count: adminLedger.length })
+                                : t('inspectProjectAdminLedger', { count: adminLedger.length })}
                             </span>
                           </button>
                           {ledgerExpanded && (
@@ -1796,7 +1824,7 @@ export function VotingView({
                                         : 'text-red-700 dark:text-red-400'
                                     }`}
                                   >
-                                    {v.decision}
+                                    {v.decision === 'yes' ? t('yesLabel') : t('noLabel')}
                                   </span>
                                 </div>
                               ))}
@@ -1811,9 +1839,12 @@ export function VotingView({
                             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                               <Vote className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                               <span>
-                                You voted <strong className="uppercase">{myVote.decision}</strong>{' '}
-                                on {formatDateTime(myVote.castAt)} (Sig:{' '}
-                                {shortHash(myVote.signatureHash)})
+                                {t('youVotedProject', {
+                                  decision:
+                                    myVote.decision === 'yes' ? t('yesLabel') : t('noLabel'),
+                                  date: formatDateTime(myVote.castAt),
+                                  hash: shortHash(myVote.signatureHash),
+                                })}
                               </span>
                             </div>
                           ) : (
@@ -1825,7 +1856,7 @@ export function VotingView({
                                 onChange={(e) =>
                                   setComments((prev) => ({ ...prev, [proj.id]: e.target.value }))
                                 }
-                                placeholder="Optional confidential rationale…"
+                                placeholder={t('optionalConfidentialRationale')}
                                 className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                               />
                               <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
@@ -1836,7 +1867,7 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Vote Yes</span>
+                                  <span>{t('voteYes')}</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1845,7 +1876,7 @@ export function VotingView({
                                   className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <X className="w-3.5 h-3.5" aria-hidden="true" />
-                                  <span>Vote No</span>
+                                  <span>{t('voteNo')}</span>
                                 </button>
                               </div>
                             </div>
@@ -1863,7 +1894,7 @@ export function VotingView({
           {(closedProjects.length > 0 || archivedLoans.length > 0 || closedPolls.length > 0) && (
             <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-3">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Completed &amp; Revealed Ballot Outcomes
+                {t('completedOutcomesHeading')}
               </h3>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 {closedPolls.map((poll) => {
@@ -1876,7 +1907,7 @@ export function VotingView({
                       <div className="space-y-1">
                         <div>
                           <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                            Decision Poll
+                            {t('outcomeDecisionPoll')}
                           </span>
                           <span aria-hidden="true"> · </span>
                           <span className="font-medium text-slate-900 dark:text-white">
@@ -1889,7 +1920,7 @@ export function VotingView({
                                 {poll.options
                                   .map((o) => `${o.label}: ${o.voteCount ?? 0}`)
                                   .join(' / ')}{' '}
-                                ({totalCast} cast)
+                                {t('castCountParen', { count: totalCast })}
                               </span>
                             </>
                           )}
@@ -1910,7 +1941,7 @@ export function VotingView({
                     >
                       <div>
                         <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                          Placement
+                          {t('outcomePlacement')}
                         </span>
                         <span aria-hidden="true"> · </span>
                         <span className="font-medium text-slate-900 dark:text-white">
@@ -1924,7 +1955,10 @@ export function VotingView({
                           <>
                             <span aria-hidden="true"> · </span>
                             <span className="text-slate-500 dark:text-slate-400">
-                              {yesVotes}/{proj.totalEligibleVoters} voted Yes
+                              {t('votedYesRatio', {
+                                yes: yesVotes,
+                                total: proj.totalEligibleVoters,
+                              })}
                             </span>
                           </>
                         )}
@@ -1968,7 +2002,10 @@ export function VotingView({
                           <>
                             <span aria-hidden="true"> · </span>
                             <span className="text-slate-500 dark:text-slate-400">
-                              {approvals}/{loan.totalEligibleVoters} approved
+                              {t('approvedRatio', {
+                                approved: approvals,
+                                total: loan.totalEligibleVoters,
+                              })}
                             </span>
                           </>
                         )}
@@ -1989,7 +2026,7 @@ export function VotingView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : undefined}

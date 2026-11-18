@@ -37,6 +37,20 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
   const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
   const isAdmin = isActiveMember && user?.role === 'admin';
 
+  const getCategoryLabel = useCallback(
+    (key: string) => {
+      const msgKey = `categories.${key}`;
+      if (tFaq.has(msgKey)) {
+        return tFaq(msgKey);
+      }
+      if (key in FAQ_CATEGORY_META) {
+        return FAQ_CATEGORY_META[key as FaqCategory].label;
+      }
+      return key;
+    },
+    [tFaq]
+  );
+
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -361,7 +375,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 >
                   {FAQ_CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
                     <option key={cat.key} value={cat.key}>
-                      {tFaq(`categories.${cat.key}`)}
+                      {getCategoryLabel(cat.key)}
                     </option>
                   ))}
                 </select>
@@ -475,7 +489,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                     aria-hidden="true"
                   />
                 )}
-                <span className="relative z-10">{tFaq(`categories.${cat.key}`)}</span>
+                <span className="relative z-10">{getCategoryLabel(cat.key)}</span>
               </button>
             );
           })}
@@ -585,7 +599,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                           {itemNumber}
                         </span>
                         <span className="font-medium text-slate-700 dark:text-slate-300">
-                          {tFaq(`categories.${item.category}`)}
+                          {getCategoryLabel(item.category)}
                         </span>
                         {item.articleRef && (
                           <>
@@ -697,7 +711,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             ? [
                 {
                   label: tFaq('topicCategory'),
-                  value: tFaq(`categories.${deleteTarget.category}`),
+                  value: getCategoryLabel(deleteTarget.category),
                 },
                 { label: tFaq('question'), value: deleteTarget.question },
               ]

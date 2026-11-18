@@ -38,7 +38,6 @@ export function MobileVisitorGate() {
   const router = useRouter();
   const { user, authChecking, setUser } = useCoopSession();
   const tAuth = useTranslations('Auth');
-  const tBrand = useTranslations('Brand');
   const tCommon = useTranslations('Common');
 
   const [isMobile, setIsMobile] = useState(false);
@@ -215,7 +214,7 @@ export function MobileVisitorGate() {
             <Shield className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
-            {tBrand('name')}
+            {tCommon('brandName')}
           </div>
           <div className="mt-1.5 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700 dark:text-emerald-400" />
@@ -259,7 +258,7 @@ export function MobileVisitorGate() {
                         id="mobile-visitor-gate-title"
                         className="font-display text-lg font-bold tracking-tight truncate"
                       >
-                        {tBrand('name')}
+                        {tCommon('brandName')}
                       </h2>
                       <p className="text-xs text-emerald-100/85 truncate">
                         {tAuth('mobileGate.tagline')}

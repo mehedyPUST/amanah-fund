@@ -131,7 +131,7 @@ export function Navbar() {
           />
           <LanguageSwitcher
             variant="compact"
-            className="inline-flex lg:hidden"
+            className="hidden md:inline-flex lg:hidden"
           />
 
           <button

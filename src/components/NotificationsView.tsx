@@ -13,6 +13,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
   CoopMeeting,
@@ -116,8 +117,15 @@ export function NotificationsView({
   onOpenManagerDeskTab,
   onRefresh,
 }: NotificationsViewProps) {
+  const tNotif = useTranslations('Notifications');
+  const t = useTranslations('Notifications.view');
   const { setUser } = useCoopSession();
   const isStaff = user.role === 'admin' || user.role === 'manager';
+
+  const getTypeLabel = (type: NotificationType) => {
+    const key = `types.${type}`;
+    return tNotif.has(key) ? tNotif(key) : TYPE_LABELS[type] || type;
+  };
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'queued' | 'sent'>('all');
@@ -165,13 +173,13 @@ export function NotificationsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Notification Load Failed',
-        description: err instanceof Error ? err.message : 'Failed to load notifications.',
+        title: t('loadFailedTitle'),
+        description: err instanceof Error ? err.message : t('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadNotifications();
@@ -181,10 +189,9 @@ export function NotificationsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Trigger Monthly & Repayment Reminders?',
-      description:
-        'Generates automated monthly contribution and scheduled Qard Hasan installment notices for all active members.',
-      confirmLabel: 'Generate Reminders',
+      title: t('triggerRemindersTitle'),
+      description: t('triggerRemindersDesc'),
+      confirmLabel: t('generateRemindersBtn'),
       run: async () => {
         setGeneratingReminders(true);
         try {
@@ -194,15 +201,15 @@ export function NotificationsView({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Reminders Generated',
-            description: `Generated ${res.createdCount} monthly contribution & scheduled loan repayment reminder(s).`,
+            title: t('remindersGeneratedTitle'),
+            description: t('remindersGeneratedDesc', { count: res.createdCount }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Reminder Generation Failed',
-            description: err instanceof Error ? err.message : 'Could not generate reminders.',
+            title: t('remindersFailedTitle'),
+            description: err instanceof Error ? err.message : t('remindersFailedDesc'),
           });
         } finally {
           setGeneratingReminders(false);
@@ -236,9 +243,8 @@ export function NotificationsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: 'Preference Update Failed',
-        description:
-          err instanceof Error ? err.message : 'Failed to save notification preference.',
+        title: t('prefUpdateFailedTitle'),
+        description: err instanceof Error ? err.message : t('prefUpdateFailedDesc'),
       });
     } finally {
       setSavingPrefs(false);
@@ -251,29 +257,29 @@ export function NotificationsView({
       : notifications.filter((n) => n.deliveryStatus === 'queued').slice(0, 15);
 
     const previewDetails: ActionModalDetailItem[] = [
-      { label: 'Sender Account', value: workspace.email || 'Connected Google Workspace' },
-      { label: 'Queued Recipients', value: `${targets.length} email(s)` },
-      ...targets.slice(0, 4).map((t) => ({
-        label: t.recipientEmail,
-        value: t.subject.slice(0, 48),
+      { label: t('senderAccount'), value: workspace.email || t('connectedGoogleWorkspace') },
+      { label: t('queuedRecipients'), value: t('emailsCount', { count: targets.length }) },
+      ...targets.slice(0, 4).map((item) => ({
+        label: item.recipientEmail,
+        value: item.subject.slice(0, 48),
       })),
     ];
 
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Send Notification Email(s) via Gmail?',
-      description: `Confirm sending ${targets.length} automated cooperative treasury email(s) from your connected Google account.`,
+      title: t('sendGmailTitle'),
+      description: t('sendGmailDesc', { count: targets.length }),
       details: previewDetails,
-      confirmLabel: 'Confirm & Send Emails',
+      confirmLabel: t('confirmSendEmails'),
       run: async () => {
         const token = getWorkspaceToken();
         if (!token) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Google Authorization Required',
-            description: 'Please sign in with Google first to authorize Gmail sending.',
+            title: t('googleAuthRequiredTitle'),
+            description: t('googleAuthRequiredDesc'),
           });
           return;
         }
@@ -285,18 +291,22 @@ export function NotificationsView({
           setModal({
             mode: 'notice',
             tone: res.failedCount > 0 && res.sentCount === 0 ? 'red' : 'emerald',
-            title: res.failedCount > 0 ? 'Gmail Dispatch Completed with Errors' : 'Emails Sent',
+            title: res.failedCount > 0 ? t('gmailDispatchErrorsTitle') : t('emailsSentTitle'),
             description:
               res.failedCount > 0
-                ? `Dispatched ${res.sentCount} email(s) via Gmail API (${res.failedCount} failed: ${res.errors[0] || ''}).`
-                : `Dispatched ${res.sentCount} notification email(s) via Gmail API.`,
+                ? t('gmailDispatchPartialDesc', {
+                    sent: res.sentCount,
+                    failed: res.failedCount,
+                    error: res.errors[0] || '',
+                  })
+                : t('gmailDispatchSuccessDesc', { sent: res.sentCount }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Gmail Dispatch Failed',
-            description: err instanceof Error ? err.message : 'Gmail dispatch failed.',
+            title: t('gmailDispatchFailedTitle'),
+            description: err instanceof Error ? err.message : t('gmailDispatchFailedDesc'),
           });
         } finally {
           setSendingGmail(false);
@@ -329,7 +339,7 @@ export function NotificationsView({
         <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-teal-800 dark:text-teal-300">
             <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Upcoming Cooperative Meetings Scheduled by Manager ({upcomingMeetings.length})</span>
+            <span>{t('upcomingMeetingsTitle', { count: upcomingMeetings.length })}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {upcomingMeetings.map((m) => (
@@ -354,10 +364,10 @@ export function NotificationsView({
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <Mail className="w-4 h-4" aria-hidden="true" />
-              <span>Email Outbox &amp; Automated Treasury Notifications</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Contribution, Loan Acceptance, Repayment &amp; Monthly Reminder Notices
+              {t('heading')}
             </h2>
           </div>
 
@@ -377,7 +387,7 @@ export function NotificationsView({
                 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0"
                 aria-hidden="true"
               />
-              <span>Notification Settings</span>
+              <span>{t('notificationSettings')}</span>
               <ChevronDown
                 className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
                   showSettings ? 'rotate-180' : ''
@@ -401,11 +411,14 @@ export function NotificationsView({
           <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-full sm:w-fit max-w-full">
             {(
               [
-                { id: 'all', label: `All (${notifications.length})` },
-                { id: 'queued', label: `Queued (${queuedItems.length})` },
+                { id: 'all', label: t('filterAll', { count: notifications.length }) },
+                { id: 'queued', label: t('filterQueued', { count: queuedItems.length }) },
                 {
                   id: 'sent',
-                  label: `Sent via Gmail (${notifications.filter((n) => n.deliveryStatus === 'sent_via_gmail').length})`,
+                  label: t('filterSent', {
+                    count: notifications.filter((n) => n.deliveryStatus === 'sent_via_gmail')
+                      .length,
+                  }),
                 },
               ] as const
             ).map((tab) => {
@@ -447,9 +460,7 @@ export function NotificationsView({
               >
                 <Bell className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
                 <span>
-                  {generatingReminders
-                    ? 'Generating Reminders…'
-                    : 'Trigger Monthly & Repayment Reminders'}
+                  {generatingReminders ? t('generatingReminders') : t('triggerRemindersBtn')}
                 </span>
               </button>
 
@@ -460,7 +471,7 @@ export function NotificationsView({
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Send Queued via Gmail ({Math.min(queuedItems.length, 15)})</span>
+                <span>{t('sendQueuedGmail', { count: Math.min(queuedItems.length, 15) })}</span>
               </button>
             </div>
           )}
@@ -469,12 +480,12 @@ export function NotificationsView({
         <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-full sm:w-fit max-w-full">
           {(
             [
-              { id: 'all', label: 'All Topics' },
-              { id: 'contributions', label: 'Contributions' },
-              { id: 'loans', label: 'Qard Hasan' },
-              { id: 'voting', label: 'Voting & Polls' },
-              { id: 'meetings', label: 'Meeting Notices' },
-              { id: 'community_profile', label: 'Members & Community' },
+              { id: 'all', label: t('topicAll') },
+              { id: 'contributions', label: t('topicContributions') },
+              { id: 'loans', label: t('topicLoans') },
+              { id: 'voting', label: t('topicVoting') },
+              { id: 'meetings', label: t('topicMeetings') },
+              { id: 'community_profile', label: t('topicCommunityProfile') },
             ] as const
           ).map((cat) => {
             const active = categoryFilter === cat.id;
@@ -520,22 +531,22 @@ export function NotificationsView({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
                 <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                <span>Notification &amp; In-App Sound Preferences</span>
+                <span>{t('prefsHeading')}</span>
               </div>
               {savingPrefs && (
                 <span className="text-[11px] font-mono text-indigo-500 dark:text-indigo-400">
-                  Saving…
+                  {t('saving')}
                 </span>
               )}
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-2.5">
               {(
                 [
-                  { key: 'inAppAlerts', label: 'In-App Alerts' },
-                  { key: 'soundEnabled', label: 'Subtle Sound Chime' },
-                  { key: 'emailBallots', label: 'Ballot & Guarantor' },
-                  { key: 'emailRepayments', label: 'Repayment Reminders' },
-                  { key: 'emailCommunity', label: 'Community Mentions' },
+                  { key: 'inAppAlerts', label: t('prefInAppAlerts') },
+                  { key: 'soundEnabled', label: t('prefSoundEnabled') },
+                  { key: 'emailBallots', label: t('prefEmailBallots') },
+                  { key: 'emailRepayments', label: t('prefEmailRepayments') },
+                  { key: 'emailCommunity', label: t('prefEmailCommunity') },
                 ] as const
               ).map((item, idx) => (
                 <label
@@ -572,7 +583,7 @@ export function NotificationsView({
           </div>
         ) : visibleNotifications.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-            No notifications match this filter.
+            {t('emptyFiltered')}
           </div>
         ) : (
           visibleNotifications.map((item) => (
@@ -585,13 +596,13 @@ export function NotificationsView({
               <div className="space-y-1.5 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                   <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                    {TYPE_LABELS[item.type] || item.type}
+                    {getTypeLabel(item.type)}
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                     ·
                   </span>
                   <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
-                    To: {item.recipientName} &lt;{item.recipientEmail}&gt;
+                    {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                     ·
@@ -609,16 +620,17 @@ export function NotificationsView({
                 </p>
 
                 <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                  Delivery:{' '}
+                  {t('deliveryPrefix')}{' '}
                   {item.deliveryStatus === 'sent_via_gmail'
-                    ? `Sent via Gmail API (${formatDateTime(item.sentAt)})`
-                    : 'Queued in In-App Outbox (ready for Gmail dispatch)'}
+                    ? t('sentViaGmailAt', { date: formatDateTime(item.sentAt) })
+                    : t('queuedOutbox')}
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
                 {(() => {
                   const subjLower = item.subject.toLowerCase();
+                  const deskLabel = user.role === 'admin' ? t('governanceDesk') : t('managerDesk');
                   if (
                     isStaff &&
                     item.type === 'loan_vote_requested' &&
@@ -634,7 +646,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Review in {user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'}</span>
+                        <span>{t('reviewInDesk', { desk: deskLabel })}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -653,7 +665,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open {user.role === 'admin' ? 'Governance Desk' : 'Manager Desk'}</span>
+                        <span>{t('openDesk', { desk: deskLabel })}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -671,7 +683,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Voting</span>
+                        <span>{t('openVoting')}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -694,7 +706,7 @@ export function NotificationsView({
                         }}
                         className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Open Qard Hasan</span>
+                        <span>{t('openQardHasan')}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     );
@@ -708,7 +720,7 @@ export function NotificationsView({
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Mark Read</span>
+                    <span>{t('markRead')}</span>
                   </button>
                 )}
                 {isStaff && item.deliveryStatus === 'queued' && workspace.connected && (
@@ -718,7 +730,7 @@ export function NotificationsView({
                     className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Send className="w-3 h-3" aria-hidden="true" />
-                    <span>Send Gmail</span>
+                    <span>{t('sendGmail')}</span>
                   </button>
                 )}
               </div>
@@ -734,7 +746,7 @@ export function NotificationsView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         busy={modalBusy || sendingGmail || generatingReminders}
         onConfirm={
           modal?.mode === 'confirm'

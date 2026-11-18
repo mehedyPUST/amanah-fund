@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import { useCoopSession } from './AppProviders.tsx';
 import type {
   Contribution,
@@ -106,6 +107,7 @@ export function TreasuryGrowthChart({
   loading = false,
   onSubmitContribution,
 }: TreasuryGrowthChartProps) {
+  const t = useTranslations('Charts');
   const { darkMode } = useCoopSession();
   const [viewMode, setViewMode] = useState<'combined' | 'contributions' | 'treasury'>('combined');
   const [range, setRange] = useState<'6m' | '12m' | 'all'>('12m');
@@ -236,7 +238,7 @@ export function TreasuryGrowthChart({
     const memberTotal = fullSeries.reduce((sum, pt) => sum + pt.myContributions, 0);
 
     return {
-      latestMonthLabel: latest?.monthLabel || 'Current',
+      latestMonthLabel: latest?.monthLabel || t('currentFallback'),
       latestMonthContrib,
       contribDeltaPct,
       totalPool,
@@ -244,7 +246,7 @@ export function TreasuryGrowthChart({
       treasuryGrowthDelta,
       memberTotal,
     };
-  }, [fullSeries, centralBalance]);
+  }, [fullSeries, centralBalance, t]);
 
   return (
     <motion.section
@@ -260,24 +262,24 @@ export function TreasuryGrowthChart({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
-            <span>Treasury Growth & Contribution Analytics</span>
+            <span>{t('treasuryAnalyticsBadge')}</span>
           </div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Monthly Contribution Trends & Treasury Growth
+            {t('treasuryAnalyticsTitle')}
           </h3>
         </div>
 
         <div className="flex flex-nowrap items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-0.5 shrink-0">
           <div
             role="group"
-            aria-label="Chart dataset view"
+            aria-label={t('datasetViewAria')}
             className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 shrink-0"
           >
             {(
               [
-                { id: 'combined', label: 'Overview' },
-                { id: 'contributions', label: 'Contributions' },
-                { id: 'treasury', label: 'Treasury Growth' },
+                { id: 'combined', label: t('tabOverview') },
+                { id: 'contributions', label: t('tabContributions') },
+                { id: 'treasury', label: t('tabTreasuryGrowth') },
               ] as const
             ).map((tab) => {
               const active = viewMode === tab.id;
@@ -307,14 +309,14 @@ export function TreasuryGrowthChart({
 
           <div
             role="group"
-            aria-label="Chart timeframe"
+            aria-label={t('timeframeAria')}
             className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 shrink-0"
           >
             {(
               [
-                { id: '6m', label: '6M' },
-                { id: '12m', label: '12M' },
-                { id: 'all', label: 'All' },
+                { id: '6m', label: t('range6m') },
+                { id: '12m', label: t('range12m') },
+                { id: 'all', label: t('rangeAll') },
               ] as const
             ).map((r) => {
               const active = range === r.id;
@@ -358,49 +360,56 @@ export function TreasuryGrowthChart({
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Net Treasury Balance</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t('netTreasuryBalance')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(metrics.latestTreasury, currency)}
             </div>
             <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-              {metrics.treasuryGrowthDelta >= 0 ? '+' : ''}
-              {formatMoney(metrics.treasuryGrowthDelta, currency)} last period
+              {t('lastPeriodDelta', {
+                sign: metrics.treasuryGrowthDelta >= 0 ? '+' : '',
+                amount: formatMoney(metrics.treasuryGrowthDelta, currency),
+              })}
             </div>
           </div>
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Latest Month ({metrics.latestMonthLabel})
+              {t('latestMonthLabel', { month: metrics.latestMonthLabel })}
             </div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(metrics.latestMonthContrib, currency)}
             </div>
             <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
               {metrics.contribDeltaPct !== null
-                ? `${metrics.contribDeltaPct >= 0 ? '+' : ''}${metrics.contribDeltaPct}% vs prior month`
-                : 'Monthly inflow'}
+                ? t('vsPriorMonth', {
+                    sign: metrics.contribDeltaPct >= 0 ? '+' : '',
+                    pct: metrics.contribDeltaPct,
+                  })
+                : t('monthlyInflow')}
             </div>
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Cumulative Pool Growth</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t('cumulativePoolGrowth')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
               {formatMoney(metrics.totalPool, currency)}
             </div>
             <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-              All-time approved deposits
+              {t('allTimeApprovedDeposits')}
             </div>
           </div>
 
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">Your Approved Deposits</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t('yourApprovedDeposits')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
               {formatMoney(metrics.memberTotal, currency)}
             </div>
             <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
               {metrics.totalPool > 0
-                ? `${Math.round((metrics.memberTotal / metrics.totalPool) * 100)}% of fund pool`
-                : 'Member equity share'}
+                ? t('percentOfFundPool', {
+                    pct: Math.round((metrics.memberTotal / metrics.totalPool) * 100),
+                  })
+                : t('memberEquityShare')}
             </div>
           </div>
         </div>
@@ -413,7 +422,7 @@ export function TreasuryGrowthChart({
         <div className="h-64 flex flex-col items-center justify-center text-center px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
           <div className="space-y-1">
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              No monthly contribution or treasury growth recorded yet
+              {t('noTreasuryActivity')}
             </p>
           </div>
           {onSubmitContribution && (
@@ -422,7 +431,7 @@ export function TreasuryGrowthChart({
               onClick={onSubmitContribution}
               className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
             >
-              <span>Submit First Contribution</span>
+              <span>{t('submitFirstContribution')}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}
@@ -480,7 +489,7 @@ export function TreasuryGrowthChart({
                   <Area
                     type="monotone"
                     dataKey="treasuryBalance"
-                    name="Treasury Balance"
+                    name={t('seriesTreasuryBalance')}
                     stroke="#059669"
                     strokeWidth={2}
                     fill="url(#treasuryGrowthAreaGrad)"
@@ -488,7 +497,7 @@ export function TreasuryGrowthChart({
                   <Line
                     type="monotone"
                     dataKey="cumulativePool"
-                    name="Cumulative Contributions"
+                    name={t('seriesCumulativeContributions')}
                     stroke="#6366f1"
                     strokeWidth={2}
                     dot={{ r: 3, fill: '#6366f1' }}
@@ -496,14 +505,14 @@ export function TreasuryGrowthChart({
                   />
                   <Bar
                     dataKey="approvedContributions"
-                    name="Monthly Contributions"
+                    name={t('seriesMonthlyContributions')}
                     fill="#10b981"
                     radius={[4, 4, 0, 0]}
                     barSize={18}
                   />
                   <Bar
                     dataKey="repaid"
-                    name="Repayments Returned"
+                    name={t('seriesRepaymentsReturned')}
                     fill="#0d9488"
                     radius={[4, 4, 0, 0]}
                     barSize={12}
@@ -515,21 +524,21 @@ export function TreasuryGrowthChart({
                 <>
                   <Bar
                     dataKey="approvedContributions"
-                    name="Pool Approved Monthly"
+                    name={t('seriesPoolApprovedMonthly')}
                     fill="#059669"
                     radius={[4, 4, 0, 0]}
                     barSize={20}
                   />
                   <Bar
                     dataKey="myContributions"
-                    name="Your Approved Monthly"
+                    name={t('seriesYourApprovedMonthly')}
                     fill="#6366f1"
                     radius={[4, 4, 0, 0]}
                     barSize={16}
                   />
                   <Bar
                     dataKey="pendingContributions"
-                    name="Pending Verification"
+                    name={t('seriesPendingVerification')}
                     fill="#d97706"
                     radius={[4, 4, 0, 0]}
                     barSize={14}
@@ -542,7 +551,7 @@ export function TreasuryGrowthChart({
                   <Area
                     type="monotone"
                     dataKey="treasuryBalance"
-                    name="Net Central Treasury"
+                    name={t('seriesNetCentralTreasury')}
                     stroke="#059669"
                     strokeWidth={2.5}
                     fill="url(#treasuryGrowthAreaGrad)"
@@ -550,21 +559,21 @@ export function TreasuryGrowthChart({
                   <Area
                     type="monotone"
                     dataKey="cumulativePool"
-                    name="Cumulative Pool Equity"
+                    name={t('seriesCumulativePoolEquity')}
                     stroke="#6366f1"
                     strokeWidth={2}
                     fill="url(#contribPoolAreaGrad)"
                   />
                   <Bar
                     dataKey="disbursed"
-                    name="Loans Disbursed"
+                    name={t('seriesLoansDisbursed')}
                     fill="#d97706"
                     radius={[4, 4, 0, 0]}
                     barSize={14}
                   />
                   <Bar
                     dataKey="repaid"
-                    name="Repayments Returned"
+                    name={t('seriesRepaymentsReturned')}
                     fill="#0d9488"
                     radius={[4, 4, 0, 0]}
                     barSize={14}

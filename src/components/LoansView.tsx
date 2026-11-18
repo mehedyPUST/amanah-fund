@@ -16,6 +16,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -78,6 +79,8 @@ export function LoansView({
   onViewMemberProfile,
   onRefresh,
 }: LoansViewProps) {
+  const t = useTranslations('Loans');
+  const tCommon = useTranslations('Common');
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
@@ -135,8 +138,8 @@ export function LoansView({
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        t('actionFailed'),
+        err instanceof Error ? err.message : t('unexpectedError')
       );
     } finally {
       setModalBusy(false);
@@ -172,20 +175,20 @@ export function LoansView({
         if (ext.senderAccount) setRepayAccount(ext.senderAccount);
         showNotice(
           'emerald',
-          'Receipt Slip Scanned',
-          `Gemini AI parsed slip (${ext.confidence} confidence): ${ext.summary}`
+          t('slipScannedTitle'),
+          t('slipScannedDesc', { confidence: ext.confidence, summary: ext.summary })
         );
       } else if (uploadRes.status === 'fulfilled') {
         showNotice(
           'slate',
-          'Receipt File Attached',
-          'Please verify the Transaction Number and sender account before submitting.'
+          t('receiptAttachedTitle'),
+          t('receiptAttachedDesc')
         );
       } else {
         showNotice(
           'red',
-          'Receipt Upload Failed',
-          'Could not upload receipt PDF or image. Please check file size (<10 MB) and try again.'
+          t('receiptUploadFailed'),
+          t('receiptUploadFailedDesc')
         );
       }
     } finally {
@@ -200,8 +203,8 @@ export function LoansView({
     if (!repayAccount.trim() || !repayRef.trim()) {
       showNotice(
         'red',
-        'Missing Repayment Details',
-        'Please provide both your sender account/wallet number and the Transaction Number.'
+        t('missingRepaymentTitle'),
+        t('missingRepaymentDesc')
       );
       return;
     }
@@ -209,17 +212,16 @@ export function LoansView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Confirm Installment #${target.installmentNumber} Repayment`,
-      description:
-        'Verify your transfer details before encrypting and submitting to the Manager Desk for fund balance reconciliation.',
+      title: t('confirmRepaymentTitle', { num: target.installmentNumber }),
+      description: t('confirmRepaymentDesc'),
       details: [
-        { label: 'Loan ID', value: target.loanId },
-        { label: 'Installment', value: `#${target.installmentNumber} · ${formatMoney(target.amount, ccy)}` },
-        { label: 'Channel & Provider', value: `${repayChannel.toUpperCase()} · ${repayProvider}` },
-        { label: 'Sender Account', value: repayAccount.trim() },
-        { label: 'Transaction Number', value: repayRef.trim() },
+        { label: t('detailLoanId'), value: target.loanId },
+        { label: t('detailInstallment'), value: `#${target.installmentNumber} · ${formatMoney(target.amount, ccy)}` },
+        { label: t('detailChannelProvider'), value: `${repayChannel.toUpperCase()} · ${repayProvider}` },
+        { label: t('detailSenderAccount'), value: repayAccount.trim() },
+        { label: t('detailTxNumber'), value: repayRef.trim() },
       ],
-      confirmLabel: 'Submit Repayment Proof',
+      confirmLabel: t('submitRepaymentProofBtn'),
       run: async () => {
         await api.submitInstallmentRepayment(target.loanId, target.installmentNumber, {
           channel: repayChannel,
@@ -235,8 +237,8 @@ export function LoansView({
         await onRefresh();
         showNotice(
           'emerald',
-          'Installment Repayment Submitted',
-          'Your repayment proof is AES-256-GCM encrypted and awaiting Manager verification.'
+          t('repaymentSubmittedTitle'),
+          t('repaymentSubmittedDesc')
         );
       },
     });
@@ -248,27 +250,27 @@ export function LoansView({
       tone: decision === 'accept' ? 'emerald' : 'red',
       title:
         decision === 'accept'
-          ? `Co-Sign Guarantor Pledge (${loan.id})`
-          : `Decline Guarantor Pledge (${loan.id})`,
+          ? t('coSignTitle', { id: loan.id })
+          : t('declinePledgeTitle', { id: loan.id }),
       description:
         decision === 'accept'
-          ? `Confirm co-signing ${loan.borrowerName}'s Qard Hasan request for ${formatMoney(loan.amount, ccy)}. Once co-signed, it advances to Manager review.`
-          : `Confirm declining to act as guarantor for ${loan.borrowerName}'s Qard Hasan request.`,
+          ? t('coSignDesc', { name: loan.borrowerName, amount: formatMoney(loan.amount, ccy) })
+          : t('declinePledgeDesc', { name: loan.borrowerName }),
       details: [
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Amount', value: formatMoney(loan.amount, ccy) },
-        { label: 'Purpose', value: loan.purpose },
+        { label: t('detailBorrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('detailAmount'), value: formatMoney(loan.amount, ccy) },
+        { label: t('detailPurpose'), value: loan.purpose },
       ],
-      confirmLabel: decision === 'accept' ? 'Confirm Co-Sign' : 'Confirm Decline',
+      confirmLabel: decision === 'accept' ? t('confirmCoSignBtn') : t('confirmDeclineBtn'),
       run: async () => {
         await api.respondAsGuarantor(loan.id, decision);
         await onRefresh();
         showNotice(
           decision === 'accept' ? 'emerald' : 'amber',
-          decision === 'accept' ? 'Guarantor Pledge Co-Signed' : 'Guarantor Pledge Declined',
+          decision === 'accept' ? t('pledgeCoSignedTitle') : t('pledgeDeclinedTitle'),
           decision === 'accept'
-            ? `Co-signed guarantor pledge for ${loan.id}.`
-            : `Declined guarantor pledge for ${loan.id}.`
+            ? t('pledgeCoSignedDesc', { id: loan.id })
+            : t('pledgeDeclinedDesc', { id: loan.id })
         );
       },
     });
@@ -281,8 +283,8 @@ export function LoansView({
     if (!reason || reason.length < 6) {
       showNotice(
         'red',
-        'Reason Too Short',
-        'Please enter a clear reason (at least 6 characters) for extending the repayment timeline.'
+        t('reasonShortTitle'),
+        t('reasonShortDesc')
       );
       return;
     }
@@ -290,15 +292,14 @@ export function LoansView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: `Confirm Reschedule Request (${loanId})`,
-      description:
-        'Submit a 0% fee installment rescheduling request to the Manager/Admin for approval.',
+      title: t('confirmRescheduleTitle', { id: loanId }),
+      description: t('confirmRescheduleDesc'),
       details: [
-        { label: 'Loan ID', value: loanId },
-        { label: 'Requested Remaining Months', value: `${months} months` },
-        { label: 'Reason', value: reason },
+        { label: t('detailLoanId'), value: loanId },
+        { label: t('detailRequestedMonths'), value: t('monthsCount', { count: months }) },
+        { label: t('detailReason'), value: reason },
       ],
-      confirmLabel: 'Submit Reschedule Request',
+      confirmLabel: t('submitRescheduleBtn'),
       run: async () => {
         await api.requestLoanReschedule(loanId, {
           requestedMonths: months,
@@ -309,8 +310,8 @@ export function LoansView({
         await onRefresh();
         showNotice(
           'emerald',
-          'Reschedule Request Submitted',
-          `Rescheduling request for ${loanId} submitted for Manager/Admin review.`
+          t('rescheduleSubmittedTitle'),
+          t('rescheduleSubmittedDesc', { id: loanId })
         );
       },
     });
@@ -322,22 +323,22 @@ export function LoansView({
       tone: decision === 'approve' ? 'emerald' : 'red',
       title:
         decision === 'approve'
-          ? `Approve Rescheduling (${loanId})`
-          : `Decline Rescheduling (${loanId})`,
+          ? t('approveRescheduleTitle', { id: loanId })
+          : t('declineRescheduleTitle', { id: loanId }),
       description:
         decision === 'approve'
-          ? 'Approving will regenerate all remaining unpaid installments evenly at 0% interest.'
-          : 'Declining will keep the borrower on the current installment schedule.',
-      confirmLabel: decision === 'approve' ? 'Approve Reschedule' : 'Decline Reschedule',
+          ? t('approveRescheduleDesc')
+          : t('declineRescheduleDesc'),
+      confirmLabel: decision === 'approve' ? t('approveRescheduleBtn') : t('declineRescheduleBtn'),
       run: async () => {
         await api.reviewLoanReschedule(loanId, decision);
         await onRefresh();
         showNotice(
           decision === 'approve' ? 'emerald' : 'amber',
-          decision === 'approve' ? 'Schedule Rescheduled' : 'Reschedule Declined',
+          decision === 'approve' ? t('rescheduleApprovedTitle') : t('rescheduleDeclinedTitle'),
           decision === 'approve'
-            ? `Approved rescheduling for ${loanId}. Remaining installments regenerated.`
-            : `Declined rescheduling request for ${loanId}.`
+            ? t('rescheduleApprovedDesc', { id: loanId })
+            : t('rescheduleDeclinedDesc', { id: loanId })
         );
       },
     });
@@ -354,23 +355,22 @@ export function LoansView({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Accept Installment #${installmentNumber} Payment`,
-        description:
-          'Confirm verifying this installment receipt. Approving updates the borrower’s remaining balance and increases the cooperative liquid fund balance.',
+        title: t('acceptInstTitle', { num: installmentNumber }),
+        description: t('acceptInstDesc'),
         details: [
-          { label: 'Loan & Borrower', value: `${loan.id} · ${loan.borrowerName}` },
-          { label: 'Installment Amount', value: formatMoney(inst?.amount || 0, ccy) },
-          { label: 'Provider', value: inst?.repaymentProvider || '—' },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('detailLoanBorrower'), value: `${loan.id} · ${loan.borrowerName}` },
+          { label: t('detailInstAmount'), value: formatMoney(inst?.amount || 0, ccy) },
+          { label: t('detailProvider'), value: inst?.repaymentProvider || '—' },
+          { label: t('detailTxNumber'), value: txNo },
         ],
-        confirmLabel: 'Accept & Credit Balance',
+        confirmLabel: t('acceptCreditBtn'),
         run: async () => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
           await onRefresh();
           showNotice(
             'emerald',
-            `Installment #${installmentNumber} Verified`,
-            `Installment #${installmentNumber} (${txNo}) verified and credited to principal & treasury balance.`
+            t('instVerifiedTitle', { num: installmentNumber }),
+            t('instVerifiedDesc', { num: installmentNumber, txNo })
           );
         },
       });
@@ -378,25 +378,24 @@ export function LoansView({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Deny Installment #${installmentNumber} Receipt`,
-        description:
-          'Provide a clear correction message explaining what the borrower must fix (e.g., Transaction Number mismatch or unclear receipt slip).',
+        title: t('denyInstTitle', { num: installmentNumber }),
+        description: t('denyInstDesc'),
         details: [
-          { label: 'Loan & Borrower', value: `${loan.id} · ${loan.borrowerName}` },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('detailLoanBorrower'), value: `${loan.id} · ${loan.borrowerName}` },
+          { label: t('detailTxNumber'), value: txNo },
         ],
-        inputLabel: 'Correction Note for Borrower',
-        inputPlaceholder: 'Explain the issue so the member can correct and resubmit…',
+        inputLabel: t('correctionNoteBorrower'),
+        inputPlaceholder: t('correctionNotePlaceholder'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Deny & Send Correction Note',
+        confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
           await onRefresh();
           showNotice(
             'amber',
-            `Installment #${installmentNumber} Denied`,
-            `Installment #${installmentNumber} was denied with your correction note sent to ${loan.borrowerName}.`
+            t('instDeniedTitle', { num: installmentNumber }),
+            t('instDeniedDesc', { num: installmentNumber, name: loan.borrowerName })
           );
         },
       });
@@ -407,22 +406,26 @@ export function LoansView({
     setModal({
       mode: 'confirm',
       tone: decision === 'upvote' ? 'emerald' : 'red',
-      title: `Confirm Secret ${decision === 'upvote' ? 'Upvote' : 'Downvote'} (${loan.id})`,
-      description:
-        'Your ballot is confidential — other members only see that the poll is ongoing until the Manager reveals the final result.',
+      title:
+        decision === 'upvote'
+          ? t('confirmUpvoteTitle', { id: loan.id })
+          : t('confirmDownvoteTitle', { id: loan.id }),
+      description: t('secretBallotDesc'),
       details: [
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Requested Amount', value: formatMoney(loan.amount, ccy) },
-        { label: 'Purpose', value: loan.purpose },
+        { label: t('detailBorrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('detailRequestedAmount'), value: formatMoney(loan.amount, ccy) },
+        { label: t('detailPurpose'), value: loan.purpose },
       ],
-      confirmLabel: decision === 'upvote' ? 'Cast Secret Upvote' : 'Cast Secret Downvote',
+      confirmLabel: decision === 'upvote' ? t('castSecretUpvote') : t('castSecretDownvote'),
       run: async () => {
         await api.voteLoan(loan.id, decision);
         await onRefresh();
         showNotice(
           'emerald',
-          'Secret Ballot Recorded',
-          `Your ${decision === 'upvote' ? 'UPVOTE' : 'DOWNVOTE'} ballot was recorded securely for ${loan.id}.`
+          t('ballotRecordedTitle'),
+          decision === 'upvote'
+            ? t('ballotRecordedUpvote', { id: loan.id })
+            : t('ballotRecordedDownvote', { id: loan.id })
         );
       },
     });
@@ -473,17 +476,17 @@ export function LoansView({
   );
 
   let loanProgressPct = 0;
-  let loanProgressCaption = 'No active or pending Qard Hasan loan request on your account.';
+  let loanProgressCaption = t('progressNone');
   let loanBarColorClass = 'bg-slate-400 dark:bg-slate-600';
 
   if (myActiveOrPendingLoan) {
     if (myActiveOrPendingLoan.status === 'pending_guarantor') {
       loanProgressPct = 15;
-      loanProgressCaption = 'Awaiting co-signing guarantor acceptance before Manager review.';
+      loanProgressCaption = t('progressGuarantor');
       loanBarColorClass = 'bg-amber-500';
     } else if (myActiveOrPendingLoan.status === 'pending_manager_review') {
       loanProgressPct = 30;
-      loanProgressCaption = 'Awaiting Manager review to open the secret 2/3 member ballot.';
+      loanProgressCaption = t('progressManager');
       loanBarColorClass = 'bg-amber-500';
     } else if (myActiveOrPendingLoan.status === 'pending_vote') {
       const revealed = Boolean(myActiveOrPendingLoan.voteResultRevealed);
@@ -495,19 +498,23 @@ export function LoansView({
           100,
           Math.round((approveCount / Math.max(1, myActiveOrPendingLoan.requiredApprovals)) * 100)
         );
-        loanProgressCaption = `2/3 Ballot Result: ${approveCount} of ${myActiveOrPendingLoan.requiredApprovals} required approvals (${loanProgressPct}%)`;
+        loanProgressCaption = t('progressBallotRevealed', {
+          approved: approveCount,
+          required: myActiveOrPendingLoan.requiredApprovals,
+          pct: loanProgressPct,
+        });
       } else {
         const cast = myActiveOrPendingLoan.totalVotesCast ?? myActiveOrPendingLoan.votes.length;
         loanProgressPct = Math.min(
           95,
           Math.round((cast / Math.max(1, myActiveOrPendingLoan.totalEligibleVoters)) * 100)
         );
-        loanProgressCaption = `Poll Ongoing · ${cast} member ballot(s) cast secretly (results hidden until revealed)`;
+        loanProgressCaption = t('progressBallotSecret', { cast });
       }
       loanBarColorClass = 'bg-amber-500';
     } else if (myActiveOrPendingLoan.status === 'approved_pending_disbursement') {
       loanProgressPct = 100;
-      loanProgressCaption = '2/3 Quorum Approved · Awaiting Manager disbursement confirmation';
+      loanProgressCaption = t('progressApprovedDisburse');
       loanBarColorClass = 'bg-teal-600 dark:bg-teal-500';
     } else if (myActiveOrPendingLoan.status === 'active') {
       const paidInstallments = myActiveOrPendingLoan.installments.filter(
@@ -520,14 +527,18 @@ export function LoansView({
               Math.round((myActiveOrPendingLoan.totalRepaid / myActiveOrPendingLoan.amount) * 100)
             )
           : 0;
-      loanProgressCaption = `Repaid ${formatMoney(myActiveOrPendingLoan.totalRepaid, ccy)} of ${formatMoney(myActiveOrPendingLoan.amount, ccy)} (${paidInstallments}/${myActiveOrPendingLoan.installments.length} installments · ${loanProgressPct}%)`;
+      loanProgressCaption = t('progressActiveRepaid', {
+        repaid: formatMoney(myActiveOrPendingLoan.totalRepaid, ccy),
+        total: formatMoney(myActiveOrPendingLoan.amount, ccy),
+        paid: paidInstallments,
+        count: myActiveOrPendingLoan.installments.length,
+        pct: loanProgressPct,
+      });
       loanBarColorClass = 'bg-emerald-600';
     }
   } else if (hasSyncedEligibilityActive && eligibility?.activeLoanId) {
     loanProgressPct = 30;
-    loanProgressCaption =
-      eligibility.reasons[0] ||
-      'Application registered on your account and queued for review.';
+    loanProgressCaption = eligibility.reasons[0] || t('progressQueued');
     loanBarColorClass = 'bg-amber-500';
   }
 
@@ -538,8 +549,9 @@ export function LoansView({
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             <span>
-              Pending Guarantor Co-Sign Request{myGuarantorRequests.length > 1 ? 's' : ''} (
-              {myGuarantorRequests.length})
+              {myGuarantorRequests.length > 1
+                ? t('pendingGuarantorMulti', { count: myGuarantorRequests.length })
+                : t('pendingGuarantorSingle', { count: myGuarantorRequests.length })}
             </span>
           </div>
           <div className="divide-y divide-amber-200/70 dark:divide-amber-900/40">
@@ -554,7 +566,7 @@ export function LoansView({
                     <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                   </div>
                   <div className="text-slate-600 dark:text-slate-300">
-                    {loan.id} · {loan.purpose} ({loan.installmentMonths} monthly installments)
+                    {loan.id} · {loan.purpose} ({t('monthlyInstallmentsCount', { count: loan.installmentMonths })})
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
@@ -564,7 +576,7 @@ export function LoansView({
                     onClick={() => confirmGuarantorRespond(loan, 'accept')}
                     className="px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    Accept Co-Sign
+                    {t('acceptCoSign')}
                   </button>
                   <button
                     type="button"
@@ -572,7 +584,7 @@ export function LoansView({
                     onClick={() => confirmGuarantorRespond(loan, 'decline')}
                     className="px-3 py-2 sm:py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
-                    Decline
+                    {t('decline')}
                   </button>
                 </div>
               </div>
@@ -583,7 +595,7 @@ export function LoansView({
 
       {!isAdmin && (
         <section
-          aria-label="Member Loan Quota and Active Request Summary"
+          aria-label={t('quotaSummaryAria')}
           className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
         >
           {!eligibility && loading ? (
@@ -597,20 +609,20 @@ export function LoansView({
                 <div className="flex items-baseline justify-between gap-2">
                   <div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Remaining Yearly Loan Quota ({currentYear})
+                      {t('remainingYearlyQuota', { year: currentYear })}
                     </div>
                     <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-                      {remainingYearlyQuota} of {maxLoansPerYear} remaining
+                      {t('remainingOfMax', { remaining: remainingYearlyQuota, max: maxLoansPerYear })}
                     </div>
                   </div>
                   <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    {usedLoansThisYear} used
+                    {t('usedCountShort', { used: usedLoansThisYear })}
                   </span>
                 </div>
 
                 <div
                   role="progressbar"
-                  aria-label="Remaining yearly loan quota"
+                  aria-label={t('remainingYearlyQuota', { year: currentYear })}
                   aria-valuenow={remainingYearlyQuota}
                   aria-valuemin={0}
                   aria-valuemax={maxLoansPerYear}
@@ -634,11 +646,13 @@ export function LoansView({
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>
                     {remainingYearlyQuota > 0
-                      ? `${remainingYearlyQuota} Qard Hasan slot${remainingYearlyQuota === 1 ? '' : 's'} available this year`
-                      : `Annual limit of ${maxLoansPerYear} loans reached`}
+                      ? remainingYearlyQuota === 1
+                        ? t('slotsAvailableSingle', { count: remainingYearlyQuota })
+                        : t('slotsAvailableMulti', { count: remainingYearlyQuota })
+                      : t('annualLimitReached', { max: maxLoansPerYear })}
                   </span>
                   <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {quotaRemainingPct}% left
+                    {t('pctLeft', { pct: quotaRemainingPct })}
                   </span>
                 </div>
               </div>
@@ -647,14 +661,14 @@ export function LoansView({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Application &amp; Loan Status
+                      {t('appAndLoanStatus')}
                     </div>
                     <div className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white truncate">
                       {myActiveOrPendingLoan
                         ? `${myActiveOrPendingLoan.id} · ${formatMoney(myActiveOrPendingLoan.amount, ccy)}`
                         : hasSyncedEligibilityActive && eligibility?.activeLoanId
-                          ? `${eligibility.activeLoanId} · Active Request`
-                          : 'No Active Request'}
+                          ? t('activeRequestLabel', { id: eligibility.activeLoanId })
+                          : t('noActiveRequest')}
                     </div>
                   </div>
                   {myActiveOrPendingLoan ? (
@@ -664,14 +678,14 @@ export function LoansView({
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                      <span>Clear Standing</span>
+                      <span>{t('clearStanding')}</span>
                     </span>
                   )}
                 </div>
 
                 <div
                   role="progressbar"
-                  aria-label="Active loan request progress"
+                  aria-label={t('appAndLoanStatus')}
                   aria-valuenow={loanProgressPct}
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -700,7 +714,7 @@ export function LoansView({
                     myActiveOrPendingLoan.status === 'pending_guarantor') && (
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Withdraw to submit a new application.
+                        {t('withdrawHint')}
                       </p>
                       <button
                         type="button"
@@ -709,20 +723,20 @@ export function LoansView({
                           setModal({
                             mode: 'confirm',
                             tone: 'amber',
-                            title: 'Withdraw Loan Application?',
-                            description: `This will cancel ${loanId} and free your eligibility so you can submit a new Qard Hasan request. This cannot be undone.`,
+                            title: t('withdrawTitle'),
+                            description: t('withdrawDesc', { id: loanId }),
                             details: [
-                              { label: 'Application', value: loanId },
+                              { label: t('detailApplication'), value: loanId },
                               {
-                                label: 'Amount',
+                                label: t('detailAmount'),
                                 value: formatMoney(myActiveOrPendingLoan.amount, ccy),
                               },
                               {
-                                label: 'Status',
+                                label: t('detailStatus'),
                                 value: myActiveOrPendingLoan.status.replace(/_/g, ' '),
                               },
                             ],
-                            confirmLabel: 'Yes, Withdraw Application',
+                            confirmLabel: t('confirmWithdrawBtn'),
                             run: async () => {
                               await api.withdrawLoan(loanId);
                               if (optimisticLoan?.id === loanId) {
@@ -732,15 +746,15 @@ export function LoansView({
                               setModal({
                                 mode: 'notice',
                                 tone: 'emerald',
-                                title: 'Application Withdrawn',
-                                description: `${loanId} was withdrawn. You can now open a new Qard Hasan request.`,
+                                title: t('withdrawnTitle'),
+                                description: t('withdrawnDesc', { id: loanId }),
                               });
                             },
                           });
                         }}
                         className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs sm:text-[11px] font-medium hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer shrink-0"
                       >
-                        Withdraw Application
+                        {t('withdrawBtn')}
                       </button>
                     </div>
                   )}
@@ -755,7 +769,7 @@ export function LoansView({
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Automated Qard Hasan Eligibility Verification
+                {t('eligibilityHeading')}
               </h2>
             </div>
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
@@ -764,12 +778,12 @@ export function LoansView({
                   {eligibility.eligible ? (
                     <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                       <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                      <span>Eligible to Request Loan</span>
+                      <span>{t('eligibleToRequest')}</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
                       <XCircle className="w-4 h-4" aria-hidden="true" />
-                      <span>Currently Not Eligible</span>
+                      <span>{t('currentlyNotEligible')}</span>
                     </span>
                   )}
                 </div>
@@ -780,7 +794,7 @@ export function LoansView({
                   onClick={onOpenLoanModal}
                   className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
-                  Open Request Modal
+                  {t('openRequestModal')}
                 </button>
               )}
             </div>
@@ -790,7 +804,7 @@ export function LoansView({
             <div className="mt-4 grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
               <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">1. Active Loan Check</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('check1Title')}</span>
                   <span
                     className={
                       eligibility.noActiveLoan
@@ -798,19 +812,19 @@ export function LoansView({
                         : 'font-medium text-red-700 dark:text-red-400'
                     }
                   >
-                    {eligibility.noActiveLoan ? 'Passed' : 'Blocked'}
+                    {eligibility.noActiveLoan ? t('passed') : t('blocked')}
                   </span>
                 </div>
                 <div className="mt-1.5 text-xs text-slate-700 dark:text-slate-300">
                   {eligibility.noActiveLoan
-                    ? 'No active or pending loan on your account.'
-                    : `Active/pending loan: ${eligibility.activeLoanId}`}
+                    ? t('noActiveOnAccount')
+                    : t('activePendingId', { id: eligibility.activeLoanId || '' })}
                 </div>
               </div>
 
               <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between gap-1 text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">2. Annual Quota Check</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('check2Title')}</span>
                   <span
                     className={
                       eligibility.quotaAvailable
@@ -818,17 +832,20 @@ export function LoansView({
                         : 'font-medium text-red-700 dark:text-red-400'
                     }
                   >
-                    {eligibility.quotaAvailable ? 'Available' : 'Exhausted'}
+                    {eligibility.quotaAvailable ? t('available') : t('exhausted')}
                   </span>
                 </div>
                 <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                  {eligibility.loansUsedThisYear} of {eligibility.maxLoansPerYear} loans used this year
+                  {t('loansUsedThisYear', {
+                    used: eligibility.loansUsedThisYear,
+                    max: eligibility.maxLoansPerYear,
+                  })}
                 </div>
               </div>
 
               <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-300 dark:hover:border-teal-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between gap-1 text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">3. Fund Lifecycle Window</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('check3Title')}</span>
                   <span
                     className={
                       eligibility.beforeMaturityDate
@@ -836,17 +853,17 @@ export function LoansView({
                         : 'font-medium text-amber-700 dark:text-amber-400'
                     }
                   >
-                    {eligibility.beforeMaturityDate ? 'Qard Hasan Active' : 'Post-Maturity'}
+                    {eligibility.beforeMaturityDate ? t('qardActiveWindow') : t('postMaturity')}
                   </span>
                 </div>
                 <div className="mt-1.5 text-xs font-mono text-slate-700 dark:text-slate-300">
-                  Maturity: {formatShortDate(config?.maturityDate)}
+                  {t('maturityPrefix', { date: formatShortDate(config?.maturityDate) })}
                 </div>
               </div>
 
               <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">4. Repayment Standing</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('check4Title')}</span>
                   <span
                     className={
                       eligibility.noOverdueInstallments
@@ -854,13 +871,13 @@ export function LoansView({
                         : 'font-medium text-red-700 dark:text-red-400'
                     }
                   >
-                    {eligibility.noOverdueInstallments ? 'Clear' : 'Overdue'}
+                    {eligibility.noOverdueInstallments ? t('clear') : t('overdue')}
                   </span>
                 </div>
                 <div className="mt-1.5 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">
                   {eligibility.noOverdueInstallments
-                    ? '0 overdue installments'
-                    : `${eligibility.overdueCount || 1} overdue installment(s)`}
+                    ? t('zeroOverdue')
+                    : t('overdueCountLabel', { count: eligibility.overdueCount || 1 })}
                 </div>
               </div>
             </div>
@@ -875,7 +892,7 @@ export function LoansView({
       {!isAdmin && (
         <div
           role="tablist"
-          aria-label="Qard Hasan Mobile View Switcher"
+          aria-label={t('mobileSwitcherAria')}
           className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80"
         >
           <button
@@ -889,7 +906,7 @@ export function LoansView({
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
-            Repayments &amp; Portfolio ({visibleLoans.length})
+            {t('mobileTabPortfolio', { count: visibleLoans.length })}
           </button>
           <button
             type="button"
@@ -902,7 +919,7 @@ export function LoansView({
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
-            Apply for Qard Hasan
+            {t('mobileTabApply')}
           </button>
         </div>
       )}
@@ -941,7 +958,7 @@ export function LoansView({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Loan Portfolio &amp; Repayment Schedules
+                {t('portfolioHeading')}
               </h3>
             </div>
 
@@ -949,8 +966,8 @@ export function LoansView({
               <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
                 {(
                   [
-                    { id: 'mine', label: 'My Loans' },
-                    { id: 'all', label: 'All Cooperative Loans' },
+                    { id: 'mine', label: t('myLoans') },
+                    { id: 'all', label: t('allLoans') },
                   ] as const
                 ).map((tab) => {
                   const active = scope === tab.id;
@@ -1005,9 +1022,7 @@ export function LoansView({
             </div>
           ) : visibleLoans.length === 0 ? (
             <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              {scope === 'mine'
-                ? 'You have no Qard Hasan loans recorded. Switch to "All Cooperative Loans" or submit an eligible request.'
-                : 'No cooperative loan requests found.'}
+              {scope === 'mine' ? t('emptyMine') : t('emptyAll')}
             </div>
           ) : (
             <>
@@ -1054,19 +1069,19 @@ export function LoansView({
 
                       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
                         <div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">Principal</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('principal')}</div>
                           <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                             {formatMoney(loan.amount, ccy)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">Repaid</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('repaid')}</div>
                           <div className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                             {formatMoney(loan.totalRepaid, ccy)}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">Remaining</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('remaining')}</div>
                           <div className="font-mono font-bold tabular-nums text-slate-900 dark:text-white">
                             {formatMoney(loan.remainingBalance, ccy)}
                           </div>
@@ -1081,11 +1096,11 @@ export function LoansView({
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <th className="py-2.5 px-4">Loan ID &amp; Borrower</th>
-                      <th className="py-2.5 px-4 text-right">Principal</th>
-                      <th className="py-2.5 px-4 text-right">Repaid</th>
-                      <th className="py-2.5 px-4 text-right">Remaining</th>
-                      <th className="py-2.5 px-4">Status</th>
+                      <th className="py-2.5 px-4">{t('colLoanBorrower')}</th>
+                      <th className="py-2.5 px-4 text-right">{t('principal')}</th>
+                      <th className="py-2.5 px-4 text-right">{t('repaid')}</th>
+                      <th className="py-2.5 px-4 text-right">{t('remaining')}</th>
+                      <th className="py-2.5 px-4">{t('colStatus')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1149,11 +1164,13 @@ export function LoansView({
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                        Installment Schedule · {activeSelectedLoan.id}
+                        {t('installmentScheduleTitle', { id: activeSelectedLoan.id })}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {activeSelectedLoan.installmentMonths} monthly installments at{' '}
-                        {formatMoney(activeSelectedLoan.monthlyInstallment, ccy)}/mo (0% interest)
+                        {t('installmentsAtZero', {
+                          months: activeSelectedLoan.installmentMonths,
+                          amount: formatMoney(activeSelectedLoan.monthlyInstallment, ccy),
+                        })}
                         {activeSelectedLoan.decryptedSensitiveNotes
                           ? ` · ${activeSelectedLoan.decryptedSensitiveNotes.channel.toUpperCase()} · ${activeSelectedLoan.decryptedSensitiveNotes.provider}`
                           : ''}
@@ -1163,7 +1180,7 @@ export function LoansView({
                       <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
                         <span>
-                          Disbursed by {activeSelectedLoan.disbursementSignature.signedByName}
+                          {t('disbursedBy', { name: activeSelectedLoan.disbursementSignature.signedByName })}
                           {activeSelectedLoan.disbursementSignature.transactionNumber
                             ? ` · Tx #${activeSelectedLoan.disbursementSignature.transactionNumber}`
                             : ''}
@@ -1193,7 +1210,7 @@ export function LoansView({
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="font-semibold text-slate-900 dark:text-white">
-                              {revealed || isAdmin ? '2/3 Member Vote' : 'Poll Ongoing (Secret Ballot)'}
+                              {revealed || isAdmin ? t('twoThirdsVote') : t('pollOngoingSecret')}
                             </span>
                             <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
                               ·
@@ -1201,18 +1218,18 @@ export function LoansView({
                             {revealed || isAdmin ? (
                               <>
                                 <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                                  {upvotes}/{activeSelectedLoan.requiredApprovals} Upvotes
+                                  {t('upvotesRatio', { upvotes, required: activeSelectedLoan.requiredApprovals })}
                                 </span>
                                 <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
                                   ·
                                 </span>
                                 <span className="font-mono tabular-nums text-red-700 dark:text-red-400">
-                                  {downvotes} Downvotes
+                                  {t('downvotesCount', { count: downvotes })}
                                 </span>
                               </>
                             ) : (
                               <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400">
-                                {cast} of {activeSelectedLoan.totalEligibleVoters} ballots cast
+                                {t('ballotsCastRatio', { cast, total: activeSelectedLoan.totalEligibleVoters })}
                               </span>
                             )}
                           </div>
@@ -1240,7 +1257,7 @@ export function LoansView({
                               className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Upvote</span>
+                              <span>{t('upvote')}</span>
                             </button>
                             <button
                               type="button"
@@ -1249,13 +1266,13 @@ export function LoansView({
                               className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Downvote</span>
+                              <span>{t('downvote')}</span>
                             </button>
                           </div>
                         )}
                         {myVote && (
                           <span className="text-xs font-medium text-slate-600 dark:text-slate-300 shrink-0">
-                            You {myVote.decision === 'approve' ? 'Upvoted' : 'Downvoted'}
+                            {myVote.decision === 'approve' ? t('youUpvoted') : t('youDownvoted')}
                           </span>
                         )}
                       </div>
@@ -1266,7 +1283,7 @@ export function LoansView({
                     <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
                         <UserCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                        <span>Co-Signing Guarantors:</span>
+                        <span>{t('coSigningGuarantors')}</span>
                       </span>
                       <div className="flex flex-wrap items-center gap-3">
                         {activeSelectedLoan.guarantors.map((g) => (
@@ -1294,7 +1311,7 @@ export function LoansView({
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                         <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                           <CalendarClock className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                          <span>Repayment Schedule Flexibility (0% Fee Rescheduling)</span>
+                          <span>{t('rescheduleHeading')}</span>
                         </span>
                         {(activeSelectedLoan.borrowerId === user.id || isStaff) &&
                           activeSelectedLoan.rescheduleRequest?.status !== 'pending' && (
@@ -1303,7 +1320,7 @@ export function LoansView({
                               onClick={() => setRescheduleOpen((prev) => !prev)}
                               className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
                             >
-                              {rescheduleOpen ? 'Close Form' : 'Request Schedule Extension'}
+                              {rescheduleOpen ? t('closeForm') : t('requestExtension')}
                             </button>
                           )}
                       </div>
@@ -1312,14 +1329,13 @@ export function LoansView({
                         <div className="p-2.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                           <div className="space-y-0.5">
                             <div className="font-medium text-slate-900 dark:text-white">
-                              Reschedule to {activeSelectedLoan.rescheduleRequest.requestedMonths}{' '}
-                              remaining months ·{' '}
+                              {t('rescheduleToMonths', { months: activeSelectedLoan.rescheduleRequest.requestedMonths })} ·{' '}
                               <span className="uppercase font-mono text-[11px]">
                                 {activeSelectedLoan.rescheduleRequest.status}
                               </span>
                             </div>
                             <div className="text-slate-600 dark:text-slate-400">
-                              Reason: {activeSelectedLoan.rescheduleRequest.reason}
+                              {t('reasonPrefix', { reason: activeSelectedLoan.rescheduleRequest.reason })}
                             </div>
                           </div>
                           {isStaff && activeSelectedLoan.rescheduleRequest.status === 'pending' && (
@@ -1333,7 +1349,7 @@ export function LoansView({
                                   }
                                   className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                                 >
-                                  Approve
+                                  {t('approve')}
                                 </button>
                                 <button
                                   type="button"
@@ -1343,12 +1359,12 @@ export function LoansView({
                                   }
                                   className="px-2.5 py-1 rounded border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
                                 >
-                                  Reject
+                                  {t('reject')}
                                 </button>
                               </div>
                             ) : (
                               <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 shrink-0">
-                                Peer / Admin Review Required
+                                {t('peerAdminReview')}
                               </span>
                             )
                           )}
@@ -1373,7 +1389,7 @@ export function LoansView({
                                 required
                                 value={rescheduleMonths}
                                 onChange={(e) => setRescheduleMonths(e.target.value)}
-                                placeholder="Months (1-36)"
+                                placeholder={t('monthsPlaceholder')}
                                 className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                               />
                             </div>
@@ -1384,7 +1400,7 @@ export function LoansView({
                                 minLength={6}
                                 value={rescheduleReason}
                                 onChange={(e) => setRescheduleReason(e.target.value)}
-                                placeholder="Reason for adjusting remaining installment months…"
+                                placeholder={t('rescheduleReasonPlaceholder')}
                                 className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                               />
                             </div>
@@ -1394,7 +1410,7 @@ export function LoansView({
                                 disabled={modalBusy}
                                 className="w-full py-1.5 px-3 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                               >
-                                Submit Request
+                                {t('submitRequest')}
                               </button>
                             </div>
                           </motion.form>
@@ -1415,14 +1431,16 @@ export function LoansView({
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                            Submit Repayment Proof for Installment #{payingInstallment.installmentNumber} (
-                            {formatMoney(payingInstallment.amount, ccy)})
+                            {t('submitRepayHeading', {
+                              num: payingInstallment.installmentNumber,
+                              amount: formatMoney(payingInstallment.amount, ccy),
+                            })}
                           </span>
                           <div className="flex items-center gap-3">
                             <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-teal-700 dark:text-teal-400 cursor-pointer">
                               <Sparkles className="w-3 h-3" aria-hidden="true" />
                               <span>
-                                {scanningRepaySlip ? 'Scanning…' : 'Scan Slip PDF/Photo (AI)'}
+                                {scanningRepaySlip ? t('scanning') : t('scanSlipAi')}
                               </span>
                               <input
                                 type="file"
@@ -1441,14 +1459,14 @@ export function LoansView({
                               onClick={() => setPayingInstallment(null)}
                               className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                             >
-                              Cancel
+                              {t('cancel')}
                             </button>
                           </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                              Channel
+                              {t('channelLabel')}
                             </label>
                             <select
                               value={repayChannel}
@@ -1459,13 +1477,13 @@ export function LoansView({
                               }}
                               className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             >
-                              <option value="mfs">MFS Wallet</option>
-                              <option value="bank">BD Bank</option>
+                              <option value="mfs">{t('mfsWalletShort')}</option>
+                              <option value="bank">{t('bdBankShort')}</option>
                             </select>
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                              {repayChannel === 'mfs' ? 'MFS Wallet' : 'Bangladesh Bank'}
+                              {repayChannel === 'mfs' ? t('mfsWalletShort') : t('bdBankLabel')}
                             </label>
                             <ProviderSelect
                               compact
@@ -1474,34 +1492,34 @@ export function LoansView({
                               onChange={setRepayProvider}
                               placeholder={
                                 repayChannel === 'mfs'
-                                  ? 'Search MFS…'
-                                  : `Search ${BANK_PROVIDERS.length} BD banks…`
+                                  ? t('searchMfsShort')
+                                  : t('searchBdBanksShort', { count: BANK_PROVIDERS.length })
                               }
                             />
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                              Sender Acct / Mobile
+                              {t('senderAcctMobile')}
                             </label>
                             <input
                               type="text"
                               required
                               value={repayAccount}
                               onChange={(e) => setRepayAccount(e.target.value)}
-                              placeholder="017XX-XXXXXX / Acct #"
+                              placeholder={t('senderPlaceholder')}
                               className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             />
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                              Transaction Number
+                              {t('txNumberLabel')}
                             </label>
                             <input
                               type="text"
                               required
                               value={repayRef}
                               onChange={(e) => setRepayRef(e.target.value)}
-                              placeholder="TrxID / Bank Ref No."
+                              placeholder={t('txPlaceholder')}
                               className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             />
                           </div>
@@ -1515,7 +1533,7 @@ export function LoansView({
                               className="inline-flex items-center gap-1 text-[11px] text-teal-700 dark:text-teal-400 hover:underline"
                             >
                               <FileImage className="w-3 h-3" aria-hidden="true" />
-                              <span>Slip attached</span>
+                              <span>{t('slipAttached')}</span>
                               <ExternalLink className="w-3 h-3" aria-hidden="true" />
                             </a>
                           ) : (
@@ -1526,7 +1544,7 @@ export function LoansView({
                             disabled={modalBusy}
                             className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 sm:py-1.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                           >
-                            Review &amp; Submit Installment Receipt
+                            {t('reviewSubmitReceipt')}
                           </button>
                         </div>
                       </motion.form>
@@ -1555,7 +1573,7 @@ export function LoansView({
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <div className="text-xs font-semibold text-slate-900 dark:text-white font-mono">
-                                Installment #{inst.installmentNumber} · {formatShortDate(inst.dueDate)}
+                                {t('installmentRowTitle', { num: inst.installmentNumber })} · {formatShortDate(inst.dueDate)}
                               </div>
                               <div className="mt-0.5">
                                 <StatusText status={inst.status} />
@@ -1583,7 +1601,7 @@ export function LoansView({
                                       rel="noreferrer"
                                       className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5"
                                     >
-                                      <span>{isPdfFileUrl(inst.receiptPhotoUrl) ? 'Slip PDF' : 'Slip'}</span>
+                                      <span>{isPdfFileUrl(inst.receiptPhotoUrl) ? t('slipPdf') : t('slip')}</span>
                                       <ExternalLink className="w-3 h-3" aria-hidden="true" />
                                     </a>
                                   )}
@@ -1591,11 +1609,11 @@ export function LoansView({
                               )}
                               {inst.rejectionNote && (
                                 <div className="text-red-700 dark:text-red-400">
-                                  Correction note: {inst.rejectionNote}
+                                  {t('correctionNotePrefix', { note: inst.rejectionNote })}
                                 </div>
                               )}
                               {!canPay && !canVerify && inst.verifierName && (
-                                <div>Verified by {inst.verifierName}</div>
+                                <div>{t('verifiedBy', { name: inst.verifierName })}</div>
                               )}
                             </div>
                           )}
@@ -1612,7 +1630,7 @@ export function LoansView({
                               }
                               className="w-full min-h-[44px] px-3 py-2 rounded-lg border border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-xs font-semibold cursor-pointer"
                             >
-                              {inst.status === 'overdue' ? 'Pay Overdue Installment' : 'Pay Installment'}
+                              {inst.status === 'overdue' ? t('payOverdueInstallment') : t('payInstallment')}
                             </button>
                           )}
 
@@ -1631,7 +1649,7 @@ export function LoansView({
                                 className="min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                               >
                                 <Check className="w-4 h-4" aria-hidden="true" />
-                                <span>Verify</span>
+                                <span>{t('verify')}</span>
                               </button>
                               <button
                                 type="button"
@@ -1646,7 +1664,7 @@ export function LoansView({
                                 className="min-h-[44px] px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                               >
                                 <X className="w-4 h-4" aria-hidden="true" />
-                                <span>Deny</span>
+                                <span>{t('deny')}</span>
                               </button>
                             </div>
                           )}
@@ -1660,11 +1678,11 @@ export function LoansView({
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
                           <th className="py-2 px-3">#</th>
-                          <th className="py-2 px-3">Due Date</th>
-                          <th className="py-2 px-3 text-right">Amount</th>
-                          <th className="py-2 px-3">Bank / MFS &amp; Transaction Number</th>
-                          <th className="py-2 px-3">Status</th>
-                          <th className="py-2 px-3 text-right">Action</th>
+                          <th className="py-2 px-3">{t('colDueDate')}</th>
+                          <th className="py-2 px-3 text-right">{t('colAmount')}</th>
+                          <th className="py-2 px-3">{t('colBankTx')}</th>
+                          <th className="py-2 px-3">{t('colStatus')}</th>
+                          <th className="py-2 px-3 text-right">{t('colAction')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1708,7 +1726,7 @@ export function LoansView({
                                         rel="noreferrer"
                                         className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5"
                                       >
-                                        <span>{isPdfFileUrl(inst.receiptPhotoUrl) ? 'Slip PDF' : 'Slip'}</span>
+                                        <span>{isPdfFileUrl(inst.receiptPhotoUrl) ? t('slipPdf') : t('slip')}</span>
                                         <ExternalLink className="w-3 h-3" aria-hidden="true" />
                                       </a>
                                     )}
@@ -1718,7 +1736,7 @@ export function LoansView({
                                 )}
                                 {inst.rejectionNote && (
                                   <div className="mt-1 text-[11px] text-red-700 dark:text-red-400">
-                                    Correction note: {inst.rejectionNote}
+                                    {t('correctionNotePrefix', { note: inst.rejectionNote })}
                                   </div>
                                 )}
                               </td>
@@ -1738,7 +1756,7 @@ export function LoansView({
                                     }
                                     className="px-2.5 py-1 rounded border border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium cursor-pointer"
                                   >
-                                    {inst.status === 'overdue' ? 'Pay Overdue' : 'Pay Installment'}
+                                    {inst.status === 'overdue' ? t('payOverdue') : t('payInstallment')}
                                   </button>
                                 )}
                                 {canVerify && (
@@ -1754,7 +1772,7 @@ export function LoansView({
                                         )
                                       }
                                       className="p-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                                      title="Verify payment"
+                                      title={t('verifyTooltip')}
                                     >
                                       <Check className="w-3.5 h-3.5" />
                                     </button>
@@ -1769,7 +1787,7 @@ export function LoansView({
                                         )
                                       }
                                       className="p-1 rounded border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 cursor-pointer"
-                                      title="Deny payment with correction note"
+                                      title={t('denyTooltip')}
                                     >
                                       <X className="w-3.5 h-3.5" />
                                     </button>
@@ -1777,7 +1795,7 @@ export function LoansView({
                                 )}
                                 {!canPay && !canVerify && (
                                   <span className="text-slate-500 dark:text-slate-400">
-                                    {inst.verifierName ? `Verified by ${inst.verifierName}` : '—'}
+                                    {inst.verifierName ? t('verifiedBy', { name: inst.verifierName }) : '—'}
                                   </span>
                                 )}
                               </td>
@@ -1801,7 +1819,7 @@ export function LoansView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

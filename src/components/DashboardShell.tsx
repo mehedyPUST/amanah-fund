@@ -1202,7 +1202,7 @@ export function DashboardShell() {
             layoutId="dash-header-lang-pill"
             className="hidden xl:inline-flex"
           />
-          <LanguageSwitcher variant="compact" className="xl:hidden" />
+          <LanguageSwitcher variant="compact" className="hidden lg:inline-flex xl:hidden" />
 
           <HeaderNotificationBell
             user={user}

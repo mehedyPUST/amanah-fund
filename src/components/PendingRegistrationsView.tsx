@@ -19,6 +19,7 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { MemberSummary, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -57,6 +58,9 @@ interface PendingRegistrationsViewProps {
 }
 
 export function PendingRegistrationsView({ user, onRefresh }: PendingRegistrationsViewProps) {
+  const t = useTranslations('Admin.approving');
+  const tAdmin = useTranslations('Admin');
+  const tCommon = useTranslations('Common');
   const isAdmin = user.role === 'admin';
 
   const [registrations, setRegistrations] = useState<MemberSummary[]>([]);
@@ -105,8 +109,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        t('actionFailedTitle'),
+        err instanceof Error ? err.message : t('unexpectedError')
       );
     } finally {
       setModalBusy(false);
@@ -128,15 +132,13 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     } catch (err) {
       showNotice(
         'red',
-        'Could Not Load Registrations',
-        err instanceof Error
-          ? err.message
-          : 'Failed to load pending user registrations from the database.'
+        t('loadFailedTitle'),
+        err instanceof Error ? err.message : t('loadFailedDesc')
       );
     } finally {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   useEffect(() => {
     void loadPendingRegistrations();
@@ -148,20 +150,19 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Approve & Issue Activation Codes (${member.name})?`,
-      description:
-        'Approving assigns the official Amanah Member ID below and generates a unique, never-before-used 6-digit Activation OTP. Both codes will be emailed to the applicant and saved in this panel for phone assistance.',
+      title: t('approveConfirmTitle', { name: member.name }),
+      description: t('approveConfirmDesc'),
       details: [
-        { label: 'Applicant', value: member.name },
-        { label: 'Email', value: member.email },
-        ...(reg?.nid ? [{ label: 'National ID (NID)', value: reg.nid }] : []),
-        ...(reg?.mobile ? [{ label: 'Mobile', value: reg.mobile }] : []),
+        { label: t('applicant'), value: member.name },
+        { label: t('email'), value: member.email },
+        ...(reg?.nid ? [{ label: t('nid'), value: reg.nid }] : []),
+        ...(reg?.mobile ? [{ label: t('mobile'), value: reg.mobile }] : []),
       ],
-      inputLabel: 'Official Member ID to Assign',
-      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputLabel: t('memberIdInputLabel'),
+      inputPlaceholder: t('memberIdInputPlaceholder'),
       inputRequired: true,
       initialInputValue: defaultMemberCode,
-      confirmLabel: 'Generate Codes & Send Email',
+      confirmLabel: t('generateAndSend'),
       run: async (memberCodeInput: string) => {
         setBusyAction({ id: member.id, type: 'approve' });
         try {
@@ -176,17 +177,27 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           await onRefresh();
           showNotice(
             'emerald',
-            'Activation Codes Issued',
+            t('codesIssuedTitle'),
             res.emailSent
-              ? `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Both codes have been emailed to ${member.email} and remain visible in this panel for phone support.`
-              : `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Email delivery could not complete${res.emailReason ? ` (${res.emailReason})` : ''}; you can share both codes directly from this panel over the phone or retry email.`,
+              ? t('codesIssuedEmailSent', {
+                  code: res.memberCode,
+                  name: member.name,
+                  email: member.email,
+                })
+              : t('codesIssuedEmailFailed', {
+                  code: res.memberCode,
+                  name: member.name,
+                  reason: res.emailReason ? ` (${res.emailReason})` : '',
+                }),
             [
-              { label: 'Applicant', value: member.name },
-              { label: 'Official Member ID', value: res.memberCode },
-              { label: '6-Digit Activation OTP', value: res.otp },
+              { label: t('applicant'), value: member.name },
+              { label: tAdmin('officialMemberId'), value: res.memberCode },
+              { label: tAdmin('activationOtp'), value: res.otp },
               {
-                label: 'Email Dispatch',
-                value: res.emailSent ? `Sent to ${member.email}` : 'Not Delivered (Use Phone / Resend)',
+                label: t('emailDispatch'),
+                value: res.emailSent
+                  ? t('sentToEmail', { email: member.email })
+                  : t('notDeliveredPhone'),
               },
             ]
           );
@@ -205,20 +216,23 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       await onRefresh();
       showNotice(
         res.emailSent ? 'emerald' : 'amber',
-        res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+        res.emailSent ? t('emailResentTitle') : t('emailDeliveryFailedTitle'),
         res.emailSent
-          ? `Resent Member ID (${res.memberCode}) and 6-digit Activation OTP to ${member.email}.`
-          : `Could not deliver email to ${member.email}${res.emailReason ? ` (${res.emailReason})` : ''}. You can still read the Member ID and 6-digit OTP below to the member over the phone.`,
+          ? t('emailResentDesc', { code: res.memberCode, email: member.email })
+          : t('emailResendFailedDesc', {
+              email: member.email,
+              reason: res.emailReason ? ` (${res.emailReason})` : '',
+            }),
         [
-          { label: 'Official Member ID', value: res.memberCode },
-          { label: '6-Digit Activation OTP', value: res.otp },
+          { label: tAdmin('officialMemberId'), value: res.memberCode },
+          { label: tAdmin('activationOtp'), value: res.otp },
         ]
       );
     } catch (err) {
       showNotice(
         'red',
-        'Could Not Resend Email',
-        err instanceof Error ? err.message : 'Failed to resend activation email.'
+        t('resendFailedTitle'),
+        err instanceof Error ? err.message : t('resendFailedDesc')
       );
     } finally {
       setBusyAction(null);
@@ -232,17 +246,15 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       mode: 'confirm',
       tone: 'red',
       title: isAwaitingActivation
-        ? `Cancel Unactivated Account (${member.name})?`
-        : `Reject Application (${member.name})?`,
-      description: isAwaitingActivation
-        ? 'Removing cancels this unactivated membership and invalidates its activation credentials permanently.'
-        : 'Rejecting permanently declines this pending registration and removes pending access.',
+        ? t('cancelUnactivatedTitle', { name: member.name })
+        : t('rejectAppTitle', { name: member.name }),
+      description: isAwaitingActivation ? t('cancelUnactivatedDesc') : t('rejectAppDesc'),
       details: [
-        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
-        { label: 'Email', value: member.email },
-        ...(reg?.nid ? [{ label: 'National ID (NID)', value: reg.nid }] : []),
+        { label: t('applicant'), value: `${member.name} (${member.memberCode})` },
+        { label: t('email'), value: member.email },
+        ...(reg?.nid ? [{ label: t('nid'), value: reg.nid }] : []),
       ],
-      confirmLabel: isAwaitingActivation ? 'Remove Unactivated Account' : 'Reject Application',
+      confirmLabel: isAwaitingActivation ? t('removeUnactivatedBtn') : t('rejectAppBtn'),
       run: async () => {
         setBusyAction({ id: member.id, type: 'reject' });
         try {
@@ -251,8 +263,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           await onRefresh();
           showNotice(
             'amber',
-            isAwaitingActivation ? 'Unactivated Account Removed' : 'Registration Rejected',
-            `Removed pending account for ${member.name} (${member.memberCode}).`
+            isAwaitingActivation ? t('unactivatedRemovedTitle') : t('regRejectedTitle'),
+            t('removedAccountDesc', { name: member.name, code: member.memberCode })
           );
         } finally {
           setBusyAction(null);
@@ -308,11 +320,10 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Administrator Access Required
+              {t('adminRequiredTitle')}
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Pending user registration records and activation OTP codes contain sensitive KYC
-              details restricted strictly to cooperative administrators.
+              {t('adminRequiredDesc')}
             </p>
           </div>
         </div>
@@ -333,17 +344,16 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>User Approving &amp; Activation Code Panel</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Member Approval Queue{' '}
+              {t('heading')}{' '}
               <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400">
                 ({registrations.length})
               </span>
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              Review new applicants to issue their official Member ID &amp; unique 6-digit
-              Activation OTP, or look up issued codes here if a member calls by phone.
+              {t('subtitle')}
             </p>
           </div>
 
@@ -357,8 +367,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search name, Member ID, OTP, NID…"
-                aria-label="Search pending registrations"
+                placeholder={t('searchPlaceholder')}
+                aria-label={t('searchAria')}
                 className="w-full sm:w-64 min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
               />
             </div>
@@ -373,7 +383,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
                 aria-hidden="true"
               />
-              <span>Refresh Queue</span>
+              <span>{t('refreshQueue')}</span>
             </button>
           </div>
         </div>
@@ -382,11 +392,11 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/70 dark:border-slate-800">
           {(
             [
-              { id: 'all', label: 'All Queue', count: registrations.length },
-              { id: 'pending_approval', label: 'Pending Review', count: pendingReviewCount },
+              { id: 'all', label: t('filterAll'), count: registrations.length },
+              { id: 'pending_approval', label: t('filterPending'), count: pendingReviewCount },
               {
                 id: 'pending_activation',
-                label: 'Awaiting Member Activation',
+                label: t('filterAwaiting'),
                 count: awaitingActivationCount,
               },
             ] as const
@@ -439,19 +449,19 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
           </div>
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            No Pending User Registrations
+            {t('emptyTitle')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            All applicants have been reviewed and activated.
+            {t('emptyDesc')}
           </p>
         </section>
       ) : filteredRegistrations.length === 0 ? (
         <section className="amanah-card-violet border rounded-2xl p-8 text-center space-y-2 shadow-xs">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            No Matching Applicants
+            {t('noMatchTitle')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            No registration in this filter matches your query.
+            {t('noMatchDesc')}
           </p>
           <button
             type="button"
@@ -461,7 +471,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             }}
             className="mt-2 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
           >
-            Reset Filters
+            {t('resetFilters')}
           </button>
         </section>
       ) : (
@@ -495,12 +505,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         href={photoUrl}
                         target="_blank"
                         rel="noreferrer"
-                        title="Open applicant photo in new tab"
+                        title={t('openPhotoTitle')}
                         className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 block"
                       >
                         <img
                           src={photoUrl}
-                          alt={`${applicant.name} portrait`}
+                          alt={t('portraitAlt', { name: applicant.name })}
                           referrerPolicy="no-referrer"
                           onError={() =>
                             setBrokenImages((prev) => ({ ...prev, [photoKey]: true }))
@@ -531,11 +541,11 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         {isAwaitingActivation ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                             <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Awaiting Member Activation</span>
+                            <span>{t('awaitingMemberActivation')}</span>
                           </span>
                         ) : (
                           <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                            Pending Admin Review
+                            {t('pendingAdminReview')}
                           </span>
                         )}
                       </div>
@@ -547,12 +557,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           <>
                             <span aria-hidden="true">·</span>
                             <span className="font-sans font-medium text-emerald-700 dark:text-emerald-400">
-                              Google Verified
+                              {t('googleVerified')}
                             </span>
                           </>
                         )}
                         <span aria-hidden="true">·</span>
-                        <span>Applied {formatDateTime(applicant.joinedAt)}</span>
+                        <span>{t('appliedAt', { date: formatDateTime(applicant.joinedAt) })}</span>
                       </div>
                     </div>
                   </div>
@@ -567,10 +577,10 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
                         {isBusy && busyAction?.type === 'reject'
-                          ? 'Removing…'
+                          ? t('removing')
                           : isAwaitingActivation
-                            ? 'Remove'
-                            : 'Reject'}
+                            ? t('remove')
+                            : t('reject')}
                       </span>
                     </button>
 
@@ -583,7 +593,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       >
                         <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>
-                          {isBusy && busyAction?.type === 'resend' ? 'Sending…' : 'Resend Email'}
+                          {isBusy && busyAction?.type === 'resend' ? t('sending') : t('resendEmail')}
                         </span>
                       </button>
                     ) : (
@@ -596,8 +606,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>
                           {isBusy && busyAction?.type === 'approve'
-                            ? 'Issuing Codes…'
-                            : 'Approve & Issue Codes'}
+                            ? t('issuingCodes')
+                            : t('approveIssueCodes')}
                         </span>
                       </button>
                     )}
@@ -610,10 +620,13 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2 text-xs font-semibold text-indigo-800 dark:text-indigo-300">
                         <Phone className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                        <span>Activation Codes (Admin &amp; Phone Support Lookup)</span>
+                        <span>{t('codesLookupHeader')}</span>
                       </div>
                       <span className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-400">
-                        Issued by {act.issuedByName} · {formatDateTime(act.issuedAt)}
+                        {t('issuedBy', {
+                          name: act.issuedByName,
+                          date: formatDateTime(act.issuedAt),
+                        })}
                       </span>
                     </div>
 
@@ -621,7 +634,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-950 px-3.5 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <div className="text-[10px] uppercase tracking-wider font-medium text-slate-500 dark:text-slate-400">
-                            Official Member ID
+                            {tAdmin('officialMemberId')}
                           </div>
                           <div className="font-mono tabular-nums text-sm font-bold text-emerald-700 dark:text-emerald-400 mt-0.5 truncate">
                             {act.memberCode}
@@ -631,7 +644,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           type="button"
                           onClick={() => void handleCopyText(`code-${applicant.id}`, act.memberCode)}
                           className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer shrink-0"
-                          title="Copy Member ID"
+                          title={tAdmin('copyMemberId')}
                         >
                           {copiedKey === `code-${applicant.id}` ? (
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -644,10 +657,10 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-950 px-3.5 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <div className="text-[10px] uppercase tracking-wider font-medium text-slate-500 dark:text-slate-400">
-                            6-Digit Activation OTP
+                            {tAdmin('activationOtp')}
                           </div>
                           <div className="font-mono tabular-nums text-sm font-bold tracking-[0.22em] text-indigo-700 dark:text-indigo-300 mt-0.5">
-                            {act.otp ? (otpVisible ? act.otp : '••••••') : 'Unavailable'}
+                            {act.otp ? (otpVisible ? act.otp : '••••••') : t('unavailable')}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -662,7 +675,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                                   }))
                                 }
                                 className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                                title={otpVisible ? 'Hide OTP' : 'Reveal OTP'}
+                                title={otpVisible ? t('hideOtp') : t('revealOtp')}
                               >
                                 {otpVisible ? (
                                   <EyeOff className="w-3.5 h-3.5" />
@@ -674,7 +687,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                                 type="button"
                                 onClick={() => void handleCopyText(`otp-${applicant.id}`, act.otp)}
                                 className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                                title="Copy 6-Digit OTP"
+                                title={t('copyOtpTitle')}
                               >
                                 {copiedKey === `otp-${applicant.id}` ? (
                                   <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -691,11 +704,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         <div className="text-[11px] text-slate-600 dark:text-slate-400">
                           {act.emailSent ? (
                             <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                              Email sent{act.emailSentAt ? ` · ${formatDateTime(act.emailSentAt)}` : ''}
+                              {t('emailSentLabel')}
+                              {act.emailSentAt ? ` · ${formatDateTime(act.emailSentAt)}` : ''}
                             </span>
                           ) : (
                             <span className="text-amber-700 dark:text-amber-400 font-medium">
-                              Email not delivered
+                              {t('emailNotDelivered')}
                               {act.emailError ? ` (${act.emailError})` : ''}
                             </span>
                           )}
@@ -706,7 +720,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                             onClick={() =>
                               void handleCopyText(
                                 `both-${applicant.id}`,
-                                `Amanah Membership Activation Codes\nMember ID: ${act.memberCode}\n6-Digit Activation OTP: ${act.otp}`
+                                t('copyBothTemplate', { code: act.memberCode, otp: act.otp })
                               )
                             }
                             className="w-full py-1.5 px-2.5 rounded-md border border-slate-200 dark:border-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 cursor-pointer"
@@ -714,12 +728,12 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                             {copiedKey === `both-${applicant.id}` ? (
                               <>
                                 <Check className="w-3 h-3 text-emerald-600" />
-                                <span>Copied Both Codes</span>
+                                <span>{t('copiedBoth')}</span>
                               </>
                             ) : (
                               <>
                                 <Copy className="w-3 h-3" />
-                                <span>Copy Both for Phone</span>
+                                <span>{t('copyBothPhone')}</span>
                               </>
                             )}
                           </button>
@@ -734,21 +748,21 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                   {reg ? (
                     <dl className="xl:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 text-xs">
                       <div>
-                        <dt className="text-slate-500 dark:text-slate-400">National ID (NID)</dt>
+                        <dt className="text-slate-500 dark:text-slate-400">{t('nid')}</dt>
                         <dd className="mt-1 font-mono font-semibold tabular-nums text-slate-900 dark:text-white break-all">
                           {reg.nid}
                         </dd>
                       </div>
 
                       <div>
-                        <dt className="text-slate-500 dark:text-slate-400">Mobile Number</dt>
+                        <dt className="text-slate-500 dark:text-slate-400">{t('mobileNumber')}</dt>
                         <dd className="mt-1 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                           {reg.mobile}
                         </dd>
                       </div>
 
                       <div>
-                        <dt className="text-slate-500 dark:text-slate-400">Date of Birth</dt>
+                        <dt className="text-slate-500 dark:text-slate-400">{t('dob')}</dt>
                         <dd className="mt-1 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                           {reg.dateOfBirth}
                         </dd>
@@ -756,7 +770,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
                       <div>
                         <dt className="text-slate-500 dark:text-slate-400">
-                          Reference (Existing Member)
+                          {t('referenceMember')}
                         </dt>
                         <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
                           {reg.referenceMemberName}
@@ -764,7 +778,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       </div>
 
                       <div>
-                        <dt className="text-slate-500 dark:text-slate-400">Occupation</dt>
+                        <dt className="text-slate-500 dark:text-slate-400">{t('occupation')}</dt>
                         <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
                           {reg.occupation}
                         </dd>
@@ -772,7 +786,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
                       <div>
                         <dt className="text-slate-500 dark:text-slate-400">
-                          Company / Organization
+                          {t('companyOrg')}
                         </dt>
                         <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
                           {reg.companyOrganization}
@@ -781,14 +795,14 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
                       <div className="col-span-2 lg:col-span-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
-                          <dt className="text-slate-500 dark:text-slate-400">Present Address</dt>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('presentAddress')}</dt>
                           <dd className="mt-1 text-slate-900 dark:text-slate-100 leading-relaxed">
                             {reg.presentAddress}
                           </dd>
                         </div>
 
                         <div>
-                          <dt className="text-slate-500 dark:text-slate-400">Permanent Address</dt>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('permanentAddress')}</dt>
                           <dd className="mt-1 text-slate-900 dark:text-slate-100 leading-relaxed">
                             {reg.permanentAddress}
                           </dd>
@@ -803,7 +817,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                     </dl>
                   ) : (
                     <div className="xl:col-span-8 text-xs text-slate-500 dark:text-slate-400 flex items-center">
-                      Extended KYC registration payload was not attached to this account record.
+                      {t('noKycAttached')}
                     </div>
                   )}
 
@@ -811,7 +825,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                   <div className="xl:col-span-4 xl:border-l xl:border-slate-100 dark:xl:border-slate-800 xl:pl-6 grid grid-cols-2 gap-3 text-xs">
                     <div className="space-y-1.5">
                       <div className="text-slate-500 dark:text-slate-400 font-medium">
-                        Applicant Photo
+                        {t('applicantPhoto')}
                       </div>
                       {photoUrl && !brokenImages[photoKey] ? (
                         <a
@@ -822,7 +836,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         >
                           <img
                             src={photoUrl}
-                            alt={`${applicant.name} verification portrait`}
+                            alt={t('verificationPortraitAlt', { name: applicant.name })}
                             referrerPolicy="no-referrer"
                             onError={() =>
                               setBrokenImages((prev) => ({ ...prev, [photoKey]: true }))
@@ -835,14 +849,14 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </a>
                       ) : (
                         <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-center p-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          No photo available
+                          {t('noPhoto')}
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
                       <div className="text-slate-500 dark:text-slate-400 font-medium">
-                        Agreement Paper
+                        {t('agreementPaper')}
                       </div>
                       {agreementUrl && !brokenImages[agreementKey] ? (
                         isPdfFileUrl(agreementUrl) ? (
@@ -857,7 +871,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                               aria-hidden="true"
                             />
                             <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1">
-                              <span>View PDF</span>
+                              <span>{t('viewPdf')}</span>
                               <ExternalLink className="w-3 h-3" aria-hidden="true" />
                             </span>
                           </a>
@@ -870,7 +884,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                           >
                             <img
                               src={agreementUrl}
-                              alt={`${applicant.name} signed agreement paper`}
+                              alt={t('agreementAlt', { name: applicant.name })}
                               referrerPolicy="no-referrer"
                               onError={() =>
                                 setBrokenImages((prev) => ({ ...prev, [agreementKey]: true }))
@@ -888,7 +902,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                             className="w-4 h-4 text-slate-400 dark:text-slate-500"
                             aria-hidden="true"
                           />
-                          <span>Optional (none)</span>
+                          <span>{t('optionalNone')}</span>
                         </div>
                       )}
                     </div>
@@ -907,7 +921,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

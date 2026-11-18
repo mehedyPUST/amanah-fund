@@ -24,6 +24,10 @@ export function LanguageSwitcher({
 }: LanguageSwitcherProps) {
   const { locale, setLocale } = useCoopSession();
   const t = useTranslations('Common');
+  const hasBaseDisplayClass = /(?:^|\s)(hidden|flex|inline-flex|block|inline-block|grid)(?:\s|$)/.test(
+    className
+  );
+  const baseDisplayClass = hasBaseDisplayClass ? '' : 'inline-flex';
 
   if (variant === 'compact') {
     const nextLocale: AppLocale = locale === 'en' ? 'bn' : 'en';
@@ -33,7 +37,7 @@ export function LanguageSwitcher({
         onClick={() => setLocale(nextLocale)}
         title={t('switchLanguage')}
         aria-label={t('switchLanguage')}
-        className={`inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+        className={`${baseDisplayClass} items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
           surface === 'inverted'
             ? 'border-white/25 bg-white/15 hover:bg-white/25 text-white'
             : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-700 dark:hover:text-emerald-300'
@@ -56,7 +60,7 @@ export function LanguageSwitcher({
     <div
       role="group"
       aria-label={t('switchLanguage')}
-      className={`inline-flex items-center p-0.5 rounded-lg border shrink-0 ${
+      className={`${baseDisplayClass} items-center p-0.5 rounded-lg border shrink-0 ${
         surface === 'inverted'
           ? 'border-white/25 bg-white/12'
           : 'border-slate-200/85 dark:border-slate-700/85 bg-slate-100/85 dark:bg-slate-950/75'

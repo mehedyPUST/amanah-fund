@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { Target } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import { useCoopSession } from './AppProviders.tsx';
 import type { Contribution, DashboardOverview, FundConfig } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
@@ -43,6 +44,7 @@ interface GoalTooltipProps {
   active?: boolean;
   label?: string;
   currency: FundConfig['currency'];
+  formatGoalPct: (pct: number) => string;
   payload?: Array<{
     name?: string;
     value?: number;
@@ -51,7 +53,7 @@ interface GoalTooltipProps {
   }>;
 }
 
-function CollectionGoalTooltip({ active, payload, label, currency }: GoalTooltipProps) {
+function CollectionGoalTooltip({ active, payload, label, currency, formatGoalPct }: GoalTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0]?.payload;
 
@@ -69,7 +71,7 @@ function CollectionGoalTooltip({ active, payload, label, currency }: GoalTooltip
                   : 'text-rose-700 dark:text-rose-400'
             }`}
           >
-            {point.attainmentPct}% of goal
+            {formatGoalPct(point.attainmentPct)}
           </span>
         )}
       </div>
@@ -125,6 +127,7 @@ export function ManagerCollectionGoalChart({
   treasury,
   loading = false,
 }: ManagerCollectionGoalChartProps) {
+  const t = useTranslations('Charts');
   const { darkMode } = useCoopSession();
   const ccy = config?.currency || 'BDT';
   const [range, setRange] = useState<'6m' | '12m' | 'all'>('6m');
@@ -230,7 +233,7 @@ export function ManagerCollectionGoalChart({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      aria-label="Monthly Collection Progress vs Target Goals"
+      aria-label={t('collectionGoalAria')}
       className="amanah-card-teal border rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5 transition-all duration-200"
     >
       {/* Header & Controls */}
@@ -241,26 +244,26 @@ export function ManagerCollectionGoalChart({
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
                 <Target className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               </span>
-              <span>Treasury Collection Analytics</span>
+              <span>{t('collectionAnalyticsBadge')}</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Monthly Collection Progress vs. Target Goals
+              {t('collectionAnalyticsTitle')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-              Goal: {formatMoney(monthlyTarget, ccy)}/mo
+              {t('goalPerMonth', { amount: formatMoney(monthlyTarget, ccy) })}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <div
               role="group"
-              aria-label="Chart comparison mode"
+              aria-label={t('comparisonModeAria')}
               className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
             >
               {(
                 [
-                  { id: 'monthly', label: 'Monthly' },
-                  { id: 'cumulative', label: 'Cumulative' },
+                  { id: 'monthly', label: t('modeMonthly') },
+                  { id: 'cumulative', label: t('modeCumulative') },
                 ] as const
               ).map((tab) => {
                 const active = mode === tab.id;
@@ -290,14 +293,14 @@ export function ManagerCollectionGoalChart({
 
             <div
               role="group"
-              aria-label="Chart range"
+              aria-label={t('chartRangeAria')}
               className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
             >
               {(
                 [
-                  { id: '6m', label: '6M' },
-                  { id: '12m', label: '12M' },
-                  { id: 'all', label: 'All' },
+                  { id: '6m', label: t('range6m') },
+                  { id: '12m', label: t('range12m') },
+                  { id: 'all', label: t('rangeAll') },
                 ] as const
               ).map((r) => {
                 const active = range === r.id;
@@ -342,53 +345,55 @@ export function ManagerCollectionGoalChart({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                Current Month Progress
+                {t('currentMonthProgress')}
               </div>
               <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(summary.currentMonthCollected, ccy)}
               </div>
               <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                {summary.currentMonthPct}% of target
+                {t('percentOfTarget', { pct: summary.currentMonthPct })}
               </div>
             </div>
 
             <div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                Monthly Goal Target
+                {t('monthlyGoalTarget')}
               </div>
               <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
                 {formatMoney(monthlyTarget, ccy)}
               </div>
               <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                {treasury?.thisMonthClearanceClearedMembers ?? 0}/
-                {treasury?.thisMonthClearanceTotalMembers ??
-                  treasury?.contributingMembersCount ??
-                  0}{' '}
-                members cleared
+                {t('membersCleared', {
+                  cleared: treasury?.thisMonthClearanceClearedMembers ?? 0,
+                  total:
+                    treasury?.thisMonthClearanceTotalMembers ??
+                    treasury?.contributingMembersCount ??
+                    0,
+                })}
               </div>
             </div>
 
             <div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                Period Goal Attainment
+                {t('periodGoalAttainment')}
               </div>
               <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
                 {summary.windowAttainmentPct}%
               </div>
               <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                {summary.monthsMetCount} of {visibleSeries.length} months met
+                {t('monthsMet', { met: summary.monthsMetCount, total: visibleSeries.length })}
               </div>
             </div>
 
             <div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                Pending in Period
+                {t('pendingInPeriod')}
               </div>
               <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
                 {formatMoney(summary.windowPending, ccy)}
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                Awaiting manager check
+                {t('awaitingManagerCheck')}
               </div>
             </div>
           </div>
@@ -431,7 +436,12 @@ export function ManagerCollectionGoalChart({
               />
               <Tooltip
                 cursor={hoverCursor}
-                content={<CollectionGoalTooltip currency={ccy} />}
+                content={
+                  <CollectionGoalTooltip
+                    currency={ccy}
+                    formatGoalPct={(pct) => t('percentOfGoal', { pct })}
+                  />
+                }
               />
               <Legend
                 wrapperStyle={{
@@ -445,7 +455,7 @@ export function ManagerCollectionGoalChart({
                 <>
                   <Bar
                     dataKey="approvedCollected"
-                    name="Approved Collected"
+                    name={t('seriesApprovedCollected')}
                     stackId="collection"
                     fill="#059669"
                     radius={[0, 0, 0, 0]}
@@ -453,7 +463,7 @@ export function ManagerCollectionGoalChart({
                   />
                   <Bar
                     dataKey="pendingReview"
-                    name="Pending Verification"
+                    name={t('seriesPendingVerification')}
                     stackId="collection"
                     fill="#f59e0b"
                     radius={[4, 4, 0, 0]}
@@ -462,7 +472,7 @@ export function ManagerCollectionGoalChart({
                   <Line
                     type="monotone"
                     dataKey="targetGoal"
-                    name="Cooperative Target Goal"
+                    name={t('seriesCooperativeTargetGoal')}
                     stroke="#6366f1"
                     strokeWidth={2}
                     strokeDasharray="5 4"
@@ -480,7 +490,7 @@ export function ManagerCollectionGoalChart({
                   <Area
                     type="monotone"
                     dataKey="cumulativeCollected"
-                    name="Cumulative Collected"
+                    name={t('seriesCumulativeCollected')}
                     stroke="#059669"
                     strokeWidth={2.25}
                     fill="url(#mgrCollectedAreaGrad)"
@@ -488,7 +498,7 @@ export function ManagerCollectionGoalChart({
                   <Line
                     type="monotone"
                     dataKey="cumulativeTarget"
-                    name="Cumulative Target Goal"
+                    name={t('seriesCumulativeTargetGoal')}
                     stroke="#6366f1"
                     strokeWidth={2}
                     strokeDasharray="5 4"

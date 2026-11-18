@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import { useCoopSession } from './AppProviders.tsx';
 import type {
   Contribution,
@@ -97,6 +98,7 @@ export function AuditTrendsCharts({
   currency,
   loading = false,
 }: AuditTrendsChartsProps) {
+  const t = useTranslations('Charts');
   const { darkMode } = useCoopSession();
   const [chartView, setChartView] = useState<'both' | 'contributions' | 'loans'>('both');
   const axisFill = darkMode ? '#94a3b8' : '#475569';
@@ -218,19 +220,19 @@ export function AuditTrendsCharts({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
               <BarChart3 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
-            <span>Time-Series Audit Telemetry</span>
+            <span>{t('auditTelemetryBadge')}</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Audit Analytics: Contribution Trends & Loan Volume Over Time
+            {t('auditAnalyticsTitle')}
           </h2>
         </div>
 
         <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
           {(
             [
-              { id: 'both', label: 'Combined View' },
-              { id: 'contributions', label: 'Contributions' },
-              { id: 'loans', label: 'Loan Volume' },
+              { id: 'both', label: t('tabCombinedView') },
+              { id: 'contributions', label: t('tabContributions') },
+              { id: 'loans', label: t('tabLoanVolume') },
             ] as const
           ).map((tab) => {
             const active = chartView === tab.id;
@@ -273,7 +275,7 @@ export function AuditTrendsCharts({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 pt-1 border-t border-slate-100 dark:border-slate-800">
           <div className="pt-2 sm:pt-3 min-w-0">
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Cumulative Approved Contributions
+              {t('cumulativeApprovedContributions')}
             </div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(totals.totalApprovedContrib, currency)}
@@ -281,7 +283,7 @@ export function AuditTrendsCharts({
           </div>
           <div className="pt-2 sm:pt-3 min-w-0">
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Cumulative Qard Hasan Loan Volume
+              {t('cumulativeLoanVolume')}
             </div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
               {formatMoney(totals.totalLoanVol, currency)}
@@ -289,7 +291,7 @@ export function AuditTrendsCharts({
           </div>
           <div className="pt-2 sm:pt-3 col-span-2 sm:col-span-1 min-w-0">
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Verified Repayments vs Volume
+              {t('verifiedRepaymentsVsVolume')}
             </div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(totals.totalRepaid, currency)}{' '}
@@ -308,7 +310,7 @@ export function AuditTrendsCharts({
         </div>
       ) : chartData.length === 0 ? (
         <div className="h-60 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-          No monthly contribution or loan history available to plot yet.
+          {t('noAuditHistory')}
         </div>
       ) : (
         <div
@@ -320,10 +322,10 @@ export function AuditTrendsCharts({
             <div className="space-y-3 min-w-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Monthly Contribution Trends
+                  {t('monthlyContributionTrends')}
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Monthly inflow & cumulative pool
+                  {t('monthlyInflowAndPool')}
                 </span>
               </div>
 
@@ -365,21 +367,21 @@ export function AuditTrendsCharts({
                     <Area
                       type="monotone"
                       dataKey="cumulativeContributions"
-                      name="Cumulative Contributions"
+                      name={t('seriesCumulativeContributions')}
                       stroke="#059669"
                       strokeWidth={2}
                       fill="url(#contribAreaGrad)"
                     />
                     <Bar
                       dataKey="monthlyContributions"
-                      name="Approved Monthly"
+                      name={t('seriesApprovedMonthly')}
                       fill="#10b981"
                       radius={[4, 4, 0, 0]}
                       barSize={20}
                     />
                     <Bar
                       dataKey="pendingContributions"
-                      name="Pending Review"
+                      name={t('seriesPendingReview')}
                       fill="#f59e0b"
                       radius={[4, 4, 0, 0]}
                       barSize={14}
@@ -394,10 +396,10 @@ export function AuditTrendsCharts({
             <div className="space-y-3 min-w-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Total Loan Volume Over Time
+                  {t('totalLoanVolumeOverTime')}
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Monthly issued, repaid & cumulative volume
+                  {t('monthlyIssuedRepaidVolume')}
                 </span>
               </div>
 
@@ -432,14 +434,14 @@ export function AuditTrendsCharts({
                     <Legend wrapperStyle={legendStyle} />
                     <Bar
                       dataKey="monthlyLoanVolume"
-                      name="Monthly Loan Volume"
+                      name={t('seriesMonthlyLoanVolume')}
                       fill="#d97706"
                       radius={[4, 4, 0, 0]}
                       barSize={20}
                     />
                     <Bar
                       dataKey="monthlyRepaid"
-                      name="Monthly Repaid"
+                      name={t('seriesMonthlyRepaid')}
                       fill="#0d9488"
                       radius={[4, 4, 0, 0]}
                       barSize={18}
@@ -447,7 +449,7 @@ export function AuditTrendsCharts({
                     <Line
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
-                      name="Cumulative Loan Volume"
+                      name={t('seriesCumulativeLoanVolume')}
                       stroke="#6366f1"
                       strokeWidth={2}
                       dot={{ r: 3, fill: '#6366f1' }}

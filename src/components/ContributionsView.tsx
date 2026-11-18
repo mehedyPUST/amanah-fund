@@ -13,6 +13,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { Contribution, FundConfig, PublicUser, ReceiptAiExtraction } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -90,6 +91,8 @@ export function ContributionsView({
   onViewMemberProfile,
   onRefresh,
 }: ContributionsViewProps) {
+  const t = useTranslations('Contributions');
+  const tCommon = useTranslations('Common');
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isReviewer = user.role === 'admin' || user.role === 'manager';
@@ -163,8 +166,8 @@ export function ContributionsView({
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        t('actionFailed'),
+        err instanceof Error ? err.message : t('unexpectedError')
       );
     } finally {
       setModalBusy(false);
@@ -200,17 +203,15 @@ export function ContributionsView({
           setAmount(String(ext.amount));
         }
         setReceiptNotice(
-          `Gemini AI extracted (${ext.confidence} confidence): ${ext.summary}`
+          t('aiExtracted', { confidence: ext.confidence, summary: ext.summary })
         );
       } else if (uploadRes.status === 'fulfilled') {
-        setReceiptNotice(
-          'Receipt file attached. Verify Transaction Number and sender account manually.'
-        );
+        setReceiptNotice(t('receiptAttachedManual'));
       } else {
         showNotice(
           'red',
-          'Receipt Upload Failed',
-          'Could not upload receipt PDF or image. Please check file size (<10 MB) and try again.'
+          t('receiptUploadFailed'),
+          t('receiptUploadFailedDesc')
         );
       }
     } finally {
@@ -229,14 +230,14 @@ export function ContributionsView({
     e.preventDefault();
     const numericAmount = Number(amount);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      showNotice('red', 'Invalid Amount', 'Please enter a valid positive contribution amount.');
+      showNotice('red', t('invalidAmount'), t('invalidAmountDesc'));
       return;
     }
     if (!senderAccount.trim() || !referenceId.trim()) {
       showNotice(
         'red',
-        'Missing Transfer Proof',
-        'Please enter both your sender account/mobile number and the Transaction Number.'
+        t('missingTransferProof'),
+        t('missingTransferProofDesc')
       );
       return;
     }
@@ -249,17 +250,16 @@ export function ContributionsView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Confirm Contribution Deposit Submission',
-      description:
-        'Verify your payment details before encrypting with AES-256-GCM and routing to the Manager Desk for approval.',
+      title: t('confirmDepositTitle'),
+      description: t('confirmDepositDesc'),
       details: [
-        { label: 'Billing Month(s)', value: monthsLabel },
-        { label: 'Total Deposit', value: formatMoney(numericAmount, ccy) },
-        { label: 'Channel & Provider', value: `${channel.toUpperCase()} · ${providerName}` },
-        { label: 'Sender Account', value: senderAccount.trim() },
-        { label: 'Transaction Number', value: referenceId.trim() },
+        { label: t('detailBillingMonths'), value: monthsLabel },
+        { label: t('detailTotalDeposit'), value: formatMoney(numericAmount, ccy) },
+        { label: t('detailChannelProvider'), value: `${channel.toUpperCase()} · ${providerName}` },
+        { label: t('detailSenderAccount'), value: senderAccount.trim() },
+        { label: t('detailTxNumber'), value: referenceId.trim() },
       ],
-      confirmLabel: 'Submit Contribution',
+      confirmLabel: t('submitContributionBtn'),
       run: async () => {
         const countMonths = effectiveBillingMonths.length;
         await api.submitContribution({
@@ -287,9 +287,9 @@ export function ContributionsView({
         showNotice(
           'emerald',
           countMonths > 1
-            ? `${countMonths}-Month Advance Contribution Submitted`
-            : 'Contribution Request Submitted',
-          'Your deposit reference is AES-256-GCM encrypted and awaiting Manager approval. Fund balance updates upon approval.'
+            ? t('advanceSubmittedTitle', { count: countMonths })
+            : t('submittedTitle'),
+          t('submittedDesc')
         );
       },
     });
@@ -301,27 +301,30 @@ export function ContributionsView({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Approve Contribution (${item.memberName})`,
-        description:
-          'Approving verifies the Transaction Number and adds this deposit directly to the cooperative fund balance.',
+        title: t('approveTitle', { name: item.memberName }),
+        description: t('approveDesc'),
         details: [
-          { label: 'Member', value: `${item.memberName} (${item.memberCode})` },
-          { label: 'Month', value: formatBillingMonth(item.billingMonth) },
-          { label: 'Amount', value: formatMoney(item.amount, ccy) },
-          { label: 'Provider', value: `${item.channel.toUpperCase()} · ${item.providerName}` },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('detailMember'), value: `${item.memberName} (${item.memberCode})` },
+          { label: t('detailMonth'), value: formatBillingMonth(item.billingMonth) },
+          { label: t('detailAmount'), value: formatMoney(item.amount, ccy) },
+          { label: t('detailProvider'), value: `${item.channel.toUpperCase()} · ${item.providerName}` },
+          { label: t('detailTxNumber'), value: txNo },
         ],
-        inputLabel: 'Optional Approval Remark',
-        inputPlaceholder: 'Verified bank/MFS transfer…',
+        inputLabel: t('approvalRemarkLabel'),
+        inputPlaceholder: t('approvalRemarkPlaceholder'),
         inputRequired: false,
-        confirmLabel: 'Approve & Credit Balance',
+        confirmLabel: t('approveCreditBtn'),
         run: async (note) => {
           await api.reviewContribution(item.id, 'approved', note || undefined);
           await onRefresh();
           showNotice(
             'emerald',
-            'Contribution Approved',
-            `${item.memberName}'s deposit (${formatMoney(item.amount, ccy)} · Tx #${txNo}) has been approved and added to treasury liquidity.`
+            t('approvedNoticeTitle'),
+            t('approvedNoticeDesc', {
+              name: item.memberName,
+              amount: formatMoney(item.amount, ccy),
+              txNo,
+            })
           );
         },
       });
@@ -329,27 +332,26 @@ export function ContributionsView({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Deny Contribution (${item.memberName})`,
-        description:
-          'Provide a mandatory correction message explaining why this contribution request is denied so the member can fix and resubmit.',
+        title: t('denyTitle', { name: item.memberName }),
+        description: t('denyDesc'),
         details: [
-          { label: 'Member', value: `${item.memberName} (${item.memberCode})` },
-          { label: 'Month', value: formatBillingMonth(item.billingMonth) },
-          { label: 'Amount', value: formatMoney(item.amount, ccy) },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('detailMember'), value: `${item.memberName} (${item.memberCode})` },
+          { label: t('detailMonth'), value: formatBillingMonth(item.billingMonth) },
+          { label: t('detailAmount'), value: formatMoney(item.amount, ccy) },
+          { label: t('detailTxNumber'), value: txNo },
         ],
-        inputLabel: 'Correction Message for Member',
-        inputPlaceholder: 'e.g. Transaction Number does not match bank statement…',
+        inputLabel: t('correctionMsgLabel'),
+        inputPlaceholder: t('correctionMsgPlaceholder'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Deny & Send Correction Note',
+        confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.reviewContribution(item.id, 'rejected', note);
           await onRefresh();
           showNotice(
             'amber',
-            'Contribution Denied',
-            `Correction message sent to ${item.memberName} (${item.memberCode}).`
+            t('deniedNoticeTitle'),
+            t('deniedNoticeDesc', { name: item.memberName, code: item.memberCode })
           );
         },
       });
@@ -367,12 +369,12 @@ export function ContributionsView({
     setProviderName(item.providerName);
     setNotes(
       item.decryptedDetails?.notes ||
-        `Resubmitted correction for ${formatBillingMonth(item.billingMonth)}`
+        t('resubmitNote', { month: formatBillingMonth(item.billingMonth) })
     );
     showNotice(
       'slate',
-      'Form Pre-Filled for Correction',
-      `Loaded denied deposit (${formatBillingMonth(item.billingMonth)}) into the form. Verify your Transaction Number and receipt slip, then resubmit.`
+      t('prefilledTitle'),
+      t('prefilledDesc', { month: formatBillingMonth(item.billingMonth) })
     );
     window.setTimeout(() => {
       depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -448,12 +450,16 @@ export function ContributionsView({
             delay={0.02}
             className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
           >
-            <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">Own Summary (Approved)</div>
+            <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">{t('ownSummary')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(ownApprovedTotal, ccy)}
             </div>
             <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 leading-snug">
-              {myContributions.filter((c) => c.status === 'approved').length} approved · {ownActiveCount} active · {ownDeniedCount} denied
+              {t('ownSummaryCounts', {
+                approved: myContributions.filter((c) => c.status === 'approved').length,
+                active: ownActiveCount,
+                denied: ownDeniedCount,
+              })}
             </div>
           </MotionCard>
         )}
@@ -464,13 +470,13 @@ export function ContributionsView({
           className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
-            {isAdmin ? 'All Members Approved Pool' : 'Other Members Summary'}
+            {isAdmin ? t('allMembersApprovedPool') : t('otherMembersSummary')}
           </div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(othersApprovedTotal, ccy)}
           </div>
           <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            {othersApprovedCount} verified deposits
+            {t('verifiedDepositsCount', { count: othersApprovedCount })}
           </div>
         </MotionCard>
 
@@ -479,12 +485,12 @@ export function ContributionsView({
           delay={0.1}
           className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">Active Requests</div>
+          <div className="text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">{t('activeRequests')}</div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {activeCount}
           </div>
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Pending Manager review
+            {t('pendingManagerReview')}
           </div>
         </MotionCard>
 
@@ -493,12 +499,12 @@ export function ContributionsView({
           delay={0.14}
           className={`backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200 ${isAdmin ? 'col-span-2 sm:col-span-1' : ''}`}
         >
-          <div className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-400">Denied Requests</div>
+          <div className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-400">{t('deniedRequests')}</div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
             {deniedCount}
           </div>
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Requires member correction &amp; resubmission
+            {t('requiresCorrection')}
           </div>
         </MotionCard>
       </section>
@@ -506,7 +512,7 @@ export function ContributionsView({
       {!isAdmin && (
         <div
           role="tablist"
-          aria-label="Contribution Workspace Switcher"
+          aria-label={t('workspaceSwitcherAria')}
           className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80"
         >
           <button
@@ -520,7 +526,7 @@ export function ContributionsView({
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
-            Deposit Form
+            {t('depositFormTab')}
           </button>
           <button
             type="button"
@@ -533,7 +539,7 @@ export function ContributionsView({
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
-            History &amp; Queue ({contributions.length})
+            {t('historyQueueTab', { count: contributions.length })}
           </button>
         </div>
       )}
@@ -549,7 +555,7 @@ export function ContributionsView({
           >
             <div className="mb-4">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Submit Capital Deposit
+                {t('submitCapitalDeposit')}
               </h2>
             </div>
 
@@ -558,7 +564,7 @@ export function ContributionsView({
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                    <span>Bank / MFS Slip Proof (Optional AI Scan)</span>
+                    <span>{t('slipProofLabel')}</span>
                   </span>
                   {receiptPhotoUrl && (
                     <button
@@ -570,7 +576,7 @@ export function ContributionsView({
                       }}
                       className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                     >
-                      Clear
+                      {t('clear')}
                     </button>
                   )}
                 </div>
@@ -579,10 +585,10 @@ export function ContributionsView({
                   <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                   <span>
                     {scanningReceipt
-                      ? 'Uploading & Scanning Slip with Gemini AI…'
+                      ? t('uploadingScanning')
                       : receiptPhotoUrl
-                        ? 'Replace Receipt (PDF or Photo)'
-                        : 'Upload Slip (PDF/Photo) & Auto-Fill TrxID'}
+                        ? t('replaceReceipt')
+                        : t('uploadAutoFill')}
                   </span>
                   <input
                     type="file"
@@ -612,10 +618,10 @@ export function ContributionsView({
                     {isPdfFileUrl(receiptPhotoUrl) ? (
                       <>
                         <FileText className="w-3 h-3" aria-hidden="true" />
-                        <span>View Attached Slip PDF</span>
+                        <span>{t('viewSlipPdf')}</span>
                       </>
                     ) : (
-                      <span>View Attached Slip Image</span>
+                      <span>{t('viewSlipImage')}</span>
                     )}
                     <ExternalLink className="w-3 h-3" aria-hidden="true" />
                   </a>
@@ -625,7 +631,7 @@ export function ContributionsView({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Primary Month
+                    {t('primaryMonth')}
                   </label>
                   <input
                     type="month"
@@ -645,8 +651,8 @@ export function ContributionsView({
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     {effectiveBillingMonths.length > 1
-                      ? `Total (${effectiveBillingMonths.length} mo, ${ccy})`
-                      : `Amount (${ccy})`}
+                      ? t('totalMonthsAmount', { count: effectiveBillingMonths.length, ccy })
+                      : t('amountWithCcy', { ccy })}
                   </label>
                   <input
                     type="number"
@@ -678,7 +684,7 @@ export function ContributionsView({
                     }}
                     className="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
                   />
-                  <span>Pay multiple months in advance (single transfer)</span>
+                  <span>{t('payMultipleAdvance')}</span>
                 </label>
 
                 <AnimatePresence initial={false}>
@@ -712,12 +718,13 @@ export function ContributionsView({
                         })}
                       </div>
                       <div className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-300">
-                        {effectiveBillingMonths.length} month(s) selected ·{' '}
-                        {formatMoney(
-                          Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
-                          ccy
-                        )}
-                        /mo split evenly
+                        {t('monthsSelectedSplit', {
+                          count: effectiveBillingMonths.length,
+                          perMonth: formatMoney(
+                            Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
+                            ccy
+                          ),
+                        })}
                       </div>
                     </motion.div>
                   )}
@@ -726,7 +733,7 @@ export function ContributionsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Payment Channel
+                  {t('paymentChannel')}
                 </label>
                 <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
                   <button
@@ -748,7 +755,7 @@ export function ContributionsView({
                         className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                       />
                     )}
-                    <span className="relative z-10">MFS (Mobile Wallet)</span>
+                    <span className="relative z-10">{t('mfsWallet')}</span>
                   </button>
                   <button
                     type="button"
@@ -769,14 +776,14 @@ export function ContributionsView({
                         className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                       />
                     )}
-                    <span className="relative z-10">BD Bank Transfer</span>
+                    <span className="relative z-10">{t('bdBankTransfer')}</span>
                   </button>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {channel === 'mfs' ? 'MFS Wallet Provider' : 'Bangladesh Bank Name'}
+                  {channel === 'mfs' ? t('mfsWalletProvider') : t('bdBankName')}
                 </label>
                 <ProviderSelect
                   options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
@@ -784,15 +791,15 @@ export function ContributionsView({
                   onChange={setProviderName}
                   placeholder={
                     channel === 'mfs'
-                      ? 'Search MFS wallet…'
-                      : `Search all ${BANK_PROVIDERS.length} BD banks…`
+                      ? t('searchMfsWallet')
+                      : t('searchAllBdBanks', { count: BANK_PROVIDERS.length })
                   }
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {channel === 'mfs' ? 'Sender Mobile Number' : 'Sender Account / Routing Ref'}
+                  {channel === 'mfs' ? t('senderMobileLabel') : t('senderAccountRouting')}
                 </label>
                 <input
                   ref={senderInputRef}
@@ -807,7 +814,7 @@ export function ContributionsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Transaction Number ({channel === 'mfs' ? 'MFS TrxID' : 'Bank Ref / Slip No.'})
+                  {channel === 'mfs' ? t('txNumberMfs') : t('txNumberBank')}
                 </label>
                 <input
                   type="text"
@@ -821,13 +828,13 @@ export function ContributionsView({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Optional Note
+                  {t('optionalNote')}
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Branch or transfer remark"
+                  placeholder={t('optionalNotePlaceholder')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
@@ -838,7 +845,7 @@ export function ContributionsView({
                 className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Lock className="w-4 h-4" aria-hidden="true" />
-                <span>Review &amp; Submit Contribution</span>
+                <span>{t('reviewSubmitBtn')}</span>
               </button>
             </form>
           </motion.section>
@@ -855,9 +862,7 @@ export function ContributionsView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {isReviewer
-                  ? 'Cooperative Contribution Ledger & Approval Queue'
-                  : 'Monthly Contribution Requests & History'}
+                {isReviewer ? t('reviewerLedgerHeading') : t('memberLedgerHeading')}
               </h2>
             </div>
 
@@ -871,7 +876,7 @@ export function ContributionsView({
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search member, bank, Tx#…"
+                  placeholder={t('searchPlaceholder')}
                   className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                 />
               </div>
@@ -879,10 +884,10 @@ export function ContributionsView({
               <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit">
                 {(
                   [
-                    { id: 'all', label: `All (${contributions.length})` },
-                    { id: 'pending', label: `Active (${activeCount})` },
-                    { id: 'rejected', label: `Denied (${deniedCount})` },
-                    { id: 'approved', label: `History (${historyCount})` },
+                    { id: 'all', label: t('tabAllCount', { count: contributions.length }) },
+                    { id: 'pending', label: t('tabActiveCount', { count: activeCount }) },
+                    { id: 'rejected', label: t('tabDeniedCount', { count: deniedCount }) },
+                    { id: 'approved', label: t('tabHistoryCount', { count: historyCount }) },
                   ] as const
                 ).map((tab) => {
                   const active = filter === tab.id;
@@ -937,7 +942,7 @@ export function ContributionsView({
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No contribution records match the selected filter.
+              {t('emptyFiltered')}
             </div>
           ) : (
             <>
@@ -1003,7 +1008,7 @@ export function ContributionsView({
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-[11px] font-medium"
                             >
-                              <span>{isPdfFileUrl(item.receiptPhotoUrl) ? 'PDF Slip' : 'Slip'}</span>
+                              <span>{isPdfFileUrl(item.receiptPhotoUrl) ? t('pdfSlip') : t('slip')}</span>
                               <ExternalLink className="w-3 h-3" aria-hidden="true" />
                             </a>
                           )}
@@ -1012,7 +1017,7 @@ export function ContributionsView({
                             onClick={() => setExpandedId(isExpanded ? null : item.id)}
                             className="min-h-[36px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
-                            {isExpanded ? 'Hide' : 'Crypto'}
+                            {isExpanded ? t('hide') : t('crypto')}
                           </button>
                         </div>
                       </div>
@@ -1021,9 +1026,9 @@ export function ContributionsView({
                         <div className="p-2.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 space-y-2 text-xs">
                           <div className="text-red-800 dark:text-red-300">
                             <span className="font-semibold">
-                              Denied by {item.reviewerName || 'Manager'}:
+                              {t('deniedByPrefix', { name: item.reviewerName || t('managerFallback') })}
                             </span>{' '}
-                            <span>{item.reviewNote || 'Correction requested by manager.'}</span>
+                            <span>{item.reviewNote || t('correctionFallback')}</span>
                           </div>
                           {!isAdmin && item.userId === user.id && (
                             <button
@@ -1031,7 +1036,7 @@ export function ContributionsView({
                               onClick={() => handlePrefillForCorrection(item)}
                               className="w-full min-h-[44px] px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer"
                             >
-                              Fix &amp; Resubmit
+                              {t('fixResubmit')}
                             </button>
                           )}
                         </div>
@@ -1046,7 +1051,7 @@ export function ContributionsView({
                             className="min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             <Check className="w-4 h-4" aria-hidden="true" />
-                            <span>Approve</span>
+                            <span>{t('approve')}</span>
                           </button>
                           <button
                             type="button"
@@ -1055,14 +1060,14 @@ export function ContributionsView({
                             className="min-h-[44px] px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             <X className="w-4 h-4" aria-hidden="true" />
-                            <span>Deny</span>
+                            <span>{t('deny')}</span>
                           </button>
                         </div>
                       )}
 
                       {isReviewer && item.status === 'pending' && !canReviewRow && (
                         <div className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                          Peer Review required by another Manager or Admin
+                          {t('peerReviewFull')}
                         </div>
                       )}
 
@@ -1078,7 +1083,7 @@ export function ContributionsView({
                             <div className="flex flex-wrap items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
                               <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
                                 <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                                <span>AES-256-GCM Envelope</span>
+                                <span>{t('aesEnvelope')}</span>
                               </span>
                               <span className="font-mono text-[11px]">{formatDateTime(item.submittedAt)}</span>
                             </div>
@@ -1089,19 +1094,19 @@ export function ContributionsView({
                                   <span className="text-slate-900 dark:text-white">{item.decryptedDetails.referenceId}</span>
                                 </div>
                                 <div>
-                                  <span className="text-slate-500 dark:text-slate-400">Sender: </span>
+                                  <span className="text-slate-500 dark:text-slate-400">{t('detailSenderAccount')}: </span>
                                   <span className="text-slate-900 dark:text-white">{item.decryptedDetails.senderAccount}</span>
                                 </div>
                                 {item.decryptedDetails.notes && (
                                   <div>
-                                    <span className="text-slate-500 dark:text-slate-400">Notes: </span>
+                                    <span className="text-slate-500 dark:text-slate-400">{t('notes')}: </span>
                                     <span className="text-slate-900 dark:text-white font-sans">{item.decryptedDetails.notes}</span>
                                   </div>
                                 )}
                               </div>
                             ) : (
                               <div className="text-slate-500 dark:text-slate-400 italic text-[11px]">
-                                Decrypted details restricted to owner, Manager, and Admin.
+                                {t('decryptedRestricted')}
                               </div>
                             )}
                             <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800 font-mono text-[10px] text-slate-500 dark:text-slate-400 break-all space-y-1">
@@ -1109,7 +1114,7 @@ export function ContributionsView({
                               <div>Entry Hash: {shortHash(item.entryHash)}</div>
                               {item.reviewerName && (
                                 <div className="font-sans text-[11px] text-slate-600 dark:text-slate-300">
-                                  Reviewed by {item.reviewerName} · {item.reviewNote}
+                                  {t('reviewedByLine', { name: item.reviewerName, note: item.reviewNote || '' })}
                                 </div>
                               )}
                             </div>
@@ -1125,12 +1130,12 @@ export function ContributionsView({
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <th className="py-2.5 pr-4">Member</th>
-                      <th className="py-2.5 pr-4">Month</th>
-                      <th className="py-2.5 pr-4">Bank / MFS &amp; Transaction No.</th>
-                      <th className="py-2.5 pr-4 text-right">Amount</th>
-                      <th className="py-2.5 pr-4">Status</th>
-                      <th className="py-2.5 text-right">Actions</th>
+                      <th className="py-2.5 pr-4">{t('colMember')}</th>
+                      <th className="py-2.5 pr-4">{t('colMonth')}</th>
+                      <th className="py-2.5 pr-4">{t('colBankTx')}</th>
+                      <th className="py-2.5 pr-4 text-right">{t('colAmount')}</th>
+                      <th className="py-2.5 pr-4">{t('colStatus')}</th>
+                      <th className="py-2.5 text-right">{t('colActions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
@@ -1191,7 +1196,7 @@ export function ContributionsView({
                                     <>
                                       <button
                                         type="button"
-                                        title="Approve contribution"
+                                        title={t('approveTooltip')}
                                         disabled={modalBusy}
                                         onClick={() => confirmReview(item, 'approved')}
                                         className="p-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
@@ -1200,7 +1205,7 @@ export function ContributionsView({
                                       </button>
                                       <button
                                         type="button"
-                                        title="Deny with correction note"
+                                        title={t('denyTooltip')}
                                         disabled={modalBusy}
                                         onClick={() => confirmReview(item, 'rejected')}
                                         className="p-1.5 rounded-md border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
@@ -1210,10 +1215,10 @@ export function ContributionsView({
                                     </>
                                   ) : (
                                     <span
-                                      title="Non-admin managers cannot approve their own deposit"
+                                      title={t('peerReviewTitle')}
                                       className="text-[10px] font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap"
                                     >
-                                      Peer Review
+                                      {t('peerReviewShort')}
                                     </span>
                                   ))}
                                 <button
@@ -1221,7 +1226,7 @@ export function ContributionsView({
                                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
                                   className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                                 >
-                                  {isExpanded ? 'Hide' : 'Crypto'}
+                                  {isExpanded ? t('hide') : t('crypto')}
                                 </button>
                               </div>
                             </div>
@@ -1230,9 +1235,9 @@ export function ContributionsView({
                               <div className="mb-2.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/75 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-2 text-xs">
                                 <div className="text-red-800 dark:text-red-300">
                                   <span className="font-semibold">
-                                    Denied by {item.reviewerName || 'Manager'}:
+                                    {t('deniedByPrefix', { name: item.reviewerName || t('managerFallback') })}
                                   </span>{' '}
-                                  <span>{item.reviewNote || 'Correction requested by manager.'}</span>
+                                  <span>{item.reviewNote || t('correctionFallback')}</span>
                                 </div>
                                 {!isAdmin && item.userId === user.id && (
                                   <button
@@ -1240,7 +1245,7 @@ export function ContributionsView({
                                     onClick={() => handlePrefillForCorrection(item)}
                                     className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium cursor-pointer whitespace-nowrap"
                                   >
-                                    Fix &amp; Resubmit
+                                    {t('fixResubmit')}
                                   </button>
                                 )}
                               </div>
@@ -1258,29 +1263,29 @@ export function ContributionsView({
                                   <div className="flex flex-wrap items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
                                     <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
                                       <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                                      <span>Authorized Decrypted Payload &amp; Ciphertext Envelope</span>
+                                      <span>{t('authorizedPayload')}</span>
                                     </span>
                                     <span className="font-mono">
-                                      Submitted {formatDateTime(item.submittedAt)}
+                                      {t('submittedAtPrefix', { date: formatDateTime(item.submittedAt) })}
                                     </span>
                                   </div>
 
                                   {item.decryptedDetails ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
                                       <div>
-                                        <span className="text-slate-500 dark:text-slate-400 block">Transaction Number</span>
+                                        <span className="text-slate-500 dark:text-slate-400 block">{t('detailTxNumber')}</span>
                                         <span className="text-slate-900 dark:text-white">
                                           {item.decryptedDetails.referenceId}
                                         </span>
                                       </div>
                                       <div>
-                                        <span className="text-slate-500 dark:text-slate-400 block">Sender Account</span>
+                                        <span className="text-slate-500 dark:text-slate-400 block">{t('detailSenderAccount')}</span>
                                         <span className="text-slate-900 dark:text-white">
                                           {item.decryptedDetails.senderAccount}
                                         </span>
                                       </div>
                                       <div>
-                                        <span className="text-slate-500 dark:text-slate-400 block">Notes</span>
+                                        <span className="text-slate-500 dark:text-slate-400 block">{t('notes')}</span>
                                         <span className="text-slate-900 dark:text-white font-sans">
                                           {item.decryptedDetails.notes || '—'}
                                         </span>
@@ -1288,7 +1293,7 @@ export function ContributionsView({
                                     </div>
                                   ) : (
                                     <div className="text-slate-500 dark:text-slate-400 italic">
-                                      Decrypted details restricted to transaction owner, Manager, and Admin.
+                                      {t('decryptedRestricted')}
                                     </div>
                                   )}
 
@@ -1299,12 +1304,12 @@ export function ContributionsView({
                                     <div>SHA-256 Entry Hash: {shortHash(item.entryHash)}</div>
                                     {item.batchGroupId && (
                                       <div className="text-teal-700 dark:text-teal-400">
-                                        Advance Batch ID: {item.batchGroupId}
+                                        {t('advanceBatchId', { id: item.batchGroupId })}
                                       </div>
                                     )}
                                     {item.receiptAiSummary && (
                                       <div className="font-sans text-emerald-700 dark:text-emerald-400">
-                                        Gemini AI Verification: {item.receiptAiSummary}
+                                        {t('aiVerification', { summary: item.receiptAiSummary })}
                                       </div>
                                     )}
                                     {item.receiptPhotoUrl && (
@@ -1317,8 +1322,8 @@ export function ContributionsView({
                                         >
                                           <span>
                                             {isPdfFileUrl(item.receiptPhotoUrl)
-                                              ? 'Open Attached Receipt PDF'
-                                              : 'Open Attached Transfer Receipt'}
+                                              ? t('openReceiptPdf')
+                                              : t('openTransferReceipt')}
                                           </span>
                                           <ExternalLink className="w-3 h-3" aria-hidden="true" />
                                         </a>
@@ -1326,7 +1331,11 @@ export function ContributionsView({
                                     )}
                                     {item.reviewerName && (
                                       <div className="font-sans text-slate-600 dark:text-slate-300">
-                                        Reviewed by {item.reviewerName} on {formatDateTime(item.reviewedAt)} — {item.reviewNote}
+                                        {t('reviewedByOnLine', {
+                                          name: item.reviewerName,
+                                          date: formatDateTime(item.reviewedAt),
+                                          note: item.reviewNote || '',
+                                        })}
                                       </div>
                                     )}
                                   </div>
@@ -1352,7 +1361,7 @@ export function ContributionsView({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

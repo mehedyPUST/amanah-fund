@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import type { FundConfig, MonthlyCashflowPoint } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
 
@@ -11,13 +12,14 @@ interface CashflowChartProps {
 }
 
 export function CashflowChart({ data, currency }: CashflowChartProps) {
+  const t = useTranslations('Charts');
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const recent = data.slice(-7);
 
   if (recent.length === 0) {
     return (
       <div className="h-56 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-        No monthly cashflow activity recorded yet.
+        {t('noCashflowActivity')}
       </div>
     );
   }
@@ -34,15 +36,15 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400">
           <span className="inline-flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" aria-hidden="true" />
-            <span>Monthly Contributions</span>
+            <span>{t('monthlyContributions')}</span>
           </span>
           <span className="inline-flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-xs bg-amber-500" aria-hidden="true" />
-            <span>Qard Hasan Disbursed</span>
+            <span>{t('qardHasanDisbursed')}</span>
           </span>
           <span className="inline-flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-xs bg-teal-600 dark:bg-teal-400" aria-hidden="true" />
-            <span>Installments Repaid</span>
+            <span>{t('installmentsRepaid')}</span>
           </span>
         </div>
 
@@ -57,15 +59,15 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
             </span>
             <span aria-hidden="true"> · </span>
             <span className="text-emerald-700 dark:text-emerald-400">
-              Inflow {formatMoney(recent[hoveredIdx].contributions, currency)}
+              {t('inflowLabel', { amount: formatMoney(recent[hoveredIdx].contributions, currency) })}
             </span>
             <span aria-hidden="true"> · </span>
             <span className="text-amber-700 dark:text-amber-400">
-              Disbursed {formatMoney(recent[hoveredIdx].disbursed, currency)}
+              {t('disbursedLabel', { amount: formatMoney(recent[hoveredIdx].disbursed, currency) })}
             </span>
             <span aria-hidden="true"> · </span>
             <span className="text-teal-700 dark:text-teal-400">
-              Repaid {formatMoney(recent[hoveredIdx].repaid, currency)}
+              {t('repaidLabel', { amount: formatMoney(recent[hoveredIdx].repaid, currency) })}
             </span>
           </motion.div>
         )}
@@ -76,7 +78,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
           viewBox={`0 0 700 ${chartHeight + 34}`}
           className="w-full h-56 overflow-visible"
           role="img"
-          aria-label="Monthly cooperative contributions, Qard Hasan disbursements, and repayments chart"
+          aria-label={t('cashflowAriaLabel')}
         >
           {[0.25, 0.5, 0.75, 1].map((tick) => {
             const y = chartHeight - tick * chartHeight;

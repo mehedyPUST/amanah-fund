@@ -25,6 +25,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { useTranslations } from 'next-intl';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -83,8 +84,17 @@ export function AdminUserManagementPanel({
   onInspectMember,
   onRefreshAll,
 }: AdminUserManagementPanelProps) {
+  const t = useTranslations('Admin.users');
+  const tCommon = useTranslations('Common');
+  const tRoles = useTranslations('Roles');
+  const tStatuses = useTranslations('Statuses');
   const isAdmin = currentUser.role === 'admin';
   const ccy = config?.currency || 'BDT';
+
+  const roleLabel = (role: string) =>
+    tRoles.has(role) ? tRoles(role) : role;
+  const statusLabel = (status: string) =>
+    tStatuses.has(status) ? tStatuses(status) : status.replace(/_/g, ' ');
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
@@ -193,18 +203,17 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Approve & Issue Activation Codes (${member.name})?`,
-      description:
-        'Assigns the official Amanah Member ID below and generates a unique, never-before-used 6-digit Activation OTP sent via email and saved in the approval panel for phone support.',
+      title: t('issueCodesTitle', { name: member.name }),
+      description: t('issueCodesDesc'),
       details: [
-        { label: 'Applicant', value: member.name },
-        { label: 'Email', value: member.email },
+        { label: t('applicant'), value: member.name },
+        { label: t('email'), value: member.email },
       ],
-      inputLabel: 'Official Member ID to Assign',
-      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputLabel: t('memberIdInputLabel'),
+      inputPlaceholder: t('memberIdInputPlaceholder'),
       inputRequired: true,
       initialInputValue: suggestedCode,
-      confirmLabel: 'Generate Codes & Send Email',
+      confirmLabel: t('generateSendBtn'),
       run: async (memberCodeInput: string) => {
         setBusyId(member.id);
         try {
@@ -216,17 +225,27 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Activation Codes Issued',
+            title: t('codesIssuedTitle'),
             description: res.emailSent
-              ? `Assigned Member ID ${res.memberCode} and unique 6-digit Activation OTP to ${member.name}. Both codes were emailed to ${member.email}.`
-              : `Assigned Member ID ${res.memberCode} and unique 6-digit Activation OTP to ${member.name}. Email could not be delivered${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes over the phone.`,
+              ? t('codesIssuedEmailSent', {
+                  code: res.memberCode,
+                  name: member.name,
+                  email: member.email,
+                })
+              : t('codesIssuedEmailFailed', {
+                  code: res.memberCode,
+                  name: member.name,
+                  reason: res.emailReason ? ` (${res.emailReason})` : '',
+                }),
             details: [
-              { label: 'Member', value: member.name },
-              { label: 'Official Member ID', value: res.memberCode },
-              { label: '6-Digit Activation OTP', value: res.otp },
+              { label: t('member'), value: member.name },
+              { label: t('officialMemberId'), value: res.memberCode },
+              { label: t('activationOtp'), value: res.otp },
               {
-                label: 'Email Dispatch',
-                value: res.emailSent ? `Sent to ${member.email}` : 'Not Delivered (Phone Ready)',
+                label: t('emailDispatch'),
+                value: res.emailSent
+                  ? t('sentToEmail', { email: member.email })
+                  : t('notDeliveredPhone'),
               },
             ],
           });
@@ -234,8 +253,8 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Activation Issuance Failed',
-            description: err instanceof Error ? err.message : 'Failed to issue activation codes.',
+            title: t('issueFailedTitle'),
+            description: err instanceof Error ? err.message : t('issueFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -253,16 +272,20 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Activation Codes · ${member.name}`,
-      description:
-        'Provide these two codes to the member over the phone if they did not receive the activation email, or click below to resend the email.',
+      title: t('viewCodesTitle', { name: member.name }),
+      description: t('viewCodesDesc'),
       details: [
-        { label: 'Official Member ID', value: act.memberCode },
-        { label: '6-Digit Activation OTP', value: act.otp || 'Unavailable' },
-        { label: 'Email Status', value: act.emailSent ? `Sent to ${member.email}` : 'Not Delivered' },
-        { label: 'Issued By', value: `${act.issuedByName} · ${formatDateTime(act.issuedAt)}` },
+        { label: t('officialMemberId'), value: act.memberCode },
+        { label: t('activationOtp'), value: act.otp || t('unavailable') },
+        {
+          label: t('emailStatus'),
+          value: act.emailSent
+            ? t('sentToEmail', { email: member.email })
+            : t('notDelivered'),
+        },
+        { label: t('issuedBy'), value: `${act.issuedByName} · ${formatDateTime(act.issuedAt)}` },
       ],
-      confirmLabel: 'Resend Activation Email',
+      confirmLabel: t('resendActivationEmailBtn'),
       run: async () => {
         setBusyId(member.id);
         try {
@@ -272,13 +295,15 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: res.emailSent ? 'emerald' : 'amber',
-            title: res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+            title: res.emailSent ? t('emailResentTitle') : t('emailFailedTitle'),
             description: res.emailSent
-              ? `Resent Member ID (${res.memberCode}) and 6-digit Activation OTP to ${member.email}.`
-              : `Email could not be delivered${res.emailReason ? ` (${res.emailReason})` : ''}. Share the codes below over the phone.`,
+              ? t('emailResentDesc', { code: res.memberCode, email: member.email })
+              : t('emailResendFailedDesc', {
+                  reason: res.emailReason ? ` (${res.emailReason})` : '',
+                }),
             details: [
-              { label: 'Official Member ID', value: res.memberCode },
-              { label: '6-Digit Activation OTP', value: res.otp },
+              { label: t('officialMemberId'), value: res.memberCode },
+              { label: t('activationOtp'), value: res.otp },
             ],
           });
         } finally {
@@ -295,27 +320,25 @@ export function AdminUserManagementPanel({
   ) {
     const isSuspend = payload.status === 'suspended';
     const actionLabel = payload.role
-      ? `Change Role to ${payload.role}`
+      ? t('changeRoleTo', { role: roleLabel(payload.role) })
       : payload.status === 'active'
         ? member.status === 'pending_approval'
-          ? 'Approve Membership'
-          : 'Reactivate Account'
-        : 'Suspend Account';
+          ? t('approveMembership')
+          : t('reactivateAccount')
+        : t('suspendAccount');
 
     setModal({
       mode: 'confirm',
       tone: isSuspend ? 'red' : payload.role === 'admin' ? 'amber' : 'emerald',
-      title: `${actionLabel}?`,
-      description: isSuspend
-        ? 'Suspending this account immediately revokes login, voting, and loan request access.'
-        : 'Confirm this account permission or status update for the cooperative directory.',
+      title: t('confirmTitleQ', { action: actionLabel }),
+      description: isSuspend ? t('suspendDesc') : t('updateConfirmDesc'),
       details: [
-        { label: 'Member', value: `${member.name} (${member.memberCode})` },
-        { label: 'Current Role', value: member.role.toUpperCase() },
-        { label: 'Current Status', value: member.status.replace(/_/g, ' ') },
-        ...(payload.role ? [{ label: 'New Role', value: payload.role.toUpperCase() }] : []),
+        { label: t('member'), value: `${member.name} (${member.memberCode})` },
+        { label: t('currentRole'), value: roleLabel(member.role) },
+        { label: t('currentStatus'), value: statusLabel(member.status) },
+        ...(payload.role ? [{ label: t('newRole'), value: roleLabel(payload.role) }] : []),
         ...(payload.status
-          ? [{ label: 'New Status', value: payload.status.replace(/_/g, ' ') }]
+          ? [{ label: t('newStatus'), value: statusLabel(payload.status) }]
           : []),
       ],
       confirmLabel: actionLabel,
@@ -328,20 +351,37 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: res.approvedNow ? 'Membership Approved' : 'User Account Updated',
+            title: res.approvedNow ? t('membershipApprovedTitle') : t('accountUpdatedTitle'),
             description: res.approvedNow
               ? res.emailSent
-                ? `Approved ${member.name} (${member.memberCode}) and sent welcome email to ${member.email}.`
-                : `Approved ${member.name} (${member.memberCode}) and queued in-app welcome notice${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`
+                ? t('approvedEmailSent', {
+                    name: member.name,
+                    code: member.memberCode,
+                    email: member.email,
+                  })
+                : t('approvedEmailSkipped', {
+                    name: member.name,
+                    code: member.memberCode,
+                    reason: res.emailReason
+                      ? t('emailSkippedReason', { reason: res.emailReason })
+                      : '',
+                  })
               : successText,
             details: [
-              { label: 'Member', value: `${member.name} (${member.memberCode})` },
-              ...(payload.role ? [{ label: 'Role', value: payload.role.toUpperCase() }] : []),
+              { label: t('member'), value: `${member.name} (${member.memberCode})` },
+              ...(payload.role ? [{ label: t('role'), value: roleLabel(payload.role) }] : []),
               ...(payload.status
-                ? [{ label: 'Status', value: payload.status.replace(/_/g, ' ') }]
+                ? [{ label: t('status'), value: statusLabel(payload.status) }]
                 : []),
               ...(res.approvedNow
-                ? [{ label: 'Welcome Email', value: res.emailSent ? `Sent to ${member.email}` : 'In-App Only' }]
+                ? [
+                    {
+                      label: t('welcomeEmail'),
+                      value: res.emailSent
+                        ? t('sentToEmail', { email: member.email })
+                        : t('inAppOnly'),
+                    },
+                  ]
                 : []),
             ],
           });
@@ -349,8 +389,8 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Update Failed',
-            description: err instanceof Error ? err.message : 'Failed to update user account.',
+            title: t('updateFailedTitle'),
+            description: err instanceof Error ? err.message : t('updateFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -363,15 +403,14 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Delete User Account?',
-      description:
-        'Removing this user deletes their access from the cooperative directory. Historical financial ledger entries remain intact.',
+      title: t('deleteTitle'),
+      description: t('deleteDesc'),
       details: [
-        { label: 'Member', value: `${member.name} (${member.memberCode})` },
-        { label: 'Email', value: member.email },
-        { label: 'Role', value: member.role.toUpperCase() },
+        { label: t('member'), value: `${member.name} (${member.memberCode})` },
+        { label: t('email'), value: member.email },
+        { label: t('role'), value: roleLabel(member.role) },
       ],
-      confirmLabel: 'Delete Account',
+      confirmLabel: t('deleteConfirmBtn'),
       run: async () => {
         setBusyId(member.id);
         try {
@@ -381,15 +420,15 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'User Removed',
-            description: `Removed user ${member.name} (${member.memberCode}) from cooperative directory.`,
+            title: t('userRemovedTitle'),
+            description: t('userRemovedDesc', { name: member.name, code: member.memberCode }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Delete Failed',
-            description: err instanceof Error ? err.message : 'Failed to remove user account.',
+            title: t('deleteFailedTitle'),
+            description: err instanceof Error ? err.message : t('deleteFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -405,17 +444,14 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Reset Password & Send Temporary Password?',
-      description:
-        'Generates a strong temporary password, updates the member login hash, resolves any pending reset request, and sends the temporary password via email.',
+      title: t('resetPwTitle'),
+      description: t('resetPwDesc'),
       details: [
-        { label: 'Member', value: `${member.name} (${member.memberCode})` },
-        { label: 'Email', value: member.email },
-        ...(pendingReq
-          ? [{ label: 'Request ID', value: pendingReq.id }]
-          : []),
+        { label: t('member'), value: `${member.name} (${member.memberCode})` },
+        { label: t('email'), value: member.email },
+        ...(pendingReq ? [{ label: t('requestId'), value: pendingReq.id }] : []),
       ],
-      confirmLabel: 'Generate & Send Temp Password',
+      confirmLabel: t('generateSendTempPwBtn'),
       run: async () => {
         setBusyId(member.id);
         try {
@@ -424,17 +460,21 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: res.emailSent ? 'emerald' : 'amber',
-            title: res.emailSent
-              ? 'Temporary Password Sent via Email'
-              : 'Password Reset (SMTP Not Configured)',
+            title: res.emailSent ? t('tempPwSentTitle') : t('tempPwNoSmtpTitle'),
             description: res.emailSent
-              ? `Temporary password has been dispatched to ${res.recipientEmail}. Instruct the member to change it from My Profile after signing in.`
-              : `Password was updated for ${res.memberName}, but SMTP email could not be sent (${res.emailError || 'SMTP_NOT_CONFIGURED'}). Share the temporary password securely below.`,
+              ? t('tempPwSentDesc', { email: res.recipientEmail })
+              : t('tempPwNoSmtpDesc', {
+                  name: res.memberName,
+                  error: res.emailError || 'SMTP_NOT_CONFIGURED',
+                }),
             details: [
-              { label: 'Member', value: `${res.memberName} (${res.memberCode})` },
-              { label: 'Email Dispatch', value: res.emailSent ? 'Delivered via SMTP' : 'Not Delivered' },
+              { label: t('member'), value: `${res.memberName} (${res.memberCode})` },
+              {
+                label: t('emailDispatch'),
+                value: res.emailSent ? t('deliveredViaSmtp') : t('notDelivered'),
+              },
               ...(!res.emailSent && res.tempPassword
-                ? [{ label: 'Temporary Password', value: res.tempPassword }]
+                ? [{ label: t('tempPassword'), value: res.tempPassword }]
                 : []),
             ],
           });
@@ -442,8 +482,8 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Password Reset Failed',
-            description: err instanceof Error ? err.message : 'Could not reset member password.',
+            title: t('resetPwFailedTitle'),
+            description: err instanceof Error ? err.message : t('resetPwFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -456,13 +496,13 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: 'Decline Password Reset Request?',
-      description: 'Marks this pending password reset request as declined without changing the account password.',
+      title: t('declineResetTitle'),
+      description: t('declineResetDesc'),
       details: [
-        { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
-        { label: 'Email', value: req.email },
+        { label: t('member'), value: `${req.memberName} (${req.memberCode})` },
+        { label: t('email'), value: req.email },
       ],
-      confirmLabel: 'Decline Request',
+      confirmLabel: t('declineRequestBtn'),
       run: async () => {
         setBusyId(req.userId);
         try {
@@ -471,15 +511,15 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Reset Request Declined',
-            description: `Declined password reset request ${req.id} for ${req.memberName}.`,
+            title: t('resetDeclinedTitle'),
+            description: t('resetDeclinedDesc', { id: req.id, name: req.memberName }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Decline Failed',
-            description: err instanceof Error ? err.message : 'Could not decline password reset request.',
+            title: t('declineFailedTitle'),
+            description: err instanceof Error ? err.message : t('declineFailedDesc'),
           });
         } finally {
           setBusyId(null);
@@ -496,16 +536,15 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Provision New Cooperative User?',
-      description:
-        'Confirm provisioning this user account with encrypted registration credentials and RBAC role.',
+      title: t('createConfirmTitle'),
+      description: t('createConfirmDesc'),
       details: [
-        { label: 'Full Name', value: createdName },
-        { label: 'Email', value: createdEmail },
-        { label: 'Role', value: createdRole.toUpperCase() },
-        { label: 'Initial Status', value: createForm.status.replace(/_/g, ' ') },
+        { label: t('fullName'), value: createdName },
+        { label: t('email'), value: createdEmail },
+        { label: t('role'), value: roleLabel(createdRole) },
+        { label: t('initialStatus'), value: statusLabel(createForm.status) },
       ],
-      confirmLabel: 'Create User Account',
+      confirmLabel: t('createAccountBtn'),
       run: async () => {
         setCreateSaving(true);
         try {
@@ -539,20 +578,20 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'User Account Created',
-            description: `User account created for ${createdName} (${createdRole}).`,
+            title: t('userCreatedTitle'),
+            description: t('userCreatedDesc', { name: createdName, role: roleLabel(createdRole) }),
             details: [
-              { label: 'Name', value: createdName },
-              { label: 'Email', value: createdEmail },
-              { label: 'Role', value: createdRole.toUpperCase() },
+              { label: t('name'), value: createdName },
+              { label: t('email'), value: createdEmail },
+              { label: t('role'), value: roleLabel(createdRole) },
             ],
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'User Provisioning Failed',
-            description: err instanceof Error ? err.message : 'Could not create user account.',
+            title: t('createFailedTitle'),
+            description: err instanceof Error ? err.message : t('createFailedDesc'),
           });
         } finally {
           setCreateSaving(false);
@@ -570,18 +609,18 @@ export function AdminUserManagementPanel({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Save User Account Changes?',
-      description: 'Confirm updating profile details, RBAC role, and account status.',
+      title: t('saveChangesTitle'),
+      description: t('saveChangesDesc'),
       details: [
-        { label: 'Member', value: `${trimmedName} (${targetMember.memberCode})` },
-        { label: 'Email', value: trimmedEmail },
-        { label: 'Role', value: editForm.role.toUpperCase() },
-        { label: 'Status', value: editForm.status.replace(/_/g, ' ') },
+        { label: t('member'), value: `${trimmedName} (${targetMember.memberCode})` },
+        { label: t('email'), value: trimmedEmail },
+        { label: t('role'), value: roleLabel(editForm.role) },
+        { label: t('status'), value: statusLabel(editForm.status) },
         ...(editForm.password.trim()
-          ? [{ label: 'Password Reset', value: 'New password will be applied' }]
+          ? [{ label: t('passwordReset'), value: t('newPasswordApplied') }]
           : []),
       ],
-      confirmLabel: 'Save Changes',
+      confirmLabel: t('saveChangesBtn'),
       run: async () => {
         setEditSaving(true);
         try {
@@ -603,15 +642,18 @@ export function AdminUserManagementPanel({
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'User Profile Updated',
-            description: `Updated user profile & permissions for ${trimmedName} (${targetMember.memberCode}).`,
+            title: t('profileUpdatedTitle'),
+            description: t('profileUpdatedDesc', {
+              name: trimmedName,
+              code: targetMember.memberCode,
+            }),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
-            title: 'Save Failed',
-            description: err instanceof Error ? err.message : 'Failed to save user edits.',
+            title: t('saveFailedTitle'),
+            description: err instanceof Error ? err.message : t('saveFailedDesc'),
           });
         } finally {
           setEditSaving(false);
@@ -627,10 +669,10 @@ export function AdminUserManagementPanel({
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Administrator User Management</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Manage Users, Roles & Access Controls ({members.length})
+            {t('heading', { count: members.length })}
           </h3>
         </div>
 
@@ -641,7 +683,7 @@ export function AdminUserManagementPanel({
             className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Add New User</span>
+            <span>{t('addNewUser')}</span>
           </button>
         )}
       </div>
@@ -652,10 +694,10 @@ export function AdminUserManagementPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
               <KeyRound className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
-              <span>Pending Password Reset Requests ({pendingResetRequests.length})</span>
+              <span>{t('pendingResetsHeading', { count: pendingResetRequests.length })}</span>
             </div>
             <span className="text-[11px] font-mono text-amber-800 dark:text-amber-300">
-              Step-up 2FA required for admin reset
+              {t('stepUp2faNote')}
             </span>
           </div>
 
@@ -673,10 +715,12 @@ export function AdminUserManagementPanel({
                     </span>
                   </div>
                   <div className="font-mono text-slate-500 dark:text-slate-400">
-                    {req.email} · Requested {formatDateTime(req.requestedAt)}
+                    {t('requestedAt', { email: req.email, date: formatDateTime(req.requestedAt) })}
                   </div>
                   {req.reason && (
-                    <p className="text-slate-700 dark:text-slate-300 pt-0.5">Note: {req.reason}</p>
+                    <p className="text-slate-700 dark:text-slate-300 pt-0.5">
+                      {t('notePrefix', { reason: req.reason })}
+                    </p>
                   )}
                 </div>
 
@@ -687,7 +731,7 @@ export function AdminUserManagementPanel({
                     onClick={() => requestDeclinePasswordReset(req)}
                     className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium cursor-pointer disabled:opacity-50"
                   >
-                    Decline
+                    {t('decline')}
                   </button>
                   <button
                     type="button"
@@ -706,7 +750,7 @@ export function AdminUserManagementPanel({
                     className="min-h-[44px] sm:min-h-0 justify-center px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs transition-colors whitespace-nowrap shrink-0"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Reset &amp; Email Temp Password</span>
+                    <span>{t('resetAndEmailTempPw')}</span>
                   </button>
                 </div>
               </div>
@@ -718,31 +762,31 @@ export function AdminUserManagementPanel({
       {/* Summary Counts Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4 py-3 sm:py-3.5 border-y border-slate-100 dark:border-slate-800 text-xs">
         <div>
-          <div className="text-slate-500 dark:text-slate-400">Total Accounts</div>
+          <div className="text-slate-500 dark:text-slate-400">{t('statTotal')}</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {loading ? <Skeleton width={36} /> : stats.total}
           </div>
         </div>
         <div>
-          <div className="text-slate-500 dark:text-slate-400">Active Verified</div>
+          <div className="text-slate-500 dark:text-slate-400">{t('statActive')}</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {loading ? <Skeleton width={36} /> : stats.active}
           </div>
         </div>
         <div>
-          <div className="text-slate-500 dark:text-slate-400">Pending Approval</div>
+          <div className="text-slate-500 dark:text-slate-400">{t('statPending')}</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {loading ? <Skeleton width={36} /> : stats.pending}
           </div>
         </div>
         <div>
-          <div className="text-slate-500 dark:text-slate-400">Suspended</div>
+          <div className="text-slate-500 dark:text-slate-400">{t('statSuspended')}</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
             {loading ? <Skeleton width={36} /> : stats.suspended}
           </div>
         </div>
         <div className="col-span-2 sm:col-span-1">
-          <div className="text-slate-500 dark:text-slate-400">Admins & Managers</div>
+          <div className="text-slate-500 dark:text-slate-400">{t('statStaff')}</div>
           <div className="mt-1 text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {loading ? <Skeleton width={36} /> : stats.staff}
           </div>
@@ -755,11 +799,11 @@ export function AdminUserManagementPanel({
           <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit">
             {(
               [
-                { id: 'all', label: 'All Statuses' },
-                { id: 'active', label: 'Active' },
-                { id: 'pending_approval', label: 'Pending Review' },
-                { id: 'pending_activation', label: 'Awaiting Activation' },
-                { id: 'suspended', label: 'Suspended' },
+                { id: 'all', label: t('filterAllStatuses') },
+                { id: 'active', label: t('filterActive') },
+                { id: 'pending_approval', label: t('filterPendingReview') },
+                { id: 'pending_activation', label: t('filterAwaitingActivation') },
+                { id: 'suspended', label: t('filterSuspended') },
               ] as const
             ).map((s) => {
               const active = statusFilter === s.id;
@@ -788,15 +832,15 @@ export function AdminUserManagementPanel({
           </div>
 
           <select
-            aria-label="Filter users by role"
+            aria-label={t('filterRoleAria')}
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'all' | UserRole)}
             className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
           >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="member">Member</option>
+            <option value="all">{t('filterAllRoles')}</option>
+            <option value="admin">{tRoles('admin')}</option>
+            <option value="manager">{tRoles('manager')}</option>
+            <option value="member">{tRoles('member')}</option>
           </select>
         </div>
 
@@ -809,8 +853,8 @@ export function AdminUserManagementPanel({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter name, email, code…"
-            aria-label="Search users"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchAria')}
             className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
           />
         </div>
@@ -843,7 +887,7 @@ export function AdminUserManagementPanel({
         </div>
       ) : filteredMembers.length === 0 ? (
         <div className="p-6 text-center rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-          No user accounts match the active filter criteria.
+          {t('emptyFiltered')}
         </div>
       ) : (
         <>
@@ -866,7 +910,7 @@ export function AdminUserManagementPanel({
                       {m.memberCode} · {m.email}
                     </div>
                     <div className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                      Joined {formatShortDate(m.joinedAt)}
+                      {t('joinedAt', { date: formatShortDate(m.joinedAt) })}
                     </div>
                   </div>
                   <div className="shrink-0">
@@ -876,19 +920,19 @@ export function AdminUserManagementPanel({
 
                 <div className="grid grid-cols-3 gap-2 py-2 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
                   <div className="min-w-0">
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Savings</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('savings')}</div>
                     <div className="font-mono tabular-nums font-semibold text-emerald-700 dark:text-emerald-400 truncate">
                       {formatMoney(m.totalContributed, ccy)}
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Loans/Yr</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('loansPerYr')}</div>
                     <div className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                       {m.loansThisYear}/{config?.maxLoansPerYear || 3}
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Loan Bal.</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{t('loanBal')}</div>
                     <div className="font-mono tabular-nums font-semibold text-amber-700 dark:text-amber-400 truncate">
                       {formatMoney(m.activeLoanBalance, ccy)}
                     </div>
@@ -899,10 +943,10 @@ export function AdminUserManagementPanel({
                   <div className="space-y-2 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                        Role Assignment
+                        {t('roleAssignment')}
                       </span>
                       <select
-                        aria-label={`Role for ${m.name}`}
+                        aria-label={t('roleForAria', { name: m.name })}
                         disabled={isBusy || isSelf}
                         value={m.role}
                         onChange={(e) => {
@@ -911,15 +955,15 @@ export function AdminUserManagementPanel({
                             requestQuickRoleOrStatus(
                               m,
                               { role: nextRole },
-                              `Updated ${m.name}'s role to ${nextRole}.`
+                              t('updatedRoleMsg', { name: m.name, role: roleLabel(nextRole) })
                             );
                           }
                         }}
-                        className="min-h-[38px] px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 capitalize disabled:opacity-60"
+                        className="min-h-[38px] px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-60"
                       >
-                        <option value="member">member</option>
-                        <option value="manager">manager</option>
-                        <option value="admin">admin</option>
+                        <option value="member">{tRoles('member')}</option>
+                        <option value="manager">{tRoles('manager')}</option>
+                        <option value="admin">{tRoles('admin')}</option>
                       </select>
                     </div>
 
@@ -931,7 +975,7 @@ export function AdminUserManagementPanel({
                           className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>KYC</span>
+                          <span>{t('kyc')}</span>
                         </button>
                       )}
                       <button
@@ -941,7 +985,7 @@ export function AdminUserManagementPanel({
                         className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Edit</span>
+                        <span>{t('edit')}</span>
                       </button>
                       {!isSelf && (
                         <>
@@ -959,7 +1003,7 @@ export function AdminUserManagementPanel({
                             className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/70 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                           >
                             <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Reset PW</span>
+                            <span>{t('resetPwShort')}</span>
                           </button>
                           {m.status === 'pending_activation' ? (
                             <button
@@ -969,7 +1013,7 @@ export function AdminUserManagementPanel({
                               className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>View Codes</span>
+                              <span>{t('viewCodes')}</span>
                             </button>
                           ) : (
                             <button
@@ -986,8 +1030,8 @@ export function AdminUserManagementPanel({
                                   m,
                                   { status: nextStatus },
                                   nextStatus === 'active'
-                                    ? `Activated ${m.name} (${m.memberCode}).`
-                                    : `Suspended ${m.name} (${m.memberCode}).`
+                                    ? t('activatedMsg', { name: m.name, code: m.memberCode })
+                                    : t('suspendedMsg', { name: m.name, code: m.memberCode })
                                 );
                               }}
                               className={`min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border font-medium cursor-pointer disabled:opacity-50 ${
@@ -997,17 +1041,17 @@ export function AdminUserManagementPanel({
                               }`}
                             >
                               {m.status === 'active'
-                                ? 'Suspend'
+                                ? t('suspend')
                                 : m.status === 'pending_approval'
-                                  ? 'Issue Codes'
-                                  : 'Activate'}
+                                  ? t('issueCodes')
+                                  : t('activate')}
                             </button>
                           )}
                           <button
                             type="button"
                             disabled={isBusy}
                             onClick={() => requestDeleteUser(m)}
-                            aria-label={`Delete ${m.name}`}
+                            aria-label={t('deleteAria', { name: m.name })}
                             className="min-w-[40px] min-h-[40px] px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 inline-flex items-center justify-center cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1016,7 +1060,7 @@ export function AdminUserManagementPanel({
                       )}
                       {isSelf && (
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 px-2">
-                          Current Admin
+                          {t('currentAdmin')}
                         </span>
                       )}
                     </div>
@@ -1032,13 +1076,13 @@ export function AdminUserManagementPanel({
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                <th className="py-2.5 px-4 font-medium">User</th>
-                <th className="py-2.5 px-4 font-medium">Role</th>
-                <th className="py-2.5 px-4 font-medium text-right">Total Contributed</th>
-                <th className="py-2.5 px-4 font-medium text-right">Loans / Year</th>
-                <th className="py-2.5 px-4 font-medium text-right">Active Balance</th>
-                <th className="py-2.5 px-4 font-medium">Status</th>
-                {isAdmin && <th className="py-2.5 px-4 font-medium text-right">Manage Actions</th>}
+                <th className="py-2.5 px-4 font-medium">{t('colUser')}</th>
+                <th className="py-2.5 px-4 font-medium">{t('colRole')}</th>
+                <th className="py-2.5 px-4 font-medium text-right">{t('colTotalContributed')}</th>
+                <th className="py-2.5 px-4 font-medium text-right">{t('colLoansPerYear')}</th>
+                <th className="py-2.5 px-4 font-medium text-right">{t('colActiveBalance')}</th>
+                <th className="py-2.5 px-4 font-medium">{t('colStatus')}</th>
+                {isAdmin && <th className="py-2.5 px-4 font-medium text-right">{t('colManageActions')}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1053,14 +1097,14 @@ export function AdminUserManagementPanel({
                         {m.name}
                       </div>
                       <div className="font-mono text-slate-500 dark:text-slate-400">
-                        {m.memberCode} · {m.email} · Joined {formatShortDate(m.joinedAt)}
+                        {m.memberCode} · {m.email} · {t('joinedAt', { date: formatShortDate(m.joinedAt) })}
                       </div>
                     </td>
 
                     <td className="py-3 px-4">
                       {isAdmin ? (
                         <select
-                          aria-label={`Role for ${m.name}`}
+                          aria-label={t('roleForAria', { name: m.name })}
                           disabled={isBusy || isSelf}
                           value={m.role}
                           onChange={(e) => {
@@ -1069,18 +1113,18 @@ export function AdminUserManagementPanel({
                               requestQuickRoleOrStatus(
                                 m,
                                 { role: nextRole },
-                                `Updated ${m.name}'s role to ${nextRole}.`
+                                t('updatedRoleMsg', { name: m.name, role: roleLabel(nextRole) })
                               );
                             }
                           }}
-                          className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 capitalize disabled:opacity-60"
+                          className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-60"
                         >
-                          <option value="member">member</option>
-                          <option value="manager">manager</option>
-                          <option value="admin">admin</option>
+                          <option value="member">{tRoles('member')}</option>
+                          <option value="manager">{tRoles('manager')}</option>
+                          <option value="admin">{tRoles('admin')}</option>
                         </select>
                       ) : (
-                        <span className="capitalize font-medium">{m.role}</span>
+                        <span className="font-medium">{roleLabel(m.role)}</span>
                       )}
                     </td>
 
@@ -1107,11 +1151,11 @@ export function AdminUserManagementPanel({
                             <button
                               type="button"
                               onClick={() => onInspectMember(m)}
-                              title="Inspect KYC details"
+                              title={t('inspectKycTitle')}
                               className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                             >
                               <Eye className="w-3 h-3" aria-hidden="true" />
-                              <span>KYC</span>
+                              <span>{t('kyc')}</span>
                             </button>
                           )}
 
@@ -1119,11 +1163,11 @@ export function AdminUserManagementPanel({
                             type="button"
                             disabled={isBusy}
                             onClick={() => openEditModal(m)}
-                            title="Edit user details and permissions"
+                            title={t('editUserTitle')}
                             className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                           >
                             <Pencil className="w-3 h-3" aria-hidden="true" />
-                            <span>Edit</span>
+                            <span>{t('edit')}</span>
                           </button>
 
                           {!isSelf && (
@@ -1138,11 +1182,11 @@ export function AdminUserManagementPanel({
                                   email: m.email,
                                 })
                               }
-                              title="Reset password and email temporary password"
+                              title={t('resetPwTitleTooltip')}
                               className="px-2.5 py-1 rounded border border-amber-200 dark:border-amber-900/70 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <KeyRound className="w-3 h-3" aria-hidden="true" />
-                              <span>Reset PW</span>
+                              <span>{t('resetPwShort')}</span>
                             </button>
                           )}
 
@@ -1153,11 +1197,11 @@ export function AdminUserManagementPanel({
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => showActivationCodesModal(m)}
-                                  title="View Member ID & 6-digit Activation OTP for phone support"
+                                  title={t('viewCodesTitleTooltip')}
                                   className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200"
                                 >
                                   <KeyRound className="w-3 h-3" aria-hidden="true" />
-                                  <span>Codes</span>
+                                  <span>{t('codes')}</span>
                                 </button>
                               ) : (
                                 <button
@@ -1174,8 +1218,8 @@ export function AdminUserManagementPanel({
                                       m,
                                       { status: nextStatus },
                                       nextStatus === 'active'
-                                        ? `Activated ${m.name} (${m.memberCode}).`
-                                        : `Suspended ${m.name} (${m.memberCode}).`
+                                        ? t('activatedMsg', { name: m.name, code: m.memberCode })
+                                        : t('suspendedMsg', { name: m.name, code: m.memberCode })
                                     );
                                   }}
                                   className={`px-2.5 py-1 rounded border font-medium cursor-pointer disabled:opacity-50 transition-all duration-200 ${
@@ -1185,10 +1229,10 @@ export function AdminUserManagementPanel({
                                   }`}
                                 >
                                   {m.status === 'active'
-                                    ? 'Suspend'
+                                    ? t('suspend')
                                     : m.status === 'pending_approval'
-                                      ? 'Issue Codes'
-                                      : 'Activate'}
+                                      ? t('issueCodes')
+                                      : t('activate')}
                                 </button>
                               )}
 
@@ -1196,8 +1240,8 @@ export function AdminUserManagementPanel({
                                 type="button"
                                 disabled={isBusy}
                                 onClick={() => requestDeleteUser(m)}
-                                title="Delete user account"
-                                aria-label={`Delete ${m.name}`}
+                                title={t('deleteUserTitleTooltip')}
+                                aria-label={t('deleteAria', { name: m.name })}
                                 className="p-1.5 rounded border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 cursor-pointer disabled:opacity-50"
                               >
                                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1206,7 +1250,9 @@ export function AdminUserManagementPanel({
                           )}
 
                           {isSelf && (
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 px-1">Current Admin</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                              {t('currentAdmin')}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -1245,13 +1291,13 @@ export function AdminUserManagementPanel({
                   id="admin-create-user-title"
                   className="text-base font-semibold text-slate-900 dark:text-white"
                 >
-                  Add New Cooperative User
+                  {t('createModalTitle')}
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setCreateOpen(false)}
-                aria-label="Close modal"
+                aria-label={t('closeModalAria')}
                 className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
@@ -1262,7 +1308,7 @@ export function AdminUserManagementPanel({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name
+                    {t('fullName')}
                   </label>
                   <input
                     type="text"
@@ -1274,7 +1320,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Email Address
+                    {t('emailAddress')}
                   </label>
                   <input
                     type="email"
@@ -1286,7 +1332,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Initial Password (min 6 chars)
+                    {t('initialPassword')}
                   </label>
                   <input
                     type="password"
@@ -1300,7 +1346,7 @@ export function AdminUserManagementPanel({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Role
+                      {t('role')}
                     </label>
                     <select
                       value={createForm.role}
@@ -1309,14 +1355,14 @@ export function AdminUserManagementPanel({
                       }
                       className="w-full px-2.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                     >
-                      <option value="member">Member</option>
-                      <option value="manager">Manager</option>
-                      <option value="admin">Admin</option>
+                      <option value="member">{tRoles('member')}</option>
+                      <option value="manager">{tRoles('manager')}</option>
+                      <option value="admin">{tRoles('admin')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Status
+                      {t('status')}
                     </label>
                     <select
                       value={createForm.status}
@@ -1325,14 +1371,14 @@ export function AdminUserManagementPanel({
                       }
                       className="w-full px-2.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                     >
-                      <option value="active">Active</option>
-                      <option value="pending_approval">Pending</option>
+                      <option value="active">{t('filterActive')}</option>
+                      <option value="pending_approval">{t('statusPending')}</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Mobile Number
+                    {t('mobileNumber')}
                   </label>
                   <input
                     type="tel"
@@ -1343,7 +1389,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Occupation
+                    {t('occupation')}
                   </label>
                   <input
                     type="text"
@@ -1356,7 +1402,7 @@ export function AdminUserManagementPanel({
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Company / Organization
+                  {t('companyOrg')}
                 </label>
                 <input
                   type="text"
@@ -1370,7 +1416,7 @@ export function AdminUserManagementPanel({
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Present Address
+                  {t('presentAddress')}
                 </label>
                 <input
                   type="text"
@@ -1388,7 +1434,7 @@ export function AdminUserManagementPanel({
                   onClick={() => setCreateOpen(false)}
                   className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1396,7 +1442,7 @@ export function AdminUserManagementPanel({
                   className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{createSaving ? 'Creating User…' : 'Create User'}</span>
+                  <span>{createSaving ? t('creatingUser') : t('createUserBtn')}</span>
                 </button>
               </div>
             </form>
@@ -1430,13 +1476,16 @@ export function AdminUserManagementPanel({
                   id="admin-edit-user-title"
                   className="text-base font-semibold text-slate-900 dark:text-white truncate"
                 >
-                  Edit User · {editingMember.name} ({editingMember.memberCode})
+                  {t('editModalTitle', {
+                    name: editingMember.name,
+                    code: editingMember.memberCode,
+                  })}
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingMember(null)}
-                aria-label="Close modal"
+                aria-label={t('closeModalAria')}
                 className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0"
               >
                 <X className="w-4 h-4" />
@@ -1447,7 +1496,7 @@ export function AdminUserManagementPanel({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name
+                    {t('fullName')}
                   </label>
                   <input
                     type="text"
@@ -1459,7 +1508,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Email Address
+                    {t('emailAddress')}
                   </label>
                   <input
                     type="email"
@@ -1471,7 +1520,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Role
+                    {t('role')}
                   </label>
                   <select
                     disabled={editingMember.id === currentUser.id}
@@ -1481,14 +1530,14 @@ export function AdminUserManagementPanel({
                     }
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-60"
                   >
-                    <option value="member">Member</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
+                    <option value="member">{tRoles('member')}</option>
+                    <option value="manager">{tRoles('manager')}</option>
+                    <option value="admin">{tRoles('admin')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Account Status
+                    {t('accountStatus')}
                   </label>
                   <select
                     disabled={editingMember.id === currentUser.id}
@@ -1498,15 +1547,15 @@ export function AdminUserManagementPanel({
                     }
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-60"
                   >
-                    <option value="active">Active (Verified)</option>
-                    <option value="pending_approval">Pending Approval</option>
-                    <option value="pending_activation">Awaiting Member Activation</option>
-                    <option value="suspended">Suspended</option>
+                    <option value="active">{t('statusActiveVerified')}</option>
+                    <option value="pending_approval">{t('statusPendingApproval')}</option>
+                    <option value="pending_activation">{t('statusPendingActivation')}</option>
+                    <option value="suspended">{t('filterSuspended')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Mobile Number
+                    {t('mobileNumber')}
                   </label>
                   <input
                     type="tel"
@@ -1517,7 +1566,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Occupation
+                    {t('occupation')}
                   </label>
                   <input
                     type="text"
@@ -1530,7 +1579,7 @@ export function AdminUserManagementPanel({
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Company / Organization
+                  {t('companyOrg')}
                 </label>
                 <input
                   type="text"
@@ -1545,7 +1594,7 @@ export function AdminUserManagementPanel({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Present Address
+                    {t('presentAddress')}
                   </label>
                   <input
                     type="text"
@@ -1556,7 +1605,7 @@ export function AdminUserManagementPanel({
                 </div>
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Permanent Address
+                    {t('permanentAddress')}
                   </label>
                   <input
                     type="text"
@@ -1571,12 +1620,12 @@ export function AdminUserManagementPanel({
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Reset Password (Optional)
+                  {t('resetPasswordOptional')}
                 </label>
                 <input
                   type="password"
                   minLength={6}
-                  placeholder="Leave blank to keep existing password"
+                  placeholder={t('keepExistingPasswordPlaceholder')}
                   value={editForm.password}
                   onChange={(e) => setEditForm((p) => ({ ...p, password: e.target.value }))}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
@@ -1589,7 +1638,7 @@ export function AdminUserManagementPanel({
                   onClick={() => setEditingMember(null)}
                   className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1597,7 +1646,7 @@ export function AdminUserManagementPanel({
                   className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{editSaving ? 'Saving Changes…' : 'Save User Changes'}</span>
+                  <span>{editSaving ? t('savingChanges') : t('saveUserChangesBtn')}</span>
                 </button>
               </div>
             </form>
@@ -1612,7 +1661,7 @@ export function AdminUserManagementPanel({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}

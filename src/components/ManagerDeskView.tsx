@@ -37,6 +37,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { useTranslations } from 'next-intl';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
 import { MemberAuditLogWidget } from './MemberAuditLogWidget.tsx';
@@ -114,7 +115,26 @@ export function ManagerDeskView({
   onOpenManagerCycle,
   onRefresh,
 }: ManagerDeskViewProps) {
+  const t = useTranslations('ManagerDesk');
+  const tCommon = useTranslations('Common');
+  const tRoles = useTranslations('Roles');
+  const tStatuses = useTranslations('Statuses');
   const ccy = config?.currency || 'BDT';
+  const roleLabel = (role: string) => (tRoles.has(role) ? tRoles(role) : role);
+  const statusLabel = (status: string) =>
+    tStatuses.has(status) ? tStatuses(status) : status.replace(/_/g, ' ');
+  const pollCategoryLabel = (cat: DecisionPoll['category']) => {
+    switch (cat) {
+      case 'policy':
+        return t('pollCategoryPolicy');
+      case 'project':
+        return t('pollCategoryProject');
+      case 'qard_hasan':
+        return t('pollCategoryQardHasan');
+      default:
+        return t('pollCategoryGeneral');
+    }
+  };
   const [activeTab, setActiveTab] = useState<ManagerDeskTab>(
     requestedTab?.tab || 'contributions'
   );
@@ -156,7 +176,10 @@ export function ManagerDeskView({
   const [pollTitle, setPollTitle] = useState('');
   const [pollDesc, setPollDesc] = useState('');
   const [pollCategory, setPollCategory] = useState<DecisionPoll['category']>('general');
-  const [pollOptions, setPollOptions] = useState<string[]>(['Approve', 'Decline']);
+  const [pollOptions, setPollOptions] = useState<string[]>(() => [
+    t('defaultOptionApprove'),
+    t('defaultOptionDecline'),
+  ]);
   const [pollClosesAt, setPollClosesAt] = useState('');
 
   // Schedule Meeting state
@@ -244,8 +267,8 @@ export function ManagerDeskView({
     } catch (err) {
       showNotice(
         'red',
-        'Action Could Not Be Completed',
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+        t('actionFailedTitle'),
+        err instanceof Error ? err.message : t('unexpectedError')
       );
     } finally {
       setModalBusy(false);
@@ -258,28 +281,31 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Approve Contribution (${c.memberName})`,
-        description:
-          'Approving verifies the Transaction Number and adds this deposit immediately to the central fund balance.',
+        title: t('approveContribTitle', { name: c.memberName }),
+        description: t('approveContribDesc'),
         details: [
-          { label: 'Member', value: `${c.memberName} (${c.memberCode})` },
-          { label: 'Billing Month', value: formatBillingMonth(c.billingMonth) },
-          { label: 'Amount', value: formatMoney(c.amount, ccy) },
-          { label: 'Channel & Bank/MFS', value: `${c.channel.toUpperCase()} · ${c.providerName}` },
-          { label: 'Transaction Number', value: txNo },
-          { label: 'Sender Account', value: c.decryptedDetails?.senderAccount || '—' },
+          { label: t('member'), value: `${c.memberName} (${c.memberCode})` },
+          { label: t('billingMonth'), value: formatBillingMonth(c.billingMonth) },
+          { label: t('amount'), value: formatMoney(c.amount, ccy) },
+          { label: t('channelProvider'), value: `${c.channel.toUpperCase()} · ${c.providerName}` },
+          { label: t('txNumber'), value: txNo },
+          { label: t('senderAccount'), value: c.decryptedDetails?.senderAccount || '—' },
         ],
-        inputLabel: 'Optional Verification Remark',
-        inputPlaceholder: 'Verified against treasury statement…',
+        inputLabel: t('optionalRemarkLabel'),
+        inputPlaceholder: t('optionalRemarkPlaceholder'),
         inputRequired: false,
-        confirmLabel: 'Approve & Credit Balance',
+        confirmLabel: t('approveCreditBtn'),
         run: async (note) => {
           await api.reviewContribution(c.id, 'approved', note || undefined);
           await onRefresh();
           showNotice(
             'emerald',
-            'Contribution Approved',
-            `${formatMoney(c.amount, ccy)} from ${c.memberName} (Tx #${txNo}) has been credited to the cooperative fund balance.`
+            t('contribApprovedTitle'),
+            t('contribApprovedDesc', {
+              amount: formatMoney(c.amount, ccy),
+              name: c.memberName,
+              txNo,
+            })
           );
         },
       });
@@ -287,26 +313,25 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Deny Contribution (${c.memberName})`,
-        description:
-          'Enter a clear correction message so the member knows what to fix before resubmitting.',
+        title: t('denyContribTitle', { name: c.memberName }),
+        description: t('denyContribDesc'),
         details: [
-          { label: 'Member', value: `${c.memberName} (${c.memberCode})` },
-          { label: 'Amount', value: formatMoney(c.amount, ccy) },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('member'), value: `${c.memberName} (${c.memberCode})` },
+          { label: t('amount'), value: formatMoney(c.amount, ccy) },
+          { label: t('txNumber'), value: txNo },
         ],
-        inputLabel: 'Mandatory Correction Note',
-        inputPlaceholder: 'e.g. Transaction Number did not appear on bank statement…',
+        inputLabel: t('mandatoryNoteLabel'),
+        inputPlaceholder: t('denyContribNotePlaceholder'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Deny & Notify Member',
+        confirmLabel: t('denyNotifyBtn'),
         run: async (note) => {
           await api.reviewContribution(c.id, 'rejected', note);
           await onRefresh();
           showNotice(
             'amber',
-            'Contribution Denied',
-            `Correction message sent to ${c.memberName} (${c.memberCode}).`
+            t('contribDeniedTitle'),
+            t('contribDeniedDesc', { name: c.memberName, code: c.memberCode })
           );
         },
       });
@@ -317,28 +342,30 @@ export function ManagerDeskView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Initiate 2/3 Secret Ballot (${loan.id})`,
-      description:
-        'Opening the Voting ballot notifies all eligible members to vote privately. Set how long voting stays open — members may change their ballot until the deadline. Results stay sealed until you reveal them.',
+      title: t('initiateVoteTitle', { id: loan.id }),
+      description: t('initiateVoteDesc'),
       details: [
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Principal', value: formatMoney(loan.amount, ccy) },
-        { label: 'Repayment Plan', value: `${loan.installmentMonths} months · 0% interest` },
-        { label: 'Purpose', value: loan.purpose },
+        { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('principal'), value: formatMoney(loan.amount, ccy) },
+        {
+          label: t('repaymentPlan'),
+          value: t('repaymentPlanValue', { months: loan.installmentMonths }),
+        },
+        { label: t('purpose'), value: loan.purpose },
       ],
-      inputLabel: 'Voting window (hours)',
-      inputPlaceholder: 'e.g. 48',
+      inputLabel: t('votingWindowLabel'),
+      inputPlaceholder: t('votingWindowPlaceholder'),
       inputRequired: true,
       initialInputValue: '48',
-      confirmLabel: 'Open Secret 2/3 Ballot',
+      confirmLabel: t('openSecretBallotBtn'),
       run: async (hoursInput) => {
         const hours = Math.min(720, Math.max(1, Math.round(Number(hoursInput) || 48)));
         await api.initiateLoanVote(loan.id, { durationHours: hours });
         await onRefresh();
         showNotice(
           'emerald',
-          'Voting Opened',
-          `Secret voting is live for ${loan.id} for ${hours} hours. Members can change votes until the deadline.`
+          t('votingOpenedTitle'),
+          t('votingOpenedDesc', { id: loan.id, hours })
         );
       },
     });
@@ -348,25 +375,24 @@ export function ManagerDeskView({
     setModal({
       mode: 'confirm',
       tone: 'red',
-      title: `Decline Qard Hasan Application (${loan.id})`,
-      description:
-        'Declining stops this request during Manager pre-vote review and notifies the borrower with your note.',
+      title: t('declineLoanTitle', { id: loan.id }),
+      description: t('declineLoanDesc'),
       details: [
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Requested Amount', value: formatMoney(loan.amount, ccy) },
+        { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('requestedAmount'), value: formatMoney(loan.amount, ccy) },
       ],
-      inputLabel: 'Reason for Declining',
-      inputPlaceholder: 'Explain why this request was declined…',
+      inputLabel: t('reasonDecliningLabel'),
+      inputPlaceholder: t('reasonDecliningLoanPlaceholder'),
       inputRequired: true,
       inputMultiline: true,
-      confirmLabel: 'Decline Request',
+      confirmLabel: t('declineRequestBtn'),
       run: async (note) => {
         await api.adminReviewLoan(loan.id, 'reject', note);
         await onRefresh();
         showNotice(
           'amber',
-          'Qard Hasan Request Declined',
-          `Application ${loan.id} was declined and ${loan.borrowerName} has been notified.`
+          t('loanDeclinedTitle'),
+          t('loanDeclinedDesc', { id: loan.id, name: loan.borrowerName })
         );
       },
     });
@@ -377,32 +403,39 @@ export function ManagerDeskView({
     setModal({
       mode: 'confirm',
       tone: insufficient ? 'amber' : 'emerald',
-      title: `Confirm Qard Hasan Disbursement (${loan.id})`,
+      title: t('disburseTitle', { id: loan.id }),
       description: insufficient
-        ? `Warning: Requested amount (${formatMoney(loan.amount, ccy)}) exceeds current available balance (${formatMoney(availableLiquidity, ccy)}). Confirming will verify if treasury allows payout.`
-        : `Disbursing transfers ${formatMoney(loan.amount, ccy)} to the borrower's encrypted account and immediately deducts it from the central fund balance.`,
+        ? t('disburseWarnDesc', {
+            amount: formatMoney(loan.amount, ccy),
+            balance: formatMoney(availableLiquidity, ccy),
+          })
+        : t('disburseOkDesc', { amount: formatMoney(loan.amount, ccy) }),
       details: [
-        { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-        { label: 'Disbursement Amount', value: formatMoney(loan.amount, ccy) },
-        { label: 'Current Fund Balance', value: formatMoney(availableLiquidity, ccy) },
+        { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+        { label: t('disbursementAmount'), value: formatMoney(loan.amount, ccy) },
+        { label: t('currentFundBalance'), value: formatMoney(availableLiquidity, ccy) },
         {
-          label: 'Payout Destination',
+          label: t('payoutDestination'),
           value: loan.decryptedSensitiveNotes
             ? `${loan.decryptedSensitiveNotes.channel.toUpperCase()} · ${loan.decryptedSensitiveNotes.provider} (${loan.decryptedSensitiveNotes.disbursementAccount})`
-            : 'Encrypted Bank / MFS Payout',
+            : t('encryptedPayoutFallback'),
         },
       ],
-      inputLabel: 'Disbursement Transaction Number (TrxID / Bank Ref)',
-      inputPlaceholder: 'Enter bank reference or MFS TrxID for audit ledger…',
+      inputLabel: t('disburseTxLabel'),
+      inputPlaceholder: t('disburseTxPlaceholder'),
       inputRequired: false,
-      confirmLabel: 'Confirm Disbursement & Deduct Balance',
+      confirmLabel: t('confirmDisburseBtn'),
       run: async (txNo) => {
         await api.disburseLoan(loan.id, txNo ? { transactionNumber: txNo } : undefined);
         await onRefresh();
         showNotice(
           'emerald',
-          'Qard Hasan Disbursed',
-          `${formatMoney(loan.amount, ccy)} deducted from central fund balance for ${loan.id}${txNo ? ` (Tx #${txNo})` : ''}. Borrower notified.`
+          t('loanDisbursedTitle'),
+          t('loanDisbursedDesc', {
+            amount: formatMoney(loan.amount, ccy),
+            id: loan.id,
+            txPart: txNo ? ` (Tx #${txNo})` : '',
+          })
         );
       },
     });
@@ -419,23 +452,22 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Accept Installment #${installmentNumber} (${loan.id})`,
-        description:
-          'Accepting verifies the repayment Transaction Number, lowers the borrower’s remaining balance, and restores funds to treasury liquidity.',
+        title: t('acceptInstTitle', { num: installmentNumber, id: loan.id }),
+        description: t('acceptInstDesc'),
         details: [
-          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-          { label: 'Installment Amount', value: formatMoney(inst?.amount || 0, ccy) },
-          { label: 'Provider', value: inst?.repaymentProvider || '—' },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: t('installmentAmount'), value: formatMoney(inst?.amount || 0, ccy) },
+          { label: t('provider'), value: inst?.repaymentProvider || '—' },
+          { label: t('txNumber'), value: txNo },
         ],
-        confirmLabel: 'Accept & Restore Balance',
+        confirmLabel: t('acceptRestoreBtn'),
         run: async () => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
           await onRefresh();
           showNotice(
             'emerald',
-            'Installment Accepted',
-            `Installment #${installmentNumber} for ${loan.id} (Tx #${txNo}) verified and restored to fund balance.`
+            t('instAcceptedTitle'),
+            t('instAcceptedDesc', { num: installmentNumber, id: loan.id, txNo })
           );
         },
       });
@@ -443,25 +475,24 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Deny Installment #${installmentNumber} (${loan.id})`,
-        description:
-          'Provide a required correction note explaining what the borrower must fix before resubmitting.',
+        title: t('denyInstTitle', { num: installmentNumber, id: loan.id }),
+        description: t('denyInstDesc'),
         details: [
-          { label: 'Borrower', value: `${loan.borrowerName} (${loan.borrowerCode})` },
-          { label: 'Transaction Number', value: txNo },
+          { label: t('borrower'), value: `${loan.borrowerName} (${loan.borrowerCode})` },
+          { label: t('txNumber'), value: txNo },
         ],
-        inputLabel: 'Mandatory Correction Note',
-        inputPlaceholder: 'e.g. TrxID not received or amount mismatch…',
+        inputLabel: t('mandatoryNoteLabel'),
+        inputPlaceholder: t('denyInstPlaceholder'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Deny & Send Correction Note',
+        confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
           await onRefresh();
           showNotice(
             'amber',
-            'Installment Denied',
-            `Correction note sent to ${loan.borrowerName} for Installment #${installmentNumber}.`
+            t('instDeniedTitle'),
+            t('instDeniedDesc', { name: loan.borrowerName, num: installmentNumber })
           );
         },
       });
@@ -470,17 +501,14 @@ export function ManagerDeskView({
 
   function buildLoanApprovalPost(loan: LoanRequest): { title: string; content: string } {
     const amount = formatMoney(loan.amount, ccy);
-    const title = `Qard Hasan Approved: ${loan.borrowerName} (${loan.id})`;
-    const content = [
-      `Alhamdulillah — the cooperative has approved a 0% interest Qard Hasan loan.`,
-      ``,
-      `• Borrower: ${loan.borrowerName} (${loan.borrowerCode})`,
-      `• Amount: ${amount}`,
-      `• Repayment plan: ${loan.installmentMonths} months`,
-      `• Purpose: ${loan.purpose}`,
-      ``,
-      `The request is now queued for treasury disbursement. May Allah make it a means of ease and barakah for the member and the fund.`,
-    ].join('\n');
+    const title = t('loanPostTitle', { name: loan.borrowerName, id: loan.id });
+    const content = t('loanPostContent', {
+      name: loan.borrowerName,
+      code: loan.borrowerCode,
+      amount,
+      months: loan.installmentMonths,
+      purpose: loan.purpose,
+    });
     return { title, content };
   }
 
@@ -503,22 +531,18 @@ export function ManagerDeskView({
     setModal({
       mode: 'confirm',
       tone: 'amber',
-      title: 'Stop Voting & Reveal Results?',
-      description:
-        'Stopping the ballot closes voting permanently and publishes the aggregate tally to all cooperative members.',
+      title: t('revealBallotTitle'),
+      description: t('revealBallotDesc'),
       details: [
-        { label: 'Ballot Item', value: title },
-        { label: 'Secret Ballots Cast', value: String(castCount) },
+        { label: t('ballotItem'), value: title },
+        { label: t('secretBallotsCast'), value: String(castCount) },
       ],
-      confirmLabel: 'Stop & Reveal Result',
+      confirmLabel: t('stopRevealBtn'),
       run: async () => {
         if (type === 'loan') {
           const prior = loans.find((l) => l.id === id);
           await api.revealLoanVote(id);
           await onRefresh();
-          // Offer automated community post after loan vote reveal. Manager can post now,
-          // save as draft, or dismiss. Content is pre-filled for an approval announcement;
-          // if the vote failed the manager can simply close the modal without posting.
           if (prior) {
             openLoanApprovedPostModal(prior);
             return;
@@ -529,11 +553,7 @@ export function ManagerDeskView({
           await api.revealHalalProjectVote(id);
         }
         await onRefresh();
-        showNotice(
-          'emerald',
-          'Vote Result Revealed',
-          `Voting has closed for "${title}". Final results are now visible to all members.`
-        );
+        showNotice('emerald', t('voteRevealedTitle'), t('voteRevealedDesc', { title }));
       },
     });
   }
@@ -542,21 +562,20 @@ export function ManagerDeskView({
     e.preventDefault();
     const cleanedOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
     if (cleanedOptions.length < 2) {
-      showNotice('red', 'Invalid Poll Options', 'Please provide at least 2 distinct poll options.');
+      showNotice('red', t('invalidPollTitle'), t('invalidPollDesc'));
       return;
     }
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Launch Secret Decision Vote?',
-      description:
-        'Publishing opens an anonymized ballot and dispatches notifications to all active members.',
+      title: t('launchPollTitle'),
+      description: t('launchPollDesc'),
       details: [
-        { label: 'Question / Title', value: pollTitle.trim() },
-        { label: 'Category', value: pollCategory },
-        { label: 'Options', value: cleanedOptions.join(' · ') },
+        { label: t('questionTitleLabel'), value: pollTitle.trim() },
+        { label: t('category'), value: pollCategoryLabel(pollCategory) },
+        { label: t('optionsLabel'), value: cleanedOptions.join(' · ') },
       ],
-      confirmLabel: 'Launch Decision Vote',
+      confirmLabel: t('launchPollBtn'),
       run: async () => {
         await api.createPoll({
           title: pollTitle.trim(),
@@ -567,14 +586,10 @@ export function ManagerDeskView({
         });
         setPollTitle('');
         setPollDesc('');
-        setPollOptions(['Approve', 'Decline']);
+        setPollOptions([t('defaultOptionApprove'), t('defaultOptionDecline')]);
         setPollClosesAt('');
         await onRefresh();
-        showNotice(
-          'emerald',
-          'Decision Poll Opened',
-          'Members have been notified and can now cast their secret ballots in Voting.'
-        );
+        showNotice('emerald', t('pollOpenedTitle'), t('pollOpenedDesc'));
       },
     });
   }
@@ -584,15 +599,14 @@ export function ManagerDeskView({
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Schedule Cooperative Meeting?',
-      description:
-        'Scheduling creates a meeting notice on member dashboards and notifications.',
+      title: t('scheduleMeetingTitle'),
+      description: t('scheduleMeetingDesc'),
       details: [
-        { label: 'Title', value: meetingTitle.trim() },
-        { label: 'Date & Time', value: formatDateTime(meetingWhen.trim()) },
-        { label: 'Location / Link', value: meetingWhere.trim() },
+        { label: t('meetingTitleDetail'), value: meetingTitle.trim() },
+        { label: t('dateAndTime'), value: formatDateTime(meetingWhen.trim()) },
+        { label: t('locationOrLink'), value: meetingWhere.trim() },
       ],
-      confirmLabel: 'Schedule & Notify Members',
+      confirmLabel: t('scheduleNotifyBtn'),
       run: async () => {
         await api.createMeeting({
           title: meetingTitle.trim(),
@@ -605,22 +619,14 @@ export function ManagerDeskView({
         setMeetingWhere('');
         setMeetingAgenda('');
         await onRefresh();
-        showNotice(
-          'emerald',
-          'Meeting Scheduled',
-          'Cooperative meeting notice dispatched to all active members.'
-        );
+        showNotice('emerald', t('meetingScheduledTitle'), t('meetingScheduledDesc'));
       },
     });
   }
 
   async function handleRewriteMeeting() {
     if (!meetingTitle.trim() && !meetingAgenda.trim()) {
-      showNotice(
-        'amber',
-        'Enter Meeting Draft First',
-        'Write a draft meeting title or agenda points before running AI Rewrite.'
-      );
+      showNotice('amber', t('draftFirstTitle'), t('draftFirstDesc'));
       return;
     }
     setRewritingMeeting(true);
@@ -642,8 +648,8 @@ export function ManagerDeskView({
     } catch (err) {
       showNotice(
         'red',
-        'AI Rewrite Unavailable',
-        err instanceof Error ? err.message : 'Unable to rewrite meeting schedule text.'
+        t('aiRewriteUnavailableTitle'),
+        err instanceof Error ? err.message : t('aiRewriteUnavailableDesc')
       );
     } finally {
       setRewritingMeeting(false);
@@ -655,18 +661,19 @@ export function ManagerDeskView({
       mode: 'confirm',
       tone: status === 'cancelled' ? 'red' : 'emerald',
       title:
-        status === 'completed'
-          ? `Mark Meeting Completed?`
-          : `Cancel Scheduled Meeting?`,
-      description: `Update status of "${m.title}" (${formatDateTime(m.scheduledFor)}).`,
-      confirmLabel: status === 'completed' ? 'Mark Completed' : 'Cancel Meeting',
+        status === 'completed' ? t('markMeetingCompletedTitle') : t('cancelMeetingTitle'),
+      description: t('updateMeetingStatusDesc', {
+        title: m.title,
+        date: formatDateTime(m.scheduledFor),
+      }),
+      confirmLabel: status === 'completed' ? t('markCompletedBtn') : t('cancelMeetingBtn'),
       run: async () => {
         await api.updateMeetingStatus(m.id, status);
         await onRefresh();
         showNotice(
           status === 'completed' ? 'emerald' : 'amber',
-          'Meeting Status Updated',
-          `"${m.title}" marked as ${status}.`
+          t('meetingStatusUpdatedTitle'),
+          t('meetingStatusUpdatedDesc', { title: m.title, status: statusLabel(status) })
         );
       },
     });
@@ -682,20 +689,23 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'emerald',
-        title: `Approve Profile Update (${req.memberName})`,
-        description: 'Applying immediately updates the member’s profile record.',
+        title: t('approveProfileTitle', { name: req.memberName }),
+        description: t('approveProfileDesc'),
         details: [
-          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
-          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+          { label: t('member'), value: `${req.memberName} (${req.memberCode})` },
+          {
+            label: t('requestedChanges'),
+            value: changesSummary || t('profileUpdateFallback'),
+          },
         ],
-        confirmLabel: 'Approve Profile Update',
+        confirmLabel: t('approveProfileBtn'),
         run: async () => {
           await api.reviewProfileChangeRequest(req.id, 'approved');
           await onRefresh();
           showNotice(
             'emerald',
-            'Profile Update Approved',
-            `${req.memberName}'s profile changes have been applied.`
+            t('profileApprovedTitle'),
+            t('profileApprovedDesc', { name: req.memberName })
           );
         },
       });
@@ -703,24 +713,27 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'red',
-        title: `Decline Profile Update (${req.memberName})`,
-        description: 'Provide a reason explaining why this profile modification request is declined.',
+        title: t('declineProfileTitle', { name: req.memberName }),
+        description: t('declineProfileDesc'),
         details: [
-          { label: 'Member', value: `${req.memberName} (${req.memberCode})` },
-          { label: 'Requested Changes', value: changesSummary || 'Profile update' },
+          { label: t('member'), value: `${req.memberName} (${req.memberCode})` },
+          {
+            label: t('requestedChanges'),
+            value: changesSummary || t('profileUpdateFallback'),
+          },
         ],
-        inputLabel: 'Reason for Declining',
-        inputPlaceholder: 'Explain why this update could not be approved…',
+        inputLabel: t('reasonDecliningLabel'),
+        inputPlaceholder: t('declineProfilePlaceholder'),
         inputRequired: true,
         inputMultiline: true,
-        confirmLabel: 'Decline Request',
+        confirmLabel: t('declineRequestBtn'),
         run: async (note) => {
           await api.reviewProfileChangeRequest(req.id, 'rejected', note);
           await onRefresh();
           showNotice(
             'amber',
-            'Profile Update Declined',
-            `Declined profile modification request from ${req.memberName}.`
+            t('profileDeclinedTitle'),
+            t('profileDeclinedDesc', { name: req.memberName })
           );
         },
       });
@@ -739,7 +752,7 @@ export function ManagerDeskView({
   }> = [
     {
       id: 'contributions',
-      label: 'Contributions',
+      label: t('tabs.contributions'),
       count: pendingContributions.length,
       Icon: CreditCard,
       activeClass: 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/35 shadow-xs',
@@ -749,7 +762,7 @@ export function ManagerDeskView({
     },
     {
       id: 'qard-hasan',
-      label: 'Qard Hasan',
+      label: t('tabs.qardHasan'),
       count: qardHasanActionCount,
       Icon: HandCoins,
       activeClass: 'border-teal-600 bg-teal-50/80 dark:bg-teal-950/35 shadow-xs',
@@ -759,7 +772,7 @@ export function ManagerDeskView({
     },
     {
       id: 'installments',
-      label: 'Installments',
+      label: t('tabs.installments'),
       count: pendingInstallments.length,
       Icon: ShieldCheck,
       activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
@@ -769,7 +782,7 @@ export function ManagerDeskView({
     },
     {
       id: 'ballots',
-      label: 'Votes & Reveals',
+      label: t('tabs.ballots'),
       count: ballotsCount,
       Icon: Vote,
       activeClass: 'border-amber-600 bg-amber-50/80 dark:bg-amber-950/35 shadow-xs',
@@ -779,7 +792,7 @@ export function ManagerDeskView({
     },
     {
       id: 'meetings-profiles',
-      label: 'Meetings & Profiles',
+      label: t('tabs.meetingsProfiles'),
       count: meetingsProfilesCount,
       Icon: CalendarPlus,
       activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
@@ -789,7 +802,7 @@ export function ManagerDeskView({
     },
     {
       id: 'community-drafts',
-      label: 'Community Drafts',
+      label: t('tabs.communityDrafts'),
       count: communityDrafts.length,
       Icon: ClipboardCheck,
       activeClass: 'border-violet-600 bg-violet-50/80 dark:bg-violet-950/35 shadow-xs',
@@ -812,10 +825,10 @@ export function ManagerDeskView({
           <div className="space-y-0.5 sm:space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <ClipboardCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span className="line-clamp-1">Manager Desk</span>
+              <span className="line-clamp-1">{t('title')}</span>
             </div>
             <h2 className="text-sm sm:text-lg font-semibold text-slate-900 dark:text-white">
-              Approvals, Qard Hasan &amp; Ballots
+              {t('headerSubtitle')}
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -826,11 +839,11 @@ export function ManagerDeskView({
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
               >
                 <CalendarClock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                <span>Rotation Timeline</span>
+                <span>{t('rotationTimeline')}</span>
               </button>
             )}
             <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/35 dark:to-teal-950/35 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-              Available Fund Balance: {formatMoney(availableLiquidity, ccy)}
+              {t('availableFundBalanceLabel', { amount: formatMoney(availableLiquidity, ccy) })}
             </div>
           </div>
         </div>
@@ -895,7 +908,7 @@ export function ManagerDeskView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Pending Monthly Contributions ({pendingContributions.length})
+                {t('pendingContribHeading', { count: pendingContributions.length })}
               </h3>
             </div>
             <div className="relative w-full sm:w-64">
@@ -907,7 +920,7 @@ export function ManagerDeskView({
                 type="search"
                 value={contribSearch}
                 onChange={(e) => setContribSearch(e.target.value)}
-                placeholder="Search member, bank, Tx#…"
+                placeholder={t('searchContribPlaceholder')}
                 className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
@@ -934,8 +947,8 @@ export function ManagerDeskView({
           ) : filteredPendingContributions.length === 0 ? (
             <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
               {pendingContributions.length === 0
-                ? 'All submitted contributions have been processed.'
-                : 'No pending contributions match your search.'}
+                ? t('allContribProcessed')
+                : t('noContribMatch')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -970,12 +983,12 @@ export function ManagerDeskView({
                         </span>
                       </div>
                       <div className="text-slate-600 dark:text-slate-400 font-mono">
-                        {c.channel.toUpperCase()} · {c.providerName} · Tx #{txNo} · Sender:{' '}
-                        {c.decryptedDetails?.senderAccount || '—'}
+                        {c.channel.toUpperCase()} · {c.providerName} · Tx #{txNo} ·{' '}
+                        {t('senderPrefix', { account: c.decryptedDetails?.senderAccount || '—' })}
                       </div>
                       {c.decryptedDetails?.notes && (
                         <div className="text-slate-500 dark:text-slate-400">
-                          Member note: {c.decryptedDetails.notes}
+                          {t('memberNotePrefix', { note: c.decryptedDetails.notes })}
                         </div>
                       )}
                       {c.receiptPhotoUrl && (
@@ -985,7 +998,7 @@ export function ManagerDeskView({
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-teal-700 dark:text-teal-400 hover:underline font-medium"
                         >
-                          <span>Inspect Attached Receipt Slip</span>
+                          <span>{t('inspectReceiptSlip')}</span>
                           <ExternalLink className="w-3 h-3" aria-hidden="true" />
                         </a>
                       )}
@@ -1001,7 +1014,7 @@ export function ManagerDeskView({
                             className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Approve</span>
+                            <span>{t('approve')}</span>
                           </button>
                           <button
                             type="button"
@@ -1010,12 +1023,12 @@ export function ManagerDeskView({
                             className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Deny with Note</span>
+                            <span>{t('denyWithNote')}</span>
                           </button>
                         </>
                       ) : (
                         <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
-                          Peer / Admin Review Required
+                          {t('peerAdminRequired')}
                         </span>
                       )}
                     </div>
@@ -1041,13 +1054,13 @@ export function ManagerDeskView({
           <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Stage 1 · Applications Awaiting Vote Initiation ({pendingReviewLoans.length})
+                {t('stage1Heading', { count: pendingReviewLoans.length })}
               </h3>
             </div>
 
             {pendingReviewLoans.length === 0 ? (
               <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                No Qard Hasan requests awaiting vote initiation.
+                {t('stage1Empty')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1076,15 +1089,15 @@ export function ManagerDeskView({
                           loan.borrowerName
                         )}{' '}
                         ({loan.borrowerCode}) ·{' '}
-                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span> (
-                        {loan.installmentMonths} months)
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>{' '}
+                        {t('monthsInline', { months: loan.installmentMonths })}
                       </div>
                       <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
                       {loan.decryptedSensitiveNotes && (
                         <div className="font-mono text-slate-500 dark:text-slate-400">
-                          Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
-                          {loan.decryptedSensitiveNotes.provider} ·{' '}
-                          {loan.decryptedSensitiveNotes.disbursementAccount}
+                          {t('payoutPrefix', {
+                            details: `${loan.decryptedSensitiveNotes.channel.toUpperCase()} · ${loan.decryptedSensitiveNotes.provider} · ${loan.decryptedSensitiveNotes.disbursementAccount}`,
+                          })}
                         </div>
                       )}
                     </div>
@@ -1098,7 +1111,7 @@ export function ManagerDeskView({
                             className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Initiate 2/3 Vote</span>
+                            <span>{t('initiateVote')}</span>
                           </button>
                           <button
                             type="button"
@@ -1106,12 +1119,12 @@ export function ManagerDeskView({
                             onClick={() => confirmDeclineLoanReview(loan)}
                             className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
-                            Decline
+                            {t('decline')}
                           </button>
                         </>
                       ) : (
                         <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
-                          Submitted by you · Another Manager or Admin must initiate 2/3 vote
+                          {t('selfSubmittedVoteNote')}
                         </span>
                       )}
                     </div>
@@ -1125,7 +1138,7 @@ export function ManagerDeskView({
             <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Awaiting Guarantor Co-Signature ({pendingGuarantorLoans.length})
+                  {t('guarantorHeading', { count: pendingGuarantorLoans.length })}
                 </h3>
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1154,12 +1167,12 @@ export function ManagerDeskView({
                           loan.borrowerName
                         )}{' '}
                         ({loan.borrowerCode}) ·{' '}
-                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span> (
-                        {loan.installmentMonths} months)
+                        <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>{' '}
+                        {t('monthsInline', { months: loan.installmentMonths })}
                       </div>
                       <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
                       <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                        <span>Guarantors:</span>
+                        <span>{t('guarantorsLabel')}</span>
                         {(loan.guarantors || []).map((g) => (
                           <span
                             key={g.memberId}
@@ -1169,13 +1182,13 @@ export function ManagerDeskView({
                                 : 'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30'
                             }`}
                           >
-                            {g.memberName} ({g.memberCode}): {g.status}
+                            {g.memberName} ({g.memberCode}): {statusLabel(g.status)}
                           </span>
                         ))}
                       </div>
                     </div>
                     <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-white/80 dark:bg-slate-900/80 shrink-0">
-                      Waiting on Guarantor Co-Sign
+                      {t('waitingGuarantorBadge')}
                     </span>
                   </div>
                 ))}
@@ -1187,13 +1200,13 @@ export function ManagerDeskView({
           <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Stage 2 · Ongoing Secret Qard Hasan Ballots ({votingLoans.length})
+                {t('stage2Heading', { count: votingLoans.length })}
               </h3>
             </div>
 
             {votingLoans.length === 0 ? (
               <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                No Qard Hasan applications currently in active voting.
+                {t('stage2Empty')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1220,8 +1233,10 @@ export function ManagerDeskView({
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 font-mono">
-                        Poll Ongoing · {loan.totalVotesCast ?? loan.votes.length} of{' '}
-                        {loan.totalEligibleVoters} ballot(s) cast secretly
+                        {t('pollOngoingLoanCount', {
+                          cast: loan.totalVotesCast ?? loan.votes.length,
+                          eligible: loan.totalEligibleVoters,
+                        })}
                       </div>
                     </div>
                     <button
@@ -1231,14 +1246,14 @@ export function ManagerDeskView({
                         confirmRevealBallot(
                           'loan',
                           loan.id,
-                          `Qard Hasan ${loan.id} (${loan.borrowerName})`,
+                          t('qardHasanBallotTitle', { id: loan.id, name: loan.borrowerName }),
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
                       className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Stop &amp; Reveal Result</span>
+                      <span>{t('stopRevealBtn')}</span>
                     </button>
                   </div>
                 ))}
@@ -1250,13 +1265,13 @@ export function ManagerDeskView({
           <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Stage 3 · Approved &amp; Awaiting Disbursement ({pendingDisbursementLoans.length})
+                {t('stage3Heading', { count: pendingDisbursementLoans.length })}
               </h3>
             </div>
 
             {pendingDisbursementLoans.length === 0 ? (
               <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                No approved Qard Hasan loans waiting for disbursement confirmation.
+                {t('stage3Empty')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1276,7 +1291,7 @@ export function ManagerDeskView({
                           {shortLiquidity && (
                             <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
                               <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Exceeds current balance</span>
+                              <span>{t('exceedsBalance')}</span>
                             </span>
                           )}
                         </div>
@@ -1297,9 +1312,9 @@ export function ManagerDeskView({
                         </div>
                         {loan.decryptedSensitiveNotes && (
                           <div className="font-mono text-slate-600 dark:text-slate-400">
-                            Payout: {loan.decryptedSensitiveNotes.channel.toUpperCase()} ·{' '}
-                            {loan.decryptedSensitiveNotes.provider} ·{' '}
-                            {loan.decryptedSensitiveNotes.disbursementAccount}
+                            {t('payoutPrefix', {
+                              details: `${loan.decryptedSensitiveNotes.channel.toUpperCase()} · ${loan.decryptedSensitiveNotes.provider} · ${loan.decryptedSensitiveNotes.disbursementAccount}`,
+                            })}
                           </div>
                         )}
                       </div>
@@ -1311,11 +1326,11 @@ export function ManagerDeskView({
                           className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Confirm Disbursement &amp; Deduct Balance</span>
+                          <span>{t('confirmDisburseBtn')}</span>
                         </button>
                       ) : (
                         <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 shrink-0">
-                          Submitted by you · Another Manager or Admin must confirm payout
+                          {t('selfSubmittedPayoutNote')}
                         </span>
                       )}
                     </div>
@@ -1339,13 +1354,13 @@ export function ManagerDeskView({
         >
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Qard Hasan Installment Verification Queue ({pendingInstallments.length})
+              {t('installmentsHeading', { count: pendingInstallments.length })}
             </h3>
           </div>
 
           {pendingInstallments.length === 0 ? (
             <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
-              No Qard Hasan installment receipts awaiting verification.
+              {t('installmentsEmpty')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1370,7 +1385,8 @@ export function ManagerDeskView({
                         ) : (
                           loan.borrowerName
                         )}{' '}
-                        ({loan.borrowerCode}) · {loan.id} Installment #{inst.installmentNumber} ·{' '}
+                        ({loan.borrowerCode}) ·{' '}
+                        {t('installmentRowLabel', { id: loan.id, num: inst.installmentNumber })} ·{' '}
                         <span className="font-mono text-emerald-700 dark:text-emerald-400">
                           {formatMoney(inst.amount, ccy)}
                         </span>
@@ -1385,7 +1401,7 @@ export function ManagerDeskView({
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
                         >
-                          <span>View Repayment Slip</span>
+                          <span>{t('viewRepaymentSlip')}</span>
                           <ExternalLink className="w-3 h-3" aria-hidden="true" />
                         </a>
                       )}
@@ -1403,7 +1419,7 @@ export function ManagerDeskView({
                             className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Accept</span>
+                            <span>{t('accept')}</span>
                           </button>
                           <button
                             type="button"
@@ -1414,12 +1430,12 @@ export function ManagerDeskView({
                             className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Deny with Note</span>
+                            <span>{t('denyWithNote')}</span>
                           </button>
                         </>
                       ) : (
                         <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
-                          Peer / Admin Review Required
+                          {t('peerAdminRequired')}
                         </span>
                       )}
                     </div>
@@ -1444,16 +1460,16 @@ export function ManagerDeskView({
           <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Initiate Decision Poll</span>
+              <span>{t('initiatePollEyebrow')}</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Open Secret Member Vote for Cooperative Decision
+              {t('initiatePollHeading')}
             </h3>
 
             <form onSubmit={handleCreatePoll} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Decision Question / Title
+                  {t('pollQuestionLabel')}
                 </label>
                 <input
                   type="text"
@@ -1461,29 +1477,29 @@ export function ManagerDeskView({
                   minLength={3}
                   value={pollTitle}
                   onChange={(e) => setPollTitle(e.target.value)}
-                  placeholder="e.g. Increase annual emergency cap?"
+                  placeholder={t('pollQuestionPlaceholder')}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Category
+                    {t('category')}
                   </label>
                   <select
                     value={pollCategory}
                     onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
                     className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                   >
-                    <option value="general">General Decision</option>
-                    <option value="policy">Policy / Rules</option>
-                    <option value="project">Venture / Project</option>
-                    <option value="qard_hasan">Qard Hasan Policy</option>
+                    <option value="general">{t('pollCategoryGeneral')}</option>
+                    <option value="policy">{t('pollCategoryPolicy')}</option>
+                    <option value="project">{t('pollCategoryProject')}</option>
+                    <option value="qard_hasan">{t('pollCategoryQardHasan')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Target Close Date (Optional)
+                    {t('targetCloseDateLabel')}
                   </label>
                   <input
                     type="date"
@@ -1495,20 +1511,20 @@ export function ManagerDeskView({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Context / Description
+                  {t('contextDescLabel')}
                 </label>
                 <textarea
                   rows={2}
                   value={pollDesc}
                   onChange={(e) => setPollDesc(e.target.value)}
-                  placeholder="Explain the cooperative decision or options..."
+                  placeholder={t('contextDescPlaceholder')}
                   className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300">
-                  <span>Ballot Options ({pollOptions.length}/6)</span>
+                  <span>{t('ballotOptionsHeader', { count: pollOptions.length })}</span>
                   {pollOptions.length < 6 && (
                     <button
                       type="button"
@@ -1516,7 +1532,7 @@ export function ManagerDeskView({
                       className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" aria-hidden="true" />
-                      <span>Add Option</span>
+                      <span>{t('addOption')}</span>
                     </button>
                   )}
                 </div>
@@ -1531,7 +1547,7 @@ export function ManagerDeskView({
                           prev.map((item, i) => (i === idx ? e.target.value : item))
                         )
                       }
-                      placeholder={`Option ${idx + 1}`}
+                      placeholder={t('optionPlaceholder', { num: idx + 1 })}
                       className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                     />
                     {pollOptions.length > 2 && (
@@ -1541,7 +1557,7 @@ export function ManagerDeskView({
                           setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                         }
                         className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer inline-flex items-center justify-center"
-                        aria-label="Remove option"
+                        aria-label={t('removeOptionAria')}
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
@@ -1555,7 +1571,7 @@ export function ManagerDeskView({
                 disabled={modalBusy}
                 className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
               >
-                Review &amp; Launch Decision Vote
+                {t('reviewLaunchPollBtn')}
               </button>
             </form>
           </section>
@@ -1563,13 +1579,13 @@ export function ManagerDeskView({
           <section className="xl:col-span-7 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Ongoing Secret Ballots ({ballotsCount})
+                {t('ongoingBallotsHeading', { count: ballotsCount })}
               </h3>
             </div>
 
             {ballotsCount === 0 ? (
               <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                No active ballots currently running.
+                {t('noActiveBallots')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1580,11 +1596,11 @@ export function ManagerDeskView({
                   >
                     <div className="text-xs space-y-1">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Qard Hasan · {loan.borrowerName} ({loan.id}) ·{' '}
+                        {t('qardHasanBallotPrefix', { name: loan.borrowerName, id: loan.id })} ·{' '}
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 font-mono">
-                        Poll Ongoing · {loan.totalVotesCast ?? loan.votes.length} ballot(s) cast (secret until revealed)
+                        {t('ballotsCastSecret', { cast: loan.totalVotesCast ?? loan.votes.length })}
                       </div>
                     </div>
                     <button
@@ -1594,14 +1610,14 @@ export function ManagerDeskView({
                         confirmRevealBallot(
                           'loan',
                           loan.id,
-                          `Qard Hasan ${loan.id}`,
+                          t('qardHasanBallotTitle', { id: loan.id, name: loan.borrowerName }),
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
                       className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Stop &amp; Reveal Result</span>
+                      <span>{t('stopRevealBtn')}</span>
                     </button>
                   </div>
                 ))}
@@ -1613,10 +1629,10 @@ export function ManagerDeskView({
                   >
                     <div className="text-xs space-y-1">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Decision Poll · {poll.title}
+                        {t('decisionPollPrefix', { title: poll.title })}
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 font-mono">
-                        Poll Ongoing · {poll.totalVotesCast ?? poll.votes.length} ballot(s) cast
+                        {t('ballotsCastCount', { cast: poll.totalVotesCast ?? poll.votes.length })}
                       </div>
                     </div>
                     <button
@@ -1633,7 +1649,7 @@ export function ManagerDeskView({
                       className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Stop &amp; Reveal Result</span>
+                      <span>{t('stopRevealBtn')}</span>
                     </button>
                   </div>
                 ))}
@@ -1645,10 +1661,13 @@ export function ManagerDeskView({
                   >
                     <div className="text-xs space-y-1">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Venture Proposal · {proj.title} ({formatMoney(proj.targetAllocation, ccy)})
+                        {t('ventureProposalPrefix', {
+                          title: proj.title,
+                          amount: formatMoney(proj.targetAllocation, ccy),
+                        })}
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 font-mono">
-                        Poll Ongoing · {proj.totalVotesCast ?? proj.votes.length} ballot(s) cast
+                        {t('ballotsCastCount', { cast: proj.totalVotesCast ?? proj.votes.length })}
                       </div>
                     </div>
                     <button
@@ -1665,7 +1684,7 @@ export function ManagerDeskView({
                       className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Stop &amp; Reveal Result</span>
+                      <span>{t('stopRevealBtn')}</span>
                     </button>
                   </div>
                 ))}
@@ -1688,10 +1707,10 @@ export function ManagerDeskView({
           <section className="xl:col-span-6 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Meeting Scheduler</span>
+              <span>{t('meetingSchedulerEyebrow')}</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Schedule Cooperative Meeting
+              {t('scheduleMeetingHeading')}
             </h3>
 
             <form onSubmit={handleScheduleMeeting} className="space-y-3">
@@ -1700,7 +1719,7 @@ export function ManagerDeskView({
                 required
                 value={meetingTitle}
                 onChange={(e) => setMeetingTitle(e.target.value)}
-                placeholder="Meeting title (e.g. Monthly Shariah & Treasury Review)"
+                placeholder={t('meetingTitlePlaceholder')}
                 className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1716,7 +1735,7 @@ export function ManagerDeskView({
                   required
                   value={meetingWhere}
                   onChange={(e) => setMeetingWhere(e.target.value)}
-                  placeholder="Room / Google Meet / Zoom link"
+                  placeholder={t('meetingWherePlaceholder')}
                   className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -1724,7 +1743,7 @@ export function ManagerDeskView({
                 rows={3}
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
-                placeholder="Meeting agenda & discussion points…"
+                placeholder={t('meetingAgendaPlaceholder')}
                 className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
@@ -1733,7 +1752,7 @@ export function ManagerDeskView({
                   disabled={modalBusy || rewritingMeeting}
                   className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                 >
-                  Schedule Meeting &amp; Notify All Members
+                  {t('scheduleNotifyAllBtn')}
                 </button>
                 <button
                   type="button"
@@ -1742,7 +1761,7 @@ export function ManagerDeskView({
                   className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
                 >
                   <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{rewritingMeeting ? 'Rewriting...' : 'AI Rewrite Title & Agenda'}</span>
+                  <span>{rewritingMeeting ? t('rewriting') : t('aiRewriteBtn')}</span>
                 </button>
               </div>
             </form>
@@ -1750,7 +1769,7 @@ export function ManagerDeskView({
             {meetings.length > 0 && (
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Scheduled Meetings ({meetings.length})
+                  {t('scheduledMeetingsHeading', { count: meetings.length })}
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
                   {meetings.slice(0, 8).map((m) => (
@@ -1775,7 +1794,7 @@ export function ManagerDeskView({
                             onClick={() => confirmMeetingStatus(m, 'completed')}
                             className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
                           >
-                            Done
+                            {t('done')}
                           </button>
                           <button
                             type="button"
@@ -1783,7 +1802,7 @@ export function ManagerDeskView({
                             onClick={() => confirmMeetingStatus(m, 'cancelled')}
                             className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                           >
-                            Cancel
+                            {tCommon('cancel')}
                           </button>
                         </div>
                       )}
@@ -1797,15 +1816,15 @@ export function ManagerDeskView({
           <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Profile Update Requests</span>
+              <span>{t('profileRequestsEyebrow')}</span>
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Pending Member Profile Change Requests ({pendingProfileRequests.length})
+              {t('pendingProfileHeading', { count: pendingProfileRequests.length })}
             </h3>
 
             {pendingProfileRequests.length === 0 ? (
               <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                No pending profile modification requests awaiting approval.
+                {t('noProfileRequests')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
@@ -1825,8 +1844,8 @@ export function ManagerDeskView({
                           req.memberName
                         )}{' '}
                         ({req.memberCode}) ·{' '}
-                        <span className="capitalize font-normal text-slate-500 dark:text-slate-400">
-                          {req.memberRole}
+                        <span className="font-normal text-slate-500 dark:text-slate-400">
+                          {roleLabel(req.memberRole)}
                         </span>
                       </span>
                       <span className="font-mono text-slate-500 dark:text-slate-400">
@@ -1850,7 +1869,7 @@ export function ManagerDeskView({
                         className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Approve</span>
+                        <span>{t('approve')}</span>
                       </button>
                       <button
                         type="button"
@@ -1859,7 +1878,7 @@ export function ManagerDeskView({
                         className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         <X className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Decline</span>
+                        <span>{t('decline')}</span>
                       </button>
                     </div>
                   </div>
@@ -1882,11 +1901,10 @@ export function ManagerDeskView({
           <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Community Drafts ({communityDrafts.length})
+                {t('communityDraftsHeading', { count: communityDrafts.length })}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Draft announcements saved after loan approvals. Edit or publish them to the Community
-                hub when ready.
+                {t('communityDraftsDesc')}
               </p>
             </div>
 
@@ -1897,8 +1915,7 @@ export function ManagerDeskView({
               </div>
             ) : communityDrafts.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
-                No saved drafts. When you approve a Qard Hasan loan you can choose &quot;Save for
-                Later&quot; to keep an announcement draft here.
+                {t('noSavedDrafts')}
               </p>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
@@ -1913,7 +1930,7 @@ export function ManagerDeskView({
                           {draft.title}
                         </span>
                         <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300">
-                          Draft
+                          {t('draftBadge')}
                         </span>
                         {draft.relatedLoanId && (
                           <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
@@ -1925,7 +1942,7 @@ export function ManagerDeskView({
                         {draft.content}
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                        Saved {formatDateTime(draft.createdAt)}
+                        {t('savedAt', { date: formatDateTime(draft.createdAt) })}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
@@ -1940,13 +1957,13 @@ export function ManagerDeskView({
                             await onRefresh();
                             showNotice(
                               'emerald',
-                              'Draft Published',
-                              `"${draft.title}" is now live in the Community hub.`
+                              t('draftPublishedTitle'),
+                              t('draftPublishedDesc', { title: draft.title })
                             );
                           } catch (err) {
                             const msg =
-                              err instanceof Error ? err.message : 'Failed to publish draft.';
-                            showNotice('red', 'Publish Failed', msg);
+                              err instanceof Error ? err.message : t('publishFailedDesc');
+                            showNotice('red', t('publishFailedTitle'), msg);
                           } finally {
                             setModalBusy(false);
                           }
@@ -1954,7 +1971,7 @@ export function ManagerDeskView({
                         className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Publish</span>
+                        <span>{t('publish')}</span>
                       </button>
                       <button
                         type="button"
@@ -1964,18 +1981,18 @@ export function ManagerDeskView({
                           try {
                             await api.deleteCommunityPost(draft.id, 'Discarded draft');
                             setCommunityDrafts((prev) => prev.filter((d) => d.id !== draft.id));
-                            showNotice('slate', 'Draft Discarded', 'The draft has been removed.');
+                            showNotice('slate', t('draftDiscardedTitle'), t('draftDiscardedDesc'));
                           } catch (err) {
                             const msg =
-                              err instanceof Error ? err.message : 'Failed to delete draft.';
-                            showNotice('red', 'Delete Failed', msg);
+                              err instanceof Error ? err.message : t('deleteDraftFailedDesc');
+                            showNotice('red', t('deleteFailedTitle'), msg);
                           } finally {
                             setModalBusy(false);
                           }
                         }}
                         className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                       >
-                        Discard
+                        {t('discard')}
                       </button>
                     </div>
                   </div>
@@ -2009,7 +2026,7 @@ export function ManagerDeskView({
         title={modal?.mode === 'loan-approved-post' ? '' : modal?.title || ''}
         description={modal?.mode === 'loan-approved-post' ? '' : modal?.description || ''}
         details={modal?.mode === 'loan-approved-post' ? undefined : modal?.details}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
@@ -2043,14 +2060,10 @@ export function ManagerDeskView({
               });
               await onRefresh();
               setModal(null);
-              showNotice(
-                'emerald',
-                'Community Post Published',
-                'The loan approval announcement has been posted to the Community hub.'
-              );
+              showNotice('emerald', t('postPublishedTitle'), t('postPublishedDesc'));
             } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Failed to publish post.';
-              showNotice('red', 'Could Not Publish', msg);
+              const msg = err instanceof Error ? err.message : t('postPublishFailedDesc');
+              showNotice('red', t('couldNotPublishTitle'), msg);
             } finally {
               setModalBusy(false);
             }
@@ -2067,14 +2080,10 @@ export function ManagerDeskView({
               });
               await onRefresh();
               setModal(null);
-              showNotice(
-                'emerald',
-                'Draft Saved',
-                'The announcement was saved as a draft. Open Manager Desk → Community Drafts to edit or publish later.'
-              );
+              showNotice('emerald', t('draftSavedTitle'), t('draftSavedDesc'));
             } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Failed to save draft.';
-              showNotice('red', 'Could Not Save Draft', msg);
+              const msg = err instanceof Error ? err.message : t('saveDraftFailedDesc');
+              showNotice('red', t('couldNotSaveDraftTitle'), msg);
             } finally {
               setModalBusy(false);
             }
@@ -2103,6 +2112,8 @@ function LoanApprovedPostModal({
   onPostNow: (title: string, content: string) => Promise<void>;
   onSaveDraft: (title: string, content: string) => Promise<void>;
 }) {
+  const t = useTranslations('ManagerDesk');
+  const tCommon = useTranslations('Common');
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
 
@@ -2127,12 +2138,10 @@ function LoanApprovedPostModal({
               id="loan-approved-post-title"
               className="text-base font-semibold text-slate-900 dark:text-white"
             >
-              Share Loan Approval with Community?
+              {t('shareLoanApprovalTitle')}
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              An automated announcement was prepared for{' '}
-              <span className="font-mono font-medium">{loan.id}</span>. Post it now or save a draft
-              for later.
+              {t('shareLoanApprovalDesc', { id: loan.id })}
             </p>
           </div>
           <button
@@ -2140,7 +2149,7 @@ function LoanApprovedPostModal({
             disabled={busy}
             onClick={onClose}
             className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
-            aria-label="Close"
+            aria-label={tCommon('close')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -2148,7 +2157,9 @@ function LoanApprovedPostModal({
 
         <div className="px-5 py-4 space-y-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Title</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('meetingTitleDetail')}
+            </label>
             <input
               type="text"
               value={title}
@@ -2160,7 +2171,7 @@ function LoanApprovedPostModal({
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Content
+              {t('contentLabel')}
             </label>
             <textarea
               value={content}
@@ -2180,7 +2191,7 @@ function LoanApprovedPostModal({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
           >
-            Dismiss
+            {t('dismiss')}
           </button>
           <button
             type="button"
@@ -2188,7 +2199,7 @@ function LoanApprovedPostModal({
             onClick={() => void onSaveDraft(title.trim(), content.trim())}
             className="px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 cursor-pointer disabled:opacity-50"
           >
-            {busy ? 'Saving…' : 'Save for Later'}
+            {busy ? t('saving') : t('saveForLater')}
           </button>
           <button
             type="button"
@@ -2197,7 +2208,7 @@ function LoanApprovedPostModal({
             className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
           >
             <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{busy ? 'Posting…' : 'Post Now'}</span>
+            <span>{busy ? t('posting') : t('postNow')}</span>
           </button>
         </div>
       </div>

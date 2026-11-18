@@ -619,7 +619,22 @@ export function AppProviders({
   const activeMessages = getMessagesForLocale(locale);
 
   return (
-    <NextIntlClientProvider locale={locale} messages={activeMessages} timeZone="Asia/Dhaka">
+    <NextIntlClientProvider
+      locale={locale}
+      messages={activeMessages}
+      timeZone="Asia/Dhaka"
+      getMessageFallback={({ namespace, key }) => {
+        const enMessages = getMessagesForLocale('en') as unknown as Record<string, unknown>;
+        const path = namespace ? `${namespace}.${key}` : key;
+        const resolved = path
+          .split('.')
+          .reduce<unknown>(
+            (acc, part) => (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>) ? (acc as Record<string, unknown>)[part] : undefined),
+            enMessages
+          );
+        return typeof resolved === 'string' ? resolved : key;
+      }}
+    >
       <CoopSessionContext.Provider
         value={{
           user,
