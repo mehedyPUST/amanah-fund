@@ -119,9 +119,12 @@ export function AppProviders({
   const reloadingRef = useRef(false);
   const lastAuthCheckRef = useRef<number>(0);
   const minimizeLogoutInFlightRef = useRef(false);
+  const sessionVersionRef = useRef(0);
 
   const setUser = useCallback((nextUser: PublicUser | null) => {
+    sessionVersionRef.current += 1;
     setUserState(nextUser);
+    setAuthChecking(false);
     if (nextUser) {
       syncLocalAccountsWithServerUser(nextUser);
       setMobileBackgroundHiddenAt(null);
@@ -257,17 +260,30 @@ export function AppProviders({
   }, []);
 
   const refreshUser = useCallback(async (): Promise<PublicUser | null> => {
+    const requestSeq = ++sessionVersionRef.current;
     lastAuthCheckRef.current = Date.now();
     try {
       const res = await api.getMe();
+      if (requestSeq !== sessionVersionRef.current) {
+        return userRef.current;
+      }
       setUserState(res.user);
       syncLocalAccountsWithServerUser(res.user);
+      setMobileBackgroundHiddenAt(null);
       return res.user;
-    } catch {
-      setUserState(null);
-      return null;
+    } catch (err) {
+      if (requestSeq !== sessionVersionRef.current) {
+        return userRef.current;
+      }
+      const status = (err as { status?: number } | null)?.status;
+      if (status === 401 || !userRef.current) {
+        setUserState(null);
+      }
+      return status === 401 ? null : userRef.current;
     } finally {
-      setAuthChecking(false);
+      if (requestSeq === sessionVersionRef.current) {
+        setAuthChecking(false);
+      }
     }
   }, []);
 
@@ -276,6 +292,7 @@ export function AppProviders({
   }, [refreshUser]);
 
   const logout = useCallback(async () => {
+    sessionVersionRef.current += 1;
     setMobileBackgroundHiddenAt(null);
     try {
       await api.logout();
@@ -300,6 +317,7 @@ export function AppProviders({
     const performMinimizeLogout = async () => {
       if (minimizeLogoutInFlightRef.current || !userRef.current) return;
       minimizeLogoutInFlightRef.current = true;
+      sessionVersionRef.current += 1;
       clearBgTimer();
       setMobileBackgroundHiddenAt(null);
       setMobileAutoLogoutNotice('__AUTO_LOGOUT_1M__');
@@ -358,6 +376,7 @@ export function AppProviders({
     };
 
     const handleUnauthorized = () => {
+      sessionVersionRef.current += 1;
       clearBgTimer();
       clearClientSessionToken();
       setMobileBackgroundHiddenAt(null);

@@ -66,27 +66,35 @@ function getClientLocaleHeader(): 'en' | 'bn' {
 }
 
 const SESSION_TOKEN_STORAGE_KEY = 'amanah_session_token_v1';
+let memorySessionToken: string | null = null;
 
 export function getClientSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
     const fromSession = window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
-    if (fromSession && fromSession.trim()) return fromSession.trim();
+    if (fromSession && fromSession.trim()) {
+      memorySessionToken = fromSession.trim();
+      return memorySessionToken;
+    }
   } catch {
     // ignore storage errors
   }
   try {
     const fromLocal = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
-    if (fromLocal && fromLocal.trim()) return fromLocal.trim();
+    if (fromLocal && fromLocal.trim()) {
+      memorySessionToken = fromLocal.trim();
+      return memorySessionToken;
+    }
   } catch {
     // ignore storage errors
   }
-  return null;
+  return memorySessionToken;
 }
 
 export function setClientSessionToken(token: string | null): void {
   if (typeof window === 'undefined') return;
   const clean = token && token.trim() ? token.trim() : null;
+  memorySessionToken = clean;
   try {
     if (clean) {
       window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
@@ -113,6 +121,7 @@ export function clearClientSessionToken(): void {
 
 async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
   const sessionToken = getClientSessionToken();
+  const tokenUsedForRequest = sessionToken;
   const res = await fetch(path, {
     credentials: 'include',
     cache: 'no-store',
@@ -154,22 +163,28 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
       );
     }
 
+    const isWorkspaceOAuthRoute = path.startsWith('/api/workspace/');
     if (
       res.status === 401 &&
       typeof window !== 'undefined' &&
+      !isWorkspaceOAuthRoute &&
       path !== '/api/auth/login' &&
       path !== '/api/auth/activate-membership' &&
       path !== '/api/auth/pin-login' &&
       path !== '/api/auth/register' &&
       path !== '/api/auth/logout'
     ) {
-      clearClientSessionToken();
-      if (path !== '/api/auth/me') {
-        window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+      const currentToken = getClientSessionToken();
+      if (currentToken === tokenUsedForRequest) {
+        clearClientSessionToken();
+        if (path !== '/api/auth/me') {
+          window.dispatchEvent(new CustomEvent('amanah:unauthorized'));
+        }
       }
     }
 
-    const errObj = new Error(message) as Error & { code?: string };
+    const errObj = new Error(message) as Error & { code?: string; status?: number };
+    errObj.status = res.status;
     if (code) errObj.code = code;
     throw errObj;
   }

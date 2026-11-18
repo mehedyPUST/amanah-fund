@@ -117,6 +117,57 @@ export function isHttpsRequest(req: Request): boolean {
   return origin.startsWith('https://') || referer.startsWith('https://');
 }
 
+function parseRawCookieHeaderValues(cookieHeader: string | undefined, name: string): string[] {
+  if (!cookieHeader) return [];
+  const results: string[] = [];
+  for (const part of cookieHeader.split(';')) {
+    const eqIdx = part.indexOf('=');
+    if (eqIdx <= 0) continue;
+    const key = part.slice(0, eqIdx).trim();
+    if (key !== name) continue;
+    const rawVal = part.slice(eqIdx + 1).trim();
+    if (!rawVal) continue;
+    try {
+      const decoded = decodeURIComponent(rawVal).trim();
+      if (decoded) results.push(decoded);
+    } catch {
+      results.push(rawVal);
+    }
+  }
+  return results;
+}
+
+export function extractSessionTokenCandidates(req: Request): string[] {
+  const candidates: string[] = [];
+  const pushUnique = (val: unknown) => {
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed && !candidates.includes(trimmed)) {
+        candidates.push(trimmed);
+      }
+    }
+  };
+
+  // Prefer the explicit client-managed session header when present so a fresh login
+  // cannot be shadowed by a stale/unpartitioned browser cookie in cross-site iframes.
+  const headerRaw = req.headers?.['x-amanah-session'];
+  const headerToken = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
+  pushUnique(headerToken);
+
+  pushUnique(req.cookies?.[SESSION_COOKIE_NAME]);
+  for (const rawCookieVal of parseRawCookieHeaderValues(req.headers?.cookie, SESSION_COOKIE_NAME)) {
+    pushUnique(rawCookieVal);
+  }
+
+  // Allow query token fallback strictly for SSE EventSource and direct browser file downloads
+  // that cannot attach custom headers when third-party iframe cookies are blocked.
+  if (req.path === '/events' || req.path.startsWith('/reports/')) {
+    pushUnique(req.query?.sessionToken);
+  }
+
+  return candidates;
+}
+
 export function extractSessionToken(req: Request): string | null {
   const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
   if (typeof cookieToken === 'string' && cookieToken.trim()) {
@@ -164,36 +215,59 @@ export function clearAuthCookie(req: Request, res: Response): void {
   });
 }
 
+function verifyCandidateJwtSub(candidates: string[]): string[] {
+  const secret = getJwtSecret();
+  const subs: string[] = [];
+  for (const token of candidates) {
+    try {
+      const decoded = jwt.verify(token, secret) as { sub?: string };
+      if (decoded?.sub && !subs.includes(decoded.sub)) {
+        subs.push(decoded.sub);
+      }
+    } catch {
+      // Try next candidate token (e.g., valid X-Amanah-Session after stale cookie)
+    }
+  }
+  return subs;
+}
+
 export async function requireAuth(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  try {
-    const token = extractSessionToken(req);
-    if (!token) {
-      res.status(401).json({ error: 'Authentication required. Please sign in.' });
-      return;
-    }
-
-    const decoded = jwt.verify(token, getJwtSecret()) as { sub?: string };
-    if (!decoded?.sub) {
-      res.status(401).json({ error: 'Invalid session token.' });
-      return;
-    }
-
-    const state = await loadVaultState();
-    const user = state.users.find((u) => u.id === decoded.sub);
-    if (!user || user.status !== 'active') {
-      res.status(401).json({ error: 'Account is inactive or not found.' });
-      return;
-    }
-
-    req.authUser = sanitizeUser(user);
-    next();
-  } catch {
-    res.status(401).json({ error: 'Session expired or invalid. Please sign in again.' });
+  const candidates = extractSessionTokenCandidates(req);
+  if (candidates.length === 0) {
+    res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    return;
   }
+
+  const validSubs = verifyCandidateJwtSub(candidates);
+  if (validSubs.length === 0) {
+    res.status(401).json({ error: 'Session expired or invalid. Please sign in again.' });
+    return;
+  }
+
+  let state;
+  try {
+    state = await loadVaultState();
+  } catch (err) {
+    console.error('[Auth] Vault load error during session verification:', err);
+    res.status(503).json({ error: 'Authentication service temporarily unavailable.' });
+    return;
+  }
+
+  const user = validSubs
+    .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
+    .find(Boolean);
+
+  if (!user) {
+    res.status(401).json({ error: 'Account is inactive or not found.' });
+    return;
+  }
+
+  req.authUser = sanitizeUser(user);
+  next();
 }
 
 export function requireRole(allowedRoles: UserRole[]) {
@@ -217,13 +291,15 @@ export async function resolveOptionalAuthUser(
 ): Promise<PublicUser | null> {
   if (req.authUser) return req.authUser;
   try {
-    const token = extractSessionToken(req);
-    if (!token) return null;
-    const decoded = jwt.verify(token, getJwtSecret()) as { sub?: string };
-    if (!decoded?.sub) return null;
+    const candidates = extractSessionTokenCandidates(req);
+    if (candidates.length === 0) return null;
+    const validSubs = verifyCandidateJwtSub(candidates);
+    if (validSubs.length === 0) return null;
     const state = await loadVaultState();
-    const user = state.users.find((u) => u.id === decoded.sub);
-    if (!user || user.status !== 'active') return null;
+    const user = validSubs
+      .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
+      .find(Boolean);
+    if (!user) return null;
     const sanitized = sanitizeUser(user);
     req.authUser = sanitized;
     return sanitized;

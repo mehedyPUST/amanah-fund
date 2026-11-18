@@ -29,6 +29,7 @@ import type { VaultState } from '../src/server/db.ts';
 import {
   clearAuthCookie,
   extractSessionToken,
+  extractSessionTokenCandidates,
   isHttpsRequest,
   sanitizeUser,
   setAuthCookie,
@@ -2028,6 +2029,33 @@ describe('Cross-Site Iframe Auth Cookie & Session Token Fallback', () => {
         query: { sessionToken: 'should-ignore-on-regular-api' },
       } as never)
     ).toBeNull();
+  });
+
+  it('collects ordered session token candidates preferring X-Amanah-Session over stale or duplicate cookies', () => {
+    expect(
+      extractSessionTokenCandidates({
+        cookies: { amanah_session: 'stale-cookie-jwt' },
+        headers: {
+          'x-amanah-session': 'fresh-header-jwt',
+          cookie: 'amanah_session=stale-cookie-jwt; other=1; amanah_session=newer-partitioned-cookie-jwt',
+        },
+        path: '/dashboard',
+        query: {},
+      } as never)
+    ).toEqual([
+      'fresh-header-jwt',
+      'stale-cookie-jwt',
+      'newer-partitioned-cookie-jwt',
+    ]);
+
+    expect(
+      extractSessionTokenCandidates({
+        cookies: {},
+        headers: {},
+        path: '/reports/monthly-sheet',
+        query: { sessionToken: 'report-query-jwt' },
+      } as never)
+    ).toEqual(['report-query-jwt']);
   });
 });
 
