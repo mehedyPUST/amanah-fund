@@ -66,8 +66,10 @@ export async function signInWithGoogleIdentity(): Promise<{
       );
     }
     if (code === 'auth/unauthorized-domain') {
+      const currentHost =
+        typeof window !== 'undefined' ? window.location.hostname : 'current domain';
       throw new Error(
-        'This domain is not yet authorized in Firebase Authentication settings.'
+        `Domain "${currentHost}" is not yet authorized in Firebase Authentication settings (Project: ${firebaseConfig.projectId}).`
       );
     }
     throw err instanceof Error ? err : new Error('Google Sign-In failed.');

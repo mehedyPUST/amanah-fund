@@ -2868,8 +2868,6 @@ export function BalanceSheetView({
 
   return (
     <div className="space-y-4">
-      {kpiSummaryStrip}
-
       {isFullScreen && mounted ? (
         <>
           <div
@@ -2890,6 +2888,8 @@ export function BalanceSheetView({
       ) : (
         workbookSection
       )}
+
+      {kpiSummaryStrip}
 
       <BalanceSheetMemberModal
         row={inspectedMemberRow}
