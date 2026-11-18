@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanah-pwa-v5';
+const CACHE_NAME = 'amanah-pwa-v6';
 const APP_SHELL_URLS = [
   '/manifest.webmanifest',
   '/brand-logo.png',

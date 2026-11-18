@@ -19,7 +19,7 @@ export function AmanahLogo({
 }: AmanahLogoProps) {
   return (
     <span
-      className={`inline-flex items-center justify-center overflow-hidden bg-[#0a4e39] ring-1 ring-emerald-500/30 shadow-xs shrink-0 select-none ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex items-center justify-center overflow-hidden bg-[#08523b] ring-1 ring-emerald-500/30 shadow-xs shrink-0 select-none ${SIZE_CLASSES[size]} ${className}`}
     >
       <img
         src="/brand-logo.png"
