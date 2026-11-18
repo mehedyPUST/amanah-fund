@@ -125,8 +125,8 @@ export function exportBalanceSheetPdf({
   // Widths sum strictly to contentWidth (~785.89 pt)
   const fixedCols = [
     // Member (2 cols = 88 pt)
-    { key: 'sn', label: '#', width: 24, align: 'right' as const },
-    { key: 'id', label: 'Member ID', width: 64, align: 'left' as const },
+    { key: 'sn', label: 'S.N', width: 26, align: 'right' as const },
+    { key: 'id', label: 'Member ID', width: 62, align: 'left' as const },
     // Prev cumulative (3 cols = 198 pt)
     { key: 'pContrib', label: 'Contribution', width: 68, align: 'right' as const },
     { key: 'pQard', label: 'Qard Hasan', width: 66, align: 'right' as const },
@@ -410,7 +410,7 @@ export function exportBalanceSheetPdf({
         ) / 100;
 
       // Member ID only (no name, phone, or email)
-      drawCellText(String(row.serialNo), 0, baseLine, { color: [100, 116, 139], fontSize: 7.2 });
+      drawCellText(String(idx + 1), 0, baseLine, { color: [100, 116, 139], fontSize: 7.2 });
       drawCellText(row.memberCode, 1, baseLine, {
         bold: true,
         color: [15, 23, 42],
