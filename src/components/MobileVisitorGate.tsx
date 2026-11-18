@@ -44,6 +44,7 @@ export function MobileVisitorGate() {
   const [browseMode, setBrowseMode] = useState(false);
   const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
   const [usePasswordMode, setUsePasswordMode] = useState(false);
+  const [vaultHasMembers, setVaultHasMembers] = useState<boolean | null>(null);
   const [autoLogoutNotice, setAutoLogoutNotice] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
@@ -70,6 +71,7 @@ export function MobileVisitorGate() {
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
+    let active = true;
     const mq = window.matchMedia('(max-width: 1023px)');
     const sync = () => {
       setIsMobile(mq.matches);
@@ -82,9 +84,22 @@ export function MobileVisitorGate() {
       }
     };
     sync();
+    api
+      .getBootstrapStatus()
+      .then((status) => {
+        if (!active) return;
+        setVaultHasMembers(status.hasMembers);
+        if (!status.hasMembers) {
+          setUsePasswordMode(true);
+        }
+      })
+      .catch(() => {
+        // ignore bootstrap status fetch failure
+      });
     mq.addEventListener('change', sync);
     window.addEventListener('amanah:mobile-devices-updated', sync);
     return () => {
+      active = false;
       mq.removeEventListener('change', sync);
       window.removeEventListener('amanah:mobile-devices-updated', sync);
     };
@@ -413,6 +428,24 @@ export function MobileVisitorGate() {
                       </div>
                     )}
 
+                    {vaultHasMembers === false && (
+                      <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 space-y-2">
+                        <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                          {tAuth('signInPage.emptyVaultTitle')}
+                        </p>
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                          {tAuth('signInPage.emptyVaultDesc')}
+                        </p>
+                        <Link
+                          href="/signup"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold"
+                        >
+                          <span>{tAuth('signInPage.createFirstAdmin')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                        </Link>
+                      </div>
+                    )}
+
                     <AnimatePresence>
                       {error && (
                         <motion.div
@@ -420,9 +453,18 @@ export function MobileVisitorGate() {
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
-                          className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                          className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed space-y-1.5"
                         >
-                          {error}
+                          <p>{error}</p>
+                          {error.includes('Join Amanah') && (
+                            <Link
+                              href="/signup"
+                              className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                            >
+                              <span>{tAuth('signInPage.createFirstAdmin')}</span>
+                              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                            </Link>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

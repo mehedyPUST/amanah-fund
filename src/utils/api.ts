@@ -339,8 +339,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, reason }),
     }),
+  getBootstrapStatus: () =>
+    apiRequest<{
+      hasMembers: boolean;
+      activeMembersCount: number;
+      storageEngine: string;
+    }>('/api/auth/bootstrap-status'),
   getReferenceMembers: () =>
-    apiRequest<{ members: Array<{ name: string; memberCode: string }> }>('/api/auth/references'),
+    apiRequest<{
+      members: Array<{ name: string; memberCode: string }>;
+      hasMembers?: boolean;
+    }>('/api/auth/references'),
   uploadFile: async (
     file: File,
     options?:
@@ -478,14 +487,22 @@ export const api = {
       body: JSON.stringify({ imageBase64 }),
     });
   },
-  register: (payload: RegisterMemberPayload) =>
-    apiRequest<{ pendingApproval?: boolean; message?: string; user: PublicUser }>(
-      '/api/auth/register',
-      {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      }
-    ),
+  register: async (payload: RegisterMemberPayload) => {
+    const res = await apiRequest<{
+      pendingApproval?: boolean;
+      bootstrapAdmin?: boolean;
+      message?: string;
+      user: PublicUser;
+      sessionToken?: string;
+    }>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (res.sessionToken) {
+      setClientSessionToken(res.sessionToken);
+    }
+    return res;
+  },
   logout: async () => {
     try {
       return await apiRequest<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });

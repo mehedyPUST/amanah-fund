@@ -604,7 +604,10 @@
       "applyPrompt": "Applying as a new member?",
       "homeLabel": "Home",
       "signInFailed": "Sign-in failed.",
-      "activationFailed": "Failed to verify activation codes."
+      "activationFailed": "Failed to verify activation codes.",
+      "emptyVaultTitle": "Cooperative First-Time Setup Required",
+      "emptyVaultDesc": "No member accounts exist in this cooperative vault yet. Register the first account on Join Amanah to automatically create the active Administrator account.",
+      "createFirstAdmin": "Create First Admin Account"
     },
     "pin": {
       "registeredDevice": "Registered Device · 4-Digit PIN",
@@ -630,6 +633,11 @@
       "charterBannerDesc": "Capped at 20 shares · ৳5,000/mo savings · ৳200 non-refundable admission fee.",
       "constitutionPdf": "Constitution PDF",
       "rulesCharter": "Rules & Charter",
+      "bootstrapBannerTitle": "First-Time Cooperative Setup — Founding Administrator",
+      "bootstrapBannerDesc": "No accounts exist yet. This first registration immediately activates your Cooperative Administrator account and opens the dashboard without waiting for approval.",
+      "bootstrapReferencePh": "Founding Administrator (Self)",
+      "bootstrapSuccessTitle": "Founding Administrator Account Active",
+      "openDashboardNow": "Open Dashboard",
       "sec1": "01. Personal & Account Information",
       "fullName": "Full Name",
       "fullNamePh": "Full legal name",

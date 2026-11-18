@@ -64,7 +64,7 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
 
 export function SignUpForm() {
   const router = useRouter();
-  const { user, authChecking } = useCoopSession();
+  const { user, authChecking, setUser } = useCoopSession();
   const t = useTranslations('Auth.signUpPage');
   const tAuth = useTranslations('Auth');
   const tCommon = useTranslations('Common');
@@ -72,6 +72,7 @@ export function SignUpForm() {
   const [referenceOptions, setReferenceOptions] = useState<
     Array<{ name: string; memberCode: string }>
   >([]);
+  const [isBootstrapSetup, setIsBootstrapSetup] = useState(false);
 
   // Required & optional signup fields
   const [name, setName] = useState('');
@@ -103,20 +104,24 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [bootstrapActivated, setBootstrapActivated] = useState(false);
 
   useEffect(() => {
-    if (!authChecking && user) {
+    if (!authChecking && user && !successModalOpen) {
       setMobileBrowseMode(false);
       router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
-  }, [authChecking, user, router]);
+  }, [authChecking, user, router, successModalOpen]);
 
   useEffect(() => {
     let active = true;
     api
       .getReferenceMembers()
       .then((res) => {
-        if (active) setReferenceOptions(res.members || []);
+        if (!active) return;
+        setReferenceOptions(res.members || []);
+        const emptyVault = res.hasMembers === false;
+        setIsBootstrapSetup(emptyVault);
       })
       .catch(() => {
         // optional autocomplete list
@@ -381,7 +386,9 @@ export function SignUpForm() {
         email,
         password,
         dateOfBirth,
-        referenceMemberName,
+        referenceMemberName:
+          referenceMemberName.trim() ||
+          (isBootstrapSetup ? 'Founding Administrator (Self)' : ''),
         mobile,
         occupation,
         companyOrganization,
@@ -395,7 +402,12 @@ export function SignUpForm() {
 
       const msg = res.message || t('submittedFallback');
       setSuccessMessage(msg);
+      setBootstrapActivated(Boolean(res.bootstrapAdmin));
       setSuccessModalOpen(true);
+      if (res.bootstrapAdmin && res.user) {
+        setMobileBrowseMode(false);
+        setUser(res.user);
+      }
       setName('');
       setEmail('');
       setPassword('');
@@ -418,7 +430,7 @@ export function SignUpForm() {
     }
   }
 
-  if (authChecking || user) {
+  if (authChecking || (user && !successModalOpen)) {
     return (
       <div className="px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="max-w-3xl w-full mx-auto bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
@@ -549,6 +561,17 @@ export function SignUpForm() {
                 )}
               </div>
 
+              {isBootstrapSetup && (
+                <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/75 dark:bg-emerald-950/35 space-y-1">
+                  <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                    {t('bootstrapBannerTitle')}
+                  </p>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                    {t('bootstrapBannerDesc')}
+                  </p>
+                </div>
+              )}
+
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -663,15 +686,22 @@ export function SignUpForm() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    {t('referenceLabel')} <span className="text-red-500">*</span>
+                    {t('referenceLabel')}{' '}
+                    {isBootstrapSetup ? (
+                      <span className="text-slate-500 dark:text-slate-400 font-normal">
+                        {t('optional')}
+                      </span>
+                    ) : (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <input
                     type="text"
-                    required
+                    required={!isBootstrapSetup}
                     list="coop-existing-members"
                     value={referenceMemberName}
                     onChange={(e) => setReferenceMemberName(e.target.value)}
-                    placeholder={t('referencePh')}
+                    placeholder={isBootstrapSetup ? t('bootstrapReferencePh') : t('referencePh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                   <datalist id="coop-existing-members">
@@ -1284,10 +1314,15 @@ export function SignUpForm() {
         open={successModalOpen}
         mode="notice"
         tone="emerald"
-        title={t('submittedTitle')}
+        title={bootstrapActivated ? t('bootstrapSuccessTitle') : t('submittedTitle')}
         description={successMessage || t('submittedFallback')}
-        confirmLabel={tCommon('okGotIt')}
-        onClose={() => setSuccessModalOpen(false)}
+        confirmLabel={bootstrapActivated ? t('openDashboardNow') : tCommon('okGotIt')}
+        onClose={() => {
+          setSuccessModalOpen(false);
+          if (bootstrapActivated) {
+            router.replace('/dashboard');
+          }
+        }}
       />
     </div>
   );

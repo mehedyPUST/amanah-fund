@@ -844,13 +844,30 @@ apiRouter.get('/constitution', async (_req, res) => {
   }
 });
 
+apiRouter.get('/auth/bootstrap-status', async (_req, res) => {
+  try {
+    const state = await loadVaultState();
+    res.json({
+      hasMembers: state.users.length > 0,
+      activeMembersCount: state.users.filter((u) => u.status === 'active').length,
+      storageEngine: getStorageEngine(),
+    });
+  } catch (err) {
+    console.error('Bootstrap status error:', err);
+    res.status(500).json({ error: 'Failed to inspect cooperative setup status.' });
+  }
+});
+
 apiRouter.get('/auth/references', async (_req, res) => {
   try {
     const state = await loadVaultState();
     const activeMembers = state.users
       .filter((u) => u.status === 'active')
       .map((u) => ({ name: u.name, memberCode: u.memberCode }));
-    res.json({ members: activeMembers });
+    res.json({
+      members: activeMembers,
+      hasMembers: state.users.length > 0,
+    });
   } catch (err) {
     console.error('Reference list error:', err);
     res.status(500).json({ error: 'Failed to load reference members.' });
@@ -863,7 +880,11 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
     const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
-    const referenceMemberName = String(req.body?.referenceMemberName || '').trim();
+    const currentVaultSnapshot = await loadVaultState();
+    const isFirstAccountBootstrap = currentVaultSnapshot.users.length === 0;
+    const referenceMemberName =
+      String(req.body?.referenceMemberName || '').trim() ||
+      (isFirstAccountBootstrap ? 'Founding Administrator (Self)' : '');
     const mobile = String(req.body?.mobile || '').trim();
     const occupation = String(req.body?.occupation || '').trim();
     const companyOrganization = String(req.body?.companyOrganization || '').trim();
@@ -882,7 +903,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       !name ||
       !email ||
       !dateOfBirth ||
-      !referenceMemberName ||
+      (!isFirstAccountBootstrap && !referenceMemberName) ||
       !mobile ||
       !occupation ||
       !companyOrganization ||
@@ -1015,13 +1036,21 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       resourceId: createdUser.id,
     });
 
+    const isBootstrapAdmin = createdUser.role === 'admin' && createdUser.status === 'active';
+    let sessionToken: string | undefined;
+    if (isBootstrapAdmin) {
+      sessionToken = signAuthToken(createdUser);
+      setAuthCookie(req, res, sessionToken);
+    }
+
     res.status(201).json({
       pendingApproval: createdUser.status === 'pending_approval',
-      bootstrapAdmin: createdUser.role === 'admin' && createdUser.status === 'active',
+      bootstrapAdmin: isBootstrapAdmin,
       user: sanitized,
+      ...(sessionToken ? { sessionToken } : {}),
       message:
         createdUser.role === 'admin'
-          ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is ready to sign in.'
+          ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is active immediately.'
           : 'Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.',
     });
   } catch (err) {

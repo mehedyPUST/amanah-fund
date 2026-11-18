@@ -72,6 +72,7 @@ export function SignInForm() {
 
   const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
   const [usePasswordMode, setUsePasswordMode] = useState(false);
+  const [vaultHasMembers, setVaultHasMembers] = useState<boolean | null>(null);
 
   const [noticeModal, setNoticeModal] = useState<{
     tone: 'emerald' | 'red';
@@ -84,6 +85,7 @@ export function SignInForm() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    let active = true;
     const params = new URLSearchParams(window.location.search);
     if (params.get('forgot') === '1') {
       setForgotOpen(true);
@@ -94,8 +96,23 @@ export function SignInForm() {
       if (accounts.length === 0) setUsePasswordMode(false);
     };
     syncRegistered();
+    api
+      .getBootstrapStatus()
+      .then((status) => {
+        if (!active) return;
+        setVaultHasMembers(status.hasMembers);
+        if (!status.hasMembers) {
+          setUsePasswordMode(true);
+        }
+      })
+      .catch(() => {
+        // ignore bootstrap status fetch failure
+      });
     window.addEventListener('amanah:mobile-devices-updated', syncRegistered);
-    return () => window.removeEventListener('amanah:mobile-devices-updated', syncRegistered);
+    return () => {
+      active = false;
+      window.removeEventListener('amanah:mobile-devices-updated', syncRegistered);
+    };
   }, []);
 
   useEffect(() => {
@@ -480,6 +497,26 @@ export function SignInForm() {
                 </p>
               </div>
 
+              {vaultHasMembers === false && (
+                <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/85 dark:bg-amber-950/35 space-y-2.5">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                      {tAuth('signInPage.emptyVaultTitle')}
+                    </p>
+                    <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                      {tAuth('signInPage.emptyVaultDesc')}
+                    </p>
+                  </div>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                  >
+                    <span>{tAuth('signInPage.createFirstAdmin')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </Link>
+                </div>
+              )}
+
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -487,9 +524,18 @@ export function SignInForm() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed space-y-2"
                   >
-                    {error}
+                    <p>{error}</p>
+                    {error.includes('Join Amanah') && (
+                      <Link
+                        href="/signup"
+                        className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                      >
+                        <span>{tAuth('signInPage.createFirstAdmin')}</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </Link>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
