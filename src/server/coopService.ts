@@ -14,6 +14,7 @@ import type {
   LoanSensitiveDetails,
   ManagerCycleSchedule,
   ManagerCycleSlot,
+  MemberActivationAdminView,
   MemberPublicProfile,
   MemberSummary,
   MonthClearanceEntry,
@@ -630,7 +631,9 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
 
   const monthlySeries = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
 
-  const pendingMembersCount = state.users.filter((u) => u.status === 'pending_approval').length;
+  const pendingMembersCount = state.users.filter(
+    (u) => u.status === 'pending_approval' || u.status === 'pending_activation'
+  ).length;
   const pendingProfileRequestsCount = (state.profileChangeRequests || []).filter(
     (r) => r.status === 'pending'
   ).length;
@@ -1001,6 +1004,31 @@ export function buildMemberSummaries(
       }
     }
 
+    let activationCredentials: MemberActivationAdminView | undefined;
+    if (includeRegistrationDetails && u.activationMeta) {
+      let otp = '';
+      if (u.encryptedActivationOtp) {
+        try {
+          const decryptedOtp = decryptSensitiveObject<{ otp?: string }>(u.encryptedActivationOtp);
+          otp = decryptedOtp?.otp ? String(decryptedOtp.otp) : '';
+        } catch {
+          otp = '';
+        }
+      }
+      activationCredentials = {
+        memberCode: u.activationMeta.memberCode || u.memberCode,
+        otp,
+        issuedAt: u.activationMeta.issuedAt,
+        issuedByName: u.activationMeta.issuedByName,
+        emailSent: Boolean(u.activationMeta.emailSent),
+        emailSentAt: u.activationMeta.emailSentAt,
+        emailError: u.activationMeta.emailError,
+        activatedAt: u.activationMeta.activatedAt,
+        agreementAcceptedAt: u.activationMeta.agreementAcceptedAt,
+        failedAttempts: u.activationMeta.failedAttempts || 0,
+      };
+    }
+
     return {
       id: u.id,
       name: u.name,
@@ -1012,6 +1040,7 @@ export function buildMemberSummaries(
       phoneMasked: u.phoneMasked,
       photoUrl: u.photoUrl,
       registrationDetails,
+      activationCredentials,
       totalContributed,
       approvedContributionsCount: approvedContribs.length,
       loansThisYear,

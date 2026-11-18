@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   FileText,
   HandCoins,
+  KeyRound,
   Mail,
   UserPlus,
   X,
@@ -93,7 +94,11 @@ export function AdminReportsView({
         description: string;
         details?: ActionModalDetailItem[];
         confirmLabel: string;
-        run: () => Promise<void>;
+        inputLabel?: string;
+        inputPlaceholder?: string;
+        inputRequired?: boolean;
+        initialInputValue?: string;
+        run: (inputValue: string) => Promise<void>;
       }
     | {
         mode: 'notice';
@@ -105,6 +110,20 @@ export function AdminReportsView({
     | null
   >(null);
   const [modalBusy, setModalBusy] = useState(false);
+
+  function suggestNextAmanahMemberId(): string {
+    let maxNum = 0;
+    for (const m of members) {
+      if (m.status === 'pending_approval') continue;
+      const code = m.activationCredentials?.memberCode || m.memberCode;
+      const match = code.match(/(?:AMANAH-)?AC-(\d+)$/i) || code.match(/(\d+)$/);
+      if (match) {
+        const n = Number(match[1]);
+        if (Number.isFinite(n) && n > maxNum) maxNum = n;
+      }
+    }
+    return `AMANAH-AC-${String(Math.max(1, maxNum + 1)).padStart(2, '0')}`;
+  }
 
   async function loadAdminData() {
     setLoading(true);
@@ -189,41 +208,84 @@ export function AdminReportsView({
   }
 
   function confirmApproveMember(member: MemberSummary) {
+    const suggestedCode = suggestNextAmanahMemberId();
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: 'Approve Member Registration?',
+      title: 'Approve & Issue Activation Codes?',
       description:
-        'Approving activates this applicant account for monthly deposits, community participation, and voting.',
+        'Approving assigns the official Member ID below and generates a unique, never-before-used 6-digit Activation OTP emailed to the applicant and saved in this panel for phone support.',
       details: [
-        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Applicant', value: member.name },
         { label: 'Email', value: member.email },
       ],
-      confirmLabel: 'Approve Signup',
-      run: async () => {
+      inputLabel: 'Official Member ID to Assign',
+      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputRequired: true,
+      initialInputValue: suggestedCode,
+      confirmLabel: 'Generate Codes & Send Email',
+      run: async (memberCodeInput: string) => {
         try {
-          const res = await api.updateMember(member.id, { status: 'active' });
+          const res = await api.issueMemberActivation(member.id, {
+            memberCode: memberCodeInput.trim() || undefined,
+          });
           setMembers(res.members);
-          setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+          const updated = res.members.find((item) => item.id === member.id) || null;
+          setInspectingMember((prev) => (prev?.id === member.id ? updated : prev));
           await Promise.all([onRefresh(), loadAdminData()]);
           setModal({
             mode: 'notice',
             tone: 'emerald',
-            title: 'Membership Approved',
+            title: 'Activation Codes Issued',
             description: res.emailSent
-              ? `${member.name} (${member.memberCode}) is now an active verified member. Welcome email sent to ${member.email}.`
-              : `${member.name} (${member.memberCode}) is now an active verified member. In-app welcome notice queued${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`,
+              ? `Assigned Member ID ${res.memberCode} and unique 6-digit OTP to ${member.name}. Emailed to ${member.email} and visible in this panel for phone support.`
+              : `Assigned Member ID ${res.memberCode} and unique 6-digit OTP to ${member.name}. Email could not be sent${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes over the phone.`,
+            details: [
+              { label: 'Applicant', value: member.name },
+              { label: 'Official Member ID', value: res.memberCode },
+              { label: '6-Digit Activation OTP', value: res.otp },
+            ],
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
             title: 'Approval Failed',
-            description: err instanceof Error ? err.message : 'Failed to approve member.',
+            description: err instanceof Error ? err.message : 'Failed to issue activation codes.',
           });
         }
       },
     });
+  }
+
+  async function handleResendActivation(member: MemberSummary) {
+    setModalBusy(true);
+    try {
+      const res = await api.resendActivationEmail(member.id);
+      setMembers(res.members);
+      await Promise.all([onRefresh(), loadAdminData()]);
+      setModal({
+        mode: 'notice',
+        tone: res.emailSent ? 'emerald' : 'amber',
+        title: res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+        description: res.emailSent
+          ? `Resent Member ID (${res.memberCode}) and 6-digit OTP to ${member.email}.`
+          : `Could not deliver email${res.emailReason ? ` (${res.emailReason})` : ''}. Share the codes below over the phone.`,
+        details: [
+          { label: 'Official Member ID', value: res.memberCode },
+          { label: '6-Digit Activation OTP', value: res.otp },
+        ],
+      });
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: 'Resend Failed',
+        description: err instanceof Error ? err.message : 'Failed to resend activation email.',
+      });
+    } finally {
+      setModalBusy(false);
+    }
   }
 
   function confirmDeclinePending(member: MemberSummary) {
@@ -315,7 +377,12 @@ export function AdminReportsView({
     });
   }
 
-  const pendingMembers = members.filter((m) => m.status === 'pending_approval');
+  const pendingMembers = members
+    .filter((m) => m.status === 'pending_approval' || m.status === 'pending_activation')
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'pending_approval' ? -1 : 1;
+      return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+    });
   const pendingReviewLoans = loans.filter((l) => l.status === 'pending_vote');
 
   return (
@@ -388,6 +455,8 @@ export function AdminReportsView({
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
               {pendingMembers.map((pm) => {
                 const reg = pm.registrationDetails;
+                const act = pm.activationCredentials;
+                const isAwaitingActivation = pm.status === 'pending_activation';
                 const avatar = reg?.photoUrl || pm.photoUrl;
                 return (
                   <div
@@ -410,12 +479,29 @@ export function AdminReportsView({
                       <div className="space-y-0.5 min-w-0">
                         <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {pm.name}{' '}
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">· {pm.memberCode}</span>
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                            · {act?.memberCode || pm.memberCode}
+                          </span>{' '}
+                          <span
+                            className={`text-xs font-medium ${
+                              isAwaitingActivation
+                                ? 'text-indigo-700 dark:text-indigo-400'
+                                : 'text-amber-700 dark:text-amber-400'
+                            }`}
+                          >
+                            · {isAwaitingActivation ? 'Awaiting Activation' : 'Pending Review'}
+                          </span>
                         </div>
                         <div className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
                           {pm.email} · Mobile {reg?.mobile || pm.phoneMasked || '••••'} · Applied{' '}
                           {formatDateTime(pm.joinedAt)}
                         </div>
+                        {isAwaitingActivation && act && (
+                          <div className="text-xs font-mono text-indigo-700 dark:text-indigo-300 pt-0.5">
+                            Member ID: <strong>{act.memberCode}</strong> · 6-Digit OTP:{' '}
+                            <strong className="tracking-widest">{act.otp || 'Unavailable'}</strong>
+                          </div>
+                        )}
                         {reg && (
                           <div className="text-xs text-slate-600 dark:text-slate-300 truncate">
                             Ref: <span className="font-medium">{reg.referenceMemberName}</span> ·{' '}
@@ -440,16 +526,27 @@ export function AdminReportsView({
                         className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                       >
                         <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Decline</span>
+                        <span>{isAwaitingActivation ? 'Remove' : 'Decline'}</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => confirmApproveMember(pm)}
-                        className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Approve Signup</span>
-                      </button>
+                      {isAwaitingActivation ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleResendActivation(pm)}
+                          className="px-3.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all duration-200"
+                        >
+                          <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Resend Email</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => confirmApproveMember(pm)}
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+                        >
+                          <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Issue Codes</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1060,10 +1157,20 @@ export function AdminReportsView({
                     onClick={() => confirmApproveMember(inspectingMember)}
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Approve Signup</span>
+                    <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Approve &amp; Issue Codes</span>
                   </button>
                 </>
+              )}
+              {inspectingMember.status === 'pending_activation' && (
+                <button
+                  type="button"
+                  onClick={() => void handleResendActivation(inspectingMember)}
+                  className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Resend Activation Email</span>
+                </button>
               )}
               <button
                 type="button"
@@ -1086,13 +1193,17 @@ export function AdminReportsView({
         description={modal?.description || ''}
         details={modal?.details}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        initialInputValue={modal?.mode === 'confirm' ? modal.initialInputValue : ''}
         busy={modalBusy}
         onConfirm={
           modal?.mode === 'confirm'
-            ? async () => {
+            ? async (inputValue: string) => {
                 setModalBusy(true);
                 try {
-                  await modal.run();
+                  await modal.run(inputValue);
                 } finally {
                   setModalBusy(false);
                 }

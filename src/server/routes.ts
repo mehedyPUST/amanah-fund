@@ -39,7 +39,14 @@ import type {
   UploadDocumentCategory,
   UserRegistrationDetails,
   UserRole,
+  UserStatus,
 } from '../types/coop.ts';
+import {
+  decryptAdminActivationView,
+  generateNextAmanahMemberId,
+  issueMemberActivationInState,
+  verifyMemberActivationInState,
+} from './activationService.ts';
 import {
   type AuthenticatedRequest,
   clearAuthCookie,
@@ -49,7 +56,9 @@ import {
   resolveOptionalAuthUser,
   sanitizeUser,
   setAuthCookie,
+  signActivationChallengeToken,
   signAuthToken,
+  verifyActivationChallengeToken,
 } from './auth.ts';
 import {
   appendAuditLog,
@@ -90,6 +99,8 @@ import {
   getSmtpStatusSummary,
   isSmtpConfigured,
   sendEmail,
+  sendMemberActivationCodesEmail,
+  sendMembershipActivatedConfirmationEmail,
   sendMonthlyPdfSummaryEmail,
   sendPasswordResetAdminAlertEmail,
   sendRegistrationApprovedEmail,
@@ -344,7 +355,23 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
     if (user.status === 'pending_approval') {
       res.status(403).json({
         error:
-          'Your registration is awaiting administrator approval. Only approved members can sign in.',
+          'Your membership application is awaiting administrator review. Once approved, your official Member ID and 6-digit Activation OTP will be emailed to you.',
+      });
+      return;
+    }
+    if (user.status === 'pending_activation') {
+      const activationToken = signActivationChallengeToken(user);
+      res.json({
+        activationRequired: true,
+        activationToken,
+        applicant: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          fundName: state.fundConfig.fundName,
+        },
+        message:
+          'Your application has been approved. Enter your official Member ID and 6-digit Activation OTP to confirm your final agreement and activate your Amanah account.',
       });
       return;
     }
@@ -378,6 +405,126 @@ apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Authentication service failed.' });
+  }
+});
+
+apiRouter.post('/auth/activate-membership', authRateLimiter, async (req, res) => {
+  try {
+    const activationToken = String(req.body?.activationToken || '').trim();
+    const fallbackEmail = String(req.body?.email || '').trim().toLowerCase();
+    const fallbackPassword = String(req.body?.password || '');
+    const memberCode = String(req.body?.memberCode || '').trim();
+    const otp = String(req.body?.otp || '').trim();
+    const agreedToTerms = Boolean(req.body?.agreedToTerms);
+
+    let targetUserId = '';
+    if (activationToken) {
+      const payload = verifyActivationChallengeToken(activationToken);
+      if (!payload) {
+        res.status(401).json({
+          error: 'Your activation session expired. Please sign in with your email and password again.',
+          code: 'ACTIVATION_SESSION_EXPIRED',
+        });
+        return;
+      }
+      targetUserId = payload.sub;
+    } else if (fallbackEmail && fallbackPassword) {
+      const currentState = await loadVaultState();
+      const matched = currentState.users.find((u) => u.email.toLowerCase() === fallbackEmail);
+      if (!matched || !matched.passwordHash || !bcrypt.compareSync(fallbackPassword, matched.passwordHash)) {
+        res.status(401).json({ error: 'Invalid email or password.' });
+        return;
+      }
+      targetUserId = matched.id;
+    } else {
+      res.status(401).json({
+        error: 'Activation session token is required. Please sign in first.',
+        code: 'ACTIVATION_SESSION_EXPIRED',
+      });
+      return;
+    }
+
+    let verificationOutcome: ReturnType<typeof verifyMemberActivationInState> | null = null;
+    const nextState = await updateVaultState((draft) => {
+      verificationOutcome = verifyMemberActivationInState(draft, {
+        userId: targetUserId,
+        memberCode,
+        otp,
+        agreedToTerms,
+      });
+      return draft;
+    });
+
+    if (!verificationOutcome) {
+      res.status(500).json({ error: 'Activation verification could not be completed.' });
+      return;
+    }
+
+    const result = verificationOutcome as ReturnType<typeof verifyMemberActivationInState>;
+    if ('code' in result) {
+      const statusCode =
+        result.code === 'TOO_MANY_ATTEMPTS'
+          ? 429
+          : result.code === 'ACCOUNT_SUSPENDED' || result.code === 'AWAITING_ADMIN_APPROVAL'
+            ? 403
+            : 400;
+      res.status(statusCode).json({ error: result.message, code: result.code });
+      return;
+    }
+
+    const activatedUser = result.user;
+    const activatedAt = result.activatedAt;
+    const sanitized = sanitizeUser(activatedUser);
+    const sessionToken = signAuthToken(activatedUser);
+    setAuthCookie(req, res, sessionToken);
+
+    let confirmationEmailSent = false;
+    let confirmationEmailReason: string | undefined;
+    try {
+      const emailRes = await Promise.race([
+        sendMembershipActivatedConfirmationEmail({
+          to: activatedUser.email,
+          memberName: activatedUser.name,
+          memberCode: activatedUser.memberCode,
+          adminName: activatedUser.activationMeta?.issuedByName || 'Amanah Administration',
+          fundName: nextState.fundConfig.fundName,
+          activatedAtIso: activatedAt,
+          templateOverrides: nextState.fundConfig.emailTemplates,
+        }),
+        new Promise<{ sent: false; reason: string }>((resolve) =>
+          setTimeout(() => resolve({ sent: false, reason: 'SMTP_TIMEOUT' }), 6000)
+        ),
+      ]);
+      confirmationEmailSent = emailRes.sent;
+      confirmationEmailReason = emailRes.reason;
+    } catch (emailErr) {
+      confirmationEmailSent = false;
+      confirmationEmailReason =
+        emailErr instanceof Error ? emailErr.message : 'SMTP delivery failed';
+      console.warn(
+        '[EmailService] Final membership confirmation email failed safely:',
+        confirmationEmailReason
+      );
+    }
+
+    broadcastRealtimeEvent('members:updated', { userId: activatedUser.id });
+    broadcastRealtimeEvent('notification:created', { type: 'signup_approved' });
+    broadcastRealtimeEvent('audit:updated', {
+      action: 'MEMBER_ACTIVATION_COMPLETED',
+      resourceType: 'auth',
+      resourceId: activatedUser.id,
+    });
+
+    res.json({
+      activated: true,
+      user: sanitized,
+      activatedAt,
+      confirmationEmailSent,
+      confirmationEmailReason,
+    });
+  } catch (err) {
+    console.error('Membership activation error:', err);
+    res.status(500).json({ error: 'Failed to verify activation codes.' });
   }
 });
 
@@ -866,7 +1013,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       message:
         createdUser.role === 'admin'
           ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is ready to sign in.'
-          : 'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.',
+          : 'Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.',
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -4804,12 +4951,276 @@ apiRouter.get(
     try {
       const state = await loadVaultState();
       const registrations = buildMemberSummaries(state, true)
-        .filter((m) => m.status === 'pending_approval')
-        .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
-      res.json({ registrations });
+        .filter((m) => m.status === 'pending_approval' || m.status === 'pending_activation')
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === 'pending_approval' ? -1 : 1;
+          }
+          return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+        });
+      const suggestedNextMemberCode = generateNextAmanahMemberId(state.users);
+      res.json({ registrations, suggestedNextMemberCode });
     } catch (err) {
       console.error('Pending registrations load error:', err);
       res.status(500).json({ error: 'Failed to load pending user registrations.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/members/:id/issue-activation',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!(await assertStepUpTotp(req, res))) return;
+      const id = String(req.params.id || '');
+      const customMemberCode =
+        typeof req.body?.memberCode === 'string' && req.body.memberCode.trim()
+          ? req.body.memberCode.trim()
+          : undefined;
+      const viewer = req.authUser!;
+
+      let issuedInfo: {
+        email: string;
+        name: string;
+        memberCode: string;
+        otp: string;
+        issuedAt: string;
+      } | null = null;
+
+      let nextState = await updateVaultState((draft) => {
+        const issued = issueMemberActivationInState(draft, {
+          targetUserId: id,
+          admin: viewer,
+          customMemberCode,
+        });
+        issuedInfo = {
+          email: issued.user.email,
+          name: issued.user.name,
+          memberCode: issued.memberCode,
+          otp: issued.otp,
+          issuedAt: issued.issuedAt,
+        };
+        return draft;
+      });
+
+      if (!issuedInfo) {
+        res.status(404).json({ error: 'Applicant account not found.' });
+        return;
+      }
+
+      const info = issuedInfo as {
+        email: string;
+        name: string;
+        memberCode: string;
+        otp: string;
+        issuedAt: string;
+      };
+
+      let emailSent = false;
+      let emailReason: string | undefined;
+      try {
+        const emailRes = await Promise.race([
+          sendMemberActivationCodesEmail({
+            to: info.email,
+            memberName: info.name,
+            memberCode: info.memberCode,
+            otp: info.otp,
+            adminName: viewer.name,
+            fundName: nextState.fundConfig.fundName,
+            templateOverrides: nextState.fundConfig.emailTemplates,
+          }),
+          new Promise<{ sent: false; reason: string }>((resolve) =>
+            setTimeout(() => resolve({ sent: false, reason: 'SMTP_TIMEOUT' }), 6000)
+          ),
+        ]);
+        emailSent = emailRes.sent;
+        emailReason = emailRes.reason;
+      } catch (emailErr) {
+        emailSent = false;
+        emailReason = emailErr instanceof Error ? emailErr.message : 'SMTP delivery failed';
+        console.warn('[EmailService] Activation codes email failed safely:', emailReason);
+      }
+
+      nextState = await updateVaultState((draft) => {
+        const target = draft.users.find((u) => u.id === id);
+        if (target?.activationMeta) {
+          target.activationMeta.emailSent = emailSent;
+          target.activationMeta.emailSentAt = emailSent ? new Date().toISOString() : undefined;
+          target.activationMeta.emailError = emailSent ? undefined : emailReason;
+        }
+        return draft;
+      });
+
+      const allMembers = buildMemberSummaries(nextState, true);
+      const registrations = allMembers
+        .filter((m) => m.status === 'pending_approval' || m.status === 'pending_activation')
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === 'pending_approval' ? -1 : 1;
+          }
+          return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+        });
+
+      broadcastRealtimeEvent('members:updated', { userId: id });
+      broadcastRealtimeEvent('notification:created', { type: 'signup_activation_issued' });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'MEMBER_ACTIVATION_CODES_ISSUED',
+        resourceType: 'auth',
+        resourceId: id,
+      });
+
+      res.json({
+        members: allMembers,
+        registrations,
+        suggestedNextMemberCode: generateNextAmanahMemberId(nextState.users),
+        memberCode: info.memberCode,
+        otp: info.otp,
+        issuedAt: info.issuedAt,
+        emailSent,
+        emailReason,
+      });
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === 'USER_NOT_FOUND') {
+          res.status(404).json({ error: 'Applicant account not found.' });
+          return;
+        }
+        if (err.message === 'USER_ALREADY_ACTIVE') {
+          res.status(400).json({ error: 'This member account is already active.' });
+          return;
+        }
+        if (err.message === 'USER_SUSPENDED') {
+          res.status(400).json({ error: 'Cannot issue activation codes for a suspended account.' });
+          return;
+        }
+        if (err.message === 'INVALID_MEMBER_CODE') {
+          res.status(400).json({
+            error: 'Invalid Member ID format. Use letters, numbers, and hyphens (e.g. AMANAH-AC-02).',
+          });
+          return;
+        }
+        if (err.message === 'MEMBER_CODE_IN_USE') {
+          res.status(409).json({
+            error: 'That Member ID is already assigned to another member. Choose a unique Member ID.',
+          });
+          return;
+        }
+      }
+      console.error('Issue member activation error:', err);
+      res.status(500).json({ error: 'Failed to generate activation codes.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/admin/members/:id/resend-activation-email',
+  requireAuth,
+  requireRole(['admin']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const id = String(req.params.id || '');
+      const viewer = req.authUser!;
+      const state = await loadVaultState();
+      const target = state.users.find((u) => u.id === id);
+
+      if (!target) {
+        res.status(404).json({ error: 'Member account not found.' });
+        return;
+      }
+      if (target.status !== 'pending_activation') {
+        res.status(400).json({
+          error: 'Activation emails can only be resent for accounts awaiting activation.',
+        });
+        return;
+      }
+
+      const creds = decryptAdminActivationView(target);
+      if (!creds || !creds.otp) {
+        res.status(400).json({
+          error: 'No active 6-digit OTP is stored for this member. Re-issue activation codes instead.',
+        });
+        return;
+      }
+
+      let emailSent = false;
+      let emailReason: string | undefined;
+      try {
+        const emailRes = await Promise.race([
+          sendMemberActivationCodesEmail({
+            to: target.email,
+            memberName: target.name,
+            memberCode: creds.memberCode,
+            otp: creds.otp,
+            adminName: viewer.name,
+            fundName: state.fundConfig.fundName,
+            templateOverrides: state.fundConfig.emailTemplates,
+          }),
+          new Promise<{ sent: false; reason: string }>((resolve) =>
+            setTimeout(() => resolve({ sent: false, reason: 'SMTP_TIMEOUT' }), 6000)
+          ),
+        ]);
+        emailSent = emailRes.sent;
+        emailReason = emailRes.reason;
+      } catch (emailErr) {
+        emailSent = false;
+        emailReason = emailErr instanceof Error ? emailErr.message : 'SMTP delivery failed';
+      }
+
+      const nextState = await updateVaultState((draft) => {
+        const userInDraft = draft.users.find((u) => u.id === id);
+        if (userInDraft?.activationMeta) {
+          userInDraft.activationMeta.emailSent = emailSent;
+          userInDraft.activationMeta.emailSentAt = emailSent
+            ? new Date().toISOString()
+            : userInDraft.activationMeta.emailSentAt;
+          userInDraft.activationMeta.emailError = emailSent ? undefined : emailReason;
+        }
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'MEMBER_ACTIVATION_EMAIL_RESENT',
+          resourceType: 'auth',
+          resourceId: id,
+          summary: `${viewer.name} resent Member ID (${creds.memberCode}) & activation OTP email to ${target.name} (${emailSent ? 'sent' : emailReason || 'failed'})`,
+          payload: {
+            targetUserId: id,
+            memberCode: creds.memberCode,
+            emailSent,
+            emailReason,
+          },
+        });
+        return draft;
+      });
+
+      const allMembers = buildMemberSummaries(nextState, true);
+      const registrations = allMembers
+        .filter((m) => m.status === 'pending_approval' || m.status === 'pending_activation')
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === 'pending_approval' ? -1 : 1;
+          }
+          return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+        });
+
+      broadcastRealtimeEvent('members:updated', { userId: id });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'MEMBER_ACTIVATION_EMAIL_RESENT',
+        resourceType: 'auth',
+        resourceId: id,
+      });
+
+      res.json({
+        emailSent,
+        emailReason,
+        memberCode: creds.memberCode,
+        otp: creds.otp,
+        members: allMembers,
+        registrations,
+      });
+    } catch (err) {
+      console.error('Resend activation email error:', err);
+      res.status(500).json({ error: 'Failed to resend activation email.' });
     }
   }
 );
@@ -4843,9 +5254,13 @@ apiRouter.post(
       const role = (['admin', 'manager', 'member'].includes(String(req.body?.role))
         ? req.body.role
         : 'member') as UserRole;
-      const status = (['active', 'pending_approval', 'suspended'].includes(String(req.body?.status))
-        ? req.body.status
-        : 'active') as 'pending_approval' | 'active' | 'suspended';
+      const status = (
+        ['active', 'pending_approval', 'pending_activation', 'suspended'].includes(
+          String(req.body?.status)
+        )
+          ? req.body.status
+          : 'active'
+      ) as UserStatus;
 
       const mobile = String(req.body?.mobile || '').trim();
       const occupation = String(req.body?.occupation || '').trim();
@@ -4956,7 +5371,7 @@ apiRouter.patch(
       if (!(await assertStepUpTotp(req, res))) return;
       const { id } = req.params;
       const role = req.body?.role as UserRole | undefined;
-      const status = req.body?.status as 'pending_approval' | 'active' | 'suspended' | undefined;
+      const status = req.body?.status as UserStatus | undefined;
       const name = req.body?.name !== undefined ? String(req.body.name).trim() : undefined;
       const email =
         req.body?.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
@@ -5033,7 +5448,7 @@ apiRouter.patch(
         }
         if (
           status &&
-          ['pending_approval', 'active', 'suspended'].includes(status) &&
+          ['pending_approval', 'pending_activation', 'active', 'suspended'].includes(status) &&
           status !== prevStatus
         ) {
           changes.status = { from: prevStatus, to: status };
@@ -5236,7 +5651,7 @@ apiRouter.delete(
           throw new Error('USER_HAS_ACTIVE_LOAN');
         }
 
-        wasPending = target.status === 'pending_approval';
+        wasPending = target.status === 'pending_approval' || target.status === 'pending_activation';
         removedName = `${target.name} (${target.memberCode})`;
         draft.users.splice(idx, 1);
         appendAuditLog(draft, {
@@ -5935,7 +6350,9 @@ apiRouter.get(
         },
         totals: {
           activeMembers: state.users.filter((u) => u.status === 'active').length,
-          pendingMembers: state.users.filter((u) => u.status === 'pending_approval').length,
+          pendingMembers: state.users.filter(
+            (u) => u.status === 'pending_approval' || u.status === 'pending_activation'
+          ).length,
           contributionsCount: state.contributions.length,
           loansCount: state.loans.length,
           halalProjectsCount: state.halalProjects.length,

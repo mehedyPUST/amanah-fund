@@ -576,14 +576,25 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             boxClass:
               'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60',
           }
-        : {
-            label: 'Suspended',
-            shortLabel: 'Suspended',
-            description: 'This membership account is currently suspended. Contact an administrator.',
-            Icon: AlertCircle,
-            toneClass: 'text-rose-700 dark:text-rose-400',
-            boxClass: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60',
-          };
+        : profile.status === 'pending_activation'
+          ? {
+              label: 'Awaiting Activation',
+              shortLabel: 'Unactivated',
+              description:
+                'Your application is approved. Sign in with your Member ID and 6-digit Activation OTP to confirm your final membership agreement.',
+              Icon: Clock,
+              toneClass: 'text-indigo-700 dark:text-indigo-400',
+              boxClass:
+                'bg-indigo-50/80 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/60',
+            }
+          : {
+              label: 'Suspended',
+              shortLabel: 'Suspended',
+              description: 'This membership account is currently suspended. Contact an administrator.',
+              Icon: AlertCircle,
+              toneClass: 'text-rose-700 dark:text-rose-400',
+              boxClass: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60',
+            };
 
   const StatusIcon = statusMeta.Icon;
 

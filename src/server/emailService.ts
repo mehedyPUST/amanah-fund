@@ -955,6 +955,170 @@ export async function sendRegistrationApprovedEmail(options: {
   return sendEmail({ to: options.to, ...payload, category: 'registration' });
 }
 
+export function buildMemberActivationCodesEmailPayload(options: {
+  memberName: string;
+  memberCode: string;
+  otp: string;
+  adminName: string;
+  fundName: string;
+  templateOverrides?: EmailTemplateCollection;
+}): { subject: string; text: string; html: string } {
+  const resolved = resolveEmailTemplate('registrationApproved', options.templateOverrides);
+  const headerTop = resolved.headerColor || '#059669';
+  const headerBottom = darkenHexColor(headerTop);
+  const subject = `[Amanah] Membership Approved — Member ID (${options.memberCode}) & Activation OTP`;
+
+  const text = [
+    `Assalamu Alaikum ${options.memberName},`,
+    '',
+    `Your cooperative membership application for ${options.fundName} has been reviewed and approved by administrator ${options.adminName}.`,
+    '',
+    'To complete your final membership agreement and activate your account, please sign in with your registered email and password and enter BOTH codes below:',
+    `- Official Member ID: ${options.memberCode}`,
+    `- 6-Digit Activation OTP: ${options.otp}`,
+    '',
+    'Important: Submitting your Member ID and 6-digit Activation OTP during login serves as your final confirmation and agreement to join Amanah Cooperative.',
+    'This 6-digit OTP is uniquely generated for your account and cannot be used for any other member.',
+    '',
+    'If you have any trouble activating your account, please contact an Amanah administrator by phone.',
+    '',
+    `Cooperative Fund: ${options.fundName}`,
+  ].join('\n');
+
+  const html = `
+  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,${headerTop},${headerBottom});padding:20px 24px;color:#ffffff;">
+      <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.9;">${escapeHtml(options.fundName)}</div>
+      <h2 style="margin:6px 0 0;font-size:18px;font-weight:700;">Membership Approved — Activation Required</h2>
+    </div>
+    <div style="padding:22px 24px;color:#334155;font-size:14px;line-height:1.6;">
+      <p style="margin:0 0 12px;font-weight:600;color:#0f172a;">Assalamu Alaikum ${escapeHtml(options.memberName)},</p>
+      <p style="margin:0 0 16px;text-align:justify;">
+        Your membership application for <strong>${escapeHtml(options.fundName)}</strong> has been reviewed and approved by administrator <strong>${escapeHtml(options.adminName)}</strong>.
+        Sign in to your account and submit both activation codes below to confirm your final agreement and activate your membership.
+      </p>
+      <table style="width:100%;border-collapse:separate;border-spacing:0 10px;margin-bottom:14px;">
+        <tr>
+          <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:11px;color:#166534;text-transform:uppercase;letter-spacing:0.05em;">Official Member ID</div>
+            <div style="font-family:monospace;font-size:20px;font-weight:700;color:#064e3b;margin-top:4px;letter-spacing:0.04em;">${escapeHtml(options.memberCode)}</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:11px;color:#1e40af;text-transform:uppercase;letter-spacing:0.05em;">Unique 6-Digit Activation OTP</div>
+            <div style="font-family:monospace;font-size:24px;font-weight:700;color:#1e3a8a;margin-top:4px;letter-spacing:0.22em;">${escapeHtml(options.otp)}</div>
+          </td>
+        </tr>
+      </table>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;">
+        <div style="font-weight:600;color:#0f172a;margin-bottom:6px;">How to Activate Your Account:</div>
+        <ol style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:4px;">Go to the Amanah Member Login page and enter your registered email and password.</li>
+          <li style="margin-bottom:4px;">When prompted, enter your <strong>Member ID</strong> and <strong>6-Digit Activation OTP</strong>.</li>
+          <li>Confirm the final membership agreement to immediately unlock your Amanah portal.</li>
+        </ol>
+      </div>
+      <p style="margin:0;font-size:12px;color:#64748b;text-align:justify;">
+        Keep these codes confidential. This 6-digit OTP is uniquely issued for your account and cannot be reused. If you need assistance, contact an Amanah administrator by phone.
+      </p>
+    </div>
+  </div>`;
+
+  return { subject, text, html };
+}
+
+export async function sendMemberActivationCodesEmail(options: {
+  to: string;
+  memberName: string;
+  memberCode: string;
+  otp: string;
+  adminName: string;
+  fundName: string;
+  templateOverrides?: EmailTemplateCollection;
+}): Promise<EmailSendResult> {
+  const payload = buildMemberActivationCodesEmailPayload(options);
+  return sendEmail({ to: options.to, ...payload, category: 'registration' });
+}
+
+export function buildMembershipActivatedConfirmationEmailPayload(options: {
+  memberName: string;
+  memberCode: string;
+  adminName: string;
+  fundName: string;
+  activatedAtIso: string;
+  templateOverrides?: EmailTemplateCollection;
+}): { subject: string; text: string; html: string } {
+  const resolved = resolveEmailTemplate('registrationApproved', options.templateOverrides);
+  const rendered = interpolateEmailTemplate(resolved, {
+    memberName: options.memberName,
+    memberCode: options.memberCode,
+    adminName: options.adminName,
+    fundName: options.fundName,
+  });
+
+  const subject = `[Amanah] Membership Confirmed & Activated — Welcome (${options.memberCode})`;
+  const headerTop = rendered.headerColor;
+  const headerBottom = darkenHexColor(headerTop);
+
+  const text = [
+    rendered.greeting,
+    '',
+    `Congratulations! Your Member ID (${options.memberCode}) and 6-digit Activation OTP have been verified, and your final membership agreement to join ${options.fundName} has been officially confirmed.`,
+    '',
+    'Official Membership Confirmation Summary:',
+    `- Member Name: ${options.memberName}`,
+    `- Official Member ID: ${options.memberCode}`,
+    `- Account Status: Active Cooperative Member`,
+    `- Final Agreement: Confirmed via Member ID & 6-Digit OTP`,
+    `- Activated At (UTC): ${options.activatedAtIso}`,
+    ...(rendered.footerNote ? ['', rendered.footerNote] : []),
+    '',
+    `Cooperative Fund: ${options.fundName}`,
+  ].join('\n');
+
+  const html = `
+  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,${headerTop},${headerBottom});padding:20px 24px;color:#ffffff;">
+      <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.9;">${escapeHtml(options.fundName)}</div>
+      <h2 style="margin:6px 0 0;font-size:18px;font-weight:700;">Final Membership Confirmation — Welcome to Amanah</h2>
+    </div>
+    <div style="padding:22px 24px;color:#334155;font-size:14px;line-height:1.6;">
+      <p style="margin:0 0 12px;font-weight:600;color:#0f172a;">${escapeHtmlWithBreaks(rendered.greeting)}</p>
+      <p style="margin:0 0 16px;text-align:justify;">
+        Your Member ID and 6-digit Activation OTP have been verified successfully, completing your final agreement to join <strong>${escapeHtml(options.fundName)}</strong>. Your account is now fully active.
+      </p>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;background:#f8fafc;margin-bottom:16px;">
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Member Name</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:right;color:#0f172a;">${escapeHtml(options.memberName)}</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Official Member ID</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700;text-align:right;font-family:monospace;color:#065f46;">${escapeHtml(options.memberCode)}</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Membership Status</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:right;color:#059669;">Active &amp; Verified</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#475569;">Final Agreement</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:right;color:#0f172a;">Confirmed via OTP</td></tr>
+        <tr><td style="padding:8px 12px;font-size:12px;color:#475569;">Activated At (UTC)</td><td style="padding:8px 12px;font-size:12px;font-weight:600;text-align:right;font-family:monospace;color:#0f172a;">${escapeHtml(options.activatedAtIso)}</td></tr>
+      </table>
+      ${
+        rendered.footerNote
+          ? `<p style="margin:0;font-size:13px;color:#475569;text-align:justify;">${escapeHtmlWithBreaks(rendered.footerNote)}</p>`
+          : ''
+      }
+    </div>
+  </div>`;
+
+  return { subject, text, html };
+}
+
+export async function sendMembershipActivatedConfirmationEmail(options: {
+  to: string;
+  memberName: string;
+  memberCode: string;
+  adminName: string;
+  fundName: string;
+  activatedAtIso: string;
+  templateOverrides?: EmailTemplateCollection;
+}): Promise<EmailSendResult> {
+  const payload = buildMembershipActivatedConfirmationEmailPayload(options);
+  return sendEmail({ to: options.to, ...payload, category: 'registration' });
+}
+
 export function buildEmailTemplatePreview(options: {
   key: EmailTemplateKey;
   templateOverrides?: EmailTemplateCollection;

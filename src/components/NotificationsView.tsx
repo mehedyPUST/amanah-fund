@@ -45,6 +45,7 @@ interface NotificationsViewProps {
 
 const TYPE_LABELS: Record<NotificationType, string> = {
   signup_pending_admin: 'Signup Approval Request',
+  signup_activation_issued: 'Activation Codes Issued',
   signup_approved: 'Account Approved',
   contribution_placed_manager: 'Contribution Placed (Manager)',
   contribution_accepted: 'Contribution Accepted',

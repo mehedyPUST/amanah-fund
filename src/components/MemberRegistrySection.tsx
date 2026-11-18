@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle2, ClipboardCheck, ExternalLink, FileText, Users, X, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  ClipboardCheck,
+  ExternalLink,
+  FileText,
+  KeyRound,
+  Mail,
+  Phone,
+  Users,
+  X,
+  XCircle,
+} from 'lucide-react';
 import type {
   FundConfig,
   MemberSummary,
@@ -31,6 +42,7 @@ type RegistryModalState =
       inputPlaceholder?: string;
       inputRequired?: boolean;
       inputMultiline?: boolean;
+      initialInputValue?: string;
       run: (inputValue: string) => Promise<void>;
     }
   | {
@@ -40,6 +52,20 @@ type RegistryModalState =
       description: string;
       details?: ActionModalDetailItem[];
     };
+
+function suggestNextAmanahMemberId(list: MemberSummary[]): string {
+  let maxNum = 0;
+  for (const m of list) {
+    if (m.status === 'pending_approval') continue;
+    const code = m.activationCredentials?.memberCode || m.memberCode;
+    const match = code.match(/(?:AMANAH-)?AC-(\d+)$/i) || code.match(/(\d+)$/);
+    if (match) {
+      const n = Number(match[1]);
+      if (Number.isFinite(n) && n > maxNum) maxNum = n;
+    }
+  }
+  return `AMANAH-AC-${String(Math.max(1, maxNum + 1)).padStart(2, '0')}`;
+}
 
 interface MemberRegistrySectionProps {
   user: PublicUser;
@@ -120,35 +146,78 @@ export function MemberRegistrySection({
   }, [loadMembers]);
 
   function confirmApprovePendingMember(member: MemberSummary) {
+    const suggestedCode = suggestNextAmanahMemberId(members);
     setModal({
       mode: 'confirm',
       tone: 'emerald',
-      title: `Approve Signup (${member.name})?`,
+      title: `Approve & Issue Activation Codes (${member.name})?`,
       description:
-        'Approving activates cooperative membership immediately and dispatches a welcome notification.',
+        'Approving assigns the official Amanah Member ID below and generates a unique, never-before-used 6-digit Activation OTP emailed to the applicant.',
       details: [
-        { label: 'Applicant', value: `${member.name} (${member.memberCode})` },
+        { label: 'Applicant', value: member.name },
         { label: 'Email', value: member.email },
       ],
-      confirmLabel: 'Approve Signup',
-      run: async () => {
-        const res = await api.updateMember(member.id, { status: 'active' });
+      inputLabel: 'Official Member ID to Assign',
+      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputRequired: true,
+      initialInputValue: suggestedCode,
+      confirmLabel: 'Generate Codes & Send Email',
+      run: async (memberCodeInput: string) => {
+        const res = await api.issueMemberActivation(member.id, {
+          memberCode: memberCodeInput.trim() || undefined,
+        });
         setMembers(res.members);
-        setInspectingMember((prev) => (prev?.id === member.id ? null : prev));
+        const updated = res.members.find((item) => item.id === member.id) || null;
+        setInspectingMember((prev) => (prev?.id === member.id ? updated : prev));
         await Promise.all([onRefresh(), loadMembers()]);
         showNotice(
           'emerald',
-          'Member Approved & Activated',
+          'Activation Codes Issued',
           res.emailSent
-            ? `${member.name} (${member.memberCode}) is now an active cooperative member. Welcome email sent to ${member.email}.`
-            : `${member.name} (${member.memberCode}) is now an active cooperative member. In-app welcome notice queued${res.emailReason ? ` (email skipped: ${res.emailReason})` : ''}.`,
+            ? `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Both codes have been emailed to ${member.email} and saved in the approval panel for phone support.`
+            : `Assigned Member ID ${res.memberCode} and a unique 6-digit Activation OTP to ${member.name}. Email could not be sent${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes below over the phone or retry email.`,
           [
-            { label: 'Member', value: `${member.name} (${member.memberCode})` },
-            { label: 'Welcome Email', value: res.emailSent ? `Sent to ${member.email}` : 'In-App Only' },
+            { label: 'Applicant', value: member.name },
+            { label: 'Official Member ID', value: res.memberCode },
+            { label: '6-Digit Activation OTP', value: res.otp },
+            {
+              label: 'Email Dispatch',
+              value: res.emailSent ? `Sent to ${member.email}` : 'Not Delivered (Phone Support Ready)',
+            },
           ]
         );
       },
     });
+  }
+
+  async function handleResendActivation(member: MemberSummary) {
+    setModalBusy(true);
+    try {
+      const res = await api.resendActivationEmail(member.id);
+      setMembers(res.members);
+      const updated = res.members.find((item) => item.id === member.id) || null;
+      setInspectingMember((prev) => (prev?.id === member.id ? updated : prev));
+      await Promise.all([onRefresh(), loadMembers()]);
+      showNotice(
+        res.emailSent ? 'emerald' : 'amber',
+        res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+        res.emailSent
+          ? `Resent Member ID (${res.memberCode}) and 6-digit Activation OTP to ${member.email}.`
+          : `Could not send email to ${member.email}${res.emailReason ? ` (${res.emailReason})` : ''}. You can still read these codes to the member over the phone.`,
+        [
+          { label: 'Official Member ID', value: res.memberCode },
+          { label: '6-Digit Activation OTP', value: res.otp },
+        ]
+      );
+    } catch (err) {
+      showNotice(
+        'red',
+        'Resend Failed',
+        err instanceof Error ? err.message : 'Failed to resend activation email.'
+      );
+    } finally {
+      setModalBusy(false);
+    }
   }
 
   function confirmDeclinePendingMember(member: MemberSummary) {
@@ -246,6 +315,7 @@ export function MemberRegistrySection({
   }
 
   const pendingCount = members.filter((m) => m.status === 'pending_approval').length;
+  const awaitingActivationCount = members.filter((m) => m.status === 'pending_activation').length;
   const pendingProfileRequests = profileRequests.filter((r) => r.status === 'pending');
 
   return (
@@ -262,7 +332,8 @@ export function MemberRegistrySection({
             <span>Admin Governance · Member Lifecycle</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Member Registry ({members.length} accounts · {pendingCount} pending approval)
+            Member Registry ({members.length} accounts · {pendingCount} pending review ·{' '}
+            {awaitingActivationCount} awaiting activation)
           </h2>
         </div>
 
@@ -454,9 +525,41 @@ export function MemberRegistrySection({
             <div className="p-4 sm:p-6 space-y-5 text-xs">
               {(() => {
                 const reg = inspectingMember.registrationDetails;
+                const act = inspectingMember.activationCredentials;
                 const portrait = reg?.photoUrl || inspectingMember.photoUrl;
                 return (
                   <>
+                    {isAdmin && inspectingMember.status === 'pending_activation' && act && (
+                      <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/35 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 font-semibold text-indigo-800 dark:text-indigo-300">
+                            <Phone className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Activation Codes (Phone Support Lookup)</span>
+                          </div>
+                          <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                            Issued {formatDateTime(act.issuedAt)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                              Official Member ID
+                            </div>
+                            <div className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400 mt-0.5">
+                              {act.memberCode}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                              6-Digit Activation OTP
+                            </div>
+                            <div className="font-mono font-bold text-sm tracking-[0.22em] text-indigo-700 dark:text-indigo-300 mt-0.5">
+                              {act.otp || 'Unavailable'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
@@ -612,10 +715,21 @@ export function MemberRegistrySection({
                     onClick={() => confirmApprovePendingMember(inspectingMember)}
                     className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all duration-200 active:scale-[0.98]"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Approve Signup</span>
+                    <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Approve &amp; Issue Codes</span>
                   </button>
                 </>
+              )}
+              {isAdmin && inspectingMember.status === 'pending_activation' && (
+                <button
+                  type="button"
+                  disabled={modalBusy}
+                  onClick={() => void handleResendActivation(inspectingMember)}
+                  className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Resend Activation Email</span>
+                </button>
               )}
               <button
                 type="button"
@@ -642,6 +756,7 @@ export function MemberRegistrySection({
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
         inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
         inputMultiline={modal?.mode === 'confirm' ? modal.inputMultiline : false}
+        initialInputValue={modal?.mode === 'confirm' ? modal.initialInputValue : ''}
         busy={modalBusy}
         onConfirm={modal?.mode === 'confirm' ? runConfirmedModal : undefined}
         onClose={() => {

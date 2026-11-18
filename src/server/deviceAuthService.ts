@@ -153,6 +153,15 @@ export function verifyRegisteredDevicePinLogin(
     };
   }
 
+  if (user.status === 'pending_activation') {
+    return {
+      ok: false,
+      code: 'ACCOUNT_PENDING',
+      message:
+        'Your membership is approved and awaiting activation. Please sign in with email and password to enter your Member ID and 6-digit OTP.',
+    };
+  }
+
   if (user.status !== 'active') {
     return {
       ok: false,

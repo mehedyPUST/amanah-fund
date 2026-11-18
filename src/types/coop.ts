@@ -1,5 +1,5 @@
 export type UserRole = 'admin' | 'manager' | 'member';
-export type UserStatus = 'pending_approval' | 'active' | 'suspended';
+export type UserStatus = 'pending_approval' | 'pending_activation' | 'active' | 'suspended';
 
 export type DashboardSectionId =
   | 'fund-overview'
@@ -91,12 +91,35 @@ export interface PublicUser {
   registrationDetails?: UserRegistrationDetails;
 }
 
+export interface MemberActivationAdminView {
+  memberCode: string;
+  otp: string;
+  issuedAt: string;
+  issuedByName: string;
+  emailSent: boolean;
+  emailSentAt?: string;
+  emailError?: string;
+  activatedAt?: string;
+  agreementAcceptedAt?: string;
+  failedAttempts?: number;
+}
+
+export interface UsedActivationOtpRecord {
+  id: string;
+  otp: string;
+  userId: string;
+  memberCode: string;
+  issuedAt: string;
+  activatedAt?: string;
+}
+
 export interface MemberSummary extends PublicUser {
   totalContributed: number;
   approvedContributionsCount: number;
   loansThisYear: number;
   activeLoanBalance: number;
   hasActiveLoan: boolean;
+  activationCredentials?: MemberActivationAdminView;
 }
 
 export interface ActiveMemberDirectoryItem {
@@ -544,6 +567,7 @@ export interface MonthClearanceEntry {
 
 export type NotificationType =
   | 'signup_pending_admin'
+  | 'signup_activation_issued'
   | 'signup_approved'
   | 'contribution_placed_manager'
   | 'contribution_accepted'

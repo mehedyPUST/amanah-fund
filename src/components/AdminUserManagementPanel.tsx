@@ -46,7 +46,11 @@ type UserMgmtModalState =
       description: string;
       details?: ActionModalDetailItem[];
       confirmLabel: string;
-      run: () => Promise<void>;
+      inputLabel?: string;
+      inputPlaceholder?: string;
+      inputRequired?: boolean;
+      initialInputValue?: string;
+      run: (inputValue: string) => Promise<void>;
     }
   | {
       mode: 'notice';
@@ -55,6 +59,20 @@ type UserMgmtModalState =
       description: string;
       details?: ActionModalDetailItem[];
     };
+
+function suggestNextAmanahMemberId(list: MemberSummary[]): string {
+  let maxNum = 0;
+  for (const m of list) {
+    if (m.status === 'pending_approval') continue;
+    const code = m.activationCredentials?.memberCode || m.memberCode;
+    const match = code.match(/(?:AMANAH-)?AC-(\d+)$/i) || code.match(/(\d+)$/);
+    if (match) {
+      const n = Number(match[1]);
+      if (Number.isFinite(n) && n > maxNum) maxNum = n;
+    }
+  }
+  return `AMANAH-AC-${String(Math.max(1, maxNum + 1)).padStart(2, '0')}`;
+}
 
 export function AdminUserManagementPanel({
   members,
@@ -131,7 +149,9 @@ export function AdminUserManagementPanel({
     return {
       total: members.length,
       active: members.filter((m) => m.status === 'active').length,
-      pending: members.filter((m) => m.status === 'pending_approval').length,
+      pending: members.filter(
+        (m) => m.status === 'pending_approval' || m.status === 'pending_activation'
+      ).length,
       suspended: members.filter((m) => m.status === 'suspended').length,
       staff: members.filter((m) => m.role === 'admin' || m.role === 'manager').length,
     };
@@ -165,6 +185,106 @@ export function AdminUserManagementPanel({
       presentAddress: member.registrationDetails?.presentAddress || '',
       permanentAddress: member.registrationDetails?.permanentAddress || '',
       password: '',
+    });
+  }
+
+  function requestIssueActivationCodes(member: MemberSummary) {
+    const suggestedCode = suggestNextAmanahMemberId(members);
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Approve & Issue Activation Codes (${member.name})?`,
+      description:
+        'Assigns the official Amanah Member ID below and generates a unique, never-before-used 6-digit Activation OTP sent via email and saved in the approval panel for phone support.',
+      details: [
+        { label: 'Applicant', value: member.name },
+        { label: 'Email', value: member.email },
+      ],
+      inputLabel: 'Official Member ID to Assign',
+      inputPlaceholder: 'e.g. AMANAH-AC-02',
+      inputRequired: true,
+      initialInputValue: suggestedCode,
+      confirmLabel: 'Generate Codes & Send Email',
+      run: async (memberCodeInput: string) => {
+        setBusyId(member.id);
+        try {
+          const res = await api.issueMemberActivation(member.id, {
+            memberCode: memberCodeInput.trim() || undefined,
+          });
+          onMembersUpdated(res.members);
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: 'emerald',
+            title: 'Activation Codes Issued',
+            description: res.emailSent
+              ? `Assigned Member ID ${res.memberCode} and unique 6-digit Activation OTP to ${member.name}. Both codes were emailed to ${member.email}.`
+              : `Assigned Member ID ${res.memberCode} and unique 6-digit Activation OTP to ${member.name}. Email could not be delivered${res.emailReason ? ` (${res.emailReason})` : ''}; share both codes over the phone.`,
+            details: [
+              { label: 'Member', value: member.name },
+              { label: 'Official Member ID', value: res.memberCode },
+              { label: '6-Digit Activation OTP', value: res.otp },
+              {
+                label: 'Email Dispatch',
+                value: res.emailSent ? `Sent to ${member.email}` : 'Not Delivered (Phone Ready)',
+              },
+            ],
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: 'Activation Issuance Failed',
+            description: err instanceof Error ? err.message : 'Failed to issue activation codes.',
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
+  function showActivationCodesModal(member: MemberSummary) {
+    const act = member.activationCredentials;
+    if (!act) {
+      requestIssueActivationCodes(member);
+      return;
+    }
+    setModal({
+      mode: 'confirm',
+      tone: 'emerald',
+      title: `Activation Codes · ${member.name}`,
+      description:
+        'Provide these two codes to the member over the phone if they did not receive the activation email, or click below to resend the email.',
+      details: [
+        { label: 'Official Member ID', value: act.memberCode },
+        { label: '6-Digit Activation OTP', value: act.otp || 'Unavailable' },
+        { label: 'Email Status', value: act.emailSent ? `Sent to ${member.email}` : 'Not Delivered' },
+        { label: 'Issued By', value: `${act.issuedByName} · ${formatDateTime(act.issuedAt)}` },
+      ],
+      confirmLabel: 'Resend Activation Email',
+      run: async () => {
+        setBusyId(member.id);
+        try {
+          const res = await api.resendActivationEmail(member.id);
+          onMembersUpdated(res.members);
+          await onRefreshAll();
+          setModal({
+            mode: 'notice',
+            tone: res.emailSent ? 'emerald' : 'amber',
+            title: res.emailSent ? 'Activation Email Resent' : 'Email Delivery Failed',
+            description: res.emailSent
+              ? `Resent Member ID (${res.memberCode}) and 6-digit Activation OTP to ${member.email}.`
+              : `Email could not be delivered${res.emailReason ? ` (${res.emailReason})` : ''}. Share the codes below over the phone.`,
+            details: [
+              { label: 'Official Member ID', value: res.memberCode },
+              { label: '6-Digit Activation OTP', value: res.otp },
+            ],
+          });
+        } finally {
+          setBusyId(null);
+        }
+      },
     });
   }
 
@@ -637,7 +757,8 @@ export function AdminUserManagementPanel({
               [
                 { id: 'all', label: 'All Statuses' },
                 { id: 'active', label: 'Active' },
-                { id: 'pending_approval', label: 'Pending' },
+                { id: 'pending_approval', label: 'Pending Review' },
+                { id: 'pending_activation', label: 'Awaiting Activation' },
                 { id: 'suspended', label: 'Suspended' },
               ] as const
             ).map((s) => {
@@ -840,32 +961,48 @@ export function AdminUserManagementPanel({
                             <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Reset PW</span>
                           </button>
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() => {
-                              const nextStatus: UserStatus =
-                                m.status === 'active' ? 'suspended' : 'active';
-                              requestQuickRoleOrStatus(
-                                m,
-                                { status: nextStatus },
-                                nextStatus === 'active'
-                                  ? `Activated ${m.name} (${m.memberCode}).`
-                                  : `Suspended ${m.name} (${m.memberCode}).`
-                              );
-                            }}
-                            className={`min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border font-medium cursor-pointer disabled:opacity-50 ${
-                              m.status === 'active'
-                                ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400'
-                                : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
-                            }`}
-                          >
-                            {m.status === 'active'
-                              ? 'Suspend'
-                              : m.status === 'pending_approval'
-                                ? 'Approve'
-                                : 'Activate'}
-                          </button>
+                          {m.status === 'pending_activation' ? (
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => showActivationCodesModal(m)}
+                              className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                            >
+                              <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>View Codes</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => {
+                                if (m.status === 'pending_approval') {
+                                  requestIssueActivationCodes(m);
+                                  return;
+                                }
+                                const nextStatus: UserStatus =
+                                  m.status === 'active' ? 'suspended' : 'active';
+                                requestQuickRoleOrStatus(
+                                  m,
+                                  { status: nextStatus },
+                                  nextStatus === 'active'
+                                    ? `Activated ${m.name} (${m.memberCode}).`
+                                    : `Suspended ${m.name} (${m.memberCode}).`
+                                );
+                              }}
+                              className={`min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border font-medium cursor-pointer disabled:opacity-50 ${
+                                m.status === 'active'
+                                  ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400'
+                                  : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                              }`}
+                            >
+                              {m.status === 'active'
+                                ? 'Suspend'
+                                : m.status === 'pending_approval'
+                                  ? 'Issue Codes'
+                                  : 'Activate'}
+                            </button>
+                          )}
                           <button
                             type="button"
                             disabled={isBusy}
@@ -1011,32 +1148,49 @@ export function AdminUserManagementPanel({
 
                           {!isSelf && (
                             <>
-                              <button
-                                type="button"
-                                disabled={isBusy}
-                                onClick={() => {
-                                  const nextStatus: UserStatus =
-                                    m.status === 'active' ? 'suspended' : 'active';
-                                  requestQuickRoleOrStatus(
-                                    m,
-                                    { status: nextStatus },
-                                    nextStatus === 'active'
-                                      ? `Activated ${m.name} (${m.memberCode}).`
-                                      : `Suspended ${m.name} (${m.memberCode}).`
-                                  );
-                                }}
-                                className={`px-2.5 py-1 rounded border font-medium cursor-pointer disabled:opacity-50 transition-all duration-200 ${
-                                  m.status === 'active'
-                                    ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white'
-                                    : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
-                                }`}
-                              >
-                                {m.status === 'active'
-                                  ? 'Suspend'
-                                  : m.status === 'pending_approval'
-                                    ? 'Approve'
-                                    : 'Activate'}
-                              </button>
+                              {m.status === 'pending_activation' ? (
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => showActivationCodesModal(m)}
+                                  title="View Member ID & 6-digit Activation OTP for phone support"
+                                  className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200"
+                                >
+                                  <KeyRound className="w-3 h-3" aria-hidden="true" />
+                                  <span>Codes</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => {
+                                    if (m.status === 'pending_approval') {
+                                      requestIssueActivationCodes(m);
+                                      return;
+                                    }
+                                    const nextStatus: UserStatus =
+                                      m.status === 'active' ? 'suspended' : 'active';
+                                    requestQuickRoleOrStatus(
+                                      m,
+                                      { status: nextStatus },
+                                      nextStatus === 'active'
+                                        ? `Activated ${m.name} (${m.memberCode}).`
+                                        : `Suspended ${m.name} (${m.memberCode}).`
+                                    );
+                                  }}
+                                  className={`px-2.5 py-1 rounded border font-medium cursor-pointer disabled:opacity-50 transition-all duration-200 ${
+                                    m.status === 'active'
+                                      ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white'
+                                      : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                                  }`}
+                                >
+                                  {m.status === 'active'
+                                    ? 'Suspend'
+                                    : m.status === 'pending_approval'
+                                      ? 'Issue Codes'
+                                      : 'Activate'}
+                                </button>
+                              )}
 
                               <button
                                 type="button"
@@ -1346,6 +1500,7 @@ export function AdminUserManagementPanel({
                   >
                     <option value="active">Active (Verified)</option>
                     <option value="pending_approval">Pending Approval</option>
+                    <option value="pending_activation">Awaiting Member Activation</option>
                     <option value="suspended">Suspended</option>
                   </select>
                 </div>
@@ -1458,13 +1613,17 @@ export function AdminUserManagementPanel({
         description={modal?.description || ''}
         details={modal?.details}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : 'OK, Got It'}
+        inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
+        inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}
+        inputRequired={modal?.mode === 'confirm' ? modal.inputRequired : false}
+        initialInputValue={modal?.mode === 'confirm' ? modal.initialInputValue : ''}
         busy={modalBusy}
         onConfirm={
           modal?.mode === 'confirm'
-            ? async () => {
+            ? async (inputValue: string) => {
                 setModalBusy(true);
                 try {
-                  await modal.run();
+                  await modal.run(inputValue);
                 } finally {
                   setModalBusy(false);
                 }

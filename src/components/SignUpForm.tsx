@@ -391,7 +391,7 @@ export function SignUpForm() {
 
       const msg =
         res.message ||
-        'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.';
+        'Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.';
       setSuccessMessage(msg);
       setSuccessModalOpen(true);
       setName('');

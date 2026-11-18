@@ -2,6 +2,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  KeyRound,
   ShieldCheck,
   Vote,
   XCircle,
@@ -44,6 +45,11 @@ const STATUS_MAP: Record<
     label: 'Awaiting Admin Approval',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
+  },
+  pending_activation: {
+    label: 'Awaiting Member Activation',
+    colorClass: 'text-indigo-700 dark:text-indigo-400',
+    Icon: KeyRound,
   },
   pending: {
     label: 'Pending Approval',

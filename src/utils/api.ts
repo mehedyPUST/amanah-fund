@@ -98,6 +98,7 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
       typeof window !== 'undefined' &&
       path !== '/api/auth/me' &&
       path !== '/api/auth/login' &&
+      path !== '/api/auth/activate-membership' &&
       path !== '/api/auth/pin-login' &&
       path !== '/api/auth/register' &&
       path !== '/api/auth/logout'
@@ -173,9 +174,38 @@ export const api = {
       body: JSON.stringify({ decision, reviewNote }),
     }),
   login: (email: string, password: string) =>
-    apiRequest<{ user: PublicUser }>('/api/auth/login', {
+    apiRequest<
+      | { user: PublicUser; activationRequired?: false }
+      | {
+          activationRequired: true;
+          activationToken: string;
+          applicant: {
+            id: string;
+            name: string;
+            email: string;
+            fundName: string;
+          };
+          message: string;
+        }
+    >('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    }),
+  activateMembership: (payload: {
+    activationToken: string;
+    memberCode: string;
+    otp: string;
+    agreedToTerms: boolean;
+  }) =>
+    apiRequest<{
+      activated: true;
+      user: PublicUser;
+      activatedAt: string;
+      confirmationEmailSent: boolean;
+      confirmationEmailReason?: string;
+    }>('/api/auth/activate-membership', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
   pinLogin: (payload: {
     userId: string;
@@ -533,7 +563,34 @@ export const api = {
     ),
   getManagerCycle: () => apiRequest<{ schedule: ManagerCycleSchedule }>('/api/manager-cycle'),
   getPendingRegistrations: () =>
-    apiRequest<{ registrations: MemberSummary[] }>('/api/admin/registrations/pending'),
+    apiRequest<{ registrations: MemberSummary[]; suggestedNextMemberCode?: string }>(
+      '/api/admin/registrations/pending'
+    ),
+  issueMemberActivation: (id: string, payload?: { memberCode?: string }) =>
+    apiRequest<{
+      members: MemberSummary[];
+      registrations: MemberSummary[];
+      suggestedNextMemberCode?: string;
+      memberCode: string;
+      otp: string;
+      issuedAt: string;
+      emailSent: boolean;
+      emailReason?: string;
+    }>(`/api/admin/members/${encodeURIComponent(id)}/issue-activation`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    }),
+  resendActivationEmail: (id: string) =>
+    apiRequest<{
+      emailSent: boolean;
+      emailReason?: string;
+      memberCode: string;
+      otp: string;
+      members: MemberSummary[];
+      registrations: MemberSummary[];
+    }>(`/api/admin/members/${encodeURIComponent(id)}/resend-activation-email`, {
+      method: 'POST',
+    }),
   getMembers: () => apiRequest<{ members: MemberSummary[] }>('/api/admin/members'),
   createMember: (payload: {
     name: string;

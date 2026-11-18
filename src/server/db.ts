@@ -19,6 +19,7 @@ import type {
   NotificationPreferences,
   PasswordResetRequest,
   ProfileChangeRequest,
+  UsedActivationOtpRecord,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
@@ -33,6 +34,20 @@ export interface StoredRegisteredDevice {
   lockedUntil?: string;
   createdAt: string;
   lastUsedAt: string;
+}
+
+export interface StoredMemberActivationMeta {
+  memberCode: string;
+  issuedAt: string;
+  issuedById: string;
+  issuedByName: string;
+  emailSent: boolean;
+  emailSentAt?: string;
+  emailError?: string;
+  activatedAt?: string;
+  agreementAcceptedAt?: string;
+  failedAttempts?: number;
+  lastFailedAt?: string;
 }
 
 export interface StoredUser {
@@ -54,6 +69,8 @@ export interface StoredUser {
   registeredDevices?: StoredRegisteredDevice[];
   notificationPreferences?: NotificationPreferences;
   encryptedRegistrationDetails?: EncryptedEnvelope;
+  encryptedActivationOtp?: EncryptedEnvelope;
+  activationMeta?: StoredMemberActivationMeta;
 }
 
 export interface StoredPrivateMessage {
@@ -91,6 +108,7 @@ export interface VaultState {
   passwordResetRequests?: PasswordResetRequest[];
   emailQueue?: EmailQueueItem[];
   faqs?: FaqItem[];
+  usedActivationOtps?: UsedActivationOtpRecord[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -156,6 +174,7 @@ function createEmptyVaultState(): VaultState {
     passwordResetRequests: [],
     emailQueue: [],
     faqs: createDefaultFaqs(now),
+    usedActivationOtps: [],
   };
 }
 
@@ -209,6 +228,9 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.emailQueue = Array.isArray(state.emailQueue)
     ? state.emailQueue
+    : [];
+  state.usedActivationOtps = Array.isArray(state.usedActivationOtps)
+    ? state.usedActivationOtps
     : [];
   if (!Array.isArray(state.faqs)) {
     state.faqs = createDefaultFaqs();
@@ -411,6 +433,8 @@ export async function initDatabase(): Promise<'mongodb_atlas' | 'encrypted_local
         mongoDb.collection('emailQueue').createIndex({ createdAt: -1 }),
         mongoDb.collection('faqs').createIndex({ id: 1 }, { unique: true }),
         mongoDb.collection('faqs').createIndex({ sortOrder: 1 }),
+        mongoDb.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
+        mongoDb.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
       ]);
 
       initialized = true;
@@ -452,6 +476,7 @@ export async function loadVaultState(): Promise<VaultState> {
       passwordResetRequests,
       emailQueue,
       faqs,
+      usedActivationOtps,
     ] = await Promise.all([
       mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
       mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -469,6 +494,7 @@ export async function loadVaultState(): Promise<VaultState> {
       mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
       mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       mongoDb.collection<FaqItem>('faqs').find({}, { projection: { _id: 0 } }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
+      mongoDb.collection<UsedActivationOtpRecord>('usedActivationOtps').find({}, { projection: { _id: 0 } }).toArray(),
     ]);
 
     return normalizeVaultState({
@@ -488,6 +514,7 @@ export async function loadVaultState(): Promise<VaultState> {
       passwordResetRequests,
       emailQueue,
       faqs,
+      usedActivationOtps,
     });
   }
   return readLocalVault();
@@ -589,6 +616,12 @@ export function updateVaultState(
           'faqs',
           current.faqs || [],
           next.faqs || []
+        ),
+        syncCollectionById(
+          mongoDb,
+          'usedActivationOtps',
+          current.usedActivationOtps || [],
+          next.usedActivationOtps || []
         ),
       ]);
     } else {

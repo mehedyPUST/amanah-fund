@@ -5,6 +5,7 @@ import {
   buildDashboardOverview,
   buildManagerCycleSchedule,
   buildMemberPublicProfile,
+  buildMemberSummaries,
   computeRequiredApprovals,
   evaluateLoanEligibility,
   extractMentionedUsers,
@@ -12,12 +13,23 @@ import {
   validateAndNormalizeNominees,
 } from '../src/server/coopService.ts';
 import {
+  decryptAdminActivationView,
+  generateNextAmanahMemberId,
+  generateUniqueSixDigitOtp,
+  issueMemberActivationInState,
+  verifyMemberActivationInState,
+} from '../src/server/activationService.ts';
+import {
   computeSha256Hash,
   decryptSensitiveObject,
   encryptSensitiveObject,
 } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
-import { sanitizeUser } from '../src/server/auth.ts';
+import {
+  sanitizeUser,
+  signActivationChallengeToken,
+  verifyActivationChallengeToken,
+} from '../src/server/auth.ts';
 import {
   isValidFourDigitPin,
   registerDeviceOnUser,
@@ -40,6 +52,8 @@ import {
 } from '../src/server/totp.ts';
 import {
   buildEmailTemplatePreview,
+  buildMemberActivationCodesEmailPayload,
+  buildMembershipActivatedConfirmationEmailPayload,
   buildTransactionSummaryEmailPayload,
   formatSmtpErrorMessage,
   isFatalSmtpError,
@@ -1723,5 +1737,194 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     if ('code' in afterRevoke) {
       expect(afterRevoke.code).toBe('DEVICE_NOT_REGISTERED');
     }
+  });
+
+  it('issues unique AMANAH-AC-XX Member ID & never-reused 6-digit OTP, exposes admin lookup only, and activates on final agreement', () => {
+    const state = makeBaseState();
+    const admin = sanitizeUser(state.users[0]);
+
+    // Add two pending applicants
+    state.users.push(
+      {
+        id: 'usr-pending-1',
+        name: 'Tariq Hassan',
+        email: 'tariq@amanahcoop.org',
+        passwordHash: 'hash-1',
+        role: 'member',
+        memberCode: 'AC-005',
+        status: 'pending_approval',
+        joinedAt: '2026-11-17T08:00:00.000Z',
+      },
+      {
+        id: 'usr-pending-2',
+        name: 'Zainab Noor',
+        email: 'zainab@amanahcoop.org',
+        passwordHash: 'hash-2',
+        role: 'member',
+        memberCode: 'AC-006',
+        status: 'pending_approval',
+        joinedAt: '2026-11-17T08:05:00.000Z',
+      }
+    );
+
+    // Pre-populate a previously used OTP to verify permanent non-reuse
+    state.usedActivationOtps = [
+      {
+        id: 'aotp-historic-1',
+        otp: '123456',
+        userId: 'usr-legacy',
+        memberCode: 'AMANAH-AC-01',
+        issuedAt: '2026-01-01T00:00:00.000Z',
+        activatedAt: '2026-01-01T00:10:00.000Z',
+      },
+    ];
+
+    // Sequential Member ID generation (base state has AC-001..AC-004 + AC-005/006 pending)
+    const suggested = generateNextAmanahMemberId(state.users, { excludeUserId: 'usr-pending-1' });
+    expect(suggested).toMatch(/^AMANAH-AC-\d{2,}$/);
+
+    // Issue custom AMANAH-AC-02 for applicant 1
+    const issued1 = issueMemberActivationInState(state, {
+      targetUserId: 'usr-pending-1',
+      admin,
+      customMemberCode: 'amanah-ac-02',
+      nowIso: '2026-11-17T09:00:00.000Z',
+    });
+
+    expect(issued1.memberCode).toBe('AMANAH-AC-02');
+    expect(issued1.otp).toMatch(/^\d{6}$/);
+    expect(issued1.otp).not.toBe('123456');
+    expect(issued1.user.status).toBe('pending_activation');
+    expect(issued1.user.encryptedActivationOtp).toBeDefined();
+
+    // Duplicate Member ID rejected for applicant 2
+    expect(() =>
+      issueMemberActivationInState(state, {
+        targetUserId: 'usr-pending-2',
+        admin,
+        customMemberCode: 'AMANAH-AC-02',
+      })
+    ).toThrow('MEMBER_CODE_IN_USE');
+
+    // Issue for applicant 2 and confirm distinct 6-digit OTP
+    const issued2 = issueMemberActivationInState(state, {
+      targetUserId: 'usr-pending-2',
+      admin,
+      nowIso: '2026-11-17T09:05:00.000Z',
+    });
+    expect(issued2.otp).toMatch(/^\d{6}$/);
+    expect(issued2.otp).not.toBe(issued1.otp);
+    expect(issued2.otp).not.toBe('123456');
+
+    // Admin panel lookup returns decrypted OTP for phone support; non-admin summary strips it
+    const adminView = decryptAdminActivationView(issued1.user);
+    expect(adminView?.memberCode).toBe('AMANAH-AC-02');
+    expect(adminView?.otp).toBe(issued1.otp);
+
+    const adminSummaries = buildMemberSummaries(state, true);
+    const nonAdminSummaries = buildMemberSummaries(state, false);
+    const pending1Admin = adminSummaries.find((m) => m.id === 'usr-pending-1');
+    const pending1NonAdmin = nonAdminSummaries.find((m) => m.id === 'usr-pending-1');
+    expect(pending1Admin?.activationCredentials?.otp).toBe(issued1.otp);
+    expect(pending1NonAdmin?.activationCredentials).toBeUndefined();
+
+    // Activation challenge token round-trip
+    const challengeToken = signActivationChallengeToken(issued1.user);
+    const decodedChallenge = verifyActivationChallengeToken(challengeToken);
+    expect(decodedChallenge?.sub).toBe('usr-pending-1');
+    expect(decodedChallenge?.email).toBe('tariq@amanahcoop.org');
+
+    // Email #1 payload includes both Member ID and 6-digit OTP
+    const codesEmail = buildMemberActivationCodesEmailPayload({
+      memberName: issued1.user.name,
+      memberCode: issued1.memberCode,
+      otp: issued1.otp,
+      adminName: admin.name,
+      fundName: state.fundConfig.fundName,
+    });
+    expect(codesEmail.text).toContain('AMANAH-AC-02');
+    expect(codesEmail.text).toContain(issued1.otp);
+    expect(codesEmail.html).toContain('AMANAH-AC-02');
+    expect(codesEmail.html).toContain(issued1.otp);
+
+    // Verification rejects missing agreement confirmation
+    const missingAgreement = verifyMemberActivationInState(state, {
+      userId: 'usr-pending-1',
+      memberCode: 'AMANAH-AC-02',
+      otp: issued1.otp,
+      agreedToTerms: false,
+    });
+    expect(missingAgreement.ok).toBe(false);
+    if ('code' in missingAgreement) expect(missingAgreement.code).toBe('AGREEMENT_REQUIRED');
+
+    // Verification rejects wrong OTP and increments failedAttempts
+    const wrongOtp = verifyMemberActivationInState(state, {
+      userId: 'usr-pending-1',
+      memberCode: 'AMANAH-AC-02',
+      otp: issued1.otp === '999999' ? '888888' : '999999',
+      agreedToTerms: true,
+    });
+    expect(wrongOtp.ok).toBe(false);
+    if ('code' in wrongOtp) expect(wrongOtp.code).toBe('INVALID_ACTIVATION_CODES');
+    expect(issued1.user.activationMeta?.failedAttempts).toBe(1);
+
+    // Verification rejects wrong Member ID
+    const wrongCode = verifyMemberActivationInState(state, {
+      userId: 'usr-pending-1',
+      memberCode: 'AMANAH-AC-99',
+      otp: issued1.otp,
+      agreedToTerms: true,
+    });
+    expect(wrongCode.ok).toBe(false);
+    if ('code' in wrongCode) expect(wrongCode.code).toBe('INVALID_ACTIVATION_CODES');
+
+    // Verification succeeds with case-insensitive Member ID + exact 6-digit OTP + agreement
+    const activated = verifyMemberActivationInState(state, {
+      userId: 'usr-pending-1',
+      memberCode: 'amanah-ac-02',
+      otp: issued1.otp,
+      agreedToTerms: true,
+      nowIso: '2026-11-17T09:15:00.000Z',
+    });
+    expect(activated.ok).toBe(true);
+    if ('user' in activated) {
+      expect(activated.user.status).toBe('active');
+      expect(activated.user.memberCode).toBe('AMANAH-AC-02');
+      expect(activated.user.encryptedActivationOtp).toBeUndefined();
+      expect(activated.user.activationMeta?.agreementAcceptedAt).toBe('2026-11-17T09:15:00.000Z');
+    }
+
+    // OTP remains permanently recorded in usedActivationOtps and cannot be generated again
+    const ledgerMatch = (state.usedActivationOtps || []).find((r) => r.otp === issued1.otp);
+    expect(ledgerMatch?.activatedAt).toBe('2026-11-17T09:15:00.000Z');
+    for (let i = 0; i < 20; i += 1) {
+      const nextOtp = generateUniqueSixDigitOtp(state);
+      expect(nextOtp).not.toBe(issued1.otp);
+      expect(nextOtp).not.toBe(issued2.otp);
+      expect(nextOtp).not.toBe('123456');
+    }
+
+    // Re-attempting activation on already active account fails cleanly
+    const replay = verifyMemberActivationInState(state, {
+      userId: 'usr-pending-1',
+      memberCode: 'AMANAH-AC-02',
+      otp: issued1.otp,
+      agreedToTerms: true,
+    });
+    expect(replay.ok).toBe(false);
+    if ('code' in replay) expect(replay.code).toBe('ALREADY_ACTIVATED');
+
+    // Email #2 final confirmation payload contains official Member ID and confirmation timestamp
+    const confirmEmail = buildMembershipActivatedConfirmationEmailPayload({
+      memberName: issued1.user.name,
+      memberCode: 'AMANAH-AC-02',
+      adminName: admin.name,
+      fundName: state.fundConfig.fundName,
+      activatedAtIso: '2026-11-17T09:15:00.000Z',
+    });
+    expect(confirmEmail.subject).toContain('AMANAH-AC-02');
+    expect(confirmEmail.text).toContain('AMANAH-AC-02');
+    expect(confirmEmail.text).toContain('final membership agreement');
+    expect(confirmEmail.html).toContain('AMANAH-AC-02');
   });
 });

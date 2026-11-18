@@ -56,7 +56,6 @@ async function startServer() {
 
   app.use((_req, res, nextFn) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     nextFn();
@@ -64,6 +63,30 @@ async function startServer() {
 
   // Mount Express API routes (JSON + Cookies + SSE) before Next.js request handler
   app.use('/api', express.json({ limit: '16mb' }), cookieParser(), apiRouter);
+
+  app.use(
+    (
+      err: Error & { name?: string },
+      req: express.Request,
+      res: express.Response,
+      nextFn: express.NextFunction
+    ) => {
+      if (
+        err &&
+        (err.name === 'MongooseError' ||
+          err.name === 'MongoNetworkError' ||
+          err.name === 'MongoServerSelectionError' ||
+          err.message?.includes('buffering timed out'))
+      ) {
+        console.warn('[AI Studio] Database offline — returning fallback response');
+        if (req.method === 'GET') {
+          return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
+        }
+        return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+      }
+      nextFn(err);
+    }
+  );
 
   app.get('/favicon.ico', (_req, res) => {
     res.sendFile('favicon.ico', { root: 'public' });

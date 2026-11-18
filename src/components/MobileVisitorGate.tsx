@@ -4,12 +4,15 @@ import { useEffect, useLayoutEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
+  CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
   Lock,
+  Phone,
   Shield,
   Smartphone,
   UserPlus,
@@ -24,6 +27,7 @@ import {
 } from '../utils/mobileDeviceAuth.ts';
 import { isMobileBrowseMode, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
+import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
 
@@ -42,6 +46,22 @@ export function MobileVisitorGate() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [activationChallenge, setActivationChallenge] = useState<{
+    activationToken: string;
+    applicant: { id: string; name: string; email: string; fundName: string };
+    message: string;
+  } | null>(null);
+  const [activationMemberId, setActivationMemberId] = useState('');
+  const [activationOtp, setActivationOtp] = useState('');
+  const [activationAgreed, setActivationAgreed] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    title: string;
+    description: string;
+    details: Array<{ label: string; value: string }>;
+  } | null>(null);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
@@ -89,6 +109,18 @@ export function MobileVisitorGate() {
     setSubmitting(true);
     try {
       const res = await api.login(email.trim(), password);
+      if (!('user' in res)) {
+        setActivationChallenge({
+          activationToken: res.activationToken,
+          applicant: res.applicant,
+          message: res.message,
+        });
+        setActivationMemberId('');
+        setActivationOtp('');
+        setActivationAgreed(false);
+        setActivationError(null);
+        return;
+      }
       setMobileAutoLogoutNotice(null);
       setAutoLogoutNotice(null);
       setSelectedPinAccountId(res.user.id);
@@ -105,7 +137,57 @@ export function MobileVisitorGate() {
     }
   }
 
-  const showWelcomeModal = isMobile && !authChecking && !user && !isAuthOrCharterPage;
+  async function handleMobileActivate(e: FormEvent) {
+    e.preventDefault();
+    if (!activationChallenge) return;
+    setActivationError(null);
+    const trimmedCode = activationMemberId.trim().toUpperCase();
+    const cleanedOtp = activationOtp.replace(/\D/g, '').trim();
+    if (!trimmedCode || !/^\d{6}$/.test(cleanedOtp)) {
+      setActivationError('Enter both your official Member ID and 6-digit Activation OTP.');
+      return;
+    }
+    if (!activationAgreed) {
+      setActivationError('Please confirm the final Amanah membership agreement checkbox.');
+      return;
+    }
+    setActivating(true);
+    try {
+      const res = await api.activateMembership({
+        activationToken: activationChallenge.activationToken,
+        memberCode: trimmedCode,
+        otp: cleanedOtp,
+        agreedToTerms: true,
+      });
+      setMobileAutoLogoutNotice(null);
+      setAutoLogoutNotice(null);
+      setSelectedPinAccountId(res.user.id);
+      setMobileBrowseMode(false);
+      setBrowseMode(false);
+      setActivationChallenge(null);
+      setConfirmationModal({
+        title: 'Membership Confirmed & Activated',
+        description: `Assalamu Alaikum ${res.user.name}. Your final agreement to join ${activationChallenge.applicant.fundName} is confirmed and your account is now active.`,
+        details: [
+          { label: 'Member Name', value: res.user.name },
+          { label: 'Official Member ID', value: res.user.memberCode },
+          { label: 'Account Status', value: 'Active & Verified' },
+          {
+            label: 'Confirmation Email',
+            value: res.confirmationEmailSent ? `Sent to ${res.user.email}` : 'Recorded In-App',
+          },
+        ],
+      });
+      setUser(res.user);
+    } catch (err) {
+      setActivationError(err instanceof Error ? err.message : 'Activation verification failed.');
+    } finally {
+      setActivating(false);
+    }
+  }
+
+  const showWelcomeModal =
+    isMobile && !authChecking && !user && !isAuthOrCharterPage && !confirmationModal;
   const showMobileSessionShield =
     !showWelcomeModal &&
     ((authChecking && !isAuthOrCharterPage) || shouldRedirectAuthenticatedMobileHome);
@@ -177,7 +259,103 @@ export function MobileVisitorGate() {
               </div>
 
               <div className="p-5 space-y-4">
-                {hasRegisteredPinAccount && !usePasswordMode ? (
+                {activationChallenge ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Activate Membership
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivationChallenge(null);
+                          setActivationError(null);
+                        }}
+                        className="text-xs font-medium text-slate-500 dark:text-slate-400 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Back</span>
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Enter the Official Member ID and 6-digit Activation OTP sent to{' '}
+                      <span className="font-mono">{activationChallenge.applicant.email}</span>.
+                    </p>
+                    {activationError && (
+                      <div
+                        role="alert"
+                        className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+                      >
+                        {activationError}
+                      </div>
+                    )}
+                    <form onSubmit={handleMobileActivate} className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor="mobile-act-code"
+                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                        >
+                          Official Member ID
+                        </label>
+                        <input
+                          id="mobile-act-code"
+                          type="text"
+                          required
+                          autoCapitalize="characters"
+                          value={activationMemberId}
+                          onChange={(e) => setActivationMemberId(e.target.value.toUpperCase())}
+                          placeholder="AMANAH-AC-02"
+                          className="w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono uppercase rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="mobile-act-otp"
+                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                        >
+                          6-Digit Activation OTP
+                        </label>
+                        <input
+                          id="mobile-act-otp"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          required
+                          value={activationOtp}
+                          onChange={(e) =>
+                            setActivationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                          }
+                          placeholder="000000"
+                          className="w-full min-h-[44px] px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.25em] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        />
+                      </div>
+                      <label className="flex items-start gap-2 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
+                        <input
+                          type="checkbox"
+                          checked={activationAgreed}
+                          onChange={(e) => setActivationAgreed(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-700"
+                        />
+                        <span>
+                          Submitting these two codes confirms my final agreement to join Amanah
+                          Cooperative.
+                        </span>
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={activating}
+                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                        <span>{activating ? 'Activating…' : 'Confirm & Activate'}</span>
+                      </button>
+                    </form>
+                    <div className="flex items-start gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>No email? Call an Amanah admin to receive your codes by phone.</span>
+                    </div>
+                  </div>
+                ) : hasRegisteredPinAccount && !usePasswordMode ? (
                   <MobilePinLoginPanel
                     compact
                     onSuccess={(loggedInUser) => {
@@ -343,6 +521,20 @@ export function MobileVisitorGate() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ActionModal
+        open={confirmationModal !== null}
+        mode="notice"
+        tone="emerald"
+        title={confirmationModal?.title || ''}
+        description={confirmationModal?.description || ''}
+        details={confirmationModal?.details}
+        confirmLabel="Open Dashboard"
+        onClose={() => {
+          setConfirmationModal(null);
+          router.replace('/dashboard');
+        }}
+      />
     </>
   );
 }

@@ -66,6 +66,36 @@ export function signAuthToken(user: StoredUser): string {
   );
 }
 
+export function signActivationChallengeToken(user: StoredUser): string {
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      purpose: 'member_activation',
+    },
+    getJwtSecret(),
+    { expiresIn: '30m' }
+  );
+}
+
+export function verifyActivationChallengeToken(
+  token: string
+): { sub: string; email: string } | null {
+  try {
+    const decoded = jwt.verify(token, getJwtSecret()) as {
+      sub?: string;
+      email?: string;
+      purpose?: string;
+    };
+    if (!decoded?.sub || !decoded?.email || decoded.purpose !== 'member_activation') {
+      return null;
+    }
+    return { sub: decoded.sub, email: decoded.email };
+  } catch {
+    return null;
+  }
+}
+
 export function setAuthCookie(req: Request, res: Response, token: string): void {
   const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
   res.cookie(SESSION_COOKIE_NAME, token, {
