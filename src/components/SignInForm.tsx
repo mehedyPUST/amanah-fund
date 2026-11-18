@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { translateRoleLabel } from '../i18n/messages.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import { api } from '../utils/api.ts';
 import {
   getRegisteredMobileAccounts,
@@ -70,9 +72,17 @@ export function SignInForm() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
 
+  const bootstrapQuery = useQuery({
+    queryKey: queryKeys.auth.bootstrapStatus(),
+    queryFn: () => api.getBootstrapStatus(),
+  });
+  const vaultHasMembers =
+    bootstrapQuery.data !== undefined ? bootstrapQuery.data.hasMembers : null;
+
   const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
-  const [usePasswordMode, setUsePasswordMode] = useState(false);
-  const [vaultHasMembers, setVaultHasMembers] = useState<boolean | null>(null);
+  const [usePasswordMode, setUsePasswordMode] = useState<boolean>(
+    () => bootstrapQuery.data?.hasMembers === false
+  );
 
   const [noticeModal, setNoticeModal] = useState<{
     tone: 'emerald' | 'red';
@@ -84,8 +94,13 @@ export function SignInForm() {
   } | null>(null);
 
   useEffect(() => {
+    if (vaultHasMembers === false) {
+      setUsePasswordMode(true);
+    }
+  }, [vaultHasMembers]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
-    let active = true;
     const params = new URLSearchParams(window.location.search);
     if (params.get('forgot') === '1') {
       setForgotOpen(true);
@@ -96,21 +111,8 @@ export function SignInForm() {
       if (accounts.length === 0) setUsePasswordMode(false);
     };
     syncRegistered();
-    api
-      .getBootstrapStatus()
-      .then((status) => {
-        if (!active) return;
-        setVaultHasMembers(status.hasMembers);
-        if (!status.hasMembers) {
-          setUsePasswordMode(true);
-        }
-      })
-      .catch(() => {
-        // ignore bootstrap status fetch failure
-      });
     window.addEventListener('amanah:mobile-devices-updated', syncRegistered);
     return () => {
-      active = false;
       window.removeEventListener('amanah:mobile-devices-updated', syncRegistered);
     };
   }, []);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import {
   AlertTriangle,
@@ -18,6 +19,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { translateRoleLabel } from '../i18n/messages.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import type { CoopNotice, NoticePriority } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { ActionModal } from './ActionModal.tsx';
@@ -79,10 +81,28 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
   const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
   const canManage = isActiveMember && (user?.role === 'admin' || user?.role === 'manager');
 
-  const [notices, setNotices] = useState<CoopNotice[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [filter, setFilter] = useState<NoticeFilter>('all');
+
+  const noticesQuery = useQuery({
+    queryKey: queryKeys.public.notices(),
+    queryFn: () => api.getNotices(),
+    enabled: isActiveMember,
+  });
+
+  const notices = useMemo(
+    () => (isActiveMember && Array.isArray(noticesQuery.data?.notices) ? noticesQuery.data.notices : []),
+    [isActiveMember, noticesQuery.data]
+  );
+  const loading = isActiveMember && (noticesQuery.isPending || noticesQuery.isFetching);
+  const error =
+    actionError ??
+    (noticesQuery.isError
+      ? noticesQuery.error instanceof Error
+        ? noticesQuery.error.message
+        : t('loadFailed')
+      : null);
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<CoopNotice | null>(null);
@@ -98,48 +118,29 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
   const [deleteTarget, setDeleteTarget] = useState<CoopNotice | null>(null);
 
   const loadNotices = useCallback(
-    async (silent = false) => {
+    async (_silent = false) => {
       if (!isActiveMember) return;
-      if (!silent) setLoading(true);
-      setError(null);
-      try {
-        const data = await api.getNotices();
-        setNotices(Array.isArray(data.notices) ? data.notices : []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('loadFailed'));
-      } finally {
-        if (!silent) setLoading(false);
-      }
+      setActionError(null);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.public.notices() });
     },
-    [isActiveMember, t]
+    [isActiveMember, queryClient]
   );
-
-  useEffect(() => {
-    if (!isActiveMember) {
-      setNotices([]);
-      return;
-    }
-    void loadNotices(false);
-  }, [isActiveMember, loadNotices]);
 
   useEffect(() => {
     if (!isActiveMember) return;
     const handleGlobalRefresh = () => {
-      void loadNotices(false);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.public.notices() });
     };
     window.addEventListener('amanah:refresh', handleGlobalRefresh);
 
     const source = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
-    const handleNoticeUpdate = () => {
-      void loadNotices(true);
-    };
-    source.addEventListener('notice:updated', handleNoticeUpdate);
+    source.addEventListener('notice:updated', handleGlobalRefresh);
     return () => {
       window.removeEventListener('amanah:refresh', handleGlobalRefresh);
-      source.removeEventListener('notice:updated', handleNoticeUpdate);
+      source.removeEventListener('notice:updated', handleGlobalRefresh);
       source.close();
     };
-  }, [isActiveMember, loadNotices]);
+  }, [isActiveMember, queryClient]);
 
   const filteredNotices = useMemo(() => {
     if (filter === 'pinned') return notices.filter((n) => n.pinned);
@@ -200,14 +201,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
           priority,
           pinned,
         });
-        setNotices((prev) =>
-          prev
+        queryClient.setQueryData<{ notices: CoopNotice[] }>(queryKeys.public.notices(), (prev) => ({
+          notices: (prev?.notices || [])
             .map((item) => (item.id === res.notice.id ? res.notice : item))
             .sort((a, b) => {
               const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
               return pinDiff !== 0 ? pinDiff : b.createdAt.localeCompare(a.createdAt);
-            })
-        );
+            }),
+        }));
       } else {
         const res = await api.createNotice({
           title: cleanTitle,
@@ -215,13 +216,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
           priority,
           pinned,
         });
-        setNotices((prev) =>
-          [res.notice, ...prev].sort((a, b) => {
+        queryClient.setQueryData<{ notices: CoopNotice[] }>(queryKeys.public.notices(), (prev) => ({
+          notices: [res.notice, ...(prev?.notices || [])].sort((a, b) => {
             const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
             return pinDiff !== 0 ? pinDiff : b.createdAt.localeCompare(a.createdAt);
-          })
-        );
+          }),
+        }));
       }
+      setActionError(null);
       setComposerOpen(false);
       setEditingNotice(null);
     } catch (err) {
@@ -234,19 +236,19 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
   async function handleTogglePin(notice: CoopNotice) {
     if (!canManage || busyId) return;
     setBusyId(notice.id);
-    setError(null);
+    setActionError(null);
     try {
       const res = await api.updateNotice(notice.id, { pinned: !notice.pinned });
-      setNotices((prev) =>
-        prev
+      queryClient.setQueryData<{ notices: CoopNotice[] }>(queryKeys.public.notices(), (prev) => ({
+        notices: (prev?.notices || [])
           .map((item) => (item.id === res.notice.id ? res.notice : item))
           .sort((a, b) => {
             const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
             return pinDiff !== 0 ? pinDiff : b.createdAt.localeCompare(a.createdAt);
-          })
-      );
+          }),
+      }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pinUpdateFailed'));
+      setActionError(err instanceof Error ? err.message : t('pinUpdateFailed'));
     } finally {
       setBusyId(null);
     }
@@ -256,13 +258,15 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
     if (!canManage || !deleteTarget) return;
     const targetId = deleteTarget.id;
     setBusyId(targetId);
-    setError(null);
+    setActionError(null);
     try {
       await api.deleteNotice(targetId);
-      setNotices((prev) => prev.filter((item) => item.id !== targetId));
+      queryClient.setQueryData<{ notices: CoopNotice[] }>(queryKeys.public.notices(), (prev) => ({
+        notices: (prev?.notices || []).filter((item) => item.id !== targetId),
+      }));
       setDeleteTarget(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('deleteFailed'));
+      setActionError(err instanceof Error ? err.message : t('deleteFailed'));
     } finally {
       setBusyId(null);
     }

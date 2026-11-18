@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   CheckCircle2,
@@ -17,7 +18,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
-import type { ConstitutionDocumentInfo } from '../types/coop.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
 import { useCoopSession } from './AppProviders.tsx';
@@ -230,11 +231,14 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const PdfHeadingTag = embedded ? 'h3' : 'h2';
   const ArticleHeadingTag = embedded ? 'h3' : 'h2';
   const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
-  const [constitutionLoading, setConstitutionLoading] = useState(true);
   const [expandedCodes, setExpandedCodes] = useState<Record<string, boolean>>({});
   /** Card layout for better readability: single column (comfortable) vs two-column grid. */
   const [cardLayout, setCardLayout] = useState<'single' | 'grid'>('grid');
+
+  const { data: constitution = null, isPending: constitutionLoading } = useQuery({
+    queryKey: queryKeys.public.constitution(),
+    queryFn: () => api.getConstitution(),
+  });
 
   // Charter language follows global locale across both embedded and standalone views
   const activeLang: CharterLanguage = locale;
@@ -259,24 +263,6 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
       setExpandedCodes(next);
     }
   }
-
-  useEffect(() => {
-    let active = true;
-    api
-      .getConstitution()
-      .then((res) => {
-        if (active) setConstitution(res);
-      })
-      .catch(() => {
-        if (active) setConstitution(null);
-      })
-      .finally(() => {
-        if (active) setConstitutionLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const constitutionUrl = constitution?.constitutionPdfUrl || DEFAULT_CONSTITUTION_PDF_URL;
   const constitutionName =

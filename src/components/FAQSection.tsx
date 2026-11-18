@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   ChevronDown,
@@ -15,6 +16,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import { queryKeys } from '../lib/queryKeys.ts';
 import type { FaqCategory, FaqItem } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
@@ -51,9 +53,33 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
     [tFaq]
   );
 
-  const [faqs, setFaqs] = useState<FaqItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const faqsQuery = useQuery({
+    queryKey: queryKeys.public.faqs(),
+    queryFn: () => api.getFaqs(),
+  });
+
+  const faqs = useMemo(() => {
+    const raw = faqsQuery.data?.faqs;
+    if (Array.isArray(raw)) {
+      return sortFaqItems(raw);
+    }
+    if (faqsQuery.isError) {
+      return createDefaultFaqs();
+    }
+    return [];
+  }, [faqsQuery.data, faqsQuery.isError]);
+
+  const loading = faqsQuery.isPending && faqs.length === 0;
+  const loadError =
+    actionError ??
+    (faqsQuery.isError
+      ? faqsQuery.error instanceof Error
+        ? faqsQuery.error.message
+        : tFaq('loadFailed')
+      : null);
 
   const [activeCategory, setActiveCategory] = useState<FaqFilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,27 +99,9 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
   const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadFaqs = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setLoadError(null);
-    try {
-      const data = await api.getFaqs();
-      setFaqs(sortFaqItems(Array.isArray(data.faqs) ? data.faqs : []));
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tFaq('loadFailed'));
-      setFaqs((prev) => (prev.length > 0 ? prev : createDefaultFaqs()));
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [tFaq]);
-
-  useEffect(() => {
-    void loadFaqs(false);
-  }, [loadFaqs]);
-
   useEffect(() => {
     const handleLocalRefresh = () => {
-      void loadFaqs(true);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.public.faqs() });
     };
     window.addEventListener('amanah:faq-updated', handleLocalRefresh);
     window.addEventListener('amanah:refresh', handleLocalRefresh);
@@ -112,7 +120,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         source.close();
       }
     };
-  }, [isActiveMember, loadFaqs]);
+  }, [isActiveMember, queryClient]);
 
   const faqNumberMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -219,7 +227,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           question: cleanQuestion,
           answer: cleanAnswer,
         });
-        setFaqs(sortFaqItems(res.faqs));
+        queryClient.setQueryData(queryKeys.public.faqs(), { faqs: sortFaqItems(res.faqs) });
       } else {
         const res = await api.createFaq({
           category: categoryInput,
@@ -227,8 +235,9 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           question: cleanQuestion,
           answer: cleanAnswer,
         });
-        setFaqs(sortFaqItems(res.faqs));
+        queryClient.setQueryData(queryKeys.public.faqs(), { faqs: sortFaqItems(res.faqs) });
       }
+      setActionError(null);
       setComposerOpen(false);
       setEditingFaq(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
@@ -245,7 +254,8 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
     try {
       const targetId = deleteTarget.id;
       const res = await api.deleteFaq(targetId);
-      setFaqs(sortFaqItems(res.faqs));
+      queryClient.setQueryData(queryKeys.public.faqs(), { faqs: sortFaqItems(res.faqs) });
+      setActionError(null);
       setOpenIds((prev) => {
         if (!(targetId in prev)) return prev;
         const next = { ...prev };
@@ -259,7 +269,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       setDeleteTarget(null);
       window.dispatchEvent(new CustomEvent('amanah:faq-updated'));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tFaq('deleteFailed'));
+      setActionError(err instanceof Error ? err.message : tFaq('deleteFailed'));
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
@@ -516,7 +526,10 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           <span>{loadError}</span>
           <button
             type="button"
-            onClick={() => void loadFaqs(false)}
+            onClick={() => {
+              setActionError(null);
+              void faqsQuery.refetch();
+            }}
             className="underline font-medium cursor-pointer shrink-0"
           >
             {tCommon('retry')}

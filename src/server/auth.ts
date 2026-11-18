@@ -231,6 +231,21 @@ function verifyCandidateJwtSub(candidates: string[]): string[] {
   return subs;
 }
 
+export async function verifySessionTokenToUser(token: string | undefined | null): Promise<PublicUser | null> {
+  if (!token || !token.trim()) return null;
+  const validSubs = verifyCandidateJwtSub([token.trim()]);
+  if (validSubs.length === 0) return null;
+  try {
+    const state = await loadVaultState();
+    const user = validSubs
+      .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
+      .find(Boolean);
+    return user ? sanitizeUser(user) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function requireAuth(
   req: AuthenticatedRequest,
   res: Response,

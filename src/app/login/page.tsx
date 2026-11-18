@@ -1,15 +1,23 @@
+import { HydrationBoundary } from '@tanstack/react-query';
 import type { Metadata } from 'next';
 import { PublicShell } from '../../components/PublicShell.tsx';
 import { SignInForm } from '../../components/SignInForm.tsx';
+import { prefetchLoginPageState } from '../../server/ssrData.ts';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Sign In — Amanah',
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const dehydratedState = await prefetchLoginPageState();
+
   return (
-    <PublicShell>
-      <SignInForm />
-    </PublicShell>
+    <HydrationBoundary state={dehydratedState}>
+      <PublicShell>
+        <SignInForm />
+      </PublicShell>
+    </HydrationBoundary>
   );
 }

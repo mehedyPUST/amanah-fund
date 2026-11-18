@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
@@ -20,7 +21,8 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
-import type { ConstitutionDocumentInfo, NomineeGender, NomineeInfo } from '../types/coop.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
+import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
@@ -69,10 +71,18 @@ export function SignUpForm() {
   const tAuth = useTranslations('Auth');
   const tCommon = useTranslations('Common');
 
-  const [referenceOptions, setReferenceOptions] = useState<
-    Array<{ name: string; memberCode: string }>
-  >([]);
-  const [isBootstrapSetup, setIsBootstrapSetup] = useState(false);
+  const referencesQuery = useQuery({
+    queryKey: queryKeys.auth.references(),
+    queryFn: () => api.getReferenceMembers(),
+  });
+  const constitutionQuery = useQuery({
+    queryKey: queryKeys.public.constitution(),
+    queryFn: () => api.getConstitution(),
+  });
+
+  const referenceOptions = referencesQuery.data?.members ?? [];
+  const isBootstrapSetup = referencesQuery.data?.hasMembers === false;
+  const constitution = constitutionQuery.data ?? null;
 
   // Required & optional signup fields
   const [name, setName] = useState('');
@@ -98,7 +108,6 @@ export function SignUpForm() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
   const [agreementUploading, setAgreementUploading] = useState(false);
-  const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,32 +123,6 @@ export function SignUpForm() {
       router.replace(isMobileViewport() ? '/dashboard' : '/');
     }
   }, [authChecking, user, router, successModalOpen]);
-
-  useEffect(() => {
-    let active = true;
-    api
-      .getReferenceMembers()
-      .then((res) => {
-        if (!active) return;
-        setReferenceOptions(res.members || []);
-        const emptyVault = res.hasMembers === false;
-        setIsBootstrapSetup(emptyVault);
-      })
-      .catch(() => {
-        // optional autocomplete list
-      });
-    api
-      .getConstitution()
-      .then((res) => {
-        if (active) setConstitution(res);
-      })
-      .catch(() => {
-        // optional constitution link
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (sameAsPresent) {

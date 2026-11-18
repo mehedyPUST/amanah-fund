@@ -4,6 +4,7 @@ import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppProviders } from '../components/AppProviders.tsx';
 import { normalizeLocale } from '../i18n/config.ts';
+import { getServerSessionUser } from '../server/ssrData.ts';
 import './globals.css';
 
 const interHeading = Inter({
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const rawLocale = await getLocale();
+  const [rawLocale, initialUser] = await Promise.all([getLocale(), getServerSessionUser()]);
   const locale = normalizeLocale(rawLocale);
 
   return (
@@ -80,7 +81,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${interHeading.variable} ${openSansBody.variable} ${spaceMono.variable} ${anekBangla.variable}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
-        <AppProviders initialLocale={locale}>{children}</AppProviders>
+        <AppProviders initialLocale={locale} initialUser={initialUser}>
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

@@ -10,10 +10,13 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
 import { ShieldCheck, X } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
+import { getQueryClient } from '../lib/queryClient.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import {
   defaultLocale,
   LOCALE_COOKIE_NAME,
@@ -90,14 +93,17 @@ export function useCoopSession(): CoopSessionContextValue {
 export function AppProviders({
   children,
   initialLocale = defaultLocale,
+  initialUser = null,
 }: {
   children: ReactNode;
   initialLocale?: AppLocale;
+  initialUser?: PublicUser | null;
 }) {
-  const [user, setUserState] = useState<PublicUser | null>(null);
-  const userRef = useRef<PublicUser | null>(null);
+  const queryClient = getQueryClient();
+  const [user, setUserState] = useState<PublicUser | null>(initialUser);
+  const userRef = useRef<PublicUser | null>(initialUser);
   userRef.current = user;
-  const [authChecking, setAuthChecking] = useState(true);
+  const [authChecking, setAuthChecking] = useState<boolean>(() => !initialUser);
   const [darkMode, setDarkMode] = useState(false);
   const [locale, setLocaleState] = useState<AppLocale>(() => normalizeLocale(initialLocale));
   const localeRef = useRef<AppLocale>(locale);
@@ -116,19 +122,32 @@ export function AppProviders({
   const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
   const reloadingRef = useRef(false);
   const manualUpdateRequestedRef = useRef(false);
-  const lastAuthCheckRef = useRef<number>(0);
+  const lastAuthCheckRef = useRef<number>(initialUser ? Date.now() : 0);
   const sessionVersionRef = useRef(0);
 
-  const setUser = useCallback((nextUser: PublicUser | null) => {
-    sessionVersionRef.current += 1;
-    setUserState(nextUser);
-    setAuthChecking(false);
-    if (nextUser) {
-      syncLocalAccountsWithServerUser(nextUser);
-      setMobileBackgroundHiddenAt(null);
-      setMobileAutoLogoutNotice(null);
-    }
-  }, []);
+  const clearPrivateQueryCaches = useCallback(() => {
+    queryClient.setQueryData(queryKeys.auth.me(), null);
+    queryClient.removeQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.removeQueries({ queryKey: queryKeys.public.notices() });
+    queryClient.removeQueries({ queryKey: queryKeys.admin.all });
+  }, [queryClient]);
+
+  const setUser = useCallback(
+    (nextUser: PublicUser | null) => {
+      sessionVersionRef.current += 1;
+      setUserState(nextUser);
+      setAuthChecking(false);
+      if (nextUser) {
+        queryClient.setQueryData(queryKeys.auth.me(), { user: nextUser });
+        syncLocalAccountsWithServerUser(nextUser);
+        setMobileBackgroundHiddenAt(null);
+        setMobileAutoLogoutNotice(null);
+      } else {
+        clearPrivateQueryCaches();
+      }
+    },
+    [queryClient, clearPrivateQueryCaches]
+  );
 
   const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
   const [totpCodeInput, setTotpCodeInput] = useState('');
@@ -261,7 +280,11 @@ export function AppProviders({
     const requestSeq = ++sessionVersionRef.current;
     lastAuthCheckRef.current = Date.now();
     try {
-      const res = await api.getMe();
+      const res = await queryClient.fetchQuery({
+        queryKey: queryKeys.auth.me(),
+        queryFn: () => api.getMe(),
+        staleTime: 0,
+      });
       if (requestSeq !== sessionVersionRef.current) {
         return userRef.current;
       }
@@ -276,6 +299,7 @@ export function AppProviders({
       const status = (err as { status?: number } | null)?.status;
       if (status === 401 || !userRef.current) {
         setUserState(null);
+        clearPrivateQueryCaches();
       }
       return status === 401 ? null : userRef.current;
     } finally {
@@ -283,11 +307,16 @@ export function AppProviders({
         setAuthChecking(false);
       }
     }
-  }, []);
+  }, [queryClient, clearPrivateQueryCaches]);
 
   useEffect(() => {
+    if (initialUser) {
+      queryClient.setQueryData(queryKeys.auth.me(), { user: initialUser });
+      syncLocalAccountsWithServerUser(initialUser);
+      return;
+    }
     void refreshUser();
-  }, [refreshUser]);
+  }, [initialUser, queryClient, refreshUser]);
 
   const logout = useCallback(async () => {
     sessionVersionRef.current += 1;
@@ -297,8 +326,9 @@ export function AppProviders({
     } finally {
       setMobileBrowseMode(false);
       setUserState(null);
+      clearPrivateQueryCaches();
     }
-  }, []);
+  }, [clearPrivateQueryCaches]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -314,6 +344,7 @@ export function AppProviders({
       setMobileBrowseMode(false);
       setUserState(null);
       setAuthChecking(false);
+      clearPrivateQueryCaches();
     };
 
     const handleVisibility = () => {
@@ -335,6 +366,7 @@ export function AppProviders({
           setMobileBrowseMode(false);
           setUserState(null);
           setAuthChecking(false);
+          clearPrivateQueryCaches();
         }
         return;
       }
@@ -353,7 +385,7 @@ export function AppProviders({
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [refreshUser]);
+  }, [refreshUser, clearPrivateQueryCaches]);
 
   const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
     swRegRef.current = reg;
@@ -584,116 +616,118 @@ export function AppProviders({
         return typeof resolved === 'string' ? resolved : key;
       }}
     >
-      <CoopSessionContext.Provider
-        value={{
-          user,
-          authChecking,
-          setUser,
-          refreshUser,
-          logout,
-          darkMode,
-          toggleDarkMode,
-          locale,
-          setLocale,
-          workspace,
-          connectingGoogle,
-          handleConnectGoogle,
-          handleDisconnectGoogle,
-          pwaUpdate: {
-            updateAvailable,
-            checkingUpdate,
-            applyingUpdate,
-            lastCheckedAt,
-            statusMessage,
-            checkForUpdates,
-            applyUpdate,
-            dismissStatusMessage,
-          },
-        }}
-      >
-        <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
-          <SkeletonTheme
-            baseColor={darkMode ? '#1e293b' : '#e2e8f0'}
-            highlightColor={darkMode ? '#334155' : '#f8fafc'}
-            borderRadius={8}
-          >
-            {children}
-            <OfflineIndicator />
-            <AnimatePresence>
-              {totpPrompt && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.16 }}
-                  className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4"
-                >
+      <QueryClientProvider client={queryClient}>
+        <CoopSessionContext.Provider
+          value={{
+            user,
+            authChecking,
+            setUser,
+            refreshUser,
+            logout,
+            darkMode,
+            toggleDarkMode,
+            locale,
+            setLocale,
+            workspace,
+            connectingGoogle,
+            handleConnectGoogle,
+            handleDisconnectGoogle,
+            pwaUpdate: {
+              updateAvailable,
+              checkingUpdate,
+              applyingUpdate,
+              lastCheckedAt,
+              statusMessage,
+              checkForUpdates,
+              applyUpdate,
+              dismissStatusMessage,
+            },
+          }}
+        >
+          <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
+            <SkeletonTheme
+              baseColor={darkMode ? '#1e293b' : '#e2e8f0'}
+              highlightColor={darkMode ? '#334155' : '#f8fafc'}
+              borderRadius={8}
+            >
+              {children}
+              <OfflineIndicator />
+              <AnimatePresence>
+                {totpPrompt && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.96, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: 8 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="w-full max-w-sm rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md p-5 shadow-xl"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.16 }}
+                    className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
-                        <ShieldCheck className="w-5 h-5 shrink-0" />
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {activeMessages.Auth.totp.title}
-                        </h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={cancelTotpPrompt}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-                        aria-label={activeMessages.Auth.totp.cancelAria}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {totpPrompt.message}
-                    </p>
-                    <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                          {activeMessages.Auth.totp.label}
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={6}
-                          autoFocus
-                          value={totpCodeInput}
-                          onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          placeholder="000000"
-                          className="w-full rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/30 dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-                        />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="w-full max-w-sm rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md p-5 shadow-xl"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                          <ShieldCheck className="w-5 h-5 shrink-0" />
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {activeMessages.Auth.totp.title}
+                          </h3>
+                        </div>
                         <button
                           type="button"
                           onClick={cancelTotpPrompt}
-                          className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                          aria-label={activeMessages.Auth.totp.cancelAria}
                         >
-                          {activeMessages.Common.cancel}
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={totpCodeInput.length !== 6}
-                          className="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-50 cursor-pointer whitespace-nowrap shadow-2xs"
-                        >
-                          {activeMessages.Auth.totp.verifyContinue}
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
-                    </form>
+                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {totpPrompt.message}
+                      </p>
+                      <form onSubmit={submitTotpPrompt} className="mt-4 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {activeMessages.Auth.totp.label}
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            autoFocus
+                            value={totpCodeInput}
+                            onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="000000"
+                            className="w-full rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/30 dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={cancelTotpPrompt}
+                            className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                          >
+                            {activeMessages.Common.cancel}
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={totpCodeInput.length !== 6}
+                            className="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-50 cursor-pointer whitespace-nowrap shadow-2xs"
+                          >
+                            {activeMessages.Auth.totp.verifyContinue}
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </SkeletonTheme>
-        </MotionConfig>
-      </CoopSessionContext.Provider>
+                )}
+              </AnimatePresence>
+            </SkeletonTheme>
+          </MotionConfig>
+        </CoopSessionContext.Provider>
+      </QueryClientProvider>
     </NextIntlClientProvider>
   );
 }

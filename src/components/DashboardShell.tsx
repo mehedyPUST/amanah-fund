@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   ArrowRight,
@@ -67,6 +68,7 @@ import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import { translateRoleLabel } from '../i18n/messages.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import { api } from '../utils/api.ts';
 import type {
   Contribution,
@@ -84,6 +86,14 @@ import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { getDashboardSectionLabel, getDeskLabel, getRegistryLabel } from '../utils/navigation.ts';
+
+const EMPTY_CONTRIBUTIONS: Contribution[] = [];
+const EMPTY_LOANS: LoanRequest[] = [];
+const EMPTY_HALAL_PROJECTS: HalalProject[] = [];
+const EMPTY_POLLS: DecisionPoll[] = [];
+const EMPTY_MEETINGS: CoopMeeting[] = [];
+const EMPTY_PROFILE_REQUESTS: ProfileChangeRequest[] = [];
+const EMPTY_NOTIFICATIONS: EmailNotification[] = [];
 
 interface NavItemConfig {
   id: DashboardSectionId;
@@ -273,15 +283,83 @@ export function DashboardShell() {
     }
   }, []);
 
-  const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [loans, setLoans] = useState<LoanRequest[]>([]);
-  const [halalProjects, setHalalProjects] = useState<HalalProject[]>([]);
-  const [polls, setPolls] = useState<DecisionPoll[]>([]);
-  const [meetings, setMeetings] = useState<CoopMeeting[]>([]);
-  const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
-  const [notifications, setNotifications] = useState<EmailNotification[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const activeUserId = user?.id ?? null;
+  const workspaceEnabled = Boolean(activeUserId);
+
+  const overviewQuery = useQuery({
+    queryKey: queryKeys.dashboard.overview(),
+    queryFn: () => api.getDashboard(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const contributionsQuery = useQuery({
+    queryKey: queryKeys.dashboard.contributions(),
+    queryFn: () => api.getContributions(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const loansQuery = useQuery({
+    queryKey: queryKeys.dashboard.loans(),
+    queryFn: () => api.getLoans(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const halalProjectsQuery = useQuery({
+    queryKey: queryKeys.dashboard.halalProjects(),
+    queryFn: () => api.getHalalProjects(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const notificationsQuery = useQuery({
+    queryKey: queryKeys.dashboard.notifications(),
+    queryFn: () => api.getNotifications(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const privateThreadsQuery = useQuery({
+    queryKey: queryKeys.dashboard.privateThreads(),
+    queryFn: () => api.getPrivateThreads(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const pollsQuery = useQuery({
+    queryKey: queryKeys.dashboard.polls(),
+    queryFn: () => api.getPolls(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const meetingsQuery = useQuery({
+    queryKey: queryKeys.dashboard.meetings(),
+    queryFn: () => api.getMeetings(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+  const profileChangeRequestsQuery = useQuery({
+    queryKey: queryKeys.dashboard.profileChangeRequests(),
+    queryFn: () => api.getProfileChangeRequests(),
+    enabled: workspaceEnabled,
+    refetchInterval: 30_000,
+  });
+
+  const overview = overviewQuery.data ?? null;
+  const contributions = contributionsQuery.data?.contributions ?? EMPTY_CONTRIBUTIONS;
+  const loans = loansQuery.data?.loans ?? EMPTY_LOANS;
+  const halalProjects = halalProjectsQuery.data?.projects ?? EMPTY_HALAL_PROJECTS;
+  const polls = pollsQuery.data?.polls ?? EMPTY_POLLS;
+  const meetings = meetingsQuery.data?.meetings ?? EMPTY_MEETINGS;
+  const profileChangeRequests =
+    profileChangeRequestsQuery.data?.requests ?? EMPTY_PROFILE_REQUESTS;
+  const notifications = notificationsQuery.data?.notifications ?? EMPTY_NOTIFICATIONS;
+  const unreadDmCount = privateThreadsQuery.data?.totalUnread ?? 0;
+
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const dataLoading =
+    manualRefreshing ||
+    (workspaceEnabled &&
+      !overview &&
+      (overviewQuery.isPending || contributionsQuery.isPending || loansQuery.isPending));
+
   const [loanModalOpen, setLoanModalOpen] = useState(false);
   const [loanGateNotice, setLoanGateNotice] = useState<{
     title: string;
@@ -293,7 +371,6 @@ export function DashboardShell() {
   const [loanGateBusy, setLoanGateBusy] = useState(false);
   const [dismissedLoanAlertIds, setDismissedLoanAlertIds] = useState<string[]>([]);
   const [liveLoanPulseId, setLiveLoanPulseId] = useState<string | null>(null);
-  const [unreadDmCount, setUnreadDmCount] = useState(0);
   const autoSyncBusyRef = useRef(false);
   const signingOutRef = useRef(false);
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
@@ -310,43 +387,26 @@ export function DashboardShell() {
     }
   }, [authChecking, user, router]);
 
-  const refreshWorkspace = useCallback(async (silent = false): Promise<DashboardOverview | null> => {
-    if (!silent) setDataLoading(true);
-    try {
-      const [ovRes, cRes, lRes, hRes, nRes, dmRes, pRes, mRes, pcrRes] = await Promise.allSettled([
-        api.getDashboard(),
-        api.getContributions(),
-        api.getLoans(),
-        api.getHalalProjects(),
-        api.getNotifications(),
-        api.getPrivateThreads(),
-        api.getPolls(),
-        api.getMeetings(),
-        api.getProfileChangeRequests(),
-      ]);
-
-      let nextOverview: DashboardOverview | null = null;
-      if (ovRes.status === 'fulfilled') {
-        nextOverview = ovRes.value;
-        setOverview(ovRes.value);
+  const refreshWorkspace = useCallback(
+    async (silent = false): Promise<DashboardOverview | null> => {
+      if (!silent) setManualRefreshing(true);
+      try {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+        const freshOverview = await queryClient.fetchQuery({
+          queryKey: queryKeys.dashboard.overview(),
+          queryFn: () => api.getDashboard(),
+          staleTime: 0,
+        });
+        return freshOverview;
+      } catch (err) {
+        console.error('Workspace sync error:', err);
+        return queryClient.getQueryData<DashboardOverview>(queryKeys.dashboard.overview()) ?? null;
+      } finally {
+        if (!silent) setManualRefreshing(false);
       }
-      if (cRes.status === 'fulfilled') setContributions(cRes.value.contributions);
-      if (lRes.status === 'fulfilled') setLoans(lRes.value.loans);
-      if (hRes.status === 'fulfilled') setHalalProjects(hRes.value.projects);
-      if (nRes.status === 'fulfilled') setNotifications(nRes.value.notifications);
-      if (dmRes.status === 'fulfilled') setUnreadDmCount(dmRes.value.totalUnread);
-      if (pRes.status === 'fulfilled') setPolls(pRes.value.polls);
-      if (mRes.status === 'fulfilled') setMeetings(mRes.value.meetings);
-      if (pcrRes.status === 'fulfilled') setProfileChangeRequests(pcrRes.value.requests);
-
-      return nextOverview;
-    } catch (err) {
-      console.error('Workspace sync error:', err);
-      return null;
-    } finally {
-      if (!silent) setDataLoading(false);
-    }
-  }, []);
+    },
+    [queryClient]
+  );
 
   const triggerAutoSheetSyncIfEnabled = useCallback(
     async (ov: DashboardOverview | null) => {
@@ -368,15 +428,53 @@ export function DashboardShell() {
     [user]
   );
 
-  const activeUserId = user?.id ?? null;
-
   useEffect(() => {
     if (!activeUserId) return;
-    void refreshWorkspace(false);
 
     const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
-    const handleSync = () => {
-      void refreshWorkspace(true);
+    const invalidateDashboardKeys = (keys: ReadonlyArray<readonly unknown[]>) => {
+      for (const queryKey of keys) {
+        void queryClient.invalidateQueries({ queryKey });
+      }
+    };
+    const handleSyncAll = () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    };
+    const handleLoanSync = () => {
+      invalidateDashboardKeys([
+        queryKeys.dashboard.overview(),
+        queryKeys.dashboard.loans(),
+        queryKeys.dashboard.notifications(),
+      ]);
+    };
+    const handleContributionSync = () => {
+      invalidateDashboardKeys([
+        queryKeys.dashboard.overview(),
+        queryKeys.dashboard.contributions(),
+        queryKeys.dashboard.notifications(),
+      ]);
+    };
+    const handleInvestmentSync = () => {
+      invalidateDashboardKeys([
+        queryKeys.dashboard.overview(),
+        queryKeys.dashboard.halalProjects(),
+        queryKeys.dashboard.notifications(),
+      ]);
+    };
+    const handlePollSync = () => {
+      invalidateDashboardKeys([queryKeys.dashboard.polls(), queryKeys.dashboard.overview()]);
+    };
+    const handleMeetingSync = () => {
+      invalidateDashboardKeys([queryKeys.dashboard.meetings(), queryKeys.dashboard.notifications()]);
+    };
+    const handleProfileRequestSync = () => {
+      invalidateDashboardKeys([
+        queryKeys.dashboard.profileChangeRequests(),
+        queryKeys.dashboard.overview(),
+      ]);
+    };
+    const handleDmSync = () => {
+      invalidateDashboardKeys([queryKeys.dashboard.privateThreads()]);
     };
     const handleLoanCreated = (evt: MessageEvent) => {
       try {
@@ -388,9 +486,9 @@ export function DashboardShell() {
       } catch {
         // ignore malformed payload
       }
-      void refreshWorkspace(true);
+      handleLoanSync();
     };
-    const handleAlertSync = (evt: MessageEvent) => {
+    const playAlertIfEnabled = (evt: MessageEvent) => {
       if (soundEnabledRef.current) {
         try {
           const payload = JSON.parse(evt.data || '{}') as { senderId?: string };
@@ -401,49 +499,59 @@ export function DashboardShell() {
           playSubtleAlertChime();
         }
       }
-      void refreshWorkspace(true);
     };
-    es.addEventListener('investment:voted', handleSync);
-    es.addEventListener('investment:created', handleSync);
-    es.addEventListener('investment:distributed', handleSync);
-    es.addEventListener('investment:revealed', handleSync);
-    es.addEventListener('loan:created', handleLoanCreated);
-    es.addEventListener('loan:updated', handleSync);
-    es.addEventListener('loan:reviewed', handleSync);
-    es.addEventListener('loan:voted', handleSync);
-    es.addEventListener('loan:vote_initiated', handleSync);
-    es.addEventListener('loan:vote_revealed', handleSync);
-    es.addEventListener('loan:guarantor', handleSync);
-    es.addEventListener('poll:created', handleSync);
-    es.addEventListener('poll:voted', handleSync);
-    es.addEventListener('poll:revealed', handleSync);
-    es.addEventListener('meeting:scheduled', handleAlertSync);
-    es.addEventListener('meeting:updated', handleSync);
-    es.addEventListener('profile:update_requested', handleSync);
-    es.addEventListener('profile:update_reviewed', handleSync);
-    es.addEventListener('contribution:submitted', handleSync);
-    es.addEventListener('contribution:reviewed', handleSync);
-    es.addEventListener('repayment:submitted', handleSync);
-    es.addEventListener('repayment:verified', handleSync);
-    es.addEventListener('repayment:overdue', handleSync);
-    es.addEventListener('config:updated', handleSync);
-    es.addEventListener('notification:created', handleAlertSync);
-    es.addEventListener('email-queue:updated', handleSync);
-    es.addEventListener('members:updated', handleSync);
-    es.addEventListener('sheet:synced', handleSync);
-    es.addEventListener('dm:received', handleAlertSync);
-    es.addEventListener('dm:read', handleSync);
-    es.addEventListener('dm:deleted', handleSync);
+    const handleMeetingAlert = (evt: MessageEvent) => {
+      playAlertIfEnabled(evt);
+      handleMeetingSync();
+    };
+    const handleNotificationAlert = (evt: MessageEvent) => {
+      playAlertIfEnabled(evt);
+      invalidateDashboardKeys([
+        queryKeys.dashboard.notifications(),
+        queryKeys.dashboard.overview(),
+      ]);
+    };
+    const handleDmAlert = (evt: MessageEvent) => {
+      playAlertIfEnabled(evt);
+      handleDmSync();
+    };
 
-    const timer = window.setInterval(() => {
-      void refreshWorkspace(true);
-    }, 30000);
+    es.addEventListener('investment:voted', handleInvestmentSync);
+    es.addEventListener('investment:created', handleInvestmentSync);
+    es.addEventListener('investment:distributed', handleInvestmentSync);
+    es.addEventListener('investment:revealed', handleInvestmentSync);
+    es.addEventListener('loan:created', handleLoanCreated);
+    es.addEventListener('loan:updated', handleLoanSync);
+    es.addEventListener('loan:reviewed', handleLoanSync);
+    es.addEventListener('loan:voted', handleLoanSync);
+    es.addEventListener('loan:vote_initiated', handleLoanSync);
+    es.addEventListener('loan:vote_revealed', handleLoanSync);
+    es.addEventListener('loan:guarantor', handleLoanSync);
+    es.addEventListener('poll:created', handlePollSync);
+    es.addEventListener('poll:voted', handlePollSync);
+    es.addEventListener('poll:revealed', handlePollSync);
+    es.addEventListener('meeting:scheduled', handleMeetingAlert);
+    es.addEventListener('meeting:updated', handleMeetingSync);
+    es.addEventListener('profile:update_requested', handleProfileRequestSync);
+    es.addEventListener('profile:update_reviewed', handleProfileRequestSync);
+    es.addEventListener('contribution:submitted', handleContributionSync);
+    es.addEventListener('contribution:reviewed', handleContributionSync);
+    es.addEventListener('repayment:submitted', handleLoanSync);
+    es.addEventListener('repayment:verified', handleLoanSync);
+    es.addEventListener('repayment:overdue', handleLoanSync);
+    es.addEventListener('config:updated', handleSyncAll);
+    es.addEventListener('notification:created', handleNotificationAlert);
+    es.addEventListener('email-queue:updated', handleSyncAll);
+    es.addEventListener('members:updated', handleSyncAll);
+    es.addEventListener('sheet:synced', handleSyncAll);
+    es.addEventListener('dm:received', handleDmAlert);
+    es.addEventListener('dm:read', handleDmSync);
+    es.addEventListener('dm:deleted', handleDmSync);
 
     return () => {
       es.close();
-      window.clearInterval(timer);
     };
-  }, [activeUserId, refreshWorkspace]);
+  }, [activeUserId, queryClient]);
 
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
@@ -673,50 +781,59 @@ export function DashboardShell() {
     await triggerAutoSheetSyncIfEnabled(freshOverview);
   }, [refreshUser, refreshWorkspace, router, triggerAutoSheetSyncIfEnabled]);
 
-  const handleLoanCreatedOptimistic = useCallback((createdLoan: LoanRequest) => {
-    setLoans((prev) => {
-      const idx = prev.findIndex((l) => l.id === createdLoan.id);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = createdLoan;
-        return next;
-      }
-      return [createdLoan, ...prev];
-    });
-    setOverview((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        personal: {
-          ...prev.personal,
-          eligibility: {
-            ...prev.personal.eligibility,
-            eligible: false,
-            noActiveLoan: false,
-            activeLoanId: createdLoan.id,
-            loansUsedThisYear: (prev.personal.eligibility.loansUsedThisYear || 0) + 1,
-            reasons: [
-              `Existing loan (${createdLoan.id}) is currently "${createdLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`,
-              ...(prev.personal.eligibility.reasons || []).filter(
-                (r) => !r.startsWith('Existing loan') && !r.startsWith('No active')
-              ),
-            ],
+  const handleLoanCreatedOptimistic = useCallback(
+    (createdLoan: LoanRequest) => {
+      queryClient.setQueryData<{ loans: LoanRequest[] }>(queryKeys.dashboard.loans(), (prev) => {
+        const list = prev?.loans ?? [];
+        const idx = list.findIndex((l) => l.id === createdLoan.id);
+        if (idx >= 0) {
+          const next = [...list];
+          next[idx] = createdLoan;
+          return { loans: next };
+        }
+        return { loans: [createdLoan, ...list] };
+      });
+      queryClient.setQueryData<DashboardOverview>(queryKeys.dashboard.overview(), (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          personal: {
+            ...prev.personal,
+            eligibility: {
+              ...prev.personal.eligibility,
+              eligible: false,
+              noActiveLoan: false,
+              activeLoanId: createdLoan.id,
+              loansUsedThisYear: (prev.personal.eligibility.loansUsedThisYear || 0) + 1,
+              reasons: [
+                `Existing loan (${createdLoan.id}) is currently "${createdLoan.status.replace(/_/g, ' ')}". Only one active or pending Qard Hasan loan is permitted at a time.`,
+                ...(prev.personal.eligibility.reasons || []).filter(
+                  (r) => !r.startsWith('Existing loan') && !r.startsWith('No active')
+                ),
+              ],
+            },
           },
-        },
-        treasury: {
-          ...prev.treasury,
-          pendingLoansReviewCount:
-            createdLoan.status === 'pending_manager_review'
-              ? (prev.treasury.pendingLoansReviewCount || 0) + 1
-              : prev.treasury.pendingLoansReviewCount,
-        },
-      };
-    });
-  }, []);
+          treasury: {
+            ...prev.treasury,
+            pendingLoansReviewCount:
+              createdLoan.status === 'pending_manager_review'
+                ? (prev.treasury.pendingLoansReviewCount || 0) + 1
+                : prev.treasury.pendingLoansReviewCount,
+          },
+        };
+      });
+    },
+    [queryClient]
+  );
 
   async function handleDismissLoanDecisionAlert(notificationId: string) {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, readByRecipient: true } : n))
+    queryClient.setQueryData<{ notifications: EmailNotification[] }>(
+      queryKeys.dashboard.notifications(),
+      (prev) => ({
+        notifications: (prev?.notifications ?? []).map((n) =>
+          n.id === notificationId ? { ...n, readByRecipient: true } : n
+        ),
+      })
     );
     try {
       await api.markNotificationRead(notificationId);
@@ -1854,7 +1971,17 @@ export function DashboardShell() {
                   <CommunityView
                     user={user}
                     currency={overview?.config.currency}
-                    onUnreadDmChange={setUnreadDmCount}
+                    onUnreadDmChange={(nextCount) => {
+                      queryClient.setQueryData<{
+                        threads: unknown[];
+                        totalUnread: number;
+                        directory: unknown[];
+                      }>(queryKeys.dashboard.privateThreads(), (prev) => ({
+                        threads: prev?.threads ?? [],
+                        totalUnread: nextCount,
+                        directory: prev?.directory ?? [],
+                      }));
+                    }}
                     onRefreshWorkspace={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
                     initialDmPeer={pendingDmPeer}
@@ -2069,39 +2196,45 @@ export function DashboardShell() {
                   setLoanGateBusy(true);
                   try {
                     await api.withdrawLoan(id);
-                    setLoans((prev) =>
-                      prev.map((l) =>
-                        l.id === id
-                          ? {
-                              ...l,
-                              status: 'rejected',
-                              adminReviewNote:
-                                'Withdrawn by borrower before manager vote initiation.',
-                            }
-                          : l
-                      )
+                    queryClient.setQueryData<{ loans: LoanRequest[] }>(
+                      queryKeys.dashboard.loans(),
+                      (prev) => ({
+                        loans: (prev?.loans ?? []).map((l) =>
+                          l.id === id
+                            ? {
+                                ...l,
+                                status: 'rejected',
+                                adminReviewNote:
+                                  'Withdrawn by borrower before manager vote initiation.',
+                              }
+                            : l
+                        ),
+                      })
                     );
-                    setOverview((prev) => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        personal: {
-                          ...prev.personal,
-                          eligibility: {
-                            ...prev.personal.eligibility,
-                            eligible: true,
-                            noActiveLoan: true,
-                            activeLoanId: undefined,
-                            reasons: [
-                              'No active or pending Qard Hasan loan.',
-                              ...(prev.personal.eligibility.reasons || []).filter(
-                                (r) => !r.startsWith('Existing loan')
-                              ),
-                            ],
+                    queryClient.setQueryData<DashboardOverview>(
+                      queryKeys.dashboard.overview(),
+                      (prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          personal: {
+                            ...prev.personal,
+                            eligibility: {
+                              ...prev.personal.eligibility,
+                              eligible: true,
+                              noActiveLoan: true,
+                              activeLoanId: undefined,
+                              reasons: [
+                                'No active or pending Qard Hasan loan.',
+                                ...(prev.personal.eligibility.reasons || []).filter(
+                                  (r) => !r.startsWith('Existing loan')
+                                ),
+                              ],
+                            },
                           },
-                        },
-                      };
-                    });
+                        };
+                      }
+                    );
                     setLoanGateNotice(null);
                     setLoanModalOpen(true);
                     try {

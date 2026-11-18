@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import { queryKeys } from '../lib/queryKeys.ts';
 import {
   Activity,
   AlertTriangle,
@@ -36,7 +38,6 @@ import {
   Vote,
 } from 'lucide-react';
 import type {
-  AdminSystemStatus,
   DashboardOverview,
   DashboardSectionId,
   FundConfig,
@@ -177,9 +178,17 @@ export function AdminSiteSettingsView({
   const [rewritingThesis, setRewritingThesis] = useState(false);
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
-  // System Health Diagnostics state
-  const [systemStatus, setSystemStatus] = useState<AdminSystemStatus | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(false);
+  const queryClient = useQueryClient();
+
+  // System Health Diagnostics (TanStack Query CSR)
+  const systemStatusQuery = useQuery({
+    queryKey: queryKeys.admin.systemStatus(),
+    queryFn: () => api.getAdminSystemStatus(),
+    enabled: isAdmin,
+    staleTime: 30_000,
+  });
+  const systemStatus = systemStatusQuery.data ?? null;
+  const loadingStatus = systemStatusQuery.isFetching;
 
   const [modal, setModal] = useState<SettingsModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
@@ -216,20 +225,8 @@ export function AdminSiteSettingsView({
 
   const fetchSystemStatus = useCallback(async () => {
     if (!isAdmin) return;
-    setLoadingStatus(true);
-    try {
-      const status = await api.getAdminSystemStatus();
-      setSystemStatus(status);
-    } catch {
-      // Keep previous diagnostics snapshot if transient failure occurs
-    } finally {
-      setLoadingStatus(false);
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    void fetchSystemStatus();
-  }, [fetchSystemStatus]);
+    await systemStatusQuery.refetch();
+  }, [isAdmin, systemStatusQuery]);
 
   const isDirty = useMemo(() => {
     if (!config) return false;
@@ -549,7 +546,10 @@ export function AdminSiteSettingsView({
             file,
             constitutionTitle.trim() || file.name
           );
-          await onRefresh();
+          await Promise.all([
+            onRefresh(),
+            queryClient.invalidateQueries({ queryKey: queryKeys.public.constitution() }),
+          ]);
           setModal({
             mode: 'notice',
             tone: 'emerald',
@@ -582,7 +582,10 @@ export function AdminSiteSettingsView({
         try {
           await api.removeConstitutionPdf();
           setShowConstitutionPreview(false);
-          await onRefresh();
+          await Promise.all([
+            onRefresh(),
+            queryClient.invalidateQueries({ queryKey: queryKeys.public.constitution() }),
+          ]);
           setModal({
             mode: 'notice',
             tone: 'amber',
