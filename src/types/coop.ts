@@ -1078,6 +1078,17 @@ export interface AiSpamCheckResult {
   model?: string;
 }
 
+export interface MonthlySheetSummaryMetrics {
+  contributionAmount: number;
+  qardHasanAmount: number;
+  dueHasanaAmount: number;
+}
+
+export interface MonthlySheetUserThisMonthMetrics extends MonthlySheetSummaryMetrics {
+  repaidAmount: number;
+  dueChangeAmount: number;
+}
+
 export interface MonthlySheetMemberRow {
   serialNo: number;
   userId: string;
@@ -1095,22 +1106,22 @@ export interface MonthlySheetMemberRow {
   activeLoanId?: string;
   dueHasanaAmount: number;
   installmentDueThisMonth: number;
-}
-
-export interface MonthlySheetSummaryMetrics {
-  contributionAmount: number;
-  qardHasanAmount: number;
-  dueHasanaAmount: number;
+  previousSummary: MonthlySheetSummaryMetrics;
+  thisMonth: MonthlySheetUserThisMonthMetrics;
+  thisMonthSummary: MonthlySheetSummaryMetrics;
 }
 
 export interface MonthlySheetData {
   month: string; // YYYY-MM
+  previousMonth: string; // YYYY-MM
+  nextMonth: string; // YYYY-MM
   currency: FundConfig['currency'];
   monthlyTarget: number;
   availableMonths: string[];
   previousMonthSummary: MonthlySheetSummaryMetrics;
   thisMonthOnly: MonthlySheetSummaryMetrics;
-  thisMonthSummary: MonthlySheetSummaryMetrics; // previous + this month
+  thisMonthRepaidAmount: number;
+  thisMonthSummary: MonthlySheetSummaryMetrics; // previous + this month (rolls into next month's previousMonthSummary)
   fundSummary: {
     fundHeight: number;
     totalQardHasan: number;

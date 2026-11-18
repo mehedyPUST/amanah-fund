@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -76,6 +77,8 @@ function escapeCsvCell(value: string | number): string {
   return str;
 }
 
+const SHEET_COL_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'] as const;
+
 export function MonthlySheetView({
   user,
   config,
@@ -95,12 +98,14 @@ export function MonthlySheetView({
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   const loadSheet = useCallback(
-    async (monthKey: string) => {
+    async (monthKey: string, options?: { silent?: boolean }) => {
       if (!user) {
         setLoading(false);
         return;
       }
-      setLoading(true);
+      if (!options?.silent) {
+        setLoading(true);
+      }
       setError(null);
       try {
         const res = await api.getMonthlySheet(monthKey);
@@ -108,7 +113,9 @@ export function MonthlySheetView({
       } catch (err) {
         setError(err instanceof Error ? err.message : t('loadFailed'));
       } finally {
-        setLoading(false);
+        if (!options?.silent) {
+          setLoading(false);
+        }
       }
     },
     [user, t]
@@ -118,16 +125,37 @@ export function MonthlySheetView({
     void loadSheet(selectedMonth);
   }, [loadSheet, selectedMonth]);
 
+  useEffect(() => {
+    const handleRefresh = () => {
+      void loadSheet(selectedMonth, { silent: true });
+    };
+    window.addEventListener('amanah:refresh', handleRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleRefresh);
+    };
+  }, [loadSheet, selectedMonth]);
+
   const ccy = sheet?.currency || config?.currency || 'BDT';
   const shortMonthLabel = useMemo(
     () => formatSheetMonthShort(selectedMonth, locale),
     [selectedMonth, locale]
+  );
+  const prevMonthKey = sheet?.previousMonth || shiftMonthKey(selectedMonth, -1);
+  const nextMonthKey = sheet?.nextMonth || shiftMonthKey(selectedMonth, 1);
+  const prevMonthLabel = useMemo(
+    () => formatSheetMonthShort(prevMonthKey, locale),
+    [prevMonthKey, locale]
+  );
+  const nextMonthLabel = useMemo(
+    () => formatSheetMonthShort(nextMonthKey, locale),
+    [nextMonthKey, locale]
   );
 
   const monthOptions = useMemo(() => {
     const set = new Set<string>(sheet?.availableMonths || []);
     set.add(selectedMonth);
     set.add(getCurrentMonthKey());
+    set.add(shiftMonthKey(getCurrentMonthKey(), 1));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }, [sheet?.availableMonths, selectedMonth]);
 
@@ -140,7 +168,7 @@ export function MonthlySheetView({
     for (const r of rows) {
       if (r.contributionStatus === 'paid') paid += 1;
       else due += 1;
-      if (r.hasQardHasan) qardHasan += 1;
+      if (r.hasQardHasan || r.thisMonthSummary.qardHasanAmount > 0) qardHasan += 1;
     }
     return {
       all: rows.length,
@@ -155,7 +183,13 @@ export function MonthlySheetView({
     return rows.filter((r) => {
       if (filter === 'paid' && r.contributionStatus !== 'paid') return false;
       if (filter === 'due' && r.contributionStatus === 'paid') return false;
-      if (filter === 'qard_hasan' && !r.hasQardHasan) return false;
+      if (
+        filter === 'qard_hasan' &&
+        !r.hasQardHasan &&
+        r.thisMonthSummary.qardHasanAmount <= 0
+      ) {
+        return false;
+      }
       if (!q) return true;
       return (
         r.name.toLowerCase().includes(q) ||
@@ -165,6 +199,38 @@ export function MonthlySheetView({
       );
     });
   }, [rows, filter, search]);
+
+  const isFiltered = filteredRows.length !== rows.length;
+
+  const filteredTotals = useMemo(() => {
+    return filteredRows.reduce(
+      (acc, r) => {
+        acc.prevContrib += r.previousSummary.contributionAmount;
+        acc.prevQard += r.previousSummary.qardHasanAmount;
+        acc.prevDue += r.previousSummary.dueHasanaAmount;
+        acc.thisContrib += r.thisMonth.contributionAmount;
+        acc.thisQard += r.thisMonth.qardHasanAmount;
+        acc.thisRepaid += r.thisMonth.repaidAmount;
+        acc.thisDueChange += r.thisMonth.dueChangeAmount;
+        acc.closeContrib += r.thisMonthSummary.contributionAmount;
+        acc.closeQard += r.thisMonthSummary.qardHasanAmount;
+        acc.closeDue += r.thisMonthSummary.dueHasanaAmount;
+        return acc;
+      },
+      {
+        prevContrib: 0,
+        prevQard: 0,
+        prevDue: 0,
+        thisContrib: 0,
+        thisQard: 0,
+        thisRepaid: 0,
+        thisDueChange: 0,
+        closeContrib: 0,
+        closeQard: 0,
+        closeDue: 0,
+      }
+    );
+  }, [filteredRows]);
 
   const renderContributionCellText = useCallback(
     (row: MonthlySheetMemberRow): string => {
@@ -182,19 +248,55 @@ export function MonthlySheetView({
     [ccy, t]
   );
 
+  const renderSignedDueDelta = useCallback(
+    (dueChange: number, repaidAmount: number): { primary: string; secondary?: string; tone: 'emerald' | 'amber' | 'muted' } => {
+      if (dueChange === 0 && repaidAmount === 0) {
+        return { primary: t('noneDash'), tone: 'muted' };
+      }
+      if (dueChange < 0) {
+        return {
+          primary: `-${formatMoney(Math.abs(dueChange), ccy)}`,
+          secondary: repaidAmount > 0 ? t('repaidShort', { amount: formatMoney(repaidAmount, ccy) }) : undefined,
+          tone: 'emerald',
+        };
+      }
+      if (dueChange > 0) {
+        return {
+          primary: `+${formatMoney(dueChange, ccy)}`,
+          secondary: repaidAmount > 0 ? t('repaidShort', { amount: formatMoney(repaidAmount, ccy) }) : undefined,
+          tone: 'amber',
+        };
+      }
+      return {
+        primary: formatMoney(0, ccy),
+        secondary: repaidAmount > 0 ? t('repaidShort', { amount: formatMoney(repaidAmount, ccy) }) : undefined,
+        tone: 'emerald',
+      };
+    },
+    [ccy, t]
+  );
+
   const handleExportCsv = useCallback(() => {
     if (!sheet) return;
     const csvRows: (string | number)[][] = [
-      ['', `Month - ${shortMonthLabel}`, '', '', '', '', '', ''],
+      ['', `Month - ${shortMonthLabel}`, '', '', '', 'Previous month Summary', '', '', `This month (${shortMonthLabel})`, '', '', '', '', `This month summary (rolls to ${nextMonthLabel})`, '', ''],
       [
         'S.N',
         'Member name',
         'Member ID',
         'Mobile No',
         'Email',
-        'Contribution',
-        'Qard Hasana',
-        'Due Hasana',
+        'Prev Contribution',
+        'Prev Qard Hasana',
+        'Prev Due Hasana',
+        'This Month Contribution',
+        'This Month Status',
+        'This Month Qard Hasana',
+        'This Month Repaid',
+        'This Month Due Change',
+        'Closing Contribution',
+        'Closing Qard Hasana',
+        'Closing Due Hasana',
       ],
       [
         '',
@@ -203,12 +305,16 @@ export function MonthlySheetView({
         '',
         'Previous month Summary',
         sheet.previousMonthSummary.contributionAmount,
-        sheet.previousMonthSummary.qardHasanAmount > 0
-          ? sheet.previousMonthSummary.qardHasanAmount
-          : 'No',
-        sheet.previousMonthSummary.dueHasanaAmount > 0
-          ? sheet.previousMonthSummary.dueHasanaAmount
-          : 'No',
+        sheet.previousMonthSummary.qardHasanAmount,
+        sheet.previousMonthSummary.dueHasanaAmount,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
       ],
       ...filteredRows.map((row) => [
         row.serialNo,
@@ -216,27 +322,39 @@ export function MonthlySheetView({
         row.memberCode,
         row.mobile,
         row.email,
+        row.previousSummary.contributionAmount,
+        row.previousSummary.qardHasanAmount,
+        row.previousSummary.dueHasanaAmount,
+        row.thisMonth.contributionAmount,
         row.contributionStatus === 'paid' || row.contributionStatus === 'partial'
-          ? row.contributionAmount
+          ? row.contributionStatus.toUpperCase()
           : row.contributionStatus === 'pending'
             ? `Pending (${row.contributionPendingAmount})`
             : `Due (${row.contributionTarget})`,
-        row.hasQardHasan ? `Yes (${row.qardHasanAmount})` : 'No',
-        row.dueHasanaAmount > 0 ? row.dueHasanaAmount : 'No',
+        row.thisMonth.qardHasanAmount,
+        row.thisMonth.repaidAmount,
+        row.thisMonth.dueChangeAmount,
+        row.thisMonthSummary.contributionAmount,
+        row.thisMonthSummary.qardHasanAmount,
+        row.thisMonthSummary.dueHasanaAmount,
       ]),
       [
         '',
         '',
         '',
         '',
-        'This month summary',
+        'This month summary (previous + this month)',
+        sheet.previousMonthSummary.contributionAmount,
+        sheet.previousMonthSummary.qardHasanAmount,
+        sheet.previousMonthSummary.dueHasanaAmount,
+        sheet.thisMonthOnly.contributionAmount,
+        '',
+        sheet.thisMonthOnly.qardHasanAmount,
+        sheet.thisMonthRepaidAmount,
+        sheet.thisMonthOnly.dueHasanaAmount,
         sheet.thisMonthSummary.contributionAmount,
-        sheet.thisMonthSummary.qardHasanAmount > 0
-          ? sheet.thisMonthSummary.qardHasanAmount
-          : 'No',
-        sheet.thisMonthSummary.dueHasanaAmount > 0
-          ? sheet.thisMonthSummary.dueHasanaAmount
-          : 'No',
+        sheet.thisMonthSummary.qardHasanAmount,
+        sheet.thisMonthSummary.dueHasanaAmount,
       ],
       [
         '',
@@ -244,9 +362,17 @@ export function MonthlySheetView({
         '',
         '',
         'Fund summary',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
         `Fund Height: ${sheet.fundSummary.fundHeight}`,
-        `Total: ${sheet.fundSummary.totalQardHasan}`,
-        `Total: ${sheet.fundSummary.totalDueHasana}`,
+        `Total Qard Hasana: ${sheet.fundSummary.totalQardHasan}`,
+        `Total Due Hasana: ${sheet.fundSummary.totalDueHasana}`,
       ],
     ];
 
@@ -263,7 +389,7 @@ export function MonthlySheetView({
 
     setExportNotice(t('csvSuccess'));
     window.setTimeout(() => setExportNotice(null), 3000);
-  }, [sheet, shortMonthLabel, filteredRows, t]);
+  }, [sheet, shortMonthLabel, nextMonthLabel, filteredRows, t]);
 
   if (!user) {
     return (
@@ -301,6 +427,9 @@ export function MonthlySheetView({
                 ({shortMonthLabel})
               </span>
             </h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              {t('rolloverNotice', { current: shortMonthLabel, next: nextMonthLabel })}
+            </p>
           </div>
 
           {/* Month Selector & Primary Actions */}
@@ -479,34 +608,37 @@ export function MonthlySheetView({
           {/* Mobile Cards Mode (< md when selected) */}
           {mobileViewMode === 'cards' && (
             <div className="md:hidden space-y-3">
-              {/* Mobile Summary Cards */}
-              <div className="grid grid-cols-1 gap-2.5">
-                <div className="rounded-xl border border-emerald-400/70 dark:border-emerald-700/60 bg-emerald-500/15 dark:bg-emerald-950/40 p-3.5 space-y-2">
+              {/* Mobile Top Summary Card */}
+              <div className="rounded-xl border border-emerald-400/70 dark:border-emerald-700/60 bg-emerald-500/15 dark:bg-emerald-950/40 p-3.5 space-y-2">
+                <div className="flex items-center justify-between gap-2">
                   <div className="text-xs font-semibold text-emerald-950 dark:text-emerald-100">
                     {t('previousMonthSummary')}
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-[11px]">
-                    <div>
-                      <div className="text-slate-600 dark:text-slate-400">{t('colContribution')}</div>
-                      <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
-                        {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
-                      </div>
+                  <div className="text-[11px] font-mono text-emerald-900/80 dark:text-emerald-200/80">
+                    {t('previousMonthSub', { month: prevMonthLabel })}
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  <div>
+                    <div className="text-slate-600 dark:text-slate-400">{t('colContribution')}</div>
+                    <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
+                      {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
                     </div>
-                    <div>
-                      <div className="text-slate-600 dark:text-slate-400">{t('colQardHasana')}</div>
-                      <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
-                        {sheet.previousMonthSummary.qardHasanAmount > 0
-                          ? formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)
-                          : t('no')}
-                      </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-600 dark:text-slate-400">{t('colQardHasana')}</div>
+                    <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
+                      {sheet.previousMonthSummary.qardHasanAmount > 0
+                        ? formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)
+                        : t('no')}
                     </div>
-                    <div>
-                      <div className="text-slate-600 dark:text-slate-400">{t('colDueHasana')}</div>
-                      <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
-                        {sheet.previousMonthSummary.dueHasanaAmount > 0
-                          ? formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)
-                          : t('no')}
-                      </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-600 dark:text-slate-400">{t('colDueHasana')}</div>
+                    <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
+                      {sheet.previousMonthSummary.dueHasanaAmount > 0
+                        ? formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)
+                        : t('no')}
                     </div>
                   </div>
                 </div>
@@ -533,86 +665,161 @@ export function MonthlySheetView({
                   )}
                 </section>
               ) : (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
-                  {filteredRows.map((row) => (
-                    <div key={row.userId} className="p-3.5 space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs tabular-nums text-slate-400">
-                              #{row.serialNo}
-                            </span>
-                            {onViewMemberProfile ? (
-                              <button
-                                type="button"
-                                onClick={() => onViewMemberProfile(row.userId)}
-                                className="text-sm font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 truncate cursor-pointer text-left"
-                              >
-                                {row.name}
-                              </button>
-                            ) : (
-                              <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                                {row.name}
+                <div className="space-y-2.5">
+                  {filteredRows.map((row) => {
+                    const deltaInfo = renderSignedDueDelta(
+                      row.thisMonth.dueChangeAmount,
+                      row.thisMonth.repaidAmount
+                    );
+                    return (
+                      <div
+                        key={row.userId}
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs tabular-nums text-slate-400">
+                                #{row.serialNo}
                               </span>
-                            )}
+                              {onViewMemberProfile ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onViewMemberProfile(row.userId)}
+                                  className="text-sm font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 truncate cursor-pointer text-left"
+                                >
+                                  {row.name}
+                                </button>
+                              ) : (
+                                <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                  {row.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                              {row.memberCode} · {row.mobile}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                              {row.email}
+                            </div>
                           </div>
-                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                            {row.memberCode} · {row.mobile}
-                          </div>
-                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                            {row.email}
+                          <div className="text-right shrink-0">
+                            <div
+                              className={`text-xs font-mono font-semibold tabular-nums ${
+                                row.contributionStatus === 'paid'
+                                  ? 'text-emerald-700 dark:text-emerald-400'
+                                  : row.contributionStatus === 'pending'
+                                    ? 'text-amber-700 dark:text-amber-400'
+                                    : 'text-rose-700 dark:text-rose-400'
+                              }`}
+                            >
+                              {renderContributionCellText(row)}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          <div
-                            className={`text-xs font-mono font-semibold tabular-nums ${
-                              row.contributionStatus === 'paid'
-                                ? 'text-emerald-700 dark:text-emerald-400'
+
+                        {/* 3-Period Per-User Ledger Grid */}
+                        <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 overflow-hidden text-[11px]">
+                          <div className="grid grid-cols-4 bg-slate-50 dark:bg-slate-950/70 px-2.5 py-1.5 font-semibold text-slate-600 dark:text-slate-300 border-b border-slate-200/80 dark:border-slate-800">
+                            <div />
+                            <div className="text-right">{t('colContribution')}</div>
+                            <div className="text-right">{t('colQardHasana')}</div>
+                            <div className="text-right">{t('colDueHasana')}</div>
+                          </div>
+
+                          {/* Previous Month Summary */}
+                          <div className="grid grid-cols-4 px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 items-center">
+                            <div className="font-medium text-slate-600 dark:text-slate-300 pr-1">
+                              {t('previousMonthSummary')}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">
+                              {formatMoney(row.previousSummary.contributionAmount, ccy)}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">
+                              {row.previousSummary.qardHasanAmount > 0
+                                ? formatMoney(row.previousSummary.qardHasanAmount, ccy)
+                                : t('no')}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">
+                              {row.previousSummary.dueHasanaAmount > 0
+                                ? formatMoney(row.previousSummary.dueHasanaAmount, ccy)
+                                : t('no')}
+                            </div>
+                          </div>
+
+                          {/* This Month Values */}
+                          <div className="grid grid-cols-4 px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 items-center">
+                            <div className="font-medium text-slate-600 dark:text-slate-300 pr-1">
+                              {shortMonthLabel}
+                            </div>
+                            <div
+                              className={`text-right font-mono tabular-nums font-medium ${
+                                row.contributionStatus === 'paid'
+                                  ? 'text-emerald-700 dark:text-emerald-400'
+                                  : row.contributionStatus === 'pending'
+                                    ? 'text-amber-700 dark:text-amber-400'
+                                    : 'text-rose-700 dark:text-rose-400'
+                              }`}
+                            >
+                              {row.thisMonth.contributionAmount > 0
+                                ? formatMoney(row.thisMonth.contributionAmount, ccy)
                                 : row.contributionStatus === 'pending'
+                                  ? t('pendingLabel')
+                                  : t('dueLabel')}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">
+                              {row.thisMonth.qardHasanAmount > 0
+                                ? `+${formatMoney(row.thisMonth.qardHasanAmount, ccy)}`
+                                : t('no')}
+                            </div>
+                            <div
+                              className={`text-right font-mono tabular-nums ${
+                                deltaInfo.tone === 'emerald'
+                                  ? 'text-emerald-700 dark:text-emerald-400'
+                                  : deltaInfo.tone === 'amber'
+                                    ? 'text-amber-700 dark:text-amber-400'
+                                    : 'text-slate-400 dark:text-slate-500'
+                              }`}
+                            >
+                              {deltaInfo.primary}
+                            </div>
+                          </div>
+
+                          {/* Closing This Month Summary (Next Month Opening) */}
+                          <div className="grid grid-cols-4 px-2.5 py-2 bg-emerald-500/12 dark:bg-emerald-950/35 items-center font-semibold">
+                            <div className="text-emerald-950 dark:text-emerald-100 pr-1">
+                              {t('thisMonthSummary')}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-emerald-900 dark:text-emerald-200">
+                              {formatMoney(row.thisMonthSummary.contributionAmount, ccy)}
+                            </div>
+                            <div className="text-right font-mono tabular-nums text-slate-900 dark:text-white">
+                              {row.thisMonthSummary.qardHasanAmount > 0
+                                ? formatMoney(row.thisMonthSummary.qardHasanAmount, ccy)
+                                : t('no')}
+                            </div>
+                            <div
+                              className={`text-right font-mono tabular-nums ${
+                                row.thisMonthSummary.dueHasanaAmount > 0
                                   ? 'text-amber-700 dark:text-amber-400'
-                                  : 'text-rose-700 dark:text-rose-400'
-                            }`}
-                          >
-                            {renderContributionCellText(row)}
+                                  : 'text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              {row.thisMonthSummary.dueHasanaAmount > 0
+                                ? formatMoney(row.thisMonthSummary.dueHasanaAmount, ccy)
+                                : t('no')}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                        <div>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {t('colQardHasana')}:{' '}
-                          </span>
-                          <span className="font-mono font-medium tabular-nums text-slate-900 dark:text-white">
-                            {row.hasQardHasan
-                              ? `${t('yes')} (${formatMoney(row.qardHasanAmount, ccy)})`
-                              : t('no')}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {t('colDueHasana')}:{' '}
-                          </span>
-                          <span
-                            className={`font-mono font-medium tabular-nums ${
-                              row.dueHasanaAmount > 0
-                                ? 'text-amber-700 dark:text-amber-400'
-                                : 'text-slate-700 dark:text-slate-300'
-                            }`}
-                          >
-                            {row.dueHasanaAmount > 0
-                              ? formatMoney(row.dueHasanaAmount, ccy)
-                              : t('no')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* Bottom Mobile Summary Cards */}
-              <div className="rounded-xl border border-emerald-400/70 dark:border-emerald-700/60 bg-emerald-500/15 dark:bg-emerald-950/40 p-3.5 space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-emerald-950 dark:text-emerald-100">
+              <div className="rounded-xl border border-emerald-400/70 dark:border-emerald-700/60 bg-emerald-500/15 dark:bg-emerald-950/40 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 text-xs font-semibold text-emerald-950 dark:text-emerald-100">
                   <span>{t('thisMonthSummary')}</span>
                   <span className="text-[11px] font-normal opacity-80">
                     {t('previousPlusThisMonth')}
@@ -642,6 +849,14 @@ export function MonthlySheetView({
                     </div>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonth(nextMonthKey)}
+                  className="w-full py-2 px-3 rounded-lg bg-white/80 dark:bg-slate-900/70 border border-emerald-400/50 dark:border-emerald-700/50 text-[11px] font-semibold text-emerald-900 dark:text-emerald-200 inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>{t('openNextMonth', { month: nextMonthLabel })}</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
               </div>
 
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 space-y-2">
@@ -683,106 +898,169 @@ export function MonthlySheetView({
             } bg-white dark:bg-slate-900 border border-slate-300/90 dark:border-slate-700/90 rounded-2xl overflow-hidden shadow-xs`}
           >
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px] border-collapse text-xs">
+              <table className="w-full min-w-[1240px] border-collapse text-xs">
                 <thead>
-                  {/* Spreadsheet Column Letters A - H */}
+                  {/* Spreadsheet Column Letters A - L */}
                   <tr className="bg-slate-100/95 dark:bg-slate-950 text-[11px] font-mono text-slate-500 dark:text-slate-400 border-b border-slate-300/80 dark:border-slate-700/80 select-none">
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800 w-14">
-                      A
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      B
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      C
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      D
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      E
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      F
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium border-r border-slate-200 dark:border-slate-800">
-                      G
-                    </th>
-                    <th className="py-1 px-3 text-center font-medium">H</th>
+                    {SHEET_COL_LETTERS.map((letter, idx) => (
+                      <th
+                        key={letter}
+                        className={`py-1 px-2.5 text-center font-medium ${
+                          idx < SHEET_COL_LETTERS.length - 1
+                            ? 'border-r border-slate-200 dark:border-slate-800'
+                            : ''
+                        } ${idx === 0 ? 'w-11 sticky left-0 z-20 bg-slate-100 dark:bg-slate-950' : ''} ${
+                          idx === 1 ? 'sticky left-[44px] z-20 bg-slate-100 dark:bg-slate-950' : ''
+                        }`}
+                      >
+                        {letter}
+                      </th>
+                    ))}
                   </tr>
 
-                  {/* Row 1: Month - nov-26 */}
+                  {/* Row 1: Month - nov-26 + Continuity Link */}
                   <tr className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3 font-semibold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <td className="py-2 px-2.5 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-900" />
+                    <td className="py-2 px-3 font-semibold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 whitespace-nowrap sticky left-[44px] z-10 bg-white dark:bg-slate-900">
                       {t('monthPrefix', { month: shortMonthLabel })}
                     </td>
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-2 px-3" />
+                    <td
+                      colSpan={10}
+                      className="py-2 px-3 text-right"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMonth(nextMonthKey)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        <span>{t('openNextMonth', { month: nextMonthLabel })}</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </td>
                   </tr>
 
-                  {/* Row 2: Column Headers */}
+                  {/* Row 2: Section Group Headers */}
+                  <tr className="border-b border-slate-300 dark:border-slate-700 text-[11px]">
+                    <th
+                      colSpan={2}
+                      className="py-2 px-3 text-left font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-950/90 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-20"
+                    >
+                      {t('colMember')}
+                    </th>
+                    <th className="py-2 px-3 text-left font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-950/90 border-r border-slate-300 dark:border-slate-700">
+                      {t('colContact')}
+                    </th>
+                    <th
+                      colSpan={3}
+                      className="py-2 px-3 text-center font-semibold bg-emerald-500/15 dark:bg-emerald-900/30 text-emerald-950 dark:text-emerald-100 border-r border-emerald-400/50 dark:border-emerald-700/60"
+                    >
+                      <div>{t('previousMonthSummary')}</div>
+                      <div className="text-[10px] font-normal opacity-80">
+                        {t('previousMonthSub', { month: prevMonthLabel })}
+                      </div>
+                    </th>
+                    <th
+                      colSpan={3}
+                      className="py-2 px-3 text-center font-semibold bg-slate-100/90 dark:bg-slate-800/70 text-slate-900 dark:text-slate-100 border-r border-slate-300 dark:border-slate-700"
+                    >
+                      <div>{t('thisMonthGroup', { month: shortMonthLabel })}</div>
+                      <div className="text-[10px] font-normal opacity-75">
+                        {t('thisMonthGroupSub')}
+                      </div>
+                    </th>
+                    <th
+                      colSpan={3}
+                      className="py-2 px-3 text-center font-semibold bg-emerald-500/20 dark:bg-emerald-600/25 text-emerald-950 dark:text-emerald-100"
+                    >
+                      <div>{t('thisMonthSummary')}</div>
+                      <div className="text-[10px] font-normal opacity-80">
+                        {t('thisMonthSummarySub', { month: nextMonthLabel })}
+                      </div>
+                    </th>
+                  </tr>
+
+                  {/* Row 3: Individual Column Headers */}
                   <tr className="bg-slate-50 dark:bg-slate-950/80 text-slate-700 dark:text-slate-200 border-b border-slate-300 dark:border-slate-700">
-                    <th className="py-2.5 px-3 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap w-11 sticky left-0 z-20 bg-slate-50 dark:bg-slate-950">
                       {t('colSn')}
                     </th>
-                    <th className="py-2.5 px-3 text-left font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                      {t('colMemberName')}
+                    <th className="py-2 px-3 text-left font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap min-w-[165px] sticky left-[44px] z-20 bg-slate-50 dark:bg-slate-950">
+                      {t('colMemberName')} / {t('colMemberId')}
                     </th>
-                    <th className="py-2.5 px-3 text-left font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                      {t('colMemberId')}
+                    <th className="py-2 px-3 text-left font-semibold border-r border-slate-300 dark:border-slate-700 whitespace-nowrap min-w-[170px]">
+                      {t('colMobileNo')} / {t('colEmail')}
                     </th>
-                    <th className="py-2.5 px-3 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                      {t('colMobileNo')}
-                    </th>
-                    <th className="py-2.5 px-3 text-left font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                      {t('colEmail')}
-                    </th>
-                    <th className="py-2.5 px-3 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+
+                    {/* Previous Month Summary Sub-headers */}
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap bg-emerald-50/60 dark:bg-emerald-950/20">
                       {t('colContribution')}
                     </th>
-                    <th className="py-2.5 px-3 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap bg-emerald-50/60 dark:bg-emerald-950/20">
                       {t('colQardHasana')}
                     </th>
-                    <th className="py-2.5 px-3 text-right font-semibold whitespace-nowrap">
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-emerald-300 dark:border-emerald-800 whitespace-nowrap bg-emerald-50/60 dark:bg-emerald-950/20">
+                      {t('colDueHasana')}
+                    </th>
+
+                    {/* This Month Sub-headers */}
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                      {t('colContribution')}
+                    </th>
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                      {t('colQardHasana')}
+                    </th>
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                      {t('colDueDelta')}
+                    </th>
+
+                    {/* This Month Summary Sub-headers */}
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap bg-emerald-50/75 dark:bg-emerald-950/25">
+                      {t('colContribution')}
+                    </th>
+                    <th className="py-2 px-2.5 text-right font-semibold border-r border-slate-200 dark:border-slate-800 whitespace-nowrap bg-emerald-50/75 dark:bg-emerald-950/25">
+                      {t('colQardHasana')}
+                    </th>
+                    <th className="py-2 px-2.5 text-right font-semibold whitespace-nowrap bg-emerald-50/75 dark:bg-emerald-950/25">
                       {t('colDueHasana')}
                     </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {/* Row 3 (Top Green Summary Band): Previous month Summary */}
+                  {/* Top Green Summary Band: Previous month Summary (Co-op Total) */}
                   <tr className="bg-emerald-500/20 dark:bg-emerald-600/25 text-emerald-950 dark:text-emerald-100 border-b-2 border-emerald-500/60 dark:border-emerald-500/50 font-semibold">
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 text-right border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 border-r border-emerald-400/40 dark:border-emerald-700/50 sticky left-0 z-10 bg-emerald-100 dark:bg-emerald-950" />
+                    <td
+                      colSpan={2}
+                      className="py-2.5 px-3 text-right border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap"
+                    >
                       {t('previousMonthSummary')}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
                       {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
                       {sheet.previousMonthSummary.qardHasanAmount > 0
                         ? formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)
                         : t('no')}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-500/50 dark:border-emerald-600/60 whitespace-nowrap">
                       {sheet.previousMonthSummary.dueHasanaAmount > 0
                         ? formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)
                         : t('no')}
+                    </td>
+                    <td
+                      colSpan={6}
+                      className="py-2.5 px-3 text-right text-[11px] font-normal opacity-80 whitespace-nowrap"
+                    >
+                      {t('previousMonthSub', { month: prevMonthLabel })}
                     </td>
                   </tr>
 
                   {/* Member Data Rows */}
                   {filteredRows.length === 0 ? (
                     <tr className="border-b border-slate-200 dark:border-slate-800">
-                      <td colSpan={8} className="py-10 px-4 text-center space-y-2">
+                      <td colSpan={12} className="py-10 px-4 text-center space-y-2">
                         <div className="text-sm font-semibold text-slate-900 dark:text-white">
                           {t('emptyTitle')}
                         </div>
@@ -804,126 +1082,255 @@ export function MonthlySheetView({
                       </td>
                     </tr>
                   ) : (
-                    filteredRows.map((row) => (
-                      <tr
-                        key={row.userId}
-                        className="border-b border-slate-200/90 dark:border-slate-800 hover:bg-emerald-50/35 dark:hover:bg-slate-800/45 transition-colors"
-                      >
-                        <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800">
-                          {row.serialNo}
-                        </td>
-                        <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                          {onViewMemberProfile ? (
-                            <button
-                              type="button"
-                              onClick={() => onViewMemberProfile(row.userId)}
-                              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
-                            >
-                              {row.name}
-                            </button>
-                          ) : (
-                            row.name
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                          {row.memberCode}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                          {row.mobile}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                          {row.email}
-                        </td>
-                        <td
-                          className={`py-2.5 px-3 text-right font-mono tabular-nums font-medium border-r border-slate-200 dark:border-slate-800 whitespace-nowrap ${
-                            row.contributionStatus === 'paid'
-                              ? 'text-emerald-700 dark:text-emerald-400'
-                              : row.contributionStatus === 'pending'
-                                ? 'text-amber-700 dark:text-amber-400'
-                                : 'text-rose-700 dark:text-rose-400'
-                          }`}
+                    filteredRows.map((row) => {
+                      const deltaInfo = renderSignedDueDelta(
+                        row.thisMonth.dueChangeAmount,
+                        row.thisMonth.repaidAmount
+                      );
+                      return (
+                        <tr
+                          key={row.userId}
+                          className="group border-b border-slate-200/90 dark:border-slate-800 hover:bg-emerald-50/35 dark:hover:bg-slate-800/45 transition-colors"
                         >
-                          {renderContributionCellText(row)}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                          {row.hasQardHasan ? (
-                            <span className="text-slate-900 dark:text-white font-medium">
-                              {t('yes')} · {formatMoney(row.qardHasanAmount, ccy)}
-                            </span>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400">{t('no')}</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                          {row.dueHasanaAmount > 0 ? (
-                            <span className="font-semibold text-amber-700 dark:text-amber-400">
-                              {formatMoney(row.dueHasanaAmount, ccy)}
-                            </span>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400">{t('no')}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-emerald-50/90 dark:group-hover:bg-slate-800">
+                            {row.serialNo}
+                          </td>
+                          <td className="py-2.5 px-3 border-r border-slate-200 dark:border-slate-800 whitespace-nowrap sticky left-[44px] z-10 bg-white dark:bg-slate-900 group-hover:bg-emerald-50/90 dark:group-hover:bg-slate-800">
+                            <div className="font-medium text-slate-900 dark:text-white">
+                              {onViewMemberProfile ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onViewMemberProfile(row.userId)}
+                                  className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left"
+                                >
+                                  {row.name}
+                                </button>
+                              ) : (
+                                row.name
+                              )}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                              {row.memberCode}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                            <div className="tabular-nums text-[11px]">{row.mobile}</div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {row.email}
+                            </div>
+                          </td>
+
+                          {/* Previous Month Summary (User Opening) */}
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-800 bg-emerald-50/30 dark:bg-emerald-950/10 whitespace-nowrap">
+                            {formatMoney(row.previousSummary.contributionAmount, ccy)}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 bg-emerald-50/30 dark:bg-emerald-950/10 whitespace-nowrap">
+                            {row.previousSummary.qardHasanAmount > 0 ? (
+                              <span className="text-slate-900 dark:text-white">
+                                {formatMoney(row.previousSummary.qardHasanAmount, ccy)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">{t('no')}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-300/80 dark:border-emerald-800/80 bg-emerald-50/30 dark:bg-emerald-950/10 whitespace-nowrap">
+                            {row.previousSummary.dueHasanaAmount > 0 ? (
+                              <span className="text-amber-700 dark:text-amber-400 font-medium">
+                                {formatMoney(row.previousSummary.dueHasanaAmount, ccy)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">{t('no')}</span>
+                            )}
+                          </td>
+
+                          {/* This Month Values */}
+                          <td
+                            className={`py-2.5 px-2.5 text-right font-mono tabular-nums font-medium border-r border-slate-200 dark:border-slate-800 whitespace-nowrap ${
+                              row.contributionStatus === 'paid'
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : row.contributionStatus === 'pending'
+                                  ? 'text-amber-700 dark:text-amber-400'
+                                  : 'text-rose-700 dark:text-rose-400'
+                            }`}
+                          >
+                            {renderContributionCellText(row)}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                            {row.thisMonth.qardHasanAmount > 0 ? (
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                +{formatMoney(row.thisMonth.qardHasanAmount, ccy)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">{t('no')}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                            <div
+                              className={
+                                deltaInfo.tone === 'emerald'
+                                  ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                                  : deltaInfo.tone === 'amber'
+                                    ? 'font-medium text-amber-700 dark:text-amber-400'
+                                    : 'text-slate-400 dark:text-slate-500'
+                              }
+                            >
+                              {deltaInfo.primary}
+                            </div>
+                            {deltaInfo.secondary && (
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {deltaInfo.secondary}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* This Month Summary (Previous + This Month -> Next Month Opening) */}
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums font-semibold text-emerald-800 dark:text-emerald-300 border-r border-slate-200 dark:border-slate-800 bg-emerald-50/45 dark:bg-emerald-950/15 whitespace-nowrap">
+                            {formatMoney(row.thisMonthSummary.contributionAmount, ccy)}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 bg-emerald-50/45 dark:bg-emerald-950/15 whitespace-nowrap">
+                            {row.thisMonthSummary.qardHasanAmount > 0 ? (
+                              <span className="font-semibold text-slate-900 dark:text-white">
+                                {formatMoney(row.thisMonthSummary.qardHasanAmount, ccy)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">{t('no')}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2.5 text-right font-mono tabular-nums bg-emerald-50/45 dark:bg-emerald-950/15 whitespace-nowrap">
+                            {row.thisMonthSummary.dueHasanaAmount > 0 ? (
+                              <span className="font-semibold text-amber-700 dark:text-amber-400">
+                                {formatMoney(row.thisMonthSummary.dueHasanaAmount, ccy)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">{t('no')}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+
+                  {/* Filtered Subtotal Row (only when filtered to fewer than all active members) */}
+                  {isFiltered && filteredRows.length > 0 && (
+                    <tr className="bg-slate-100/80 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-medium text-[11px]">
+                      <td className="py-2 px-2.5 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-slate-100 dark:bg-slate-800" />
+                      <td
+                        colSpan={2}
+                        className="py-2 px-3 text-right border-r border-slate-300 dark:border-slate-700 whitespace-nowrap"
+                      >
+                        {t('filteredSubtotal', { count: filteredRows.length })}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {formatMoney(filteredTotals.prevContrib, ccy)}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {filteredTotals.prevQard > 0 ? formatMoney(filteredTotals.prevQard, ccy) : t('no')}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                        {filteredTotals.prevDue > 0 ? formatMoney(filteredTotals.prevDue, ccy) : t('no')}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {formatMoney(filteredTotals.thisContrib, ccy)}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {filteredTotals.thisQard > 0 ? `+${formatMoney(filteredTotals.thisQard, ccy)}` : t('no')}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                        {renderSignedDueDelta(filteredTotals.thisDueChange, filteredTotals.thisRepaid).primary}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {formatMoney(filteredTotals.closeContrib, ccy)}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                        {filteredTotals.closeQard > 0 ? formatMoney(filteredTotals.closeQard, ccy) : t('no')}
+                      </td>
+                      <td className="py-2 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                        {filteredTotals.closeDue > 0 ? formatMoney(filteredTotals.closeDue, ccy) : t('no')}
+                      </td>
+                    </tr>
                   )}
 
                   {/* Bottom Green Summary Band: This month summary (previous + this month) */}
                   <tr className="bg-emerald-500/20 dark:bg-emerald-600/25 text-emerald-950 dark:text-emerald-100 border-y-2 border-emerald-500/60 dark:border-emerald-500/50 font-semibold">
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 border-r border-emerald-400/40 dark:border-emerald-700/50" />
-                    <td className="py-2.5 px-3 text-right border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 border-r border-emerald-400/40 dark:border-emerald-700/50 sticky left-0 z-10 bg-emerald-100 dark:bg-emerald-950" />
+                    <td
+                      colSpan={2}
+                      className="py-2.5 px-3 text-right border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap"
+                    >
                       <div>{t('thisMonthSummary')}</div>
                       <div className="text-[10px] font-normal opacity-80">
-                        {t('previousPlusThisMonth')}
+                        {isFiltered ? t('coopTotalsLabel') : t('previousPlusThisMonth')}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+
+                    {/* Previous Month Totals */}
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                      {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
+                    </td>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                      {sheet.previousMonthSummary.qardHasanAmount > 0
+                        ? formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)
+                        : t('no')}
+                    </td>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-500/50 dark:border-emerald-600/60 whitespace-nowrap">
+                      {sheet.previousMonthSummary.dueHasanaAmount > 0
+                        ? formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)
+                        : t('no')}
+                    </td>
+
+                    {/* This Month Only Totals */}
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                      +{formatMoney(sheet.thisMonthOnly.contributionAmount, ccy)}
+                    </td>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                      {sheet.thisMonthOnly.qardHasanAmount > 0
+                        ? `+${formatMoney(sheet.thisMonthOnly.qardHasanAmount, ccy)}`
+                        : t('no')}
+                    </td>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-500/50 dark:border-emerald-600/60 whitespace-nowrap">
+                      <div>
+                        {
+                          renderSignedDueDelta(
+                            sheet.thisMonthOnly.dueHasanaAmount,
+                            sheet.thisMonthRepaidAmount
+                          ).primary
+                        }
+                      </div>
+                      {sheet.thisMonthRepaidAmount > 0 && (
+                        <div className="text-[10px] font-normal opacity-80">
+                          {t('repaidShort', {
+                            amount: formatMoney(sheet.thisMonthRepaidAmount, ccy),
+                          })}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Closing This Month Summary Totals (Previous + This Month -> Next Month) */}
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
                       <div>{formatMoney(sheet.thisMonthSummary.contributionAmount, ccy)}</div>
-                      <div className="text-[10px] font-normal opacity-80">
-                        {t('thisMonthShort', {
-                          value: formatMoney(sheet.thisMonthOnly.contributionAmount, ccy),
-                        })}
-                      </div>
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
-                      <div>
-                        {sheet.thisMonthSummary.qardHasanAmount > 0
-                          ? formatMoney(sheet.thisMonthSummary.qardHasanAmount, ccy)
-                          : t('no')}
-                      </div>
-                      <div className="text-[10px] font-normal opacity-80">
-                        {t('thisMonthShort', {
-                          value:
-                            sheet.thisMonthOnly.qardHasanAmount > 0
-                              ? formatMoney(sheet.thisMonthOnly.qardHasanAmount, ccy)
-                              : t('no'),
-                        })}
-                      </div>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums border-r border-emerald-400/40 dark:border-emerald-700/50 whitespace-nowrap">
+                      {sheet.thisMonthSummary.qardHasanAmount > 0
+                        ? formatMoney(sheet.thisMonthSummary.qardHasanAmount, ccy)
+                        : t('no')}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                      <div>
-                        {sheet.thisMonthSummary.dueHasanaAmount > 0
-                          ? formatMoney(sheet.thisMonthSummary.dueHasanaAmount, ccy)
-                          : t('no')}
-                      </div>
-                      <div className="text-[10px] font-normal opacity-80">
-                        {t('previousPlusThisMonth')}
-                      </div>
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                      {sheet.thisMonthSummary.dueHasanaAmount > 0
+                        ? formatMoney(sheet.thisMonthSummary.dueHasanaAmount, ccy)
+                        : t('no')}
                     </td>
                   </tr>
 
-                  {/* Bottom Row: Fund summary (Fund Height | Total | Total) */}
+                  {/* Bottom Row: Fund summary (Fund Height | Total Qard Hasana | Total Due Hasana) */}
                   <tr className="bg-slate-50/95 dark:bg-slate-950/90 text-slate-900 dark:text-white font-semibold">
-                    <td className="py-3 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-3 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-3 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-3 px-3 border-r border-slate-200 dark:border-slate-800" />
-                    <td className="py-3 px-3 text-right border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <td className="py-3 px-2.5 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-slate-50 dark:bg-slate-950" />
+                    <td
+                      colSpan={8}
+                      className="py-3 px-3 text-right border-r border-slate-300 dark:border-slate-700 whitespace-nowrap"
+                    >
                       {t('fundSummary')}
                     </td>
-                    <td className="py-3 px-3 text-right border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <td className="py-3 px-2.5 text-right border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
                       <div className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                         {t('fundHeight')}
                       </div>
@@ -931,7 +1338,7 @@ export function MonthlySheetView({
                         {formatMoney(sheet.fundSummary.fundHeight, ccy)}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-right border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <td className="py-3 px-2.5 text-right border-r border-slate-200 dark:border-slate-800 whitespace-nowrap">
                       <div className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                         {t('totalLabel')}
                       </div>
@@ -939,7 +1346,7 @@ export function MonthlySheetView({
                         {formatMoney(sheet.fundSummary.totalQardHasan, ccy)}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                    <td className="py-3 px-2.5 text-right whitespace-nowrap">
                       <div className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                         {t('totalLabel')}
                       </div>

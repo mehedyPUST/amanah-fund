@@ -2143,8 +2143,15 @@ describe('Monthly Sheet Report builder', () => {
       entryHash: 'hash-ls1',
     });
 
+    const nextMonth = `${nowYear}-03`;
+
+    const sheetJan = buildMonthlySheetData(state, prevMonth);
     const sheet = buildMonthlySheetData(state, targetMonth);
+    const sheetMar = buildMonthlySheetData(state, nextMonth);
+
     expect(sheet.month).toBe(targetMonth);
+    expect(sheet.previousMonth).toBe(prevMonth);
+    expect(sheet.nextMonth).toBe(nextMonth);
     expect(sheet.monthlyTarget).toBe(5000);
 
     // Previous month (Jan): contributions = 10000 (u-1) + 5000 (u-2) = 15000; Qard Hasan = 6000; Due = 6000
@@ -2154,12 +2161,13 @@ describe('Monthly Sheet Report builder', () => {
       dueHasanaAmount: 6000,
     });
 
-    // This month only (Feb): contribution = 5000; new loan = 0; net due change = -2000
+    // This month only (Feb): contribution = 5000; new loan = 0; net due change = -2000; repaid = 2000
     expect(sheet.thisMonthOnly).toEqual({
       contributionAmount: 5000,
       qardHasanAmount: 0,
       dueHasanaAmount: -2000,
     });
+    expect(sheet.thisMonthRepaidAmount).toBe(2000);
 
     // This month cumulative summary: 20000 contrib, 6000 loan, 4000 remaining due
     expect(sheet.thisMonthSummary).toEqual({
@@ -2185,6 +2193,23 @@ describe('Monthly Sheet Report builder', () => {
       hasQardHasan: true,
       qardHasanAmount: 6000,
       dueHasanaAmount: 4000,
+      previousSummary: {
+        contributionAmount: 5000,
+        qardHasanAmount: 6000,
+        dueHasanaAmount: 6000,
+      },
+      thisMonth: {
+        contributionAmount: 5000,
+        qardHasanAmount: 0,
+        repaidAmount: 2000,
+        dueChangeAmount: -2000,
+        dueHasanaAmount: -2000,
+      },
+      thisMonthSummary: {
+        contributionAmount: 10000,
+        qardHasanAmount: 6000,
+        dueHasanaAmount: 4000,
+      },
     });
     expect(sheet.rows[1]).toMatchObject({
       serialNo: 2,
@@ -2194,7 +2219,32 @@ describe('Monthly Sheet Report builder', () => {
       hasQardHasan: false,
       qardHasanAmount: 0,
       dueHasanaAmount: 0,
+      previousSummary: {
+        contributionAmount: 0,
+        qardHasanAmount: 0,
+        dueHasanaAmount: 0,
+      },
+      thisMonth: {
+        contributionAmount: 0,
+        qardHasanAmount: 0,
+        repaidAmount: 0,
+        dueChangeAmount: 0,
+        dueHasanaAmount: 0,
+      },
+      thisMonthSummary: {
+        contributionAmount: 0,
+        qardHasanAmount: 0,
+        dueHasanaAmount: 0,
+      },
     });
+
+    // Rollover guarantee: every member's closing summary in month M equals their previousSummary in month M+1
+    expect(sheetJan.thisMonthSummary).toEqual(sheet.previousMonthSummary);
+    expect(sheet.thisMonthSummary).toEqual(sheetMar.previousMonthSummary);
+    for (let i = 0; i < sheet.rows.length; i += 1) {
+      expect(sheetJan.rows[i].thisMonthSummary).toEqual(sheet.rows[i].previousSummary);
+      expect(sheet.rows[i].thisMonthSummary).toEqual(sheetMar.rows[i].previousSummary);
+    }
   });
 });
 

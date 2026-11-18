@@ -1702,12 +1702,22 @@ export function buildMonthlySheetData(
   state: VaultState,
   requestedMonth?: string
 ): MonthlySheetData {
+  const round2 = (n: number): number => Math.round(n * 100) / 100;
+  const shiftYm = (ym: string, deltaMonths: number): string => {
+    const match = ym.match(/^(\d{4})-(\d{2})$/);
+    if (!match) return ym;
+    const d = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1 + deltaMonths, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  };
+
   const now = new Date();
   const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
   const month =
     requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth.trim())
       ? requestedMonth.trim()
       : currentMonthKey;
+  const previousMonth = shiftYm(month, -1);
+  const nextMonth = shiftYm(month, 1);
 
   const monthlyTarget = state.fundConfig.monthlyContributionAmount || 5000;
   const approvedContribs = state.contributions.filter((c) => c.status === 'approved');
@@ -1720,21 +1730,44 @@ export function buildMonthlySheetData(
   const getLoanMonth = (loan: LoanRequest): string =>
     (loan.disbursedAt || loan.approvedAt || loan.requestedAt || '').slice(0, 7);
 
+  const getInstallmentPaidMonth = (
+    inst: NonNullable<LoanRequest['installments']>[number],
+    loan: LoanRequest
+  ): string => (inst.paidAt || loan.completedAt || getLoanMonth(loan) || '').slice(0, 7);
+
+  const getPaidBeforeMonth = (loan: LoanRequest, targetMonth: string): number => {
+    let repaid = 0;
+    for (const inst of loan.installments || []) {
+      if (inst.status === 'paid') {
+        const paidMonth = getInstallmentPaidMonth(inst, loan);
+        if (!paidMonth || paidMonth < targetMonth) {
+          repaid += inst.paidAmount || inst.amount || 0;
+        }
+      }
+    }
+    return round2(repaid);
+  };
+
   const getPaidThroughMonth = (loan: LoanRequest, targetMonth: string): number => {
     let repaid = 0;
     for (const inst of loan.installments || []) {
       if (inst.status === 'paid') {
-        const paidMonth = (inst.paidAt || '').slice(0, 7);
+        const paidMonth = getInstallmentPaidMonth(inst, loan);
         if (!paidMonth || paidMonth <= targetMonth) {
           repaid += inst.paidAmount || inst.amount || 0;
         }
       }
     }
-    return Math.round(repaid * 100) / 100;
+    return round2(repaid);
   };
 
-  // Collect all relevant months so users can browse cleanly
-  const monthSet = new Set<string>([currentMonthKey, month]);
+  // Collect all relevant months so users can browse cleanly (including next month to inspect rollover)
+  const monthSet = new Set<string>([
+    currentMonthKey,
+    shiftYm(currentMonthKey, 1),
+    month,
+    nextMonth,
+  ]);
   for (const c of state.contributions) {
     if (/^\d{4}-\d{2}$/.test(c.billingMonth)) {
       monthSet.add(c.billingMonth);
@@ -1744,6 +1777,12 @@ export function buildMonthlySheetData(
     const lm = getLoanMonth(l);
     if (/^\d{4}-\d{2}$/.test(lm)) {
       monthSet.add(lm);
+    }
+    for (const inst of l.installments || []) {
+      const pm = (inst.paidAt || '').slice(0, 7);
+      if (/^\d{4}-\d{2}$/.test(pm)) {
+        monthSet.add(pm);
+      }
     }
   }
   const availableMonths = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
@@ -1763,6 +1802,11 @@ export function buildMonthlySheetData(
       }
     }
     const mobile = reg?.mobile || member.phoneMasked || '—';
+
+    const memberApprovedContribs = approvedContribs.filter((c) => c.userId === member.id);
+    const prevApprovedAmt = memberApprovedContribs
+      .filter((c) => c.billingMonth < month)
+      .reduce((sum, c) => sum + c.amount, 0);
 
     const memberMonthContribs = state.contributions.filter(
       (c) => c.userId === member.id && c.billingMonth === month
@@ -1791,14 +1835,33 @@ export function buildMonthlySheetData(
     });
 
     let activeLoanForMonth: LoanRequest | undefined;
+    let prevQardHasan = 0;
+    let prevDueHasana = 0;
+    let thisMonthQardHasan = 0;
+    let thisMonthRepaid = 0;
     let totalDueAsOfMonth = 0;
     let installmentDueThisMonth = 0;
 
     for (const loan of memberLoansUpToMonth) {
+      const lm = getLoanMonth(loan);
+      const isPriorLoan = !lm || lm < month;
+      const paidBefore = isPriorLoan ? getPaidBeforeMonth(loan, month) : 0;
       const paidThrough = getPaidThroughMonth(loan, month);
-      const remainingAtMonth = Math.max(0, Math.round((loan.amount - paidThrough) * 100) / 100);
-      if (remainingAtMonth > 0) {
-        totalDueAsOfMonth += remainingAtMonth;
+
+      const openingRemaining = isPriorLoan ? Math.max(0, round2(loan.amount - paidBefore)) : 0;
+      const closingRemaining = Math.max(0, round2(loan.amount - paidThrough));
+
+      if (isPriorLoan) {
+        prevQardHasan += loan.amount;
+        prevDueHasana += openingRemaining;
+        thisMonthRepaid += Math.max(0, round2(openingRemaining - closingRemaining));
+      } else {
+        thisMonthQardHasan += loan.amount;
+        thisMonthRepaid += Math.max(0, round2(loan.amount - closingRemaining));
+      }
+
+      if (closingRemaining > 0) {
+        totalDueAsOfMonth += closingRemaining;
         if (!activeLoanForMonth) {
           activeLoanForMonth = loan;
         }
@@ -1811,11 +1874,7 @@ export function buildMonthlySheetData(
 
       for (const inst of loan.installments || []) {
         const dueYm = (inst.dueDate || '').slice(0, 7);
-        if (
-          dueYm &&
-          dueYm <= month &&
-          inst.status !== 'paid'
-        ) {
+        if (dueYm && dueYm <= month && inst.status !== 'paid') {
           installmentDueThisMonth += Math.max(0, (inst.amount || 0) - (inst.paidAmount || 0));
         }
       }
@@ -1823,6 +1882,19 @@ export function buildMonthlySheetData(
 
     const hasQardHasan = Boolean(activeLoanForMonth);
     const qardHasanAmount = activeLoanForMonth ? activeLoanForMonth.amount : 0;
+
+    const prevContribRounded = round2(prevApprovedAmt);
+    const thisContribRounded = round2(approvedAmt);
+    const closingContribRounded = round2(prevContribRounded + thisContribRounded);
+
+    const prevQardRounded = round2(prevQardHasan);
+    const thisQardRounded = round2(thisMonthQardHasan);
+    const closingQardRounded = round2(prevQardRounded + thisQardRounded);
+
+    const prevDueRounded = round2(prevDueHasana);
+    const closingDueRounded = round2(totalDueAsOfMonth);
+    const dueChangeRounded = round2(closingDueRounded - prevDueRounded);
+    const repaidRounded = round2(thisMonthRepaid);
 
     return {
       serialNo: index + 1,
@@ -1833,14 +1905,31 @@ export function buildMonthlySheetData(
       mobile,
       email: member.email,
       contributionStatus,
-      contributionAmount: Math.round(approvedAmt * 100) / 100,
-      contributionPendingAmount: Math.round(pendingAmt * 100) / 100,
+      contributionAmount: thisContribRounded,
+      contributionPendingAmount: round2(pendingAmt),
       contributionTarget: monthlyTarget,
       hasQardHasan,
-      qardHasanAmount: Math.round(qardHasanAmount * 100) / 100,
+      qardHasanAmount: round2(qardHasanAmount),
       activeLoanId: activeLoanForMonth?.id,
-      dueHasanaAmount: Math.round(totalDueAsOfMonth * 100) / 100,
-      installmentDueThisMonth: Math.round(installmentDueThisMonth * 100) / 100,
+      dueHasanaAmount: closingDueRounded,
+      installmentDueThisMonth: round2(installmentDueThisMonth),
+      previousSummary: {
+        contributionAmount: prevContribRounded,
+        qardHasanAmount: prevQardRounded,
+        dueHasanaAmount: prevDueRounded,
+      },
+      thisMonth: {
+        contributionAmount: thisContribRounded,
+        qardHasanAmount: thisQardRounded,
+        dueHasanaAmount: dueChangeRounded,
+        repaidAmount: repaidRounded,
+        dueChangeAmount: dueChangeRounded,
+      },
+      thisMonthSummary: {
+        contributionAmount: closingContribRounded,
+        qardHasanAmount: closingQardRounded,
+        dueHasanaAmount: closingDueRounded,
+      },
     };
   });
 
@@ -1857,33 +1946,33 @@ export function buildMonthlySheetData(
   let thisMonthQardHasanAmount = 0;
   let prevDueHasanaAmount = 0;
   let endOfMonthDueHasanaAmount = 0;
+  let totalRepaidInMonth = 0;
 
   for (const loan of disbursedLoans) {
     const lm = getLoanMonth(loan);
-    if (!lm || lm < month) {
+    const isPriorLoan = !lm || lm < month;
+    const isThisMonthLoan = lm === month;
+
+    if (isPriorLoan) {
       prevQardHasanAmount += loan.amount;
-    } else if (lm === month) {
+    } else if (isThisMonthLoan) {
       thisMonthQardHasanAmount += loan.amount;
     }
 
-    // Remaining due entering `month`: disbursed < month minus paid strictly < month
-    if (!lm || lm < month) {
-      let paidBeforeMonth = 0;
-      for (const inst of loan.installments || []) {
-        if (inst.status === 'paid') {
-          const paidMonth = (inst.paidAt || '').slice(0, 7);
-          if (paidMonth && paidMonth < month) {
-            paidBeforeMonth += inst.paidAmount || inst.amount || 0;
-          }
-        }
-      }
-      prevDueHasanaAmount += Math.max(0, loan.amount - paidBeforeMonth);
-    }
+    if (isPriorLoan) {
+      const paidBeforeMonth = getPaidBeforeMonth(loan, month);
+      const openingRemaining = Math.max(0, round2(loan.amount - paidBeforeMonth));
+      prevDueHasanaAmount += openingRemaining;
 
-    // Remaining due at end of `month`: disbursed <= month minus paid <= month
-    if (!lm || lm <= month) {
       const paidThrough = getPaidThroughMonth(loan, month);
-      endOfMonthDueHasanaAmount += Math.max(0, loan.amount - paidThrough);
+      const closingRemaining = Math.max(0, round2(loan.amount - paidThrough));
+      endOfMonthDueHasanaAmount += closingRemaining;
+      totalRepaidInMonth += Math.max(0, round2(openingRemaining - closingRemaining));
+    } else if (isThisMonthLoan) {
+      const paidThrough = getPaidThroughMonth(loan, month);
+      const closingRemaining = Math.max(0, round2(loan.amount - paidThrough));
+      endOfMonthDueHasanaAmount += closingRemaining;
+      totalRepaidInMonth += Math.max(0, round2(loan.amount - closingRemaining));
     }
   }
 
@@ -1899,31 +1988,31 @@ export function buildMonthlySheetData(
 
   return {
     month,
+    previousMonth,
+    nextMonth,
     currency: state.fundConfig.currency,
     monthlyTarget,
     availableMonths,
     previousMonthSummary: {
-      contributionAmount: Math.round(prevContributionAmount * 100) / 100,
-      qardHasanAmount: Math.round(prevQardHasanAmount * 100) / 100,
-      dueHasanaAmount: Math.round(prevDueHasanaAmount * 100) / 100,
+      contributionAmount: round2(prevContributionAmount),
+      qardHasanAmount: round2(prevQardHasanAmount),
+      dueHasanaAmount: round2(prevDueHasanaAmount),
     },
     thisMonthOnly: {
-      contributionAmount: Math.round(thisMonthContributionAmount * 100) / 100,
-      qardHasanAmount: Math.round(thisMonthQardHasanAmount * 100) / 100,
-      dueHasanaAmount:
-        Math.round((endOfMonthDueHasanaAmount - prevDueHasanaAmount) * 100) / 100,
+      contributionAmount: round2(thisMonthContributionAmount),
+      qardHasanAmount: round2(thisMonthQardHasanAmount),
+      dueHasanaAmount: round2(endOfMonthDueHasanaAmount - prevDueHasanaAmount),
     },
+    thisMonthRepaidAmount: round2(totalRepaidInMonth),
     thisMonthSummary: {
-      contributionAmount:
-        Math.round((prevContributionAmount + thisMonthContributionAmount) * 100) / 100,
-      qardHasanAmount:
-        Math.round((prevQardHasanAmount + thisMonthQardHasanAmount) * 100) / 100,
-      dueHasanaAmount: Math.round(endOfMonthDueHasanaAmount * 100) / 100,
+      contributionAmount: round2(prevContributionAmount + thisMonthContributionAmount),
+      qardHasanAmount: round2(prevQardHasanAmount + thisMonthQardHasanAmount),
+      dueHasanaAmount: round2(endOfMonthDueHasanaAmount),
     },
     fundSummary: {
-      fundHeight: Math.round(fundHeight * 100) / 100,
-      totalQardHasan: Math.round(totalQardHasan * 100) / 100,
-      totalDueHasana: Math.round(totalDueHasana * 100) / 100,
+      fundHeight: round2(fundHeight),
+      totalQardHasan: round2(totalQardHasan),
+      totalDueHasana: round2(totalDueHasana),
     },
     rows,
   };
