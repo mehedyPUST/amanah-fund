@@ -10,7 +10,6 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { ShieldCheck, X } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
@@ -25,10 +24,8 @@ import {
 import { getMessagesForLocale } from '../i18n/messages.ts';
 import type { PublicUser } from '../types/coop.ts';
 import { api, clearClientSessionToken, registerTotpChallengeHandler } from '../utils/api.ts';
-import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
+import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
-  getMobileBackgroundHiddenAt,
-  MOBILE_MINIMIZE_LOGOUT_MS,
   setMobileAutoLogoutNotice,
   setMobileBackgroundHiddenAt,
   syncLocalAccountsWithServerUser,
@@ -91,11 +88,6 @@ export function AppProviders({
   children: ReactNode;
   initialLocale?: AppLocale;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
-
   const [user, setUserState] = useState<PublicUser | null>(null);
   const userRef = useRef<PublicUser | null>(null);
   userRef.current = user;
@@ -117,8 +109,8 @@ export function AppProviders({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
   const reloadingRef = useRef(false);
+  const manualUpdateRequestedRef = useRef(false);
   const lastAuthCheckRef = useRef<number>(0);
-  const minimizeLogoutInFlightRef = useRef(false);
   const sessionVersionRef = useRef(0);
 
   const setUser = useCallback((nextUser: PublicUser | null) => {
@@ -305,79 +297,12 @@ export function AppProviders({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    let bgTimerId: number | null = null;
-
-    const clearBgTimer = () => {
-      if (bgTimerId !== null) {
-        window.clearTimeout(bgTimerId);
-        bgTimerId = null;
-      }
-    };
-
-    const performMinimizeLogout = async () => {
-      if (minimizeLogoutInFlightRef.current || !userRef.current) return;
-      minimizeLogoutInFlightRef.current = true;
-      sessionVersionRef.current += 1;
-      clearBgTimer();
-      setMobileBackgroundHiddenAt(null);
-      setMobileAutoLogoutNotice('__AUTO_LOGOUT_1M__');
-      try {
-        await api.logout();
-      } catch {
-        // proceed with local logout even if offline
-      } finally {
-        clearClientSessionToken();
-        setMobileBrowseMode(false);
-        setUserState(null);
-        setAuthChecking(false);
-        minimizeLogoutInFlightRef.current = false;
-        if (pathnameRef.current?.startsWith('/dashboard')) {
-          router.replace('/');
-        }
-      }
-    };
-
-    const evaluateBackgroundElapsed = (): boolean => {
-      if (!userRef.current || !isMobileViewport()) {
-        setMobileBackgroundHiddenAt(null);
-        return false;
-      }
-      const hiddenAt = getMobileBackgroundHiddenAt();
-      if (!hiddenAt) return false;
-      if (Date.now() - hiddenAt >= MOBILE_MINIMIZE_LOGOUT_MS) {
-        void performMinimizeLogout();
-        return true;
-      }
-      setMobileBackgroundHiddenAt(null);
-      return false;
-    };
-
-    // Check immediately in case mobile app was killed/reopened after >= 1 min hidden
-    if (user && isMobileViewport() && document.visibilityState === 'visible') {
-      evaluateBackgroundElapsed();
-    }
-
-    const markHiddenAndStartTimer = () => {
-      if (!userRef.current || !isMobileViewport()) return;
-      const existing = getMobileBackgroundHiddenAt();
-      const hiddenAt = existing ?? Date.now();
-      if (!existing) {
-        setMobileBackgroundHiddenAt(hiddenAt);
-      }
-      clearBgTimer();
-      const remainingMs = Math.max(0, MOBILE_MINIMIZE_LOGOUT_MS - (Date.now() - hiddenAt));
-      bgTimerId = window.setTimeout(() => {
-        if (!userRef.current || !isMobileViewport()) return;
-        const storedAt = getMobileBackgroundHiddenAt();
-        if (storedAt && Date.now() - storedAt >= MOBILE_MINIMIZE_LOGOUT_MS - 250) {
-          void performMinimizeLogout();
-        }
-      }, remainingMs + 50);
-    };
+    // Clear any legacy background-logout timestamps so sessions remain active across tab/app switches.
+    setMobileBackgroundHiddenAt(null);
+    setMobileAutoLogoutNotice(null);
 
     const handleUnauthorized = () => {
       sessionVersionRef.current += 1;
-      clearBgTimer();
       clearClientSessionToken();
       setMobileBackgroundHiddenAt(null);
       setMobileBrowseMode(false);
@@ -386,45 +311,21 @@ export function AppProviders({
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        markHiddenAndStartTimer();
-        return;
-      }
-      if (document.visibilityState === 'visible') {
-        clearBgTimer();
-        const loggedOut = evaluateBackgroundElapsed();
-        if (!loggedOut && Date.now() - lastAuthCheckRef.current >= 45_000) {
+      if (document.visibilityState === 'visible' && userRef.current) {
+        if (Date.now() - lastAuthCheckRef.current >= 5 * 60 * 1000) {
           void refreshUser();
         }
       }
     };
 
-    const handlePageHide = () => {
-      markHiddenAndStartTimer();
-    };
-
-    const handlePageShowOrFocus = () => {
-      if (document.visibilityState === 'visible') {
-        clearBgTimer();
-        evaluateBackgroundElapsed();
-      }
-    };
-
     window.addEventListener('amanah:unauthorized', handleUnauthorized);
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', handlePageHide);
-    window.addEventListener('pageshow', handlePageShowOrFocus);
-    window.addEventListener('focus', handlePageShowOrFocus);
 
     return () => {
-      clearBgTimer();
       window.removeEventListener('amanah:unauthorized', handleUnauthorized);
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', handlePageHide);
-      window.removeEventListener('pageshow', handlePageShowOrFocus);
-      window.removeEventListener('focus', handlePageShowOrFocus);
     };
-  }, [user, refreshUser, router]);
+  }, [refreshUser]);
 
   const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
     swRegRef.current = reg;
@@ -531,6 +432,7 @@ export function AppProviders({
   const applyUpdate = useCallback(async () => {
     if (typeof window === 'undefined') return;
     setApplyingUpdate(true);
+    manualUpdateRequestedRef.current = true;
     try {
       if ('serviceWorker' in navigator) {
         const reg = swRegRef.current || (await navigator.serviceWorker.getRegistration('/'));
@@ -572,7 +474,7 @@ export function AppProviders({
     }
 
     const handleControllerChange = () => {
-      if (!reloadingRef.current) {
+      if (manualUpdateRequestedRef.current && !reloadingRef.current) {
         reloadingRef.current = true;
         window.location.reload();
       }

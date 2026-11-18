@@ -366,8 +366,10 @@ export function DashboardShell() {
     [user]
   );
 
+  const activeUserId = user?.id ?? null;
+
   useEffect(() => {
-    if (!user) return;
+    if (!activeUserId) return;
     void refreshWorkspace(false);
 
     const sseToken = getClientSessionToken();
@@ -381,7 +383,7 @@ export function DashboardShell() {
     const handleLoanCreated = (evt: MessageEvent) => {
       try {
         const data = JSON.parse(evt.data) as { loanId?: string; borrowerId?: string };
-        if (data.loanId && data.borrowerId !== user.id) {
+        if (data.loanId && data.borrowerId !== activeUserId) {
           setLiveLoanPulseId(data.loanId);
           setDismissedLoanAlertIds((prev) => prev.filter((id) => id !== data.loanId));
         }
@@ -394,7 +396,7 @@ export function DashboardShell() {
       if (soundEnabledRef.current) {
         try {
           const payload = JSON.parse(evt.data || '{}') as { senderId?: string };
-          if (!payload.senderId || payload.senderId !== user.id) {
+          if (!payload.senderId || payload.senderId !== activeUserId) {
             playSubtleAlertChime();
           }
         } catch {
@@ -443,7 +445,7 @@ export function DashboardShell() {
       es.close();
       window.clearInterval(timer);
     };
-  }, [user, refreshWorkspace]);
+  }, [activeUserId, refreshWorkspace]);
 
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
