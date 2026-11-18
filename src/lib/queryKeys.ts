@@ -22,7 +22,8 @@ export const queryKeys = {
     polls: () => ['dashboard', 'polls'] as const,
     meetings: () => ['dashboard', 'meetings'] as const,
     profileChangeRequests: () => ['dashboard', 'profile-change-requests'] as const,
-    monthlySheet: (month: string) => ['dashboard', 'monthly-sheet', month] as const,
+    balanceSheet: (month: string) => ['dashboard', 'balance-sheet', month] as const,
+    monthlySheet: (month: string) => ['dashboard', 'balance-sheet', month] as const,
   },
   admin: {
     all: ['admin'] as const,

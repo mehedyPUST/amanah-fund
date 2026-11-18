@@ -577,6 +577,7 @@ html.dark ::-webkit-scrollbar-thumb:active {
     display: none !important;
   }
 
+  .balance-sheet-printable,
   .monthly-sheet-printable {
     box-shadow: none !important;
     border-color: #cbd5e1 !important;

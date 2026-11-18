@@ -2064,6 +2064,15 @@ describe('Cross-Site Iframe Auth Cookie & Session Token Fallback', () => {
         query: { sessionToken: 'report-query-jwt' },
       } as never)
     ).toEqual(['report-query-jwt']);
+
+    expect(
+      extractSessionTokenCandidates({
+        cookies: {},
+        headers: {},
+        path: '/reports/balance-sheet',
+        query: { sessionToken: 'balance-sheet-jwt' },
+      } as never)
+    ).toEqual(['balance-sheet-jwt']);
   });
 });
 

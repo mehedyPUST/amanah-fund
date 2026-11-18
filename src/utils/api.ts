@@ -1230,12 +1230,18 @@ export const api = {
       body: JSON.stringify(tempPassword ? { tempPassword } : {}),
     }),
 
-  // Monthly Sheet Ledger & Monthly Fund Summary PDF
+  // Balance Sheet Ledger & Monthly Fund Summary PDF
+  getBalanceSheet: (month?: string) =>
+    apiRequest<{ sheet: MonthlySheetData }>(
+      month
+        ? `/api/reports/balance-sheet?month=${encodeURIComponent(month)}`
+        : '/api/reports/balance-sheet'
+    ),
   getMonthlySheet: (month?: string) =>
     apiRequest<{ sheet: MonthlySheetData }>(
       month
-        ? `/api/reports/monthly-sheet?month=${encodeURIComponent(month)}`
-        : '/api/reports/monthly-sheet'
+        ? `/api/reports/balance-sheet?month=${encodeURIComponent(month)}`
+        : '/api/reports/balance-sheet'
     ),
   emailMonthlyPdfSummary: (monthKey?: string) =>
     apiRequest<{

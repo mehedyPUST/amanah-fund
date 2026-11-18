@@ -54,8 +54,8 @@ import { ManagerDeskView, type ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MemberProfile } from './MemberProfile.tsx';
 import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
+import { BalanceSheetView } from './BalanceSheetView.tsx';
 import { MobileMfsHome } from './MobileMfsHome.tsx';
-import { MonthlySheetView } from './MonthlySheetView.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
@@ -113,7 +113,7 @@ const MEMBER_NAV_ITEMS: NavItemConfig[] = [
   { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
   { id: 'members', label: 'Members', Icon: Users, group: 'member' },
-  { id: 'monthly-sheet', label: 'Monthly Sheet', Icon: FileSpreadsheet, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
 ];
@@ -129,7 +129,7 @@ const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
   { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
   { id: 'members', label: 'Members', Icon: Users, group: 'member' },
-  { id: 'monthly-sheet', label: 'Monthly Sheet', Icon: FileSpreadsheet, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
   { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
@@ -160,7 +160,7 @@ const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
   'manager-desk': 'amber',
   'my-profile': 'emerald',
   members: 'emerald',
-  'monthly-sheet': 'emerald',
+  'balance-sheet': 'emerald',
   'member-profile': 'emerald',
   community: 'emerald',
   'member-registry': 'emerald',
@@ -737,8 +737,17 @@ export function DashboardShell() {
       }
 
       const params = new URLSearchParams(window.location.search);
-      const requested = params.get('page') as DashboardSectionId | null;
+      const rawRequested = params.get('page');
+      const requested = (
+        rawRequested === 'monthly-sheet' ? 'balance-sheet' : rawRequested
+      ) as DashboardSectionId | null;
       const requestedMemberId = params.get('memberId');
+
+      if (rawRequested === 'monthly-sheet') {
+        const canonicalUrl = new URL(window.location.href);
+        canonicalUrl.searchParams.set('page', 'balance-sheet');
+        window.history.replaceState({ page: 'balance-sheet' }, '', canonicalUrl);
+      }
 
       if (requested === 'member-profile' && requestedMemberId) {
         setViewingMemberId(requestedMemberId);
@@ -1117,11 +1126,11 @@ export function DashboardShell() {
             onClick: () => navigateToPage('statistics', true),
           },
           {
-            id: 'monthly-sheet',
-            label: tNav('monthlySheet'),
+            id: 'balance-sheet',
+            label: tNav('balanceSheet'),
             Icon: FileSpreadsheet,
-            active: activeSection === 'monthly-sheet',
-            onClick: () => navigateToPage('monthly-sheet', true),
+            active: activeSection === 'balance-sheet',
+            onClick: () => navigateToPage('balance-sheet', true),
           },
         ]
       : [
@@ -1171,11 +1180,11 @@ export function DashboardShell() {
             onClick: () => navigateToPage('transaction-history', true),
           },
           {
-            id: 'monthly-sheet',
-            label: tNav('monthlySheet'),
+            id: 'balance-sheet',
+            label: tNav('balanceSheet'),
             Icon: FileSpreadsheet,
-            active: activeSection === 'monthly-sheet',
-            onClick: () => navigateToPage('monthly-sheet', true),
+            active: activeSection === 'balance-sheet',
+            onClick: () => navigateToPage('balance-sheet', true),
           },
         ];
 
@@ -1941,10 +1950,10 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {activeSection === 'monthly-sheet' && (
-                <section id="monthly-sheet" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('monthlySheet')} tone="emerald" />
-                  <MonthlySheetView
+              {activeSection === 'balance-sheet' && (
+                <section id="balance-sheet" className="space-y-4 pb-8">
+                  <SectionEyebrow label={tNav('balanceSheet')} tone="emerald" />
+                  <BalanceSheetView
                     user={user}
                     config={overview?.config || null}
                     onViewMemberProfile={handleViewMemberProfile}

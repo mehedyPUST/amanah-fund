@@ -404,7 +404,7 @@ export async function prefetchDashboardPageState(): Promise<DehydratedState> {
         queryFn: async () => bundle.profileChangeRequests,
       }),
       queryClient.prefetchQuery({
-        queryKey: queryKeys.dashboard.monthlySheet(currentMonthKey),
+        queryKey: queryKeys.dashboard.balanceSheet(currentMonthKey),
         queryFn: async () => currentMonthlySheet,
       }),
     ]);

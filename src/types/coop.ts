@@ -20,7 +20,7 @@ export type DashboardSectionId =
   | 'member-profile'
   | 'manager-cycle'
   | 'members'
-  | 'monthly-sheet'
+  | 'balance-sheet'
   | 'email-queue';
 
 export interface EncryptedEnvelope {

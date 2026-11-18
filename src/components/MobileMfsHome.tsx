@@ -647,13 +647,13 @@ export function MobileMfsHome({
           onClick: () => onNavigate('statistics'),
         },
         {
-          id: 'monthly-sheet',
-          label: tNav('monthlySheet'),
+          id: 'balance-sheet',
+          label: tNav('balanceSheet'),
           Icon: FileSpreadsheet,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
           iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-          onClick: () => onNavigate('monthly-sheet'),
+          onClick: () => onNavigate('balance-sheet'),
         },
         {
           id: 'manager-cycle',
@@ -741,13 +741,13 @@ export function MobileMfsHome({
           onClick: () => onNavigate('statistics'),
         },
         {
-          id: 'monthly-sheet',
-          label: tNav('monthlySheet'),
+          id: 'balance-sheet',
+          label: tNav('balanceSheet'),
           Icon: FileSpreadsheet,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
           iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-          onClick: () => onNavigate('monthly-sheet'),
+          onClick: () => onNavigate('balance-sheet'),
         },
         {
           id: 'manager-cycle',
