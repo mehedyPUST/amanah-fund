@@ -43,6 +43,7 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
 import { exportBalanceSheetPdf } from '../utils/monthlySheetPdf.ts';
+import { BalanceSheetMemberModal } from './BalanceSheetMemberModal.tsx';
 
 interface BalanceSheetViewProps {
   user: PublicUser | null;
@@ -199,6 +200,7 @@ export function BalanceSheetView({
   });
   const [copiedCell, setCopiedCell] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [inspectedMemberId, setInspectedMemberId] = useState<string | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
 
   const sheetQuery = useQuery({
@@ -431,6 +433,17 @@ export function BalanceSheetView({
   }, [rows, search, filter, sortField, sortDir]);
 
   const isFiltered = filter !== 'all' || search.trim().length > 0;
+
+  const inspectedMemberIndex = useMemo(() => {
+    if (!inspectedMemberId) return -1;
+    return filteredRows.findIndex((r) => r.userId === inspectedMemberId);
+  }, [filteredRows, inspectedMemberId]);
+
+  const inspectedMemberRow = useMemo(() => {
+    if (!inspectedMemberId) return null;
+    if (inspectedMemberIndex >= 0) return filteredRows[inspectedMemberIndex] ?? null;
+    return rows.find((r) => r.userId === inspectedMemberId) ?? null;
+  }, [filteredRows, inspectedMemberId, inspectedMemberIndex, rows]);
 
   const filteredTotals = useMemo(() => {
     return filteredRows.reduce(
@@ -933,7 +946,7 @@ export function BalanceSheetView({
     const map: Record<number, { value: string; formula: string }> = {
       0: {
         value: row.name,
-        formula: `="${row.name}"  // ${row.memberCode} · ${row.email}`,
+        formula: `="${row.name}"  // ${row.memberCode} · Double-click name for member details`,
       },
       1: {
         value: row.memberCode,
@@ -1026,6 +1039,21 @@ export function BalanceSheetView({
 
   const handleGridKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      if (inspectedMemberId) return;
+      if (
+        e.key === 'Enter' &&
+        activeTab === 'balance-sheet' &&
+        selectedCell.tab === 'balance-sheet' &&
+        selectedCell.col === 0 &&
+        selectedCell.row >= 0
+      ) {
+        const targetRow = filteredRows[selectedCell.row];
+        if (targetRow) {
+          e.preventDefault();
+          setInspectedMemberId(targetRow.userId);
+        }
+        return;
+      }
       if (
         e.key !== 'ArrowUp' &&
         e.key !== 'ArrowDown' &&
@@ -1071,7 +1099,7 @@ export function BalanceSheetView({
         return { tab: 'balance-sheet', row: nextRow, col: nextCol };
       });
     },
-    [activeTab, allVariablesRows.length, filteredRows.length, isFiltered]
+    [activeTab, allVariablesRows.length, filteredRows, inspectedMemberId, isFiltered, selectedCell]
   );
 
   const showToast = useCallback((message: string) => {
@@ -1710,7 +1738,7 @@ export function BalanceSheetView({
                           <div className="min-w-0">
                             <button
                               type="button"
-                              onClick={() => onViewMemberProfile?.(row.userId)}
+                              onClick={() => setInspectedMemberId(row.userId)}
                               className="text-sm font-bold text-slate-900 dark:text-slate-50 hover:text-emerald-700 dark:hover:text-emerald-400 text-left truncate block cursor-pointer"
                             >
                               {row.serialNo}. {row.name}
@@ -2145,17 +2173,22 @@ export function BalanceSheetView({
                             {idx + 2}
                           </td>
 
-                          {/* A: Member Name */}
+                          {/* A: Member Name (double-click to open member details modal) */}
                           <td
                             onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            className={`px-2.5 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-cell ${
+                            onDoubleClick={() => {
+                              selectSheetCell('balance-sheet', idx, 0);
+                              setInspectedMemberId(row.userId);
+                            }}
+                            title="Double-click to view member details"
+                            className={`px-2.5 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer ${
                               freezeIdentityCols
                                 ? `md:sticky md:left-[42px] md:z-20 ${stickyBg}`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
                           >
                             <div className="flex items-center justify-between gap-1.5 min-w-0">
-                              <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                              <span className="font-medium text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 truncate transition-colors">
                                 {row.name}
                               </span>
                               {onViewMemberProfile && (
@@ -2165,6 +2198,7 @@ export function BalanceSheetView({
                                     e.stopPropagation();
                                     onViewMemberProfile(row.userId);
                                   }}
+                                  onDoubleClick={(e) => e.stopPropagation()}
                                   title={t('viewProfile')}
                                   aria-label={`${t('viewProfile')}: ${row.name}`}
                                   className="p-0.5 rounded text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shrink-0 cursor-pointer print-hidden"
@@ -2751,6 +2785,26 @@ export function BalanceSheetView({
           )}
         </div>
       </section>
+
+      <BalanceSheetMemberModal
+        row={inspectedMemberRow}
+        rowIndex={inspectedMemberIndex}
+        totalRows={filteredRows.length}
+        currency={ccy}
+        fullMonthLabel={fullMonthLabel}
+        shortMonthLabel={shortMonthLabel}
+        prevMonthLabel={prevMonthLabel}
+        nextMonthLabel={nextMonthLabel}
+        onClose={() => setInspectedMemberId(null)}
+        onNavigateRow={(nextIdx) => {
+          const nextRow = filteredRows[nextIdx];
+          if (nextRow) {
+            setInspectedMemberId(nextRow.userId);
+            setSelectedCell({ tab: 'balance-sheet', row: nextIdx, col: 0 });
+          }
+        }}
+        onViewMemberProfile={onViewMemberProfile}
+      />
     </div>
   );
 }

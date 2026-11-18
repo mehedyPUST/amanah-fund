@@ -39,5 +39,6 @@ export const queryKeys = {
     all: ['members'] as const,
     active: () => ['members', 'active'] as const,
     cycle: () => ['members', 'cycle'] as const,
+    profile: (memberId: string) => ['members', 'profile', memberId] as const,
   },
 } as const;
