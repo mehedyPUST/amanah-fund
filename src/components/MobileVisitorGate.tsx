@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,12 +30,17 @@ import { isMobileBrowseMode, setMobileBrowseMode } from '../utils/mobileSession.
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
 
 export function MobileVisitorGate() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, authChecking, setUser } = useCoopSession();
+  const tAuth = useTranslations('Auth');
+  const tBrand = useTranslations('Brand');
+  const tCommon = useTranslations('Common');
+
   const [isMobile, setIsMobile] = useState(false);
   const [browseMode, setBrowseMode] = useState(false);
   const [hasRegisteredPinAccount, setHasRegisteredPinAccount] = useState(false);
@@ -96,8 +102,6 @@ export function MobileVisitorGate() {
   const shouldRedirectAuthenticatedMobileHome =
     isMobile && !authChecking && Boolean(user) && pathname === '/' && !browseMode;
 
-  // Authenticated mobile visitors go directly to the app main interface (/dashboard)
-  // unless they intentionally tapped "Home" from the mobile dashboard drawer.
   useEffect(() => {
     if (!shouldRedirectAuthenticatedMobileHome) return;
     router.replace('/dashboard');
@@ -130,7 +134,7 @@ export function MobileVisitorGate() {
       router.replace('/dashboard');
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Sign-in failed. Please check your credentials.'
+        err instanceof Error ? err.message : tAuth('mobileGate.signInFailed')
       );
     } finally {
       setSubmitting(false);
@@ -144,11 +148,11 @@ export function MobileVisitorGate() {
     const trimmedCode = activationMemberId.trim().toUpperCase();
     const cleanedOtp = activationOtp.replace(/\D/g, '').trim();
     if (!trimmedCode || !/^\d{6}$/.test(cleanedOtp)) {
-      setActivationError('Enter both your official Member ID and 6-digit Activation OTP.');
+      setActivationError(tAuth('activation.errorBothRequired'));
       return;
     }
     if (!activationAgreed) {
-      setActivationError('Please confirm the final Amanah membership agreement checkbox.');
+      setActivationError(tAuth('activation.errorAgreementRequired'));
       return;
     }
     setActivating(true);
@@ -166,21 +170,26 @@ export function MobileVisitorGate() {
       setBrowseMode(false);
       setActivationChallenge(null);
       setConfirmationModal({
-        title: 'Membership Confirmed & Activated',
-        description: `Assalamu Alaikum ${res.user.name}. Your final agreement to join ${activationChallenge.applicant.fundName} is confirmed and your account is now active.`,
+        title: tAuth('activation.confirmedTitle'),
+        description: tAuth('activation.confirmedDesc', {
+          name: res.user.name,
+          fundName: activationChallenge.applicant.fundName,
+        }),
         details: [
-          { label: 'Member Name', value: res.user.name },
-          { label: 'Official Member ID', value: res.user.memberCode },
-          { label: 'Account Status', value: 'Active & Verified' },
+          { label: tAuth('activation.memberName'), value: res.user.name },
+          { label: tAuth('activation.officialMemberId'), value: res.user.memberCode },
+          { label: tAuth('activation.accountStatus'), value: tAuth('activation.activeVerified') },
           {
-            label: 'Confirmation Email',
-            value: res.confirmationEmailSent ? `Sent to ${res.user.email}` : 'Recorded In-App',
+            label: tAuth('activation.confirmationEmail'),
+            value: res.confirmationEmailSent
+              ? tAuth('activation.emailSentTo', { email: res.user.email })
+              : tAuth('activation.emailQueued'),
           },
         ],
       });
       setUser(res.user);
     } catch (err) {
-      setActivationError(err instanceof Error ? err.message : 'Activation verification failed.');
+      setActivationError(err instanceof Error ? err.message : tAuth('signInPage.activationFailed'));
     } finally {
       setActivating(false);
     }
@@ -199,21 +208,21 @@ export function MobileVisitorGate() {
       {showMobileSessionShield && (
         <div
           aria-live="polite"
-          aria-label="Checking cooperative session"
+          aria-label={tAuth('mobileGate.checkingSessionAria')}
           className="lg:hidden fixed inset-0 z-50 amanah-ambient-canvas flex flex-col items-center justify-center p-6 text-center"
         >
           <div className="w-12 h-12 rounded-2xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-lg mb-3">
             <Shield className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
-            Amanah
+            {tBrand('name')}
           </div>
           <div className="mt-1.5 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700 dark:text-emerald-400" />
             <span>
               {shouldRedirectAuthenticatedMobileHome
-                ? 'Opening Amanah Dashboard…'
-                : 'Checking session…'}
+                ? tAuth('mobileGate.openingDashboard')
+                : tAuth('mobileGate.checkingSession')}
             </span>
           </div>
         </div>
@@ -240,21 +249,28 @@ export function MobileVisitorGate() {
             >
               {/* Brand Header */}
               <div className="bg-gradient-to-br from-emerald-700 via-teal-700 to-emerald-900 text-white px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
-                    <Shield className="w-5 h-5 text-white" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <h2
-                      id="mobile-visitor-gate-title"
-                      className="font-display text-lg font-bold tracking-tight"
-                    >
-                      Amanah
-                    </h2>
-                    <p className="text-xs text-emerald-100/85">
-                      Qard Hasan &amp; Halal Treasury
-                    </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-10 h-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
+                      <Shield className="w-5 h-5 text-white" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2
+                        id="mobile-visitor-gate-title"
+                        className="font-display text-lg font-bold tracking-tight truncate"
+                      >
+                        {tBrand('name')}
+                      </h2>
+                      <p className="text-xs text-emerald-100/85 truncate">
+                        {tAuth('mobileGate.tagline')}
+                      </p>
+                    </div>
                   </div>
+                  <LanguageSwitcher
+                    variant="compact"
+                    surface="inverted"
+                    className="shrink-0"
+                  />
                 </div>
               </div>
 
@@ -263,7 +279,7 @@ export function MobileVisitorGate() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                        Activate Membership
+                        {tAuth('mobileGate.activateMembership')}
                       </span>
                       <button
                         type="button"
@@ -274,12 +290,13 @@ export function MobileVisitorGate() {
                         className="text-xs font-medium text-slate-500 dark:text-slate-400 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Back</span>
+                        <span>{tCommon('back')}</span>
                       </button>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Enter the Official Member ID and 6-digit Activation OTP sent to{' '}
-                      <span className="font-mono">{activationChallenge.applicant.email}</span>.
+                      {tAuth('mobileGate.enterCodesSentTo', {
+                        email: activationChallenge.applicant.email,
+                      })}
                     </p>
                     {activationError && (
                       <div
@@ -295,7 +312,7 @@ export function MobileVisitorGate() {
                           htmlFor="mobile-act-code"
                           className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                          Official Member ID
+                          {tAuth('activation.memberIdLabel')}
                         </label>
                         <input
                           id="mobile-act-code"
@@ -313,7 +330,7 @@ export function MobileVisitorGate() {
                           htmlFor="mobile-act-otp"
                           className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                          6-Digit Activation OTP
+                          {tAuth('activation.otpLabel')}
                         </label>
                         <input
                           id="mobile-act-otp"
@@ -325,7 +342,7 @@ export function MobileVisitorGate() {
                           onChange={(e) =>
                             setActivationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                           }
-                          placeholder="000000"
+                          placeholder={tAuth('activation.otpPlaceholder')}
                           className="w-full min-h-[44px] px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.25em] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                         />
                       </div>
@@ -336,10 +353,7 @@ export function MobileVisitorGate() {
                           onChange={(e) => setActivationAgreed(e.target.checked)}
                           className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-700"
                         />
-                        <span>
-                          Submitting these two codes confirms my final agreement to join Amanah
-                          Cooperative.
-                        </span>
+                        <span>{tAuth('mobileGate.agreementShort')}</span>
                       </label>
                       <button
                         type="submit"
@@ -347,12 +361,16 @@ export function MobileVisitorGate() {
                         className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                        <span>{activating ? 'Activating…' : 'Confirm & Activate'}</span>
+                        <span>
+                          {activating
+                            ? tAuth('mobileGate.activating')
+                            : tAuth('mobileGate.confirmActivate')}
+                        </span>
                       </button>
                     </form>
                     <div className="flex items-start gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                       <Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-                      <span>No email? Call an Amanah admin to receive your codes by phone.</span>
+                      <span>{tAuth('mobileGate.phoneHelpShort')}</span>
                     </div>
                   </div>
                 ) : hasRegisteredPinAccount && !usePasswordMode ? (
@@ -371,13 +389,13 @@ export function MobileVisitorGate() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                        Registered Member?
+                        {tAuth('mobileGate.registeredMember')}
                       </span>
                       <Link
                         href="/login?forgot=1"
                         className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline py-1"
                       >
-                        Forgot Password?
+                        {tAuth('forgotPassword')}
                       </Link>
                     </div>
 
@@ -408,7 +426,7 @@ export function MobileVisitorGate() {
                           htmlFor="mobile-modal-email"
                           className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                          Email Address
+                          {tAuth('email')}
                         </label>
                         <input
                           id="mobile-modal-email"
@@ -417,7 +435,7 @@ export function MobileVisitorGate() {
                           autoComplete="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="name@amanahcoop.org"
+                          placeholder={tAuth('emailPlaceholder')}
                           className="w-full min-h-[44px] px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                         />
                       </div>
@@ -427,7 +445,7 @@ export function MobileVisitorGate() {
                           htmlFor="mobile-modal-password"
                           className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                          Password
+                          {tAuth('password')}
                         </label>
                         <div className="relative">
                           <input
@@ -437,13 +455,17 @@ export function MobileVisitorGate() {
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder={tAuth('passwordPlaceholder')}
                             className="w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword((v) => !v)}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            aria-label={
+                              showPassword
+                                ? tAuth('mobileGate.hidePassword')
+                                : tAuth('mobileGate.showPassword')
+                            }
                             className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
                           >
                             {showPassword ? (
@@ -461,7 +483,7 @@ export function MobileVisitorGate() {
                         className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
                       >
                         <Lock className="w-4 h-4" aria-hidden="true" />
-                        <span>{submitting ? 'Signing In…' : 'Sign In'}</span>
+                        <span>{submitting ? tAuth('signingIn') : tAuth('signIn')}</span>
                       </button>
                     </form>
 
@@ -475,7 +497,7 @@ export function MobileVisitorGate() {
                         className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Sign in with 4-Digit PIN</span>
+                        <span>{tAuth('useDevicePin')}</span>
                       </button>
                     )}
                   </div>
@@ -486,7 +508,7 @@ export function MobileVisitorGate() {
                 {/* New to Amanah Section */}
                 <div className="space-y-2.5">
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    New to Amanah?
+                    {tAuth('mobileGate.newToAmanah')}
                   </div>
 
                   <div className="space-y-2">
@@ -499,7 +521,7 @@ export function MobileVisitorGate() {
                           className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400"
                           aria-hidden="true"
                         />
-                        <span>Rules &amp; Charter</span>
+                        <span>{tAuth('mobileGate.browseRules')}</span>
                       </span>
                       <ArrowRight className="w-4 h-4 text-slate-400" aria-hidden="true" />
                     </Link>
@@ -510,7 +532,7 @@ export function MobileVisitorGate() {
                     >
                       <span className="inline-flex items-center gap-2.5">
                         <UserPlus className="w-4.5 h-4.5" aria-hidden="true" />
-                        <span>Join Amanah</span>
+                        <span>{tAuth('mobileGate.applyJoin')}</span>
                       </span>
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </Link>
@@ -529,7 +551,7 @@ export function MobileVisitorGate() {
         title={confirmationModal?.title || ''}
         description={confirmationModal?.description || ''}
         details={confirmationModal?.details}
-        confirmLabel="Open Dashboard"
+        confirmLabel={tAuth('openDashboard')}
         onClose={() => {
           setConfirmationModal(null);
           router.replace('/dashboard');

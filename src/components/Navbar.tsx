@@ -14,32 +14,31 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 
-interface PublicNavItem {
-  href: string;
-  label: string;
-}
-
-const NAV_LINKS: PublicNavItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/rules', label: 'Rules & Charter' },
-];
-
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const tCommon = useTranslations('Common');
+  const tNav = useTranslations('Navigation');
   const { user, authChecking, refreshUser, logout, darkMode, toggleDarkMode } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const isAuthenticated = !authChecking && Boolean(user);
+
+  const navLinks = [
+    { href: '/', label: tNav('home') },
+    { href: '/about', label: tNav('about') },
+    { href: '/rules', label: tNav('rules') },
+  ];
 
   function isLinkActive(href: string): boolean {
     if (href === '/') return pathname === '/';
@@ -74,7 +73,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4">
+      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-4">
         {/* Zone 1: Clean single-element Brand Wordmark */}
         <Link
           href="/"
@@ -87,16 +86,16 @@ export function Navbar() {
             className="transition-transform duration-150 group-hover:scale-105"
           />
           <span className="font-display font-bold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0">
-            Amanah
+            {tCommon('brandName')}
           </span>
         </Link>
 
         {/* Zone 2: Centered typographic nav links with subtle underline */}
         <nav
-          className="hidden md:flex items-center justify-center gap-7 md:justify-self-center"
-          aria-label="Primary navigation"
+          className="hidden md:flex items-center justify-center gap-6 lg:gap-7 md:justify-self-center"
+          aria-label={tNav('primaryNav')}
         >
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = isLinkActive(link.href);
             return (
               <Link
@@ -123,14 +122,24 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Zone 3: Refresh, PWA Update, Theme & Primary Action */}
-        <div className="flex items-center gap-2 shrink-0 md:justify-self-end">
+        {/* Zone 3: Language, Refresh, PWA Update, Theme & Primary Action */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 md:justify-self-end">
+          <LanguageSwitcher
+            variant="segmented"
+            layoutId="navbar-lang-pill"
+            className="hidden lg:inline-flex"
+          />
+          <LanguageSwitcher
+            variant="compact"
+            className="inline-flex lg:hidden"
+          />
+
           <button
             type="button"
             onClick={() => void handleRefreshPage()}
             disabled={refreshing}
-            title="Refresh page and cooperative status"
-            aria-label="Refresh page"
+            title={tCommon('refreshPageTitle')}
+            aria-label={tCommon('refreshPage')}
             className="w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/35 transition-colors duration-150 flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
           >
             <RefreshCw
@@ -141,13 +150,13 @@ export function Navbar() {
 
           <PWAUpdateButton compact className="hidden sm:inline-flex" />
 
-          <PWAInstallButton compact className="hidden lg:inline-flex" />
+          <PWAInstallButton compact className="hidden xl:inline-flex" />
 
           <button
             type="button"
             onClick={toggleDarkMode}
-            title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-            aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+            aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             className="w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition-colors duration-150 flex items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
@@ -168,14 +177,14 @@ export function Navbar() {
                 className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Dashboard</span>
+                <span>{tNav('dashboard')}</span>
               </Link>
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
                 disabled={signingOut}
-                title="Sign out"
-                aria-label="Sign out"
+                title={tNav('signOut')}
+                aria-label={tNav('signOut')}
                 className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 transition-colors duration-150 shrink-0 cursor-pointer disabled:opacity-60"
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
@@ -187,13 +196,13 @@ export function Navbar() {
                 href="/login"
                 className="hidden sm:inline-flex items-center px-2.5 h-9 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors duration-150 whitespace-nowrap shrink-0"
               >
-                Sign In
+                {tNav('signIn')}
               </Link>
               <Link
                 href="/signup"
                 className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
               >
-                <span>Join Amanah</span>
+                <span>{tNav('joinAmanah')}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -205,7 +214,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle navigation menu"
+            aria-label={tCommon('toggleNavigationMenu')}
             className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -220,10 +229,10 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden absolute left-0 right-0 top-[66px] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3.5 space-y-2 shadow-xl"
+            className="md:hidden absolute left-0 right-0 top-[66px] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3.5 space-y-2.5 shadow-xl"
           >
             <div className="space-y-1">
-              {NAV_LINKS.map((link) => {
+              {navLinks.map((link) => {
                 const active = isLinkActive(link.href);
                 return (
                   <Link
@@ -242,7 +251,14 @@ export function Navbar() {
               })}
             </div>
 
-            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 px-1">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {tCommon('language')}
+                </span>
+                <LanguageSwitcher variant="segmented" layoutId="mobile-navbar-lang-pill" />
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -254,7 +270,7 @@ export function Navbar() {
                     className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`}
                     aria-hidden="true"
                   />
-                  <span>Refresh</span>
+                  <span>{tCommon('refresh')}</span>
                 </button>
                 <PWAUpdateButton fullWidth />
               </div>
@@ -270,7 +286,7 @@ export function Navbar() {
                     className="w-full py-2.5 px-3 rounded-lg bg-emerald-700 text-white text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
-                    <span>Dashboard</span>
+                    <span>{tNav('dashboard')}</span>
                   </Link>
                   <button
                     type="button"
@@ -279,7 +295,7 @@ export function Navbar() {
                     className="w-full py-2.5 px-3 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap"
                   >
                     <LogOut className="w-4 h-4" aria-hidden="true" />
-                    <span>{signingOut ? 'Signing Out…' : 'Sign Out'}</span>
+                    <span>{signingOut ? tNav('signingOut') : tNav('signOut')}</span>
                   </button>
                 </div>
               ) : (
@@ -289,14 +305,14 @@ export function Navbar() {
                     onClick={() => setMobileOpen(false)}
                     className="block w-full text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
-                    Sign In
+                    {tNav('signIn')}
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setMobileOpen(false)}
                     className="block w-full text-center py-2.5 px-3 rounded-lg bg-emerald-700 text-white text-sm font-medium"
                   >
-                    Join Amanah
+                    {tNav('joinAmanah')}
                   </Link>
                 </div>
               )}

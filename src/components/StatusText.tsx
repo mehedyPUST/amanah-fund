@@ -1,3 +1,5 @@
+'use client';
+
 import {
   AlertCircle,
   CheckCircle2,
@@ -7,139 +9,121 @@ import {
   Vote,
   XCircle,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface StatusTextProps {
   status: string;
 }
 
-const STATUS_MAP: Record<
+const STATUS_META: Record<
   string,
-  { label: string; colorClass: string; Icon: typeof CheckCircle2 }
+  { colorClass: string; Icon: typeof CheckCircle2 }
 > = {
   approved: {
-    label: 'Approved',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: CheckCircle2,
   },
   paid: {
-    label: 'Paid',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: CheckCircle2,
   },
   repaid: {
-    label: 'Fully Repaid',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: ShieldCheck,
   },
   active: {
-    label: 'Active',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: CheckCircle2,
   },
   vetted: {
-    label: 'Shariah Vetted',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: ShieldCheck,
   },
   pending_approval: {
-    label: 'Awaiting Admin Approval',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
   pending_activation: {
-    label: 'Awaiting Member Activation',
     colorClass: 'text-indigo-700 dark:text-indigo-400',
     Icon: KeyRound,
   },
   pending: {
-    label: 'Pending Approval',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
   pending_guarantor: {
-    label: 'Awaiting Guarantor Co-Sign',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
   pending_manager_review: {
-    label: 'Awaiting Manager Review',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
   pending_vote: {
-    label: '2/3 Member Voting',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Vote,
   },
   approved_pending_disbursement: {
-    label: 'Ready for Disbursement',
     colorClass: 'text-teal-700 dark:text-teal-400',
     Icon: ShieldCheck,
   },
   pending_verification: {
-    label: 'Pending Verification',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Clock,
   },
   open: {
-    label: 'Poll Ongoing',
     colorClass: 'text-amber-700 dark:text-amber-400',
     Icon: Vote,
   },
   closed: {
-    label: 'Poll Closed',
     colorClass: 'text-slate-600 dark:text-slate-400',
     Icon: CheckCircle2,
   },
   completed: {
-    label: 'Completed',
     colorClass: 'text-emerald-700 dark:text-emerald-400',
     Icon: CheckCircle2,
   },
   cancelled: {
-    label: 'Cancelled',
     colorClass: 'text-red-700 dark:text-red-400',
     Icon: XCircle,
   },
   scheduled: {
-    label: 'Scheduled',
     colorClass: 'text-indigo-700 dark:text-indigo-400',
     Icon: Clock,
   },
   proposed: {
-    label: 'Proposed',
     colorClass: 'text-indigo-700 dark:text-indigo-400',
     Icon: Clock,
   },
   rejected: {
-    label: 'Rejected',
     colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: XCircle,
   },
   suspended: {
-    label: 'Suspended',
     colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: AlertCircle,
   },
   overdue: {
-    label: 'Overdue',
     colorClass: 'text-rose-700 dark:text-rose-400',
     Icon: AlertCircle,
   },
 };
 
 export function StatusText({ status }: StatusTextProps) {
-  const entry = STATUS_MAP[status] || {
-    label: status.replace(/_/g, ' '),
+  const tStatus = useTranslations('Status');
+  const entry = STATUS_META[status] || {
     colorClass: 'text-slate-600 dark:text-slate-300',
     Icon: Clock,
   };
   const { Icon } = entry;
+  const label = STATUS_META[status]
+    ? tStatus(status as keyof typeof STATUS_META)
+    : status.replace(/_/g, ' ');
 
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${entry.colorClass}`}>
       <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-      <span>{entry.label}</span>
+      <span>{label}</span>
     </span>
   );
 }

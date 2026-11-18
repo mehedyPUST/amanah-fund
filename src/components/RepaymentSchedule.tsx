@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type {
   DashboardSectionId,
   FundConfig,
@@ -39,19 +40,22 @@ function getDaysUntil(dateStr: string): number {
   return Math.round((parsed.getTime() - utcToday) / (1000 * 60 * 60 * 24));
 }
 
-function describeDueTiming(inst: InstallmentItem): {
+function describeDueTiming(
+  inst: InstallmentItem,
+  t: (key: string, values?: Record<string, string | number>) => string
+): {
   label: string;
   tone: 'paid' | 'pending' | 'overdue' | 'soon' | 'upcoming';
 } {
   if (inst.status === 'paid') {
     return {
-      label: inst.paidAt ? `Paid ${formatShortDate(inst.paidAt)}` : 'Paid',
+      label: inst.paidAt ? t('paidDate', { date: formatShortDate(inst.paidAt) }) : t('paid'),
       tone: 'paid',
     };
   }
   if (inst.status === 'pending_verification') {
     return {
-      label: 'Awaiting Verification',
+      label: t('awaitingVerification'),
       tone: 'pending',
     };
   }
@@ -59,17 +63,17 @@ function describeDueTiming(inst: InstallmentItem): {
   if (inst.status === 'overdue' || days < 0) {
     const overdueDays = Math.abs(days);
     return {
-      label: overdueDays === 0 ? 'Overdue' : `Overdue by ${overdueDays}d`,
+      label: overdueDays === 0 ? t('overdue') : t('overdueByDays', { days: overdueDays }),
       tone: 'overdue',
     };
   }
   if (days === 0) {
-    return { label: 'Due Today', tone: 'soon' };
+    return { label: t('dueToday'), tone: 'soon' };
   }
   if (days <= 7) {
-    return { label: `Due in ${days}d`, tone: 'soon' };
+    return { label: t('dueInDays', { days }), tone: 'soon' };
   }
-  return { label: `In ${days} days`, tone: 'upcoming' };
+  return { label: t('inDays', { days }), tone: 'upcoming' };
 }
 
 export function RepaymentSchedule({
@@ -80,6 +84,7 @@ export function RepaymentSchedule({
   onNavigate,
   onOpenLoanModal,
 }: RepaymentScheduleProps) {
+  const t = useTranslations('Loans.schedule');
   const ccy = config?.currency || 'BDT';
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
@@ -147,7 +152,7 @@ export function RepaymentSchedule({
   const nextDueInstallment = activeLoan
     ? activeLoan.installments.find((i) => i.status !== 'paid') || null
     : null;
-  const nextDueTiming = nextDueInstallment ? describeDueTiming(nextDueInstallment) : null;
+  const nextDueTiming = nextDueInstallment ? describeDueTiming(nextDueInstallment, t) : null;
 
   const visibleInstallments = activeLoan
     ? viewFilter === 'upcoming'
@@ -159,7 +164,7 @@ export function RepaymentSchedule({
     <MotionCard
       as="section"
       hue="teal"
-      aria-label="Repayment Schedule"
+      aria-label={t('title')}
       className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
@@ -168,10 +173,10 @@ export function RepaymentSchedule({
           <div>
             <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <CalendarClock className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>0% Interest · Revolving Principal</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <h3 className="mt-1 text-base font-semibold text-slate-900 dark:text-white">
-              Repayment Schedule
+              {t('title')}
             </h3>
           </div>
 
@@ -180,8 +185,8 @@ export function RepaymentSchedule({
               <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 {(
                   [
-                    { id: 'mine', label: 'My Loan' },
-                    { id: 'all', label: `All Active (${allActiveLoans.length})` },
+                    { id: 'mine', label: t('myLoan') },
+                    { id: 'all', label: t('allActive', { count: allActiveLoans.length }) },
                   ] as const
                 ).map((tab) => {
                   const active = scope === tab.id;
@@ -218,8 +223,8 @@ export function RepaymentSchedule({
               <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 {(
                   [
-                    { id: 'upcoming', label: 'Upcoming' },
-                    { id: 'all', label: `All (${totalCount})` },
+                    { id: 'upcoming', label: t('upcoming') },
+                    { id: 'all', label: t('allCount', { count: totalCount }) },
                   ] as const
                 ).map((tab) => {
                   const active = viewFilter === tab.id;
@@ -278,12 +283,14 @@ export function RepaymentSchedule({
             </div>
             <div className="space-y-1">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                No Active Repayment Deadlines
+                {t('noDeadlinesTitle')}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {myRepaidCount > 0
-                  ? `Zero balance · ${myRepaidCount} Qard Hasan ${myRepaidCount === 1 ? 'loan' : 'loans'} repaid.`
-                  : 'Zero remaining Qard Hasan balance.'}
+                  ? myRepaidCount === 1
+                    ? t('zeroBalanceRepaidSingle', { count: myRepaidCount })
+                    : t('zeroBalanceRepaidMulti', { count: myRepaidCount })
+                  : t('zeroBalance')}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -293,7 +300,7 @@ export function RepaymentSchedule({
                   onClick={onOpenLoanModal}
                   className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer transition-colors"
                 >
-                  Request Loan
+                  {t('requestLoan')}
                 </button>
               )}
               <button
@@ -301,7 +308,7 @@ export function RepaymentSchedule({
                 onClick={() => onNavigate('quard-hasan')}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
               >
-                Open Qard Hasan
+                {t('openQardHasan')}
               </button>
             </div>
           </div>
@@ -320,8 +327,8 @@ export function RepaymentSchedule({
                     <span aria-hidden="true">·</span>
                     <span className="text-emerald-700 dark:text-emerald-400 font-medium">
                       {activeLoan.status === 'approved_pending_disbursement'
-                        ? 'Approved · Awaiting Disbursement'
-                        : 'Active Repayment'}
+                        ? t('approvedAwaiting')
+                        : t('activeRepayment')}
                     </span>
                   </div>
                   <div className="mt-1.5 flex items-baseline gap-2">
@@ -329,7 +336,7 @@ export function RepaymentSchedule({
                       {formatMoney(activeLoan.remainingBalance, ccy)}
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      remaining of{' '}
+                      {t('remainingOf')}{' '}
                       <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
                         {formatMoney(activeLoan.amount, ccy)}
                       </span>
@@ -338,7 +345,7 @@ export function RepaymentSchedule({
                 </div>
 
                 <div className="text-right">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Total Repaid</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{t('totalRepaid')}</div>
                   <div className="text-sm font-semibold font-mono tabular-nums text-emerald-700 dark:text-emerald-400 mt-0.5">
                     {formatMoney(activeLoan.totalRepaid, ccy)} ({paidPct}%)
                   </div>
@@ -353,10 +360,10 @@ export function RepaymentSchedule({
                     gridTemplateColumns: `repeat(${Math.max(1, totalCount)}, minmax(0, 1fr))`,
                   }}
                   role="img"
-                  aria-label={`${paidCount} of ${totalCount} installments paid`}
+                  aria-label={t('paidOfTotalAria', { paid: paidCount, total: totalCount })}
                 >
                   {activeLoan.installments.map((inst) => {
-                    const timing = describeDueTiming(inst);
+                    const timing = describeDueTiming(inst, t);
                     const colorClass =
                       timing.tone === 'paid'
                         ? 'bg-emerald-600 dark:bg-emerald-500'
@@ -370,7 +377,7 @@ export function RepaymentSchedule({
                     return (
                       <div
                         key={inst.installmentNumber}
-                        title={`Installment #${inst.installmentNumber} · ${formatShortDate(inst.dueDate)} · ${timing.label}`}
+                        title={`#${inst.installmentNumber} · ${formatShortDate(inst.dueDate)} · ${timing.label}`}
                         className={`h-2 rounded-sm transition-colors ${colorClass}`}
                       />
                     );
@@ -378,10 +385,10 @@ export function RepaymentSchedule({
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
                   <span>
-                    {paidCount} / {totalCount} installments settled
+                    {t('settledCount', { paid: paidCount, total: totalCount })}
                   </span>
                   <span>
-                    {totalCount - paidCount} remaining
+                    {t('remainingCount', { count: totalCount - paidCount })}
                   </span>
                 </div>
               </div>
@@ -406,7 +413,7 @@ export function RepaymentSchedule({
                   )}
                   <div className="text-xs min-w-0">
                     <span className="font-semibold text-slate-900 dark:text-white">
-                      Next Deadline: Installment #{nextDueInstallment.installmentNumber}
+                      {t('nextDeadline', { num: nextDueInstallment.installmentNumber })}
                     </span>
                     <span className="text-slate-600 dark:text-slate-400 ml-1.5">
                       · {formatShortDate(nextDueInstallment.dueDate)} ({nextDueTiming.label})
@@ -423,11 +430,11 @@ export function RepaymentSchedule({
             <div className="max-h-60 overflow-y-auto scrollbar-subtle divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl">
               {visibleInstallments.length === 0 ? (
                 <div className="p-5 text-center text-xs text-slate-500 dark:text-slate-400">
-                  All installments are settled.
+                  {t('allSettled')}
                 </div>
               ) : (
                 visibleInstallments.map((inst) => {
-                  const timing = describeDueTiming(inst);
+                  const timing = describeDueTiming(inst, t);
                   return (
                     <div
                       key={inst.installmentNumber}
@@ -474,7 +481,7 @@ export function RepaymentSchedule({
                         </div>
                         {inst.paidAmount > 0 && inst.status !== 'paid' && (
                           <div className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                            Paid {formatMoney(inst.paidAmount, ccy)}
+                            {t('paidPartial', { amount: formatMoney(inst.paidAmount, ccy) })}
                           </div>
                         )}
                       </div>
@@ -491,14 +498,14 @@ export function RepaymentSchedule({
         <div className="pt-1 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <HandCoins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Submit Bank/MFS installment proof to restore principal</span>
+            <span>{t('footerHint')}</span>
           </span>
           <button
             type="button"
             onClick={() => onNavigate('quard-hasan')}
             className="group text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
           >
-            <span>Open Qard Hasan</span>
+            <span>{t('openQardHasan')}</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>

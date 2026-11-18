@@ -22,6 +22,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
@@ -67,6 +68,10 @@ export function OverviewView({
   onViewMemberProfile,
   onRefresh,
 }: OverviewViewProps) {
+  const t = useTranslations('Dashboard');
+  const tOv = useTranslations('Dashboard.overviewView');
+  const tNav = useTranslations('Navigation');
+  const tCommon = useTranslations('Common');
   const [quotaInput, setQuotaInput] = useState(
     String(overview?.config.maxLoansPerYear ?? 3)
   );
@@ -93,15 +98,15 @@ export function OverviewView({
       await onRefresh();
       setQuotaModal({
         tone: 'emerald',
-        title: 'Annual Loan Quota Updated',
-        description: `Saved: ${nextLimit} Qard Hasan loans per member per year.`,
+        title: t('alerts.quotaUpdated'),
+        description: t('alerts.quotaSavedDesc', { limit: nextLimit }),
       });
     } catch (err) {
       setQuotaModal({
         tone: 'red',
-        title: 'Quota Update Failed',
+        title: t('alerts.quotaUpdateFailed'),
         description:
-          err instanceof Error ? err.message : 'Could not update annual loan limit.',
+          err instanceof Error ? err.message : t('alerts.quotaUpdateError'),
       });
     } finally {
       setSavingQuota(false);
@@ -217,17 +222,15 @@ export function OverviewView({
           <div className="space-y-1.5 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
               <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                {phase === 'qard_hasan'
-                  ? 'Phase 1 · Active Qard Hasan Lending'
-                  : 'Phase 2 · Post-Maturity Halal Investment'}
+                {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                Target Maturity: {formatShortDate(config.maturityDate)}
+                {t('targetMaturity', { date: formatShortDate(config.maturityDate) })}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
-                {daysUntilMaturity} days remaining
+                {tCommon('daysRemaining', { days: daysUntilMaturity })}
               </span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -245,7 +248,7 @@ export function OverviewView({
               className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
             >
               <BarChart3 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-              <span>Statistics</span>
+              <span>{tNav('statistics')}</span>
             </button>
             {isAdmin ? (
               <button
@@ -253,7 +256,7 @@ export function OverviewView({
                 onClick={() => onNavigate('site-settings')}
                 className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Site Settings</span>
+                <span>{tNav('siteSettings')}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -265,7 +268,7 @@ export function OverviewView({
                 onClick={() => onNavigate('monthly-contribution')}
                 className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Contributions</span>
+                <span>{tNav('contributions')}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -281,20 +284,20 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22, delay: 0.03 }}
-        aria-label="Quick Actions"
+        aria-label={t('quickActions')}
         className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="space-y-0.5">
             <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              {isAdmin ? 'Quick Actions · Governance Shortcuts' : 'Quick Actions · Member Workflows'}
+              {isAdmin ? t('quickActionsAdmin') : t('quickActionsMember')}
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Quick Actions
+              {t('quickActions')}
             </h3>
           </div>
           <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-            One-click navigation
+            {t('oneClickNav')}
           </span>
         </div>
 
@@ -311,16 +314,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Users &amp; Roles
+                    {tNav('usersAndRoles')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    KYC &amp; Role Permissions
+                    {t('quickCards.kycRolePerms')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {treasury.pendingMembersCount > 0 ? `${treasury.pendingMembersCount} Pending` : '20 Cap'}
+                  {treasury.pendingMembersCount > 0 ? tOv('pendingCountBadge', { count: treasury.pendingMembersCount }) : tOv('cap20')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -340,16 +343,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Governance Desk
+                    {tNav('governanceDesk')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Shura Verification Queue
+                    {t('quickCards.shuraQueue')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {treasury.pendingLoansReviewCount + treasury.pendingContributionsCount} Queue
+                  {tOv('queueCountBadge', { count: treasury.pendingLoansReviewCount + treasury.pendingContributionsCount })}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -369,16 +372,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Voting
+                    {tNav('voting')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Secret 2/3 Consensus
+                    {t('quickCards.secretConsensus')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {treasury.pendingVotesCount} Open
+                  {tOv('openCountBadge', { count: treasury.pendingVotesCount })}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -398,16 +401,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Transactions
+                    {tNav('transactions')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Full Audit Ledger
+                    {t('quickCards.fullAuditLedger')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  Ledger
+                  {tCommon('ledger')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -427,16 +430,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Site Settings
+                    {tNav('siteSettings')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Charter ceilings, email templates &amp; treasury controls
+                    {t('quickCards.siteSettingsSub')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300">
-                  Config
+                  {tCommon('config')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -458,16 +461,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Request Loan
+                    {tNav('requestLoan')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    0% Qard Hasan Relief
+                    {t('quickCards.qardHasanRelief')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  0% Interest
+                  {t('quickCards.zeroInterest')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -487,16 +490,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Contributions
+                    {tNav('contributions')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Monthly Savings · {formatMoney(config.monthlyContributionAmount, ccy)}
+                    {t('quickCards.monthlySavings', { amount: formatMoney(config.monthlyContributionAmount, ccy) })}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {personal.approvedContributionsCount} Paid
+                  {tOv('paidCountBadge', { count: personal.approvedContributionsCount })}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -516,16 +519,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Voting
+                    {tNav('voting')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Anonymized 2/3 Quorum
+                    {t('quickCards.anonymizedQuorum')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {treasury.pendingVotesCount} Open
+                  {tOv('openCountBadge', { count: treasury.pendingVotesCount })}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -545,16 +548,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    My Amanah
+                    {tNav('myAmanah')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Personal Equity &amp; Eligibility
+                    {t('quickCards.personalEquity')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {personal.eligibility.eligible ? 'Eligible' : 'Standing'}
+                  {personal.eligibility.eligible ? tCommon('eligible') : t('quickCards.standing')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -576,16 +579,16 @@ export function OverviewView({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    Transactions
+                    {tNav('transactions')}
                   </div>
                   <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Verified deposits, disbursements &amp; audit ledger
+                    {t('quickCards.verifiedDeposits')}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300">
-                  Ledger
+                  {tCommon('ledger')}
                 </span>
                 <ChevronRight
                   className="w-4 h-4 text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -606,16 +609,16 @@ export function OverviewView({
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      Manager Desk
+                      {tNav('managerDesk')}
                     </div>
                     <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                      Shura Review &amp; Approvals
+                      {t('quickCards.shuraApprovals')}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300">
-                    {treasury.pendingContributionsCount + treasury.pendingLoansReviewCount} Due
+                    {tOv('dueCountBadge', { count: treasury.pendingContributionsCount + treasury.pendingLoansReviewCount })}
                   </span>
                   <ChevronRight
                     className="w-4 h-4 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-transform duration-150 group-hover:translate-x-0.5"
@@ -634,6 +637,7 @@ export function OverviewView({
         let progressPct = 20;
         let stageCaption = '';
         let barColor = 'bg-amber-500';
+        const deskName = isAdmin ? tNav('governanceDesk') : tNav('managerDesk');
         if (loan.status === 'pending_guarantor') {
           progressPct = 15;
           const pendingNames = (loan.guarantors || [])
@@ -641,31 +645,35 @@ export function OverviewView({
             .map((g) => g.memberName)
             .join(', ');
           stageCaption = pendingNames
-            ? `Waiting for guarantor co-signature from ${pendingNames} before Manager review.`
-            : 'Waiting for guarantor co-signature before Manager review.';
+            ? tOv('stageGuarantorNames', { names: pendingNames })
+            : tOv('stageGuarantor');
         } else if (loan.status === 'pending_manager_review') {
           progressPct = 35;
-          stageCaption = `Application submitted and queued in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} to initiate the 2/3 Voting ballot.`;
+          stageCaption = tOv('stageManagerReview', { desk: deskName });
         } else if (loan.status === 'pending_vote') {
           progressPct = 60;
           const cast = loan.totalVotesCast ?? loan.votes.length;
-          stageCaption = `Secret 2/3 Voting ballot is open (${cast} of ${loan.totalEligibleVoters} member ballot(s) cast).`;
+          stageCaption = tOv('stageVotingOpen', { cast, total: loan.totalEligibleVoters });
         } else if (loan.status === 'approved_pending_disbursement') {
           progressPct = 85;
-          stageCaption = `2/3 quorum approved! Awaiting Manager payout confirmation in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}.`;
+          stageCaption = tOv('stageAwaitingDisbursement', { desk: deskName });
           barColor = 'bg-teal-600 dark:bg-teal-500';
         } else if (loan.status === 'active') {
           progressPct =
             loan.amount > 0
               ? Math.min(100, Math.round((loan.totalRepaid / loan.amount) * 100))
               : 0;
-          stageCaption = `Disbursed · Repaid ${formatMoney(loan.totalRepaid, ccy)} of ${formatMoney(loan.amount, ccy)} (${formatMoney(loan.remainingBalance, ccy)} remaining).`;
+          stageCaption = tOv('stageActiveDisbursed', {
+            repaid: formatMoney(loan.totalRepaid, ccy),
+            total: formatMoney(loan.amount, ccy),
+            remaining: formatMoney(loan.remainingBalance, ccy),
+          });
           barColor = 'bg-emerald-600';
         }
 
         return (
           <section
-            aria-label="Your Active Qard Hasan Request"
+            aria-label={t('alerts.activeLoanRequest')}
             className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -673,7 +681,7 @@ export function OverviewView({
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
                     <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    <span>Your Active Qard Hasan Request</span>
+                    <span>{t('alerts.activeLoanRequest')}</span>
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                   <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
@@ -688,13 +696,15 @@ export function OverviewView({
                     {formatMoney(loan.amount, ccy)}
                   </h3>
                   <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                    {loan.installmentMonths} monthly installments of{' '}
-                    {formatMoney(loan.monthlyInstallment, ccy)} (0% interest)
+                    {tOv('installmentsSummary', {
+                      months: loan.installmentMonths,
+                      amount: formatMoney(loan.monthlyInstallment, ccy),
+                    })}
                   </span>
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-3xl">
-                  Purpose: {loan.purpose}
+                  {t('alerts.purposeLabel', { purpose: loan.purpose })}
                 </p>
               </div>
 
@@ -706,7 +716,7 @@ export function OverviewView({
                     className="px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <Vote className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open Voting</span>
+                    <span>{t('alerts.openVoting')}</span>
                   </button>
                 )}
                 <button
@@ -714,7 +724,7 @@ export function OverviewView({
                   onClick={() => onNavigate('quard-hasan')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
-                  <span>Open Qard Hasan</span>
+                  <span>{t('alerts.openQardHasan')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
@@ -745,8 +755,8 @@ export function OverviewView({
               <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
                 {myGuarantorRequests.length}{' '}
                 {myGuarantorRequests.length === 1
-                  ? 'Guarantor Co-Signature Request Waiting for You'
-                  : 'Guarantor Co-Signature Requests Waiting for You'}
+                  ? tOv('guarantorWaitingSingle')
+                  : tOv('guarantorWaitingMulti')}
               </div>
               <p className="text-xs text-amber-800 dark:text-amber-300">
                 {myGuarantorRequests[0].borrowerName} ({myGuarantorRequests[0].id}) ·{' '}
@@ -759,7 +769,7 @@ export function OverviewView({
             onClick={() => onNavigate('quard-hasan')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
           >
-            Open Qard Hasan →
+            {t('alerts.openQardHasan')} →
           </button>
         </section>
       )}
@@ -773,13 +783,13 @@ export function OverviewView({
               <div className="text-xs font-semibold text-red-900 dark:text-red-200">
                 {treasury.overdueInstallmentsCount}{' '}
                 {treasury.overdueInstallmentsCount === 1
-                  ? 'Overdue Qard Hasan Installment Detected'
-                  : 'Overdue Qard Hasan Installments Detected'}
+                  ? tOv('overdueSingle')
+                  : tOv('overdueMulti')}
               </div>
               <p className="text-xs text-red-800 dark:text-red-300">
                 {!isAdmin && !personal.eligibility.noOverdueInstallments
-                  ? `You have ${personal.eligibility.overdueCount} overdue installment(s). Settle them in Qard Hasan before requesting new financing.`
-                  : 'Cooperative repayment scheduler flagged past-due installments requiring follow-up.'}
+                  ? tOv('overdueMemberNotice', { count: personal.eligibility.overdueCount })
+                  : tOv('overdueCoopNotice')}
               </p>
             </div>
           </div>
@@ -789,7 +799,7 @@ export function OverviewView({
               onClick={() => onNavigate('quard-hasan')}
               className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium whitespace-nowrap cursor-pointer shrink-0"
             >
-              Inspect Repayments →
+              {t('alerts.inspectRepayments')} →
             </button>
           )}
         </section>
@@ -802,8 +812,8 @@ export function OverviewView({
             <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
               {treasury.pendingMembersCount}{' '}
               {treasury.pendingMembersCount === 1
-                ? 'New Member Application Pending Approval'
-                : 'New Member Applications Pending Approval'}
+                ? tOv('pendingAppSingle')
+                : tOv('pendingAppMulti')}
             </div>
           </div>
           <button
@@ -811,7 +821,7 @@ export function OverviewView({
             onClick={() => onNavigate('member-registry')}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer shrink-0"
           >
-            Review Users &amp; Roles →
+            {t('alerts.reviewUsersRoles')} →
           </button>
         </section>
       )}
@@ -823,10 +833,10 @@ export function OverviewView({
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Administrator Quota Control</span>
+                <span>{t('alerts.adminQuotaControl')}</span>
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Maximum Qard Hasan Loans Per Member Per Year
+                {t('alerts.maxLoansPerYear')}
               </h3>
             </div>
 
@@ -835,7 +845,7 @@ export function OverviewView({
               className="flex flex-wrap items-center gap-2.5 shrink-0"
             >
               <label htmlFor="admin-annual-loan-limit" className="sr-only">
-                Maximum Qard Hasan Loans Per Member Per Year
+                {t('alerts.maxLoansPerYear')}
               </label>
               <input
                 id="admin-annual-loan-limit"
@@ -852,7 +862,7 @@ export function OverviewView({
                 disabled={savingQuota}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer"
               >
-                {savingQuota ? 'Saving…' : 'Update Annual Limit'}
+                {savingQuota ? tCommon('saving') : t('alerts.updateAnnualLimit')}
               </button>
             </form>
           </div>
@@ -867,15 +877,17 @@ export function OverviewView({
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>Amanah Height (Total Raised)</span>
+            <span>{tOv('amanahHeightTitle')}</span>
             <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            {treasury.contributingMembersCount} contributing members · Pending{' '}
-            {formatMoney(treasury.pendingContributionsAmount, ccy)}
+            {tOv('contributingMembersPending', {
+              count: treasury.contributingMembersCount,
+              amount: formatMoney(treasury.pendingContributionsAmount, ccy),
+            })}
           </div>
         </MotionCard>
 
@@ -885,14 +897,14 @@ export function OverviewView({
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>Current Balance</span>
+            <span>{t('kpi.currentBalance')}</span>
             <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            Amanah Height − Qard Hasan Current
+            {tOv('currentBalanceFormula')}
           </div>
         </MotionCard>
 
@@ -902,16 +914,21 @@ export function OverviewView({
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>Qard Hasan Total Current</span>
+            <span>{tOv('qardHasanTotalCurrent')}</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            {treasury.activeBorrowers.length}{' '}
-            {treasury.activeBorrowers.length === 1 ? 'active borrower' : 'active borrowers'} ·
-            Disbursed {formatMoney(treasury.totalLoansDisbursed, ccy)}
+            {tOv('activeBorrowersDisbursed', {
+              count: treasury.activeBorrowers.length,
+              label:
+                treasury.activeBorrowers.length === 1
+                  ? t('kpi.borrowerSingular')
+                  : t('kpi.borrowerPlural'),
+              amount: formatMoney(treasury.totalLoansDisbursed, ccy),
+            })}
           </div>
         </MotionCard>
 
@@ -921,7 +938,7 @@ export function OverviewView({
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>Repayments Returned (+)</span>
+            <span>{tOv('repaymentsReturnedPlus')}</span>
             <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -929,8 +946,10 @@ export function OverviewView({
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             {treasury.approvedLoansDeducted > 0
-              ? `${Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100)}% restored to central fund`
-              : '100% revolving principal'}
+              ? tOv('restoredToCentralFund', {
+                  pct: Math.round((treasury.totalRepaid / treasury.approvedLoansDeducted) * 100),
+                })
+              : tOv('revolvingPrincipal100')}
           </div>
         </MotionCard>
       </section>
@@ -943,7 +962,7 @@ export function OverviewView({
           className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-            <span>This Month Contribution ({treasury.thisMonthKey})</span>
+            <span>{tOv('thisMonthContributionWithMonth', { month: treasury.thisMonthKey })}</span>
             <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -983,7 +1002,7 @@ export function OverviewView({
           className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            This Month Due (Remaining / Target)
+            {t('sheets.thisMonthDue')}
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
             {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
@@ -993,8 +1012,8 @@ export function OverviewView({
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthDueRemaining === 0
-              ? 'All monthly contribution targets collected'
-              : 'Pending collection from members this cycle'}
+              ? t('sheets.allTargetsCollected')
+              : t('sheets.pendingCollectionCycle')}
           </div>
         </MotionCard>
 
@@ -1004,7 +1023,7 @@ export function OverviewView({
           className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            This Month Hasan Installment
+            {t('sheets.thisMonthHasanInstallment')}
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
@@ -1014,8 +1033,8 @@ export function OverviewView({
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthHasanInstallmentNeed > 0
-              ? 'Installments due & collected this month'
-              : 'No installments due this month'}
+              ? t('sheets.installmentsDueCollected')
+              : t('sheets.noInstallmentsDue')}
           </div>
         </MotionCard>
 
@@ -1025,13 +1044,13 @@ export function OverviewView({
           className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-            <span>This Month Clearance</span>
+            <span>{t('sheets.thisMonthClearance')}</span>
             <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
             {treasury.thisMonthClearanceClearedMembers}{' '}
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {treasury.thisMonthClearanceTotalMembers} cleared members
+              / {treasury.thisMonthClearanceTotalMembers} {tOv('clearedMembersSuffix')}
             </span>
           </div>
           <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -1067,17 +1086,17 @@ export function OverviewView({
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Qard Hasan Members
+                {tOv('activeQardHasanMembers')}
               </h3>
             </div>
             <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
-              {treasury.activeBorrowers.length} active
+              {tOv('activeCountLabel', { count: treasury.activeBorrowers.length })}
             </span>
           </div>
 
           {treasury.activeBorrowers.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No active Qard Hasan loans are currently outstanding.
+              {t('sheets.noActiveBorrowers')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1109,11 +1128,11 @@ export function OverviewView({
                     <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
                       {b.loanId}
                       {b.nextDueDate
-                        ? ` · Next due ${formatShortDate(b.nextDueDate)}`
+                        ? ` · ${tOv('nextDuePrefix', { date: formatShortDate(b.nextDueDate) })}`
                         : ''}
                       {b.missedInstallmentsCount > 0 && (
                         <span className="text-red-600 dark:text-red-400 ml-1.5">
-                          · {b.missedInstallmentsCount} overdue
+                          · {t('sheets.overdueCount', { count: b.missedInstallmentsCount })}
                         </span>
                       )}
                     </div>
@@ -1123,11 +1142,11 @@ export function OverviewView({
                       {formatMoney(b.mainAmount, ccy)}{' '}
                       <span className="text-slate-400 dark:text-slate-600 font-normal">/</span>{' '}
                       <span className="text-amber-700 dark:text-amber-400">
-                        {formatMoney(b.dueAmount, ccy)} due
+                        {formatMoney(b.dueAmount, ccy)} {t('sheets.dueLower')}
                       </span>
                     </div>
                     <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                      Repaid {formatMoney(b.totalRepaid, ccy)}
+                      {t('sheets.repaidAmount', { amount: formatMoney(b.totalRepaid, ccy) })}
                     </div>
                   </div>
                 </div>
@@ -1144,7 +1163,7 @@ export function OverviewView({
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                This Month Member Clearance ({treasury.thisMonthKey})
+                {tOv('thisMonthClearanceWithMonth', { month: treasury.thisMonthKey })}
               </h3>
             </div>
             <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
@@ -1154,7 +1173,7 @@ export function OverviewView({
 
           {treasury.thisMonthMemberClearance.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-              No active contributing members found.
+              {t('sheets.noActiveContributors')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto pr-1">
@@ -1196,10 +1215,10 @@ export function OverviewView({
                     }`}
                   >
                     {entry.status === 'cleared'
-                      ? 'Cleared'
+                      ? t('sheets.clearedBadge')
                       : entry.status === 'pending'
-                        ? 'Pending Review'
-                        : 'Due'}
+                        ? t('sheets.pendingReviewBadge')
+                        : t('sheets.dueBadge')}
                   </span>
                 </div>
               ))}
@@ -1219,26 +1238,26 @@ export function OverviewView({
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Administrator Account · Non-Contributing Governance</span>
+                <span>{tOv('adminNonContribBadge')}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Platform Oversight &amp; Configuration
+                {tOv('platformOversightTitle')}
               </h3>
               <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs pt-1">
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Pending Profile Edits</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t('sheets.pendingProfileEdits')}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.pendingProfileRequestsCount}
                   </dd>
                 </div>
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Open Decision Polls</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t('sheets.openDecisionPolls')}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.openDecisionPollsCount}
                   </dd>
                 </div>
                 <div className="py-2 flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Upcoming Meetings</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">{t('sheets.upcomingMeetings')}</dt>
                   <dd className="font-mono font-semibold text-slate-900 dark:text-white">
                     {treasury.upcomingMeetingsCount}
                   </dd>
@@ -1253,7 +1272,7 @@ export function OverviewView({
                 className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Users &amp; Roles</span>
+                <span>{tNav('usersAndRoles')}</span>
               </button>
               <button
                 type="button"
@@ -1261,7 +1280,7 @@ export function OverviewView({
                 className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Site Settings</span>
+                <span>{tNav('siteSettings')}</span>
               </button>
             </div>
           </MotionCard>
@@ -1274,7 +1293,7 @@ export function OverviewView({
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Your Member Standing
+                  {t('sheets.memberStandingTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {user.name} · <span className="font-mono">{user.memberCode}</span>
@@ -1283,7 +1302,7 @@ export function OverviewView({
 
               <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Your Approved Deposits</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.yourApprovedDeposits')}</span>
                   <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(personal.totalContributed, ccy)}
                   </span>
@@ -1291,10 +1310,10 @@ export function OverviewView({
                 <div className="py-2.5 flex items-center justify-between gap-2">
                   <span className="text-slate-600 dark:text-slate-400">
                     {personal.activeLoanBalance > 0
-                      ? 'Active Loan Balance'
+                      ? t('sheets.activeLoanBalance')
                       : myActiveOrPendingLoan
-                        ? 'Pending Qard Hasan Request'
-                        : 'Active Loan Balance'}
+                        ? t('sheets.pendingQardRequest')
+                        : t('sheets.activeLoanBalance')}
                   </span>
                   <div className="text-right">
                     <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
@@ -1312,21 +1331,23 @@ export function OverviewView({
                   </div>
                 </div>
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.coopNetEquity')}</span>
                   <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(personal.cooperativeEquity, ccy)}
                     {personal.totalProfitDistributed > 0 && (
                       <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
-                        (+{formatMoney(personal.totalProfitDistributed, ccy)} profit)
+                        {tOv('profitPlus', { amount: formatMoney(personal.totalProfitDistributed, ccy) })}
                       </span>
                     )}
                   </span>
                 </div>
                 <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Annual Loan Quota</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.annualLoanQuota')}</span>
                   <span className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
-                    {personal.eligibility.loansUsedThisYear} / {personal.eligibility.maxLoansPerYear}{' '}
-                    used
+                    {t('sheets.usedCount', {
+                      used: personal.eligibility.loansUsedThisYear,
+                      max: personal.eligibility.maxLoansPerYear,
+                    })}
                   </span>
                 </div>
               </div>
@@ -1340,7 +1361,7 @@ export function OverviewView({
                         aria-hidden="true"
                       />
                       <span className="text-emerald-700 dark:text-emerald-400">
-                        Eligible for Qard Hasan Request
+                        {t('sheets.eligibleForLoan')}
                       </span>
                     </>
                   ) : (
@@ -1350,7 +1371,7 @@ export function OverviewView({
                         aria-hidden="true"
                       />
                       <span className="text-amber-700 dark:text-amber-400">
-                        Not Eligible for Qard Hasan
+                        {t('sheets.notEligibleForLoan')}
                       </span>
                     </>
                   )}
@@ -1369,7 +1390,7 @@ export function OverviewView({
                   className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Request Loan</span>
+                  <span>{tNav('requestLoan')}</span>
                 </button>
               )}
               <button
@@ -1377,7 +1398,7 @@ export function OverviewView({
                 onClick={() => onNavigate('my-amanah')}
                 className="group flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Open My Amanah</span>
+                <span>{t('sheets.openMyAmanah')}</span>
                 <ArrowRight
                   className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
@@ -1395,10 +1416,10 @@ export function OverviewView({
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                Active Governance &amp; Approval Queues
+                {tOv('activeGovernanceQueues')}
               </h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                2/3 anonymized ballots · AES-256-GCM encrypted records
+                {t('sheets.queuesSubtitle')}
               </span>
             </div>
 
@@ -1413,7 +1434,7 @@ export function OverviewView({
                 className="group amanah-card-amber border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
-                  <span>Pending Loan Reviews</span>
+                  <span>{t('sheets.pendingLoanReviews')}</span>
                   <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -1422,9 +1443,9 @@ export function OverviewView({
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
                   {isStaff
                     ? pendingGuarantorLoansCount > 0
-                      ? `Initiate 2/3 ballot → (+${pendingGuarantorLoansCount})`
-                      : 'Initiate 2/3 ballot →'
-                    : 'Inspect Qard Hasan queue →'}
+                      ? tOv('initiateBallotPlus', { count: pendingGuarantorLoansCount })
+                      : tOv('initiateBallotShort')
+                    : tOv('inspectQardQueue')}
                 </div>
               </button>
 
@@ -1434,14 +1455,14 @@ export function OverviewView({
                 className="group amanah-card-violet border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-violet-700 dark:text-violet-400 font-medium">
-                  <span>Open 2/3 Ballots</span>
+                  <span>{t('sheets.openTwoThirdsBallots')}</span>
                   <Vote className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
-                  Cast anonymized vote →
+                  {tOv('castAnonymizedVote')}
                 </div>
               </button>
 
@@ -1463,7 +1484,7 @@ export function OverviewView({
                 className="group amanah-card-emerald border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                  <span>Pending Deposits</span>
+                  <span>{t('sheets.pendingDeposits')}</span>
                   <ShieldCheck
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
@@ -1474,8 +1495,10 @@ export function OverviewView({
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                   {isStaff
-                    ? `Review in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
-                    : 'View submission status →'}
+                    ? tOv('reviewInDeskArrow', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tOv('viewSubStatusArrow')}
                 </div>
               </button>
 
@@ -1491,7 +1514,7 @@ export function OverviewView({
                 className="group amanah-card-teal border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
-                  <span>Awaiting Disbursement</span>
+                  <span>{t('sheets.awaitingDisbursement')}</span>
                   <ShieldCheck
                     className="w-4 h-4 text-teal-600 dark:text-teal-400"
                     aria-hidden="true"
@@ -1502,8 +1525,10 @@ export function OverviewView({
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
                   {isStaff
-                    ? `Confirm payout in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
-                    : 'Multi-sig treasury release →'}
+                    ? tOv('confirmPayoutArrow', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tOv('multiSigReleaseArrow')}
                 </div>
               </button>
 
@@ -1525,7 +1550,7 @@ export function OverviewView({
                 className="group amanah-card-emerald border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                  <span>Pending Repayments</span>
+                  <span>{t('sheets.pendingRepayments')}</span>
                   <CheckCircle2
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
@@ -1536,8 +1561,10 @@ export function OverviewView({
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                   {isStaff
-                    ? `Verify installments in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} →`
-                    : 'Inspect installment receipts →'}
+                    ? tOv('verifyInstallmentsArrow', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tOv('inspectReceiptsArrow')}
                 </div>
               </button>
             </div>

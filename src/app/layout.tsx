@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Anek_Bangla, Inter, Open_Sans, Space_Mono } from 'next/font/google';
+import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppProviders } from '../components/AppProviders.tsx';
+import { normalizeLocale } from '../i18n/config.ts';
 import './globals.css';
 
 const interHeading = Inter({
@@ -67,15 +69,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const rawLocale = await getLocale();
+  const locale = normalizeLocale(rawLocale);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={`${interHeading.variable} ${openSansBody.variable} ${spaceMono.variable} ${anekBangla.variable}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders initialLocale={locale}>{children}</AppProviders>
       </body>
     </html>
   );

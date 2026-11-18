@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Lock, ShieldCheck, X, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type { EligibilityCheck, FundConfig, LoanRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
@@ -30,6 +31,8 @@ export function RequestQardHasanModal({
   availableLiquidity,
   onSubmitted,
 }: RequestQardHasanModalProps) {
+  const t = useTranslations('Loans.modal');
+  const tf = useTranslations('Loans.form');
   const ccy = config?.currency || 'BDT';
   const maxLoanAmount = config?.maxLoanAmount || 75000;
   const maxInstallmentMonths = config?.maxInstallmentMonths || 12;
@@ -63,7 +66,7 @@ export function RequestQardHasanModal({
       .catch((err) => {
         if (!cancelled) {
           setEligibilityError(
-            err instanceof Error ? err.message : 'Unable to verify loan eligibility.'
+            err instanceof Error ? err.message : tf('eligibilityLoadError')
           );
         }
       });
@@ -129,32 +132,32 @@ export function RequestQardHasanModal({
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                   <span className="inline-flex items-center gap-1">
                     <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                    <span>AES-256-GCM Encrypted</span>
+                    <span>{t('aesEncrypted')}</span>
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                     ·
                   </span>
-                  <span className="font-mono">0% Interest Qard Hasan</span>
+                  <span className="font-mono">{t('zeroInterestQard')}</span>
                 </div>
                 <h2
                   id="request-qard-hasan-modal-title"
                   className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white"
                 >
-                  Request Qard Hasan
+                  {t('title')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {user.name} (<span className="font-mono">{user.memberCode}</span>) · Cap{' '}
-                  <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {formatMoney(maxLoanAmount, ccy)}
-                  </span>{' '}
-                  · Up to {maxInstallmentMonths} months
+                  {user.name} (<span className="font-mono">{user.memberCode}</span>) ·{' '}
+                  {t('capUpTo', {
+                    amount: formatMoney(maxLoanAmount, ccy),
+                    months: maxInstallmentMonths,
+                  })}
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close Request Qard Hasan dialog"
+                aria-label={t('closeAria')}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
@@ -165,7 +168,7 @@ export function RequestQardHasanModal({
               <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
                 <div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Available Liquid Pool
+                    {t('availableLiquidPool')}
                   </div>
                   <div className="mt-0.5 font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {formatMoney(availableLiquidity, ccy)}
@@ -173,18 +176,21 @@ export function RequestQardHasanModal({
                 </div>
                 <div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Annual Quota Standing
+                    {t('annualQuotaStanding')}
                   </div>
                   <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                     {effectiveEligibility ? (
-                      `${effectiveEligibility.loansUsedThisYear} / ${effectiveEligibility.maxLoansPerYear} used`
+                      t('usedRatio', {
+                        used: effectiveEligibility.loansUsedThisYear,
+                        max: effectiveEligibility.maxLoansPerYear,
+                      })
                     ) : eligibilityError ? (
                       <button
                         type="button"
                         onClick={() => setEligibilityAttempt((c) => c + 1)}
                         className="text-rose-600 dark:text-rose-400 underline cursor-pointer"
                       >
-                        Retry check
+                        {t('retryCheck')}
                       </button>
                     ) : (
                       <Skeleton width={72} height={16} />
@@ -200,11 +206,10 @@ export function RequestQardHasanModal({
                 >
                   <div className="font-semibold flex items-center gap-1.5">
                     <XCircle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
-                    <span>Loan Eligibility Locked</span>
+                    <span>{t('eligibilityLocked')}</span>
                   </div>
                   <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
-                    {effectiveEligibility.reasons[0] ||
-                      'Your account does not currently meet the cooperative loan eligibility rules.'}
+                    {effectiveEligibility.reasons[0] || tf('placementLockedDefault')}
                   </p>
                 </div>
               )}
@@ -212,9 +217,7 @@ export function RequestQardHasanModal({
               {effectiveEligibility?.eligible && (
                 <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>
-                    Eligible: Passed active loan check, annual quota, and pre-maturity governance window.
-                  </span>
+                  <span>{t('eligibleNotice')}</span>
                 </div>
               )}
 

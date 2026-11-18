@@ -53,6 +53,17 @@ export function registerTotpChallengeHandler(handler: TotpChallengeHandler | nul
   totpChallengeHandler = handler;
 }
 
+function getClientLocaleHeader(): 'en' | 'bn' {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const saved = window.localStorage.getItem('amanah_locale');
+    if (saved === 'bn' || saved === 'en') return saved;
+  } catch {
+    // ignore storage access errors
+  }
+  return document.documentElement?.lang === 'bn' ? 'bn' : 'en';
+}
+
 async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = false): Promise<T> {
   const res = await fetch(path, {
     credentials: 'include',
@@ -60,6 +71,7 @@ async function apiRequest<T>(path: string, init?: RequestInit, hasRetriedTotp = 
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      'x-amanah-locale': getClientLocaleHeader(),
       ...(init?.headers || {}),
     },
   });

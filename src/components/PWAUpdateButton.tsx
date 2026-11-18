@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { useCoopSession } from './AppProviders.tsx';
 
 interface PWAUpdateButtonProps {
@@ -17,8 +18,8 @@ interface PWAUpdateButtonProps {
   className?: string;
 }
 
-function formatLastCheckedLabel(timestampMs: number | null): string {
-  if (!timestampMs) return 'Not checked yet';
+function formatLastCheckedLabel(timestampMs: number | null, fallback: string): string {
+  if (!timestampMs) return fallback;
   try {
     return new Date(timestampMs).toLocaleString('en-US', {
       month: 'short',
@@ -27,7 +28,7 @@ function formatLastCheckedLabel(timestampMs: number | null): string {
       minute: '2-digit',
     });
   } catch {
-    return 'Recently';
+    return fallback;
   }
 }
 
@@ -36,6 +37,8 @@ export function PWAUpdateButton({
   fullWidth = false,
   className = '',
 }: PWAUpdateButtonProps) {
+  const tPwa = useTranslations('PWA');
+  const tCommon = useTranslations('Common');
   const { pwaUpdate } = useCoopSession();
   const {
     updateAvailable,
@@ -83,12 +86,8 @@ export function PWAUpdateButton({
         type="button"
         onClick={() => void handlePrimaryClick()}
         disabled={checkingUpdate || applyingUpdate}
-        title={
-          updateAvailable
-            ? 'New app update available — click to update Amanah'
-            : 'Check for Amanah app updates (auto-checks once daily)'
-        }
-        aria-label={updateAvailable ? 'Update App' : 'Check for App Updates'}
+        title={updateAvailable ? tPwa('updateReadyMessage') : tPwa('autoCheckDesc')}
+        aria-label={tPwa('updateApp')}
         aria-expanded={panelOpen}
         className={`relative inline-flex items-center justify-center gap-1.5 rounded-lg border font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70 ${
           fullWidth ? 'w-full py-2.5 px-3 text-xs' : compact ? 'h-9 px-2.5 text-xs' : 'h-9 px-3 text-xs'
@@ -105,12 +104,10 @@ export function PWAUpdateButton({
         )}
         <span className={compact && !fullWidth ? 'hidden sm:inline' : ''}>
           {applyingUpdate
-            ? 'Updating...'
+            ? tPwa('updating')
             : checkingUpdate
-              ? 'Checking...'
-              : updateAvailable
-                ? 'Update App'
-                : 'Update App'}
+              ? tPwa('checking')
+              : tPwa('updateApp')}
         </span>
         {updateAvailable && !applyingUpdate && (
           <span
@@ -128,7 +125,7 @@ export function PWAUpdateButton({
             exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
             role="dialog"
-            aria-label="PWA Update Status"
+            aria-label={tPwa('versionStatusTitle')}
             className={`absolute ${
               fullWidth ? 'left-0 right-0 bottom-full mb-2' : 'right-0 top-full mt-2 w-72'
             } z-[70] amanah-card-violet border rounded-xl p-3.5 shadow-xl space-y-2.5 text-left`}
@@ -147,13 +144,13 @@ export function PWAUpdateButton({
                   />
                 )}
                 <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                  {updateAvailable ? 'App Update Ready' : 'App Version Status'}
+                  {updateAvailable ? tPwa('updateReadyTitle') : tPwa('versionStatusTitle')}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setPanelOpen(false)}
-                aria-label="Close update status"
+                aria-label={tCommon('closeDialog')}
                 className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -162,14 +159,16 @@ export function PWAUpdateButton({
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               {statusMessage ||
-                (updateAvailable
-                  ? 'A newer version of Amanah has been downloaded. Apply now to reload.'
-                  : 'Amanah checks automatically for updates once every 24 hours.')}
+                (updateAvailable ? tPwa('updateReadyDesc') : tPwa('autoCheckDesc'))}
             </p>
 
             <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 border-t border-slate-200/75 dark:border-slate-800 pt-2 flex flex-col gap-0.5">
-              <span>Auto-check: Once daily (24h)</span>
-              <span>Last checked: {formatLastCheckedLabel(lastCheckedAt)}</span>
+              <span>{tPwa('autoCheckInterval')}</span>
+              <span>
+                {tPwa('lastChecked', {
+                  time: formatLastCheckedLabel(lastCheckedAt, tPwa('notCheckedYet')),
+                })}
+              </span>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">
@@ -183,7 +182,7 @@ export function PWAUpdateButton({
                   className={`w-3 h-3 ${checkingUpdate ? 'animate-spin' : ''}`}
                   aria-hidden="true"
                 />
-                <span>Check Now</span>
+                <span>{tPwa('checkNow')}</span>
               </button>
               {updateAvailable && (
                 <button
@@ -193,7 +192,7 @@ export function PWAUpdateButton({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
                 >
                   <ArrowUpCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{applyingUpdate ? 'Updating...' : 'Apply Update'}</span>
+                  <span>{applyingUpdate ? tPwa('updating') : tPwa('applyUpdate')}</span>
                 </button>
               )}
             </div>

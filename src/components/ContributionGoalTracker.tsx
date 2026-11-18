@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type { Contribution, FundConfig, PublicUser } from '../types/coop.ts';
 import {
   formatBillingMonth,
@@ -58,6 +59,21 @@ export function ContributionGoalTracker({
   loading = false,
   onSubmitContribution,
 }: ContributionGoalTrackerProps) {
+  const t = useTranslations('Contributions.goalTracker');
+  const monthLabels = [
+    t('months.m0'),
+    t('months.m1'),
+    t('months.m2'),
+    t('months.m3'),
+    t('months.m4'),
+    t('months.m5'),
+    t('months.m6'),
+    t('months.m7'),
+    t('months.m8'),
+    t('months.m9'),
+    t('months.m10'),
+    t('months.m11'),
+  ];
   const ccy = config?.currency || 'BDT';
   const monthlyBaseTarget = Math.max(1, config?.monthlyContributionAmount || 5000);
   const defaultYearlyGoal = monthlyBaseTarget * 12;
@@ -238,7 +254,7 @@ export function ContributionGoalTracker({
     e.preventDefault();
     const parsed = Number(goalInput);
     if (!Number.isFinite(parsed) || parsed < 100) {
-      setGoalError('Enter a yearly savings goal of at least 100.');
+      setGoalError(t('goalMinError'));
       return;
     }
     setGoalError(null);
@@ -302,21 +318,21 @@ export function ContributionGoalTracker({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <Target className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
-            <span>Annual Savings Goal Tracker</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h3
             id="contribution-goal-tracker-heading"
             className="text-base font-semibold text-slate-900 dark:text-white"
           >
-            {selectedYear} Monthly Contribution Progress vs. Yearly Goal
+            {t('heading', { year: selectedYear })}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Monthly pace target{' '}
+            {t('monthlyPaceTarget')}{' '}
             <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
               {formatMoney(Math.round(monthlyPaceTarget), ccy)}/mo
             </span>
             <span aria-hidden="true"> · </span>
-            Cooperative standard{' '}
+            {t('coopStandard')}{' '}
             <span className="font-mono tabular-nums">
               {formatMoney(defaultYearlyGoal, ccy)}/yr
             </span>
@@ -324,7 +340,7 @@ export function ContributionGoalTracker({
               <>
                 <span aria-hidden="true"> · </span>
                 <span className="text-indigo-700 dark:text-indigo-400 font-medium">
-                  Custom goal active
+                  {t('customGoalActive')}
                 </span>
               </>
             )}
@@ -335,7 +351,7 @@ export function ContributionGoalTracker({
           {availableYears.length > 1 && (
             <div
               role="group"
-              aria-label="Select tracking year"
+              aria-label={t('selectYearAria')}
               className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
             >
               {availableYears.map((yr) => {
@@ -375,7 +391,7 @@ export function ContributionGoalTracker({
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Pencil className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-            <span>{editingGoal ? 'Close Editor' : 'Edit Yearly Goal'}</span>
+            <span>{editingGoal ? t('closeEditor') : t('editYearlyGoal')}</span>
           </button>
 
           {onSubmitContribution && (
@@ -384,7 +400,7 @@ export function ContributionGoalTracker({
               onClick={() => onSubmitContribution(currentBillingMonth)}
               className="group px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <span>Deposit Month</span>
+              <span>{t('depositMonth')}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           )}
@@ -429,7 +445,7 @@ export function ContributionGoalTracker({
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="font-semibold text-slate-900 dark:text-white">
-                Current Month Status · {currentMonthSummary.monthLabel}
+                {t('currentMonthStatus', { month: currentMonthSummary.monthLabel })}
               </span>
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                 ·
@@ -442,63 +458,42 @@ export function ContributionGoalTracker({
                 <StatusText status="rejected" />
               ) : (
                 <span className="font-semibold text-amber-700 dark:text-amber-400">
-                  Contribution Due
+                  {t('contributionDue')}
                 </span>
               )}
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              {currentMonthSummary.state === 'paid' && (
-                <>
-                  Verified{' '}
-                  <strong className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {formatMoney(currentMonthSummary.approvedAmount, ccy)}
-                  </strong>{' '}
-                  against your{' '}
-                  <span className="font-mono tabular-nums">
-                    {formatMoney(monthlyBaseTarget, ccy)}
-                  </span>{' '}
-                  monthly cooperative requirement.
-                </>
-              )}
-              {currentMonthSummary.state === 'pending' && (
-                <>
-                  Submitted{' '}
-                  <strong className="font-mono tabular-nums text-amber-700 dark:text-amber-300">
-                    {formatMoney(currentMonthSummary.pendingAmount, ccy)}
-                  </strong>{' '}
-                  via {currentMonthSummary.latestEntry?.providerName} (
-                  <span className="font-mono">
-                    {currentMonthSummary.latestEntry?.maskedReference}
-                  </span>
-                  ). Awaiting manager verification.
-                </>
-              )}
-              {currentMonthSummary.state === 'rejected' && (
-                <>
-                  Last submission for {currentMonthSummary.monthLabel} was declined
-                  {currentMonthSummary.latestEntry?.reviewNote
+              {currentMonthSummary.state === 'paid' &&
+                t('verifiedStatusDesc', {
+                  paid: formatMoney(currentMonthSummary.approvedAmount, ccy),
+                  target: formatMoney(monthlyBaseTarget, ccy),
+                })}
+              {currentMonthSummary.state === 'pending' &&
+                t('pendingStatusDesc', {
+                  amount: formatMoney(currentMonthSummary.pendingAmount, ccy),
+                  provider: currentMonthSummary.latestEntry?.providerName || '',
+                  ref: currentMonthSummary.latestEntry?.maskedReference || '',
+                })}
+              {currentMonthSummary.state === 'rejected' &&
+                t('rejectedStatusDesc', {
+                  month: currentMonthSummary.monthLabel,
+                  note: currentMonthSummary.latestEntry?.reviewNote
                     ? ` (${currentMonthSummary.latestEntry.reviewNote})`
-                    : ''}
-                  . Submit a corrected Bank or MFS reference below.
-                </>
-              )}
-              {currentMonthSummary.state === 'due' && (
-                <>
-                  Monthly contribution target of{' '}
-                  <strong className="font-mono tabular-nums text-slate-900 dark:text-white">
-                    {formatMoney(currentMonthSummary.remainingAmount, ccy)}
-                  </strong>{' '}
-                  has not been submitted for {currentMonthSummary.monthLabel} yet.
-                </>
-              )}
+                    : '',
+                })}
+              {currentMonthSummary.state === 'due' &&
+                t('dueStatusDesc', {
+                  amount: formatMoney(currentMonthSummary.remainingAmount, ccy),
+                  month: currentMonthSummary.monthLabel,
+                })}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="text-right font-mono tabular-nums">
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">Monthly Target</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">{t('monthlyTargetLabel')}</div>
             <div className="text-sm font-bold text-slate-900 dark:text-white">
               {formatMoney(monthlyBaseTarget, ccy)}
             </div>
@@ -512,8 +507,8 @@ export function ContributionGoalTracker({
             >
               <span>
                 {currentMonthSummary.state === 'rejected'
-                  ? `Resubmit ${MONTH_NAMES[currentMonthIndex]}`
-                  : `Pay ${MONTH_NAMES[currentMonthIndex]} Now`}
+                  ? t('resubmitMonth', { month: monthLabels[currentMonthIndex] })
+                  : t('payMonthNow', { month: monthLabels[currentMonthIndex] })}
               </span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
@@ -537,7 +532,7 @@ export function ContributionGoalTracker({
                 htmlFor="yearly-savings-goal-input"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300"
               >
-                Personal {selectedYear} Yearly Savings Goal ({ccy})
+                {t('personalGoalLabel', { year: selectedYear, ccy })}
               </label>
               <input
                 id="yearly-savings-goal-input"
@@ -559,7 +554,7 @@ export function ContributionGoalTracker({
                 type="submit"
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
               >
-                Save Goal
+                {t('saveGoal')}
               </button>
               {customGoal !== null && (
                 <button
@@ -568,13 +563,13 @@ export function ContributionGoalTracker({
                   className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Reset to 12× ({formatMoney(defaultYearlyGoal, ccy)})</span>
+                  <span>{t('resetTo12x', { amount: formatMoney(defaultYearlyGoal, ccy) })}</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setEditingGoal(false)}
-                aria-label="Cancel editing yearly goal"
+                aria-label={t('cancelEditAria')}
                 className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -588,41 +583,41 @@ export function ContributionGoalTracker({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            Verified Saved ({selectedYear})
+            {t('verifiedSavedYear', { year: selectedYear })}
           </div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(trackerData.approvedTotal, ccy)}
           </div>
           <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {trackerData.monthsMetCount} of 12 monthly targets met
+            {t('targetsMetCount', { count: trackerData.monthsMetCount })}
           </div>
         </div>
 
         <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Yearly Savings Goal</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">{t('yearlySavingsGoal')}</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {formatMoney(yearlyGoal, ccy)}
           </div>
           <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {trackerData.approvedPct}% verified complete
+            {t('verifiedCompletePct', { pct: trackerData.approvedPct })}
           </div>
         </div>
 
         <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Pending Review</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">{t('pendingReview')}</div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(trackerData.pendingTotal, ccy)}
           </div>
           <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
             {trackerData.pendingTotal > 0
-              ? `+${trackerData.pendingPct}% awaiting manager`
-              : 'No pending submissions'}
+              ? t('awaitingManagerPct', { pct: trackerData.pendingPct })
+              : t('noPendingSubmissions')}
           </div>
         </div>
 
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            {trackerData.surplusAmount > 0 ? 'Goal Exceeded By' : 'Remaining to Goal'}
+            {trackerData.surplusAmount > 0 ? t('goalExceededBy') : t('remainingToGoal')}
           </div>
           <div className="mt-1 text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {trackerData.surplusAmount > 0
@@ -632,9 +627,15 @@ export function ContributionGoalTracker({
           <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
             {trackerData.elapsedMonths > 0
               ? trackerData.paceDelta >= 0
-                ? `${formatMoney(Math.round(trackerData.paceDelta), ccy)} ahead of ${trackerData.elapsedMonths}m pace`
-                : `${formatMoney(Math.abs(Math.round(trackerData.paceDelta)), ccy)} behind ${trackerData.elapsedMonths}m pace`
-              : 'Upcoming saving cycle'}
+                ? t('aheadPace', {
+                    amount: formatMoney(Math.round(trackerData.paceDelta), ccy),
+                    months: trackerData.elapsedMonths,
+                  })
+                : t('behindPace', {
+                    amount: formatMoney(Math.abs(Math.round(trackerData.paceDelta)), ccy),
+                    months: trackerData.elapsedMonths,
+                  })
+              : t('upcomingSavingCycle')}
           </div>
         </div>
       </div>
@@ -643,7 +644,7 @@ export function ContributionGoalTracker({
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className="font-medium text-slate-700 dark:text-slate-300">
-            Annual Progress Bar ({trackerData.monthsMetCount}/12 months funded)
+            {t('annualProgressBar', { count: trackerData.monthsMetCount })}
           </span>
           <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
             {formatMoney(trackerData.approvedTotal, ccy)}{' '}
@@ -655,7 +656,7 @@ export function ContributionGoalTracker({
 
         <div
           role="progressbar"
-          aria-label={`${selectedYear} yearly savings goal progress`}
+          aria-label={t('progressBarAria', { year: selectedYear })}
           aria-valuenow={Math.min(yearlyGoal, trackerData.approvedTotal)}
           aria-valuemin={0}
           aria-valuemax={yearlyGoal}
@@ -697,14 +698,14 @@ export function ContributionGoalTracker({
           <div className="flex flex-wrap items-center gap-4">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600 shrink-0" aria-hidden="true" />
-              <span>Verified ({trackerData.approvedPct}%)</span>
+              <span>{t('verifiedPct', { pct: trackerData.approvedPct })}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="w-2.5 h-2.5 rounded-xs bg-amber-500/80 dark:bg-amber-400/75 shrink-0"
                 aria-hidden="true"
               />
-              <span>Pending Verification ({trackerData.pendingPct}%)</span>
+              <span>{t('pendingPct', { pct: trackerData.pendingPct })}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span
@@ -712,12 +713,14 @@ export function ContributionGoalTracker({
                 aria-hidden="true"
               />
               <span>
-                Remaining ({Math.max(0, 100 - trackerData.approvedPct - trackerData.pendingPct)}%)
+                {t('remainingPct', {
+                  pct: Math.max(0, 100 - trackerData.approvedPct - trackerData.pendingPct),
+                })}
               </span>
             </span>
           </div>
 
-          <span className="font-mono tabular-nums">12 segments = 1 month each</span>
+          <span className="font-mono tabular-nums">{t('twelveSegments')}</span>
         </div>
       </div>
 
@@ -725,11 +728,11 @@ export function ContributionGoalTracker({
       <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-            Monthly Breakdown Against {formatMoney(Math.round(monthlyPaceTarget), ccy)}/mo Target
+            {t('monthlyBreakdown', { amount: formatMoney(Math.round(monthlyPaceTarget), ccy) })}
           </h4>
           {onSubmitContribution && (
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              Select any open month to submit a Bank or MFS contribution
+              {t('selectOpenMonthHint')}
             </span>
           )}
         </div>
@@ -756,12 +759,12 @@ export function ContributionGoalTracker({
               selectedYear === currentYear && month.index === currentMonthIndex;
 
             const statusLabel = isVerifiedComplete
-              ? 'Met'
+              ? t('statusMet')
               : hasPending
-                ? 'Pending'
+                ? t('statusPending')
                 : isPastOrCurrent
-                  ? 'Due'
-                  : 'Upcoming';
+                  ? t('statusDue')
+                  : t('statusUpcoming');
 
             const content = (
               <>
@@ -773,7 +776,7 @@ export function ContributionGoalTracker({
                         : 'text-slate-800 dark:text-slate-200'
                     }`}
                   >
-                    {month.label}
+                    {monthLabels[month.index] || month.label}
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 text-[11px] font-medium ${
@@ -860,29 +863,29 @@ export function ContributionGoalTracker({
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
             <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-              Your Contribution Payment History ({personalPaymentHistory.length})
+              {t('yourPaymentHistory', { count: personalPaymentHistory.length })}
             </h4>
           </div>
           <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            {user.memberCode} · Chronological Record
+            {t('chronologicalRecord', { code: user.memberCode })}
           </span>
         </div>
 
         {personalPaymentHistory.length === 0 ? (
           <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 text-center">
-            No monthly contributions recorded under your account yet. Submit your first deposit below.
+            {t('noHistoryYet')}
           </div>
         ) : (
           <div className="overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg max-h-64 overflow-y-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="sticky top-0 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <tr>
-                  <th className="py-2 px-3 font-medium">Billing Month</th>
-                  <th className="py-2 px-3 font-medium">Submitted</th>
-                  <th className="py-2 px-3 font-medium">Channel &amp; Ref</th>
-                  <th className="py-2 px-3 font-medium">Status</th>
-                  <th className="py-2 px-3 font-medium text-right">Amount</th>
-                  <th className="py-2 px-3 font-medium">Verification Note</th>
+                  <th className="py-2 px-3 font-medium">{t('colBillingMonth')}</th>
+                  <th className="py-2 px-3 font-medium">{t('colSubmitted')}</th>
+                  <th className="py-2 px-3 font-medium">{t('colChannelRef')}</th>
+                  <th className="py-2 px-3 font-medium">{t('colStatus')}</th>
+                  <th className="py-2 px-3 font-medium text-right">{t('colAmount')}</th>
+                  <th className="py-2 px-3 font-medium">{t('colVerificationNote')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -918,7 +921,7 @@ export function ContributionGoalTracker({
                       {item.reviewNote
                         ? item.reviewNote
                         : item.reviewerName
-                          ? `Verified by ${item.reviewerName}`
+                          ? t('verifiedBy', { name: item.reviewerName })
                           : `Hash ${shortHash(item.entryHash)}`}
                     </td>
                   </tr>

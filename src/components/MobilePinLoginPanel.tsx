@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Check,
   ChevronDown,
@@ -38,6 +39,7 @@ export function MobilePinLoginPanel({
   onUsePassword,
   compact = false,
 }: MobilePinLoginPanelProps) {
+  const tAuth = useTranslations('Auth');
   const [accounts, setAccounts] = useState<LocalRegisteredAccount[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [accountPickerOpen, setAccountPickerOpen] = useState(false);
@@ -97,7 +99,7 @@ export function MobilePinLoginPanel({
         }
       }
       setPin('');
-      setError(err instanceof Error ? err.message : 'PIN login failed. Try again.');
+      setError(err instanceof Error ? err.message : tAuth('pin.pinFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +152,7 @@ export function MobilePinLoginPanel({
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
             <AmanahLogo size="xs" decorative className="w-5 h-5 rounded-md" />
             <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Registered Device · 4-Digit PIN</span>
+            <span>{tAuth('pin.registeredDevice')}</span>
           </span>
           {accounts.length > 1 && (
             <button
@@ -158,7 +160,7 @@ export function MobilePinLoginPanel({
               onClick={() => setAccountPickerOpen((v) => !v)}
               className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
-              <span>Switch Account</span>
+              <span>{tAuth('pin.switchAccount')}</span>
               <ChevronDown
                 className={`w-3.5 h-3.5 transition-transform ${accountPickerOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
@@ -196,8 +198,8 @@ export function MobilePinLoginPanel({
           <button
             type="button"
             onClick={() => handleRemoveLocalAccount(selectedAccount)}
-            title="Forget this account on this device"
-            aria-label={`Remove ${selectedAccount.name} from this device`}
+            title={tAuth('pin.forgetDevice')}
+            aria-label={tAuth('pin.removeAccountAria', { name: selectedAccount.name })}
             className="min-w-[36px] min-h-[36px] rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <Trash2 className="w-4 h-4" aria-hidden="true" />
@@ -266,7 +268,7 @@ export function MobilePinLoginPanel({
             htmlFor={compact ? 'mobile-gate-pin' : 'signin-device-pin'}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
           >
-            Enter 4-Digit PIN
+            {tAuth('pin.enterPin')}
           </label>
           <div className="relative">
             <input
@@ -290,7 +292,7 @@ export function MobilePinLoginPanel({
             <button
               type="button"
               onClick={() => setShowPin((v) => !v)}
-              aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+              aria-label={showPin ? tAuth('pin.hidePin') : tAuth('pin.showPin')}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
             >
               {showPin ? (
@@ -308,7 +310,7 @@ export function MobilePinLoginPanel({
           className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
         >
           <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>{submitting ? 'Verifying PIN…' : 'Sign In with PIN'}</span>
+          <span>{submitting ? tAuth('pin.verifyingPin') : tAuth('pin.signInWithPin')}</span>
         </button>
       </form>
 
@@ -318,7 +320,7 @@ export function MobilePinLoginPanel({
         className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
       >
         <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-        <span>Sign in with Email &amp; Password</span>
+        <span>{tAuth('useEmailPassword')}</span>
       </button>
     </div>
   );

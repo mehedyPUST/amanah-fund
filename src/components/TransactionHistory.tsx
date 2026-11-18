@@ -15,6 +15,7 @@ import {
   Search,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
@@ -33,6 +34,7 @@ import {
   shortHash,
 } from '../utils/format.ts';
 import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
+import { useCoopSession } from './AppProviders.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export type TransactionTabTarget = DashboardSectionId;
@@ -94,6 +96,9 @@ export function TransactionHistory({
   onNavigate,
   onViewMemberProfile,
 }: TransactionHistoryProps) {
+  const { locale } = useCoopSession();
+  const t = useTranslations('Transactions');
+  const tCommon = useTranslations('Common');
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = isAdmin || user.role === 'manager';
@@ -135,18 +140,18 @@ export function TransactionHistory({
         monthKey: c.billingMonth,
         displayDate: formatDateTime(c.submittedAt),
         periodLabel: formatBillingMonth(c.billingMonth),
-        title: `Monthly Contribution · ${formatBillingMonth(c.billingMonth)}`,
+        title: t('monthlyContributionTitle', { month: formatBillingMonth(c.billingMonth) }),
         subtitle:
           effectiveScope === 'all'
             ? `${c.memberName} (${c.memberCode})`
-            : 'Cooperative central fund deposit',
+            : t('coopCentralFundDeposit'),
         channelLabel: c.channel.toUpperCase(),
         providerName: c.providerName,
         maskedReference: c.maskedReference,
         status: c.status,
         statusBucket,
         amount: c.amount,
-        directionLabel: 'Contribution',
+        directionLabel: t('dirContribution'),
         decryptedReference: c.decryptedDetails?.referenceId,
         decryptedSenderAccount: c.decryptedDetails?.senderAccount,
         decryptedNotes: c.decryptedDetails?.notes,
@@ -178,18 +183,18 @@ export function TransactionHistory({
           monthKey: disbursedAt.slice(0, 7),
           displayDate: formatDateTime(disbursedAt),
           periodLabel: formatShortDate(disbursedAt),
-          title: `Qard Hasan Disbursement · ${loan.id}`,
+          title: t('qardHasanDisbursementTitle', { id: loan.id }),
           subtitle:
             effectiveScope === 'all'
               ? `${loan.borrowerName} (${loan.borrowerCode}) · ${loan.purpose}`
               : loan.purpose,
           channelLabel: (loan.decryptedSensitiveNotes?.channel || 'bank').toUpperCase(),
-          providerName: loan.decryptedSensitiveNotes?.provider || 'Qard Hasan Payout',
+          providerName: loan.decryptedSensitiveNotes?.provider || t('qardHasanPayout'),
           maskedReference: txRef,
           status: loan.status === 'repaid' ? 'repaid' : 'disbursed',
           statusBucket: 'completed',
           amount: loan.amount,
-          directionLabel: 'Disbursement',
+          directionLabel: t('dirDisbursement'),
           loanId: loan.id,
           loanRemainingBalance: loan.remainingBalance,
           decryptedReference: txRef,
@@ -213,7 +218,7 @@ export function TransactionHistory({
         const displayDate =
           inst.paidAt || inst.submittedAt
             ? formatDateTime(inst.paidAt || inst.submittedAt)
-            : `Due ${formatShortDate(inst.dueDate)}`;
+            : t('duePrefix', { date: formatShortDate(inst.dueDate) });
 
         rows.push({
           id: `tx-repay-${loan.id}-${inst.installmentNumber}`,
@@ -224,19 +229,19 @@ export function TransactionHistory({
           sortDate: eventIso,
           monthKey: eventIso.slice(0, 7),
           displayDate,
-          periodLabel: `Due ${formatShortDate(inst.dueDate)}`,
-          title: `Loan Repayment #${inst.installmentNumber}/${loan.installmentMonths}`,
+          periodLabel: t('duePrefix', { date: formatShortDate(inst.dueDate) }),
+          title: t('loanRepaymentTitle', { num: inst.installmentNumber, total: loan.installmentMonths }),
           subtitle:
             effectiveScope === 'all'
               ? `${loan.borrowerName} · ${loan.id} · ${loan.purpose}`
               : `${loan.id} · ${loan.purpose}`,
           channelLabel: inst.repaymentChannel ? inst.repaymentChannel.toUpperCase() : 'SCHEDULE',
-          providerName: inst.repaymentProvider || 'Installment Plan',
+          providerName: inst.repaymentProvider || t('installmentPlan'),
           maskedReference: inst.maskedReference || '—',
           status: inst.status,
           statusBucket,
           amount: inst.status === 'paid' ? inst.paidAmount : inst.amount,
-          directionLabel: 'Repayment',
+          directionLabel: t('dirRepayment'),
           loanId: loan.id,
           loanRemainingBalance: loan.remainingBalance,
           installmentNumber: inst.installmentNumber,
@@ -253,7 +258,7 @@ export function TransactionHistory({
     rows.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 
     return { allRows: rows, activeLoans: scopedActiveLoans };
-  }, [contributions, loans, effectiveScope, user.id]);
+  }, [contributions, loans, effectiveScope, user.id, t]);
 
   const counts = useMemo(() => {
     const contribCount = allRows.filter((r) => r.category === 'contribution').length;
@@ -376,6 +381,7 @@ export function TransactionHistory({
       contributions,
       loans,
       scope: effectiveScope,
+      locale,
     });
   }
 
@@ -384,17 +390,17 @@ export function TransactionHistory({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      aria-label="Member Transaction History"
+      aria-label={t('memberTxHistoryAria')}
       className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <History className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>General Treasury Ledger</span>
+            <span>{t('generalTreasuryLedger')}</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Transaction History · Contributions, Disbursements &amp; Repayments
+            {t('ledgerHeading')}
           </h2>
         </div>
 
@@ -403,8 +409,8 @@ export function TransactionHistory({
             <div className="col-span-2 sm:col-span-1 flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               {(
                 [
-                  { id: 'mine', label: 'My Transactions' },
-                  { id: 'all', label: 'All Members' },
+                  { id: 'mine', label: t('myTransactions') },
+                  { id: 'all', label: t('allMembers') },
                 ] as const
               ).map((item) => {
                 const active = scope === item.id;
@@ -443,7 +449,7 @@ export function TransactionHistory({
               className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
               <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-              <span>Export CSV</span>
+              <span>{tCommon('exportCsv')}</span>
             </button>
           )}
 
@@ -454,7 +460,7 @@ export function TransactionHistory({
               className={`px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${!compact && filteredRows.length === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Download PDF</span>
+              <span>{tCommon('downloadPdf')}</span>
             </button>
           )}
 
@@ -464,7 +470,7 @@ export function TransactionHistory({
               onClick={() => onNavigate('transaction-history')}
               className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-200"
             >
-              <span>Open Transactions</span>
+              <span>{t('openTransactions')}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           )}
@@ -474,50 +480,56 @@ export function TransactionHistory({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 py-3 sm:py-3.5 border-y border-slate-100 dark:border-slate-800">
         <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Approved Contributions
+            {t('approvedContributions')}
           </div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(counts.approvedContribTotal, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {counts.contribCount} submission{counts.contribCount === 1 ? '' : 's'}
+            {t('submissionsCount', {
+              count: counts.contribCount,
+              label: counts.contribCount === 1 ? t('submissionSingular') : t('submissionPlural'),
+            })}
           </div>
         </div>
 
         <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Loan Repayments Paid
+            {t('loanRepaymentsPaid')}
           </div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {formatMoney(counts.paidRepayTotal, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {counts.paidRepayCount} verified · {activeLoans.length} active loan
-            {activeLoans.length === 1 ? '' : 's'}
+            {t('verifiedAndActiveLoans', {
+              paid: counts.paidRepayCount,
+              active: activeLoans.length,
+              label: activeLoans.length === 1 ? t('loanSingular') : t('loanPlural'),
+            })}
           </div>
         </div>
 
         <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Active Loan Remaining
+            {t('activeLoanRemaining')}
           </div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
             {formatMoney(counts.activeLoanRemaining, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {activeLoans.length > 0 ? '0% Qard Hasan principal' : 'No active loan balance'}
+            {activeLoans.length > 0 ? t('zeroInterestPrincipal') : t('noActiveLoanBalance')}
           </div>
         </div>
 
         <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Pending Review
+            {t('pendingReview')}
           </div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {counts.pendingCount}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Awaiting manager reconciliation
+            {t('awaitingManagerRecon')}
           </div>
         </div>
       </div>
@@ -527,10 +539,10 @@ export function TransactionHistory({
           <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit">
             {(
               [
-                { id: 'all', label: `All (${counts.total})` },
-                { id: 'contribution', label: `Contributions (${counts.contribCount})` },
-                { id: 'loan_disbursement', label: `Disbursements (${counts.disburseCount})` },
-                { id: 'loan_repayment', label: `Repayments (${counts.repayCount})` },
+                { id: 'all', label: t('allCount', { count: counts.total }) },
+                { id: 'contribution', label: t('contributionsCount', { count: counts.contribCount }) },
+                { id: 'loan_disbursement', label: t('disbursementsCount', { count: counts.disburseCount }) },
+                { id: 'loan_repayment', label: t('repaymentsCount', { count: counts.repayCount }) },
               ] as const
             ).map((tab) => {
               const active = typeFilter === tab.id;
@@ -562,16 +574,16 @@ export function TransactionHistory({
           </div>
 
           <select
-            aria-label="Filter transactions by status"
+            aria-label={t('filterByStatusAria')}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
             className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
           >
-            <option value="all">All Statuses</option>
-            <option value="completed">Approved / Paid / Disbursed</option>
-            <option value="pending">Pending Verification</option>
-            <option value="scheduled">Scheduled Installments</option>
-            <option value="attention">Rejected / Overdue</option>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="completed">{t('statusCompletedGroup')}</option>
+            <option value="pending">{t('statusPendingGroup')}</option>
+            <option value="scheduled">{t('statusScheduledGroup')}</option>
+            <option value="attention">{t('statusAttentionGroup')}</option>
           </select>
         </div>
 
@@ -584,7 +596,7 @@ export function TransactionHistory({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search month, bank, loan ID, Tx#…"
+            placeholder={t('searchPlaceholder')}
             className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
           />
         </div>
@@ -595,11 +607,14 @@ export function TransactionHistory({
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200">
               <CalendarRange className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
-              <span>Month Sliding Filter</span>
+              <span>{t('monthSlidingFilter')}</span>
               <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
                 {monthRangeActive && activeStartMonth && activeEndMonth
                   ? `${formatBillingMonth(activeStartMonth)} — ${formatBillingMonth(activeEndMonth)}`
-                  : `All Months (${formatBillingMonth(availableMonths[0])} — ${formatBillingMonth(availableMonths[maxMonthIdx])})`}
+                  : t('allMonthsRange', {
+                      start: formatBillingMonth(availableMonths[0]),
+                      end: formatBillingMonth(availableMonths[maxMonthIdx]),
+                    })}
               </span>
             </div>
 
@@ -617,7 +632,7 @@ export function TransactionHistory({
                 }}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                {monthRangeActive ? 'Show All Months' : 'Enable Month Range'}
+                {monthRangeActive ? t('showAllMonths') : t('enableMonthRange')}
               </button>
             </div>
           </div>
@@ -625,10 +640,10 @@ export function TransactionHistory({
           {availableMonths.length > 1 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
               <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <span className="w-16 shrink-0 font-medium">From:</span>
+                <span className="w-16 shrink-0 font-medium">{t('fromLabel')}</span>
                 <input
                   type="range"
-                  aria-label="Filter start month"
+                  aria-label={t('filterStartMonthAria')}
                   min={0}
                   max={maxMonthIdx}
                   value={monthRangeActive ? safeStartIdx : 0}
@@ -650,10 +665,10 @@ export function TransactionHistory({
               </label>
 
               <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <span className="w-16 shrink-0 font-medium">To:</span>
+                <span className="w-16 shrink-0 font-medium">{t('toLabel')}</span>
                 <input
                   type="range"
-                  aria-label="Filter end month"
+                  aria-label={t('filterEndMonthAria')}
                   min={0}
                   max={maxMonthIdx}
                   value={monthRangeActive ? safeEndIdx : maxMonthIdx}
@@ -698,14 +713,10 @@ export function TransactionHistory({
       ) : displayedRows.length === 0 ? (
         <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {allRows.length === 0
-              ? 'No monthly contributions or active loan repayments recorded yet.'
-              : 'No transactions match your current filter or search query.'}
+            {allRows.length === 0 ? t('emptyNoRecords') : t('emptyNoMatches')}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            {allRows.length === 0
-              ? 'Once you submit a monthly Bank/MFS contribution or have an active Qard Hasan repayment schedule, each transaction will appear here.'
-              : 'Try clearing the search box or switching the type, status, or month range filters.'}
+            {allRows.length === 0 ? t('emptyNoRecordsHint') : t('emptyNoMatchesHint')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
             {allRows.length > 0 ? (
@@ -719,7 +730,7 @@ export function TransactionHistory({
                 }}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
               >
-                Reset Filters
+                {tCommon('resetFilters')}
               </button>
             ) : (
               onNavigate && (
@@ -730,7 +741,7 @@ export function TransactionHistory({
                     className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Submit Monthly Contribution</span>
+                    <span>{t('submitMonthlyContribution')}</span>
                   </button>
                   <button
                     type="button"
@@ -738,7 +749,7 @@ export function TransactionHistory({
                     className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>View Qard Hasan Loans</span>
+                    <span>{t('viewQardHasanLoans')}</span>
                   </button>
                 </>
               )
@@ -824,7 +835,7 @@ export function TransactionHistory({
                       <div className="grid grid-cols-1 gap-1.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                         {onViewMemberProfile && (
                           <div className="font-sans">
-                            <span className="text-slate-400">Member: </span>
+                            <span className="text-slate-400">{t('member')}: </span>
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(row.memberId)}
@@ -836,23 +847,23 @@ export function TransactionHistory({
                         )}
                         <div>
                           <span className="text-slate-400">
-                            {row.category === 'loan_disbursement' ? 'Payout Account: ' : 'Sender Account: '}
+                            {row.category === 'loan_disbursement' ? `${t('payoutAccountLabel')} ` : `${t('senderAccountLabel')} `}
                           </span>
                           <span className="text-slate-800 dark:text-slate-200">
-                            {row.decryptedSenderAccount || 'Encrypted / Not yet submitted'}
+                            {row.decryptedSenderAccount || t('encryptedNotSubmitted')}
                           </span>
                         </div>
                         <div>
                           <span className="text-slate-400">
-                            {row.category === 'loan_disbursement' ? 'Disbursed By: ' : 'Verified By: '}
+                            {row.category === 'loan_disbursement' ? `${t('disbursedByLabel')} ` : `${t('verifiedByLabel')} `}
                           </span>
                           <span className="text-slate-800 dark:text-slate-200">
-                            {row.reviewerOrVerifier || 'Pending'}
+                            {row.reviewerOrVerifier || tCommon('pending')}
                           </span>
                         </div>
                         {(row.decryptedNotes || row.reviewNote) && (
                           <div className="font-sans">
-                            <span className="text-slate-400">Note: </span>
+                            <span className="text-slate-400">{t('noteLabel')} </span>
                             <span className="text-slate-800 dark:text-slate-200">
                               {row.reviewNote || row.decryptedNotes}
                             </span>
@@ -860,7 +871,7 @@ export function TransactionHistory({
                         )}
                         {row.entryHash && (
                           <div>
-                            <span className="text-slate-400">Entry Hash: </span>
+                            <span className="text-slate-400">{t('entryHashLabel')} </span>
                             <span className="text-slate-800 dark:text-slate-200">{shortHash(row.entryHash)}</span>
                           </div>
                         )}
@@ -871,7 +882,7 @@ export function TransactionHistory({
                           onClick={() => onNavigate('quard-hasan')}
                           className="w-full min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>Submit Repayment</span>
+                          <span>{t('submitRepayment')}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       )}
@@ -886,12 +897,12 @@ export function TransactionHistory({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                  <th className="py-2.5 px-4 font-medium">Date &amp; Period</th>
-                  <th className="py-2.5 px-4 font-medium">Transaction</th>
-                  <th className="py-2.5 px-4 font-medium">Bank / MFS &amp; Transaction No.</th>
-                  <th className="py-2.5 px-4 font-medium">Status</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Amount</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Details</th>
+                  <th className="py-2.5 px-4 font-medium">{t('colDatePeriod')}</th>
+                  <th className="py-2.5 px-4 font-medium">{t('colTransaction')}</th>
+                  <th className="py-2.5 px-4 font-medium">{t('colBankTx')}</th>
+                  <th className="py-2.5 px-4 font-medium">{t('status')}</th>
+                  <th className="py-2.5 px-4 font-medium text-right">{t('amount')}</th>
+                  <th className="py-2.5 px-4 font-medium text-right">{t('colDetails')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -918,14 +929,14 @@ export function TransactionHistory({
       {compact && filteredRows.length > displayedRows.length && onNavigate && (
         <div className="flex items-center justify-between pt-1 text-xs text-slate-500 dark:text-slate-400">
           <span className="font-mono tabular-nums">
-            Showing {displayedRows.length} of {filteredRows.length} transactions
+            {t('showingCountOf', { shown: displayedRows.length, total: filteredRows.length })}
           </span>
           <button
             type="button"
             onClick={() => onNavigate('transaction-history')}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
-            <span>Inspect all {filteredRows.length} transactions</span>
+            <span>{t('inspectAllCount', { total: filteredRows.length })}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -949,6 +960,8 @@ function FragmentRow({
   onNavigate?: (tab: TransactionTabTarget) => void;
   onViewMemberProfile?: (memberId: string) => void;
 }) {
+  const t = useTranslations('Transactions');
+  const tCommon = useTranslations('Common');
   const txNo = row.decryptedReference || row.maskedReference;
   return (
     <>
@@ -1019,7 +1032,7 @@ function FragmentRow({
           </div>
           {row.category === 'loan_repayment' && row.loanRemainingBalance !== undefined && (
             <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Bal {formatMoney(row.loanRemainingBalance, currency)}
+              {t('balPrefix', { amount: formatMoney(row.loanRemainingBalance, currency) })}
             </div>
           )}
         </td>
@@ -1031,7 +1044,7 @@ function FragmentRow({
             aria-expanded={isExpanded}
             className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
           >
-            <span>{isExpanded ? 'Hide' : 'Inspect'}</span>
+            <span>{isExpanded ? tCommon('hide') : t('inspect')}</span>
             {isExpanded ? (
               <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
@@ -1048,39 +1061,39 @@ function FragmentRow({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                 <div>
                   <span className="text-slate-400 dark:text-slate-500">
-                    {row.category === 'loan_disbursement' ? 'Payout Account: ' : 'Sender Account: '}
+                    {row.category === 'loan_disbursement' ? `${t('payoutAccountLabel')} ` : `${t('senderAccountLabel')} `}
                   </span>
                   <span className="text-slate-800 dark:text-slate-200">
-                    {row.decryptedSenderAccount || 'Encrypted / Not yet submitted'}
+                    {row.decryptedSenderAccount || t('encryptedNotSubmitted')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 dark:text-slate-500">Transaction Number: </span>
+                  <span className="text-slate-400 dark:text-slate-500">{t('txNumberLabel')} </span>
                   <span className="text-slate-800 dark:text-slate-200">{txNo}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 dark:text-slate-500">
-                    {row.category === 'loan_disbursement' ? 'Disbursed By: ' : 'Verified By: '}
+                    {row.category === 'loan_disbursement' ? `${t('disbursedByLabel')} ` : `${t('verifiedByLabel')} `}
                   </span>
                   <span className="text-slate-800 dark:text-slate-200">
-                    {row.reviewerOrVerifier || 'Pending'}
+                    {row.reviewerOrVerifier || tCommon('pending')}
                   </span>
                 </div>
                 {row.decryptedNotes && (
                   <div className="sm:col-span-2">
-                    <span className="text-slate-400 dark:text-slate-500">Note: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('noteLabel')} </span>
                     <span className="text-slate-800 dark:text-slate-200">{row.decryptedNotes}</span>
                   </div>
                 )}
                 {row.reviewNote && (
                   <div className="sm:col-span-2">
-                    <span className="text-slate-400 dark:text-slate-500">Review Note: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('reviewNoteLabel')} </span>
                     <span className="text-slate-800 dark:text-slate-200">{row.reviewNote}</span>
                   </div>
                 )}
                 {row.entryHash && (
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500">Entry Hash: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('entryHashLabel')} </span>
                     <span className="text-slate-800 dark:text-slate-200">
                       {shortHash(row.entryHash)}
                     </span>
@@ -1088,7 +1101,7 @@ function FragmentRow({
                 )}
                 {row.batchGroupId && (
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500">Advance Batch: </span>
+                    <span className="text-slate-400 dark:text-slate-500">{t('advanceBatchLabel')} </span>
                     <span className="text-emerald-700 dark:text-emerald-400">
                       {row.batchGroupId}
                     </span>
@@ -1102,7 +1115,7 @@ function FragmentRow({
                   onClick={() => onNavigate('quard-hasan')}
                   className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center"
                 >
-                  <span>Submit Repayment</span>
+                  <span>{t('submitRepayment')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ArrowRight, Award, CheckCircle2, Flame, Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type { DashboardSectionId, FundConfig, LeaderboardEntry } from '../types/coop.ts';
 import { formatMoney } from '../utils/format.ts';
 import { MotionCard } from './MotionCard.tsx';
@@ -54,6 +55,7 @@ export function ContributionLeaderboard({
   onNavigate,
   onViewMemberProfile,
 }: ContributionLeaderboardProps) {
+  const t = useTranslations('Contributions.leaderboard');
   const ccy = config?.currency || 'BDT';
   const [mode, setMode] = useState<'top' | 'consistent'>('top');
 
@@ -129,7 +131,7 @@ export function ContributionLeaderboard({
     <MotionCard
       as="section"
       hue="amber"
-      aria-label="Contribution Leaderboard"
+      aria-label={t('title')}
       className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
@@ -137,22 +139,22 @@ export function ContributionLeaderboard({
           <div>
             <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
               <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Cooperative Fund Participation</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <h3 className="mt-1 text-base font-semibold text-slate-900 dark:text-white">
-              Contribution Leaderboard
+              {t('title')}
             </h3>
           </div>
 
           <div
             role="tablist"
-            aria-label="Leaderboard ranking mode"
+            aria-label={t('modeAria')}
             className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
             {(
               [
-                { id: 'top', label: 'Top Contributors' },
-                { id: 'consistent', label: 'Consistent Payers' },
+                { id: 'top', label: t('topContributors') },
+                { id: 'consistent', label: t('consistentPayers') },
               ] as const
             ).map((tab) => {
               const active = mode === tab.id;
@@ -189,7 +191,7 @@ export function ContributionLeaderboard({
             <Award className="w-8 h-8 text-amber-600 dark:text-amber-400 mx-auto" />
             <div className="space-y-1">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                No Approved Contributions Yet
+                {t('noApprovedYet')}
               </h4>
             </div>
             <button
@@ -197,7 +199,7 @@ export function ContributionLeaderboard({
               onClick={() => onNavigate('monthly-contribution')}
               className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer transition-colors"
             >
-              Submit Monthly Contribution
+              {t('submitMonthlyBtn')}
             </button>
           </div>
         ) : (
@@ -242,7 +244,7 @@ export function ContributionLeaderboard({
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(entry.userId)}
-                              title={`View ${entry.memberName}'s profile`}
+                              title={t('viewProfileTitle', { name: entry.memberName })}
                               className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline truncate cursor-pointer text-left"
                             >
                               {entry.memberName}
@@ -254,7 +256,7 @@ export function ContributionLeaderboard({
                           )}
                           {entry.isSelf && (
                             <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                              (You)
+                              {t('youTag')}
                             </span>
                           )}
                         </div>
@@ -263,14 +265,14 @@ export function ContributionLeaderboard({
                           <span aria-hidden="true">·</span>
                           <span className="tabular-nums">
                             {entry.approvedMonthsCount}{' '}
-                            {entry.approvedMonthsCount === 1 ? 'month' : 'months'}
+                            {entry.approvedMonthsCount === 1 ? t('monthSingular') : t('monthPlural')}
                           </span>
                           {entry.currentStreakMonths > 0 && (
                             <>
                               <span aria-hidden="true">·</span>
                               <span className="inline-flex items-center gap-0.5 text-amber-700 dark:text-amber-400 font-medium tabular-nums">
                                 <Flame className="w-3 h-3" aria-hidden="true" />
-                                {entry.currentStreakMonths}m streak
+                                {t('streakMonths', { count: entry.currentStreakMonths })}
                               </span>
                             </>
                           )}
@@ -285,19 +287,19 @@ export function ContributionLeaderboard({
                             {formatMoney(entry.totalContributed, ccy)}
                           </div>
                           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                            {entry.consistencyScore}% consistency
+                            {t('consistencyPct', { pct: entry.consistencyScore })}
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="text-xs sm:text-sm font-semibold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                            {entry.consistencyScore}% on-time
+                            {t('onTimePct', { pct: entry.consistencyScore })}
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-end gap-1">
                             {entry.currentMonthPaid ? (
                               <span className="inline-flex items-center gap-0.5 text-emerald-700 dark:text-emerald-400">
                                 <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                                Current month paid
+                                {t('currentMonthPaid')}
                               </span>
                             ) : (
                               <span className="font-mono tabular-nums">
@@ -337,15 +339,19 @@ export function ContributionLeaderboard({
       <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
         <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
           {selfEntry
-            ? `Your rank: #${selfRankIndex + 1} of ${ranked.length} active · ${selfEntry.currentStreakMonths}m streak`
-            : `${ranked.length} active members`}
+            ? t('yourRankFooter', {
+                rank: selfRankIndex + 1,
+                total: ranked.length,
+                streak: selfEntry.currentStreakMonths,
+              })
+            : t('activeMembersCount', { count: ranked.length })}
         </span>
         <button
           type="button"
           onClick={() => onNavigate('monthly-contribution')}
           className="group text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
         >
-          <span>Contribute This Month</span>
+          <span>{t('contributeThisMonth')}</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>

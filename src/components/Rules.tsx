@@ -15,10 +15,12 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { ConstitutionDocumentInfo } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatShortDate } from '../utils/format.ts';
+import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
 type CharterLanguage = 'en' | 'bn';
@@ -220,10 +222,13 @@ const CHARTER_SECTIONS_BN: CharterSection[] = [
 ];
 
 export function Rules({ embedded = false }: { embedded?: boolean }) {
+  const { locale, setLocale } = useCoopSession();
+  const tRules = useTranslations('Public.rules');
+  const tCommon = useTranslations('Common');
+  const tNav = useTranslations('Navigation');
   const HeadingTag = embedded ? 'h2' : 'h1';
   const PdfHeadingTag = embedded ? 'h3' : 'h2';
   const ArticleHeadingTag = embedded ? 'h3' : 'h2';
-  const [lang, setLang] = useState<CharterLanguage>('en');
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [constitution, setConstitution] = useState<ConstitutionDocumentInfo | null>(null);
   const [constitutionLoading, setConstitutionLoading] = useState(true);
@@ -231,8 +236,8 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   /** Card layout for better readability: single column (comfortable) vs two-column grid. */
   const [cardLayout, setCardLayout] = useState<'single' | 'grid'>('grid');
 
-  // Language toggle is strictly for the standalone Charter page (/rules)
-  const activeLang: CharterLanguage = embedded ? 'en' : lang;
+  // Charter language follows global locale across both embedded and standalone views
+  const activeLang: CharterLanguage = locale;
   const isBn = activeLang === 'bn';
   const sections = isBn ? CHARTER_SECTIONS_BN : CHARTER_SECTIONS_EN;
 
@@ -297,7 +302,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
         >
           <div className="space-y-1.5">
             <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Official Constitution &amp; Bylaws · Jan 2027 – Dec 2036
+              {tRules('eyebrow')}
             </div>
             <HeadingTag
               className={
@@ -306,10 +311,10 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   : 'text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white text-balance'
               }
             >
-              Savings, Investment &amp; Interest-Free Loan Fund Charter
+              {tRules('heading')}
             </HeadingTag>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-              Articles 1–25 governing cooperative operations, Qard Hasan lending, and 2/3 member voting.
+              {tRules('subheading')}
             </p>
           </div>
 
@@ -318,11 +323,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="hidden md:inline">Language</span>
+                  <span className="hidden md:inline">{tCommon('language')}</span>
                 </span>
                 <div
                   role="tablist"
-                  aria-label="Charter language"
+                  aria-label={tCommon('switchLanguage')}
                   className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
                 >
                   {(
@@ -331,14 +336,14 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       { id: 'bn', label: 'বাংলা' },
                     ] as const
                   ).map((option) => {
-                    const selected = lang === option.id;
+                    const selected = locale === option.id;
                     return (
                       <button
                         key={option.id}
                         type="button"
                         role="tab"
                         aria-selected={selected}
-                        onClick={() => setLang(option.id)}
+                        onClick={() => setLocale(option.id)}
                         className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                           selected
                             ? 'text-slate-900 dark:text-white'
@@ -364,17 +369,17 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="hidden md:inline">Layout</span>
+                  <span className="hidden md:inline">{tRules('layout')}</span>
                 </span>
                 <div
                   role="tablist"
-                  aria-label="Card layout for readability"
+                  aria-label={tRules('layout')}
                   className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
                 >
                   {(
                     [
-                      { id: 'single' as const, label: 'Single', title: 'Single column — better readability' },
-                      { id: 'grid' as const, label: 'Grid', title: 'Two-column grid' },
+                      { id: 'single' as const, label: tRules('single') },
+                      { id: 'grid' as const, label: tRules('grid') },
                     ] as const
                   ).map((option) => {
                     const selected = cardLayout === option.id;
@@ -384,7 +389,6 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                         type="button"
                         role="tab"
                         aria-selected={selected}
-                        title={option.title}
                         onClick={() => setCardLayout(option.id)}
                         className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                           selected
@@ -414,13 +418,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 onClick={toggleExpandAll}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
               >
-                {allExpanded ? 'Collapse Clauses' : 'Expand All Articles'}
+                {allExpanded ? tRules('collapseAll') : tRules('expandAll')}
               </button>
               <Link
                 href="/rules"
                 className="px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors whitespace-nowrap"
               >
-                Full Page
+                {tRules('fullPage')}
               </Link>
             </div>
           )}
@@ -457,12 +461,12 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   <div className="space-y-1">
                     <PdfHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                      Official Cooperative Constitution PDF (Articles 1–25 · 2027–2036)
+                      {tRules('officialPdfTitle')}
                     </PdfHeadingTag>
                     <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                       {constitutionName}
                       {constitution?.constitutionUploadedAt
-                        ? ` · Updated ${formatShortDate(constitution.constitutionUploadedAt)}`
+                        ? ` · ${tRules('uploadedOn', { date: formatShortDate(constitution.constitutionUploadedAt) })}`
                         : ''}
                     </p>
                   </div>
@@ -477,12 +481,12 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     {showPdfPreview ? (
                       <>
                         <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Hide PDF</span>
+                        <span>{tRules('hidePreview')}</span>
                       </>
                     ) : (
                       <>
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Preview PDF</span>
+                        <span>{tRules('previewPdf')}</span>
                       </>
                     )}
                   </button>
@@ -493,7 +497,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Open PDF</span>
+                    <span>{tRules('openNewTab')}</span>
                   </a>
                   <a
                     href={constitutionUrl}
@@ -501,7 +505,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Download PDF</span>
+                    <span>{tRules('downloadPdf')}</span>
                   </a>
                 </div>
               </div>
@@ -594,7 +598,9 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
                     >
                       <span>
-                        {isOpen ? 'Hide Articles' : `Read ${rule.points.length} Articles`}
+                        {isOpen
+                          ? tRules('hideArticles')
+                          : tRules('readArticles', { count: rule.points.length })}
                       </span>
                       <ChevronDown
                         className={`w-3.5 h-3.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
@@ -610,20 +616,20 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
         <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Ready to participate in Amanah&apos;s 20-share cooperative treasury cycle (2027–2036)?
+            {tRules('readyToJoin')}
           </p>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              Sign In
+              {tNav('signIn')}
             </Link>
             <Link
               href="/signup"
               className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
             >
-              <span>Join Amanah</span>
+              <span>{tNav('joinAmanah')}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"

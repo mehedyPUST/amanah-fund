@@ -10,6 +10,7 @@ import {
   History,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
@@ -66,6 +67,9 @@ export function RecentTransactions({
   maxItems = 6,
   onNavigate,
 }: RecentTransactionsProps) {
+  const t = useTranslations('Transactions');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
   const ccy = config?.currency || 'BDT';
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -80,8 +84,8 @@ export function RecentTransactions({
         list.push({
           id: `contrib-${c.id}`,
           type: 'contribution',
-          title: `Monthly Contribution · ${formatBillingMonth(c.billingMonth)}`,
-          subtitle: 'Central fund monthly deposit',
+          title: t('monthlyContributionTitle', { month: formatBillingMonth(c.billingMonth) }),
+          subtitle: t('centralFundDeposit'),
           dateIso: eventIso,
           dateLabel: formatShortDate(c.submittedAt),
           fullDateLabel: formatDateTime(c.submittedAt),
@@ -105,13 +109,13 @@ export function RecentTransactions({
           list.push({
             id: `loan-req-${loan.id}`,
             type: 'loan_payment',
-            title: `Qard Hasan Request · ${loan.id}`,
-            subtitle: `${loan.installmentMonths} monthly installments · ${loan.purpose}`,
+            title: t('qardHasanRequestTitle', { id: loan.id }),
+            subtitle: t('installmentSubtitle', { months: loan.installmentMonths, purpose: loan.purpose }),
             dateIso: loan.approvedAt || loan.requestedAt,
             dateLabel: formatShortDate(loan.requestedAt),
             fullDateLabel: formatDateTime(loan.requestedAt),
             channel: loan.decryptedSensitiveNotes?.channel.toUpperCase() || 'QARD HASAN',
-            provider: loan.decryptedSensitiveNotes?.provider || 'Application',
+            provider: loan.decryptedSensitiveNotes?.provider || t('applicationLabel'),
             maskedReference: loan.id,
             amount: loan.amount,
             status: loan.status,
@@ -143,17 +147,17 @@ export function RecentTransactions({
           list.push({
             id: `repay-${loan.id}-${inst.installmentNumber}`,
             type: 'loan_payment',
-            title: `Loan Payment #${inst.installmentNumber}/${loan.installmentMonths}`,
+            title: t('loanPaymentTitle', { num: inst.installmentNumber, total: loan.installmentMonths }),
             subtitle: `${loan.id} · ${loan.purpose}`,
             dateIso: eventIso,
             dateLabel: hasSubmission
               ? formatShortDate(inst.paidAt || inst.submittedAt)
-              : `Due ${formatShortDate(inst.dueDate)}`,
+              : t('duePrefix', { date: formatShortDate(inst.dueDate) }),
             fullDateLabel: hasSubmission
               ? formatDateTime(inst.paidAt || inst.submittedAt)
-              : `Due ${formatShortDate(inst.dueDate)}`,
+              : t('duePrefix', { date: formatShortDate(inst.dueDate) }),
             channel: inst.repaymentChannel ? inst.repaymentChannel.toUpperCase() : 'SCHEDULE',
-            provider: inst.repaymentProvider || 'Installment Plan',
+            provider: inst.repaymentProvider || t('installmentPlan'),
             maskedReference: inst.maskedReference || '—',
             decryptedReference: inst.decryptedReceipt?.referenceId,
             amount: inst.status === 'paid' ? inst.paidAmount : inst.amount,
@@ -177,7 +181,7 @@ export function RecentTransactions({
     });
 
     return list;
-  }, [contributions, loans, user.id, user.memberCode]);
+  }, [contributions, loans, user.id, user.memberCode, t]);
 
   const counts = useMemo(() => {
     const contribCount = items.filter((i) => i.type === 'contribution').length;
@@ -211,17 +215,17 @@ export function RecentTransactions({
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <History className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Personal Activity Feed</span>
+            <span>{t('personalActivityFeed')}</span>
           </div>
           <h3
             id="recent-transactions-heading"
             className="text-base font-semibold text-slate-900 dark:text-white"
           >
-            Recent Transactions
+            {t('recentActivity')}
           </h3>
           {counts.pendingCount > 0 && (
             <p className="text-xs font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
-              {counts.pendingCount} awaiting verification
+              {t('awaitingVerification', { count: counts.pendingCount })}
             </p>
           )}
         </div>
@@ -229,14 +233,14 @@ export function RecentTransactions({
         <div className="flex flex-wrap items-center gap-2.5 shrink-0 max-w-full">
           <div
             role="group"
-            aria-label="Filter recent transactions"
+            aria-label={t('filterRecentAria')}
             className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
           >
             {(
               [
-                { id: 'all', label: `All (${counts.all})` },
-                { id: 'contribution', label: `Contributions (${counts.contribution})` },
-                { id: 'loan_payment', label: `Loan Payments (${counts.loan_payment})` },
+                { id: 'all', label: t('allCount', { count: counts.all }) },
+                { id: 'contribution', label: t('contributionsCount', { count: counts.contribution }) },
+                { id: 'loan_payment', label: t('loanPaymentsCount', { count: counts.loan_payment }) },
               ] as const
             ).map((tab) => {
               const active = filter === tab.id;
@@ -274,7 +278,7 @@ export function RecentTransactions({
               onClick={() => onNavigate('transaction-history')}
               className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
             >
-              <span>Open Transactions</span>
+              <span>{t('openTransactions')}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -306,15 +310,13 @@ export function RecentTransactions({
         <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
             {items.length === 0
-              ? 'No monthly contributions or loan payments recorded yet.'
+              ? t('noActivityYet')
               : filter === 'contribution'
-                ? 'No monthly contributions submitted on your account yet.'
-                : 'No active or completed loan payments recorded on your account.'}
+                ? t('noContribsYet')
+                : t('noLoanPaymentsYet')}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            {items.length === 0
-              ? 'Your Bank/MFS monthly deposits and Qard Hasan installment payments will appear here with live verification status.'
-              : 'Switch the filter or open the corresponding section to submit a new entry.'}
+            {items.length === 0 ? t('noActivityHint') : t('switchFilterHint')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
             {filter !== 'all' && items.length > 0 && (
@@ -323,7 +325,7 @@ export function RecentTransactions({
                 onClick={() => setFilter('all')}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer whitespace-nowrap"
               >
-                Show All Activity
+                {t('showAllActivity')}
               </button>
             )}
             {onNavigate && (filter === 'all' || filter === 'contribution') && (
@@ -333,7 +335,7 @@ export function RecentTransactions({
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs"
               >
                 <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Submit Capital Deposit</span>
+                <span>{t('submitCapitalDeposit')}</span>
               </button>
             )}
             {onNavigate && (filter === 'all' || filter === 'loan_payment') && (
@@ -343,7 +345,7 @@ export function RecentTransactions({
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>View Qard Hasan Loans</span>
+                <span>{t('viewQardHasanLoans')}</span>
               </button>
             )}
           </div>
@@ -437,25 +439,25 @@ export function RecentTransactions({
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                         <div>
-                          <span className="text-slate-400 dark:text-slate-500">Timestamp: </span>
+                          <span className="text-slate-400 dark:text-slate-500">{t('timestampLabel')} </span>
                           <span className="text-slate-800 dark:text-slate-200">
                             {item.fullDateLabel}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-400 dark:text-slate-500">Reference: </span>
+                          <span className="text-slate-400 dark:text-slate-500">{t('referenceLabel')} </span>
                           <span className="text-slate-800 dark:text-slate-200">
                             {item.decryptedReference || item.maskedReference}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-400 dark:text-slate-500">Verified By: </span>
+                          <span className="text-slate-400 dark:text-slate-500">{t('verifiedByLabel')} </span>
                           <span className="text-slate-800 dark:text-slate-200">
-                            {item.reviewerName || (item.status === 'scheduled' ? 'Scheduled' : 'Pending')}
+                            {item.reviewerName || (item.status === 'scheduled' ? tStatus('scheduled') : tCommon('pending'))}
                           </span>
                         </div>
                         <div className="sm:col-span-3 font-sans text-slate-600 dark:text-slate-300">
-                          <span className="text-slate-400 dark:text-slate-500">Details: </span>
+                          <span className="text-slate-400 dark:text-slate-500">{t('detailsLabel')} </span>
                           {item.subtitle}
                           {item.note ? ` — ${item.note}` : ''}
                         </div>
@@ -469,10 +471,10 @@ export function RecentTransactions({
                         >
                           <span>
                             {item.status === 'scheduled' || item.status === 'overdue'
-                              ? 'Open Qard Hasan'
+                              ? t('openQardHasan')
                               : isContribution
-                                ? 'Open Contributions'
-                                : 'Open Qard Hasan'}
+                                ? t('openContributions')
+                                : t('openQardHasan')}
                           </span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
@@ -489,14 +491,14 @@ export function RecentTransactions({
       {filteredItems.length > visibleItems.length && onNavigate && (
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           <span className="font-mono tabular-nums">
-            Showing latest {visibleItems.length} of {filteredItems.length} entries
+            {t('showingLatest', { shown: visibleItems.length, total: filteredItems.length })}
           </span>
           <button
             type="button"
             onClick={() => onNavigate('transaction-history')}
             className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
           >
-            <span>View all {filteredItems.length} in Transactions</span>
+            <span>{t('viewAllInTransactions', { total: filteredItems.length })}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>

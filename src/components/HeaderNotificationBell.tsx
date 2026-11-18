@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Bell, Check, CheckCircle2, Clock, Vote } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import type {
   Contribution,
   DashboardOverview,
@@ -49,6 +50,7 @@ export function HeaderNotificationBell({
   onOpenContributionMonth,
   onMarkRead,
 }: HeaderNotificationBellProps) {
+  const tNotif = useTranslations('Notifications');
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,7 +101,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'approved_loan',
-          title: 'Qard Hasan Approved',
+          title: tNotif('types.loan_approved_confirmation'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: user.role === 'admin' ? 'ballot' : 'quard-hasan',
@@ -111,8 +113,8 @@ export function HeaderNotificationBell({
           kind: 'contribution_reminder',
           title:
             n.type === 'contribution_accepted'
-              ? 'Contribution Approved'
-              : 'Contribution Correction Needed',
+              ? tNotif('types.contribution_accepted')
+              : tNotif('types.contribution_rejected'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: user.role === 'admin' ? 'notification' : 'monthly-contribution',
@@ -124,8 +126,8 @@ export function HeaderNotificationBell({
           kind: 'approved_loan',
           title:
             n.type === 'loan_repayment_rejected'
-              ? 'Installment Correction Needed'
-              : 'Qard Hasan Installment Update',
+              ? tNotif('types.loan_repayment_rejected')
+              : tNotif('types.loan_repayment_notice'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: user.role === 'admin' ? 'notification' : 'quard-hasan',
@@ -135,7 +137,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Meeting Scheduled',
+          title: tNotif('types.meeting_scheduled'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'notification',
@@ -145,7 +147,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Official Cooperative Notice',
+          title: tNotif('types.cooperative_notice'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'notification',
@@ -155,7 +157,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Guarantor Co-Sign Request',
+          title: tNotif('types.loan_guarantor_requested'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'quard-hasan',
@@ -170,7 +172,10 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: isManagerReviewNotice ? 'approved_loan' : 'governance',
-          title: isManagerReviewNotice ? 'Qard Hasan Application Ready for Review' : 'Voting Open',
+          title:
+            n.type === 'decision_vote_requested'
+              ? tNotif('types.decision_vote_requested')
+              : tNotif('types.loan_vote_requested'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: isManagerReviewNotice ? 'manager-desk' : 'ballot',
@@ -181,7 +186,10 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Community Update',
+          title:
+            n.type === 'community_mention'
+              ? tNotif('types.community_mention')
+              : tNotif('types.community_post_created'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'community',
@@ -191,7 +199,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Profile Update Review Needed',
+          title: tNotif('types.profile_update_requested'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'member-registry',
@@ -201,7 +209,7 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           kind: 'governance',
-          title: 'Profile Update Decision',
+          title: tNotif('types.profile_update_reviewed'),
           detail: n.subject,
           timestampLabel: formatDateTime(n.createdAt),
           targetTab: 'my-profile',
@@ -308,7 +316,7 @@ export function HeaderNotificationBell({
     }
 
     return list;
-  }, [notifications, loans, contributions, user.id, user.email, user.role, isStaff, ccy, overview]);
+  }, [notifications, loans, contributions, user.id, user.email, user.role, isStaff, ccy, overview, tNotif]);
 
   const unreadInboxCount = overview?.treasury.unreadNotificationsCount || 0;
   const badgeCount = alerts.length > 0 ? alerts.length : unreadInboxCount;
@@ -334,8 +342,8 @@ export function HeaderNotificationBell({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-haspopup="true"
-        title="Loan & contribution alerts"
-        aria-label="Loan & contribution alerts"
+        title={tNotif('bellAria')}
+        aria-label={tNotif('bellAria')}
         className={`relative p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer ${
           open
             ? 'border-amber-400 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
@@ -358,21 +366,21 @@ export function HeaderNotificationBell({
             exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             role="dialog"
-            aria-label="Treasury alerts and reminders"
+            aria-label={tNotif('panelAria')}
             className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-14 sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl z-50 overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-2">
               <div>
                 <h2 className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Notifications &amp; Reminders
+                  {tNotif('title')}
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Approved loans, ballots, and contribution alerts
+                  {tNotif('subtitle')}
                 </p>
               </div>
               {badgeCount > 0 && (
                 <span className="font-mono text-xs tabular-nums font-semibold text-amber-700 dark:text-amber-400">
-                  {badgeCount} active
+                  {tNotif('activeCount', { count: badgeCount })}
                 </span>
               )}
             </div>
@@ -384,10 +392,10 @@ export function HeaderNotificationBell({
                   aria-hidden="true"
                 />
                 <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                  All caught up
+                  {tNotif('allCaughtUp')}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  No new approved loan notices or pending contribution reminders right now.
+                  {tNotif('allCaughtUpDesc')}
                 </p>
               </div>
             ) : (
@@ -440,8 +448,8 @@ export function HeaderNotificationBell({
                         <button
                           type="button"
                           onClick={() => void onMarkRead(alert.notificationId!)}
-                          title="Mark notification as read"
-                          aria-label="Mark notification as read"
+                          title={tNotif('markAsRead')}
+                          aria-label={tNotif('markAsRead')}
                           className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 cursor-pointer"
                         >
                           <Check className="w-3.5 h-3.5" />
@@ -455,7 +463,7 @@ export function HeaderNotificationBell({
 
             <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex items-center justify-between gap-2">
               <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                {unreadInboxCount} unread
+                {tNotif('unreadCount', { count: unreadInboxCount })}
               </span>
               <button
                 type="button"
@@ -465,7 +473,7 @@ export function HeaderNotificationBell({
                 }}
                 className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
-                <span>Open Notifications</span>
+                <span>{tNotif('openNotifications')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>

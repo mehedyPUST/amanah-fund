@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { FaqCategory, FaqItem } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
@@ -30,6 +31,9 @@ import { MotionCard } from './MotionCard.tsx';
 
 export function FAQSection({ embedded = true }: { embedded?: boolean }) {
   const { user, authChecking } = useCoopSession();
+  const tFaq = useTranslations('Public.faq');
+  const tCommon = useTranslations('Common');
+  const tNav = useTranslations('Navigation');
   const isActiveMember = !authChecking && Boolean(user && user.status === 'active');
   const isAdmin = isActiveMember && user?.role === 'admin';
 
@@ -265,7 +269,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         <div className="max-w-2xl space-y-1.5">
           <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
             <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Frequently Asked Questions · Fund &amp; Membership</span>
+            <span>{tFaq('eyebrow')}</span>
           </div>
           <HeadingTag
             id="faq-section-heading"
@@ -275,10 +279,10 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 : 'text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white text-balance'
             }
           >
-            Common questions about savings custody, Qard Hasan &amp; membership
+            {tFaq('heading')}
           </HeadingTag>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Clear, charter-backed answers covering KYC onboarding, monthly deposits, 0% interest loan limits, and 2/3 member governance.
+            {tFaq('subheading')}
           </p>
         </div>
 
@@ -290,7 +294,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
               className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Add FAQ</span>
+              <span>{tFaq('addFaq')}</span>
             </button>
           )}
           <button
@@ -299,7 +303,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             disabled={loading || filteredItems.length === 0}
             className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
           >
-            {allVisibleExpanded ? 'Collapse All' : 'Expand All Answers'}
+            {allVisibleExpanded ? tFaq('collapseAll') : tFaq('expandAll')}
           </button>
         </div>
       </div>
@@ -318,17 +322,17 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {editingFaq ? 'Edit FAQ Question & Answer' : 'Add New FAQ Question & Answer'}
+                  {editingFaq ? tFaq('editTitle') : tFaq('addTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Changes apply immediately across the Home, About, How It Works, and Rules &amp; Charter pages.
+                  {tFaq('editorDesc')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeComposer}
                 disabled={submitting}
-                aria-label="Close FAQ editor"
+                aria-label={tCommon('closeDialog')}
                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -347,7 +351,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                   htmlFor="faq-editor-category"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Topic Category
+                  {tFaq('topicCategory')}
                 </label>
                 <select
                   id="faq-editor-category"
@@ -357,7 +361,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 >
                   {FAQ_CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
                     <option key={cat.key} value={cat.key}>
-                      {cat.label}
+                      {tFaq(`categories.${cat.key}`)}
                     </option>
                   ))}
                 </select>
@@ -368,7 +372,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                   htmlFor="faq-editor-ref"
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Charter / Policy Reference (Optional)
+                  {tFaq('policyRef')}
                 </label>
                 <input
                   id="faq-editor-ref"
@@ -376,7 +380,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                   maxLength={80}
                   value={articleRefInput}
                   onChange={(e) => setArticleRefInput(e.target.value)}
-                  placeholder="e.g. Article 10 or Charter Policy"
+                  placeholder={tFaq('policyRefPlaceholder')}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 />
               </div>
@@ -387,7 +391,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 htmlFor="faq-editor-question"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Question
+                {tFaq('question')}
               </label>
               <input
                 id="faq-editor-question"
@@ -396,7 +400,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 maxLength={300}
                 value={questionInput}
                 onChange={(e) => setQuestionInput(e.target.value)}
-                placeholder="Enter the FAQ question..."
+                placeholder={tFaq('questionPlaceholder')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
               />
             </div>
@@ -406,7 +410,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 htmlFor="faq-editor-answer"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Answer
+                {tFaq('answer')}
               </label>
               <textarea
                 id="faq-editor-answer"
@@ -415,7 +419,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 maxLength={4000}
                 value={answerInput}
                 onChange={(e) => setAnswerInput(e.target.value)}
-                placeholder="Write a clear, accurate answer..."
+                placeholder={tFaq('answerPlaceholder')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 leading-relaxed"
               />
             </div>
@@ -427,14 +431,14 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 disabled={submitting}
                 className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
                 className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs cursor-pointer disabled:opacity-50"
               >
-                {submitting ? 'Saving...' : editingFaq ? 'Save Changes' : 'Publish FAQ'}
+                {submitting ? tCommon('saving') : editingFaq ? tCommon('saveChanges') : tFaq('publishFaq')}
               </button>
             </div>
           </motion.form>
@@ -445,7 +449,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div
           role="tablist"
-          aria-label="Filter FAQ by topic"
+          aria-label={tFaq('topicCategory')}
           className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950/70 self-start"
         >
           {FAQ_CATEGORIES.map((cat) => {
@@ -471,7 +475,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                     aria-hidden="true"
                   />
                 )}
-                <span className="relative z-10">{cat.label}</span>
+                <span className="relative z-10">{tFaq(`categories.${cat.key}`)}</span>
               </button>
             );
           })}
@@ -486,8 +490,8 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search fund or membership questions..."
-            aria-label="Search frequently asked questions"
+            placeholder={tFaq('searchPlaceholder')}
+            aria-label={tFaq('searchAria')}
             className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
           />
         </div>
@@ -501,7 +505,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             onClick={() => void loadFaqs(false)}
             className="underline font-medium cursor-pointer shrink-0"
           >
-            Retry
+            {tCommon('retry')}
           </button>
         </div>
       )}
@@ -522,9 +526,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       ) : filteredItems.length === 0 ? (
         <div className="amanah-card-violet border rounded-xl p-8 text-center space-y-3">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-            {faqs.length === 0
-              ? 'No FAQ entries have been published yet.'
-              : 'No FAQ entries match your filter.'}
+            {faqs.length === 0 ? tFaq('emptyNone') : tFaq('emptyFiltered')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
             {(activeCategory !== 'all' || searchQuery.trim() !== '') && (
@@ -536,7 +538,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 }}
                 className="px-3.5 py-1.5 rounded-lg border border-violet-300 dark:border-violet-700 bg-white dark:bg-slate-900 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors cursor-pointer whitespace-nowrap"
               >
-                Reset Filters
+                {tCommon('resetFilters')}
               </button>
             )}
             {isAdmin && (
@@ -546,7 +548,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Add First FAQ</span>
+                <span>{tFaq('addFirstFaq')}</span>
               </button>
             )}
           </div>
@@ -583,7 +585,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                           {itemNumber}
                         </span>
                         <span className="font-medium text-slate-700 dark:text-slate-300">
-                          {meta.label}
+                          {tFaq(`categories.${item.category}`)}
                         </span>
                         {item.articleRef && (
                           <>
@@ -662,20 +664,20 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       {/* Footer CTA Row */}
       <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-xs text-slate-600 dark:text-slate-400">
-          Need the full constitutional text covering Articles 1–25? Review the official signed charter anytime.
+          {tFaq('footerNote')}
         </p>
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <Link
             href="/rules"
             className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
           >
-            Read Full Charter
+            {tFaq('readFullCharter')}
           </Link>
           <Link
             href={user ? '/dashboard' : '/signup'}
             className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap shrink-0"
           >
-            <span>{user ? 'Dashboard' : 'Join Amanah'}</span>
+            <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
             <ArrowRight
               className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
               aria-hidden="true"
@@ -688,20 +690,20 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         open={Boolean(deleteTarget)}
         mode="confirm"
         tone="red"
-        title="Delete FAQ Question & Answer"
-        description="Removing this FAQ immediately hides it from all public and member information pages."
+        title={tFaq('deleteTitle')}
+        description={tFaq('deleteDesc')}
         details={
           deleteTarget
             ? [
                 {
-                  label: 'Category',
-                  value: (FAQ_CATEGORY_META[deleteTarget.category] || FAQ_CATEGORY_META.membership).label,
+                  label: tFaq('topicCategory'),
+                  value: tFaq(`categories.${deleteTarget.category}`),
                 },
-                { label: 'Question', value: deleteTarget.question },
+                { label: tFaq('question'), value: deleteTarget.question },
               ]
             : undefined
         }
-        confirmLabel="Delete FAQ"
+        confirmLabel={tFaq('deleteConfirm')}
         busy={deleting}
         onConfirm={confirmDeleteFaq}
         onClose={() => {

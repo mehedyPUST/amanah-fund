@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import { api } from '../utils/api.ts';
 import {
   getRegisteredMobileAccounts,
@@ -41,7 +43,9 @@ interface ActivationChallengeState {
 
 export function SignInForm() {
   const router = useRouter();
-  const { user, authChecking, setUser } = useCoopSession();
+  const { user, authChecking, setUser, locale } = useCoopSession();
+  const tAuth = useTranslations('Auth');
+  const tCommon = useTranslations('Common');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -122,18 +126,18 @@ export function SignInForm() {
       setMobileBrowseMode(false);
       setNoticeModal({
         tone: 'emerald',
-        title: 'Signed In Successfully',
-        description: `Welcome back, ${res.user.name}. Your encrypted cooperative session is now active.`,
+        title: tAuth('signedInSuccess'),
+        description: tAuth('signedInDesc', { name: res.user.name }),
         details: [
-          { label: 'Member Code', value: res.user.memberCode },
-          { label: 'Role', value: res.user.role.toUpperCase() },
+          { label: tAuth('memberCodeLabel'), value: res.user.memberCode },
+          { label: tAuth('roleLabel'), value: translateRoleLabel(res.user.role, locale) },
         ],
-        confirmLabel: mobile ? 'Dashboard' : 'Home',
+        confirmLabel: mobile ? tAuth('openDashboard') : tAuth('signInPage.homeLabel'),
         redirectHomeOnClose: true,
       });
       setUser(res.user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign-in failed.');
+      setError(err instanceof Error ? err.message : tAuth('signInPage.signInFailed'));
     } finally {
       setLoading(false);
     }
@@ -148,17 +152,15 @@ export function SignInForm() {
     const cleanedOtp = activationOtp.replace(/\D/g, '').trim();
 
     if (!trimmedCode) {
-      setActivationError('Please enter your official Member ID (for example: AMANAH-AC-02).');
+      setActivationError(tAuth('activation.errorMemberIdRequired'));
       return;
     }
     if (!/^\d{6}$/.test(cleanedOtp)) {
-      setActivationError('Please enter the 6-digit numeric Activation OTP.');
+      setActivationError(tAuth('activation.errorOtpInvalid'));
       return;
     }
     if (!activationAgreed) {
-      setActivationError(
-        'Please confirm the final Amanah membership agreement checkbox to complete activation.'
-      );
+      setActivationError(tAuth('activation.errorAgreementRequired'));
       return;
     }
 
@@ -178,21 +180,24 @@ export function SignInForm() {
       setActivationChallenge(null);
       setNoticeModal({
         tone: 'emerald',
-        title: 'Membership Confirmed & Activated',
-        description: `Assalamu Alaikum ${res.user.name}. Your final agreement to join ${activationChallenge.applicant.fundName} is confirmed and your account is now active.`,
+        title: tAuth('activation.confirmedTitle'),
+        description: tAuth('activation.confirmedDesc', {
+          name: res.user.name,
+          fundName: activationChallenge.applicant.fundName,
+        }),
         details: [
-          { label: 'Member Name', value: res.user.name },
-          { label: 'Official Member ID', value: res.user.memberCode },
-          { label: 'Account Status', value: 'Active & Verified' },
-          { label: 'Final Agreement', value: 'Confirmed via OTP' },
+          { label: tAuth('activation.memberName'), value: res.user.name },
+          { label: tAuth('activation.officialMemberId'), value: res.user.memberCode },
+          { label: tAuth('activation.accountStatus'), value: tAuth('activation.activeVerified') },
+          { label: tAuth('activation.finalAgreement'), value: tAuth('activation.confirmedViaOtp') },
           {
-            label: 'Confirmation Email',
+            label: tAuth('activation.confirmationEmail'),
             value: res.confirmationEmailSent
-              ? `Sent to ${res.user.email}`
-              : 'Recorded In-App (Email Queued)',
+              ? tAuth('activation.emailSentTo', { email: res.user.email })
+              : tAuth('activation.emailQueued'),
           },
         ],
-        confirmLabel: mobile ? 'Open Dashboard' : 'Enter Amanah Portal',
+        confirmLabel: mobile ? tAuth('openDashboard') : tAuth('enterPortal'),
         redirectHomeOnClose: true,
       });
       setUser(res.user);
@@ -202,7 +207,7 @@ export function SignInForm() {
         setActivationChallenge(null);
         setError(errObj.message);
       } else {
-        setActivationError(errObj?.message || 'Failed to verify activation codes.');
+        setActivationError(errObj?.message || tAuth('signInPage.activationFailed'));
       }
     } finally {
       setActivating(false);
@@ -221,7 +226,7 @@ export function SignInForm() {
     setForgotError(null);
     const trimmedEmail = forgotEmail.trim();
     if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setForgotError('Please enter a valid registered email address.');
+      setForgotError(tAuth('forgot.invalidEmail'));
       return;
     }
 
@@ -231,20 +236,18 @@ export function SignInForm() {
       setForgotOpen(false);
       setNoticeModal({
         tone: 'emerald',
-        title: 'Password Reset Request Sent',
-        description:
-          res.message ||
-          'Your forgotten password request has been submitted to cooperative administrators. Once approved, a temporary password will be sent to your email.',
+        title: tAuth('forgot.sentTitle'),
+        description: res.message || tAuth('forgot.sentDesc'),
         details: [
-          { label: 'Registered Email', value: trimmedEmail },
-          { label: 'Status', value: 'Pending Admin Review' },
+          { label: tAuth('forgot.registeredEmail'), value: trimmedEmail },
+          { label: tAuth('activation.accountStatus'), value: tAuth('forgot.statusPending') },
         ],
-        confirmLabel: 'OK, Got It',
+        confirmLabel: tCommon('okGotIt'),
         redirectHomeOnClose: false,
       });
     } catch (err) {
       setForgotError(
-        err instanceof Error ? err.message : 'Failed to submit password reset request.'
+        err instanceof Error ? err.message : tAuth('forgot.invalidEmail')
       );
     } finally {
       setForgotSubmitting(false);
@@ -287,42 +290,42 @@ export function SignInForm() {
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>
                   {activationChallenge
-                    ? 'Final Activation · Two-Code Agreement'
-                    : 'Encrypted Dashboard · HttpOnly JWT'}
+                    ? tAuth('signInPage.badgeActivation')
+                    : tAuth('signInPage.badge')}
                 </span>
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
               {activationChallenge
-                ? 'Activate Your Amanah Membership'
-                : 'Sign in to the Amanah Dashboard'}
+                ? tAuth('signInPage.headingActivation')
+                : tAuth('signInPage.heading')}
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
               {activationChallenge
-                ? 'Your application has been approved by an administrator. Verify both your official Member ID and your unique 6-digit Activation OTP to finalize your membership agreement.'
-                : 'Access your personal cooperative equity ledger, monthly contribution receipts, Qard Hasan status, and anonymized 2/3 governance ballots.'}
+                ? tAuth('signInPage.subtitleActivation')
+                : tAuth('signInPage.subtitle')}
             </p>
           </div>
 
           <dl className="divide-y divide-slate-200/75 dark:divide-slate-800 border-t border-b border-slate-200/75 dark:border-slate-800 text-xs">
             <div className="py-3 flex items-center justify-between gap-4">
-              <dt className="text-slate-500 dark:text-slate-400">Session Security</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{tAuth('signInPage.sessionSecurity')}</dt>
               <dd className="font-mono font-medium text-slate-900 dark:text-slate-100">
-                HttpOnly Cookie · 2FA TOTP Ready
+                {tAuth('signInPage.sessionSecurityVal')}
               </dd>
             </div>
             <div className="py-3 flex items-center justify-between gap-4">
-              <dt className="text-slate-500 dark:text-slate-400">Field Custody</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{tAuth('signInPage.fieldCustody')}</dt>
               <dd className="font-mono font-medium text-slate-900 dark:text-slate-100">
-                AES-256-GCM · SHA-256 Audit Chain
+                {tAuth('signInPage.fieldCustodyVal')}
               </dd>
             </div>
             <div className="py-3 flex items-center justify-between gap-4">
-              <dt className="text-slate-500 dark:text-slate-400">Eligibility Gate</dt>
+              <dt className="text-slate-500 dark:text-slate-400">{tAuth('signInPage.eligibilityGate')}</dt>
               <dd className="font-medium text-emerald-700 dark:text-emerald-400">
                 {activationChallenge
-                  ? 'Member ID + Single-Use 6-Digit OTP'
-                  : 'Admin-verified active members'}
+                  ? tAuth('signInPage.eligibilityGateActivationVal')
+                  : tAuth('signInPage.eligibilityGateVal')}
               </dd>
             </div>
           </dl>
@@ -335,10 +338,10 @@ export function SignInForm() {
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    Two-Code Membership Activation
+                    {tAuth('signInPage.activationTitle')}
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Account verified for{' '}
+                    {tAuth('signInPage.accountVerifiedFor')}{' '}
                     <span className="font-medium text-slate-800 dark:text-slate-200">
                       {activationChallenge.applicant.name}
                     </span>{' '}
@@ -354,7 +357,7 @@ export function SignInForm() {
                   className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 inline-flex items-center gap-1 shrink-0 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Back</span>
+                  <span>{tCommon('back')}</span>
                 </button>
               </div>
 
@@ -378,7 +381,7 @@ export function SignInForm() {
                     htmlFor="activation-member-id"
                     className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
-                    Official Member ID <span className="text-rose-600">*</span>
+                    {tAuth('activation.memberIdLabel')} <span className="text-rose-600">*</span>
                   </label>
                   <input
                     id="activation-member-id"
@@ -399,7 +402,7 @@ export function SignInForm() {
                     htmlFor="activation-otp"
                     className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
-                    6-Digit Activation OTP <span className="text-rose-600">*</span>
+                    {tAuth('activation.otpLabel')} <span className="text-rose-600">*</span>
                   </label>
                   <input
                     id="activation-otp"
@@ -413,7 +416,7 @@ export function SignInForm() {
                     onChange={(e) =>
                       setActivationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                     }
-                    placeholder="000000"
+                    placeholder={tAuth('activation.otpPlaceholder')}
                     className="w-full px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.28em] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
@@ -427,11 +430,11 @@ export function SignInForm() {
                   />
                   <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     <strong className="font-semibold text-slate-900 dark:text-white">
-                      Final Membership Agreement:
+                      {tAuth('signInPage.finalAgreementTitle')}
                     </strong>{' '}
-                    Submitting my official Member ID and 6-digit Activation OTP serves as my final
-                    confirmation and agreement to join {activationChallenge.applicant.fundName} and
-                    uphold its Shariah-compliant cooperative bylaws.
+                    {tAuth('signInPage.finalAgreementBody', {
+                      fundName: activationChallenge.applicant.fundName,
+                    })}
                   </span>
                 </label>
 
@@ -442,18 +445,14 @@ export function SignInForm() {
                 >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   <span>
-                    {activating ? 'Verifying & Activating…' : 'Confirm Agreement & Activate Account'}
+                    {activating ? tAuth('activation.verifying') : tAuth('activation.submitButton')}
                   </span>
                 </button>
               </form>
 
               <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <Phone className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-                <p className="leading-relaxed">
-                  Didn&apos;t receive the activation email? Contact an Amanah administrator over the
-                  phone — they can share your assigned Member ID and 6-digit OTP directly from the
-                  approval panel.
-                </p>
+                <p className="leading-relaxed">{tAuth('activation.phoneHelp')}</p>
               </div>
             </div>
           ) : hasRegisteredPinAccount && !usePasswordMode ? (
@@ -469,11 +468,10 @@ export function SignInForm() {
             <>
               <div className="space-y-1">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Member Credentials
+                  {tAuth('signInPage.credentialsTitle')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Sign in using your registered cooperative email and password. Unactivated members
-                  will be prompted for their Member ID and 6-digit Activation OTP.
+                  {tAuth('signInPage.credentialsSub')}
                 </p>
               </div>
 
@@ -497,7 +495,7 @@ export function SignInForm() {
                     htmlFor="signin-email"
                     className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
-                    Email Address
+                    {tAuth('email')}
                   </label>
                   <input
                     id="signin-email"
@@ -506,7 +504,7 @@ export function SignInForm() {
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@amanahcoop.org"
+                    placeholder={tAuth('emailPlaceholder')}
                     className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
@@ -517,7 +515,7 @@ export function SignInForm() {
                       htmlFor="signin-password"
                       className="block text-xs font-medium text-slate-700 dark:text-slate-300"
                     >
-                      Password
+                      {tAuth('password')}
                     </label>
                     <button
                       type="button"
@@ -525,7 +523,7 @@ export function SignInForm() {
                       className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-1"
                     >
                       <KeyRound className="w-3 h-3" aria-hidden="true" />
-                      <span>Forgot Password?</span>
+                      <span>{tAuth('forgotPassword')}</span>
                     </button>
                   </div>
                   <input
@@ -535,7 +533,7 @@ export function SignInForm() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={tAuth('passwordPlaceholder')}
                     className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
@@ -546,7 +544,7 @@ export function SignInForm() {
                   className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <Lock className="w-4 h-4" aria-hidden="true" />
-                  <span>{loading ? 'Signing In…' : 'Sign In'}</span>
+                  <span>{loading ? tAuth('signingIn') : tAuth('signIn')}</span>
                 </button>
               </form>
 
@@ -560,19 +558,19 @@ export function SignInForm() {
                   className="w-full py-2 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Sign in with 4-Digit PIN</span>
+                  <span>{tAuth('useDevicePin')}</span>
                 </button>
               )}
             </>
           )}
 
           <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
-            <span>Applying as a new member?</span>
+            <span>{tAuth('signInPage.applyPrompt')}</span>
             <Link
               href="/signup"
               className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
             >
-              <span>Join Amanah</span>
+              <span>{tAuth('signUp')}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -607,17 +605,17 @@ export function SignInForm() {
                       id="forgot-password-modal-title"
                       className="text-base font-semibold text-slate-900 dark:text-white"
                     >
-                      Request Password Reset
+                      {tAuth('forgot.title')}
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Submit a request to cooperative admins to generate and email a temporary password.
+                      {tAuth('forgot.subtitle')}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => !forgotSubmitting && setForgotOpen(false)}
-                  aria-label="Close modal"
+                  aria-label={tCommon('closeDialog')}
                   className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -639,7 +637,7 @@ export function SignInForm() {
                     htmlFor="forgot-email"
                     className="block font-medium text-slate-700 dark:text-slate-300 mb-1"
                   >
-                    Registered Email Address <span className="text-red-500">*</span>
+                    {tAuth('forgot.registeredEmail')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="forgot-email"
@@ -647,7 +645,7 @@ export function SignInForm() {
                     required
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="name@amanahcoop.org"
+                    placeholder={tAuth('emailPlaceholder')}
                     className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -657,8 +655,7 @@ export function SignInForm() {
                     htmlFor="forgot-reason"
                     className="block font-medium text-slate-700 dark:text-slate-300 mb-1"
                   >
-                    Note for Admin{' '}
-                    <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional)</span>
+                    {tAuth('forgot.reasonLabel')}
                   </label>
                   <textarea
                     id="forgot-reason"
@@ -666,7 +663,7 @@ export function SignInForm() {
                     maxLength={400}
                     value={forgotReason}
                     onChange={(e) => setForgotReason(e.target.value)}
-                    placeholder="e.g. Locked out of account or lost device credentials"
+                    placeholder={tAuth('forgot.reasonPlaceholder')}
                     className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -678,14 +675,14 @@ export function SignInForm() {
                     onClick={() => setForgotOpen(false)}
                     className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={forgotSubmitting}
                     className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-medium shadow-xs cursor-pointer"
                   >
-                    {forgotSubmitting ? 'Submitting…' : 'Send Reset Request'}
+                    {forgotSubmitting ? tAuth('forgot.submitting') : tAuth('forgot.submit')}
                   </button>
                 </div>
               </form>
@@ -701,7 +698,7 @@ export function SignInForm() {
         title={noticeModal?.title || ''}
         description={noticeModal?.description || ''}
         details={noticeModal?.details}
-        confirmLabel={noticeModal?.confirmLabel || 'OK, Got It'}
+        confirmLabel={noticeModal?.confirmLabel || tCommon('okGotIt')}
         onClose={() => {
           const shouldGoHome = Boolean(noticeModal?.redirectHomeOnClose);
           setNoticeModal(null);

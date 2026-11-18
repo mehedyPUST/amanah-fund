@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, Download, ExternalLink, Smartphone, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { usePWAInstall } from '../utils/usePWAInstall.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
@@ -14,6 +15,8 @@ interface PWAInstallButtonProps {
 }
 
 export function PWAInstallButton({ compact = false, className = '' }: PWAInstallButtonProps) {
+  const tPwa = useTranslations('PWA');
+  const tCommon = useTranslations('Common');
   const { isInstalled, isIOS, isInIframe, hasNativePrompt, canInstall, promptInstall } =
     usePWAInstall();
   const [guideMode, setGuideMode] = useState<'ios' | 'iframe' | 'manual' | null>(null);
@@ -37,8 +40,8 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
       <button
         type="button"
         onClick={() => void handleClick()}
-        title="Install Amanah App"
-        aria-label="Install Amanah App"
+        title={tPwa('installTitle')}
+        aria-label={tPwa('installTitle')}
         className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/35 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white text-emerald-700 dark:text-emerald-300 font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
           compact ? 'px-2.5 py-2 text-xs' : 'px-3 py-2 text-xs'
         } ${className}`}
@@ -48,18 +51,18 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
         ) : (
           <Smartphone className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         )}
-        <span className={compact ? 'hidden sm:inline' : ''}>Install App</span>
+        <span className={compact ? 'hidden sm:inline' : ''}>{tPwa('installApp')}</span>
       </button>
 
       <ActionModal
         open={installedNoticeOpen}
         mode="notice"
         tone="emerald"
-        title="Amanah App Installed"
-        description="Amanah has been installed to your device. You can now launch it directly from your home screen or desktop app launcher in standalone mode."
+        title={tPwa('installedTitle')}
+        description={tPwa('installedDesc')}
         details={[
-          { label: 'App Name', value: 'Amanah' },
-          { label: 'Mode', value: 'Standalone PWA' },
+          { label: tPwa('appName'), value: tCommon('brandName') },
+          { label: tPwa('mode'), value: tPwa('standaloneMode') },
         ]}
         onClose={() => setInstalledNoticeOpen(false)}
       />
@@ -97,10 +100,10 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                           className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white"
                         >
                           {guideMode === 'iframe' || (isInIframe && !hasNativePrompt)
-                            ? 'Open in New Tab to Install App'
+                            ? tPwa('openNewTabInstall')
                             : isIOS || guideMode === 'ios'
-                              ? 'Install Amanah on iPhone / iPad'
-                              : 'Install Amanah on Your Device'}
+                              ? tPwa('installIos')
+                              : tPwa('installDevice')}
                         </h3>
                       </div>
                     </div>
@@ -108,7 +111,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                       type="button"
                       onClick={() => setGuideMode(null)}
                       className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-                      aria-label="Close install instructions"
+                      aria-label={tCommon('closeDialog')}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -167,7 +170,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                         onClick={() => setGuideMode(null)}
                         className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs"
                       >
-                        <span>Open in New Tab</span>
+                        <span>{tPwa('openNewTab')}</span>
                         <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                       </a>
                     )}
@@ -176,7 +179,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                       onClick={() => setGuideMode(null)}
                       className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                     >
-                      Close
+                      {tCommon('close')}
                     </button>
                   </div>
                 </motion.div>

@@ -35,7 +35,9 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import type {
   Contribution,
   DashboardOverview,
@@ -48,6 +50,7 @@ import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/forma
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
+import { useCoopSession } from './AppProviders.tsx';
 import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { RepaymentSchedule } from './RepaymentSchedule.tsx';
@@ -243,6 +246,10 @@ export function MobileMfsHome({
   onViewMemberProfile,
   onRefresh,
 }: MobileMfsHomeProps) {
+  const { locale } = useCoopSession();
+  const tCommon = useTranslations('Common');
+  const tNav = useTranslations('Navigation');
+  const tDash = useTranslations('Dashboard');
   const [balanceVisible, setBalanceVisible] = useState(false);
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
 
@@ -288,7 +295,7 @@ export function MobileMfsHome({
           kind: 'contribution',
           title: isAdmin
             ? `${c.memberName} · ${formatBillingMonth(c.billingMonth)}`
-            : `Monthly Savings · ${formatBillingMonth(c.billingMonth)}`,
+            : `${tDash('mobile.monthlySavingsLabel')} · ${formatBillingMonth(c.billingMonth)}`,
           subtitle: `${c.channel.toUpperCase()} · ${c.providerName}`,
           amount: c.amount,
           status: c.status,
@@ -309,8 +316,10 @@ export function MobileMfsHome({
         list.push({
           id: `l-${l.id}`,
           kind: 'loan',
-          title: isAdmin ? `${l.borrowerName} · ${l.id}` : `Qard Hasan · ${l.id}`,
-          subtitle: `${l.installmentMonths} mo · ${l.purpose}`,
+          title: isAdmin
+            ? `${l.borrowerName} · ${l.id}`
+            : `${tDash('mobile.qardHasanLabel')} · ${l.id}`,
+          subtitle: `${l.installmentMonths} ${tCommon('monthsShort')} · ${l.purpose}`,
           amount: l.amount,
           status: l.status,
           dateIso: l.approvedAt || l.requestedAt,
@@ -320,7 +329,7 @@ export function MobileMfsHome({
 
     list.sort((a, b) => b.dateIso.localeCompare(a.dateIso));
     return list.slice(0, 5);
-  }, [contributions, loans, isAdmin, user.id, user.memberCode]);
+  }, [contributions, loans, isAdmin, user.id, user.memberCode, tDash, tCommon]);
 
   async function handleQuickQuotaSave(e: FormEvent) {
     e.preventDefault();
@@ -332,15 +341,15 @@ export function MobileMfsHome({
       await onRefresh();
       setQuotaNotice({
         tone: 'emerald',
-        title: 'Annual Loan Quota Updated',
-        description: `Saved: ${nextLimit} Qard Hasan loans per member per year.`,
+        title: tDash('alerts.quotaUpdated'),
+        description: tDash('alerts.quotaSavedDesc', { limit: nextLimit }),
       });
     } catch (err) {
       setQuotaNotice({
         tone: 'red',
-        title: 'Quota Update Failed',
+        title: tDash('alerts.quotaUpdateFailed'),
         description:
-          err instanceof Error ? err.message : 'Could not update annual loan limit.',
+          err instanceof Error ? err.message : tDash('alerts.quotaUpdateError'),
       });
     } finally {
       setSavingQuota(false);
@@ -454,25 +463,33 @@ export function MobileMfsHome({
         .map((g) => g.memberName)
         .join(', ');
       stageCaption = pendingNames
-        ? `Waiting for guarantor co-sign from ${pendingNames}`
-        : 'Waiting for guarantor co-signature before Manager review';
+        ? tDash('mobile.waitingGuarantorNames', { names: pendingNames })
+        : tDash('mobile.waitingGuarantor');
     } else if (loan.status === 'pending_manager_review') {
       progressPct = 35;
-      stageCaption = `Queued in ${isAdmin ? 'Governance Desk' : 'Manager Desk'} to initiate the 2/3 ballot`;
+      stageCaption = tDash('mobile.queuedInDesk', {
+        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+      });
     } else if (loan.status === 'pending_vote') {
       progressPct = 60;
       const cast = loan.totalVotesCast ?? loan.votes.length;
-      stageCaption = `Secret 2/3 Voting ballot open (${cast} / ${loan.totalEligibleVoters} ballots)`;
+      stageCaption = tDash('mobile.secretBallotOpen', {
+        cast,
+        total: loan.totalEligibleVoters,
+      });
     } else if (loan.status === 'approved_pending_disbursement') {
       progressPct = 85;
-      stageCaption = '2/3 quorum approved · Awaiting Manager payout release';
+      stageCaption = tDash('mobile.quorumApprovedPayout');
       barColor = 'bg-teal-600 dark:bg-teal-500';
     } else if (loan.status === 'active') {
       progressPct =
         loan.amount > 0
           ? Math.min(100, Math.round((loan.totalRepaid / loan.amount) * 100))
           : 0;
-      stageCaption = `Repaid ${formatMoney(loan.totalRepaid, ccy)} of ${formatMoney(loan.amount, ccy)}`;
+      stageCaption = tDash('mobile.repaidOfTotal', {
+        repaid: formatMoney(loan.totalRepaid, ccy),
+        total: formatMoney(loan.amount, ccy),
+      });
       barColor = 'bg-emerald-600';
     }
     return { loan, progressPct, stageCaption, barColor };
@@ -483,7 +500,7 @@ export function MobileMfsHome({
     ? [
         {
           id: 'member-registry',
-          label: 'Users & Roles',
+          label: tNav('usersAndRoles'),
           Icon: UserCheck,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
@@ -493,7 +510,7 @@ export function MobileMfsHome({
         },
         {
           id: 'manager-desk',
-          label: 'Governance Desk',
+          label: tNav('governanceDesk'),
           Icon: ClipboardCheck,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
@@ -503,7 +520,7 @@ export function MobileMfsHome({
         },
         {
           id: 'site-settings',
-          label: 'Site Settings',
+          label: tNav('siteSettings'),
           Icon: Settings,
           iconBgClass:
             'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
@@ -512,7 +529,7 @@ export function MobileMfsHome({
         },
         {
           id: 'community',
-          label: 'Community',
+          label: tNav('community'),
           Icon: MessageSquare,
           iconBgClass:
             'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
@@ -522,7 +539,7 @@ export function MobileMfsHome({
         },
         {
           id: 'members',
-          label: 'Members',
+          label: tNav('members'),
           Icon: Users,
           iconBgClass:
             'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
@@ -531,7 +548,7 @@ export function MobileMfsHome({
         },
         {
           id: 'voting',
-          label: 'Voting',
+          label: tNav('voting'),
           Icon: Vote,
           iconBgClass:
             'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
@@ -543,7 +560,7 @@ export function MobileMfsHome({
     : [
         {
           id: 'pay-monthly-contribution',
-          label: 'Contributions',
+          label: tNav('contributions'),
           Icon: CreditCard,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
@@ -553,7 +570,7 @@ export function MobileMfsHome({
         },
         {
           id: 'apply-qard-hasan',
-          label: 'Request Loan',
+          label: tNav('requestLoan'),
           Icon: FilePlus2,
           iconBgClass:
             'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
@@ -568,7 +585,7 @@ export function MobileMfsHome({
         },
         {
           id: 'my-amanah',
-          label: 'My Amanah',
+          label: tNav('myAmanah'),
           Icon: Wallet,
           iconBgClass:
             'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
@@ -577,7 +594,7 @@ export function MobileMfsHome({
         },
         {
           id: 'community',
-          label: 'Community',
+          label: tNav('community'),
           Icon: MessageSquare,
           iconBgClass:
             'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
@@ -587,7 +604,7 @@ export function MobileMfsHome({
         },
         {
           id: 'members',
-          label: 'Members',
+          label: tNav('members'),
           Icon: Users,
           iconBgClass:
             'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
@@ -596,7 +613,7 @@ export function MobileMfsHome({
         },
         {
           id: 'voting',
-          label: 'Voting',
+          label: tNav('voting'),
           Icon: Vote,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
@@ -611,7 +628,7 @@ export function MobileMfsHome({
     ? [
         {
           id: 'transaction-history',
-          label: 'Transactions',
+          label: tNav('transactions'),
           Icon: History,
           iconBgClass:
             'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
@@ -620,7 +637,7 @@ export function MobileMfsHome({
         },
         {
           id: 'statistics',
-          label: 'Statistics',
+          label: tNav('statistics'),
           Icon: BarChart3,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
@@ -629,7 +646,7 @@ export function MobileMfsHome({
         },
         {
           id: 'manager-cycle',
-          label: 'Manager Cycle',
+          label: tNav('managerCycle'),
           Icon: CalendarClock,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -638,7 +655,7 @@ export function MobileMfsHome({
         },
         {
           id: 'notification',
-          label: 'Notifications',
+          label: tNav('notifications'),
           Icon: Bell,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -648,7 +665,7 @@ export function MobileMfsHome({
         },
         {
           id: 'email-queue',
-          label: 'Email Queue',
+          label: tNav('emailQueue'),
           Icon: MailWarning,
           iconBgClass:
             'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
@@ -658,7 +675,7 @@ export function MobileMfsHome({
         },
         {
           id: 'site-activity',
-          label: 'Site Activity',
+          label: tNav('siteActivity'),
           Icon: Activity,
           iconBgClass:
             'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
@@ -667,7 +684,7 @@ export function MobileMfsHome({
         },
         {
           id: 'system-audit-logs',
-          label: 'Audit Logs',
+          label: tNav('auditLogs'),
           Icon: Shield,
           iconBgClass:
             'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
@@ -676,7 +693,7 @@ export function MobileMfsHome({
         },
         {
           id: 'my-profile',
-          label: 'Profile',
+          label: tNav('profile'),
           Icon: User,
           iconBgClass:
             'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
@@ -687,7 +704,7 @@ export function MobileMfsHome({
     : [
         {
           id: 'quard-hasan',
-          label: 'Qard Hasan',
+          label: tNav('qardHasan'),
           Icon: HandCoins,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -696,7 +713,7 @@ export function MobileMfsHome({
         },
         {
           id: 'transaction-history',
-          label: 'Transactions',
+          label: tNav('transactions'),
           Icon: History,
           iconBgClass:
             'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
@@ -705,7 +722,7 @@ export function MobileMfsHome({
         },
         {
           id: 'statistics',
-          label: 'Statistics',
+          label: tNav('statistics'),
           Icon: BarChart3,
           iconBgClass:
             'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
@@ -714,7 +731,7 @@ export function MobileMfsHome({
         },
         {
           id: 'manager-cycle',
-          label: 'Manager Cycle',
+          label: tNav('managerCycle'),
           Icon: CalendarClock,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -723,7 +740,7 @@ export function MobileMfsHome({
         },
         {
           id: 'notification',
-          label: 'Notifications',
+          label: tNav('notifications'),
           Icon: Bell,
           iconBgClass:
             'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -733,7 +750,7 @@ export function MobileMfsHome({
         },
         {
           id: 'my-profile',
-          label: 'Profile',
+          label: tNav('profile'),
           Icon: User,
           iconBgClass:
             'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
@@ -744,7 +761,7 @@ export function MobileMfsHome({
           ? [
               {
                 id: 'manager-desk',
-                label: 'Manager Desk',
+                label: tNav('managerDesk'),
                 Icon: ClipboardCheck,
                 iconBgClass:
                   'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
@@ -754,7 +771,7 @@ export function MobileMfsHome({
               },
               {
                 id: 'member-registry',
-                label: 'Member Registry',
+                label: tNav('memberRegistry'),
                 Icon: UserCheck,
                 iconBgClass:
                   'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
@@ -770,7 +787,7 @@ export function MobileMfsHome({
   const insightTiles: MfsIconTile[] = [
     {
       id: 'monthly-pulse',
-      label: 'Monthly Pulse',
+      label: tDash('monthlyPulse'),
       Icon: CalendarCheck,
       iconBgClass:
         'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
@@ -779,7 +796,7 @@ export function MobileMfsHome({
     },
     {
       id: 'approval-queues',
-      label: 'Approval Queues',
+      label: tDash('approvalQueues'),
       Icon: ClipboardCheck,
       iconBgClass:
         'bg-violet-50 dark:bg-violet-950/40 border-violet-200/70 dark:border-violet-800/60',
@@ -789,7 +806,7 @@ export function MobileMfsHome({
     },
     {
       id: 'active-borrowers',
-      label: 'Active Borrowers',
+      label: tDash('activeBorrowers'),
       Icon: HandCoins,
       iconBgClass:
         'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -799,7 +816,7 @@ export function MobileMfsHome({
     },
     {
       id: 'repayment-schedule',
-      label: 'Repayment Schedule',
+      label: tDash('repaymentSchedule'),
       Icon: CalendarClock,
       iconBgClass:
         'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
@@ -808,7 +825,7 @@ export function MobileMfsHome({
     },
     {
       id: 'leaderboard',
-      label: 'Leaderboard',
+      label: tDash('leaderboard'),
       Icon: Trophy,
       iconBgClass:
         'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
@@ -817,7 +834,7 @@ export function MobileMfsHome({
     },
     {
       id: 'standing-quota',
-      label: isAdmin ? 'Annual Quota' : 'Member Standing',
+      label: isAdmin ? tDash('annualQuota') : tDash('memberStanding'),
       Icon: ShieldCheck,
       iconBgClass:
         'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
@@ -837,11 +854,11 @@ export function MobileMfsHome({
       >
         <div className="flex items-center justify-between gap-2 text-[11px] text-emerald-100/85">
           <span className="truncate font-medium">
-            {phase === 'qard_hasan' ? 'Phase 1 · Qard Hasan' : 'Phase 2 · Halal Equity'} · Maturity{' '}
-            {formatShortDate(config.maturityDate)}
+            {phase === 'qard_hasan' ? tDash('phase1Short') : tDash('phase2Short')} ·{' '}
+            {tDash('maturityLabel', { date: formatShortDate(config.maturityDate) })}
           </span>
           <span className="font-mono font-semibold tabular-nums shrink-0 text-amber-200">
-            {daysUntilMaturity}d left
+            {tCommon('daysLeft', { days: daysUntilMaturity })}
           </span>
         </div>
 
@@ -854,8 +871,9 @@ export function MobileMfsHome({
             />
             <div className="min-w-0">
               <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
-              <div className="text-[11px] text-emerald-100/85 truncate mt-0.5 capitalize">
-                {user.name} · <span className="font-mono">{user.memberCode}</span> · {user.role}
+              <div className="text-[11px] text-emerald-100/85 truncate mt-0.5">
+                {user.name} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+                {translateRoleLabel(user.role, locale)}
               </div>
             </div>
           </div>
@@ -863,7 +881,7 @@ export function MobileMfsHome({
           <button
             type="button"
             onClick={() => setBalanceVisible((v) => !v)}
-            aria-label={balanceVisible ? 'Hide balance' : 'Tap for balance'}
+            aria-label={balanceVisible ? tDash('hideBalance') : tDash('tapForBalance')}
             className="min-h-[44px] px-3.5 py-2 rounded-full bg-white/95 text-emerald-900 text-xs font-semibold shadow-xs active:scale-95 transition-transform inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
           >
             {balanceVisible ? (
@@ -879,7 +897,7 @@ export function MobileMfsHome({
             ) : (
               <>
                 <Eye className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
-                <span>Tap for Balance</span>
+                <span>{tDash('tapForBalance')}</span>
               </>
             )}
           </button>
@@ -892,7 +910,7 @@ export function MobileMfsHome({
             className="text-left min-h-[44px] flex flex-col justify-center cursor-pointer"
           >
             <div className="text-[11px] text-emerald-100/75">
-              {isAdmin ? 'Contributions Pool' : 'Cooperative Equity'}
+              {isAdmin ? tDash('contributionsPool') : tDash('cooperativeEquity')}
             </div>
             <div className="font-mono font-semibold tabular-nums mt-0.5 flex items-center gap-1">
               <span>
@@ -916,10 +934,10 @@ export function MobileMfsHome({
           >
             <div className="text-[11px] text-emerald-100/75">
               {isAdmin
-                ? 'Active Members'
+                ? tDash('activeMembers')
                 : personal.activeLoanBalance > 0
-                  ? 'Active Loan Due'
-                  : 'Quota & Eligibility'}
+                  ? tDash('activeLoanDue')
+                  : tDash('quotaEligibility')}
             </div>
             <div className="font-mono font-semibold tabular-nums mt-0.5 flex items-center gap-1">
               {isAdmin ? (
@@ -935,7 +953,7 @@ export function MobileMfsHome({
               ) : (
                 <span>
                   {personal.eligibility.loansUsedThisYear}/{personal.eligibility.maxLoansPerYear}{' '}
-                  · {personal.eligibility.eligible ? 'Eligible' : 'Hold'}
+                  · {personal.eligibility.eligible ? tCommon('eligible') : tCommon('hold')}
                 </span>
               )}
               <ChevronRight className="w-3.5 h-3.5 opacity-75 shrink-0" aria-hidden="true" />
@@ -961,7 +979,7 @@ export function MobileMfsHome({
                 <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
-                    {myGuarantorRequests.length} Guarantor Co-Sign Request
+                    {tDash('alerts.guarantorPending', { count: myGuarantorRequests.length })}
                   </div>
                   <div className="text-[11px] text-amber-800 dark:text-amber-300 truncate">
                     {myGuarantorRequests[0].borrowerName} ·{' '}
@@ -987,11 +1005,11 @@ export function MobileMfsHome({
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-red-900 dark:text-red-200 truncate">
                     {isAdmin
-                      ? `${treasury.overdueInstallmentsCount} Overdue Cooperative Installment(s)`
-                      : `${personal.eligibility.overdueCount} Overdue Installment(s)`}
+                      ? tDash('alerts.overdueCoopInstallments', { count: treasury.overdueInstallmentsCount })
+                      : tDash('alerts.overdueInstallments', { count: personal.eligibility.overdueCount })}
                   </div>
                   <div className="text-[11px] text-red-800 dark:text-red-300 truncate">
-                    {isAdmin ? 'Tap to inspect active borrowers' : 'Tap to settle in Qard Hasan'}
+                    {isAdmin ? tDash('alerts.tapInspectBorrowers') : tDash('alerts.tapSettleLoan')}
                   </div>
                 </div>
               </div>
@@ -1009,10 +1027,10 @@ export function MobileMfsHome({
                 <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
-                    {treasury.pendingMembersCount} Pending Member Approval
+                    {tDash('alerts.pendingMemberApprovals', { count: treasury.pendingMembersCount })}
                   </div>
                   <div className="text-[11px] text-amber-800 dark:text-amber-300 truncate">
-                    Tap to review KYC in Users &amp; Roles
+                    {tDash('alerts.tapReviewKyc')}
                   </div>
                 </div>
               </div>
@@ -1036,7 +1054,7 @@ export function MobileMfsHome({
                     <StatusText status={loanProgress.loan.status} />
                     <span aria-hidden="true">·</span>
                     <span className="font-mono tabular-nums">
-                      {loanProgress.loan.installmentMonths} mo
+                      {loanProgress.loan.installmentMonths} {tCommon('monthsShort')}
                     </span>
                   </div>
                 </div>
@@ -1050,7 +1068,9 @@ export function MobileMfsHome({
                   className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <span>
-                    {loanProgress.loan.status === 'pending_vote' ? 'Open Voting' : 'Open Qard Hasan'}
+                    {loanProgress.loan.status === 'pending_vote'
+                      ? tDash('alerts.openVoting')
+                      : tDash('alerts.openQardHasan')}
                   </span>
                   <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </button>
@@ -1076,17 +1096,17 @@ export function MobileMfsHome({
       )}
 
       {/* 3. Treasury Headline KPI Strip (2x2 clean grid) */}
-      <section aria-label="Fund Overview" className="space-y-2">
+      <section aria-label={tDash('fundOverview')} className="space-y-2">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Fund Overview
+            {tDash('fundOverview')}
           </h2>
           <button
             type="button"
             onClick={() => setActiveSheet('pulse')}
             className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
           >
-            <span>Monthly Pulse ({treasury.thisMonthKey})</span>
+            <span>{tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}</span>
             <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -1101,7 +1121,7 @@ export function MobileMfsHome({
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                Fund Height
+                {tDash('fundHeight')}
               </span>
               <span className="w-7 h-7 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
@@ -1112,7 +1132,10 @@ export function MobileMfsHome({
                 {formatMoney(treasury.amanahHeight, ccy)}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
-                {treasury.contributingMembersCount} members · Month {thisMonthContribPct}%
+                {tDash('kpi.membersMonthPct', {
+                  count: treasury.contributingMembersCount,
+                  pct: thisMonthContribPct,
+                })}
               </div>
             </div>
           </motion.button>
@@ -1126,7 +1149,7 @@ export function MobileMfsHome({
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                Current Balance
+                {tDash('kpi.currentBalance')}
               </span>
               <span className="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5 text-violet-700 dark:text-violet-400" />
@@ -1137,7 +1160,7 @@ export function MobileMfsHome({
                 {formatMoney(treasury.currentBalance, ccy)}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
-                Liquid reserve · Tap ledger
+                {tDash('kpi.liquidReserveTapLedger')}
               </div>
             </div>
           </motion.button>
@@ -1151,7 +1174,7 @@ export function MobileMfsHome({
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                Current Qard Hasan
+                {tDash('kpi.currentQardHasan')}
               </span>
               <span className="w-7 h-7 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0">
                 <HandCoins className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
@@ -1162,8 +1185,13 @@ export function MobileMfsHome({
                 {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
-                {treasury.activeBorrowers.length} active{' '}
-                {treasury.activeBorrowers.length === 1 ? 'borrower' : 'borrowers'}
+                {tDash('kpi.activeBorrowersCount', {
+                  count: treasury.activeBorrowers.length,
+                  label:
+                    treasury.activeBorrowers.length === 1
+                      ? tDash('kpi.borrowerSingular')
+                      : tDash('kpi.borrowerPlural'),
+                })}
               </div>
             </div>
           </motion.button>
@@ -1177,7 +1205,7 @@ export function MobileMfsHome({
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                Repayments Returned
+                {tDash('kpi.repaymentsReturned')}
               </span>
               <span className="w-7 h-7 rounded-xl bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
@@ -1189,8 +1217,8 @@ export function MobileMfsHome({
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
                 {treasury.approvedLoansDeducted > 0
-                  ? `${repaymentRestorePct}% restored · View schedule`
-                  : 'Revolving principal · View schedule'}
+                  ? tDash('kpi.restoredViewSchedule', { pct: repaymentRestorePct })
+                  : tDash('kpi.revolvingPrincipalViewSchedule')}
               </div>
             </div>
           </motion.button>
@@ -1198,9 +1226,9 @@ export function MobileMfsHome({
       </section>
 
       {/* 4. Core Services Grid */}
-      <section aria-label="Services" className="space-y-2">
+      <section aria-label={tDash('mobile.services')} className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          Services
+          {tDash('mobile.services')}
         </h2>
 
         <div className="mfs-icon-grid-3">
@@ -1211,9 +1239,13 @@ export function MobileMfsHome({
       </section>
 
       {/* 5. All Functional Pages (4-col grid ensuring 100% of app pages have iconic buttons on Home) */}
-      <section aria-label="All App Pages" className="space-y-2">
+      <section aria-label={tDash('mobile.allPagesAccount')} className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {isAdmin ? 'Governance & Ledger Pages' : isManager ? 'Management & Ledger Pages' : 'All Pages & Account'}
+          {isAdmin
+            ? tDash('mobile.governanceLedgerPages')
+            : isManager
+              ? tDash('mobile.managementLedgerPages')
+              : tDash('mobile.allPagesAccount')}
         </h2>
 
         <div className="mfs-icon-grid-4">
@@ -1224,9 +1256,9 @@ export function MobileMfsHome({
       </section>
 
       {/* 6. Treasury Insights & Live Queues (Bottom-sheet drill-downs matching Desktop Overview) */}
-      <section aria-label="Treasury Insights and Queues" className="space-y-2">
+      <section aria-label={tDash('mobile.treasuryInsightsQueues')} className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          Treasury Insights &amp; Queues
+          {tDash('mobile.treasuryInsightsQueues')}
         </h2>
 
         <div className="mfs-icon-grid-3">
@@ -1237,17 +1269,17 @@ export function MobileMfsHome({
       </section>
 
       {/* 7. Recent Activity Tap-List */}
-      <section aria-label="Recent Activity" className="space-y-2">
+      <section aria-label={tDash('mobile.recentActivity')} className="space-y-2">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Recent Activity
+            {tDash('mobile.recentActivity')}
           </h2>
           <button
             type="button"
             onClick={() => onNavigate('transaction-history')}
             className="text-xs font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[44px] px-1.5"
           >
-            <span>See All</span>
+            <span>{tDash('mobile.seeAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -1255,7 +1287,7 @@ export function MobileMfsHome({
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
           {recentActivity.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
-              No recent contributions or loan activity yet.
+              {tDash('mobile.noRecentActivity')}
             </div>
           ) : (
             recentActivity.map((item) => (
@@ -1309,14 +1341,18 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'pulse'}
         onClose={() => setActiveSheet(null)}
-        title={`Monthly Pulse (${treasury.thisMonthKey})`}
-        subtitle={`${treasury.thisMonthClearanceClearedMembers}/${treasury.thisMonthClearanceTotalMembers} members cleared · Maturity ${formatShortDate(config.maturityDate)}`}
+        title={tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}
+        subtitle={tDash('sheets.pulseSubtitle', {
+          cleared: treasury.thisMonthClearanceClearedMembers,
+          total: treasury.thisMonthClearanceTotalMembers,
+          date: formatShortDate(config.maturityDate),
+        })}
       >
         <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 space-y-1.5">
           <div className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
             {phase === 'qard_hasan'
-              ? 'Phase 1 · Active Qard Hasan Lending'
-              : 'Phase 2 · Post-Maturity Halal Investment'}
+              ? tDash('phase1Title')
+              : tDash('phase2Title')}
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             {config.halalInvestmentThesis}
@@ -1326,7 +1362,7 @@ export function MobileMfsHome({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <span>This Month Contribution</span>
+              <span>{tDash('sheets.thisMonthContribution')}</span>
               <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -1345,7 +1381,7 @@ export function MobileMfsHome({
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-1.5">
             <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-              This Month Due (Remaining / Target)
+              {tDash('sheets.thisMonthDue')}
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
               {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
@@ -1355,14 +1391,14 @@ export function MobileMfsHome({
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
               {treasury.thisMonthDueRemaining === 0
-                ? 'All monthly contribution targets collected'
-                : 'Pending collection from members this cycle'}
+                ? tDash('sheets.allTargetsCollected')
+                : tDash('sheets.pendingCollectionCycle')}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-1.5">
             <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-              This Month Hasan Installment
+              {tDash('sheets.thisMonthHasanInstallment')}
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
@@ -1372,20 +1408,20 @@ export function MobileMfsHome({
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
               {treasury.thisMonthHasanInstallmentNeed > 0
-                ? 'Installments due & collected this month'
-                : 'No installments due this month'}
+                ? tDash('sheets.installmentsDueCollected')
+                : tDash('sheets.noInstallmentsDue')}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <span>This Month Clearance</span>
+              <span>{tDash('sheets.thisMonthClearance')}</span>
               <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.thisMonthClearanceClearedMembers}{' '}
               <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                / {treasury.thisMonthClearanceTotalMembers} cleared
+                / {treasury.thisMonthClearanceTotalMembers} {tDash('sheets.clearedSuffix')}
               </span>
             </div>
             <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -1400,7 +1436,7 @@ export function MobileMfsHome({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              This Month Member Clearance
+              {tDash('sheets.thisMonthMemberClearance')}
             </h3>
             <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold tabular-nums">
               {treasury.thisMonthClearanceClearedMembers}/{treasury.thisMonthClearanceTotalMembers}
@@ -1409,7 +1445,7 @@ export function MobileMfsHome({
 
           {treasury.thisMonthMemberClearance.length === 0 ? (
             <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-              No active contributing members found.
+              {tDash('sheets.noActiveContributors')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
@@ -1448,10 +1484,10 @@ export function MobileMfsHome({
                     }`}
                   >
                     {entry.status === 'cleared'
-                      ? 'Cleared'
+                      ? tDash('sheets.clearedBadge')
                       : entry.status === 'pending'
-                        ? 'Pending Review'
-                        : 'Due'}
+                        ? tDash('sheets.pendingReviewBadge')
+                        : tDash('sheets.dueBadge')}
                   </span>
                 </button>
               ))}
@@ -1464,8 +1500,8 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'queues'}
         onClose={() => setActiveSheet(null)}
-        title="Governance & Approval Queues"
-        subtitle="2/3 anonymized ballots · AES-256-GCM encrypted records"
+        title={tDash('sheets.queuesTitle')}
+        subtitle={tDash('sheets.queuesSubtitle')}
       >
         <div className="space-y-2.5">
           <button
@@ -1481,14 +1517,16 @@ export function MobileMfsHome({
               <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Pending Loan Reviews
+                  {tDash('sheets.pendingLoanReviews')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
                   {isStaff
                     ? pendingGuarantorLoansCount > 0
-                      ? `Initiate 2/3 ballot (+${pendingGuarantorLoansCount} awaiting guarantor)`
-                      : `Initiate 2/3 ballot in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
-                    : 'Inspect Qard Hasan queue'}
+                      ? tDash('sheets.initiateBallotGuarantor', { count: pendingGuarantorLoansCount })
+                      : tDash('sheets.initiateBallotInDesk', {
+                          desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                        })
+                    : tDash('sheets.inspectLoanQueue')}
                 </div>
               </div>
             </div>
@@ -1512,10 +1550,10 @@ export function MobileMfsHome({
               <Vote className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Open 2/3 Ballots
+                  {tDash('sheets.openTwoThirdsBallots')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
-                  Cast anonymized secret vote
+                  {tDash('sheets.castSecretVote')}
                 </div>
               </div>
             </div>
@@ -1547,12 +1585,14 @@ export function MobileMfsHome({
               <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Pending Deposits
+                  {tDash('sheets.pendingDeposits')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
                   {isStaff
-                    ? `Review in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
-                    : 'View contribution submission status'}
+                    ? tDash('sheets.reviewInDesk', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tDash('sheets.viewContribStatus')}
                 </div>
               </div>
             </div>
@@ -1577,12 +1617,14 @@ export function MobileMfsHome({
               <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Awaiting Disbursement
+                  {tDash('sheets.awaitingDisbursement')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
                   {isStaff
-                    ? `Confirm payout in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
-                    : 'Multi-sig treasury release'}
+                    ? tDash('sheets.confirmPayoutInDesk', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tDash('sheets.multiSigRelease')}
                 </div>
               </div>
             </div>
@@ -1614,12 +1656,14 @@ export function MobileMfsHome({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Pending Repayments
+                  {tDash('sheets.pendingRepayments')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
                   {isStaff
-                    ? `Verify installments in ${isAdmin ? 'Governance Desk' : 'Manager Desk'}`
-                    : 'Inspect installment receipts'}
+                    ? tDash('sheets.verifyInstallmentsInDesk', {
+                        desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+                      })
+                    : tDash('sheets.inspectInstallmentReceipts')}
                 </div>
               </div>
             </div>
@@ -1637,12 +1681,15 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'borrowers'}
         onClose={() => setActiveSheet(null)}
-        title="Active Qard Hasan Borrowers"
-        subtitle={`${treasury.activeBorrowers.length} active · Disbursed ${formatMoney(treasury.totalLoansDisbursed, ccy)}`}
+        title={tDash('sheets.activeBorrowersTitle')}
+        subtitle={tDash('sheets.activeBorrowersSubtitle', {
+          count: treasury.activeBorrowers.length,
+          amount: formatMoney(treasury.totalLoansDisbursed, ccy),
+        })}
       >
         {treasury.activeBorrowers.length === 0 ? (
           <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-            No active Qard Hasan loans are currently outstanding.
+            {tDash('sheets.noActiveBorrowers')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
@@ -1667,10 +1714,10 @@ export function MobileMfsHome({
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {b.loanId}
-                    {b.nextDueDate ? ` · Due ${formatShortDate(b.nextDueDate)}` : ''}
+                    {b.nextDueDate ? ` · ${tDash('sheets.duePrefix', { date: formatShortDate(b.nextDueDate) })}` : ''}
                     {b.missedInstallmentsCount > 0 && (
                       <span className="text-red-600 dark:text-red-400 ml-1">
-                        · {b.missedInstallmentsCount} overdue
+                        · {tDash('sheets.overdueCount', { count: b.missedInstallmentsCount })}
                       </span>
                     )}
                   </div>
@@ -1679,11 +1726,11 @@ export function MobileMfsHome({
                   <div className="font-semibold text-slate-900 dark:text-white">
                     {formatMoney(b.dueAmount, ccy)}{' '}
                     <span className="text-[11px] font-normal text-amber-700 dark:text-amber-400">
-                      due
+                      {tDash('sheets.dueLower')}
                     </span>
                   </div>
                   <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                    Repaid {formatMoney(b.totalRepaid, ccy)}
+                    {tDash('sheets.repaidAmount', { amount: formatMoney(b.totalRepaid, ccy) })}
                   </div>
                 </div>
               </button>
@@ -1699,7 +1746,7 @@ export function MobileMfsHome({
           }}
           className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>{isAdmin ? 'Open Voting' : 'Open Qard Hasan'}</span>
+          <span>{isAdmin ? tDash('alerts.openVoting') : tDash('alerts.openQardHasan')}</span>
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </MobileBottomSheet>
@@ -1708,8 +1755,8 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'repayments'}
         onClose={() => setActiveSheet(null)}
-        title="Repayment Schedule"
-        subtitle="0% interest revolving installments"
+        title={tDash('repaymentSchedule')}
+        subtitle={tDash('sheets.repaymentScheduleSub')}
       >
         <RepaymentSchedule
           loans={loans}
@@ -1735,8 +1782,8 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'leaderboard'}
         onClose={() => setActiveSheet(null)}
-        title="Contribution Leaderboard"
-        subtitle="Top contributors & consistent payers"
+        title={tDash('sheets.leaderboardTitle')}
+        subtitle={tDash('sheets.leaderboardSub')}
       >
         <ContributionLeaderboard
           entries={overview.leaderboard || []}
@@ -1761,26 +1808,26 @@ export function MobileMfsHome({
       <MobileBottomSheet
         open={activeSheet === 'standing'}
         onClose={() => setActiveSheet(null)}
-        title={isAdmin ? 'Oversight & Annual Loan Quota' : 'Your Member Standing'}
+        title={isAdmin ? tDash('sheets.adminStandingTitle') : tDash('sheets.memberStandingTitle')}
         subtitle={`${user.name} · ${user.memberCode}`}
       >
         {isAdmin ? (
           <div className="space-y-4">
             <dl className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3.5 text-xs">
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Pending Profile Edits</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.pendingProfileEdits')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingProfileRequestsCount}
                 </dd>
               </div>
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Open Decision Polls</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.openDecisionPolls')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                   {treasury.openDecisionPollsCount}
                 </dd>
               </div>
               <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Upcoming Meetings</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.upcomingMeetings')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                   {treasury.upcomingMeetingsCount}
                 </dd>
@@ -1793,13 +1840,13 @@ export function MobileMfsHome({
             >
               <div>
                 <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-                  Administrator Quota Control
+                  {tDash('alerts.adminQuotaControl')}
                 </div>
                 <label
                   htmlFor="mobile-admin-annual-loan-limit"
                   className="block text-xs font-semibold text-slate-900 dark:text-white mt-0.5"
                 >
-                  Max Qard Hasan Loans Per Member / Year
+                  {tDash('sheets.maxLoansShort')}
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -1818,7 +1865,7 @@ export function MobileMfsHome({
                   disabled={savingQuota}
                   className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer"
                 >
-                  {savingQuota ? 'Saving…' : 'Update Annual Limit'}
+                  {savingQuota ? tCommon('saving') : tDash('alerts.updateAnnualLimit')}
                 </button>
               </div>
             </form>
@@ -1833,7 +1880,7 @@ export function MobileMfsHome({
                 className="min-h-[44px] py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Users className="w-4 h-4" />
-                <span>Users &amp; Roles</span>
+                <span>{tNav('usersAndRoles')}</span>
               </button>
               <button
                 type="button"
@@ -1844,7 +1891,7 @@ export function MobileMfsHome({
                 className="min-h-[44px] py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Settings className="w-4 h-4" />
-                <span>Site Settings</span>
+                <span>{tNav('siteSettings')}</span>
               </button>
             </div>
           </div>
@@ -1852,7 +1899,7 @@ export function MobileMfsHome({
           <div className="space-y-4">
             <dl className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3.5 text-xs">
               <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">Your Approved Deposits</dt>
+                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.yourApprovedDeposits')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                   {formatMoney(personal.totalContributed, ccy)}
                 </dd>
@@ -1860,10 +1907,10 @@ export function MobileMfsHome({
               <div className="py-3 flex items-center justify-between gap-2">
                 <dt className="text-slate-600 dark:text-slate-400">
                   {personal.activeLoanBalance > 0
-                    ? 'Active Loan Balance'
+                    ? tDash('sheets.activeLoanBalance')
                     : myActiveOrPendingLoan
-                      ? 'Pending Qard Hasan Request'
-                      : 'Active Loan Balance'}
+                      ? tDash('sheets.pendingQardRequest')
+                      : tDash('sheets.activeLoanBalance')}
                 </dt>
                 <dd className="text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                   {personal.activeLoanBalance > 0
@@ -1874,7 +1921,7 @@ export function MobileMfsHome({
                 </dd>
               </div>
               <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">Cooperative Net Equity</dt>
+                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.coopNetEquity')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                   {formatMoney(personal.cooperativeEquity, ccy)}
                   {personal.totalProfitDistributed > 0 && (
@@ -1885,10 +1932,12 @@ export function MobileMfsHome({
                 </dd>
               </div>
               <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">Annual Loan Quota</dt>
+                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.annualLoanQuota')}</dt>
                 <dd className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
-                  {personal.eligibility.loansUsedThisYear} /{' '}
-                  {personal.eligibility.maxLoansPerYear} used
+                  {tDash('sheets.usedCount', {
+                    used: personal.eligibility.loansUsedThisYear,
+                    max: personal.eligibility.maxLoansPerYear,
+                  })}
                 </dd>
               </div>
             </dl>
@@ -1899,14 +1948,14 @@ export function MobileMfsHome({
                   <>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="text-emerald-700 dark:text-emerald-400">
-                      Eligible for Qard Hasan Request
+                      {tDash('sheets.eligibleForLoan')}
                     </span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <span className="text-amber-700 dark:text-amber-400">
-                      Not Eligible for Qard Hasan
+                      {tDash('sheets.notEligibleForLoan')}
                     </span>
                   </>
                 )}
@@ -1927,7 +1976,7 @@ export function MobileMfsHome({
                   className="min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <FilePlus2 className="w-4 h-4" />
-                  <span>Request Loan</span>
+                  <span>{tNav('requestLoan')}</span>
                 </button>
               )}
               <button
@@ -1938,7 +1987,7 @@ export function MobileMfsHome({
                 }}
                 className="min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Open My Amanah</span>
+                <span>{tDash('sheets.openMyAmanah')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

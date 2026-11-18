@@ -7,97 +7,93 @@ import {
   ScrollText,
   ShieldCheck,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-const EXPLORE_PAGES: Array<{
-  href: string;
-  index: string;
-  label: string;
-  eyebrow: string;
-  description: string;
-  cta: string;
-  Icon: typeof HelpCircle;
-  hue: CardHue;
-  iconBoxClass: string;
-  badgeClass: string;
-  ctaClass: string;
-}> = [
-  {
-    href: '/#how-it-works',
-    index: '01.',
-    label: 'How It Works',
-    eyebrow: 'Role Workflows',
-    description:
-      'Step-by-step guides for cooperative Members, 5-member Shura Managers, and system Administrators.',
-    cta: 'View Workflows',
-    Icon: HelpCircle,
-    hue: 'violet',
-    iconBoxClass:
-      'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
-    badgeClass:
-      'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
-    ctaClass: 'text-violet-700 dark:text-violet-400',
-  },
-  {
-    href: '/#architecture',
-    index: '02.',
-    label: 'Security & Architecture',
-    eyebrow: 'Trust Stack',
-    description:
-      '20-share KYC onboarding, dual Shura and Savings committees, AES-256-GCM encrypted fields, and SHA-256 audit chains.',
-    cta: 'Inspect Architecture',
-    Icon: ShieldCheck,
-    hue: 'teal',
-    iconBoxClass:
-      'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
-    badgeClass:
-      'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
-    ctaClass: 'text-teal-700 dark:text-teal-400',
-  },
-  {
-    href: '/rules',
-    index: '03.',
-    label: 'Rules & Charter',
-    eyebrow: 'Articles 1–25 · PDF',
-    description:
-      'Read the official VISION-36 cooperative constitution, arrears policies, Qard Hasan ceilings, and preview the signed PDF.',
-    cta: 'Rules & Charter',
-    Icon: ScrollText,
-    hue: 'emerald',
-    iconBoxClass:
-      'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
-    badgeClass:
-      'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
-    ctaClass: 'text-emerald-700 dark:text-emerald-400',
-  },
-];
-
 export function HomeHighlights() {
+  const t = useTranslations('Public.highlights');
+
+  const explorePages: Array<{
+    href: string;
+    index: string;
+    label: string;
+    eyebrow: string;
+    description: string;
+    cta: string;
+    Icon: typeof HelpCircle;
+    hue: CardHue;
+    iconBoxClass: string;
+    badgeClass: string;
+    ctaClass: string;
+  }> = [
+    {
+      href: '/#how-it-works',
+      index: '01.',
+      label: t('card1Label'),
+      eyebrow: t('card1Eyebrow'),
+      description: t('card1Desc'),
+      cta: t('card1Cta'),
+      Icon: HelpCircle,
+      hue: 'violet',
+      iconBoxClass:
+        'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+      badgeClass:
+        'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
+      ctaClass: 'text-violet-700 dark:text-violet-400',
+    },
+    {
+      href: '/#architecture',
+      index: '02.',
+      label: t('card2Label'),
+      eyebrow: t('card2Eyebrow'),
+      description: t('card2Desc'),
+      cta: t('card2Cta'),
+      Icon: ShieldCheck,
+      hue: 'teal',
+      iconBoxClass:
+        'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
+      badgeClass:
+        'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
+      ctaClass: 'text-teal-700 dark:text-teal-400',
+    },
+    {
+      href: '/rules',
+      index: '03.',
+      label: t('card3Label'),
+      eyebrow: t('card3Eyebrow'),
+      description: t('card3Desc'),
+      cta: t('card3Cta'),
+      Icon: ScrollText,
+      hue: 'emerald',
+      iconBoxClass:
+        'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+      badgeClass:
+        'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+      ctaClass: 'text-emerald-700 dark:text-emerald-400',
+    },
+  ];
+
   return (
     <section className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-slate-800">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            Cooperative Guide
+            {t('eyebrow')}
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
-            Dedicated guides and official cooperative bylaws
+            {t('heading')}
           </h2>
         </div>
         <span className="font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
-          2027–2036 · 20 Shares
+          {t('meta')}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {EXPLORE_PAGES.map((item, idx) => {
+        {explorePages.map((item, idx) => {
           const Icon = item.Icon;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex"
-            >
+            <Link key={item.href} href={item.href} className="group flex">
               <MotionCard
                 hue={item.hue}
                 delay={idx * 0.04}

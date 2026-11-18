@@ -3,6 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
   CheckCircle2,
@@ -64,6 +65,9 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
 export function SignUpForm() {
   const router = useRouter();
   const { user, authChecking } = useCoopSession();
+  const t = useTranslations('Auth.signUpPage');
+  const tAuth = useTranslations('Auth');
+  const tCommon = useTranslations('Common');
 
   const [referenceOptions, setReferenceOptions] = useState<
     Array<{ name: string; memberCode: string }>
@@ -224,15 +228,15 @@ export function SignUpForm() {
     const isImage = file.type.startsWith('image/');
 
     if (target === 'photo' && !isImage) {
-      setError('Please select a valid image file (PNG, JPG, WEBP, or GIF) for your member photo.');
+      setError(t('errInvalidImage'));
       return;
     }
     if (target === 'agreement' && !isImage && !isPdf) {
-      setError('Agreement paper must be a PDF document or image file (PNG, JPG, WEBP).');
+      setError(t('errInvalidAgreement'));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError('Selected file must be smaller than 10 MB.');
+      setError(t('errFileTooLarge'));
       return;
     }
 
@@ -252,7 +256,7 @@ export function SignUpForm() {
         setAgreementPhotoUrl(res.url);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'File upload failed.');
+      setError(err instanceof Error ? err.message : t('errUploadFailed'));
     } finally {
       if (target === 'photo') setPhotoUploading(false);
       else setAgreementUploading(false);
@@ -263,11 +267,11 @@ export function SignUpForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file (PNG, JPG, or WEBP).');
+      setError(t('errNomineeImage'));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError('Selected nominee image must be smaller than 10 MB.');
+      setError(t('errNomineeSize'));
       return;
     }
 
@@ -289,7 +293,7 @@ export function SignUpForm() {
         )
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nominee photo upload failed.');
+      setError(err instanceof Error ? err.message : t('errNomineeUploadFailed'));
       setNominees((prev) =>
         prev.map((item, i) => (i === index ? { ...item, photoUploading: false } : item))
       );
@@ -302,11 +306,11 @@ export function SignUpForm() {
     setSuccessMessage(null);
 
     if (!photoUrl) {
-      setError('Please upload your profile photo before submitting the application.');
+      setError(t('errPhotoRequired'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+      setError(t('errPasswordLength'));
       return;
     }
 
@@ -316,7 +320,9 @@ export function SignUpForm() {
 
     for (let i = 0; i < nominees.length; i += 1) {
       const n = nominees[i];
-      const prefix = multipleNominees ? `Nominee #${i + 1}` : 'Nominee';
+      const prefix = multipleNominees
+        ? t('nomineeNumber', { number: i + 1 })
+        : t('primaryNominee');
 
       if (
         !n.name.trim() ||
@@ -327,12 +333,12 @@ export function SignUpForm() {
         !n.nidOrBirthReg.trim() ||
         !n.address.trim()
       ) {
-        setError(`${prefix}: Please complete all required nominee details.`);
+        setError(t('errNomineeIncomplete', { prefix }));
         return;
       }
 
       if (n.gender !== 'female' && !n.photoUrl) {
-        setError(`${prefix}: Nominee photo is required unless the nominee gender is Female.`);
+        setError(t('errNomineePhotoRequired', { prefix }));
         return;
       }
 
@@ -340,7 +346,7 @@ export function SignUpForm() {
       if (multipleNominees) {
         const parsed = Number(n.sharePercentage);
         if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
-          setError(`${prefix}: Enter a valid share percentage between 0.01% and 100%.`);
+          setError(t('errNomineeShareRange', { prefix }));
           return;
         }
         sharePercentage = Math.round(parsed * 100) / 100;
@@ -364,9 +370,7 @@ export function SignUpForm() {
     }
 
     if (multipleNominees && Math.abs(shareSum - 100) > 0.05) {
-      setError(
-        `Total share percentage across all nominees must equal 100% (currently ${Math.round(shareSum * 100) / 100}%).`
-      );
+      setError(t('errTotalShare', { current: Math.round(shareSum * 100) / 100 }));
       return;
     }
 
@@ -389,9 +393,7 @@ export function SignUpForm() {
         nominees: preparedNominees,
       });
 
-      const msg =
-        res.message ||
-        'Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.';
+      const msg = res.message || t('submittedFallback');
       setSuccessMessage(msg);
       setSuccessModalOpen(true);
       setName('');
@@ -410,7 +412,7 @@ export function SignUpForm() {
       setAgreementPhotoUrl('');
       setNominees([createEmptyNominee('100')]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit registration.');
+      setError(err instanceof Error ? err.message : t('errSubmitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -464,10 +466,10 @@ export function SignUpForm() {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>Admin-Verified Cooperative Onboarding · AES-256-GCM KYC</span>
+                <span>{t('eyebrow')}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Membership Application
+                {t('heading')}
               </h1>
             </div>
           </div>
@@ -475,7 +477,7 @@ export function SignUpForm() {
             href="/login"
             className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline whitespace-nowrap shrink-0"
           >
-            Already approved? Sign In →
+            {t('alreadyApproved')}
           </Link>
         </div>
 
@@ -491,7 +493,7 @@ export function SignUpForm() {
               <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
                 <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
                 <div className="space-y-1">
-                  <h2 className="text-base font-semibold">Application Submitted for Review</h2>
+                  <h2 className="text-base font-semibold">{t('submittedTitle')}</h2>
                   <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
                     {successMessage}
                   </p>
@@ -502,7 +504,7 @@ export function SignUpForm() {
                   href="/login"
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap"
                 >
-                  <span>Go to Sign In</span>
+                  <span>{t('goToSignIn')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </Link>
                 <button
@@ -510,7 +512,7 @@ export function SignUpForm() {
                   onClick={() => setSuccessMessage(null)}
                   className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap"
                 >
-                  Submit Another Application
+                  {t('submitAnother')}
                 </button>
               </div>
             </motion.div>
@@ -519,10 +521,10 @@ export function SignUpForm() {
               <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                    Constitution Charter (§4–§6 · VISION-36: 2027–2036)
+                    {t('charterBannerTitle')}
                   </p>
                   <p className="text-xs text-slate-600 dark:text-slate-400 tabular-nums">
-                    Capped at 20 shares · ৳5,000/mo savings · ৳200 non-refundable admission fee.
+                    {t('charterBannerDesc')}
                   </p>
                 </div>
                 {constitution?.constitutionPdfUrl ? (
@@ -534,7 +536,7 @@ export function SignUpForm() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Constitution PDF</span>
+                    <span>{t('constitutionPdf')}</span>
                   </a>
                 ) : (
                   <Link
@@ -542,7 +544,7 @@ export function SignUpForm() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Rules &amp; Charter</span>
+                    <span>{t('rulesCharter')}</span>
                   </Link>
                 )}
               </div>
@@ -564,40 +566,40 @@ export function SignUpForm() {
             {/* Section 1: Identity & Credentials */}
             <div className="space-y-4">
               <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                01. Personal &amp; Account Information
+                {t('sec1')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Full Name <span className="text-red-500">*</span>
+                    {t('fullName')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Full legal name"
+                    placeholder={t('fullNamePh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Email Address <span className="text-red-500">*</span>
+                    {tAuth('email')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="member@example.com"
+                    placeholder={tAuth('emailPlaceholder')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Password (min 6 chars) <span className="text-red-500">*</span>
+                    {t('passwordMin')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="password"
@@ -605,14 +607,14 @@ export function SignUpForm() {
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a secure password"
+                    placeholder={t('passwordCreatePh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Date of Birth <span className="text-red-500">*</span>
+                    {t('dob')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -625,28 +627,28 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Mobile Number <span className="text-red-500">*</span>
+                    {t('mobile')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    placeholder="017XX-XXXXXX"
+                    placeholder={t('mobilePh')}
                     className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    National ID (NID) <span className="text-red-500">*</span>
+                    {t('nid')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={nid}
                     onChange={(e) => setNid(e.target.value)}
-                    placeholder="Enter NID number"
+                    placeholder={t('nidPh')}
                     className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -656,12 +658,12 @@ export function SignUpForm() {
             {/* Section 2: Reference & Employment */}
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                02. Reference &amp; Employment
+                {t('sec2')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Reference (Existing Member Name) <span className="text-red-500">*</span>
+                    {t('referenceLabel')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -669,7 +671,7 @@ export function SignUpForm() {
                     list="coop-existing-members"
                     value={referenceMemberName}
                     onChange={(e) => setReferenceMemberName(e.target.value)}
-                    placeholder="e.g. Amanah Administrator"
+                    placeholder={t('referencePh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                   <datalist id="coop-existing-members">
@@ -683,28 +685,28 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Occupation <span className="text-red-500">*</span>
+                    {t('occupation')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
-                    placeholder="e.g. Software Engineer"
+                    placeholder={t('occupationPh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Company / Organization <span className="text-red-500">*</span>
+                    {t('company')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={companyOrganization}
                     onChange={(e) => setCompanyOrganization(e.target.value)}
-                    placeholder="Organization name"
+                    placeholder={t('companyPh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
@@ -715,7 +717,7 @@ export function SignUpForm() {
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                  03. Residential Addresses
+                  {t('sec3')}
                 </h2>
                 <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
                   <input
@@ -724,27 +726,27 @@ export function SignUpForm() {
                     onChange={(e) => setSameAsPresent(e.target.checked)}
                     className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                   />
-                  <span>Permanent address same as present</span>
+                  <span>{t('sameAsPresent')}</span>
                 </label>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Present Address <span className="text-red-500">*</span>
+                    {t('presentAddress')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
                     required
                     value={presentAddress}
                     onChange={(e) => setPresentAddress(e.target.value)}
-                    placeholder="House, Road, Area, City"
+                    placeholder={t('presentAddressPh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Permanent Address <span className="text-red-500">*</span>
+                    {t('permanentAddress')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={2}
@@ -752,7 +754,7 @@ export function SignUpForm() {
                     disabled={sameAsPresent}
                     value={permanentAddress}
                     onChange={(e) => setPermanentAddress(e.target.value)}
-                    placeholder="Village / Ward, Post Office, District"
+                    placeholder={t('permanentAddressPh')}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
                   />
                 </div>
@@ -766,11 +768,11 @@ export function SignUpForm() {
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                     <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                      04. Nominee Information
+                      {t('sec4')}
                     </h2>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Multiple nominees must total 100%. Photo optional for female nominees.
+                    {t('sec4Sub')}
                   </p>
                 </div>
 
@@ -784,14 +786,14 @@ export function SignUpForm() {
                             : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
                         }`}
                       >
-                        Total Share: {totalNomineeShare}%
+                        {t('totalShare', { percent: totalNomineeShare })}
                       </span>
                       <button
                         type="button"
                         onClick={handleEqualSplitShares}
                         className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
                       >
-                        Equal Split
+                        {t('equalSplit')}
                       </button>
                     </>
                   )}
@@ -802,7 +804,7 @@ export function SignUpForm() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Add Another Nominee</span>
+                    <span>{t('addNominee')}</span>
                   </button>
                 </div>
               </div>
@@ -832,12 +834,14 @@ export function SignUpForm() {
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                            {nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee'}
+                            {nominees.length > 1
+                              ? t('nomineeNumber', { number: idx + 1 })
+                              : t('primaryNominee')}
                           </span>
                           <span className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-                            {nominees.length === 1
-                              ? '100% Share'
-                              : `${nominee.sharePercentage || 0}% Share`}
+                            {t('sharePercentLabel', {
+                              percent: nominees.length === 1 ? 100 : nominee.sharePercentage || 0,
+                            })}
                           </span>
                         </div>
 
@@ -848,7 +852,7 @@ export function SignUpForm() {
                           className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Remove</span>
+                          <span>{tCommon('remove')}</span>
                         </button>
                       )}
                     </div>
@@ -856,21 +860,21 @@ export function SignUpForm() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Nominee Name <span className="text-red-500">*</span>
+                          {t('nomineeName')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           required
                           value={nominee.name}
                           onChange={(e) => updateNomineeField(idx, 'name', e.target.value)}
-                          placeholder="Full legal name"
+                          placeholder={t('fullNamePh')}
                           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Date of Birth <span className="text-red-500">*</span>
+                          {t('dob')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="date"
@@ -883,7 +887,7 @@ export function SignUpForm() {
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Gender <span className="text-red-500">*</span>
+                          {t('gender')} <span className="text-red-500">*</span>
                         </label>
                         <select
                           required
@@ -893,30 +897,30 @@ export function SignUpForm() {
                           }
                           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         >
-                          <option value="">Select gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
+                          <option value="">{t('selectGender')}</option>
+                          <option value="male">{t('male')}</option>
+                          <option value="female">{t('female')}</option>
+                          <option value="other">{t('other')}</option>
                         </select>
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Occupation <span className="text-red-500">*</span>
+                          {t('occupation')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           required
                           value={nominee.occupation}
                           onChange={(e) => updateNomineeField(idx, 'occupation', e.target.value)}
-                          placeholder="e.g. Teacher, Homemaker, Student"
+                          placeholder={t('nomineeOccupationPh')}
                           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Relation <span className="text-red-500">*</span>
+                          {t('relation')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -924,35 +928,37 @@ export function SignUpForm() {
                           list="coop-nominee-relations"
                           value={nominee.relation}
                           onChange={(e) => updateNomineeField(idx, 'relation', e.target.value)}
-                          placeholder="e.g. Spouse, Mother, Son"
+                          placeholder={t('relationPh')}
                           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          NID / Birth Registration No. <span className="text-red-500">*</span>
+                          {t('nidBirthReg')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           required
                           value={nominee.nidOrBirthReg}
                           onChange={(e) => updateNomineeField(idx, 'nidOrBirthReg', e.target.value)}
-                          placeholder="Enter NID or Birth Reg number"
+                          placeholder={t('nidBirthRegPh')}
                           className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                          Nominee Mobile No.{' '}
-                          <span className="text-slate-500 dark:text-slate-400 font-normal">(If available)</span>
+                          {t('nomineeMobile')}{' '}
+                          <span className="text-slate-500 dark:text-slate-400 font-normal">
+                            {t('ifAvailable')}
+                          </span>
                         </label>
                         <input
                           type="tel"
                           value={nominee.mobile}
                           onChange={(e) => updateNomineeField(idx, 'mobile', e.target.value)}
-                          placeholder="017XX-XXXXXX (optional)"
+                          placeholder={t('nomineeMobilePh')}
                           className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
@@ -960,7 +966,7 @@ export function SignUpForm() {
                       {nominees.length > 1 && (
                         <div>
                           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                            Share Percentage (%) <span className="text-red-500">*</span>
+                            {t('sharePercentage')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="number"
@@ -972,7 +978,7 @@ export function SignUpForm() {
                             onChange={(e) =>
                               updateNomineeField(idx, 'sharePercentage', e.target.value)
                             }
-                            placeholder="e.g. 50"
+                            placeholder="50"
                             className="w-full px-3.5 py-2.5 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                           />
                         </div>
@@ -983,7 +989,7 @@ export function SignUpForm() {
                       <div>
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                            Nominee Address <span className="text-red-500">*</span>
+                            {t('nomineeAddress')} <span className="text-red-500">*</span>
                           </label>
                           <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">
                             <input
@@ -1005,7 +1011,7 @@ export function SignUpForm() {
                               }}
                               className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                             />
-                            <span>Same as applicant present</span>
+                            <span>{t('sameAsApplicantPresent')}</span>
                           </label>
                         </div>
                         <textarea
@@ -1014,7 +1020,7 @@ export function SignUpForm() {
                           disabled={nominee.sameAsApplicantPresent}
                           value={nominee.address}
                           onChange={(e) => updateNomineeField(idx, 'address', e.target.value)}
-                          placeholder="Full nominee residential address"
+                          placeholder={t('nomineeAddressPh')}
                           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
                         />
                       </div>
@@ -1023,10 +1029,10 @@ export function SignUpForm() {
                       <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                            Nominee Photo{' '}
+                            {t('nomineePhoto')}{' '}
                             {nominee.gender === 'female' ? (
                               <span className="text-emerald-700 dark:text-emerald-400 font-normal">
-                                (Not needed for female)
+                                {t('notNeededFemale')}
                               </span>
                             ) : (
                               <span className="text-red-500">*</span>
@@ -1035,14 +1041,14 @@ export function SignUpForm() {
                           {nominee.photoUrl && nominee.gender !== 'female' && (
                             <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                               <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Uploaded</span>
+                              <span>{t('uploaded')}</span>
                             </span>
                           )}
                         </div>
 
                         {nominee.gender === 'female' ? (
                           <div className="py-3 px-3 rounded-lg border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
-                            Photo upload is not required for female nominees.
+                            {t('femalePhotoExempt')}
                           </div>
                         ) : nominee.photoUrl ? (
                           <div className="flex items-center gap-3">
@@ -1055,7 +1061,7 @@ export function SignUpForm() {
                             <div className="flex flex-col gap-1">
                               <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
                                 <span>
-                                  {nominee.photoUploading ? 'Uploading…' : 'Replace Photo'}
+                                  {nominee.photoUploading ? t('uploading') : t('replacePhoto')}
                                 </span>
                                 <input
                                   type="file"
@@ -1070,7 +1076,7 @@ export function SignUpForm() {
                                 onClick={() => updateNomineeField(idx, 'photoUrl', '')}
                                 className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
                               >
-                                Remove
+                                {tCommon('remove')}
                               </button>
                             </div>
                           </div>
@@ -1083,8 +1089,8 @@ export function SignUpForm() {
                             )}
                             <span className="text-xs text-slate-600 dark:text-slate-400">
                               {nominee.photoUploading
-                                ? 'Uploading to ImageKit.io…'
-                                : 'Choose Nominee Photo'}
+                                ? t('uploadingToCloud')
+                                : t('chooseNomineePhoto')}
                             </span>
                             <input
                               type="file"
@@ -1107,7 +1113,7 @@ export function SignUpForm() {
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div>
                 <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                  05. Identity Photo &amp; Agreement Paper
+                  {t('sec5')}
                 </h2>
               </div>
 
@@ -1116,12 +1122,12 @@ export function SignUpForm() {
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Member Photo <span className="text-red-500">*</span>
+                      {t('memberPhoto')} <span className="text-red-500">*</span>
                     </span>
                     {photoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Uploaded</span>
+                        <span>{t('uploaded')}</span>
                       </span>
                     )}
                   </div>
@@ -1130,12 +1136,12 @@ export function SignUpForm() {
                     <div className="flex items-center gap-3">
                       <img
                         src={photoUrl}
-                        alt="Uploaded member portrait"
+                        alt={t('memberPhoto')}
                         referrerPolicy="no-referrer"
                         className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                       />
                       <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                        <span>{photoUploading ? 'Uploading…' : 'Replace Photo'}</span>
+                        <span>{photoUploading ? t('uploading') : t('replacePhoto')}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -1153,7 +1159,7 @@ export function SignUpForm() {
                         <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {photoUploading ? 'Uploading to ImageKit.io…' : 'Choose Member Photo'}
+                        {photoUploading ? t('uploadingToCloud') : t('chooseMemberPhoto')}
                       </span>
                       <input
                         type="file"
@@ -1170,13 +1176,15 @@ export function SignUpForm() {
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      Agreement Paper (PDF or Photo){' '}
-                      <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional)</span>
+                      {t('agreementPaper')}{' '}
+                      <span className="text-slate-500 dark:text-slate-400 font-normal">
+                        {t('optional')}
+                      </span>
                     </span>
                     {agreementPhotoUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Uploaded</span>
+                        <span>{t('uploaded')}</span>
                       </span>
                     )}
                   </div>
@@ -1196,7 +1204,7 @@ export function SignUpForm() {
                       ) : (
                         <img
                           src={agreementPhotoUrl}
-                          alt="Uploaded agreement paper"
+                          alt={t('agreementPaper')}
                           referrerPolicy="no-referrer"
                           className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
                         />
@@ -1209,12 +1217,12 @@ export function SignUpForm() {
                             rel="noreferrer"
                             className="text-xs font-medium text-slate-700 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
                           >
-                            <span>Preview PDF</span>
+                            <span>{t('previewPdf')}</span>
                             <ExternalLink className="w-3 h-3" aria-hidden="true" />
                           </a>
                         )}
                         <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                          <span>{agreementUploading ? 'Uploading…' : 'Replace File'}</span>
+                          <span>{agreementUploading ? t('uploading') : t('replaceFile')}</span>
                           <input
                             type="file"
                             accept="image/*,application/pdf,.pdf"
@@ -1228,7 +1236,7 @@ export function SignUpForm() {
                           onClick={() => setAgreementPhotoUrl('')}
                           className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline cursor-pointer"
                         >
-                          Remove
+                          {tCommon('remove')}
                         </button>
                       </div>
                     </div>
@@ -1240,9 +1248,7 @@ export function SignUpForm() {
                         <FileText className="w-5 h-5 text-slate-400" aria-hidden="true" />
                       )}
                       <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {agreementUploading
-                          ? 'Uploading to ImageKit.io…'
-                          : 'Upload Signed Agreement (PDF or Photo)'}
+                        {agreementUploading ? t('uploadingToCloud') : t('uploadAgreement')}
                       </span>
                       <input
                         type="file"
@@ -1266,7 +1272,7 @@ export function SignUpForm() {
                 className="px-6 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
-                <span>{submitting ? 'Submitting Application…' : 'Submit Membership Application'}</span>
+                <span>{submitting ? t('submittingApp') : t('submitApp')}</span>
               </button>
             </div>
           </form>
@@ -1278,12 +1284,9 @@ export function SignUpForm() {
         open={successModalOpen}
         mode="notice"
         tone="emerald"
-        title="Application Submitted for Review"
-        description={
-          successMessage ||
-          'Membership application submitted. An administrator will verify your registration details and approve your account before you can sign in.'
-        }
-        confirmLabel="OK, Got It"
+        title={t('submittedTitle')}
+        description={successMessage || t('submittedFallback')}
+        confirmLabel={tCommon('okGotIt')}
         onClose={() => setSuccessModalOpen(false)}
       />
     </div>

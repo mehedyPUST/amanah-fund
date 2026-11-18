@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
@@ -40,131 +41,121 @@ interface RoleGuide {
   steps: GuideStep[];
 }
 
-const ROLE_GUIDES: RoleGuide[] = [
-  {
-    key: 'member',
-    label: 'Members',
-    headline: 'Everyday workflow for verified cooperative shareholders',
-    steps: [
-      {
-        number: '01.',
-        title: 'Apply & Complete KYC',
-        summary:
-          'Submit your application on Join Amanah with NID, nominee details, portrait photo, and an existing member reference.',
-        actionHint: 'Application → Admin Review → Portal Access',
-        Icon: UserCheck,
-      },
-      {
-        number: '02.',
-        title: 'Log Monthly Savings',
-        summary:
-          'Deposit ৳5,000 per share by the 10th via Bank or MFS, then upload the receipt or transaction ID in Contributions.',
-        actionHint: 'Contributions → Submit Receipt',
-        Icon: Wallet,
-      },
-      {
-        number: '03.',
-        title: 'Request & Repay Qard Hasan',
-        summary:
-          'Apply for a 0% interest loan (up to ৳50,000 or 75% of your savings) and submit monthly installments over up to 10 months.',
-        actionHint: 'Request Loan → Qard Hasan',
-        Icon: HandCoins,
-      },
-      {
-        number: '04.',
-        title: 'Vote & Connect Safely',
-        summary:
-          'Cast secret 2/3 ballots on loan requests and Halal ventures in Voting, and message verified peers in Community.',
-        actionHint: 'Voting · Community',
-        Icon: Vote,
-      },
-    ],
-  },
-  {
-    key: 'manager',
-    label: 'Shura Managers',
-    headline: 'Operational oversight for elected 5-member Shura managers',
-    steps: [
-      {
-        number: '01.',
-        title: 'Verify Deposit Receipts',
-        summary:
-          'Inspect incoming Bank/MFS deposit slips and installment payments in Manager Desk before crediting member savings.',
-        actionHint: 'Manager Desk → Contributions',
-        Icon: ClipboardCheck,
-      },
-      {
-        number: '02.',
-        title: 'Open 2/3 Loan Ballots',
-        summary:
-          'Review pending Qard Hasan applications against liquidity limits and launch secret voting for active members.',
-        actionHint: 'Manager Desk → Loan Requests',
-        Icon: Vote,
-      },
-      {
-        number: '03.',
-        title: 'Reveal Tallies & Disburse',
-        summary:
-          'Close voting once quorum is met, reveal anonymized tallies, and record disbursement proof for approved loans.',
-        actionHint: 'Reveal Ballot → Mark Disbursed',
-        Icon: CheckCircle2,
-      },
-      {
-        number: '04.',
-        title: 'Propose Ventures & Meetings',
-        summary:
-          'Publish Halal investment proposals for 2/3 voting, create community polls, and sync Shura meeting notices.',
-        actionHint: 'Manager Desk → Projects & Polls',
-        Icon: Building2,
-      },
-    ],
-  },
-  {
-    key: 'admin',
-    label: 'Administrators',
-    headline: 'System administration, KYC approval, and constitution custody',
-    steps: [
-      {
-        number: '01.',
-        title: 'Approve Member KYC',
-        summary:
-          'Verify NIDs, nominee shares, portrait uploads, and reference checks in Users & Roles before activating new accounts.',
-        actionHint: 'Users & Roles → Pending',
-        Icon: ShieldCheck,
-      },
-      {
-        number: '02.',
-        title: 'Set Treasury Parameters',
-        summary:
-          'Configure monthly contribution rates, late fees, loan caps, maturity date, and member roles in Site Settings.',
-        actionHint: 'Site Settings → Policy Controls',
-        Icon: Settings,
-      },
-      {
-        number: '03.',
-        title: 'Publish Constitution PDF',
-        summary:
-          'Upload the signed cooperative constitution PDF in Site Settings so all visitors and members can view or download it.',
-        actionHint: 'Site Settings → Constitution PDF',
-        Icon: FileCheck2,
-      },
-      {
-        number: '04.',
-        title: 'Audit & Sync Reports',
-        summary:
-          'Verify the SHA-256 audit log chain, mirror treasury tabs to Google Sheets, and export periodic financial reports.',
-        actionHint: 'Audit Logs · Sheets Sync',
-        Icon: LockKeyhole,
-      },
-    ],
-  },
-];
-
 export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
   const { user } = useCoopSession();
+  const t = useTranslations('Public.howItWorks');
+  const tNav = useTranslations('Navigation');
   const [activeRole, setActiveRole] = useState<RoleGuideKey>('member');
 
-  const currentGuide = ROLE_GUIDES.find((g) => g.key === activeRole) || ROLE_GUIDES[0];
+  const roleGuides: RoleGuide[] = [
+    {
+      key: 'member',
+      label: t('roles.member.label'),
+      headline: t('roles.member.headline'),
+      steps: [
+        {
+          number: '01.',
+          title: t('roles.member.s1Title'),
+          summary: t('roles.member.s1Summary'),
+          actionHint: t('roles.member.s1Hint'),
+          Icon: UserCheck,
+        },
+        {
+          number: '02.',
+          title: t('roles.member.s2Title'),
+          summary: t('roles.member.s2Summary'),
+          actionHint: t('roles.member.s2Hint'),
+          Icon: Wallet,
+        },
+        {
+          number: '03.',
+          title: t('roles.member.s3Title'),
+          summary: t('roles.member.s3Summary'),
+          actionHint: t('roles.member.s3Hint'),
+          Icon: HandCoins,
+        },
+        {
+          number: '04.',
+          title: t('roles.member.s4Title'),
+          summary: t('roles.member.s4Summary'),
+          actionHint: t('roles.member.s4Hint'),
+          Icon: Vote,
+        },
+      ],
+    },
+    {
+      key: 'manager',
+      label: t('roles.manager.label'),
+      headline: t('roles.manager.headline'),
+      steps: [
+        {
+          number: '01.',
+          title: t('roles.manager.s1Title'),
+          summary: t('roles.manager.s1Summary'),
+          actionHint: t('roles.manager.s1Hint'),
+          Icon: ClipboardCheck,
+        },
+        {
+          number: '02.',
+          title: t('roles.manager.s2Title'),
+          summary: t('roles.manager.s2Summary'),
+          actionHint: t('roles.manager.s2Hint'),
+          Icon: Vote,
+        },
+        {
+          number: '03.',
+          title: t('roles.manager.s3Title'),
+          summary: t('roles.manager.s3Summary'),
+          actionHint: t('roles.manager.s3Hint'),
+          Icon: CheckCircle2,
+        },
+        {
+          number: '04.',
+          title: t('roles.manager.s4Title'),
+          summary: t('roles.manager.s4Summary'),
+          actionHint: t('roles.manager.s4Hint'),
+          Icon: Building2,
+        },
+      ],
+    },
+    {
+      key: 'admin',
+      label: t('roles.admin.label'),
+      headline: t('roles.admin.headline'),
+      steps: [
+        {
+          number: '01.',
+          title: t('roles.admin.s1Title'),
+          summary: t('roles.admin.s1Summary'),
+          actionHint: t('roles.admin.s1Hint'),
+          Icon: ShieldCheck,
+        },
+        {
+          number: '02.',
+          title: t('roles.admin.s2Title'),
+          summary: t('roles.admin.s2Summary'),
+          actionHint: t('roles.admin.s2Hint'),
+          Icon: Settings,
+        },
+        {
+          number: '03.',
+          title: t('roles.admin.s3Title'),
+          summary: t('roles.admin.s3Summary'),
+          actionHint: t('roles.admin.s3Hint'),
+          Icon: FileCheck2,
+        },
+        {
+          number: '04.',
+          title: t('roles.admin.s4Title'),
+          summary: t('roles.admin.s4Summary'),
+          actionHint: t('roles.admin.s4Hint'),
+          Icon: LockKeyhole,
+        },
+      ],
+    },
+  ];
+
+  const currentGuide = roleGuides.find((g) => g.key === activeRole) || roleGuides[0];
   const HeadingTag = embedded ? 'h2' : 'h1';
 
   return (
@@ -180,7 +171,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           <div className="max-w-2xl space-y-1.5">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>How It Works</span>
+              <span>{t('eyebrow')}</span>
             </div>
             <HeadingTag
               className={
@@ -189,7 +180,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                   : 'text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white text-balance'
               }
             >
-              Clear workflows for every cooperative role
+              {t('heading')}
             </HeadingTag>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {currentGuide.headline}
@@ -198,10 +189,10 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
 
           <div
             role="tablist"
-            aria-label="Select cooperative role guide"
+            aria-label={t('selectRoleGuide')}
             className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950/70 self-start lg:self-auto"
           >
-            {ROLE_GUIDES.map((guide) => {
+            {roleGuides.map((guide) => {
               const selected = guide.key === activeRole;
               return (
                 <button
@@ -298,8 +289,10 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
             <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
             <span>
-              <strong className="font-semibold text-slate-900 dark:text-white">Quick rule:</strong>{' '}
-              ৳5,000/share monthly due by the 10th · 0% Qard Hasan requires 2/3 member vote · ৳50 late fees go to annual Sadaqah.
+              <strong className="font-semibold text-slate-900 dark:text-white">
+                {t('quickRuleLabel')}
+              </strong>{' '}
+              {t('quickRuleText')}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -307,13 +300,13 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               href="/rules"
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
             >
-              Rules &amp; Charter
+              {tNav('rules')}
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
               className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
             >
-              <span>{user ? 'Dashboard' : 'Join Amanah'}</span>
+              <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight
                 className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"

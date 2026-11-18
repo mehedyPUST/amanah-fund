@@ -1,57 +1,63 @@
+import type { AppLocale } from '../i18n/config.ts';
+import { getMessagesForLocale } from '../i18n/messages.ts';
 import type { DashboardSectionId, UserRole } from '../types/coop.ts';
 
-export function getDeskLabel(role?: UserRole | null): string {
-  return role === 'admin' ? 'Governance Desk' : 'Manager Desk';
+export function getDeskLabel(role?: UserRole | null, locale: AppLocale = 'en'): string {
+  const nav = getMessagesForLocale(locale).Navigation;
+  return role === 'admin' ? nav.governanceDesk : nav.managerDesk;
 }
 
-export function getRegistryLabel(role?: UserRole | null): string {
-  return role === 'admin' ? 'Users & Roles' : 'Member Registry';
+export function getRegistryLabel(role?: UserRole | null, locale: AppLocale = 'en'): string {
+  const nav = getMessagesForLocale(locale).Navigation;
+  return role === 'admin' ? nav.usersAndRoles : nav.memberRegistry;
 }
 
 export function getDashboardSectionLabel(
   sectionId: DashboardSectionId,
-  role?: UserRole | null
+  role?: UserRole | null,
+  locale: AppLocale = 'en'
 ): string {
+  const nav = getMessagesForLocale(locale).Navigation;
   switch (sectionId) {
     case 'fund-overview':
-      return 'Overview';
+      return nav.overview;
     case 'my-amanah':
-      return 'My Amanah';
+      return nav.myAmanah;
     case 'monthly-contribution':
-      return 'Contributions';
+      return nav.contributions;
     case 'quard-hasan':
-      return 'Qard Hasan';
+      return nav.qardHasan;
     case 'transaction-history':
-      return 'Transactions';
+      return nav.transactions;
     case 'statistics':
-      return 'Statistics';
+      return nav.statistics;
     case 'ballot':
-      return 'Voting';
+      return nav.voting;
     case 'notification':
-      return 'Notifications';
+      return nav.notifications;
     case 'community':
-      return 'Community';
+      return nav.community;
     case 'members':
-      return 'Members';
+      return nav.members;
     case 'manager-cycle':
-      return 'Manager Cycle';
+      return nav.managerCycle;
     case 'my-profile':
-      return 'Profile';
+      return nav.profile;
     case 'member-profile':
-      return 'Member Profile';
+      return nav.memberProfile;
     case 'manager-desk':
-      return getDeskLabel(role);
+      return getDeskLabel(role, locale);
     case 'member-registry':
-      return getRegistryLabel(role);
+      return getRegistryLabel(role, locale);
     case 'site-settings':
-      return 'Site Settings';
+      return nav.siteSettings;
     case 'email-queue':
-      return 'Email Queue';
+      return nav.emailQueue;
     case 'site-activity':
-      return 'Site Activity';
+      return nav.siteActivity;
     case 'system-audit-logs':
-      return 'Audit Logs';
+      return nav.auditLogs;
     default:
-      return 'Overview';
+      return nav.overview;
   }
 }

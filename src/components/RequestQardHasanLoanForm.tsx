@@ -14,6 +14,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { useTranslations } from 'next-intl';
 import type {
   ActiveMemberDirectoryItem,
   EligibilityCheck,
@@ -66,6 +67,8 @@ export function RequestQardHasanLoanForm({
   onClose,
   onSubmitted,
 }: RequestQardHasanLoanFormProps) {
+  const t = useTranslations('Loans.form');
+  const tLoans = useTranslations('Loans');
   const ccy = config?.currency || 'BDT';
   const configMaxLoanAmount = config?.maxLoanAmount || 50000;
   const configMaxInstallmentMonths = config?.maxInstallmentMonths || 10;
@@ -102,7 +105,7 @@ export function RequestQardHasanLoanForm({
       .catch((err) => {
         if (!cancelled) {
           setEligibilityError(
-            err instanceof Error ? err.message : 'Unable to verify cooperative loan eligibility.'
+            err instanceof Error ? err.message : t('eligibilityLoadError')
           );
         }
       })
@@ -176,7 +179,7 @@ export function RequestQardHasanLoanForm({
         if (!cancelled) {
           setActiveMembers([]);
           setMembersError(
-            err instanceof Error ? err.message : 'Unable to load active member guarantors.'
+            err instanceof Error ? err.message : t('guarantorsLoadError')
           );
         }
       })
@@ -267,18 +270,18 @@ export function RequestQardHasanLoanForm({
     setFeedback(null);
 
     if (!isVerifiedMember) {
-      showError(
-        'Verification Required',
-        'Only administrator-verified active members can request a Qard Hasan loan.'
-      );
+      showError(t('verificationRequiredTitle'), t('verificationRequiredDesc'));
       return;
     }
     // Eligibility is gated when the application modal opens — do not re-block here.
     // Server still enforces eligibility on POST /api/loans.
     if (!Number.isFinite(rawAmount) || parsedAmount < 100 || parsedAmount > maxLoanAmount) {
       showError(
-        'Invalid Requested Amount',
-        `Requested amount must be between ${formatMoney(100, ccy)} and ${formatMoney(maxLoanAmount, ccy)}.`
+        t('invalidAmountTitle'),
+        t('invalidAmountDesc', {
+          min: formatMoney(100, ccy),
+          max: formatMoney(maxLoanAmount, ccy),
+        })
       );
       return;
     }
@@ -289,47 +292,44 @@ export function RequestQardHasanLoanForm({
       months > maxInstallmentMonths
     ) {
       showError(
-        'Invalid Repayment Duration',
-        `Repayment duration must be a whole number between 1 and ${maxInstallmentMonths} months.`
+        t('invalidDurationTitle'),
+        t('invalidDurationDesc', { max: maxInstallmentMonths })
       );
       return;
     }
     if (!purpose.trim() || !disbursementAccount.trim() || !provider.trim()) {
-      showError(
-        'Missing Required Fields',
-        'Please complete the loan purpose, bank/MFS provider, and payout account number.'
-      );
+      showError(t('missingFieldsTitle'), t('missingFieldsDesc'));
       return;
     }
     if (exceedsGuarantorThreshold) {
       if (membersLoading) {
-        showError(
-          'Loading Guarantor Directory',
-          'Please wait a moment while active cooperative members load so you can select co-signing guarantor(s).'
-        );
+        showError(t('loadingGuarantorsTitle'), t('loadingGuarantorsDesc'));
         return;
       }
       if (membersError) {
         showError(
-          'Guarantor Directory Unavailable',
-          `${membersError} Please retry loading the member list before submitting a request above ${formatMoney(guarantorThreshold, ccy)}.`
+          t('guarantorsUnavailableTitle'),
+          t('guarantorsUnavailableDesc', {
+            error: membersError,
+            threshold: formatMoney(guarantorThreshold, ccy),
+          })
         );
         return;
       }
       if (needsGuarantors && validSelectedGuarantorIds.length < effectiveRequiredGuarantors) {
         showError(
-          'Guarantors Required',
-          `Requests above ${formatMoney(guarantorThreshold, ccy)} require ${effectiveRequiredGuarantors} co-signing guarantor member(s).`
+          t('guarantorsRequiredTitle'),
+          t('guarantorsRequiredDesc', {
+            threshold: formatMoney(guarantorThreshold, ccy),
+            count: effectiveRequiredGuarantors,
+          })
         );
         return;
       }
     }
     if (!agreedToTerms) {
       setTermsHighlight(true);
-      showError(
-        'Commitment Required',
-        'Please confirm the 0% interest Qard Hasan terms and repayment commitment checkbox before submitting.'
-      );
+      showError(t('commitmentRequiredTitle'), t('commitmentRequiredDesc'));
       return;
     }
 
@@ -359,9 +359,8 @@ export function RequestQardHasanLoanForm({
 
       setFeedback({
         kind: 'success',
-        title: `Qard Hasan Request Submitted (${created.id})`,
-        message:
-          'Your payout details are AES-256-GCM encrypted. The application is now in Manager Desk — a manager will initiate the 2/3 secret ballot. Track status on your dashboard as an active request.',
+        title: t('submittedTitle', { id: created.id }),
+        message: t('submittedDesc'),
         loanId: created.id,
       });
 
@@ -378,8 +377,8 @@ export function RequestQardHasanLoanForm({
       }
     } catch (err) {
       showError(
-        'Could Not Place Qard Hasan Request',
-        err instanceof Error ? err.message : 'An unexpected error occurred while saving your request.'
+        t('submitFailedTitle'),
+        err instanceof Error ? err.message : t('submitFailedDesc')
       );
     } finally {
       submittingRef.current = false;
@@ -393,7 +392,7 @@ export function RequestQardHasanLoanForm({
       : 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200';
 
   return (
-    <section aria-label="Request Qard Hasan Loan Form" className={wrapperClass}>
+    <section aria-label={t('ariaLabel')} className={wrapperClass}>
       {variant === 'card' && (
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2 text-xs">
@@ -401,20 +400,26 @@ export function RequestQardHasanLoanForm({
               <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span>
                 {isVerifiedMember
-                  ? `Verified Member · ${user.memberCode}`
-                  : 'Account Pending Verification'}
+                  ? t('verifiedMember', { code: user.memberCode })
+                  : t('pendingVerification')}
               </span>
             </span>
-            <span className="font-mono text-slate-500 dark:text-slate-400">0% Interest</span>
+            <span className="font-mono text-slate-500 dark:text-slate-400">{t('zeroInterest')}</span>
           </div>
 
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            Request Qard Hasan Loan
+            {tLoans('requestNew')}
           </h3>
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Your limit {formatMoney(maxLoanAmount, ccy)}
-            {config?.loanSavingsCapPct ? ` (${config.loanSavingsCapPct}% savings / ${formatMoney(configMaxLoanAmount, ccy)} cap)` : ''} · Liquid pool{' '}
+            {t('yourLimitPrefix', { limit: formatMoney(maxLoanAmount, ccy) })}
+            {config?.loanSavingsCapPct
+              ? t('savingsCapNote', {
+                  pct: config.loanSavingsCapPct,
+                  cap: formatMoney(configMaxLoanAmount, ccy),
+                })
+              : ''}{' '}
+            · {t('liquidPoolPrefix')}{' '}
             <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
               {formatMoney(availableLiquidity, ccy)}
             </span>
@@ -441,7 +446,7 @@ export function RequestQardHasanLoanForm({
               className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" aria-hidden="true" />
-              <span>Retry</span>
+              <span>{t('retry')}</span>
             </button>
           </motion.div>
         )}
@@ -476,7 +481,7 @@ export function RequestQardHasanLoanForm({
             </div>
             <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">{feedback.message}</p>
             <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
-              Application ID · {feedback.loanId}
+              {t('applicationIdPrefix', { id: feedback.loanId })}
             </p>
           </motion.div>
         )}
@@ -491,11 +496,10 @@ export function RequestQardHasanLoanForm({
           >
             <div className="font-semibold flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
-              <span>Loan Placement Locked</span>
+              <span>{t('placementLockedTitle')}</span>
             </div>
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-              {eligibility.reasons[0] ||
-                'Your account does not currently meet the cooperative loan eligibility rules.'}
+              {eligibility.reasons[0] || t('placementLockedDefault')}
             </p>
           </motion.div>
         )}
@@ -508,7 +512,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-amount-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Requested Amount ({ccy})
+              {t('requestedAmountLabel', { ccy })}
             </label>
             <div className="flex items-center gap-1">
               {presetAmounts.map((preset) => (
@@ -548,8 +552,7 @@ export function RequestQardHasanLoanForm({
           />
           {parsedAmount > availableLiquidity && (
             <p className="text-[11px] text-amber-700 dark:text-amber-400">
-              Note: Requested amount exceeds current liquid pool ({formatMoney(availableLiquidity, ccy)}).
-              Submission is saved for administrative review; disbursement awaits sufficient funds.
+              {t('exceedsPoolNote', { pool: formatMoney(availableLiquidity, ccy) })}
             </p>
           )}
         </div>
@@ -560,7 +563,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-purpose-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Loan Purpose (Visible for Review &amp; Anonymized Voting)
+              {t('purposeLabel')}
             </label>
             <button
               type="button"
@@ -585,7 +588,7 @@ export function RequestQardHasanLoanForm({
               className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
-              <span>{rewritingField === 'purpose' ? 'Polishing…' : 'AI Polish'}</span>
+              <span>{rewritingField === 'purpose' ? t('polishing') : t('aiPolish')}</span>
             </button>
           </div>
           <input
@@ -595,7 +598,7 @@ export function RequestQardHasanLoanForm({
             disabled={fieldsLocked}
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
-            placeholder="e.g. Family medical expense, tuition fee, urgent repair"
+            placeholder={t('purposePlaceholder')}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
@@ -606,7 +609,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-months-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Preferred Repayment Timeline (Months)
+              {t('timelineLabel')}
             </label>
             <div className="flex items-center gap-1">
               {durationPresets.map((m) => (
@@ -648,26 +651,26 @@ export function RequestQardHasanLoanForm({
           {installmentMonths.trim() !== '' &&
             (!Number.isInteger(rawMonths) || rawMonths < 1 || rawMonths > maxInstallmentMonths) && (
               <p className="text-[11px] text-red-600 dark:text-red-400">
-                Enter a whole number between 1 and {maxInstallmentMonths} months.
+                {t('durationError', { max: maxInstallmentMonths })}
               </p>
             )}
 
           <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Monthly Installment</span>
+              <span className="text-slate-600 dark:text-slate-400">{t('monthlyInstallmentLabel')}</span>
               <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                {formatMoney(monthlyInstallmentPreview, ccy)} / mo
+                {formatMoney(monthlyInstallmentPreview, ccy)} {t('perMonthSuffix')}
               </span>
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-              <span>Total Repayable ({parsedMonths} installments · 0% interest)</span>
+              <span>{t('totalRepayableLabel', { months: parsedMonths })}</span>
               <span className="font-mono tabular-nums text-slate-800 dark:text-slate-200">
                 {formatMoney(parsedAmount, ccy)}
               </span>
             </div>
             {firstDueDate && finalDueDate && (
               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                <span>Projected Timeline</span>
+                <span>{t('projectedTimeline')}</span>
                 <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
                   {formatShortDate(firstDueDate)} → {formatShortDate(finalDueDate)}
                 </span>
@@ -684,8 +687,8 @@ export function RequestQardHasanLoanForm({
                   <Calendar className="w-3 h-3" aria-hidden="true" />
                   <span>
                     {showSchedulePreview
-                      ? 'Hide Repayment Schedule Preview'
-                      : `Preview ${schedulePreview.length}-Month Repayment Schedule`}
+                      ? t('hidePreview')
+                      : t('previewSchedule', { count: schedulePreview.length })}
                   </span>
                 </span>
                 {showSchedulePreview ? (
@@ -727,7 +730,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-channel-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Payout Channel
+              {t('payoutChannelLabel')}
             </label>
             <select
               id={`qard-loan-channel-${variant}`}
@@ -740,8 +743,8 @@ export function RequestQardHasanLoanForm({
               }}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
             >
-              <option value="mfs">MFS (Mobile Wallet)</option>
-              <option value="bank">Bangladesh Bank Transfer</option>
+              <option value="mfs">{t('channelMfs')}</option>
+              <option value="bank">{t('channelBank')}</option>
             </select>
           </div>
           <div>
@@ -749,7 +752,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-provider-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              {channel === 'mfs' ? 'MFS Wallet Provider' : 'Bangladesh Bank'}
+              {channel === 'mfs' ? t('mfsProviderLabel') : t('bankProviderLabel')}
             </label>
             <ProviderSelect
               id={`qard-loan-provider-${variant}`}
@@ -759,8 +762,8 @@ export function RequestQardHasanLoanForm({
               disabled={fieldsLocked}
               placeholder={
                 channel === 'mfs'
-                  ? 'Search MFS wallet…'
-                  : `Search all ${BANK_PROVIDERS.length} BD banks…`
+                  ? t('searchMfs')
+                  : t('searchBanks', { count: BANK_PROVIDERS.length })
               }
             />
           </div>
@@ -771,7 +774,7 @@ export function RequestQardHasanLoanForm({
             htmlFor={`qard-loan-account-${variant}`}
             className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Payout Account / Wallet Number
+            {t('payoutAccountLabel')}
           </label>
           <input
             id={`qard-loan-account-${variant}`}
@@ -780,7 +783,7 @@ export function RequestQardHasanLoanForm({
             disabled={fieldsLocked}
             value={disbursementAccount}
             onChange={(e) => setDisbursementAccount(e.target.value)}
-            placeholder={channel === 'mfs' ? '017XX-XXXXXX' : 'Bank Account Number'}
+            placeholder={channel === 'mfs' ? '017XX-XXXXXX' : t('bankAccountPlaceholder')}
             className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
@@ -791,7 +794,7 @@ export function RequestQardHasanLoanForm({
               htmlFor={`qard-loan-context-${variant}`}
               className="block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Confidential Review Notes
+              {t('confidentialNotesLabel')}
             </label>
             <button
               type="button"
@@ -816,7 +819,7 @@ export function RequestQardHasanLoanForm({
               className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
-              <span>{rewritingField === 'context' ? 'Polishing…' : 'AI Polish'}</span>
+              <span>{rewritingField === 'context' ? t('polishing') : t('aiPolish')}</span>
             </button>
           </div>
           <textarea
@@ -825,7 +828,7 @@ export function RequestQardHasanLoanForm({
             disabled={fieldsLocked}
             value={emergencyContext}
             onChange={(e) => setEmergencyContext(e.target.value)}
-            placeholder="Optional supporting context"
+            placeholder={t('confidentialNotesPlaceholder')}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
@@ -835,20 +838,25 @@ export function RequestQardHasanLoanForm({
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Co-Signing Guarantors Required</span>
+                <span>{t('guarantorsRequiredHeading')}</span>
               </span>
               {!membersLoading && !membersError && (
                 <span className="font-mono text-[11px] text-amber-800 dark:text-amber-300">
-                  {validSelectedGuarantorIds.length} / {effectiveRequiredGuarantors} selected
+                  {t('selectedRatio', {
+                    selected: validSelectedGuarantorIds.length,
+                    required: effectiveRequiredGuarantors,
+                  })}
                 </span>
               )}
             </div>
             <p className="text-[11px] text-amber-800 dark:text-amber-300">
-              Select{' '}
-              {membersLoading || membersError
-                ? requiredGuarantorsCount
-                : effectiveRequiredGuarantors}{' '}
-              co-signer(s) for requests over {formatMoney(guarantorThreshold, ccy)}.
+              {t('selectGuarantorsHint', {
+                count:
+                  membersLoading || membersError
+                    ? requiredGuarantorsCount
+                    : effectiveRequiredGuarantors,
+                threshold: formatMoney(guarantorThreshold, ccy),
+              })}
             </p>
             {membersLoading ? (
               <div className="p-2.5 rounded border border-amber-200/80 dark:border-amber-900/50 bg-white dark:bg-slate-950 space-y-1.5">
@@ -864,7 +872,7 @@ export function RequestQardHasanLoanForm({
                   className="inline-flex items-center gap-1 font-medium underline shrink-0 cursor-pointer"
                 >
                   <RefreshCw className="w-3 h-3" aria-hidden="true" />
-                  <span>Retry</span>
+                  <span>{t('retry')}</span>
                 </button>
               </div>
             ) : (
@@ -923,7 +931,7 @@ export function RequestQardHasanLoanForm({
             className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer"
           />
           <span className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-            I confirm this is a <strong className="text-slate-800 dark:text-slate-200">0% Qard Hasan</strong> request and commit to the {parsedMonths}-month repayment schedule.
+            {t('termsCheckbox', { months: parsedMonths })}
           </span>
         </label>
 
@@ -934,7 +942,7 @@ export function RequestQardHasanLoanForm({
               onClick={onClose}
               className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              Cancel
+              {t('cancel')}
             </button>
           )}
           <button
@@ -945,12 +953,12 @@ export function RequestQardHasanLoanForm({
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>
               {!isVerifiedMember
-                ? 'Member Account Verification Required'
+                ? t('memberVerificationRequired')
                 : submitting
-                  ? 'Encrypting & Submitting…'
+                  ? t('encryptingSubmitting')
                   : eligibilityChecking && !eligibility
-                    ? 'Checking Eligibility…'
-                    : 'Submit Qard Hasan Request'}
+                    ? t('checkingEligibility')
+                    : t('submitBtn')}
             </span>
           </button>
         </div>

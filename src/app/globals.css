@@ -28,12 +28,36 @@ html.dark {
   }
 
   [lang="bn"],
+  [lang="bn"] body,
   [lang="bn"] h1,
   [lang="bn"] h2,
   [lang="bn"] h3,
   [lang="bn"] h4,
-  [lang="bn"] .font-mono {
+  [lang="bn"] .font-display,
+  [lang="bn"] button,
+  [lang="bn"] input,
+  [lang="bn"] select,
+  [lang="bn"] textarea {
     font-family: var(--font-bangla), var(--font-sans), system-ui, -apple-system, sans-serif;
+  }
+
+  [lang="bn"] .font-mono {
+    font-family: var(--font-mono), var(--font-bangla), ui-monospace, SFMono-Regular, monospace;
+  }
+
+  html[lang="bn"] body {
+    line-height: 1.6;
+  }
+
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3 {
+    line-height: 1.3;
+  }
+
+  html[lang="bn"] .mfs-tile-label {
+    line-height: 1.3;
+    font-size: clamp(0.7rem, 2.9vw, 0.82rem);
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),

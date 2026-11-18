@@ -13,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 
 export interface ActionModalDetailItem {
@@ -46,8 +47,8 @@ export function ActionModal({
   title,
   description,
   details,
-  confirmLabel = mode === 'notice' ? 'Done' : 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   busy = false,
   inputLabel,
   inputPlaceholder,
@@ -57,6 +58,10 @@ export function ActionModal({
   onConfirm,
   onClose,
 }: ActionModalProps) {
+  const tCommon = useTranslations('Common');
+  const resolvedConfirmLabel =
+    confirmLabel ?? (mode === 'notice' ? tCommon('done') : tCommon('confirm'));
+  const resolvedCancelLabel = cancelLabel ?? tCommon('cancel');
   const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState(initialInputValue);
   const [inputError, setInputError] = useState<string | null>(null);
@@ -222,7 +227,7 @@ export function ActionModal({
 
     const trimmed = inputValue.trim();
     if (inputLabel && inputRequired && !trimmed) {
-      setInputError(`Please enter ${inputLabel.toLowerCase()} before continuing.`);
+      setInputError(tCommon('pleaseEnterField', { field: inputLabel.toLowerCase() }));
       return;
     }
     setInputError(null);
@@ -369,7 +374,7 @@ export function ActionModal({
                       <button
                         type="button"
                         onClick={() => onCloseRef.current()}
-                        aria-label="Close dialog"
+                        aria-label={tCommon('closeDialog')}
                         className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
                         <X className="w-4 h-4" />
@@ -416,7 +421,7 @@ export function ActionModal({
                       <button
                         type="button"
                         onClick={() => onCloseRef.current()}
-                        aria-label="Close dialog"
+                        aria-label={tCommon('closeDialog')}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
                       >
                         <X className="w-4 h-4" />
@@ -507,7 +512,7 @@ export function ActionModal({
                       onClick={() => onCloseRef.current()}
                       className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      {cancelLabel}
+                      {resolvedCancelLabel}
                     </button>
                   )}
                   <button
@@ -520,10 +525,10 @@ export function ActionModal({
                     {isBusy ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                        <span>Processing…</span>
+                        <span>{tCommon('processing')}</span>
                       </>
                     ) : (
-                      confirmLabel
+                      resolvedConfirmLabel
                     )}
                   </button>
                 </div>
