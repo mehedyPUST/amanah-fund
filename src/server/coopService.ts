@@ -1901,6 +1901,7 @@ export function buildMonthlySheetData(
       userId: member.id,
       name: member.name,
       memberCode: member.memberCode,
+      photoUrl: reg?.photoUrl || member.photoUrl || undefined,
       role: member.role,
       mobile,
       email: member.email,

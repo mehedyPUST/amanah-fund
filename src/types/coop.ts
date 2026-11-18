@@ -1094,6 +1094,7 @@ export interface MonthlySheetMemberRow {
   userId: string;
   name: string;
   memberCode: string;
+  photoUrl?: string;
   role: UserRole;
   mobile: string;
   email: string;

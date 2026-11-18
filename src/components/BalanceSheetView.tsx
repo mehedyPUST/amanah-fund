@@ -29,7 +29,6 @@ import {
   ShieldAlert,
   Sigma,
   Table2,
-  UserRound,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -173,6 +172,47 @@ function statusSortRank(status: MonthlySheetMemberRow['contributionStatus']): nu
     default:
       return 3;
   }
+}
+
+function SheetMemberAvatar({
+  name,
+  photoUrl,
+  size = 'sm',
+}: {
+  name: string;
+  photoUrl?: string;
+  size?: 'sm' | 'md';
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() || '')
+    .join('');
+
+  const dims = size === 'md' ? 'w-8 h-8 text-[11px]' : 'w-6 h-6 text-[10px]';
+
+  if (photoUrl && !imgFailed) {
+    return (
+      <img
+        src={photoUrl}
+        alt={`${name} photo`}
+        referrerPolicy="no-referrer"
+        onError={() => setImgFailed(true)}
+        className={`${dims} rounded-full object-cover border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0`}
+      />
+    );
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`${dims} rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-semibold flex items-center justify-center shrink-0 select-none`}
+    >
+      {initials || 'M'}
+    </div>
+  );
 }
 
 export function BalanceSheetView({
@@ -1470,7 +1510,7 @@ export function BalanceSheetView({
     >
       {/* 1. Spreadsheet Document Header & Period Controls */}
       <div className="relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 pr-11 lg:pr-0">
           <div className="w-9 h-9 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
           </div>
@@ -1494,7 +1534,7 @@ export function BalanceSheetView({
           </div>
         </div>
 
-        {/* Month Switcher + Export Controls */}
+        {/* Month Switcher + Export Controls + Top-Right Corner Fullscreen */}
         <div className="flex flex-wrap items-center gap-1.5 print-hidden">
           <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900 overflow-hidden">
             <button
@@ -1580,6 +1620,42 @@ export function BalanceSheetView({
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
+
+          {/* YouTube-style Full Screen Toggle in Top-Right Corner */}
+          <div className="absolute top-2.5 right-2.5 lg:static lg:pl-1.5 lg:border-l lg:border-slate-200 dark:lg:border-slate-800 group/fs shrink-0 flex items-center">
+            <button
+              type="button"
+              onClick={() => setIsFullScreen((prev) => !prev)}
+              aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+              aria-pressed={isFullScreen}
+              className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            >
+              {isFullScreen ? (
+                <Minimize
+                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
+              ) : (
+                <Maximize
+                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+
+            <div
+              role="tooltip"
+              className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+              />
+              {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1854,16 +1930,24 @@ export function BalanceSheetView({
                     return (
                       <div key={row.userId} className="p-3.5 space-y-2.5 bg-white dark:bg-slate-950">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <button
-                              type="button"
-                              onClick={() => setInspectedMemberId(row.userId)}
-                              className="text-sm font-bold text-slate-900 dark:text-slate-50 hover:text-emerald-700 dark:hover:text-emerald-400 text-left truncate block cursor-pointer"
-                            >
-                              {idx + 1}. {row.name}
-                            </button>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                              <span>{row.memberCode}</span>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <SheetMemberAvatar
+                              key={row.photoUrl || 'init'}
+                              name={row.name}
+                              photoUrl={row.photoUrl}
+                              size="md"
+                            />
+                            <div className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => setInspectedMemberId(row.userId)}
+                                className="text-sm font-bold text-slate-900 dark:text-slate-50 hover:text-emerald-700 dark:hover:text-emerald-400 text-left truncate block cursor-pointer"
+                              >
+                                {idx + 1}. {row.name}
+                              </button>
+                              <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                <span>{row.memberCode}</span>
+                              </div>
                             </div>
                           </div>
                           {renderStatusIndicator(row.contributionStatus)}
@@ -2306,18 +2390,8 @@ export function BalanceSheetView({
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
                           >
-                            <div className="flex items-center justify-between gap-1.5 min-w-0">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-medium text-slate-900 dark:text-slate-100 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 truncate transition-colors">
-                                  {row.name}
-                                </span>
-                                {isSelfRow && (
-                                  <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                                    (You)
-                                  </span>
-                                )}
-                              </div>
-                              {onViewMemberProfile && (
+                            <div className="flex items-center gap-2 min-w-0">
+                              {onViewMemberProfile ? (
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -2328,10 +2402,28 @@ export function BalanceSheetView({
                                   onDoubleClick={(e) => e.stopPropagation()}
                                   title={t('viewProfile')}
                                   aria-label={`${t('viewProfile')}: ${row.name}`}
-                                  className="p-0.5 rounded text-slate-400 opacity-70 group-hover/row:opacity-100 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shrink-0 cursor-pointer transition-opacity print-hidden"
+                                  className="shrink-0 rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                 >
-                                  <UserRound className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <SheetMemberAvatar
+                                    key={row.photoUrl || 'init'}
+                                    name={row.name}
+                                    photoUrl={row.photoUrl}
+                                  />
                                 </button>
+                              ) : (
+                                <SheetMemberAvatar
+                                  key={row.photoUrl || 'init'}
+                                  name={row.name}
+                                  photoUrl={row.photoUrl}
+                                />
+                              )}
+                              <span className="font-medium text-slate-900 dark:text-slate-100 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 truncate transition-colors">
+                                {row.name}
+                              </span>
+                              {isSelfRow && (
+                                <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
+                                  (You)
+                                </span>
                               )}
                             </div>
                           </td>
@@ -2882,124 +2974,86 @@ export function BalanceSheetView({
         )}
 
         {/* 5. Bottom Sheet Tabs & Status Bar */}
-        <div className="relative z-40 shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pl-3 pr-2 py-1.5 flex items-center justify-between gap-2 print-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-2 flex-1 min-w-0">
-            <div className="flex items-center gap-1" role="tablist" aria-label="Balance Sheet tabs">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'balance-sheet'}
-                onClick={() => {
-                  setActiveTab('balance-sheet');
-                  setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
-                }}
-                className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'balance-sheet'
-                    ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
-                }`}
-              >
-                <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Balance Sheet ({shortMonthLabel})</span>
-              </button>
-
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'variables-summary'}
-                onClick={() => {
-                  setActiveTab('variables-summary');
-                  setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
-                }}
-                className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'variables-summary'
-                    ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
-                }`}
-              >
-                <Sigma className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>All Variables Summary</span>
-              </button>
-            </div>
-
-            {sheet && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 px-1">
-                <span>
-                  Rows:{' '}
-                  <strong className="text-slate-900 dark:text-slate-100">
-                    {activeTab === 'balance-sheet'
-                      ? `${filteredRows.length}/${rows.length}`
-                      : `${visibleVariablesRows.length}/${allVariablesRows.length}`}
-                  </strong>
-                </span>
-                <span className="hidden sm:inline" aria-hidden="true">
-                  ·
-                </span>
-                <span className="hidden sm:inline">
-                  Refund Qard:{' '}
-                  <strong className="text-emerald-700 dark:text-emerald-400">
-                    {formatMoney(sheet.thisMonthRepaidAmount, ccy)}
-                  </strong>
-                </span>
-                <span className="hidden md:inline" aria-hidden="true">
-                  ·
-                </span>
-                <span className="hidden md:inline">
-                  All-Time Fund:{' '}
-                  <strong className="text-slate-900 dark:text-slate-100">
-                    {formatMoney(sheet.fundSummary.fundHeight, ccy)}
-                  </strong>
-                </span>
-                <span className="hidden sm:inline" aria-hidden="true">
-                  ·
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMonth(nextMonthKey)}
-                  className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-sans font-semibold cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <span>Open {nextMonthLabel}</span>
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* YouTube-style Full Screen Toggle in Bottom-Right Corner */}
-          <div className="relative group/fs shrink-0 pl-2 border-l border-slate-200 dark:border-slate-800 flex items-center">
+        <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 pt-1.5 pb-1.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
+          <div className="flex items-center gap-1" role="tablist" aria-label="Balance Sheet tabs">
             <button
               type="button"
-              onClick={() => setIsFullScreen((prev) => !prev)}
-              aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
-              aria-pressed={isFullScreen}
-              className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              role="tab"
+              aria-selected={activeTab === 'balance-sheet'}
+              onClick={() => {
+                setActiveTab('balance-sheet');
+                setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
+              }}
+              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === 'balance-sheet'
+                  ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
+              }`}
             >
-              {isFullScreen ? (
-                <Minimize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
-              ) : (
-                <Maximize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
-              )}
+              <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Balance Sheet ({shortMonthLabel})</span>
             </button>
 
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute right-0 bottom-full mb-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'variables-summary'}
+              onClick={() => {
+                setActiveTab('variables-summary');
+                setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
+              }}
+              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === 'variables-summary'
+                  ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
+              }`}
             >
-              <span
-                aria-hidden="true"
-                className="absolute -bottom-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-              />
-              {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
-            </div>
+              <Sigma className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>All Variables Summary</span>
+            </button>
           </div>
+
+          {sheet && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 px-1">
+              <span>
+                Rows:{' '}
+                <strong className="text-slate-900 dark:text-slate-100">
+                  {activeTab === 'balance-sheet'
+                    ? `${filteredRows.length}/${rows.length}`
+                    : `${visibleVariablesRows.length}/${allVariablesRows.length}`}
+                </strong>
+              </span>
+              <span className="hidden sm:inline" aria-hidden="true">
+                ·
+              </span>
+              <span className="hidden sm:inline">
+                Refund Qard:{' '}
+                <strong className="text-emerald-700 dark:text-emerald-400">
+                  {formatMoney(sheet.thisMonthRepaidAmount, ccy)}
+                </strong>
+              </span>
+              <span className="hidden md:inline" aria-hidden="true">
+                ·
+              </span>
+              <span className="hidden md:inline">
+                All-Time Fund:{' '}
+                <strong className="text-slate-900 dark:text-slate-100">
+                  {formatMoney(sheet.fundSummary.fundHeight, ccy)}
+                </strong>
+              </span>
+              <span className="hidden sm:inline" aria-hidden="true">
+                ·
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(nextMonthKey)}
+                className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline font-sans font-semibold cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <span>Open {nextMonthLabel}</span>
+                <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
   );
