@@ -14,14 +14,12 @@ export type DashboardSectionId =
   | 'community'
   | 'manager-desk'
   | 'site-activity'
-  | 'system-audit-logs'
   | 'member-registry'
   | 'site-settings'
   | 'member-profile'
   | 'manager-cycle'
   | 'members'
-  | 'balance-sheet'
-  | 'email-queue';
+  | 'balance-sheet';
 
 export interface EncryptedEnvelope {
   iv: string;

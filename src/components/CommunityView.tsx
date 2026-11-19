@@ -42,7 +42,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import type { AppLocale } from '../i18n/config.ts';
 import { translateRoleLabel } from '../i18n/messages.ts';
 import type {
-  ActiveMemberDirectoryItem,
   AiRewriteTone,
   AiSpamCheckResult,
   CommunityCategory,
@@ -65,7 +64,7 @@ import {
   MAX_COMMUNITY_POST_LINKS,
   normalizeCommunityLinkUrl,
 } from '../utils/communityLinks.ts';
-import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import {
@@ -200,10 +199,7 @@ export function CommunityView({
   const tCommon = useTranslations('Common');
   const locale = useLocale() as AppLocale;
   const isAdmin = user.role === 'admin';
-  const [activeTab, setActiveTab] = useState<'feed' | 'messages' | 'members'>('feed');
-  const [activeMembersList, setActiveMembersList] = useState<ActiveMemberDirectoryItem[]>([]);
-  const [membersLoading, setMembersLoading] = useState(true);
-  const [directorySearch, setDirectorySearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'feed' | 'messages'>('feed');
 
   // Community Feed State
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -371,23 +367,10 @@ export function CommunityView({
     [loadThreads, t]
   );
 
-  const loadActiveMembers = useCallback(async (silent = false) => {
-    if (!silent) setMembersLoading(true);
-    try {
-      const res = await api.getActiveMembers();
-      setActiveMembersList(res.members);
-    } catch {
-      // ignore transient error
-    } finally {
-      if (!silent) setMembersLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     void loadPosts(false);
     void loadThreads(false);
-    void loadActiveMembers(false);
-  }, [loadPosts, loadThreads, loadActiveMembers]);
+  }, [loadPosts, loadThreads]);
 
   useEffect(() => {
     const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
@@ -1608,16 +1591,6 @@ export function CommunityView({
                   Icon: Mail,
                   badge: totalUnread > 0 ? totalUnread : null,
                   badgeClass: 'font-semibold text-indigo-700 dark:text-indigo-400',
-                },
-                {
-                  id: 'members',
-                  label: t('tabMembers'),
-                  Icon: Users,
-                  badge:
-                    activeMembersList.length > 0
-                      ? activeMembersList.length
-                      : directory.length + 1,
-                  badgeClass: 'text-slate-500 dark:text-slate-400',
                 },
               ] as const
             ).map((tab) => {
@@ -3566,165 +3539,6 @@ export function CommunityView({
           </motion.div>
         )}
 
-        {/* MEMBERS DIRECTORY TAB */}
-        {activeTab === 'members' && (
-          <motion.div
-            key="tab-members"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.16 }}
-            className="space-y-5"
-          >
-          <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {t('verifiedMembersCount', { count: activeMembersList.length })}
-              </h3>
-            </div>
-            <div className="relative w-full sm:w-72 shrink-0">
-              <Search
-                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={directorySearch}
-                onChange={(e) => setDirectorySearch(e.target.value)}
-                placeholder={t('searchMembersPlaceholder')}
-                className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
-              />
-            </div>
-          </div>
-
-          {membersLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <Skeleton width={36} height={36} borderRadius={8} />
-                    <div className="flex-1 space-y-1.5">
-                      <Skeleton width="65%" height={15} />
-                      <Skeleton width="80%" height={12} />
-                    </div>
-                  </div>
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <Skeleton width={90} height={24} />
-                    <Skeleton width={110} height={30} borderRadius={8} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (() => {
-            const q = directorySearch.trim().toLowerCase();
-            const list = activeMembersList.filter(
-              (m) =>
-                !q ||
-                m.name.toLowerCase().includes(q) ||
-                m.memberCode.toLowerCase().includes(q) ||
-                (m.occupation || '').toLowerCase().includes(q) ||
-                (m.companyOrganization || '').toLowerCase().includes(q)
-            );
-              if (list.length === 0) {
-              return (
-                <div className="amanah-card-violet border rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                  {t('noVerifiedMatch')}
-                </div>
-              );
-            }
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {list.map((member, idx) => {
-                  const isSelf = member.id === user.id;
-                  return (
-                    <div
-                      key={member.id}
-                      className={`${
-                        idx % 2 === 0 ? 'amanah-card-emerald' : 'amanah-card-violet'
-                      } border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-4 transition-all duration-200`}
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <AvatarBadge name={member.name} photoUrl={member.photoUrl} />
-                        <div className="min-w-0 space-y-0.5 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">
-                              {member.name}
-                            </span>
-                            {isSelf && (
-                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                                {t('youTag')}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                            <span className="font-mono">{member.memberCode}</span>
-                            <span aria-hidden="true">·</span>
-                            <span className="capitalize">{translateRoleLabel(member.role, locale)}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{t('joinedShort', { date: formatShortDate(member.joinedAt) })}</span>
-                          </div>
-                          {(member.occupation || member.companyOrganization) && (
-                            <div className="text-xs text-slate-600 dark:text-slate-300 truncate pt-0.5">
-                              {[member.occupation, member.companyOrganization]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                        <div className="text-xs">
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {t('contributedLabel')}
-                          </div>
-                          <div className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                            {formatMoney(member.totalContributed, currency)}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {!isSelf && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleOpenDirectMessage({
-                                  id: member.id,
-                                  name: member.name,
-                                  memberCode: member.memberCode,
-                                  role: member.role,
-                                  photoUrl: member.photoUrl,
-                                })
-                              }
-                              className="min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Mail className="w-3 h-3" aria-hidden="true" />
-                              <span>{t('messageBtn')}</span>
-                            </button>
-                          )}
-                          {onViewMemberProfile && (
-                            <button
-                              type="button"
-                              onClick={() => onViewMemberProfile(member.id)}
-                              className="min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all"
-                            >
-                              <User className="w-3 h-3" aria-hidden="true" />
-                              <span>{t('viewProfileBtn')}</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-          </motion.div>
-        )}
       </AnimatePresence>
       <ActionModal
         open={modal !== null}

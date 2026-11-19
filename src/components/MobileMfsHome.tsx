@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -21,13 +21,10 @@ import {
   HandCoins,
   History,
   Lock,
-  MailWarning,
   MessageSquare,
   Settings,
-  Shield,
   ShieldCheck,
   TrendingUp,
-  Trophy,
   User,
   UserCheck,
   Users,
@@ -46,15 +43,11 @@ import type {
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
-import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
-import { ActionModal } from './ActionModal.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
-import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
-import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export interface MfsIconTile {
@@ -71,8 +64,6 @@ type MobileSheetId =
   | 'pulse'
   | 'queues'
   | 'borrowers'
-  | 'repayments'
-  | 'leaderboard'
   | 'standing'
   | null;
 
@@ -246,7 +237,6 @@ export function MobileMfsHome({
   onOpenManagerDeskTab,
   onOpenLoanModal,
   onViewMemberProfile,
-  onRefresh,
 }: MobileMfsHomeProps) {
   const { locale } = useCoopSession();
   const tCommon = useTranslations('Common');
@@ -254,22 +244,6 @@ export function MobileMfsHome({
   const tDash = useTranslations('Dashboard');
   const [balanceVisible, setBalanceVisible] = useState(false);
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
-
-  const [quotaInput, setQuotaInput] = useState(
-    String(overview?.config.maxLoansPerYear ?? 3)
-  );
-  const [savingQuota, setSavingQuota] = useState(false);
-  const [quotaNotice, setQuotaNotice] = useState<{
-    tone: 'emerald' | 'red';
-    title: string;
-    description: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (overview?.config.maxLoansPerYear !== undefined) {
-      setQuotaInput(String(overview.config.maxLoansPerYear));
-    }
-  }, [overview?.config.maxLoansPerYear]);
 
   const isAdmin = user.role === 'admin';
   const isManager = user.role === 'manager';
@@ -332,31 +306,6 @@ export function MobileMfsHome({
     list.sort((a, b) => b.dateIso.localeCompare(a.dateIso));
     return list.slice(0, 5);
   }, [contributions, loans, isAdmin, user.id, user.memberCode, tDash, tCommon]);
-
-  async function handleQuickQuotaSave(e: FormEvent) {
-    e.preventDefault();
-    setSavingQuota(true);
-    setQuotaNotice(null);
-    try {
-      const nextLimit = Number(quotaInput);
-      await api.updateConfig({ maxLoansPerYear: nextLimit });
-      await onRefresh();
-      setQuotaNotice({
-        tone: 'emerald',
-        title: tDash('alerts.quotaUpdated'),
-        description: tDash('alerts.quotaSavedDesc', { limit: nextLimit }),
-      });
-    } catch (err) {
-      setQuotaNotice({
-        tone: 'red',
-        title: tDash('alerts.quotaUpdateFailed'),
-        description:
-          err instanceof Error ? err.message : tDash('alerts.quotaUpdateError'),
-      });
-    } finally {
-      setSavingQuota(false);
-    }
-  }
 
   if (loading || !overview) {
     return (
@@ -527,6 +476,7 @@ export function MobileMfsHome({
           iconBgClass:
             'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
           iconColorClass: 'text-indigo-700 dark:text-indigo-400',
+          badge: pendingBadgeCount('site-settings'),
           onClick: () => onNavigate('site-settings'),
         },
         {
@@ -675,16 +625,6 @@ export function MobileMfsHome({
           onClick: () => onNavigate('notification'),
         },
         {
-          id: 'email-queue',
-          label: tNav('emailQueue'),
-          Icon: MailWarning,
-          iconBgClass:
-            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
-          iconColorClass: 'text-rose-700 dark:text-rose-400',
-          badge: pendingBadgeCount('email-queue'),
-          onClick: () => onNavigate('email-queue'),
-        },
-        {
           id: 'site-activity',
           label: tNav('siteActivity'),
           Icon: Activity,
@@ -692,15 +632,6 @@ export function MobileMfsHome({
             'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
           iconColorClass: 'text-teal-700 dark:text-teal-400',
           onClick: () => onNavigate('site-activity'),
-        },
-        {
-          id: 'system-audit-logs',
-          label: tNav('auditLogs'),
-          Icon: Shield,
-          iconBgClass:
-            'bg-rose-50 dark:bg-rose-950/40 border-rose-200/70 dark:border-rose-800/60',
-          iconColorClass: 'text-rose-700 dark:text-rose-400',
-          onClick: () => onNavigate('system-audit-logs'),
         },
         {
           id: 'my-profile',
@@ -802,66 +733,6 @@ export function MobileMfsHome({
             ]
           : []),
       ];
-
-  // 3. Desktop Overview Drill-Down Sheets (3-col clean cards)
-  const insightTiles: MfsIconTile[] = [
-    {
-      id: 'monthly-pulse',
-      label: tDash('monthlyPulse'),
-      Icon: CalendarCheck,
-      iconBgClass:
-        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-      onClick: () => setActiveSheet('pulse'),
-    },
-    {
-      id: 'approval-queues',
-      label: tDash('approvalQueues'),
-      Icon: ClipboardCheck,
-      iconBgClass:
-        'bg-violet-50 dark:bg-violet-950/40 border-violet-200/70 dark:border-violet-800/60',
-      iconColorClass: 'text-violet-700 dark:text-violet-400',
-      badge: totalQueueCount,
-      onClick: () => setActiveSheet('queues'),
-    },
-    {
-      id: 'active-borrowers',
-      label: tDash('activeBorrowers'),
-      Icon: HandCoins,
-      iconBgClass:
-        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-      iconColorClass: 'text-amber-700 dark:text-amber-400',
-      badge: treasury.activeBorrowers.length,
-      onClick: () => setActiveSheet('borrowers'),
-    },
-    {
-      id: 'repayment-schedule',
-      label: tDash('repaymentSchedule'),
-      Icon: CalendarClock,
-      iconBgClass:
-        'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
-      iconColorClass: 'text-teal-700 dark:text-teal-400',
-      onClick: () => setActiveSheet('repayments'),
-    },
-    {
-      id: 'leaderboard',
-      label: tDash('leaderboard'),
-      Icon: Trophy,
-      iconBgClass:
-        'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-      iconColorClass: 'text-amber-700 dark:text-amber-400',
-      onClick: () => setActiveSheet('leaderboard'),
-    },
-    {
-      id: 'standing-quota',
-      label: isAdmin ? tDash('annualQuota') : tDash('memberStanding'),
-      Icon: ShieldCheck,
-      iconBgClass:
-        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-400',
-      onClick: () => setActiveSheet('standing'),
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -1117,18 +988,29 @@ export function MobileMfsHome({
 
       {/* 3. Treasury Headline KPI Strip (2x2 clean grid) */}
       <section aria-label={tDash('fundOverview')} className="space-y-2">
-        <div className="flex items-center justify-between px-0.5">
+        <div className="flex items-center justify-between gap-2 px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
             {tDash('fundOverview')}
           </h2>
-          <button
-            type="button"
-            onClick={() => setActiveSheet('pulse')}
-            className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
-          >
-            <span>{tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}</span>
-            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            {totalQueueCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSheet('queues')}
+                className="text-[11px] font-medium text-violet-700 dark:text-violet-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
+              >
+                <span>{tDash('approvalQueues')} ({totalQueueCount})</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setActiveSheet('pulse')}
+              className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
+            >
+              <span>{tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}</span>
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
@@ -1218,7 +1100,7 @@ export function MobileMfsHome({
 
           <motion.button
             type="button"
-            onClick={() => setActiveSheet('repayments')}
+            onClick={() => (isAdmin ? setActiveSheet('borrowers') : onNavigate('quard-hasan'))}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
             className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
@@ -1275,20 +1157,7 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* 6. Treasury Insights & Live Queues (Bottom-sheet drill-downs matching Desktop Overview) */}
-      <section aria-label={tDash('mobile.treasuryInsightsQueues')} className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {tDash('mobile.treasuryInsightsQueues')}
-        </h2>
-
-        <div className="mfs-icon-grid-3">
-          {insightTiles.map((tile) => (
-            <MfsGridTileButton key={tile.id} tile={tile} />
-          ))}
-        </div>
-      </section>
-
-      {/* 7. Recent Activity Tap-List */}
+      {/* 6. Recent Activity Tap-List */}
       <section aria-label={tDash('mobile.recentActivity')} className="space-y-2">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1771,60 +1640,7 @@ export function MobileMfsHome({
         </button>
       </MobileBottomSheet>
 
-      {/* Sheet 4: Full Repayment Schedule */}
-      <MobileBottomSheet
-        open={activeSheet === 'repayments'}
-        onClose={() => setActiveSheet(null)}
-        title={tDash('repaymentSchedule')}
-        subtitle={tDash('sheets.repaymentScheduleSub')}
-      >
-        <RepaymentSchedule
-          loans={loans}
-          config={config}
-          user={user}
-          loading={loading}
-          onNavigate={(sec) => {
-            setActiveSheet(null);
-            onNavigate(sec);
-          }}
-          onOpenLoanModal={
-            onOpenLoanModal
-              ? () => {
-                  setActiveSheet(null);
-                  onOpenLoanModal();
-                }
-              : undefined
-          }
-        />
-      </MobileBottomSheet>
-
-      {/* Sheet 5: Full Contribution Leaderboard */}
-      <MobileBottomSheet
-        open={activeSheet === 'leaderboard'}
-        onClose={() => setActiveSheet(null)}
-        title={tDash('sheets.leaderboardTitle')}
-        subtitle={tDash('sheets.leaderboardSub')}
-      >
-        <ContributionLeaderboard
-          entries={overview.leaderboard || []}
-          config={config}
-          loading={loading}
-          onNavigate={(sec) => {
-            setActiveSheet(null);
-            onNavigate(sec);
-          }}
-          onViewMemberProfile={
-            onViewMemberProfile
-              ? (memberId) => {
-                  setActiveSheet(null);
-                  onViewMemberProfile(memberId);
-                }
-              : undefined
-          }
-        />
-      </MobileBottomSheet>
-
-      {/* Sheet 6: Member Standing / Admin Oversight & Quota Control */}
+      {/* Sheet 4: Member Standing / Admin Oversight */}
       <MobileBottomSheet
         open={activeSheet === 'standing'}
         onClose={() => setActiveSheet(null)}
@@ -1853,42 +1669,6 @@ export function MobileMfsHome({
                 </dd>
               </div>
             </dl>
-
-            <form
-              onSubmit={handleQuickQuotaSave}
-              className="rounded-xl border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 p-3.5 space-y-3"
-            >
-              <div>
-                <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-                  {tDash('alerts.adminQuotaControl')}
-                </div>
-                <label
-                  htmlFor="mobile-admin-annual-loan-limit"
-                  className="block text-xs font-semibold text-slate-900 dark:text-white mt-0.5"
-                >
-                  {tDash('sheets.maxLoansShort')}
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="mobile-admin-annual-loan-limit"
-                  type="number"
-                  min={1}
-                  max={12}
-                  required
-                  value={quotaInput}
-                  onChange={(e) => setQuotaInput(e.target.value)}
-                  className="w-24 min-h-[44px] px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-                />
-                <button
-                  type="submit"
-                  disabled={savingQuota}
-                  className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer"
-                >
-                  {savingQuota ? tCommon('saving') : tDash('alerts.updateAnnualLimit')}
-                </button>
-              </div>
-            </form>
 
             <div className="grid grid-cols-2 gap-2.5">
               <button
@@ -2014,15 +1794,6 @@ export function MobileMfsHome({
           </div>
         )}
       </MobileBottomSheet>
-
-      <ActionModal
-        open={quotaNotice !== null}
-        mode="notice"
-        tone={quotaNotice?.tone || 'emerald'}
-        title={quotaNotice?.title || ''}
-        description={quotaNotice?.description || ''}
-        onClose={() => setQuotaNotice(null)}
-      />
     </div>
   );
 }

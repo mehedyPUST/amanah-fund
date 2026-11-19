@@ -29,6 +29,7 @@ import {
 } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ProviderSelect } from './ProviderSelect.tsx';
+import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 import { RequestQardHasanLoanForm } from './RequestQardHasanLoanForm.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -1811,6 +1812,15 @@ export function LoansView({
           )}
         </section>
       </div>
+
+      <RepaymentSchedule
+        loans={loans}
+        config={config}
+        user={user}
+        loading={loading}
+        onOpenLoanModal={onOpenLoanModal}
+        hideFooterLink
+      />
 
       <ActionModal
         open={Boolean(modal)}

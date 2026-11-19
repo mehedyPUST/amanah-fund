@@ -49,10 +49,13 @@ import { api } from '../utils/api.ts';
 import { formatDateTime, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
 import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
 import { AdminFaqManager } from './AdminFaqManager.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
+
+export type SettingsTabId = 'policy' | 'charter' | 'faqs' | 'email' | 'integrations' | 'ventures';
 
 interface AdminSiteSettingsViewProps {
   overview: DashboardOverview | null;
@@ -67,9 +70,8 @@ interface AdminSiteSettingsViewProps {
   onDisconnectGoogle: () => Promise<void>;
   onRefresh: () => Promise<void>;
   onNavigateSection?: (section: DashboardSectionId) => void;
+  requestedTab?: { tab: SettingsTabId; key: number } | null;
 }
-
-type SettingsTabId = 'policy' | 'charter' | 'faqs' | 'email' | 'integrations' | 'ventures';
 
 type SettingsModalState =
   | {
@@ -113,6 +115,7 @@ export function AdminSiteSettingsView({
   onDisconnectGoogle,
   onRefresh,
   onNavigateSection,
+  requestedTab,
 }: AdminSiteSettingsViewProps) {
   const t = useTranslations('Admin.siteSettings');
   const tCommon = useTranslations('Common');
@@ -120,6 +123,12 @@ export function AdminSiteSettingsView({
   const ccy = config?.currency || 'BDT';
 
   const [activeTab, setActiveTab] = useState<SettingsTabId>('policy');
+
+  useEffect(() => {
+    if (requestedTab?.tab) {
+      setActiveTab(requestedTab.tab);
+    }
+  }, [requestedTab]);
 
   // Policy form fields
   const [fundName, setFundName] = useState(
@@ -599,6 +608,11 @@ export function AdminSiteSettingsView({
     });
   }
 
+  const queueAttentionCount =
+    (systemStatus?.smtp.queueStats.pending ?? 0) +
+    (systemStatus?.smtp.queueStats.retrying ?? 0) +
+    (systemStatus?.smtp.queueStats.failed ?? 0);
+
   const tabs: Array<{
     id: SettingsTabId;
     label: string;
@@ -615,7 +629,12 @@ export function AdminSiteSettingsView({
     },
     { id: 'charter', label: t('tabs.charter'), Icon: FileText },
     { id: 'faqs', label: t('tabs.faqs'), Icon: HelpCircle },
-    { id: 'email', label: t('tabs.email'), Icon: Mail },
+    {
+      id: 'email',
+      label: t('tabs.email'),
+      Icon: Mail,
+      badge: queueAttentionCount > 0 ? queueAttentionCount : undefined,
+    },
     { id: 'integrations', label: t('tabs.integrations'), Icon: Server },
     {
       id: 'ventures',
@@ -624,11 +643,6 @@ export function AdminSiteSettingsView({
       badge: projects.length > 0 ? projects.length : undefined,
     },
   ];
-
-  const queueAttentionCount =
-    (systemStatus?.smtp.queueStats.pending ?? 0) +
-    (systemStatus?.smtp.queueStats.retrying ?? 0) +
-    (systemStatus?.smtp.queueStats.failed ?? 0);
 
   return (
     <motion.div
@@ -664,19 +678,6 @@ export function AdminSiteSettingsView({
               >
                 <ClipboardCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>{t('navGovernanceDesk')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigateSection('email-queue')}
-                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
-              >
-                <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span>{t('navEmailQueue')}</span>
-                {queueAttentionCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono text-[10px]">
-                    {queueAttentionCount}
-                  </span>
-                )}
               </button>
               <button
                 type="button"
@@ -1507,17 +1508,9 @@ export function AdminSiteSettingsView({
                   : t('emailTemplatesHint')}
               </p>
             </div>
-            {onNavigateSection && (
-              <button
-                type="button"
-                onClick={() => onNavigateSection('email-queue')}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <MailCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span>{t('manageEmailQueue')}</span>
-              </button>
-            )}
           </section>
+
+          <AdminEmailQueueView onRefreshWorkspace={onRefresh} />
 
           <AdminEmailTemplatesEditor
             config={config}

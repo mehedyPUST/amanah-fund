@@ -53,12 +53,8 @@ export function getDashboardSectionLabel(
       return getRegistryLabel(role, locale);
     case 'site-settings':
       return nav.siteSettings;
-    case 'email-queue':
-      return nav.emailQueue;
     case 'site-activity':
       return nav.siteActivity;
-    case 'system-audit-logs':
-      return nav.auditLogs;
     default:
       return nav.overview;
   }

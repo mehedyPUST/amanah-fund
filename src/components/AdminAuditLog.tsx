@@ -9,6 +9,7 @@ import {
   ChevronUp,
   CreditCard,
   Download,
+  FileJson,
   HandCoins,
   KeyRound,
   MessageSquare,
@@ -105,11 +106,36 @@ const CONTRIBUTION_PAYMENT_ACTIONS = new Set([
 
 const SYSTEM_SETTINGS_ACTIONS = new Set([
   'FUND_POLICY_UPDATED',
+  'FUND_CONFIG_INITIALIZED',
   'GOOGLE_SHEET_SYNCED',
   'GMAIL_NOTIFICATIONS_DISPATCHED',
   'REMINDER_BATCH_GENERATED',
   'REPORT_EXPORTED',
 ]);
+
+interface ChangeDiffEntry {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
+
+function extractChangeDiffs(payload?: Record<string, unknown>): ChangeDiffEntry[] {
+  if (!payload || typeof payload.changes !== 'object' || payload.changes === null) {
+    return [];
+  }
+  const raw = payload.changes as Record<string, { from?: unknown; to?: unknown }>;
+  return Object.entries(raw).map(([field, delta]) => ({
+    field,
+    from: delta?.from,
+    to: delta?.to,
+  }));
+}
+
+function formatDiffValue(val: unknown): string {
+  if (val === null || val === undefined || val === '') return '—';
+  if (typeof val === 'object') return JSON.stringify(val);
+  return String(val);
+}
 
 function getAuditVisualMeta(action: string) {
   if (
@@ -251,6 +277,8 @@ export function AdminAuditLog({
   compactHeader = false,
 }: AdminAuditLogProps) {
   const t = useTranslations('Admin.audit');
+  const tSys = useTranslations('Admin.systemAudit');
+  const tCommon = useTranslations('Common');
   const locale = useLocale() as AppLocale;
   const canViewAuditLogs = user.role === 'admin' || user.role === 'manager';
 
@@ -264,7 +292,14 @@ export function AdminAuditLog({
 
   const [logs, setLogs] = useState<AuditLogEntry[]>(initialLogs || []);
   const [chainValid, setChainValid] = useState<boolean>(initialChainValid ?? true);
+  const [integrity, setIntegrity] = useState<{
+    totalEntries: number;
+    verifiedEntries: number;
+    brokenLinks: string[];
+  } | null>(null);
   const [loading, setLoading] = useState<boolean>(initialLogs ? Boolean(externalLoading) : true);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationNote, setVerificationNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'reconnecting'>('connecting');
@@ -280,6 +315,9 @@ export function AdminAuditLog({
 
   const [categoryFilter, setCategoryFilter] = useState<AuditCategoryFilter>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
+  const [actorFilter, setActorFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [visibleLimit, setVisibleLimit] = useState(25);
@@ -309,7 +347,7 @@ export function AdminAuditLog({
   }, [externalLoading]);
 
   const fetchAuditLogs = useCallback(
-    async (silent = false) => {
+    async (silent = false, showVerifyBanner = false) => {
       if (!canViewAuditLogs) {
         setLoading(false);
         return;
@@ -317,9 +355,12 @@ export function AdminAuditLog({
       if (!silent) {
         setLoading(true);
       }
+      if (showVerifyBanner) {
+        setVerifying(true);
+      }
       setError(null);
       try {
-        if (onRefreshExternal && !silent) {
+        if (onRefreshExternal && !silent && !showVerifyBanner) {
           await onRefreshExternal();
         } else {
           const res = await api.getAuditLogs();
@@ -336,8 +377,25 @@ export function AdminAuditLog({
 
           setLogs(res.logs);
           setChainValid(res.chainValid);
+          setIntegrity(
+            res.integrity || {
+              totalEntries: res.logs.length,
+              verifiedEntries: res.logs.length,
+              brokenLinks: [],
+            }
+          );
           setLastSyncedAt(new Date().toISOString());
           setQueuedLiveEvents(0);
+
+          if (showVerifyBanner) {
+            const total = res.integrity?.totalEntries ?? res.logs.length;
+            const verified = res.integrity?.verifiedEntries ?? res.logs.length;
+            setVerificationNote(
+              res.chainValid
+                ? tSys('verifySuccess', { verified, total })
+                : tSys('verifyMismatch', { count: res.integrity?.brokenLinks.length || 1 })
+            );
+          }
 
           if (arrivedIds.length > 0) {
             setNewEntryIds((prev) => Array.from(new Set([...arrivedIds, ...prev])).slice(0, 20));
@@ -351,9 +409,12 @@ export function AdminAuditLog({
         if (!silent) {
           setLoading(false);
         }
+        if (showVerifyBanner) {
+          setVerifying(false);
+        }
       }
     },
-    [canViewAuditLogs, onRefreshExternal]
+    [canViewAuditLogs, onRefreshExternal, t, tSys]
   );
 
   // Fade out live highlight tags after 15s
@@ -445,6 +506,20 @@ export function AdminAuditLog({
     };
   }, [logs]);
 
+  const actorOptions = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; role: string }>();
+    for (const log of logs) {
+      if (!map.has(log.actorId)) {
+        map.set(log.actorId, {
+          id: log.actorId,
+          name: log.actorName,
+          role: log.actorRole,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [logs]);
+
   const filteredLogs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return logs.filter((entry) => {
@@ -467,21 +542,82 @@ export function AdminAuditLog({
       if (roleFilter !== 'all' && entry.actorRole !== roleFilter) {
         return false;
       }
+      if (actorFilter !== 'all' && entry.actorId !== actorFilter) {
+        return false;
+      }
+
+      const entryDate = entry.timestamp.slice(0, 10);
+      if (dateFrom && entryDate < dateFrom) return false;
+      if (dateTo && entryDate > dateTo) return false;
 
       if (!q) return true;
       const payloadText = entry.decryptedPayload
         ? JSON.stringify(entry.decryptedPayload).toLowerCase()
         : '';
       return (
+        entry.id.toLowerCase().includes(q) ||
         entry.actorName.toLowerCase().includes(q) ||
         entry.action.toLowerCase().includes(q) ||
         entry.summary.toLowerCase().includes(q) ||
         entry.resourceId.toLowerCase().includes(q) ||
         entry.resourceType.toLowerCase().includes(q) ||
+        entry.entryHash.toLowerCase().includes(q) ||
         payloadText.includes(q)
       );
     });
-  }, [logs, categoryFilter, roleFilter, searchQuery]);
+  }, [logs, categoryFilter, roleFilter, actorFilter, dateFrom, dateTo, searchQuery]);
+
+  function handleResetFilters() {
+    setCategoryFilter('all');
+    setRoleFilter('all');
+    setActorFilter('all');
+    setDateFrom('');
+    setDateTo('');
+    setSearchQuery('');
+    setVisibleLimit(25);
+  }
+
+  function handleExportImmutableJson() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      exportedBy: `${user.name} (${user.memberCode})`,
+      immutabilityModel: 'Append-only SHA-256 hash chain with AES-256-GCM encrypted payload envelopes',
+      chainValid,
+      integrity: integrity || {
+        totalEntries: logs.length,
+        verifiedEntries: logs.length,
+        brokenLinks: [],
+      },
+      count: filteredLogs.length,
+      records: filteredLogs.map((entry) => ({
+        id: entry.id,
+        timestamp: entry.timestamp,
+        actorId: entry.actorId,
+        actorName: entry.actorName,
+        actorRole: entry.actorRole,
+        action: entry.action,
+        resourceType: entry.resourceType,
+        resourceId: entry.resourceId,
+        summary: entry.summary,
+        prevHash: entry.prevHash,
+        entryHash: entry.entryHash,
+        hashVerified: entry.hashVerified,
+        chainLinkVerified: entry.chainLinkVerified,
+        metadata: entry.decryptedPayload || null,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `amanah-audit-proof-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 
   if (!canViewAuditLogs) {
     return (
@@ -699,24 +835,61 @@ export function AdminAuditLog({
 
             <button
               type="button"
-              onClick={() => void fetchAuditLogs(false)}
-              disabled={loading}
+              onClick={() => void fetchAuditLogs(false, true)}
+              disabled={loading || verifying}
               className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>{t('refresh')}</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loading || verifying ? 'animate-spin' : ''}`} />
+              <span>{verifying ? tSys('verifying') : tSys('verifyChain')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportImmutableJson}
+              disabled={filteredLogs.length === 0}
+              className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+            >
+              <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+              <span>{tSys('exportJsonProof')}</span>
             </button>
 
             <button
               type="button"
               onClick={() => window.location.assign(api.getCsvReportExportUrl('audit'))}
-              className="col-span-2 sm:col-span-1 px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('exportCsv')}</span>
             </button>
           </div>
         </div>
+
+        {verificationNote && (
+          <div
+            role="status"
+            className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-3 ${
+              chainValid
+                ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300'
+                : 'border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 text-red-800 dark:text-red-300'
+            }`}
+          >
+            <span className="inline-flex items-center gap-2 font-medium">
+              {chainValid ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              )}
+              <span>{verificationNote}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setVerificationNote(null)}
+              className="text-xs underline cursor-pointer shrink-0"
+            >
+              {tSys('dismiss')}
+            </button>
+          </div>
+        )}
 
         {streamPaused && queuedLiveEvents > 0 && (
           <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
@@ -745,8 +918,8 @@ export function AdminAuditLog({
           </div>
         )}
 
-        {/* Filter Bar: Critical Site Activity Categories + Actor Role + Search */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pt-1">
+        {/* Filter Bar: Activity Categories + Role, Actor, Date Range & Search */}
+        <div className="space-y-3 pt-1">
           <div className="flex flex-nowrap xl:flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar w-full xl:w-fit">
             {(
               [
@@ -786,7 +959,7 @@ export function AdminAuditLog({
             })}
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
             <select
               aria-label={t('filterRoleAria')}
               value={roleFilter}
@@ -802,7 +975,48 @@ export function AdminAuditLog({
               <option value="member">{t('roleMember')}</option>
             </select>
 
-            <div className="relative flex-1 sm:flex-initial sm:w-64">
+            <select
+              aria-label={tSys('actorFilterLabel')}
+              value={actorFilter}
+              onChange={(e) => {
+                setActorFilter(e.target.value);
+                setVisibleLimit(25);
+              }}
+              className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            >
+              <option value="all">{tSys('allAdminsManagers')}</option>
+              {actorOptions.map((actor) => (
+                <option key={actor.id} value={actor.id}>
+                  {actor.name} ({translateRoleLabel(actor.role, locale)})
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              aria-label={tSys('fromDateLabel')}
+              title={tSys('fromDateLabel')}
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setVisibleLimit(25);
+              }}
+              className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            />
+
+            <input
+              type="date"
+              aria-label={tSys('toDateLabel')}
+              title={tSys('toDateLabel')}
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setVisibleLimit(25);
+              }}
+              className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            />
+
+            <div className="relative col-span-2 lg:col-span-1">
               <Search
                 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
                 aria-hidden="true"
@@ -839,13 +1053,27 @@ export function AdminAuditLog({
             ))}
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="p-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 text-center space-y-1.5">
+          <div className="p-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950 text-center space-y-2.5">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
               {t('emptyTitle')}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {t('emptyDesc')}
             </p>
+            {(categoryFilter !== 'all' ||
+              roleFilter !== 'all' ||
+              actorFilter !== 'all' ||
+              Boolean(dateFrom) ||
+              Boolean(dateTo) ||
+              Boolean(searchQuery.trim())) && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                {tCommon('resetFilters')}
+              </button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
@@ -854,6 +1082,7 @@ export function AdminAuditLog({
               const isJustArrived = newEntryIds.includes(entry.id);
               const visual = getVisualMeta(entry.action);
               const Icon = visual.Icon;
+              const diffs = extractChangeDiffs(entry.decryptedPayload);
 
               return (
                 <div
@@ -960,21 +1189,57 @@ export function AdminAuditLog({
                           </div>
                         </div>
 
+                        {diffs.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                              {tSys('modifiedFieldsHeader')}
+                            </div>
+                            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                              <table className="w-full text-left border-collapse text-[11px] font-mono">
+                                <thead>
+                                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                                    <th className="py-1.5 px-3 font-medium">{tSys('colField')}</th>
+                                    <th className="py-1.5 px-3 font-medium">{tSys('colPrevValue')}</th>
+                                    <th className="py-1.5 px-3 font-medium">{tSys('colNewValue')}</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                  {diffs.map((d) => (
+                                    <tr key={d.field}>
+                                      <td className="py-1.5 px-3 text-slate-700 dark:text-slate-300 font-medium">
+                                        {d.field}
+                                      </td>
+                                      <td className="py-1.5 px-3 text-rose-700 dark:text-rose-400 break-all">
+                                        {formatDiffValue(d.from)}
+                                      </td>
+                                      <td className="py-1.5 px-3 text-emerald-700 dark:text-emerald-400 break-all">
+                                        {formatDiffValue(d.to)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
                         {entry.decryptedPayload && (
                           <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                             <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-400 mb-1.5">
                               {t('decryptedMetadata')}
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-slate-700 dark:text-slate-300">
-                              {Object.entries(entry.decryptedPayload).map(([k, v]) => (
-                                <div
-                                  key={k}
-                                  className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 break-all"
-                                >
-                                  <span className="text-slate-500 dark:text-slate-400">{k}:</span>{' '}
-                                  <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-                                </div>
-                              ))}
+                              {Object.entries(entry.decryptedPayload)
+                                .filter(([k]) => k !== 'changes')
+                                .map(([k, v]) => (
+                                  <div
+                                    key={k}
+                                    className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 break-all"
+                                  >
+                                    <span className="text-slate-500 dark:text-slate-400">{k}:</span>{' '}
+                                    <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                                  </div>
+                                ))}
                             </div>
                           </div>
                         )}

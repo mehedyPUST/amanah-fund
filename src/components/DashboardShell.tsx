@@ -20,13 +20,11 @@ import {
   History,
   Home,
   LogOut,
-  MailWarning,
   Menu,
   MessageSquare,
   Moon,
   RefreshCw,
   Settings,
-  Shield,
   Sun,
   User,
   Users,
@@ -40,8 +38,7 @@ import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
-import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
-import { AdminSiteSettingsView } from './AdminSiteSettingsView.tsx';
+import { AdminSiteSettingsView, type SettingsTabId } from './AdminSiteSettingsView.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
@@ -64,7 +61,6 @@ import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
-import { SystemAuditLogsView } from './SystemAuditLogsView.tsx';
 import { TransactionHistory } from './TransactionHistory.tsx';
 import { VotingView } from './VotingView.tsx';
 import { translateRoleLabel } from '../i18n/messages.ts';
@@ -140,9 +136,7 @@ const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { id: 'member-registry', label: 'Users & Roles', Icon: Users, group: 'admin' },
   { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
   { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
-  { id: 'email-queue', label: 'Email Queue', Icon: MailWarning, group: 'admin' },
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
-  { id: 'system-audit-logs', label: 'Audit Logs', Icon: Shield, group: 'admin' },
 ];
 
 type SectionAccentTone = 'emerald' | 'amber';
@@ -165,9 +159,7 @@ const SECTION_TONE_MAP: Record<DashboardSectionId, SectionAccentTone> = {
   community: 'emerald',
   'member-registry': 'emerald',
   'site-settings': 'emerald',
-  'email-queue': 'amber',
   'site-activity': 'emerald',
-  'system-audit-logs': 'emerald',
 };
 
 const SIDEBAR_TONE_STYLES: Record<
@@ -258,6 +250,10 @@ export function DashboardShell() {
   const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
   const [managerDeskTabRequest, setManagerDeskTabRequest] = useState<{
     tab: ManagerDeskTab;
+    key: number;
+  } | null>(null);
+  const [settingsTabRequest, setSettingsTabRequest] = useState<{
+    tab: SettingsTabId;
     key: number;
   } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -738,15 +734,21 @@ export function DashboardShell() {
 
       const params = new URLSearchParams(window.location.search);
       const rawRequested = params.get('page');
-      const requested = (
-        rawRequested === 'monthly-sheet' ? 'balance-sheet' : rawRequested
-      ) as DashboardSectionId | null;
+      const normalizedPage =
+        rawRequested === 'monthly-sheet'
+          ? 'balance-sheet'
+          : rawRequested === 'system-audit-logs'
+            ? 'site-activity'
+            : rawRequested === 'email-queue'
+              ? 'site-settings'
+              : rawRequested;
+      const requested = normalizedPage as DashboardSectionId | null;
       const requestedMemberId = params.get('memberId');
 
-      if (rawRequested === 'monthly-sheet') {
+      if (normalizedPage && rawRequested !== normalizedPage) {
         const canonicalUrl = new URL(window.location.href);
-        canonicalUrl.searchParams.set('page', 'balance-sheet');
-        window.history.replaceState({ page: 'balance-sheet' }, '', canonicalUrl);
+        canonicalUrl.searchParams.set('page', normalizedPage);
+        window.history.replaceState({ page: normalizedPage }, '', canonicalUrl);
       }
 
       if (requested === 'member-profile' && requestedMemberId) {
@@ -762,6 +764,9 @@ export function DashboardShell() {
           ? requested
           : 'fund-overview';
       setActiveSection(valid);
+      if (rawRequested === 'email-queue' && valid === 'site-settings') {
+        setSettingsTabRequest({ tab: 'email', key: Date.now() });
+      }
       if (valid !== 'monthly-contribution') {
         setPreselectedBillingMonth(null);
       }
@@ -962,7 +967,7 @@ export function DashboardShell() {
         overview.treasury.pendingProfileRequestsCount
       );
     }
-    if (sectionId === 'email-queue' && isAdmin) {
+    if (sectionId === 'site-settings' && isAdmin) {
       return overview.treasury.emailQueueAttentionCount || 0;
     }
     return 0;
@@ -1808,14 +1813,11 @@ export function DashboardShell() {
                     <SectionEyebrow label={tNav('overview')} tone="emerald" />
                     <OverviewView
                       overview={overview}
-                      contributions={contributions}
                       loans={loans}
                       user={user}
                       loading={dataLoading && !overview}
                       onNavigate={(sec) => navigateToPage(sec, false)}
                       onOpenManagerDeskTab={openManagerDeskTab}
-                      onOpenLoanModal={() => void openLoanRequestModal()}
-                      onRefresh={handleRefreshWithAutoSync}
                       onViewMemberProfile={handleViewMemberProfile}
                     />
                   </div>
@@ -1903,6 +1905,7 @@ export function DashboardShell() {
                     user={user}
                     loading={dataLoading && !overview}
                     onNavigate={(sec) => navigateToPage(sec, false)}
+                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -2046,13 +2049,6 @@ export function DashboardShell() {
                 </section>
               )}
 
-              {isAdmin && activeSection === 'system-audit-logs' && (
-                <section id="system-audit-logs" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('auditLogs')} tone="emerald" />
-                  <SystemAuditLogsView user={user} />
-                </section>
-              )}
-
               {isStaff && activeSection === 'member-registry' && (
                 <section id="member-registry" className="space-y-4">
                   <SectionEyebrow label={getRegistryLabel(user.role, locale)} tone="emerald" />
@@ -2060,7 +2056,6 @@ export function DashboardShell() {
                     user={user}
                     config={overview?.config || null}
                     onRefresh={handleRefreshWithAutoSync}
-                    onViewMemberProfile={handleViewMemberProfile}
                   />
                 </section>
               )}
@@ -2081,14 +2076,8 @@ export function DashboardShell() {
                     onDisconnectGoogle={handleDisconnectGoogle}
                     onRefresh={handleRefreshWithAutoSync}
                     onNavigateSection={(sectionId) => navigateToPage(sectionId, false)}
+                    requestedTab={settingsTabRequest}
                   />
-                </section>
-              )}
-
-              {isAdmin && activeSection === 'email-queue' && (
-                <section id="email-queue" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('emailQueue')} tone="amber" />
-                  <AdminEmailQueueView onRefreshWorkspace={handleRefreshWithAutoSync} />
                 </section>
               )}
             </motion.div>

@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
   CalendarCheck,
   CheckCircle2,
-  ChevronRight,
-  ClipboardCheck,
   Clock,
-  CreditCard,
   HandCoins,
-  History,
-  Lock,
-  Settings,
   ShieldCheck,
   UserCheck,
   Users,
@@ -25,93 +18,41 @@ import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type {
-  Contribution,
   DashboardOverview,
   DashboardSectionId,
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
-import { api } from '../utils/api.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
-import { ActionModal } from './ActionModal.tsx';
-import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MotionCard } from './MotionCard.tsx';
-import { RecentTransactions } from './RecentTransactions.tsx';
-import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export type NavTab = DashboardSectionId;
 
 interface OverviewViewProps {
   overview: DashboardOverview | null;
-  contributions: Contribution[];
   loans: LoanRequest[];
   user: PublicUser;
   loading: boolean;
   onNavigate: (section: DashboardSectionId) => void;
   onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
-  onOpenLoanModal?: () => void;
   onViewMemberProfile?: (userId: string) => void;
-  onRefresh: () => Promise<void>;
 }
 
 export function OverviewView({
   overview,
-  contributions,
   loans,
   user,
   loading,
   onNavigate,
   onOpenManagerDeskTab,
-  onOpenLoanModal,
   onViewMemberProfile,
-  onRefresh,
 }: OverviewViewProps) {
   const t = useTranslations('Dashboard');
   const tOv = useTranslations('Dashboard.overviewView');
   const tNav = useTranslations('Navigation');
   const tCommon = useTranslations('Common');
-  const [quotaInput, setQuotaInput] = useState(
-    String(overview?.config.maxLoansPerYear ?? 3)
-  );
-  const [savingQuota, setSavingQuota] = useState(false);
-  const [quotaModal, setQuotaModal] = useState<{
-    tone: 'emerald' | 'red';
-    title: string;
-    description: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (overview?.config.maxLoansPerYear !== undefined) {
-      setQuotaInput(String(overview.config.maxLoansPerYear));
-    }
-  }, [overview?.config.maxLoansPerYear]);
-
-  async function handleQuickQuotaSave(e: FormEvent) {
-    e.preventDefault();
-    setSavingQuota(true);
-    setQuotaModal(null);
-    try {
-      const nextLimit = Number(quotaInput);
-      await api.updateConfig({ maxLoansPerYear: nextLimit });
-      await onRefresh();
-      setQuotaModal({
-        tone: 'emerald',
-        title: t('alerts.quotaUpdated'),
-        description: t('alerts.quotaSavedDesc', { limit: nextLimit }),
-      });
-    } catch (err) {
-      setQuotaModal({
-        tone: 'red',
-        title: t('alerts.quotaUpdateFailed'),
-        description:
-          err instanceof Error ? err.message : t('alerts.quotaUpdateError'),
-      });
-    } finally {
-      setSavingQuota(false);
-    }
-  }
 
   if (loading || !overview) {
     return (
@@ -120,14 +61,6 @@ export function OverviewView({
           <Skeleton width={260} height={14} />
           <Skeleton width={320} height={22} />
           <Skeleton width="80%" height={14} />
-        </div>
-        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
-          <Skeleton width={160} height={16} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            {[1, 2, 3, 4, 5].map((k) => (
-              <Skeleton key={k} height={68} borderRadius={12} />
-            ))}
-          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
           {[1, 2, 3, 4].map((k) => (
@@ -277,358 +210,6 @@ export function OverviewView({
             )}
           </div>
         </div>
-      </motion.section>
-
-      {/* Quick Actions Card */}
-      <motion.section
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.22, delay: 0.03 }}
-        aria-label={t('quickActions')}
-        className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="space-y-0.5">
-            <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              {isAdmin ? t('quickActionsAdmin') : t('quickActionsMember')}
-            </div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              {t('quickActions')}
-            </h3>
-          </div>
-          <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-            {t('oneClickNav')}
-          </span>
-        </div>
-
-        {isAdmin ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => onNavigate('member-registry')}
-              className="group amanah-card-emerald border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <Users className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('usersAndRoles')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.kycRolePerms')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {treasury.pendingMembersCount > 0 ? tOv('pendingCountBadge', { count: treasury.pendingMembersCount }) : tOv('cap20')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('manager-desk')}
-              className="group amanah-card-violet border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 flex items-center justify-center shrink-0">
-                  <ClipboardCheck className="w-4.5 h-4.5 text-violet-700 dark:text-violet-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('governanceDesk')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.shuraQueue')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {tOv('queueCountBadge', { count: treasury.pendingLoansReviewCount + treasury.pendingContributionsCount })}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('ballot')}
-              className="group amanah-card-emerald border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <Vote className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('voting')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.secretConsensus')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {tOv('openCountBadge', { count: treasury.pendingVotesCount })}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('transaction-history')}
-              className="group amanah-card-violet border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 flex items-center justify-center shrink-0">
-                  <History className="w-4.5 h-4.5 text-violet-700 dark:text-violet-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('transactions')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.fullAuditLedger')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {tCommon('ledger')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('site-settings')}
-              className="group amanah-card-teal border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left md:col-span-2 xl:col-span-2"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 flex items-center justify-center shrink-0">
-                  <Settings className="w-4.5 h-4.5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('siteSettings')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.siteSettingsSub')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300">
-                  {tCommon('config')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => (onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan'))}
-              className="group amanah-card-emerald border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <HandCoins className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('requestLoan')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.qardHasanRelief')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {t('quickCards.zeroInterest')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('monthly-contribution')}
-              className="group amanah-card-violet border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 flex items-center justify-center shrink-0">
-                  <CreditCard className="w-4.5 h-4.5 text-violet-700 dark:text-violet-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('contributions')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.monthlySavings', { amount: formatMoney(config.monthlyContributionAmount, ccy) })}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {tOv('paidCountBadge', { count: personal.approvedContributionsCount })}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('ballot')}
-              className="group amanah-card-emerald border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <Vote className="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('voting')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.anonymizedQuorum')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                  {tOv('openCountBadge', { count: treasury.pendingVotesCount })}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('my-amanah')}
-              className="group amanah-card-violet border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 flex items-center justify-center shrink-0">
-                  <Wallet className="w-4.5 h-4.5 text-violet-700 dark:text-violet-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('myAmanah')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.personalEquity')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300">
-                  {personal.eligibility.eligible ? tCommon('eligible') : t('quickCards.standing')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('transaction-history')}
-              className={`group amanah-card-teal border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left ${
-                user.role === 'manager' ? '' : 'md:col-span-2 xl:col-span-2'
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 flex items-center justify-center shrink-0">
-                  <History className="w-4.5 h-4.5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {tNav('transactions')}
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('quickCards.verifiedDeposits')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300">
-                  {tCommon('ledger')}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            {user.role === 'manager' && (
-              <button
-                type="button"
-                onClick={() => onNavigate('manager-desk')}
-                className="group amanah-card-amber border rounded-xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-left"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 flex items-center justify-center shrink-0">
-                    <ClipboardCheck className="w-4.5 h-4.5 text-amber-700 dark:text-amber-400" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {tNav('managerDesk')}
-                    </div>
-                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                      {t('quickCards.shuraApprovals')}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300">
-                    {tOv('dueCountBadge', { count: treasury.pendingContributionsCount + treasury.pendingLoansReviewCount })}
-                  </span>
-                  <ChevronRight
-                    className="w-4 h-4 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-transform duration-150 group-hover:translate-x-0.5"
-                    aria-hidden="true"
-                  />
-                </div>
-              </button>
-            )}
-          </div>
-        )}
       </motion.section>
 
       {/* Active or Pending Qard Hasan Request Tracker (Member / Manager Personal View) */}
@@ -823,49 +404,6 @@ export function OverviewView({
           >
             {t('alerts.reviewUsersRoles')} →
           </button>
-        </section>
-      )}
-
-      {/* Admin Quick Control: Maximum Loans Per Member Per Year */}
-      {isAdmin && (
-        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                <Settings className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{t('alerts.adminQuotaControl')}</span>
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {t('alerts.maxLoansPerYear')}
-              </h3>
-            </div>
-
-            <form
-              onSubmit={handleQuickQuotaSave}
-              className="flex flex-wrap items-center gap-2.5 shrink-0"
-            >
-              <label htmlFor="admin-annual-loan-limit" className="sr-only">
-                {t('alerts.maxLoansPerYear')}
-              </label>
-              <input
-                id="admin-annual-loan-limit"
-                type="number"
-                min={1}
-                max={12}
-                required
-                value={quotaInput}
-                onChange={(e) => setQuotaInput(e.target.value)}
-                className="w-24 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-              <button
-                type="submit"
-                disabled={savingQuota}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 whitespace-nowrap cursor-pointer"
-              >
-                {savingQuota ? tCommon('saving') : t('alerts.updateAnnualLimit')}
-              </button>
-            </form>
-          </div>
         </section>
       )}
 
@@ -1227,9 +765,9 @@ export function OverviewView({
         </MotionCard>
       </div>
 
-      {/* Personal Standing (Members & Managers) or Admin Governance Notice + Approval Queues */}
+      {/* Admin Governance Oversight + Active Governance Approval Queues */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        {isAdmin ? (
+        {isAdmin && (
           <MotionCard
             as="section"
             hue="teal"
@@ -1279,130 +817,8 @@ export function OverviewView({
                 onClick={() => onNavigate('site-settings')}
                 className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
               >
-                <Settings className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('siteSettings')}</span>
-              </button>
-            </div>
-          </MotionCard>
-        ) : (
-          <MotionCard
-            as="section"
-            hue="teal"
-            className="xl:col-span-5 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
-          >
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {t('sheets.memberStandingTitle')}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {user.name} · <span className="font-mono">{user.memberCode}</span>
-                </p>
-              </div>
-
-              <div className="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
-                <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.yourApprovedDeposits')}</span>
-                  <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {formatMoney(personal.totalContributed, ccy)}
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between gap-2">
-                  <span className="text-slate-600 dark:text-slate-400">
-                    {personal.activeLoanBalance > 0
-                      ? t('sheets.activeLoanBalance')
-                      : myActiveOrPendingLoan
-                        ? t('sheets.pendingQardRequest')
-                        : t('sheets.activeLoanBalance')}
-                  </span>
-                  <div className="text-right">
-                    <span className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                      {personal.activeLoanBalance > 0
-                        ? formatMoney(personal.activeLoanBalance, ccy)
-                        : myActiveOrPendingLoan
-                          ? formatMoney(myActiveOrPendingLoan.amount, ccy)
-                          : formatMoney(0, ccy)}
-                    </span>
-                    {personal.activeLoanBalance === 0 && myActiveOrPendingLoan && (
-                      <div className="flex justify-end mt-0.5">
-                        <StatusText status={myActiveOrPendingLoan.status} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.coopNetEquity')}</span>
-                  <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {formatMoney(personal.cooperativeEquity, ccy)}
-                    {personal.totalProfitDistributed > 0 && (
-                      <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1.5">
-                        {tOv('profitPlus', { amount: formatMoney(personal.totalProfitDistributed, ccy) })}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">{t('sheets.annualLoanQuota')}</span>
-                  <span className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
-                    {t('sheets.usedCount', {
-                      used: personal.eligibility.loansUsedThisYear,
-                      max: personal.eligibility.maxLoansPerYear,
-                    })}
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-2 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-medium">
-                  {personal.eligibility.eligible ? (
-                    <>
-                      <CheckCircle2
-                        className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="text-emerald-700 dark:text-emerald-400">
-                        {t('sheets.eligibleForLoan')}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock
-                        className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="text-amber-700 dark:text-amber-400">
-                        {t('sheets.notEligibleForLoan')}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
-                  {personal.eligibility.reasons[0]}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-              {onOpenLoanModal && (
-                <button
-                  type="button"
-                  onClick={onOpenLoanModal}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{tNav('requestLoan')}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onNavigate('my-amanah')}
-                className="group flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
-              >
-                <span>{t('sheets.openMyAmanah')}</span>
-                <ArrowRight
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           </MotionCard>
@@ -1411,7 +827,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="violet"
-          className="xl:col-span-7 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200"
+          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200`}
         >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -1571,48 +987,6 @@ export function OverviewView({
           </div>
         </MotionCard>
       </div>
-
-      {/* Repayment Schedule & Contribution Leaderboard */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-        <div className="xl:col-span-6 flex [&>section]:w-full">
-          <RepaymentSchedule
-            loans={loans}
-            config={config}
-            user={user}
-            loading={loading}
-            onNavigate={onNavigate}
-            onOpenLoanModal={onOpenLoanModal}
-          />
-        </div>
-        <div className="xl:col-span-6 flex [&>section]:w-full">
-          <ContributionLeaderboard
-            entries={overview.leaderboard || []}
-            config={config}
-            loading={loading}
-            onNavigate={onNavigate}
-            onViewMemberProfile={onViewMemberProfile}
-          />
-        </div>
-      </div>
-
-      {/* User's Latest Monthly Contributions & Loan Payments */}
-      <RecentTransactions
-        contributions={contributions}
-        loans={loans}
-        config={config}
-        user={user}
-        loading={loading}
-        onNavigate={onNavigate}
-      />
-
-      <ActionModal
-        open={quotaModal !== null}
-        mode="notice"
-        tone={quotaModal?.tone || 'emerald'}
-        title={quotaModal?.title || ''}
-        description={quotaModal?.description || ''}
-        onClose={() => setQuotaModal(null)}
-      />
     </div>
   );
 }

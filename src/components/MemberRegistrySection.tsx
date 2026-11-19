@@ -26,7 +26,6 @@ import type {
 import { api } from '../utils/api.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
-import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
@@ -72,21 +71,18 @@ interface MemberRegistrySectionProps {
   user: PublicUser;
   config: FundConfig | null;
   onRefresh: () => Promise<void>;
-  onViewMemberProfile?: (userId: string) => void;
 }
 
 export function MemberRegistrySection({
   user,
   config,
   onRefresh,
-  onViewMemberProfile,
 }: MemberRegistrySectionProps) {
   const t = useTranslations('Admin.memberRegistry');
   const tCommon = useTranslations('Common');
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const isAdmin = user.role === 'admin';
 
-  const [subTab, setSubTab] = useState<'manage' | 'directory'>('manage');
   const [members, setMembers] = useState<MemberSummary[]>([]);
   const [profileRequests, setProfileRequests] = useState<ProfileChangeRequest[]>([]);
   const [profileBusyId, setProfileBusyId] = useState<string | null>(null);
@@ -351,50 +347,9 @@ export function MemberRegistrySection({
             })}
           </h2>
         </div>
-
-        <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
-          {(
-            [
-              { id: 'manage', label: t('tabManage') },
-              { id: 'directory', label: t('tabDirectory') },
-            ] as const
-          ).map((tab) => {
-            const active = subTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setSubTab(tab.id)}
-                className={`relative min-h-[40px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  active
-                    ? 'text-indigo-700 dark:text-indigo-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="registry-subtab-pill"
-                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
-                  />
-                )}
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
       </section>
 
-      <AnimatePresence mode="wait">
-      {subTab === 'manage' ? (
-        <motion.div
-          key="registry-manage"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.16 }}
-          className="space-y-6"
-        >
+      <div className="space-y-6">
           {pendingProfileRequests.length > 0 && (
             <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-3.5 sm:p-6 space-y-4 shadow-xs">
               <div>
@@ -477,23 +432,7 @@ export function MemberRegistrySection({
               }}
             />
           )}
-        </motion.div>
-      ) : (
-        <motion.div
-          key="registry-directory"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.16 }}
-        >
-          <ActiveMembersView
-            user={user}
-            config={config}
-            onViewMemberProfile={onViewMemberProfile}
-          />
-        </motion.div>
-      )}
-      </AnimatePresence>
+      </div>
 
       {/* Admin Inspection Modal: Full Applicant / Member Registration Details */}
       <AnimatePresence>

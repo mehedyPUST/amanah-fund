@@ -12,6 +12,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { AuditTrendsCharts } from './AuditTrendsCharts.tsx';
+import { ContributionLeaderboard } from './ContributionLeaderboard.tsx';
 import { MonthlyFinancialSnapshot } from './MonthlyFinancialSnapshot.tsx';
 import { TreasuryGrowthChart } from './TreasuryGrowthChart.tsx';
 
@@ -22,6 +23,7 @@ interface StatisticsViewProps {
   user: PublicUser;
   loading: boolean;
   onNavigate: (section: DashboardSectionId) => void;
+  onViewMemberProfile?: (userId: string) => void;
 }
 
 export function StatisticsView({
@@ -31,6 +33,7 @@ export function StatisticsView({
   user,
   loading,
   onNavigate,
+  onViewMemberProfile,
 }: StatisticsViewProps) {
   const t = useTranslations('Statistics');
   const ccy = overview?.config.currency || 'BDT';
@@ -95,6 +98,14 @@ export function StatisticsView({
         monthlySeries={monthlySeries}
         currency={ccy}
         loading={loading && monthlySeries.length === 0}
+      />
+
+      <ContributionLeaderboard
+        entries={overview?.leaderboard || []}
+        config={overview?.config || null}
+        loading={loading && !overview}
+        onNavigate={onNavigate}
+        onViewMemberProfile={onViewMemberProfile}
       />
     </div>
   );

@@ -28,8 +28,9 @@ interface RepaymentScheduleProps {
   config: FundConfig | null;
   user: PublicUser;
   loading?: boolean;
-  onNavigate: (section: DashboardSectionId) => void;
+  onNavigate?: (section: DashboardSectionId) => void;
   onOpenLoanModal?: () => void;
+  hideFooterLink?: boolean;
 }
 
 function getDaysUntil(dateStr: string): number {
@@ -83,6 +84,7 @@ export function RepaymentSchedule({
   loading = false,
   onNavigate,
   onOpenLoanModal,
+  hideFooterLink = false,
 }: RepaymentScheduleProps) {
   const t = useTranslations('Loans.schedule');
   const ccy = config?.currency || 'BDT';
@@ -303,13 +305,15 @@ export function RepaymentSchedule({
                   {t('requestLoan')}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => onNavigate('quard-hasan')}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-              >
-                {t('openQardHasan')}
-              </button>
+              {!hideFooterLink && onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('quard-hasan')}
+                  className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                >
+                  {t('openQardHasan')}
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -494,7 +498,7 @@ export function RepaymentSchedule({
         )}
       </div>
 
-      {activeLoan && (
+      {activeLoan && !hideFooterLink && onNavigate && (
         <div className="pt-1 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <HandCoins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
