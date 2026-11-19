@@ -514,7 +514,7 @@ function printBanglaApplicationFormViaIframe(input: ApplicationFormPdfInput): vo
       : ''
   }
 
-  <div class="section-title">${hasSocial ? '০৩' : '০২'}. বসবাসের ঠিকানা (টেলিটক ফরম্যাট)</div>
+  <div class="section-title">${hasSocial ? '০৩' : '০২'}. বসবাসের ঠিকানা</div>
   <div class="addr-grid">
     ${renderBanglaAddressHtml('বর্তমান ঠিকানা', reg.presentAddressDetails, reg.presentAddress)}
     ${renderBanglaAddressHtml('স্থায়ী ঠিকানা', reg.permanentAddressDetails, reg.permanentAddress)}
@@ -903,7 +903,7 @@ export async function downloadMembershipApplicationPdf(
   // =========================================================================
   // RESIDENTIAL ADDRESSES (Teletalk Standard Side-by-Side Cards)
   // =========================================================================
-  drawSectionBar(`0${nextSectionNumber}`, 'RESIDENTIAL ADDRESSES (TELETALK FORMAT)');
+  drawSectionBar(`0${nextSectionNumber}`, 'RESIDENTIAL ADDRESSES');
   nextSectionNumber += 1;
 
   const addrGap = 10;

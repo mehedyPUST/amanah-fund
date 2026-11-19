@@ -1262,12 +1262,9 @@ export function SignUpForm() {
 
             {/* Section 3: Teletalk-Style Residential Addresses */}
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
-              <div className="space-y-0.5">
-                <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
-                  {t('sec3')}
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{t('sec3Sub')}</p>
-              </div>
+              <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                {t('sec3')}
+              </h2>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <TeletalkAddressFields
@@ -1806,14 +1803,9 @@ export function SignUpForm() {
                 {/* Applicant Signature 300x80 px (Required, Teletalk Standard) */}
                 <div className="sm:col-span-2 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                        {t('signatureLabel')} <span className="text-red-500">*</span>
-                      </span>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        {t('signatureSpecHint')}
-                      </p>
-                    </div>
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      {t('signatureLabel')} <span className="text-red-500">*</span>
+                    </span>
                     {signatureUrl && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1921,14 +1913,9 @@ export function SignUpForm() {
                           </>
                         )}
                       </div>
-                      <div className="space-y-0.5">
-                        <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                          {signatureUploading ? t('uploadingToCloud') : t('chooseSignature')}
-                        </span>
-                        <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                          {t('signatureSpecHint')}
-                        </span>
-                      </div>
+                      <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        {signatureUploading ? t('uploadingToCloud') : t('chooseSignature')}
+                      </span>
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/jpg"
