@@ -225,11 +225,7 @@ export function BalanceSheetView({
   const [mobileViewMode, setMobileViewMode] = useState<'sheet' | 'cards'>('sheet');
   const [sortField, setSortField] = useState<SortField>('serialNo');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
-  const [selectedCell, setSelectedCell] = useState<SelectedCell>({
-    tab: 'balance-sheet',
-    row: 0,
-    col: 0,
-  });
+  const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
   const [markedRowUserId, setMarkedRowUserId] = useState<string | null>(null);
   const [copiedCell, setCopiedCell] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
@@ -249,6 +245,7 @@ export function BalanceSheetView({
   useBodyScrollLock(isFullScreen);
 
   useEffect(() => {
+    if (!selectedCell) return;
     const container = gridContainerRef.current;
     if (!container) return;
     const selector = `[data-sheet-cell="${selectedCell.tab}:${selectedCell.row}:${selectedCell.col}"]`;
@@ -786,6 +783,14 @@ export function BalanceSheetView({
 
   // Compute Name Box coordinate, Formula Bar expression, and plain copyable text for active cell
   const activeCellInfo = useMemo(() => {
+    if (!selectedCell || selectedCell.tab !== activeTab) {
+      return {
+        ref: '—',
+        formula: 'Click any cell to inspect its formula and breakdown.',
+        copyValue: '',
+      };
+    }
+
     const fmt = (v: number) => formatMoney(v, ccy);
 
     if (activeTab === 'variables-summary') {
@@ -989,10 +994,15 @@ export function BalanceSheetView({
   const handleGridKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (inspectedMemberId) return;
+      if (e.key === 'Escape' && !isFullScreen && selectedCell) {
+        e.preventDefault();
+        setSelectedCell(null);
+        return;
+      }
       if (
         e.key === 'Enter' &&
         activeTab === 'balance-sheet' &&
-        selectedCell.tab === 'balance-sheet' &&
+        selectedCell?.tab === 'balance-sheet' &&
         (selectedCell.col === 0 || selectedCell.col === 1) &&
         selectedCell.row >= 0
       ) {
@@ -1013,11 +1023,14 @@ export function BalanceSheetView({
       }
       e.preventDefault();
       setSelectedCell((prev) => {
+        if (!prev || prev.tab !== activeTab) {
+          return { tab: activeTab, row: 0, col: 0 };
+        }
         if (activeTab === 'variables-summary') {
           const maxRow = Math.max(0, visibleVariablesRows.length - 1);
           const maxCol = SUMMARY_COL_LETTERS.length - 1;
-          let nextRow = prev.tab === 'variables-summary' ? prev.row : 0;
-          let nextCol = prev.tab === 'variables-summary' ? prev.col : 0;
+          let nextRow = prev.row;
+          let nextCol = prev.col;
           if (e.key === 'ArrowUp') nextRow = Math.max(0, nextRow - 1);
           if (e.key === 'ArrowDown') nextRow = Math.min(maxRow, nextRow + 1);
           if (e.key === 'ArrowLeft') nextCol = Math.max(0, nextCol - 1);
@@ -1027,8 +1040,8 @@ export function BalanceSheetView({
 
         const maxDataIdx = filteredRows.length - 1;
         const maxCol = SHEET_COL_LETTERS.length - 1;
-        let nextRow = prev.tab === 'balance-sheet' ? prev.row : 0;
-        let nextCol = prev.tab === 'balance-sheet' ? prev.col : 0;
+        let nextRow = prev.row;
+        let nextCol = prev.col;
 
         if (e.key === 'ArrowLeft') nextCol = Math.max(0, nextCol - 1);
         if (e.key === 'ArrowRight') nextCol = Math.min(maxCol, nextCol + 1);
@@ -1046,7 +1059,7 @@ export function BalanceSheetView({
         return { tab: 'balance-sheet', row: nextRow, col: nextCol };
       });
     },
-    [activeTab, visibleVariablesRows.length, filteredRows, inspectedMemberId, selectedCell]
+    [activeTab, visibleVariablesRows.length, filteredRows, inspectedMemberId, isFullScreen, selectedCell]
   );
 
   const showToast = useCallback((message: string) => {
@@ -1229,7 +1242,7 @@ export function BalanceSheetView({
   };
 
   const isCellActive = (tab: WorkbookTab, row: number, col: number) =>
-    selectedCell.tab === tab && selectedCell.row === row && selectedCell.col === col;
+    Boolean(selectedCell && selectedCell.tab === tab && selectedCell.row === row && selectedCell.col === col);
 
   const cellRingClass = (active: boolean) =>
     active ? 'ring-2 ring-inset ring-emerald-500 dark:ring-emerald-400' : '';
@@ -1658,12 +1671,15 @@ export function BalanceSheetView({
         </div>
         <div className="shrink-0 flex items-center gap-1.5 pr-2 sm:pr-3 pl-1.5 sm:pl-2 border-l border-slate-200/80 dark:border-slate-800 h-full">
           {activeTab === 'balance-sheet' &&
-            selectedCell.tab === 'balance-sheet' &&
+            selectedCell?.tab === 'balance-sheet' &&
             selectedCell.row >= 0 &&
             filteredRows[selectedCell.row] && (
               <button
                 type="button"
-                onClick={() => setInspectedMemberId(filteredRows[selectedCell.row].userId)}
+                onClick={() => {
+                  const row = filteredRows[selectedCell.row];
+                  if (row) setInspectedMemberId(row.userId);
+                }}
                 className="md:hidden h-6 px-2 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <span>Details</span>
@@ -1990,7 +2006,7 @@ export function BalanceSheetView({
                     />
                     {SHEET_COL_LETTERS.map((letter, colIdx) => {
                       const colActive =
-                        selectedCell.tab === 'balance-sheet' && selectedCell.col === colIdx;
+                        Boolean(selectedCell && selectedCell.tab === 'balance-sheet' && selectedCell.col === colIdx);
                       const stickyClass =
                         freezeIdentityCols && colIdx === 0
                           ? 'md:sticky md:left-[40px] md:z-40'
@@ -2309,7 +2325,7 @@ export function BalanceSheetView({
                   ) : (
                     filteredRows.map((row, idx) => {
                       const rowActive =
-                        selectedCell.tab === 'balance-sheet' && selectedCell.row === idx;
+                        Boolean(selectedCell && selectedCell.tab === 'balance-sheet' && selectedCell.row === idx);
                       const isRowMarked = markedRowUserId === row.userId;
                       const isSelfRow = Boolean(user?.id && row.userId === user.id);
                       const zebraBg = isRowMarked
@@ -2801,7 +2817,7 @@ export function BalanceSheetView({
                   <th className="w-[40px] min-w-[40px] h-6 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40" />
                   {SUMMARY_COL_LETTERS.map((letter, colIdx) => {
                     const colActive =
-                      selectedCell.tab === 'variables-summary' && selectedCell.col === colIdx;
+                      Boolean(selectedCell && selectedCell.tab === 'variables-summary' && selectedCell.col === colIdx);
                     return (
                       <th
                         key={letter}
@@ -2860,7 +2876,7 @@ export function BalanceSheetView({
                     const prevGroup = idx > 0 ? visibleVariablesRows[idx - 1].group : item.group;
                     const isNewGroup = idx > 0 && item.group !== prevGroup;
                     const rowActive =
-                      selectedCell.tab === 'variables-summary' && selectedCell.row === idx;
+                      Boolean(selectedCell && selectedCell.tab === 'variables-summary' && selectedCell.row === idx);
                     const highlightColor =
                       item.highlight === 'emerald'
                         ? 'text-emerald-700 dark:text-emerald-400 font-bold'
@@ -2972,7 +2988,7 @@ export function BalanceSheetView({
               onClick={() => {
                 setActiveTab('balance-sheet');
                 setDisplayMode('sheet');
-                setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
+                setSelectedCell(null);
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'balance-sheet'
@@ -2991,7 +3007,7 @@ export function BalanceSheetView({
               onClick={() => {
                 setActiveTab('variables-summary');
                 setDisplayMode('sheet');
-                setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
+                setSelectedCell(null);
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'variables-summary'

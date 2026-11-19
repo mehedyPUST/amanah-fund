@@ -376,13 +376,20 @@ export function exportBalanceSheetPdf({
     rows.forEach((row, idx) => {
       ensureRowSpace(rowH);
 
-      if (idx % 2 === 1) {
-        doc.setFillColor(249, 250, 251);
-        doc.rect(marginX, y, contentWidth, rowH, 'F');
+      const isOddRow = idx % 2 === 1;
+      if (isOddRow) {
+        doc.setFillColor(236, 243, 250);
+      } else {
+        doc.setFillColor(255, 255, 255);
       }
+      doc.rect(marginX, y, contentWidth, rowH, 'F');
 
-      // Subtle tint on Refund Qard column
-      doc.setFillColor(240, 253, 244);
+      // Subtle alternating tint on Refund Qard column
+      if (isOddRow) {
+        doc.setFillColor(220, 245, 233);
+      } else {
+        doc.setFillColor(240, 253, 244);
+      }
       doc.rect(colX[7], y, colDefs[7].width, rowH, 'F');
 
       // Spreadsheet gridlines
