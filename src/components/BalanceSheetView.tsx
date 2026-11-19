@@ -1511,44 +1511,42 @@ export function BalanceSheetView({
           : 'rounded-xl border border-slate-200/90 dark:border-slate-800'
       }`}
     >
-      {/* YouTube-style Full Screen Toggle permanently anchored at Top-Right Corner */}
-      <div className="absolute top-3 right-3 z-50 print-hidden group/fs">
-        <button
-          type="button"
-          onClick={() => setIsFullScreen((prev) => !prev)}
-          aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
-          aria-pressed={isFullScreen}
-          className="h-8 w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-        >
-          {isFullScreen ? (
+      {/* Exit Full Screen Toggle pinned at Top-Right Corner in Full Screen mode */}
+      {isFullScreen && (
+        <div className="absolute top-3 right-3 z-50 print-hidden group/fs">
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(false)}
+            aria-label="Exit full screen (f)"
+            aria-pressed={true}
+            className="h-8 w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+          >
             <Minimize
               className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
               strokeWidth={2.2}
               aria-hidden="true"
             />
-          ) : (
-            <Maximize
-              className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-              strokeWidth={2.2}
-              aria-hidden="true"
-            />
-          )}
-        </button>
+          </button>
 
-        <div
-          role="tooltip"
-          className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
-        >
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-          />
-          {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+          <div
+            role="tooltip"
+            className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+          >
+            <span
+              aria-hidden="true"
+              className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+            />
+            Exit full screen (f)
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 1. Spreadsheet Document Header & Period Controls */}
-      <div className="relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 pl-4 pr-14 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div
+        className={`relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 ${
+          isFullScreen ? 'pl-4 pr-14' : 'px-4'
+        } py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3`}
+      >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
@@ -3252,6 +3250,41 @@ export function BalanceSheetView({
       )}
 
       {kpiSummaryStrip}
+
+      {/* Floating Full Screen button — always visible as the user scrolls */}
+      {mounted &&
+        !isFullScreen &&
+        !inspectedMemberId &&
+        createPortal(
+          <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 print-hidden group/fs">
+            <button
+              type="button"
+              onClick={() => setIsFullScreen(true)}
+              aria-label="Full screen (f)"
+              aria-pressed={false}
+              className="h-10 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white border border-emerald-600/40 dark:border-emerald-400/30 shadow-[0_10px_28px_-6px_rgba(5,150,105,0.48)] hover:shadow-[0_14px_32px_-6px_rgba(5,150,105,0.58)] inline-flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            >
+              <Maximize
+                className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                strokeWidth={2.2}
+                aria-hidden="true"
+              />
+              <span className="text-xs font-semibold whitespace-nowrap">Full Screen</span>
+            </button>
+
+            <div
+              role="tooltip"
+              className="pointer-events-none absolute right-0 bottom-full mb-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-1 right-4 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+              />
+              Full screen (f)
+            </div>
+          </div>,
+          document.body
+        )}
 
       <BalanceSheetMemberModal
         row={inspectedMemberRow}

@@ -351,10 +351,10 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   })}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="hidden xl:flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="hidden md:inline">{tRules('layout')}</span>
+                  <span>{tRules('layout')}</span>
                 </span>
                 <div
                   role="tablist"
