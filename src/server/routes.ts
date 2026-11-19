@@ -31,6 +31,7 @@ import type {
   NotificationPreferences,
   PasswordResetRequest,
   PrivateMessage,
+  PrivateMessageReplyPreview,
   ProfileChangePayload,
   ProfileChangeRequest,
   ProfitDistributionAllocation,
@@ -8829,16 +8830,30 @@ function makeConversationId(userA: string, userB: string): string {
   return [userA, userB].sort().join('--');
 }
 
-function decryptPrivateMessage(msg: StoredPrivateMessage): PrivateMessage {
-  let body = '[Encrypted message could not be decrypted]';
+interface EncryptedPrivateMessagePayload {
+  body?: string;
+  replyTo?: PrivateMessageReplyPreview;
+  reactions?: Record<string, string>;
+  editedAt?: string;
+}
+
+const ALLOWED_DM_REACTIONS = new Set(['❤️', '😆', '😮', '😢', '😠', '👍']);
+
+function decryptPrivateMessagePayload(msg: StoredPrivateMessage): EncryptedPrivateMessagePayload {
   try {
-    const decrypted = decryptSensitiveObject<{ body?: string }>(msg.encryptedBody);
-    if (typeof decrypted?.body === 'string') {
-      body = decrypted.body;
-    }
+    const decrypted = decryptSensitiveObject<EncryptedPrivateMessagePayload>(msg.encryptedBody);
+    return decrypted || {};
   } catch {
-    // keep fallback string
+    return {};
   }
+}
+
+function decryptPrivateMessage(msg: StoredPrivateMessage): PrivateMessage {
+  const payload = decryptPrivateMessagePayload(msg);
+  const body =
+    typeof payload.body === 'string'
+      ? payload.body
+      : '[Encrypted message could not be decrypted]';
 
   return {
     id: msg.id,
@@ -8854,6 +8869,9 @@ function decryptPrivateMessage(msg: StoredPrivateMessage): PrivateMessage {
     recipientRole: msg.recipientRole,
     recipientPhotoUrl: msg.recipientPhotoUrl,
     body,
+    replyTo: payload.replyTo,
+    reactions: payload.reactions,
+    editedAt: payload.editedAt,
     createdAt: msg.createdAt,
     readAt: msg.readAt,
   };
@@ -9007,6 +9025,8 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
     const peerId = String(req.params.peerId || '');
     const viewer = req.authUser!;
     const body = String(req.body?.body || '').trim();
+    const replyToMessageId =
+      typeof req.body?.replyToMessageId === 'string' ? req.body.replyToMessageId.trim() : '';
 
     if (!peerId || peerId === viewer.id) {
       res.status(400).json({ error: 'Select another active cooperative member to message.' });
@@ -9025,6 +9045,30 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
       }
 
       const conversationId = makeConversationId(viewer.id, peer.id);
+      draft.privateMessages = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+
+      let replyTo: PrivateMessageReplyPreview | undefined;
+      if (replyToMessageId) {
+        const target = draft.privateMessages.find(
+          (m) => m.id === replyToMessageId && m.conversationId === conversationId
+        );
+        if (target) {
+          const targetPayload = decryptPrivateMessagePayload(target);
+          const rawPreview = (targetPayload.body || '').trim();
+          replyTo = {
+            messageId: target.id,
+            senderId: target.senderId,
+            senderName: target.senderName,
+            bodyPreview:
+              rawPreview.length > 110 ? `${rawPreview.slice(0, 107)}...` : rawPreview,
+          };
+        }
+      }
+
+      const payload: EncryptedPrivateMessagePayload = replyTo
+        ? { body, replyTo }
+        : { body };
+
       createdStored = {
         id: `dm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         conversationId,
@@ -9038,11 +9082,10 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
         recipientCode: peer.memberCode,
         recipientRole: peer.role,
         recipientPhotoUrl: peer.photoUrl,
-        encryptedBody: encryptSensitiveObject({ body }),
+        encryptedBody: encryptSensitiveObject(payload),
         createdAt: new Date().toISOString(),
       };
 
-      draft.privateMessages = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
       draft.privateMessages.push(createdStored);
       return draft;
     });
@@ -9069,6 +9112,146 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
     console.error('Send private message error:', err);
     res.status(500).json({ error: 'Failed to send private message.' });
   }
+});
+
+apiRouter.patch('/messages/:messageId', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { messageId } = req.params;
+    const viewer = req.authUser!;
+    const nextBody = String(req.body?.body || '').trim();
+    if (!nextBody || nextBody.length > 3000) {
+      res.status(400).json({ error: 'Message must be between 1 and 3000 characters.' });
+      return;
+    }
+
+    let updatedMsg: StoredPrivateMessage | null = null;
+    await updateVaultState((draft) => {
+      const list = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+      const idx = list.findIndex((m) => m.id === messageId);
+      if (idx === -1) return draft;
+      if (list[idx].senderId !== viewer.id) {
+        throw new Error('FORBIDDEN_DM_EDIT');
+      }
+      const existingPayload = decryptPrivateMessagePayload(list[idx]);
+      const nextPayload: EncryptedPrivateMessagePayload = {
+        ...existingPayload,
+        body: nextBody,
+        editedAt: new Date().toISOString(),
+      };
+      list[idx] = {
+        ...list[idx],
+        encryptedBody: encryptSensitiveObject(nextPayload),
+      };
+      updatedMsg = list[idx];
+      draft.privateMessages = list;
+      return draft;
+    });
+
+    if (!updatedMsg) {
+      res.status(404).json({ error: 'Message not found.' });
+      return;
+    }
+
+    const hydrated = decryptPrivateMessage(updatedMsg);
+    sendRealtimeEventToUsers([hydrated.senderId, hydrated.recipientId], 'dm:edited', {
+      conversationId: hydrated.conversationId,
+      messageId: hydrated.id,
+      senderId: hydrated.senderId,
+      recipientId: hydrated.recipientId,
+    });
+
+    res.json({ message: hydrated });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN_DM_EDIT') {
+      res.status(403).json({ error: 'You can only edit private messages you sent.' });
+      return;
+    }
+    console.error('Edit private message error:', err);
+    res.status(500).json({ error: 'Failed to edit private message.' });
+  }
+});
+
+apiRouter.post('/messages/:messageId/react', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { messageId } = req.params;
+    const viewer = req.authUser!;
+    const emoji = typeof req.body?.emoji === 'string' ? req.body.emoji.trim() : '';
+
+    if (emoji && !ALLOWED_DM_REACTIONS.has(emoji)) {
+      res.status(400).json({ error: 'Unsupported reaction emoji.' });
+      return;
+    }
+
+    let updatedMsg: StoredPrivateMessage | null = null;
+    await updateVaultState((draft) => {
+      const list = Array.isArray(draft.privateMessages) ? draft.privateMessages : [];
+      const idx = list.findIndex((m) => m.id === messageId);
+      if (idx === -1) return draft;
+      const target = list[idx];
+      if (target.senderId !== viewer.id && target.recipientId !== viewer.id) {
+        throw new Error('FORBIDDEN_DM_REACT');
+      }
+
+      const existingPayload = decryptPrivateMessagePayload(target);
+      const nextReactions: Record<string, string> = {
+        ...(existingPayload.reactions || {}),
+      };
+      if (!emoji || nextReactions[viewer.id] === emoji) {
+        delete nextReactions[viewer.id];
+      } else {
+        nextReactions[viewer.id] = emoji;
+      }
+
+      const nextPayload: EncryptedPrivateMessagePayload = {
+        ...existingPayload,
+        reactions: Object.keys(nextReactions).length > 0 ? nextReactions : undefined,
+      };
+      list[idx] = {
+        ...target,
+        encryptedBody: encryptSensitiveObject(nextPayload),
+      };
+      updatedMsg = list[idx];
+      draft.privateMessages = list;
+      return draft;
+    });
+
+    if (!updatedMsg) {
+      res.status(404).json({ error: 'Message not found.' });
+      return;
+    }
+
+    const hydrated = decryptPrivateMessage(updatedMsg);
+    sendRealtimeEventToUsers([hydrated.senderId, hydrated.recipientId], 'dm:reacted', {
+      conversationId: hydrated.conversationId,
+      messageId: hydrated.id,
+      senderId: hydrated.senderId,
+      recipientId: hydrated.recipientId,
+    });
+
+    res.json({ message: hydrated });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'FORBIDDEN_DM_REACT') {
+      res.status(403).json({ error: 'You cannot react to messages outside your conversations.' });
+      return;
+    }
+    console.error('React private message error:', err);
+    res.status(500).json({ error: 'Failed to update reaction.' });
+  }
+});
+
+apiRouter.post('/messages/with/:peerId/typing', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const peerId = String(req.params.peerId || '');
+  const viewer = req.authUser!;
+  if (!peerId || peerId === viewer.id) {
+    res.status(400).json({ error: 'Invalid typing recipient.' });
+    return;
+  }
+  sendRealtimeEventToUsers([peerId], 'dm:typing', {
+    senderId: viewer.id,
+    recipientId: peerId,
+    isTyping: Boolean(req.body?.isTyping),
+  });
+  res.json({ ok: true });
 });
 
 apiRouter.delete('/messages/:messageId', requireAuth, async (req: AuthenticatedRequest, res) => {

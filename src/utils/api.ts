@@ -1093,10 +1093,25 @@ export const api = {
       };
       messages: PrivateMessage[];
     }>(`/api/messages/with/${peerId}`),
-  sendPrivateMessage: (peerId: string, body: string) =>
+  sendPrivateMessage: (peerId: string, body: string, replyToMessageId?: string) =>
     apiRequest<{ message: PrivateMessage }>(`/api/messages/with/${peerId}`, {
       method: 'POST',
+      body: JSON.stringify({ body, ...(replyToMessageId ? { replyToMessageId } : {}) }),
+    }),
+  editPrivateMessage: (messageId: string, body: string) =>
+    apiRequest<{ message: PrivateMessage }>(`/api/messages/${messageId}`, {
+      method: 'PATCH',
       body: JSON.stringify({ body }),
+    }),
+  reactPrivateMessage: (messageId: string, emoji: string) =>
+    apiRequest<{ message: PrivateMessage }>(`/api/messages/${messageId}/react`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    }),
+  sendPrivateTyping: (peerId: string, isTyping: boolean) =>
+    apiRequest<{ ok: boolean }>(`/api/messages/with/${peerId}/typing`, {
+      method: 'POST',
+      body: JSON.stringify({ isTyping }),
     }),
   deletePrivateMessage: (messageId: string) =>
     apiRequest<{ ok: boolean; messageId: string }>(`/api/messages/${messageId}`, {

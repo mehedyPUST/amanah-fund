@@ -813,6 +813,13 @@ export interface CommunityPost {
   updatedAt?: string;
 }
 
+export interface PrivateMessageReplyPreview {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  bodyPreview: string;
+}
+
 export interface PrivateMessage {
   id: string;
   conversationId: string;
@@ -827,6 +834,9 @@ export interface PrivateMessage {
   recipientRole: UserRole;
   recipientPhotoUrl?: string;
   body: string;
+  replyTo?: PrivateMessageReplyPreview;
+  reactions?: Record<string, string>;
+  editedAt?: string;
   createdAt: string;
   readAt?: string;
 }

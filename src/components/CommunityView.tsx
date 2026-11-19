@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowDown,
   ArrowLeft,
   Award,
   BarChart2,
   Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
   Edit3,
   Eye,
   EyeOff,
@@ -21,11 +25,13 @@ import {
   Pin,
   PinOff,
   Plus,
+  Reply,
   Search,
   SendHorizontal,
   ShieldAlert,
   ShieldCheck,
   Smile,
+  SmilePlus,
   Sparkles,
   ThumbsUp,
   Trash2,
@@ -63,6 +69,7 @@ import {
   isSpamCheckBlockingPost,
   MAX_COMMUNITY_POST_LINKS,
   normalizeCommunityLinkUrl,
+  parseTextWithLinks,
 } from '../utils/communityLinks.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
@@ -98,6 +105,8 @@ const CATEGORIES: CommunityCategory[] = [
   'Announcements',
   'Help & Support',
 ];
+
+const DM_REACTION_EMOJIS = ['❤️', '😆', '😮', '😢', '😠', '👍'] as const;
 
 const REACTION_OPTIONS: Array<{
   type: CommunityReactionType;
@@ -195,7 +204,7 @@ function AvatarBadge({
   return (
     <div
       aria-hidden="true"
-      className={`${dims} ${radius} bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 text-[#0084FF] dark:text-sky-400 font-semibold flex items-center justify-center shrink-0`}
+      className={`${dims} ${radius} bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/60 dark:to-teal-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center justify-center shrink-0`}
     >
       {initials || 'AM'}
     </div>
@@ -303,6 +312,22 @@ export function CommunityView({
   const [dmEmojiOpen, setDmEmojiOpen] = useState(false);
   const [dmInfoOpen, setDmInfoOpen] = useState(false);
   const [activeMsgActionsId, setActiveMsgActionsId] = useState<string | null>(null);
+  const [threadFilter, setThreadFilter] = useState<'all' | 'unread'>('all');
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    senderId: string;
+    senderName: string;
+    body: string;
+  } | null>(null);
+  const [editingDmId, setEditingDmId] = useState<string | null>(null);
+  const [reactionBarMsgId, setReactionBarMsgId] = useState<string | null>(null);
+  const [dmSearchOpen, setDmSearchOpen] = useState(false);
+  const [dmSearchQuery, setDmSearchQuery] = useState('');
+  const [dmSearchIdx, setDmSearchIdx] = useState(0);
+  const [peerTyping, setPeerTyping] = useState(false);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   const [modal, setModal] = useState<
     | {
@@ -330,6 +355,14 @@ export function CommunityView({
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const mobileChatEndRef = useRef<HTMLDivElement | null>(null);
+  const desktopScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileScrollRef = useRef<HTMLDivElement | null>(null);
+  const desktopComposerRef = useRef<HTMLTextAreaElement | null>(null);
+  const mobileComposerRef = useRef<HTMLTextAreaElement | null>(null);
+  const typingClearTimerRef = useRef<number | null>(null);
+  const lastTypingSentRef = useRef<{ peerId: string; at: number } | null>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const highlightTimerRef = useRef<number | null>(null);
   const selectedPeerIdRef = useRef<string | null>(null);
   selectedPeerIdRef.current = selectedPeerId;
 
@@ -362,6 +395,14 @@ export function CommunityView({
     setDmEmojiOpen(false);
     setDmInfoOpen(false);
     setActiveMsgActionsId(null);
+    setReplyingTo(null);
+    setEditingDmId(null);
+    setReactionBarMsgId(null);
+    setDmSearchOpen(false);
+    setDmSearchQuery('');
+    setDmSearchIdx(0);
+    setPeerTyping(false);
+    setShowScrollToBottom(false);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       if (url.searchParams.has('dm')) {
@@ -469,6 +510,9 @@ export function CommunityView({
       if (!currentPeer) return;
       try {
         const data = JSON.parse(evt.data) as { senderId?: string; recipientId?: string };
+        if (evt.type === 'dm:received' && data.senderId === currentPeer) {
+          setPeerTyping(false);
+        }
         if (data.senderId === currentPeer || data.recipientId === currentPeer) {
           void loadConversation(currentPeer, true);
         } else {
@@ -479,13 +523,42 @@ export function CommunityView({
       }
     };
 
+    const handleTyping = (evt: MessageEvent) => {
+      const currentPeer = selectedPeerIdRef.current;
+      if (!currentPeer) return;
+      try {
+        const data = JSON.parse(evt.data) as { senderId?: string; isTyping?: boolean };
+        if (data.senderId !== currentPeer) return;
+        const active = Boolean(data.isTyping);
+        setPeerTyping(active);
+        if (typingClearTimerRef.current) {
+          window.clearTimeout(typingClearTimerRef.current);
+          typingClearTimerRef.current = null;
+        }
+        if (active) {
+          typingClearTimerRef.current = window.setTimeout(() => {
+            setPeerTyping(false);
+            typingClearTimerRef.current = null;
+          }, 4500);
+        }
+      } catch {
+        // Ignore malformed typing payload
+      }
+    };
+
     es.addEventListener('community:updated', handleCommunity);
     es.addEventListener('members:updated', handleCommunity);
     es.addEventListener('dm:received', handleDm);
     es.addEventListener('dm:read', handleDm);
     es.addEventListener('dm:deleted', handleDm);
+    es.addEventListener('dm:edited', handleDm);
+    es.addEventListener('dm:reacted', handleDm);
+    es.addEventListener('dm:typing', handleTyping);
 
     return () => {
+      if (typingClearTimerRef.current) {
+        window.clearTimeout(typingClearTimerRef.current);
+      }
       es.close();
     };
   }, [loadPosts, loadThreads, loadConversation]);
@@ -498,7 +571,7 @@ export function CommunityView({
         chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
     }
-  }, [activeTab, selectedPeerId, messages.length, messagesLoading, mobileDmModalOpen]);
+  }, [activeTab, selectedPeerId, messages.length, messagesLoading, mobileDmModalOpen, peerTyping]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -574,16 +647,19 @@ export function CommunityView({
 
   const filteredThreads = useMemo(() => {
     const q = memberSearch.trim().toLowerCase();
-    if (!q) return threads;
-    return threads.filter(
-      (t) =>
+    return threads.filter((t) => {
+      if (threadFilter === 'unread' && t.unreadCount === 0) return false;
+      if (!q) return true;
+      return (
         t.peerName.toLowerCase().includes(q) ||
         t.peerCode.toLowerCase().includes(q) ||
         t.lastMessageBody.toLowerCase().includes(q)
-    );
-  }, [threads, memberSearch]);
+      );
+    });
+  }, [threads, memberSearch, threadFilter]);
 
   const otherDirectoryMembers = useMemo(() => {
+    if (threadFilter === 'unread') return [];
     const threadPeerIds = new Set(threads.map((t) => t.peerId));
     const q = memberSearch.trim().toLowerCase();
     return directory.filter((m) => {
@@ -591,7 +667,34 @@ export function CommunityView({
       if (!q) return true;
       return m.name.toLowerCase().includes(q) || m.memberCode.toLowerCase().includes(q);
     });
-  }, [directory, threads, memberSearch]);
+  }, [directory, threads, memberSearch, threadFilter]);
+
+  const activeDirectoryStrip = useMemo(() => {
+    const q = memberSearch.trim().toLowerCase();
+    return directory
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || m.memberCode.toLowerCase().includes(q))
+      .slice(0, 12);
+  }, [directory, memberSearch]);
+
+  const dmSearchMatches = useMemo(() => {
+    const q = dmSearchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return messages
+      .filter((m) => m.body.toLowerCase().includes(q))
+      .map((m) => m.id);
+  }, [messages, dmSearchQuery]);
+
+  const sharedConversationLinks = useMemo(() => {
+    const urls = new Set<string>();
+    for (const msg of messages) {
+      for (const seg of parseTextWithLinks(msg.body)) {
+        if (seg.type === 'link') {
+          urls.add(seg.value);
+        }
+      }
+    }
+    return Array.from(urls);
+  }, [messages]);
 
   const mentionableMembers = useMemo(() => {
     const all: DirectoryMember[] = [
@@ -1566,6 +1669,124 @@ export function CommunityView({
     });
   }
 
+  function focusDmComposer() {
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      const target = mobileDmModalOpen ? mobileComposerRef.current : desktopComposerRef.current;
+      target?.focus();
+    });
+  }
+
+  function notifyTyping(isTyping: boolean) {
+    if (!selectedPeerId) return;
+    const now = Date.now();
+    if (isTyping) {
+      const last = lastTypingSentRef.current;
+      if (last && last.peerId === selectedPeerId && now - last.at < 2200) {
+        return;
+      }
+      lastTypingSentRef.current = { peerId: selectedPeerId, at: now };
+    } else {
+      lastTypingSentRef.current = null;
+    }
+    void api.sendPrivateTyping(selectedPeerId, isTyping).catch(() => {});
+  }
+
+  function jumpToPrivateMessage(messageId: string, highlight = true) {
+    const el = messageRefs.current[messageId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (highlight) {
+      setHighlightedMsgId(messageId);
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+      }
+      highlightTimerRef.current = window.setTimeout(() => {
+        setHighlightedMsgId(null);
+        highlightTimerRef.current = null;
+      }, 1800);
+    }
+  }
+
+  function handleDmSearchStep(direction: -1 | 1) {
+    if (dmSearchMatches.length === 0) return;
+    const nextIdx =
+      (dmSearchIdx + direction + dmSearchMatches.length) % dmSearchMatches.length;
+    setDmSearchIdx(nextIdx);
+    jumpToPrivateMessage(dmSearchMatches[nextIdx]);
+  }
+
+  function handleStartReply(msg: PrivateMessage) {
+    setEditingDmId(null);
+    setReplyingTo({
+      id: msg.id,
+      senderId: msg.senderId,
+      senderName: msg.senderId === user.id ? user.name : selectedPeer?.name || '',
+      body: msg.body,
+    });
+    setReactionBarMsgId(null);
+    setActiveMsgActionsId(null);
+    focusDmComposer();
+  }
+
+  function handleStartEditDm(msg: PrivateMessage) {
+    setReplyingTo(null);
+    setEditingDmId(msg.id);
+    setMessageInput(msg.body);
+    setReactionBarMsgId(null);
+    setActiveMsgActionsId(null);
+    focusDmComposer();
+  }
+
+  function handleCancelReplyOrEdit() {
+    if (editingDmId) {
+      setEditingDmId(null);
+      setMessageInput('');
+    }
+    setReplyingTo(null);
+  }
+
+  async function handleReactPrivateMessage(messageId: string, emoji: string) {
+    setReactionBarMsgId(null);
+    setActiveMsgActionsId(null);
+    const snapshot = messages;
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const nextReactions = { ...(m.reactions || {}) };
+        if (nextReactions[user.id] === emoji) {
+          delete nextReactions[user.id];
+        } else {
+          nextReactions[user.id] = emoji;
+        }
+        return { ...m, reactions: nextReactions };
+      })
+    );
+    try {
+      const res = await api.reactPrivateMessage(messageId, emoji);
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? res.message : m)));
+    } catch (err) {
+      setMessages(snapshot);
+      setDmError(err instanceof Error ? err.message : t('sendMessageError'));
+    }
+  }
+
+  async function handleCopyPrivateMessage(messageId: string, body: string) {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(body);
+        setCopiedMsgId(messageId);
+        window.setTimeout(() => {
+          setCopiedMsgId((curr) => (curr === messageId ? null : curr));
+        }, 1800);
+      }
+    } catch {
+      // Clipboard write unavailable
+    } finally {
+      setActiveMsgActionsId(null);
+    }
+  }
+
   function handleOpenDirectMessage(peer: {
     id: string;
     name: string;
@@ -1579,6 +1800,14 @@ export function CommunityView({
     setDmEmojiOpen(false);
     setDmInfoOpen(false);
     setActiveMsgActionsId(null);
+    setReplyingTo(null);
+    setEditingDmId(null);
+    setReactionBarMsgId(null);
+    setDmSearchOpen(false);
+    setDmSearchQuery('');
+    setDmSearchIdx(0);
+    setPeerTyping(false);
+    setShowScrollToBottom(false);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       if (url.searchParams.get('dm') !== peer.id) {
@@ -1601,13 +1830,23 @@ export function CommunityView({
     setDmError(null);
     setDmEmojiOpen(false);
     try {
-      const res = await api.sendPrivateMessage(selectedPeerId, body);
-      setMessages((prev) =>
-        prev.some((m) => m.id === res.message.id) ? prev : [...prev, res.message]
-      );
-      if (!isOverride) {
+      if (editingDmId && !isOverride) {
+        const res = await api.editPrivateMessage(editingDmId, body);
+        setMessages((prev) => prev.map((m) => (m.id === editingDmId ? res.message : m)));
+        setEditingDmId(null);
         setMessageInput('');
+      } else {
+        const replyId = !isOverride ? replyingTo?.id : undefined;
+        const res = await api.sendPrivateMessage(selectedPeerId, body, replyId);
+        setMessages((prev) =>
+          prev.some((m) => m.id === res.message.id) ? prev : [...prev, res.message]
+        );
+        if (!isOverride) {
+          setMessageInput('');
+          setReplyingTo(null);
+        }
       }
+      notifyTyping(false);
       await loadThreads(true);
     } catch (err) {
       setDmError(err instanceof Error ? err.message : t('sendMessageError'));
@@ -1628,6 +1867,13 @@ export function CommunityView({
         try {
           await api.deletePrivateMessage(messageId);
           setMessages((prev) => prev.filter((m) => m.id !== messageId));
+          if (editingDmId === messageId) {
+            setEditingDmId(null);
+            setMessageInput('');
+          }
+          if (replyingTo?.id === messageId) {
+            setReplyingTo(null);
+          }
           await loadThreads(true);
           setModal({
             mode: 'notice',
@@ -1646,6 +1892,1013 @@ export function CommunityView({
         }
       },
     });
+  }
+
+  function renderDmMessageBody(body: string, mine: boolean) {
+    const query = dmSearchOpen ? dmSearchQuery.trim() : '';
+    const renderHighlightedText = (text: string, keyPrefix: string) => {
+      if (!query) return text;
+      const lowerText = text.toLowerCase();
+      const lowerQ = query.toLowerCase();
+      const parts: React.ReactNode[] = [];
+      let cursor = 0;
+      let hit = lowerText.indexOf(lowerQ, cursor);
+      let partIdx = 0;
+      while (hit !== -1) {
+        if (hit > cursor) {
+          parts.push(text.slice(cursor, hit));
+        }
+        parts.push(
+          <mark
+            key={`${keyPrefix}-m-${partIdx++}`}
+            className={
+              mine
+                ? 'bg-amber-300 text-slate-950 rounded px-0.5'
+                : 'bg-amber-200 dark:bg-amber-500/40 text-slate-950 dark:text-white rounded px-0.5'
+            }
+          >
+            {text.slice(hit, hit + query.length)}
+          </mark>
+        );
+        cursor = hit + query.length;
+        hit = lowerText.indexOf(lowerQ, cursor);
+      }
+      if (cursor < text.length) {
+        parts.push(text.slice(cursor));
+      }
+      return parts.length > 0 ? parts : text;
+    };
+
+    const segments = parseTextWithLinks(body);
+    return segments.map((seg, idx) =>
+      seg.type === 'link' ? (
+        <a
+          key={`seg-${idx}`}
+          href={seg.value}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className={`underline underline-offset-2 break-all ${
+            mine
+              ? 'text-emerald-50 decoration-emerald-200/80 hover:text-white'
+              : 'text-emerald-700 dark:text-emerald-400 decoration-emerald-600/40 hover:text-emerald-800 dark:hover:text-emerald-300'
+          }`}
+        >
+          {renderHighlightedText(seg.value, `l-${idx}`)}
+        </a>
+      ) : (
+        <span key={`seg-${idx}`}>{renderHighlightedText(seg.value, `t-${idx}`)}</span>
+      )
+    );
+  }
+
+  function renderMessengerChatPane(isMobileModal: boolean) {
+    if (!selectedPeerId || !selectedPeer) return null;
+
+    let lastOutgoingMsgId: string | null = null;
+    let lastOutgoingReadMsgId: string | null = null;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if (m.senderId === user.id) {
+        if (!lastOutgoingMsgId) lastOutgoingMsgId = m.id;
+        if (!lastOutgoingReadMsgId && m.readAt) lastOutgoingReadMsgId = m.id;
+      }
+      if (lastOutgoingMsgId && lastOutgoingReadMsgId) break;
+    }
+
+    const hasDraft = messageInput.trim().length > 0;
+    const scrollRef = isMobileModal ? mobileScrollRef : desktopScrollRef;
+    const endRef = isMobileModal ? mobileChatEndRef : chatEndRef;
+    const composerRef = isMobileModal ? mobileComposerRef : desktopComposerRef;
+    const activeSearchMsgId = dmSearchMatches[dmSearchIdx] || null;
+
+    const formatDivider = (iso: string) => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      const now = new Date();
+      const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+      const yest = new Date(now);
+      yest.setDate(now.getDate() - 1);
+      const yestKey = `${yest.getFullYear()}-${yest.getMonth()}-${yest.getDate()}`;
+      const timeStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(d);
+      if (dayKey === todayKey) return `${t('todayLabel')} · ${timeStr}`;
+      if (dayKey === yestKey) return `${t('yesterdayLabel')} · ${timeStr}`;
+      const dateStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(d);
+      return `${dateStr}, ${timeStr}`;
+    };
+
+    const handleCanvasScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setShowScrollToBottom(distanceFromBottom > 180);
+    };
+
+    return (
+      <>
+        {/* Messenger Header */}
+        <header
+          className={`shrink-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-[0_1px_6px_-4px_rgba(15,23,42,0.12)] ${
+            isMobileModal ? 'pt-[env(safe-area-inset-top)]' : ''
+          }`}
+        >
+          <div className={`${isMobileModal ? 'px-2.5 py-2 gap-2' : 'px-4 py-2.5 gap-3'} flex items-center justify-between`}>
+            <div className={`flex items-center min-w-0 flex-1 ${isMobileModal ? 'gap-2' : 'gap-3'}`}>
+              {isMobileModal && (
+                <button
+                  type="button"
+                  onClick={handleCloseDirectMessage}
+                  aria-label={tCommon('back')}
+                  className="w-10 h-10 rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center shrink-0 transition-all cursor-pointer"
+                >
+                  <ArrowLeft className="w-5 h-5 stroke-[2.25]" aria-hidden="true" />
+                </button>
+              )}
+
+              <div className="relative shrink-0">
+                <AvatarBadge
+                  name={selectedPeer.name}
+                  photoUrl={selectedPeer.photoUrl}
+                  size="md"
+                  shape="circle"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950"
+                />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h3
+                  id={isMobileModal ? 'mobile-dm-modal-title' : undefined}
+                  className="text-[14.5px] font-semibold text-slate-950 dark:text-white truncate leading-tight"
+                >
+                  {selectedPeer.name}
+                </h3>
+                {peerTyping ? (
+                  <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate mt-0.5">
+                    {t('typingLabel', { name: selectedPeer.name.split(' ')[0] || selectedPeer.name })}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate mt-0.5">
+                    <Lock className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                    <span className="font-mono shrink-0">{selectedPeer.memberCode}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="capitalize truncate">{translateRoleLabel(selectedPeer.role, locale)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setDmSearchOpen((prev) => {
+                    const next = !prev;
+                    if (!next) {
+                      setDmSearchQuery('');
+                      setDmSearchIdx(0);
+                    }
+                    return next;
+                  });
+                }}
+                title={t('searchChatAria')}
+                aria-label={t('searchChatAria')}
+                aria-expanded={dmSearchOpen}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                  dmSearchOpen
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-[#F0F2F5] dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400'
+                }`}
+              >
+                <Search className="w-4 h-4" aria-hidden="true" />
+              </button>
+
+              {onViewMemberProfile && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const peerId = selectedPeer.id;
+                    if (isMobileModal) {
+                      handleCloseDirectMessage();
+                    }
+                    onViewMemberProfile(peerId);
+                  }}
+                  title={t('profileBtn')}
+                  aria-label={t('profileBtn')}
+                  className={
+                    isMobileModal
+                      ? 'w-9 h-9 rounded-full bg-[#F0F2F5] dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 flex items-center justify-center cursor-pointer transition-colors'
+                      : 'h-9 px-3 rounded-full bg-[#F0F2F5] dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-xs font-semibold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 cursor-pointer transition-colors'
+                  }
+                >
+                  <User className="w-4 h-4" aria-hidden="true" />
+                  {!isMobileModal && <span>{t('profileBtn')}</span>}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setDmInfoOpen((prev) => !prev)}
+                title={t('chatInfoAria')}
+                aria-label={t('chatInfoAria')}
+                aria-expanded={dmInfoOpen}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                  dmInfoOpen
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-[#F0F2F5] dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400'
+                }`}
+              >
+                <Info className="w-4 h-4" aria-hidden="true" />
+              </button>
+
+              {isMobileModal && (
+                <button
+                  type="button"
+                  onClick={handleCloseDirectMessage}
+                  aria-label={tCommon('close')}
+                  className="w-9 h-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Collapsible In-Conversation Search Bar */}
+          {dmSearchOpen && (
+            <div className="px-3.5 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+                <input
+                  type="search"
+                  autoFocus
+                  value={dmSearchQuery}
+                  onChange={(e) => {
+                    const nextVal = e.target.value;
+                    setDmSearchQuery(nextVal);
+                    setDmSearchIdx(0);
+                    const q = nextVal.trim().toLowerCase();
+                    if (q) {
+                      const firstHit = messages.find((m) => m.body.toLowerCase().includes(q));
+                      if (firstHit) {
+                        window.requestAnimationFrame(() => jumpToPrivateMessage(firstHit.id, false));
+                      }
+                    }
+                  }}
+                  placeholder={t('searchChatPlaceholder')}
+                  className="w-full h-8 pl-8 pr-3 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+              {dmSearchQuery.trim() && (
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
+                  {dmSearchMatches.length > 0
+                    ? t('searchMatches', { current: dmSearchIdx + 1, total: dmSearchMatches.length })
+                    : t('noSearchMatches')}
+                </span>
+              )}
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button
+                  type="button"
+                  disabled={dmSearchMatches.length === 0}
+                  onClick={() => handleDmSearchStep(-1)}
+                  aria-label="Previous match"
+                  className="w-7 h-7 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-40 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={dmSearchMatches.length === 0}
+                  onClick={() => handleDmSearchStep(1)}
+                  aria-label="Next match"
+                  className="w-7 h-7 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-40 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDmSearchOpen(false);
+                    setDmSearchQuery('');
+                    setDmSearchIdx(0);
+                  }}
+                  aria-label={tCommon('close')}
+                  className="w-7 h-7 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Collapsible Messenger Conversation Info Drawer */}
+          {dmInfoOpen && (
+            <div className="px-4 py-2.5 bg-emerald-50/50 dark:bg-slate-900/95 border-t border-slate-200/80 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                  <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-medium">{t('verifiedMemberBadge')}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('encryptedDirectChat')}</span>
+                </div>
+                <span className="font-mono text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full">
+                  {t('aesBadge')}
+                </span>
+              </div>
+              <div className="pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+                  <Link2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>{t('sharedLinksLabel', { count: sharedConversationLinks.length })}</span>
+                </div>
+                {sharedConversationLinks.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('noSharedLinks')}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                    {sharedConversationLinks.slice(0, 6).map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-emerald-700 dark:text-emerald-400 hover:border-emerald-400 truncate max-w-[220px]"
+                      >
+                        <Link2 className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{getCommunityLinkHost(url)}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </header>
+
+        {dmError && (
+          <div className="shrink-0 px-4 py-2 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 flex-1">{dmError}</span>
+          </div>
+        )}
+
+        {/* Scrollable Message Canvas + Floating Scroll-to-Bottom */}
+        <div className="relative flex-1 min-h-0 flex flex-col bg-white dark:bg-slate-950">
+          <div
+            ref={scrollRef}
+            onScroll={handleCanvasScroll}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle px-3.5 py-4 flex flex-col"
+          >
+            {messagesLoading ? (
+              <div className="space-y-3.5 my-auto px-1">
+                <div className="flex items-end gap-2">
+                  <Skeleton width={28} height={28} circle />
+                  <Skeleton height={40} width="64%" borderRadius={20} />
+                </div>
+                <div className="flex justify-end">
+                  <Skeleton height={44} width="58%" borderRadius={20} />
+                </div>
+                <div className="flex items-end gap-2">
+                  <Skeleton width={28} height={28} circle />
+                  <Skeleton height={36} width="50%" borderRadius={20} />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Messenger Centered Peer Intro */}
+                <div className="pt-3 pb-6 px-4 flex flex-col items-center text-center space-y-2 shrink-0">
+                  <AvatarBadge
+                    name={selectedPeer.name}
+                    photoUrl={selectedPeer.photoUrl}
+                    size="xl"
+                    shape="circle"
+                  />
+                  <div>
+                    <h4 className="text-[15.5px] font-bold text-slate-950 dark:text-white">
+                      {selectedPeer.name}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedPeer.memberCode} · {translateRoleLabel(selectedPeer.role, locale)} · {t('verifiedMemberBadge')}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-emerald-50/70 dark:bg-slate-900 border border-emerald-200/70 dark:border-slate-800 px-3 py-1 rounded-full">
+                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                    <span>{t('encryptedDirectChat')} · {t('aesBadge')}</span>
+                  </span>
+                  {messages.length === 0 && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-2 max-w-[260px]">
+                      {t('noMessagesYet', { name: selectedPeer.name })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Grouped Messenger Bubbles */}
+                <div className="space-y-0.5 mt-auto">
+                  {messages.map((msg, idx) => {
+                    const mine = msg.senderId === user.id;
+                    const prev = idx > 0 ? messages[idx - 1] : null;
+                    const next = idx < messages.length - 1 ? messages[idx + 1] : null;
+                    const msgMs = new Date(msg.createdAt).getTime();
+                    const prevMs = prev ? new Date(prev.createdAt).getTime() : 0;
+                    const nextMs = next ? new Date(next.createdAt).getTime() : 0;
+
+                    const showDivider =
+                      idx === 0 ||
+                      (Number.isFinite(msgMs) && Number.isFinite(prevMs) && msgMs - prevMs > 15 * 60 * 1000);
+                    const nextHasDivider =
+                      next !== null &&
+                      Number.isFinite(nextMs) &&
+                      Number.isFinite(msgMs) &&
+                      nextMs - msgMs > 15 * 60 * 1000;
+
+                    const groupedPrev =
+                      !showDivider &&
+                      prev !== null &&
+                      prev.senderId === msg.senderId &&
+                      msgMs - prevMs <= 5 * 60 * 1000 &&
+                      !msg.replyTo;
+                    const groupedNext =
+                      !nextHasDivider &&
+                      next !== null &&
+                      next.senderId === msg.senderId &&
+                      nextMs - msgMs <= 5 * 60 * 1000 &&
+                      !next.replyTo;
+
+                    const isStandaloneThumb = msg.body.trim() === '👍' && !msg.replyTo;
+                    const bubbleRadii = mine
+                      ? groupedPrev && groupedNext
+                        ? 'rounded-[20px] rounded-tr-[5px] rounded-br-[5px]'
+                        : groupedPrev
+                          ? 'rounded-[20px] rounded-tr-[5px]'
+                          : groupedNext
+                            ? 'rounded-[20px] rounded-br-[5px]'
+                            : 'rounded-[20px]'
+                      : groupedPrev && groupedNext
+                        ? 'rounded-[20px] rounded-tl-[5px] rounded-bl-[5px]'
+                        : groupedPrev
+                          ? 'rounded-[20px] rounded-tl-[5px]'
+                          : groupedNext
+                            ? 'rounded-[20px] rounded-bl-[5px]'
+                            : 'rounded-[20px]';
+
+                    const isSelected = activeMsgActionsId === msg.id;
+                    const showReactionPicker = reactionBarMsgId === msg.id;
+                    const showSeenAvatar = msg.id === lastOutgoingReadMsgId;
+                    const showSentBadge = msg.id === lastOutgoingMsgId && !msg.readAt;
+                    const isHighlighted =
+                      highlightedMsgId === msg.id || activeSearchMsgId === msg.id;
+
+                    const reactionEntries = msg.reactions
+                      ? Object.entries(msg.reactions).reduce<
+                          Array<{ emoji: string; count: number; byMe: boolean }>
+                        >((acc, [uid, emoji]) => {
+                          const existing = acc.find((item) => item.emoji === emoji);
+                          if (existing) {
+                            existing.count += 1;
+                            if (uid === user.id) existing.byMe = true;
+                          } else {
+                            acc.push({ emoji, count: 1, byMe: uid === user.id });
+                          }
+                          return acc;
+                        }, [])
+                      : [];
+                    const hasReactions = reactionEntries.length > 0;
+                    const totalReactionCount = reactionEntries.reduce((s, r) => s + r.count, 0);
+
+                    return (
+                      <div
+                        key={msg.id}
+                        ref={(el) => {
+                          messageRefs.current[msg.id] = el;
+                        }}
+                      >
+                        {showDivider && (
+                          <div className="py-3 text-center">
+                            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                              {formatDivider(msg.createdAt)}
+                            </span>
+                          </div>
+                        )}
+
+                        <div
+                          className={`group/dm relative flex items-end gap-2 ${
+                            mine ? 'justify-end' : 'justify-start'
+                          } ${hasReactions ? 'mb-3.5' : groupedNext ? 'mb-[2px]' : 'mb-2.5'}`}
+                        >
+                          {!mine && (
+                            <div className="w-7 shrink-0 flex items-end justify-center">
+                              {!groupedNext && (
+                                <AvatarBadge
+                                  name={selectedPeer.name}
+                                  photoUrl={selectedPeer.photoUrl}
+                                  size="sm"
+                                  shape="circle"
+                                />
+                              )}
+                            </div>
+                          )}
+
+                          {/* Desktop Hover Action Strip (Left side for outgoing) */}
+                          {mine && (
+                            <div
+                              className={`hidden sm:flex items-center gap-0.5 transition-opacity shrink-0 mb-1 ${
+                                showReactionPicker || isSelected
+                                  ? 'opacity-100'
+                                  : 'opacity-0 group-hover/dm:opacity-100 focus-within:opacity-100'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => requestDeletePrivateMessage(msg.id)}
+                                title={t('unsendAction')}
+                                aria-label={t('unsendAction')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditDm(msg)}
+                                title={tCommon('edit')}
+                                aria-label={tCommon('edit')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStartReply(msg)}
+                                title={t('replyAction')}
+                                aria-label={t('replyAction')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <Reply className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReactionBarMsgId((curr) => (curr === msg.id ? null : msg.id))
+                                }
+                                title={t('reactAria')}
+                                aria-label={t('reactAria')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <SmilePlus className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Bubble + Quoted Reply + Overlapping Reaction Badge Column */}
+                          <div
+                            className={`relative flex flex-col max-w-[78%] sm:max-w-[72%] ${
+                              mine ? 'items-end' : 'items-start'
+                            }`}
+                          >
+                            {/* Floating Messenger Reaction Picker Pill */}
+                            {showReactionPicker && (
+                              <div
+                                role="group"
+                                aria-label={t('reactAria')}
+                                className={`absolute -top-11 z-30 flex items-center gap-0.5 px-2 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-lg ${
+                                  mine ? 'right-0' : 'left-0'
+                                }`}
+                              >
+                                {DM_REACTION_EMOJIS.map((emoji) => {
+                                  const picked = msg.reactions?.[user.id] === emoji;
+                                  return (
+                                    <button
+                                      key={emoji}
+                                      type="button"
+                                      onClick={() => void handleReactPrivateMessage(msg.id, emoji)}
+                                      className={`w-8 h-8 rounded-full text-lg flex items-center justify-center transition-transform hover:scale-125 cursor-pointer ${
+                                        picked ? 'bg-emerald-100 dark:bg-emerald-950/80 ring-1 ring-emerald-500/40' : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                                      }`}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Quoted Reply Preview Above Bubble */}
+                            {msg.replyTo && (
+                              <button
+                                type="button"
+                                onClick={() => jumpToPrivateMessage(msg.replyTo!.messageId)}
+                                className={`mb-1 px-3 py-1.5 rounded-2xl text-left text-[11.5px] max-w-full border border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
+                                  mine ? 'self-end' : 'self-start'
+                                }`}
+                              >
+                                <span className="flex items-center gap-1 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                  <Reply className="w-3 h-3 shrink-0" aria-hidden="true" />
+                                  <span className="truncate">{msg.replyTo.senderName}</span>
+                                </span>
+                                <span className="block truncate opacity-80 mt-0.5">
+                                  {msg.replyTo.bodyPreview}
+                                </span>
+                              </button>
+                            )}
+
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => {
+                                setReactionBarMsgId(null);
+                                setActiveMsgActionsId((curr) => (curr === msg.id ? null : msg.id));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setActiveMsgActionsId((curr) => (curr === msg.id ? null : msg.id));
+                                }
+                              }}
+                              title={formatDateTime(msg.createdAt)}
+                              className={`text-left w-fit max-w-full cursor-pointer transition-all active:scale-[0.99] focus:outline-none ${
+                                isHighlighted
+                                  ? 'ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-slate-950'
+                                  : ''
+                              } ${
+                                isStandaloneThumb
+                                  ? 'text-4xl leading-none px-1 py-0.5 bg-transparent rounded-xl'
+                                  : `px-3.5 py-2.5 sm:py-2 text-[15px] sm:text-[14px] leading-snug whitespace-pre-wrap break-words ${bubbleRadii} ${
+                                      mine
+                                        ? 'bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-600 text-white shadow-xs'
+                                        : 'bg-[#F0F2F5] dark:bg-[#242526] text-[#050505] dark:text-[#E4E6EB]'
+                                    }`
+                              }`}
+                            >
+                              {renderDmMessageBody(msg.body, mine)}
+                              {msg.editedAt && !isStandaloneThumb && (
+                                <span
+                                  className={`ml-1.5 text-[10px] italic ${
+                                    mine ? 'text-emerald-100/85' : 'text-slate-400 dark:text-slate-500'
+                                  }`}
+                                >
+                                  ({t('editedLabel')})
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Overlapping Messenger Reaction Badges */}
+                            {hasReactions && (
+                              <div
+                                className={`flex items-center gap-0.5 px-1.5 py-0.5 -mt-2 z-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xs text-[11px] ${
+                                  mine ? 'self-end mr-1.5' : 'self-start ml-1.5'
+                                }`}
+                              >
+                                {reactionEntries.map((r) => (
+                                  <button
+                                    key={r.emoji}
+                                    type="button"
+                                    onClick={() => void handleReactPrivateMessage(msg.id, r.emoji)}
+                                    className={`inline-flex items-center leading-none cursor-pointer rounded-full px-0.5 ${
+                                      r.byMe ? 'ring-1 ring-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/50' : ''
+                                    }`}
+                                  >
+                                    <span>{r.emoji}</span>
+                                  </button>
+                                ))}
+                                {totalReactionCount > 1 && (
+                                  <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 pl-0.5 pr-0.5 tabular-nums">
+                                    {totalReactionCount}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Desktop Hover Action Strip (Right side for incoming) */}
+                          {!mine && (
+                            <div
+                              className={`hidden sm:flex items-center gap-0.5 transition-opacity shrink-0 mb-1 ${
+                                showReactionPicker || isSelected
+                                  ? 'opacity-100'
+                                  : 'opacity-0 group-hover/dm:opacity-100 focus-within:opacity-100'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReactionBarMsgId((curr) => (curr === msg.id ? null : msg.id))
+                                }
+                                title={t('reactAria')}
+                                aria-label={t('reactAria')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <SmilePlus className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStartReply(msg)}
+                                title={t('replyAction')}
+                                aria-label={t('replyAction')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                <Reply className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleCopyPrivateMessage(msg.id, msg.body)}
+                                title={copiedMsgId === msg.id ? t('copiedLabel') : t('copyAction')}
+                                aria-label={t('copyAction')}
+                                className="w-6 h-6 rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                              >
+                                {copiedMsgId === msg.id ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tap-Revealed Metadata & Touch Quick Action Chips */}
+                        {isSelected && (
+                          <div
+                            className={`flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 mb-2 ${
+                              mine ? 'justify-end pr-1' : 'justify-start pl-9'
+                            }`}
+                          >
+                            <span>{formatDateTime(msg.createdAt)}</span>
+                            {mine && msg.readAt && (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                · {t('seenLabel')}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setReactionBarMsgId((curr) => (curr === msg.id ? null : msg.id))
+                              }
+                              className="min-h-[24px] px-2 inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
+                            >
+                              <SmilePlus className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>{t('reactAria')}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleStartReply(msg)}
+                              className="min-h-[24px] px-2 inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
+                            >
+                              <Reply className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>{t('replyAction')}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleCopyPrivateMessage(msg.id, msg.body)}
+                              className="min-h-[24px] px-2 inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
+                            >
+                              {copiedMsgId === msg.id ? (
+                                <Check className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                              <span>{copiedMsgId === msg.id ? t('copiedLabel') : t('copyAction')}</span>
+                            </button>
+                            {mine && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditDm(msg)}
+                                  className="min-h-[24px] px-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-medium cursor-pointer"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                  <span>{tCommon('edit')}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => requestDeletePrivateMessage(msg.id)}
+                                  className="min-h-[24px] px-2 inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-medium cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  <span>{t('unsendAction')}</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {showSeenAvatar && (
+                          <div
+                            className="flex justify-end items-center gap-1 pr-0.5 -mt-1.5 mb-2"
+                            title={t('readAt', { date: formatDateTime(msg.readAt!) })}
+                          >
+                            <AvatarBadge
+                              name={selectedPeer.name}
+                              photoUrl={selectedPeer.photoUrl}
+                              size="xs"
+                              shape="circle"
+                            />
+                          </div>
+                        )}
+
+                        {showSentBadge && (
+                          <div
+                            className="flex justify-end items-center pr-0.5 -mt-1.5 mb-2"
+                            title={t('sentAria')}
+                          >
+                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                              <Check className="w-2.5 h-2.5 stroke-[2.6]" aria-label={t('sentAria')} />
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Live Incoming Typing Bubble */}
+                  {peerTyping && (
+                    <div
+                      aria-label={t('typingLabel', { name: selectedPeer.name })}
+                      className="flex items-end gap-2 justify-start mt-1 mb-2"
+                    >
+                      <div className="w-7 shrink-0 flex items-end justify-center">
+                        <AvatarBadge
+                          name={selectedPeer.name}
+                          photoUrl={selectedPeer.photoUrl}
+                          size="sm"
+                          shape="circle"
+                        />
+                      </div>
+                      <div className="px-3.5 py-2.5 rounded-[20px] bg-[#F0F2F5] dark:bg-[#242526] inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce [animation-delay:0ms]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce [animation-delay:150ms]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce [animation-delay:300ms]" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            <div ref={endRef} className="h-1 shrink-0" />
+          </div>
+
+          {/* Floating Scroll-to-Latest Button */}
+          {showScrollToBottom && !messagesLoading && (
+            <button
+              type="button"
+              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
+              aria-label={t('scrollToBottomAria')}
+              title={t('scrollToBottomAria')}
+              className="absolute bottom-3 right-4 z-20 w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
+            >
+              <ArrowDown className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        {/* Reply / Edit Banner Above Composer */}
+        {(replyingTo || editingDmId) && (
+          <div className="shrink-0 px-3.5 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center justify-between gap-2 text-xs">
+            <div className="min-w-0 flex items-start gap-2">
+              {editingDmId ? (
+                <Edit3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              ) : (
+                <Reply className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              )}
+              <div className="min-w-0">
+                <div className="font-semibold text-emerald-800 dark:text-emerald-300 truncate">
+                  {editingDmId
+                    ? t('editingMessage')
+                    : t('replyingTo', { name: replyingTo?.senderName || '' })}
+                </div>
+                {replyingTo && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[260px] sm:max-w-[380px]">
+                    {replyingTo.body}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCancelReplyOrEdit}
+              aria-label={tCommon('cancel')}
+              className="w-7 h-7 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Messenger Emoji Tray */}
+        {dmEmojiOpen && (
+          <div className="shrink-0 px-3.5 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950">
+            <CommunityEmojiPicker
+              compact
+              onSelect={(emoji) =>
+                insertEmojiAtCursor(emoji, composerRef.current, messageInput, setMessageInput)
+              }
+            />
+          </div>
+        )}
+
+        {/* Messenger Pill Composer */}
+        <form
+          onSubmit={handleSendPrivateMessage}
+          className={`shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex items-end ${
+            isMobileModal
+              ? 'px-2.5 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] gap-1.5'
+              : 'px-3.5 py-2.5 gap-2'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setDmEmojiOpen((prev) => !prev)}
+            title={t('emojiBtn')}
+            aria-label={t('emojiBtn')}
+            className={`${
+              isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
+            } rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+              dmEmojiOpen
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                : 'text-emerald-600 dark:text-emerald-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800'
+            }`}
+          >
+            <Smile className="w-5 h-5" aria-hidden="true" />
+          </button>
+
+          <div className="flex-1 rounded-[22px] bg-[#F0F2F5] dark:bg-[#242526] px-4 py-1 flex items-center">
+            <textarea
+              ref={composerRef}
+              rows={1}
+              maxLength={3000}
+              value={messageInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMessageInput(val);
+                notifyTyping(val.trim().length > 0 && !editingDmId);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && (replyingTo || editingDmId)) {
+                  e.preventDefault();
+                  handleCancelReplyOrEdit();
+                  return;
+                }
+                if (e.key === 'Enter' && !e.shiftKey && !isMobileModal) {
+                  e.preventDefault();
+                  void handleSendPrivateMessage();
+                }
+              }}
+              placeholder={
+                isMobileModal
+                  ? t('dmMobilePlaceholder', { name: selectedPeer.name })
+                  : t('dmPlaceholder', { name: selectedPeer.name })
+              }
+              className={`w-full bg-transparent leading-snug text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none resize-none ${
+                isMobileModal
+                  ? 'min-h-[36px] max-h-28 py-1.5 text-[16px]'
+                  : 'max-h-24 py-1 text-[14px]'
+              }`}
+            />
+          </div>
+
+          {hasDraft || editingDmId ? (
+            <button
+              type="submit"
+              disabled={sendingMessage || !hasDraft}
+              aria-label={sendingMessage ? t('sending') : t('send')}
+              className={`${
+                isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
+              } rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-45 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer`}
+            >
+              {sendingMessage ? (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              ) : editingDmId ? (
+                <Check className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <SendHorizontal className="w-4 h-4" aria-hidden="true" />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={sendingMessage}
+              onClick={() => void handleSendPrivateMessage(undefined, '👍')}
+              title={t('sendThumbsUpAria')}
+              aria-label={t('sendThumbsUpAria')}
+              className={`${
+                isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
+              } rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 disabled:opacity-45 flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer`}
+            >
+              {sendingMessage ? (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <ThumbsUp className="w-5 h-5 fill-emerald-600/15 dark:fill-emerald-400/20" aria-hidden="true" />
+              )}
+            </button>
+          )}
+        </form>
+      </>
+    );
   }
 
   return (
@@ -1687,7 +2940,7 @@ export function CommunityView({
                   label: t('tabMessages'),
                   Icon: Mail,
                   badge: totalUnread > 0 ? totalUnread : null,
-                  badgeClass: 'font-semibold text-indigo-700 dark:text-indigo-400',
+                  badgeClass: 'font-semibold text-emerald-700 dark:text-emerald-400',
                 },
               ] as const
             ).map((tab) => {
@@ -3326,7 +4579,7 @@ export function CommunityView({
           </motion.div>
         )}
 
-        {/* PRIVATE MESSAGES TAB (Facebook Messenger Style) */}
+        {/* PRIVATE MESSAGES TAB (Amanah Emerald/Teal Messenger Style) */}
         {activeTab === 'messages' && (() => {
           const formatThreadTime = (iso?: string) => {
             if (!iso) return '';
@@ -3345,29 +4598,6 @@ export function CommunityView({
             }).format(d);
           };
 
-          const formatMessengerDivider = (iso: string) => {
-            const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) return '';
-            const now = new Date();
-            const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-            const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-            const yest = new Date(now);
-            yest.setDate(now.getDate() - 1);
-            const yestKey = `${yest.getFullYear()}-${yest.getMonth()}-${yest.getDate()}`;
-            const timeStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-            }).format(d);
-            if (dayKey === todayKey) return `${t('todayLabel')} · ${timeStr}`;
-            if (dayKey === yestKey) return `${t('yesterdayLabel')} · ${timeStr}`;
-            const dateStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }).format(d);
-            return `${dateStr}, ${timeStr}`;
-          };
-
           return (
             <motion.div
               key="tab-messages"
@@ -3377,17 +4607,19 @@ export function CommunityView({
               transition={{ duration: 0.16 }}
               className="bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs grid grid-cols-1 lg:grid-cols-[336px_minmax(0,1fr)] h-[74dvh] min-h-[500px] lg:h-[640px] lg:max-h-[75vh]"
             >
-              {/* Left Pane: Facebook Messenger Chats List */}
+              {/* Left Pane: Messenger Chats List */}
               <aside className="flex border-b lg:border-b-0 lg:border-r border-slate-200/90 dark:border-slate-800 flex-col min-h-0 bg-white dark:bg-slate-950">
-                <div className="px-4 pt-3.5 pb-3 space-y-2.5 shrink-0">
+                <div className="px-4 pt-3.5 pb-2.5 space-y-2.5 shrink-0">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold tracking-tight text-slate-950 dark:text-white">
                       {t('chatsTitle')}
                     </h3>
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
                       {t('activeCount', { count: directory.length })}
                     </span>
                   </div>
+
+                  {/* Pill Search Input */}
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
@@ -3395,9 +4627,80 @@ export function CommunityView({
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       placeholder={t('findMemberPlaceholder')}
-                      className="w-full min-h-[38px] pl-9 pr-3.5 py-1.5 rounded-full border-0 bg-[#F0F2F5] dark:bg-slate-800/90 text-[13px] text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0084FF]/40"
+                      className="w-full min-h-[38px] pl-9 pr-3.5 py-1.5 rounded-full border-0 bg-[#F0F2F5] dark:bg-slate-800/90 text-[13px] text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/35"
                     />
                   </div>
+
+                  {/* All / Unread Messenger Filter Tabs */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setThreadFilter('all')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
+                        threadFilter === 'all'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 font-medium'
+                      }`}
+                    >
+                      {t('allTab')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setThreadFilter('unread')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                        threadFilter === 'unread'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 font-medium'
+                      }`}
+                    >
+                      <span>{t('unreadTab')}</span>
+                      {totalUnread > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px] font-bold tabular-nums">
+                          {totalUnread}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Horizontal Active People Strip */}
+                  {activeDirectoryStrip.length > 0 && threadFilter === 'all' && (
+                    <div className="flex items-start gap-2.5 overflow-x-auto no-scrollbar pt-1 pb-0.5">
+                      {activeDirectoryStrip.map((member) => {
+                        const firstName = member.name.split(' ')[0] || member.name;
+                        const active = selectedPeerId === member.id;
+                        return (
+                          <button
+                            key={`strip-${member.id}`}
+                            type="button"
+                            onClick={() => handleOpenDirectMessage(member)}
+                            className="flex flex-col items-center gap-1 w-12 shrink-0 group cursor-pointer"
+                          >
+                            <div
+                              className={`relative rounded-full p-0.5 transition-all ${
+                                active
+                                  ? 'ring-2 ring-emerald-600 dark:ring-emerald-400'
+                                  : 'group-hover:scale-105'
+                              }`}
+                            >
+                              <AvatarBadge
+                                name={member.name}
+                                photoUrl={member.photoUrl}
+                                size="md"
+                                shape="circle"
+                              />
+                              <span
+                                aria-hidden="true"
+                                className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950"
+                              />
+                            </div>
+                            <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-full leading-tight">
+                              {firstName}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-subtle px-2 pb-2 space-y-1">
@@ -3439,7 +4742,7 @@ export function CommunityView({
                                 }
                                 className={`w-full px-2.5 py-2 rounded-xl text-left flex items-center gap-3 transition-colors cursor-pointer ${
                                   active
-                                    ? 'bg-[#EBF5FF] dark:bg-[#0084FF]/15'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/40'
                                     : 'hover:bg-[#F2F3F5] dark:hover:bg-slate-900'
                                 }`}
                               >
@@ -3461,9 +4764,9 @@ export function CommunityView({
                                       {thread.peerName}
                                     </span>
                                     {unread && (
-                                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0084FF] shrink-0">
+                                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                                         {thread.unreadCount}
-                                        <span className="w-2.5 h-2.5 rounded-full bg-[#0084FF]" aria-hidden="true" />
+                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 dark:bg-emerald-400" aria-hidden="true" />
                                       </span>
                                     )}
                                   </div>
@@ -3471,7 +4774,7 @@ export function CommunityView({
                                     <p
                                       className={`truncate min-w-0 ${
                                         unread
-                                          ? 'font-semibold text-[#0084FF] dark:text-sky-400'
+                                          ? 'font-semibold text-emerald-700 dark:text-emerald-400'
                                           : 'text-slate-500 dark:text-slate-400'
                                       }`}
                                     >
@@ -3505,7 +4808,7 @@ export function CommunityView({
                                 onClick={() => handleOpenDirectMessage(member)}
                                 className={`w-full px-2.5 py-2 rounded-xl text-left flex items-center gap-3 transition-colors cursor-pointer ${
                                   active
-                                    ? 'bg-[#EBF5FF] dark:bg-[#0084FF]/15'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/40'
                                     : 'hover:bg-[#F2F3F5] dark:hover:bg-slate-900'
                                 }`}
                               >
@@ -3540,11 +4843,11 @@ export function CommunityView({
                 </div>
               </aside>
 
-              {/* Right Pane: Facebook Messenger Active Chat (Desktop split pane; mobile opens full-screen modal) */}
+              {/* Right Pane: Desktop Messenger Active Chat */}
               <div className="hidden lg:flex flex-col min-h-0 bg-white dark:bg-slate-950">
                 {!selectedPeerId || !selectedPeer ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#0099FF] via-[#0084FF] to-[#6B4DFF] text-white flex items-center justify-center shadow-md shadow-[#0084FF]/20">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
                       <MessageSquare className="w-6 h-6" />
                     </div>
                     <div className="space-y-1 max-w-sm">
@@ -3556,371 +4859,9 @@ export function CommunityView({
                       </p>
                     </div>
                   </div>
-                ) : (() => {
-                  let lastOutgoingMsgId: string | null = null;
-                  let lastOutgoingReadMsgId: string | null = null;
-                  for (let i = messages.length - 1; i >= 0; i -= 1) {
-                    const m = messages[i];
-                    if (m.senderId === user.id) {
-                      if (!lastOutgoingMsgId) lastOutgoingMsgId = m.id;
-                      if (!lastOutgoingReadMsgId && m.readAt) lastOutgoingReadMsgId = m.id;
-                    }
-                    if (lastOutgoingMsgId && lastOutgoingReadMsgId) break;
-                  }
-                  const hasDraft = messageInput.trim().length > 0;
-
-                  return (
-                    <>
-                      {/* Desktop Messenger Header */}
-                      <div className="px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3 bg-white/95 dark:bg-slate-950/95 shrink-0 shadow-[0_1px_6px_-4px_rgba(15,23,42,0.12)]">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <AvatarBadge
-                            name={selectedPeer.name}
-                            photoUrl={selectedPeer.photoUrl}
-                            size="md"
-                            shape="circle"
-                          />
-                          <div className="min-w-0">
-                            <div className="text-[14.5px] font-semibold text-slate-950 dark:text-white truncate leading-tight">
-                              {selectedPeer.name}
-                            </div>
-                            <div className="text-[11.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
-                              <Lock className="w-3 h-3 text-[#0084FF] shrink-0" aria-hidden="true" />
-                              <span className="font-mono">{selectedPeer.memberCode}</span>
-                              <span aria-hidden="true">·</span>
-                              <span className="capitalize">{translateRoleLabel(selectedPeer.role, locale)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {onViewMemberProfile && (
-                            <button
-                              type="button"
-                              onClick={() => onViewMemberProfile(selectedPeer.id)}
-                              title={t('profileBtn')}
-                              aria-label={t('profileBtn')}
-                              className="h-9 px-3 rounded-full bg-[#F0F2F5] dark:bg-slate-800 hover:bg-[#E4E6EB] dark:hover:bg-slate-700 text-xs font-semibold text-[#0084FF] dark:text-sky-400 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
-                            >
-                              <User className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>{t('profileBtn')}</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setDmInfoOpen((prev) => !prev)}
-                            title={t('chatInfoAria')}
-                            aria-label={t('chatInfoAria')}
-                            aria-expanded={dmInfoOpen}
-                            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-                              dmInfoOpen
-                                ? 'bg-[#0084FF] text-white'
-                                : 'bg-[#F0F2F5] dark:bg-slate-800 hover:bg-[#E4E6EB] dark:hover:bg-slate-700 text-[#0084FF] dark:text-sky-400'
-                            }`}
-                          >
-                            <Info className="w-4 h-4" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Collapsible Messenger Info Strip */}
-                      {dmInfoOpen && (
-                        <div className="px-4 py-2.5 bg-[#F7F9FC] dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
-                          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                            <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                            <span className="font-medium">{t('verifiedMemberBadge')}</span>
-                            <span aria-hidden="true">·</span>
-                            <span className="text-slate-500 dark:text-slate-400">{t('encryptedDirectChat')}</span>
-                          </div>
-                          <span className="font-mono text-[10.5px] font-semibold text-[#0084FF] dark:text-sky-400 bg-[#EBF5FF] dark:bg-[#0084FF]/15 px-2.5 py-0.5 rounded-full">
-                            {t('aesBadge')}
-                          </span>
-                        </div>
-                      )}
-
-                      {dmError && (
-                        <div className="px-4 py-2 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 shrink-0">
-                          {dmError}
-                        </div>
-                      )}
-
-                      {/* Messenger Message Canvas */}
-                      <div className="flex-1 overflow-y-auto scrollbar-subtle px-4 py-4 flex flex-col">
-                        {messagesLoading ? (
-                          <div className="space-y-3 my-auto">
-                            <Skeleton height={38} width="55%" borderRadius={20} />
-                            <Skeleton height={38} width="45%" borderRadius={20} className="ml-auto" />
-                            <Skeleton height={38} width="62%" borderRadius={20} />
-                          </div>
-                        ) : (
-                          <>
-                            {/* Messenger Intro Profile Header */}
-                            <div className="pt-3 pb-6 flex flex-col items-center text-center space-y-2 shrink-0">
-                              <AvatarBadge
-                                name={selectedPeer.name}
-                                photoUrl={selectedPeer.photoUrl}
-                                size="xl"
-                                shape="circle"
-                              />
-                              <div>
-                                <h4 className="text-[15px] font-bold text-slate-950 dark:text-white">
-                                  {selectedPeer.name}
-                                </h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                  {selectedPeer.memberCode} · {translateRoleLabel(selectedPeer.role, locale)} · {t('verifiedMemberBadge')}
-                                </p>
-                              </div>
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-[#F0F2F5] dark:bg-slate-900 px-3 py-1 rounded-full">
-                                <Lock className="w-3 h-3 text-[#0084FF]" aria-hidden="true" />
-                                <span>{t('encryptedDirectChat')} · {t('aesBadge')}</span>
-                              </span>
-                              {messages.length === 0 && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
-                                  {t('noMessagesYet', { name: selectedPeer.name })}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Grouped Messenger Bubbles */}
-                            <div className="space-y-0.5">
-                              {messages.map((msg, idx) => {
-                                const mine = msg.senderId === user.id;
-                                const prev = idx > 0 ? messages[idx - 1] : null;
-                                const next = idx < messages.length - 1 ? messages[idx + 1] : null;
-                                const msgMs = new Date(msg.createdAt).getTime();
-                                const prevMs = prev ? new Date(prev.createdAt).getTime() : 0;
-                                const nextMs = next ? new Date(next.createdAt).getTime() : 0;
-
-                                const showDivider =
-                                  idx === 0 ||
-                                  (Number.isFinite(msgMs) && Number.isFinite(prevMs) && msgMs - prevMs > 15 * 60 * 1000);
-                                const nextHasDivider =
-                                  next !== null &&
-                                  Number.isFinite(nextMs) &&
-                                  Number.isFinite(msgMs) &&
-                                  nextMs - msgMs > 15 * 60 * 1000;
-
-                                const groupedPrev =
-                                  !showDivider &&
-                                  prev !== null &&
-                                  prev.senderId === msg.senderId &&
-                                  msgMs - prevMs <= 5 * 60 * 1000;
-                                const groupedNext =
-                                  !nextHasDivider &&
-                                  next !== null &&
-                                  next.senderId === msg.senderId &&
-                                  nextMs - msgMs <= 5 * 60 * 1000;
-
-                                const isStandaloneThumb = msg.body.trim() === '👍';
-                                const bubbleRadii = mine
-                                  ? groupedPrev && groupedNext
-                                    ? 'rounded-[20px] rounded-tr-[5px] rounded-br-[5px]'
-                                    : groupedPrev
-                                      ? 'rounded-[20px] rounded-tr-[5px]'
-                                      : groupedNext
-                                        ? 'rounded-[20px] rounded-br-[5px]'
-                                        : 'rounded-[20px]'
-                                  : groupedPrev && groupedNext
-                                    ? 'rounded-[20px] rounded-tl-[5px] rounded-bl-[5px]'
-                                    : groupedPrev
-                                      ? 'rounded-[20px] rounded-tl-[5px]'
-                                      : groupedNext
-                                        ? 'rounded-[20px] rounded-bl-[5px]'
-                                        : 'rounded-[20px]';
-
-                                const isSelected = activeMsgActionsId === msg.id;
-                                const showSeenAvatar = msg.id === lastOutgoingReadMsgId;
-                                const showSentBadge =
-                                  msg.id === lastOutgoingMsgId && !msg.readAt;
-
-                                return (
-                                  <div key={msg.id}>
-                                    {showDivider && (
-                                      <div className="py-3 text-center">
-                                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                                          {formatMessengerDivider(msg.createdAt)}
-                                        </span>
-                                      </div>
-                                    )}
-
-                                    <div
-                                      className={`group/dm flex items-end gap-2 ${
-                                        mine ? 'justify-end' : 'justify-start'
-                                      } ${groupedNext ? 'mb-[2px]' : 'mb-2.5'}`}
-                                    >
-                                      {!mine && (
-                                        <div className="w-7 shrink-0 flex items-end justify-center">
-                                          {!groupedNext && (
-                                            <AvatarBadge
-                                              name={selectedPeer.name}
-                                              photoUrl={selectedPeer.photoUrl}
-                                              size="sm"
-                                              shape="circle"
-                                            />
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {mine && (
-                                        <div className="flex items-center gap-1 opacity-0 group-hover/dm:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 mb-1">
-                                          <button
-                                            type="button"
-                                            onClick={() => requestDeletePrivateMessage(msg.id)}
-                                            title={tCommon('delete')}
-                                            aria-label={tCommon('delete')}
-                                            className="w-6 h-6 rounded-full text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                                          </button>
-                                        </div>
-                                      )}
-
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setActiveMsgActionsId((curr) =>
-                                            curr === msg.id ? null : msg.id
-                                          )
-                                        }
-                                        title={formatDateTime(msg.createdAt)}
-                                        className={`text-left max-w-[72%] cursor-pointer transition-transform active:scale-[0.99] ${
-                                          isStandaloneThumb
-                                            ? 'text-4xl leading-none px-1 py-0.5 bg-transparent'
-                                            : `px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap break-words ${bubbleRadii} ${
-                                                mine
-                                                  ? 'bg-gradient-to-br from-[#0099FF] via-[#0084FF] to-[#0066FF] text-white'
-                                                  : 'bg-[#F0F2F5] dark:bg-[#242526] text-[#050505] dark:text-[#E4E6EB]'
-                                              }`
-                                        }`}
-                                      >
-                                        {msg.body}
-                                      </button>
-                                    </div>
-
-                                    {isSelected && (
-                                      <div
-                                        className={`flex items-center gap-2 text-[10.5px] text-slate-400 dark:text-slate-500 mb-1.5 ${
-                                          mine ? 'justify-end pr-1' : 'justify-start pl-9'
-                                        }`}
-                                      >
-                                        <span>{formatDateTime(msg.createdAt)}</span>
-                                        {mine && msg.readAt && (
-                                          <span>· {t('readAt', { date: formatDateTime(msg.readAt) })}</span>
-                                        )}
-                                      </div>
-                                    )}
-
-                                    {showSeenAvatar && (
-                                      <div
-                                        className="flex justify-end items-center gap-1 pr-0.5 -mt-1.5 mb-2"
-                                        title={t('readAt', { date: formatDateTime(msg.readAt!) })}
-                                      >
-                                        <AvatarBadge
-                                          name={selectedPeer.name}
-                                          photoUrl={selectedPeer.photoUrl}
-                                          size="xs"
-                                          shape="circle"
-                                        />
-                                      </div>
-                                    )}
-
-                                    {showSentBadge && (
-                                      <div
-                                        className="flex justify-end items-center pr-0.5 -mt-1.5 mb-2"
-                                        title={t('sentAria')}
-                                      >
-                                        <span className="w-3.5 h-3.5 rounded-full bg-[#0084FF]/15 text-[#0084FF] flex items-center justify-center">
-                                          <Check className="w-2.5 h-2.5 stroke-[2.6]" aria-label={t('sentAria')} />
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                        <div ref={chatEndRef} />
-                      </div>
-
-                      {/* Messenger Emoji Tray (when open) */}
-                      {dmEmojiOpen && (
-                        <div className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
-                          <CommunityEmojiPicker
-                            compact
-                            onSelect={(emoji) => setMessageInput((prev) => `${prev}${emoji}`)}
-                          />
-                        </div>
-                      )}
-
-                      {/* Desktop Messenger Pill Composer */}
-                      <form
-                        onSubmit={handleSendPrivateMessage}
-                        className="px-3.5 py-2.5 border-t border-slate-200/80 dark:border-slate-800 flex items-end gap-2 bg-white dark:bg-slate-950 shrink-0"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setDmEmojiOpen((prev) => !prev)}
-                          title={t('emojiBtn')}
-                          aria-label={t('emojiBtn')}
-                          className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
-                            dmEmojiOpen
-                              ? 'bg-[#EBF5FF] dark:bg-[#0084FF]/20 text-[#0084FF]'
-                              : 'text-[#0084FF] hover:bg-[#F0F2F5] dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          <Smile className="w-5 h-5" aria-hidden="true" />
-                        </button>
-
-                        <div className="flex-1 rounded-[22px] bg-[#F0F2F5] dark:bg-[#242526] px-4 py-1.5 flex items-center">
-                          <textarea
-                            rows={1}
-                            maxLength={3000}
-                            value={messageInput}
-                            onChange={(e) => setMessageInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                void handleSendPrivateMessage();
-                              }
-                            }}
-                            placeholder={t('dmPlaceholder', { name: selectedPeer.name })}
-                            className="w-full bg-transparent text-[14px] leading-snug text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none resize-none max-h-24 py-1"
-                          />
-                        </div>
-
-                        {hasDraft ? (
-                          <button
-                            type="submit"
-                            disabled={sendingMessage}
-                            aria-label={sendingMessage ? t('sending') : t('send')}
-                            className="w-9 h-9 rounded-full bg-[#0084FF] hover:bg-[#0073E6] disabled:opacity-45 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
-                          >
-                            {sendingMessage ? (
-                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <SendHorizontal className="w-4 h-4" aria-hidden="true" />
-                            )}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={sendingMessage}
-                            onClick={() => void handleSendPrivateMessage(undefined, '👍')}
-                            title={t('sendThumbsUpAria')}
-                            aria-label={t('sendThumbsUpAria')}
-                            className="w-9 h-9 rounded-full text-[#0084FF] hover:bg-[#F0F2F5] dark:hover:bg-slate-800 disabled:opacity-45 flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer"
-                          >
-                            {sendingMessage ? (
-                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <ThumbsUp className="w-5 h-5 fill-[#0084FF]/15" aria-hidden="true" />
-                            )}
-                          </button>
-                        )}
-                      </form>
-                    </>
-                  );
-                })()}
+                ) : (
+                  renderMessengerChatPane(false)
+                )}
               </div>
             </motion.div>
           );
@@ -3928,437 +4869,25 @@ export function CommunityView({
 
       </AnimatePresence>
 
-      {/* Mobile Full-Screen Facebook Messenger Modal (< lg) */}
+      {/* Mobile Full-Screen Amanah Messenger Modal (< lg) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
-            {mobileDmModalOpen && selectedPeer && (() => {
-              let lastOutgoingMsgId: string | null = null;
-              let lastOutgoingReadMsgId: string | null = null;
-              for (let i = messages.length - 1; i >= 0; i -= 1) {
-                const m = messages[i];
-                if (m.senderId === user.id) {
-                  if (!lastOutgoingMsgId) lastOutgoingMsgId = m.id;
-                  if (!lastOutgoingReadMsgId && m.readAt) lastOutgoingReadMsgId = m.id;
-                }
-                if (lastOutgoingMsgId && lastOutgoingReadMsgId) break;
-              }
-              const hasDraft = messageInput.trim().length > 0;
-
-              const formatMobileDivider = (iso: string) => {
-                const d = new Date(iso);
-                if (Number.isNaN(d.getTime())) return '';
-                const now = new Date();
-                const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-                const yest = new Date(now);
-                yest.setDate(now.getDate() - 1);
-                const yestKey = `${yest.getFullYear()}-${yest.getMonth()}-${yest.getDate()}`;
-                const timeStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                }).format(d);
-                if (dayKey === todayKey) return `${t('todayLabel')} · ${timeStr}`;
-                if (dayKey === yestKey) return `${t('yesterdayLabel')} · ${timeStr}`;
-                const dateStr = new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                }).format(d);
-                return `${dateStr}, ${timeStr}`;
-              };
-
-              return (
-                <motion.div
-                  key="mobile-dm-modal"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="mobile-dm-modal-title"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="fixed inset-0 z-[60] lg:hidden flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-white dark:bg-slate-950 overflow-hidden"
-                >
-                  {/* Sticky Messenger Header */}
-                  <header className="shrink-0 pt-[env(safe-area-inset-top)] bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.12)]">
-                    <div className="px-2.5 py-2 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={handleCloseDirectMessage}
-                          aria-label={tCommon('back')}
-                          className="w-10 h-10 rounded-full text-[#0084FF] hover:bg-[#F0F2F5] dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center shrink-0 transition-all cursor-pointer"
-                        >
-                          <ArrowLeft className="w-5 h-5 stroke-[2.25]" aria-hidden="true" />
-                        </button>
-
-                        <AvatarBadge
-                          name={selectedPeer.name}
-                          photoUrl={selectedPeer.photoUrl}
-                          size="md"
-                          shape="circle"
-                        />
-
-                        <div className="min-w-0 flex-1">
-                          <h3
-                            id="mobile-dm-modal-title"
-                            className="text-[15px] font-semibold text-slate-950 dark:text-white truncate leading-tight"
-                          >
-                            {selectedPeer.name}
-                          </h3>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate mt-0.5">
-                            <Lock className="w-2.5 h-2.5 text-[#0084FF] shrink-0" aria-hidden="true" />
-                            <span className="font-mono shrink-0">{selectedPeer.memberCode}</span>
-                            <span aria-hidden="true">·</span>
-                            <span className="capitalize truncate">
-                              {translateRoleLabel(selectedPeer.role, locale)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        {onViewMemberProfile && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const peerId = selectedPeer.id;
-                              handleCloseDirectMessage();
-                              onViewMemberProfile(peerId);
-                            }}
-                            title={t('profileBtn')}
-                            aria-label={t('profileBtn')}
-                            className="w-9 h-9 rounded-full bg-[#F0F2F5] dark:bg-slate-800 hover:bg-[#E4E6EB] dark:hover:bg-slate-700 text-[#0084FF] dark:text-sky-400 flex items-center justify-center cursor-pointer transition-colors"
-                          >
-                            <User className="w-4 h-4" aria-hidden="true" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setDmInfoOpen((prev) => !prev)}
-                          title={t('chatInfoAria')}
-                          aria-label={t('chatInfoAria')}
-                          aria-expanded={dmInfoOpen}
-                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-                            dmInfoOpen
-                              ? 'bg-[#0084FF] text-white'
-                              : 'bg-[#F0F2F5] dark:bg-slate-800 hover:bg-[#E4E6EB] dark:hover:bg-slate-700 text-[#0084FF] dark:text-sky-400'
-                          }`}
-                        >
-                          <Info className="w-4 h-4" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCloseDirectMessage}
-                          aria-label={tCommon('close')}
-                          className="w-9 h-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all cursor-pointer"
-                        >
-                          <X className="w-4 h-4" aria-hidden="true" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {dmInfoOpen && (
-                      <div className="px-3.5 py-2 bg-[#F7F9FC] dark:bg-slate-900/90 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 text-[11px]">
-                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 truncate">
-                          <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span className="font-medium truncate">{t('verifiedMemberBadge')}</span>
-                          <span aria-hidden="true">·</span>
-                          <span className="text-slate-500 dark:text-slate-400 truncate">{t('encryptedDirectChat')}</span>
-                        </div>
-                        <span className="font-mono text-[10px] font-semibold text-[#0084FF] dark:text-sky-400 bg-[#EBF5FF] dark:bg-[#0084FF]/15 px-2 py-0.5 rounded-full shrink-0">
-                          {t('aesBadge')}
-                        </span>
-                      </div>
-                    )}
-                  </header>
-
-                  {dmError && (
-                    <div className="shrink-0 px-4 py-2.5 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span className="min-w-0 flex-1">{dmError}</span>
-                    </div>
-                  )}
-
-                  {/* Scrollable Messenger Conversation Area */}
-                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle px-3 py-3 bg-white dark:bg-slate-950 flex flex-col">
-                    {messagesLoading ? (
-                      <div className="space-y-3.5 my-auto px-1">
-                        <div className="flex items-end gap-2">
-                          <Skeleton width={28} height={28} circle />
-                          <Skeleton height={40} width="64%" borderRadius={20} />
-                        </div>
-                        <div className="flex justify-end">
-                          <Skeleton height={44} width="58%" borderRadius={20} />
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <Skeleton width={28} height={28} circle />
-                          <Skeleton height={36} width="50%" borderRadius={20} />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Messenger Centered Peer Intro */}
-                        <div className="pt-4 pb-6 px-4 flex flex-col items-center text-center space-y-2 shrink-0">
-                          <AvatarBadge
-                            name={selectedPeer.name}
-                            photoUrl={selectedPeer.photoUrl}
-                            size="xl"
-                            shape="circle"
-                          />
-                          <div>
-                            <h4 className="text-base font-bold text-slate-950 dark:text-white">
-                              {selectedPeer.name}
-                            </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              {selectedPeer.memberCode} · {translateRoleLabel(selectedPeer.role, locale)} · {t('verifiedMemberBadge')}
-                            </p>
-                          </div>
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-[#F0F2F5] dark:bg-slate-900 px-3 py-1 rounded-full">
-                            <Lock className="w-3 h-3 text-[#0084FF]" aria-hidden="true" />
-                            <span>{t('encryptedDirectChat')} · {t('aesBadge')}</span>
-                          </span>
-                          {messages.length === 0 && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 pt-2 max-w-[260px]">
-                              {t('noMessagesYet', { name: selectedPeer.name })}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Grouped Messenger Messages */}
-                        <div className="space-y-0.5 mt-auto">
-                          {messages.map((msg, idx) => {
-                            const mine = msg.senderId === user.id;
-                            const prev = idx > 0 ? messages[idx - 1] : null;
-                            const next = idx < messages.length - 1 ? messages[idx + 1] : null;
-                            const msgMs = new Date(msg.createdAt).getTime();
-                            const prevMs = prev ? new Date(prev.createdAt).getTime() : 0;
-                            const nextMs = next ? new Date(next.createdAt).getTime() : 0;
-
-                            const showDivider =
-                              idx === 0 ||
-                              (Number.isFinite(msgMs) && Number.isFinite(prevMs) && msgMs - prevMs > 15 * 60 * 1000);
-                            const nextHasDivider =
-                              next !== null &&
-                              Number.isFinite(nextMs) &&
-                              Number.isFinite(msgMs) &&
-                              nextMs - msgMs > 15 * 60 * 1000;
-
-                            const groupedPrev =
-                              !showDivider &&
-                              prev !== null &&
-                              prev.senderId === msg.senderId &&
-                              msgMs - prevMs <= 5 * 60 * 1000;
-                            const groupedNext =
-                              !nextHasDivider &&
-                              next !== null &&
-                              next.senderId === msg.senderId &&
-                              nextMs - msgMs <= 5 * 60 * 1000;
-
-                            const isStandaloneThumb = msg.body.trim() === '👍';
-                            const bubbleRadii = mine
-                              ? groupedPrev && groupedNext
-                                ? 'rounded-[20px] rounded-tr-[5px] rounded-br-[5px]'
-                                : groupedPrev
-                                  ? 'rounded-[20px] rounded-tr-[5px]'
-                                  : groupedNext
-                                    ? 'rounded-[20px] rounded-br-[5px]'
-                                    : 'rounded-[20px]'
-                              : groupedPrev && groupedNext
-                                ? 'rounded-[20px] rounded-tl-[5px] rounded-bl-[5px]'
-                                : groupedPrev
-                                  ? 'rounded-[20px] rounded-tl-[5px]'
-                                  : groupedNext
-                                    ? 'rounded-[20px] rounded-bl-[5px]'
-                                    : 'rounded-[20px]';
-
-                            const isSelected = activeMsgActionsId === msg.id;
-                            const showSeenAvatar = msg.id === lastOutgoingReadMsgId;
-                            const showSentBadge = msg.id === lastOutgoingMsgId && !msg.readAt;
-
-                            return (
-                              <div key={msg.id}>
-                                {showDivider && (
-                                  <div className="py-3 text-center">
-                                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                                      {formatMobileDivider(msg.createdAt)}
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div
-                                  className={`flex items-end gap-2 ${
-                                    mine ? 'justify-end' : 'justify-start'
-                                  } ${groupedNext ? 'mb-[2px]' : 'mb-2.5'}`}
-                                >
-                                  {!mine && (
-                                    <div className="w-7 shrink-0 flex items-end justify-center">
-                                      {!groupedNext && (
-                                        <AvatarBadge
-                                          name={selectedPeer.name}
-                                          photoUrl={selectedPeer.photoUrl}
-                                          size="sm"
-                                          shape="circle"
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setActiveMsgActionsId((curr) =>
-                                        curr === msg.id ? null : msg.id
-                                      )
-                                    }
-                                    className={`text-left max-w-[78%] cursor-pointer transition-transform active:scale-[0.99] ${
-                                      isStandaloneThumb
-                                        ? 'text-4xl leading-none px-1 py-0.5 bg-transparent'
-                                        : `px-3.5 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${bubbleRadii} ${
-                                            mine
-                                              ? 'bg-gradient-to-br from-[#0099FF] via-[#0084FF] to-[#0066FF] text-white'
-                                              : 'bg-[#F0F2F5] dark:bg-[#242526] text-[#050505] dark:text-[#E4E6EB]'
-                                          }`
-                                    }`}
-                                  >
-                                    {msg.body}
-                                  </button>
-                                </div>
-
-                                {isSelected && (
-                                  <div
-                                    className={`flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 mb-2 ${
-                                      mine ? 'justify-end pr-1' : 'justify-start pl-9'
-                                    }`}
-                                  >
-                                    <span>{formatDateTime(msg.createdAt)}</span>
-                                    {mine && (
-                                      <>
-                                        {msg.readAt && (
-                                          <span className="text-[#0084FF] dark:text-sky-400">
-                                            · {t('seenLabel')}
-                                          </span>
-                                        )}
-                                        <button
-                                          type="button"
-                                          onClick={() => requestDeletePrivateMessage(msg.id)}
-                                          className="min-h-[26px] px-2 inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-medium cursor-pointer"
-                                        >
-                                          <Trash2 className="w-3 h-3" aria-hidden="true" />
-                                          <span>{tCommon('delete')}</span>
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-
-                                {showSeenAvatar && (
-                                  <div
-                                    className="flex justify-end items-center gap-1 pr-0.5 -mt-1.5 mb-2"
-                                    title={t('readAt', { date: formatDateTime(msg.readAt!) })}
-                                  >
-                                    <AvatarBadge
-                                      name={selectedPeer.name}
-                                      photoUrl={selectedPeer.photoUrl}
-                                      size="xs"
-                                      shape="circle"
-                                    />
-                                  </div>
-                                )}
-
-                                {showSentBadge && (
-                                  <div
-                                    className="flex justify-end items-center pr-0.5 -mt-1.5 mb-2"
-                                    title={t('sentAria')}
-                                  >
-                                    <span className="w-3.5 h-3.5 rounded-full bg-[#0084FF]/15 text-[#0084FF] flex items-center justify-center">
-                                      <Check className="w-2.5 h-2.5 stroke-[2.6]" aria-label={t('sentAria')} />
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                    <div ref={mobileChatEndRef} className="h-1 shrink-0" />
-                  </div>
-
-                  {/* Mobile Emoji Tray (when open) */}
-                  {dmEmojiOpen && (
-                    <div className="shrink-0 px-3 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950">
-                      <CommunityEmojiPicker
-                        compact
-                        onSelect={(emoji) => setMessageInput((prev) => `${prev}${emoji}`)}
-                      />
-                    </div>
-                  )}
-
-                  {/* Sticky Mobile Messenger Pill Composer */}
-                  <form
-                    onSubmit={handleSendPrivateMessage}
-                    className="shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-2.5 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] flex items-end gap-1.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setDmEmojiOpen((prev) => !prev)}
-                      title={t('emojiBtn')}
-                      aria-label={t('emojiBtn')}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
-                        dmEmojiOpen
-                          ? 'bg-[#EBF5FF] dark:bg-[#0084FF]/20 text-[#0084FF]'
-                          : 'text-[#0084FF] hover:bg-[#F0F2F5] dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <Smile className="w-5 h-5" aria-hidden="true" />
-                    </button>
-
-                    <div className="flex-1 rounded-[22px] bg-[#F0F2F5] dark:bg-[#242526] px-4 py-1 flex items-center">
-                      <textarea
-                        rows={1}
-                        maxLength={3000}
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        placeholder={t('dmMobilePlaceholder', { name: selectedPeer.name })}
-                        className="w-full min-h-[36px] max-h-28 py-1.5 bg-transparent text-[16px] leading-snug text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none resize-none"
-                      />
-                    </div>
-
-                    {hasDraft ? (
-                      <button
-                        type="submit"
-                        disabled={sendingMessage}
-                        aria-label={sendingMessage ? t('sending') : t('send')}
-                        className="w-10 h-10 rounded-full bg-[#0084FF] hover:bg-[#0073E6] disabled:opacity-45 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
-                      >
-                        {sendingMessage ? (
-                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                          <SendHorizontal className="w-4 h-4" aria-hidden="true" />
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={sendingMessage}
-                        onClick={() => void handleSendPrivateMessage(undefined, '👍')}
-                        title={t('sendThumbsUpAria')}
-                        aria-label={t('sendThumbsUpAria')}
-                        className="w-10 h-10 rounded-full text-[#0084FF] hover:bg-[#F0F2F5] dark:hover:bg-slate-800 disabled:opacity-45 flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer"
-                      >
-                        {sendingMessage ? (
-                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                          <ThumbsUp className="w-5 h-5 fill-[#0084FF]/15" aria-hidden="true" />
-                        )}
-                      </button>
-                    )}
-                  </form>
-                </motion.div>
-              );
-            })()}
+            {mobileDmModalOpen && selectedPeer && (
+              <motion.div
+                key="mobile-dm-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="mobile-dm-modal-title"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="fixed inset-0 z-[60] lg:hidden flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-white dark:bg-slate-950 overflow-hidden"
+              >
+                {renderMessengerChatPane(true)}
+              </motion.div>
+            )}
           </AnimatePresence>,
           document.body
         )}
