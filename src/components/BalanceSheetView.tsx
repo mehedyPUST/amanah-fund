@@ -18,7 +18,6 @@ import {
   Copy,
   Download,
   FileDown,
-  FileSpreadsheet,
   Landmark,
   LayoutGrid,
   Maximize,
@@ -26,8 +25,6 @@ import {
   Printer,
   RefreshCw,
   Repeat,
-  Rows3,
-  Search,
   ShieldAlert,
   Sigma,
   Table2,
@@ -57,9 +54,7 @@ interface BalanceSheetViewProps {
   onViewMemberProfile?: (userId: string) => void;
 }
 
-type SheetFilter = 'all' | 'paid' | 'due' | 'qard_hasan';
 type WorkbookTab = 'balance-sheet' | 'variables-summary';
-type SheetDensity = 'compact' | 'standard';
 type SortField =
   | 'serialNo'
   | 'name'
@@ -225,10 +220,7 @@ export function BalanceSheetView({
   const currentMonthKey = useMemo(() => getCurrentMonthKey(), []);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKey());
   const [activeTab, setActiveTab] = useState<WorkbookTab>('balance-sheet');
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<SheetFilter>('all');
   const [freezeIdentityCols, setFreezeIdentityCols] = useState(true);
-  const [density, setDensity] = useState<SheetDensity>('compact');
   const [mobileViewMode, setMobileViewMode] = useState<'sheet' | 'cards'>('sheet');
   const [sortField, setSortField] = useState<SortField>('serialNo');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
@@ -453,27 +445,7 @@ export function BalanceSheetView({
   );
 
   const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const list = rows.filter((row) => {
-      if (filter === 'paid' && row.contributionStatus !== 'paid') return false;
-      if (filter === 'due' && row.contributionStatus === 'paid') return false;
-      if (
-        filter === 'qard_hasan' &&
-        !row.hasQardHasan &&
-        row.thisMonthSummary.qardHasanAmount <= 0 &&
-        row.thisMonth.repaidAmount <= 0
-      ) {
-        return false;
-      }
-      if (!q) return true;
-      return (
-        row.name.toLowerCase().includes(q) ||
-        row.memberCode.toLowerCase().includes(q) ||
-        row.email.toLowerCase().includes(q)
-      );
-    });
-
-    const sorted = [...list];
+    const sorted = [...rows];
     sorted.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -521,9 +493,9 @@ export function BalanceSheetView({
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return sorted;
-  }, [rows, search, filter, sortField, sortDir]);
+  }, [rows, sortField, sortDir]);
 
-  const isFiltered = filter !== 'all' || search.trim().length > 0;
+  const isFiltered = false;
 
   const inspectedMemberIndex = useMemo(() => {
     if (!inspectedMemberId) return -1;
@@ -841,16 +813,7 @@ export function BalanceSheetView({
     netLiquidFund,
   ]);
 
-  const visibleVariablesRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return allVariablesRows;
-    return allVariablesRows.filter(
-      (item) =>
-        item.group.toLowerCase().includes(q) ||
-        item.variable.toLowerCase().includes(q) ||
-        item.basis.toLowerCase().includes(q)
-    );
-  }, [allVariablesRows, search]);
+  const visibleVariablesRows = allVariablesRows;
 
   // Compute Name Box coordinate, Formula Bar expression, and plain copyable text for active cell
   const activeCellInfo = useMemo(() => {
@@ -1189,20 +1152,16 @@ export function BalanceSheetView({
 
   const handleExportPdf = useCallback(() => {
     if (!sheet) return;
-    const filterParts: string[] = [];
-    if (filter !== 'all') filterParts.push(`filter: ${filter}`);
-    if (search.trim()) filterParts.push(`search: "${search.trim()}"`);
-
     exportBalanceSheetPdf({
       sheet,
       rows: filteredRows,
-      isFiltered,
-      filterLabel: filterParts.join(', '),
+      isFiltered: false,
+      filterLabel: '',
       fundName,
       preparedBy: user,
     });
     showToast(t('pdfSuccess'));
-  }, [sheet, filteredRows, isFiltered, filter, search, fundName, user, showToast, t]);
+  }, [sheet, filteredRows, fundName, user, showToast, t]);
 
   const handleExportCsv = useCallback(() => {
     if (!sheet) return;
@@ -1369,7 +1328,7 @@ export function BalanceSheetView({
   const cellRingClass = (active: boolean) =>
     active ? 'ring-2 ring-inset ring-emerald-500 dark:ring-emerald-400' : '';
 
-  const cellPadY = density === 'compact' ? 'py-2' : 'py-3';
+  const cellPadY = 'py-2';
 
   const selectSheetCell = (tab: WorkbookTab, row: number, col: number) => {
     setSelectedCell({ tab, row, col });
@@ -1487,30 +1446,59 @@ export function BalanceSheetView({
           : 'rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 shadow-[0_12px_36px_-14px_rgba(16,185,129,0.16)]'
       }`}
     >
-      {/* 1. Spreadsheet Document Header & Period Controls */}
-      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm flex items-center justify-center shrink-0">
-            <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
-                Balance Sheet
-              </h1>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                {fullMonthLabel}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-              {fundName} · Target{' '}
-              <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
-                {formatMoney(monthlyTarget, ccy)}
-              </span>
-              /member · Rolls into {nextMonthLabel}
-            </p>
-          </div>
+      {/* 1. Period, Freeze, Export & Full Screen Controls */}
+      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
+        <div className="flex items-center gap-1.5">
+          {activeTab === 'balance-sheet' && (
+            <>
+              <button
+                type="button"
+                aria-pressed={freezeIdentityCols}
+                onClick={() => setFreezeIdentityCols((v) => !v)}
+                title={
+                  isFullScreen
+                    ? 'Freeze columns A & B (Name & ID)'
+                    : 'Freeze columns A & B (Photo & ID)'
+                }
+                className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  freezeIdentityCols
+                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Freeze A–B</span>
+              </button>
+
+              {/* Mobile Sheet / Cards Switch */}
+              <div className="inline-flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMobileViewMode('sheet')}
+                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                    mobileViewMode === 'sheet'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{t('viewToggleSheet')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileViewMode('cards')}
+                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                    mobileViewMode === 'cards'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{t('viewToggleCards')}</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Month Switcher + Export Controls + Top-Right Icon-Only Full Screen Toggle */}
@@ -1639,149 +1627,6 @@ export function BalanceSheetView({
               {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* 2. Search, Segmented Filters & Grid View Controls */}
-      <div className="shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 print-hidden">
-        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
-          {/* Quick Search */}
-          <div className="relative w-full sm:w-64">
-            <Search
-              className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              aria-label={t('searchAria')}
-              className="w-full h-8 pl-8 pr-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 dark:focus:border-emerald-500 transition-colors"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                aria-label={t('clearSearchAria')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
-            )}
-          </div>
-
-          {activeTab === 'balance-sheet' && (
-            <div
-              className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800/80 flex-wrap"
-              role="group"
-              aria-label="Filter members by status"
-            >
-              {(
-                [
-                  { key: 'all', label: 'All', count: filterCounts.all },
-                  { key: 'paid', label: 'Paid', count: filterCounts.paid },
-                  { key: 'due', label: 'Unpaid', count: filterCounts.due },
-                  { key: 'qard_hasan', label: 'Qard Hasan', count: filterCounts.qardHasan },
-                ] as const
-              ).map((item) => {
-                const active = filter === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => {
-                      setFilter(item.key);
-                      setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
-                    }}
-                    className={`h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
-                      active
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    <span
-                      className={`font-mono tabular-nums text-[11px] rounded px-1 ${
-                        active
-                          ? 'bg-white/20 text-white'
-                          : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      {item.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Right View Controls */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {activeTab === 'balance-sheet' && (
-            <>
-              <button
-                type="button"
-                aria-pressed={freezeIdentityCols}
-                onClick={() => setFreezeIdentityCols((v) => !v)}
-                title={
-                  isFullScreen
-                    ? 'Freeze columns A & B (Name & ID)'
-                    : 'Freeze columns A & B (Photo & ID)'
-                }
-                className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
-                  freezeIdentityCols
-                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Freeze A–B</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDensity((d) => (d === 'compact' ? 'standard' : 'compact'))}
-                title="Toggle spreadsheet row height"
-                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-              >
-                <Rows3 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">
-                  {density === 'compact' ? 'Compact' : 'Standard'}
-                </span>
-              </button>
-
-              {/* Mobile Sheet / Cards Switch */}
-              <div className="inline-flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setMobileViewMode('sheet')}
-                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                    mobileViewMode === 'sheet'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{t('viewToggleSheet')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileViewMode('cards')}
-                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                    mobileViewMode === 'cards'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{t('viewToggleCards')}</span>
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -2427,18 +2272,6 @@ export function BalanceSheetView({
                           {t('emptyTitle')}
                         </p>
                         <p className="text-xs mt-1">{t('emptyDesc')}</p>
-                        {isFiltered && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSearch('');
-                              setFilter('all');
-                            }}
-                            className="mt-3 h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          >
-                            Reset Filters
-                          </button>
-                        )}
                       </td>
                     </tr>
                   ) : (
@@ -3042,17 +2875,8 @@ export function BalanceSheetView({
                         No matching variables found
                       </p>
                       <p className="text-xs mt-1">
-                        Try a different keyword or clear the search filter.
+                        No variables available for this period.
                       </p>
-                      {search.trim() && (
-                        <button
-                          type="button"
-                          onClick={() => setSearch('')}
-                          className="mt-3 h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                        >
-                          Clear Search
-                        </button>
-                      )}
                     </td>
                   </tr>
                 ) : (
