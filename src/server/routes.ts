@@ -27,6 +27,7 @@ import type {
   LoanGuarantor,
   LoanRequest,
   LoanVote,
+  MemberSocialMedia,
   NoticePriority,
   NotificationPreferences,
   PasswordResetRequest,
@@ -37,11 +38,14 @@ import type {
   ProfitDistributionAllocation,
   ProfitDistributionRecord,
   RegisteredDeviceSummary,
+  StructuredBdAddress,
   UploadDocumentCategory,
   UserRegistrationDetails,
   UserRole,
   UserStatus,
 } from '../types/coop.ts';
+import { formatBdAddress } from '../utils/bdLocations.ts';
+import { validateStrongPassword } from '../utils/passwordStrength.ts';
 import {
   decryptAdminActivationView,
   generateNextAmanahMemberId,
@@ -706,6 +710,7 @@ apiRouter.get('/uploads/:filename', (req, res) => {
 const ALLOWED_UPLOAD_CATEGORIES = new Set<UploadDocumentCategory>([
   'cooperative-constitution',
   'member-kyc-photo',
+  'member-signature',
   'member-signed-agreement',
   'nominee-kyc-photo',
   'contribution-receipt',
@@ -909,13 +914,56 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     const occupation = String(req.body?.occupation || '').trim();
     const companyOrganization = String(req.body?.companyOrganization || '').trim();
     const nid = String(req.body?.nid || '').trim();
-    const presentAddress = String(req.body?.presentAddress || '').trim();
-    const permanentAddress = String(req.body?.permanentAddress || '').trim();
+    const normalizeStructuredAddress = (raw: unknown): StructuredBdAddress | undefined => {
+      if (!raw || typeof raw !== 'object') return undefined;
+      const obj = raw as Record<string, unknown>;
+      const cleaned: StructuredBdAddress = {
+        careOf: String(obj.careOf || '').trim(),
+        villageRoadHouse: String(obj.villageRoadHouse || '').trim(),
+        division: String(obj.division || '').trim(),
+        district: String(obj.district || '').trim(),
+        upazila: String(obj.upazila || '').trim(),
+        postOffice: String(obj.postOffice || '').trim(),
+        postCode: String(obj.postCode || '').trim(),
+      };
+      const hasAny = Object.values(cleaned).some(Boolean);
+      return hasAny ? cleaned : undefined;
+    };
+
+    const normalizeSocialUrl = (raw: unknown): string | undefined => {
+      const val = String(raw || '').trim();
+      if (!val) return undefined;
+      if (/^javascript:/i.test(val) || /^data:/i.test(val)) return undefined;
+      if (/^https?:\/\//i.test(val)) return val;
+      return `https://${val}`;
+    };
+
+    const normalizeSocialMedia = (raw: unknown): MemberSocialMedia | undefined => {
+      if (!raw || typeof raw !== 'object') return undefined;
+      const obj = raw as Record<string, unknown>;
+      const whatsapp = String(obj.whatsapp || '').trim() || undefined;
+      const facebook = normalizeSocialUrl(obj.facebook);
+      const linkedin = normalizeSocialUrl(obj.linkedin);
+      if (!whatsapp && !facebook && !linkedin) return undefined;
+      return { whatsapp, facebook, linkedin };
+    };
+
+    const presentAddressDetails = normalizeStructuredAddress(req.body?.presentAddressDetails);
+    const permanentAddressDetails = normalizeStructuredAddress(req.body?.permanentAddressDetails);
+    const presentAddress =
+      String(req.body?.presentAddress || '').trim() ||
+      (presentAddressDetails ? formatBdAddress(presentAddressDetails) : '');
+    const permanentAddress =
+      String(req.body?.permanentAddress || '').trim() ||
+      (permanentAddressDetails ? formatBdAddress(permanentAddressDetails) : '');
+    const socialMedia = normalizeSocialMedia(req.body?.socialMedia);
     const photoUrl = String(req.body?.photoUrl || '').trim();
+    const signatureUrl = String(req.body?.signatureUrl || '').trim();
     const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    const passwordError = validateStrongPassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 
@@ -954,7 +1002,11 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       nid,
       presentAddress,
       permanentAddress,
+      presentAddressDetails,
+      permanentAddressDetails,
+      socialMedia,
       photoUrl,
+      signatureUrl: signatureUrl || undefined,
       agreementPhotoUrl: agreementPhotoUrl || undefined,
       nominees: nomineeValidation.nominees,
     };

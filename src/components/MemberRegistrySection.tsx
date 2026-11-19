@@ -588,6 +588,27 @@ export function MemberRegistrySection({
                       </div>
                     </div>
 
+                    {reg?.signatureUrl && (
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
+                        <div className="font-medium text-slate-700 dark:text-slate-300">
+                          {t('applicantSignature')}
+                        </div>
+                        <a
+                          href={reg.signatureUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white w-[300px] max-w-full h-[80px]"
+                        >
+                          <img
+                            src={reg.signatureUrl}
+                            alt={`${inspectingMember.name} signature`}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-contain"
+                          />
+                        </a>
+                      </div>
+                    )}
+
                     {reg ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -644,6 +665,44 @@ export function MemberRegistrySection({
                             {reg.permanentAddress}
                           </div>
                         </div>
+                        {(reg.socialMedia?.whatsapp ||
+                          reg.socialMedia?.facebook ||
+                          reg.socialMedia?.linkedin) && (
+                          <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1.5">
+                            <div className="text-slate-500 dark:text-slate-400">
+                              {t('socialProfiles')}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {reg.socialMedia.whatsapp && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 font-mono text-[11px] font-medium text-emerald-800 dark:text-emerald-300">
+                                  {t('whatsapp')}: {reg.socialMedia.whatsapp}
+                                </span>
+                              )}
+                              {reg.socialMedia.facebook && (
+                                <a
+                                  href={reg.socialMedia.facebook}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
+                                >
+                                  <span>{t('facebook')}</span>
+                                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                                </a>
+                              )}
+                              {reg.socialMedia.linkedin && (
+                                <a
+                                  href={reg.socialMedia.linkedin}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-sky-700 dark:text-sky-400 hover:underline"
+                                >
+                                  <span>{t('linkedin')}</span>
+                                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">

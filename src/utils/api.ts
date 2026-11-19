@@ -31,6 +31,7 @@ import type {
   LoanRequest,
   ManagerCycleSchedule,
   MemberPublicProfile,
+  MemberSocialMedia,
   MemberSummary,
   MonthlySheetData,
   NomineeInfo,
@@ -42,6 +43,7 @@ import type {
   PublicUser,
   ReceiptAiExtraction,
   RegisteredDeviceSummary,
+  StructuredBdAddress,
   UploadDocumentCategory,
   UserRole,
   UserStatus,
@@ -269,7 +271,11 @@ export interface RegisterMemberPayload {
   nid: string;
   presentAddress: string;
   permanentAddress: string;
+  presentAddressDetails?: StructuredBdAddress;
+  permanentAddressDetails?: StructuredBdAddress;
+  socialMedia?: MemberSocialMedia;
   photoUrl: string;
+  signatureUrl?: string;
   agreementPhotoUrl?: string;
   nominees: NomineeInfo[];
 }

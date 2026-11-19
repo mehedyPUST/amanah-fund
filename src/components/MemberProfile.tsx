@@ -853,6 +853,72 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     </div>
                   )}
 
+                  {reg?.signatureUrl && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                          {t('signatureTitle')}
+                        </span>
+                        <a
+                          href={reg.signatureUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>{t('openFullImage')}</span>
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      </div>
+                      <div className="w-[300px] max-w-full h-[80px] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white flex items-center justify-center">
+                        <img
+                          src={reg.signatureUrl}
+                          alt={t('signatureAlt', { name: profile.name })}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {(reg?.socialMedia?.whatsapp ||
+                    reg?.socialMedia?.facebook ||
+                    reg?.socialMedia?.linkedin) && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                      <div className="font-medium text-slate-700 dark:text-slate-300">
+                        {t('socialProfilesTitle')}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {reg.socialMedia.whatsapp && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 font-mono text-[11px] font-medium text-emerald-800 dark:text-emerald-300">
+                            {t('whatsapp')}: {reg.socialMedia.whatsapp}
+                          </span>
+                        )}
+                        {reg.socialMedia.facebook && (
+                          <a
+                            href={reg.socialMedia.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
+                          >
+                            <span>{t('facebook')}</span>
+                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                          </a>
+                        )}
+                        {reg.socialMedia.linkedin && (
+                          <a
+                            href={reg.socialMedia.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-sky-700 dark:text-sky-400 hover:underline"
+                          >
+                            <span>{t('linkedin')}</span>
+                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {reg?.nominees && reg.nominees.length > 0 && (
                     <NomineeDetailsList nominees={reg.nominees} compact />
                   )}

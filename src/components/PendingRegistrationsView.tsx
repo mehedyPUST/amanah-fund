@@ -484,9 +484,13 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             const act = applicant.activationCredentials;
             const isAwaitingActivation = applicant.status === 'pending_activation';
             const photoUrl = reg?.photoUrl || applicant.photoUrl;
+            const signatureUrl = reg?.signatureUrl;
             const agreementUrl = reg?.agreementPhotoUrl;
+            const social = reg?.socialMedia;
+            const hasSocial = Boolean(social?.whatsapp || social?.facebook || social?.linkedin);
             const isBusy = busyAction?.id === applicant.id;
             const photoKey = `photo-${applicant.id}`;
+            const signatureKey = `signature-${applicant.id}`;
             const agreementKey = `agreement-${applicant.id}`;
             const otpVisible = Boolean(revealedOtps[applicant.id]);
             const cardHueClass = isAwaitingActivation
@@ -812,6 +816,43 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </div>
                       </div>
 
+                      {hasSocial && (
+                        <div className="col-span-2 lg:col-span-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+                          <dt className="text-slate-500 dark:text-slate-400">
+                            {t('socialProfiles')}
+                          </dt>
+                          <dd className="flex flex-wrap items-center gap-2">
+                            {social?.whatsapp && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 font-mono text-[11px] font-medium text-emerald-800 dark:text-emerald-300">
+                                {t('whatsapp')}: {social.whatsapp}
+                              </span>
+                            )}
+                            {social?.facebook && (
+                              <a
+                                href={social.facebook}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
+                              >
+                                <span>{t('facebook')}</span>
+                                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                              </a>
+                            )}
+                            {social?.linkedin && (
+                              <a
+                                href={social.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-sky-700 dark:text-sky-400 hover:underline"
+                              >
+                                <span>{t('linkedin')}</span>
+                                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                              </a>
+                            )}
+                          </dd>
+                        </div>
+                      )}
+
                       {reg.nominees && reg.nominees.length > 0 && (
                         <div className="col-span-2 lg:col-span-3">
                           <NomineeDetailsList nominees={reg.nominees} />
@@ -909,6 +950,33 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </div>
                       )}
                     </div>
+
+                    {signatureUrl && !brokenImages[signatureKey] && (
+                      <div className="col-span-2 space-y-1.5 pt-1">
+                        <div className="text-slate-500 dark:text-slate-400 font-medium">
+                          {t('applicantSignature')}
+                        </div>
+                        <a
+                          href={signatureUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group relative flex items-center justify-center rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white h-[80px] max-w-[300px]"
+                        >
+                          <img
+                            src={signatureUrl}
+                            alt={t('signatureAlt', { name: applicant.name })}
+                            referrerPolicy="no-referrer"
+                            onError={() =>
+                              setBrokenImages((prev) => ({ ...prev, [signatureKey]: true }))
+                            }
+                            className="w-full h-full object-contain"
+                          />
+                          <span className="absolute bottom-1 right-1 p-1 rounded bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                          </span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>

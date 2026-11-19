@@ -1,34 +1,50 @@
 'use client';
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import {
+  AlertCircle,
   ArrowRight,
+  Check,
   CheckCircle2,
+  ChevronDown,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileCheck2,
   FileText,
+  Globe,
   ImagePlus,
   Loader2,
+  PenTool,
   Plus,
   ShieldCheck,
+  Sparkles,
   Trash2,
   UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import { queryKeys } from '../lib/queryKeys.ts';
-import type { NomineeGender, NomineeInfo } from '../types/coop.ts';
+import type { NomineeGender, NomineeInfo, StructuredBdAddress } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import {
+  createEmptyBdAddress,
+  formatBdAddress,
+  isBdAddressComplete,
+} from '../utils/bdLocations.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
+import { evaluatePasswordStrength } from '../utils/passwordStrength.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
 
 interface NomineeDraft {
   id: string;
@@ -88,24 +104,47 @@ export function SignUpForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [referenceMemberName, setReferenceMemberName] = useState('');
   const [mobile, setMobile] = useState('');
   const [occupation, setOccupation] = useState('');
   const [companyOrganization, setCompanyOrganization] = useState('');
   const [nid, setNid] = useState('');
-  const [presentAddress, setPresentAddress] = useState('');
-  const [permanentAddress, setPermanentAddress] = useState('');
+
+  // Teletalk-style structured Bangladesh addresses
+  const [presentAddressDetails, setPresentAddressDetails] = useState<StructuredBdAddress>(() =>
+    createEmptyBdAddress()
+  );
+  const [permanentAddressDetails, setPermanentAddressDetails] = useState<StructuredBdAddress>(() =>
+    createEmptyBdAddress()
+  );
   const [sameAsPresent, setSameAsPresent] = useState(false);
+
+  // Optional Social Media fields
+  const [showSocialSection, setShowSocialSection] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+  const [facebook, setFacebook] = useState('');
+  const [linkedin, setLinkedin] = useState('');
 
   // Nominees (1 or more; share % sums to 100%)
   const [nominees, setNominees] = useState<NomineeDraft[]>(() => [
     createEmptyNominee('100', 'nom-initial-1'),
   ]);
 
-  // ImageKit.io uploaded photo & agreement paper URLs
+  // ImageKit.io uploaded photo, 300x80 signature, & agreement paper URLs
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [signatureUrl, setSignatureUrl] = useState('');
+  const [signatureUploading, setSignatureUploading] = useState(false);
+  const [pendingSignature, setPendingSignature] = useState<{
+    file: File;
+    previewUrl: string;
+    width: number;
+    height: number;
+  } | null>(null);
   const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
   const [agreementUploading, setAgreementUploading] = useState(false);
 
@@ -116,6 +155,24 @@ export function SignUpForm() {
   const [bootstrapActivated, setBootstrapActivated] = useState(false);
   const redirectingRef = useRef(false);
 
+  const effectivePermanentAddressDetails = useMemo(
+    () => (sameAsPresent ? presentAddressDetails : permanentAddressDetails),
+    [sameAsPresent, presentAddressDetails, permanentAddressDetails]
+  );
+
+  const presentAddress = useMemo(
+    () => formatBdAddress(presentAddressDetails),
+    [presentAddressDetails]
+  );
+  const permanentAddress = useMemo(
+    () => formatBdAddress(effectivePermanentAddressDetails),
+    [effectivePermanentAddressDetails]
+  );
+
+  const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
+  const passwordsMatch = Boolean(confirmPassword) && password === confirmPassword;
+  const passwordsMismatch = Boolean(confirmPassword) && password !== confirmPassword;
+
   useEffect(() => {
     if (!authChecking && user && !successModalOpen && !redirectingRef.current) {
       redirectingRef.current = true;
@@ -125,10 +182,12 @@ export function SignUpForm() {
   }, [authChecking, user, router, successModalOpen]);
 
   useEffect(() => {
-    if (sameAsPresent) {
-      setPermanentAddress(presentAddress);
-    }
-  }, [sameAsPresent, presentAddress]);
+    return () => {
+      if (pendingSignature?.previewUrl) {
+        URL.revokeObjectURL(pendingSignature.previewUrl);
+      }
+    };
+  }, [pendingSignature?.previewUrl]);
 
   useEffect(() => {
     setNominees((prev) => {
@@ -253,6 +312,112 @@ export function SignUpForm() {
     }
   }
 
+  async function uploadSignatureFile(file: File) {
+    setSignatureUploading(true);
+    setError(null);
+    try {
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: 'member-signature',
+        subject: name.trim() || email.trim() || 'applicant',
+      });
+      setSignatureUrl(res.url);
+      setPendingSignature(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errSignatureUploadFailed'));
+    } finally {
+      setSignatureUploading(false);
+    }
+  }
+
+  function handleSignatureSelect(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError(t('errInvalidSignature'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(t('errSignatureSize'));
+      return;
+    }
+
+    setError(null);
+    const previewUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+      if (width === 300 && height === 80) {
+        URL.revokeObjectURL(previewUrl);
+        void uploadSignatureFile(file);
+      } else {
+        setPendingSignature({ file, previewUrl, width, height });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(previewUrl);
+      setError(t('errInvalidSignature'));
+    };
+    img.src = previewUrl;
+  }
+
+  async function handleAutoResizeSignature() {
+    if (!pendingSignature) return;
+    setSignatureUploading(true);
+    setError(null);
+
+    try {
+      const resizedFile = await new Promise<File>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300;
+          canvas.height = 80;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context unavailable'));
+            return;
+          }
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 300, 80);
+
+          // Fit image cleanly inside 300x80 with slight padding while preserving aspect ratio
+          const padX = 6;
+          const padY = 4;
+          const availW = 300 - padX * 2;
+          const availH = 80 - padY * 2;
+          const scale = Math.min(availW / img.naturalWidth, availH / img.naturalHeight);
+          const drawW = Math.round(img.naturalWidth * scale);
+          const drawH = Math.round(img.naturalHeight * scale);
+          const dx = Math.round((300 - drawW) / 2);
+          const dy = Math.round((80 - drawH) / 2);
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, dx, dy, drawW, drawH);
+
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to generate 300×80 signature image.'));
+              return;
+            }
+            resolve(new File([blob], 'signature-300x80.png', { type: 'image/png' }));
+          }, 'image/png');
+        };
+        img.onerror = () => reject(new Error('Failed to load signature preview.'));
+        img.src = pendingSignature.previewUrl;
+      });
+
+      await uploadSignatureFile(resizedFile);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errSignatureUploadFailed'));
+      setSignatureUploading(false);
+    }
+  }
+
   async function handleNomineePhotoUpload(index: number, e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -295,12 +460,28 @@ export function SignUpForm() {
     setError(null);
     setSuccessMessage(null);
 
+    if (!passwordStrength.isValid) {
+      setError(t('errPasswordLength'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t('errPasswordMismatch'));
+      return;
+    }
+    if (!isBdAddressComplete(presentAddressDetails)) {
+      setError(t('errPresentAddressIncomplete'));
+      return;
+    }
+    if (!isBdAddressComplete(effectivePermanentAddressDetails)) {
+      setError(t('errPermanentAddressIncomplete'));
+      return;
+    }
     if (!photoUrl) {
       setError(t('errPhotoRequired'));
       return;
     }
-    if (password.length < 6) {
-      setError(t('errPasswordLength'));
+    if (!signatureUrl) {
+      setError(t('errSignatureRequired'));
       return;
     }
 
@@ -364,6 +545,15 @@ export function SignUpForm() {
       return;
     }
 
+    const cleanedSocial = {
+      whatsapp: whatsapp.trim() || undefined,
+      facebook: facebook.trim() || undefined,
+      linkedin: linkedin.trim() || undefined,
+    };
+    const hasSocialMedia = Boolean(
+      cleanedSocial.whatsapp || cleanedSocial.facebook || cleanedSocial.linkedin
+    );
+
     setSubmitting(true);
     try {
       const res = await api.register({
@@ -380,7 +570,11 @@ export function SignUpForm() {
         nid,
         presentAddress,
         permanentAddress,
+        presentAddressDetails,
+        permanentAddressDetails: effectivePermanentAddressDetails,
+        socialMedia: hasSocialMedia ? cleanedSocial : undefined,
         photoUrl,
+        signatureUrl,
         agreementPhotoUrl: agreementPhotoUrl || undefined,
         nominees: preparedNominees,
       });
@@ -396,16 +590,23 @@ export function SignUpForm() {
       setName('');
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
       setDateOfBirth('');
       setReferenceMemberName('');
       setMobile('');
       setOccupation('');
       setCompanyOrganization('');
       setNid('');
-      setPresentAddress('');
-      setPermanentAddress('');
+      setPresentAddressDetails(createEmptyBdAddress());
+      setPermanentAddressDetails(createEmptyBdAddress());
       setSameAsPresent(false);
+      setWhatsapp('');
+      setFacebook('');
+      setLinkedin('');
+      setShowSocialSection(false);
       setPhotoUrl('');
+      setSignatureUrl('');
+      setPendingSignature(null);
       setAgreementPhotoUrl('');
       setNominees([createEmptyNominee('100')]);
     } catch (err) {
@@ -606,18 +807,167 @@ export function SignUpForm() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label
+                    htmlFor="signup-password"
+                    className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  >
                     {t('passwordMin')} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t('passwordCreatePh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                  />
+                  <div className="relative">
+                    <input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('passwordCreatePh')}
+                      className="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="signup-confirm-password"
+                    className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  >
+                    {t('confirmPassword')} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup-confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={t('confirmPasswordPh')}
+                      className={`w-full pl-3.5 pr-10 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                        passwordsMismatch
+                          ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                          : passwordsMatch
+                            ? 'border-emerald-400 dark:border-emerald-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      aria-label={showConfirmPassword ? t('hidePassword') : t('showPassword')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordsMatch && (
+                    <p className="mt-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 shrink-0" aria-hidden="true" />
+                      <span>{t('passwordsMatch')}</span>
+                    </p>
+                  )}
+                  {passwordsMismatch && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400 inline-flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
+                      <span>{t('passwordsMismatch')}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Live Password Strength Meter & Rules Checklist */}
+                <div className="sm:col-span-2 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/60 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      {t('strengthLabel')}
+                    </span>
+                    {passwordStrength.level !== 'empty' && (
+                      <span
+                        className={`font-semibold ${
+                          passwordStrength.level === 'weak'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : passwordStrength.level === 'fair'
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : passwordStrength.level === 'good'
+                                ? 'text-teal-700 dark:text-teal-400'
+                                : 'text-emerald-700 dark:text-emerald-400'
+                        }`}
+                      >
+                        {passwordStrength.level === 'weak'
+                          ? t('strengthWeak')
+                          : passwordStrength.level === 'fair'
+                            ? t('strengthFair')
+                            : passwordStrength.level === 'good'
+                              ? t('strengthGood')
+                              : t('strengthStrong')}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
+                    {[1, 2, 3, 4].map((segment) => {
+                      const active = passwordStrength.score >= segment;
+                      const barColor = !active
+                        ? 'bg-slate-200 dark:bg-slate-800'
+                        : passwordStrength.level === 'weak'
+                          ? 'bg-rose-500'
+                          : passwordStrength.level === 'fair'
+                            ? 'bg-amber-500'
+                            : passwordStrength.level === 'good'
+                              ? 'bg-teal-500'
+                              : 'bg-emerald-600';
+                      return (
+                        <div
+                          key={segment}
+                          className={`h-1.5 rounded-full transition-colors duration-200 ${barColor}`}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-0.5 text-[11px]">
+                    {[
+                      { ok: passwordStrength.checks.minLength, label: t('ruleMin8') },
+                      { ok: passwordStrength.checks.hasUppercase, label: t('ruleUpper') },
+                      { ok: passwordStrength.checks.hasLowercase, label: t('ruleLower') },
+                      { ok: passwordStrength.checks.hasNumber, label: t('ruleNumber') },
+                      { ok: passwordStrength.checks.hasSpecial, label: t('ruleSpecial') },
+                    ].map((rule) => (
+                      <span
+                        key={rule.label}
+                        className={`inline-flex items-center gap-1 transition-colors ${
+                          rule.ok
+                            ? 'text-emerald-700 dark:text-emerald-400 font-medium'
+                            : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        <Check
+                          className={`w-3 h-3 shrink-0 ${
+                            rule.ok ? 'opacity-100' : 'opacity-35'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <span>{rule.label}</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -647,7 +997,7 @@ export function SignUpForm() {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {t('nid')} <span className="text-red-500">*</span>
                   </label>
@@ -726,53 +1076,161 @@ export function SignUpForm() {
                   />
                 </div>
               </div>
+              {/* Optional Social Media Profiles (WhatsApp, Facebook, LinkedIn) */}
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/55 dark:bg-slate-950/45 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowSocialSection((prev) => !prev)}
+                  aria-expanded={showSocialSection}
+                  className="w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-900/60 transition-colors"
+                >
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <Globe
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100">
+                        <span>{t('socialToggleTitle')}</span>
+                        <span className="font-normal text-slate-500 dark:text-slate-400">
+                          {t('optional')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('socialToggleSub')}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shrink-0 whitespace-nowrap">
+                    <span>{showSocialSection ? t('hideSocialBtn') : t('addSocialBtn')}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        showSocialSection ? 'rotate-180' : ''
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </span>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {showSocialSection && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 pt-3 border-t border-slate-200/70 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <label
+                              htmlFor="signup-whatsapp"
+                              className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                            >
+                              {t('whatsappLabel')}
+                            </label>
+                            {mobile.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => setWhatsapp(mobile.trim())}
+                                className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                              >
+                                {t('sameAsMobile')}
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            id="signup-whatsapp"
+                            type="tel"
+                            value={whatsapp}
+                            onChange={(e) => setWhatsapp(e.target.value)}
+                            placeholder={t('whatsappPh')}
+                            className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="signup-facebook"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                          >
+                            {t('facebookLabel')}
+                          </label>
+                          <input
+                            id="signup-facebook"
+                            type="text"
+                            value={facebook}
+                            onChange={(e) => setFacebook(e.target.value)}
+                            placeholder={t('facebookPh')}
+                            className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="signup-linkedin"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                          >
+                            {t('linkedinLabel')}
+                          </label>
+                          <input
+                            id="signup-linkedin"
+                            type="text"
+                            value={linkedin}
+                            onChange={(e) => setLinkedin(e.target.value)}
+                            placeholder={t('linkedinPh')}
+                            className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
-            {/* Section 3: Addresses */}
+            {/* Section 3: Teletalk-Style Residential Addresses */}
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="space-y-0.5">
                 <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
                   {t('sec3')}
                 </h2>
-                <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={sameAsPresent}
-                    onChange={(e) => setSameAsPresent(e.target.checked)}
-                    className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
-                  />
-                  <span>{t('sameAsPresent')}</span>
-                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('sec3Sub')}</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    {t('presentAddress')} <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={presentAddress}
-                    onChange={(e) => setPresentAddress(e.target.value)}
-                    placeholder={t('presentAddressPh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    {t('permanentAddress')} <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows={2}
-                    required
-                    disabled={sameAsPresent}
-                    value={permanentAddress}
-                    onChange={(e) => setPermanentAddress(e.target.value)}
-                    placeholder={t('permanentAddressPh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
-                  />
-                </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <TeletalkAddressFields
+                  title={t('presentAddress')}
+                  idPrefix="present-addr"
+                  value={presentAddressDetails}
+                  onChange={setPresentAddressDetails}
+                />
+
+                <TeletalkAddressFields
+                  title={t('permanentAddress')}
+                  idPrefix="permanent-addr"
+                  value={effectivePermanentAddressDetails}
+                  onChange={setPermanentAddressDetails}
+                  disabled={sameAsPresent}
+                  headerRight={
+                    <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sameAsPresent}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setSameAsPresent(checked);
+                          if (checked) {
+                            setPermanentAddressDetails({ ...presentAddressDetails });
+                          }
+                        }}
+                        className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
+                      />
+                      <span>{t('sameAsPresent')}</span>
+                    </label>
+                  }
+                />
               </div>
             </div>
 
@@ -1275,6 +1733,142 @@ export function SignUpForm() {
                     </label>
                   )}
                 </div>
+                {/* Applicant Signature 300x80 px (Required, Teletalk Standard) */}
+                <div className="sm:col-span-2 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        {t('signatureLabel')} <span className="text-red-500">*</span>
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {t('signatureSpecHint')}
+                      </p>
+                    </div>
+                    {signatureUrl && (
+                      <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                        <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{t('signatureVerifiedBadge')}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {pendingSignature ? (
+                    <div className="p-3.5 rounded-lg border border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/30 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                          <span>
+                            {t('signatureDimMismatch', {
+                              width: pendingSignature.width,
+                              height: pendingSignature.height,
+                            })}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPendingSignature(null)}
+                          aria-label={tCommon('cancel')}
+                          className="p-1 rounded text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/50 cursor-pointer shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
+                          <img
+                            src={pendingSignature.previewUrl}
+                            alt={t('signatureLabel')}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={signatureUploading}
+                            onClick={() => void handleAutoResizeSignature()}
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            {signatureUploading ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                            )}
+                            <span>
+                              {signatureUploading ? t('uploading') : t('autoResizeUpload')}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={signatureUploading}
+                            onClick={() => setPendingSignature(null)}
+                            className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
+                          >
+                            {tCommon('cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : signatureUrl ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                        <img
+                          src={signatureUrl}
+                          alt={t('signatureLabel')}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-wrap sm:flex-col gap-2 sm:gap-1">
+                        <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                          <span>{signatureUploading ? t('uploading') : t('replaceSignature')}</span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg"
+                            disabled={signatureUploading}
+                            onChange={handleSignatureSelect}
+                            className="sr-only"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSignatureUrl('')}
+                          className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                        >
+                          {tCommon('remove')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center sm:text-left transition-colors">
+                      <div className="w-[150px] h-[40px] rounded border border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-400 shrink-0">
+                        {signatureUploading ? (
+                          <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                        ) : (
+                          <>
+                            <PenTool className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>300 × 80 px</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                          {signatureUploading ? t('uploadingToCloud') : t('chooseSignature')}
+                        </span>
+                        <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                          {t('signatureSpecHint')}
+                        </span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        disabled={signatureUploading}
+                        onChange={handleSignatureSelect}
+                        className="sr-only"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1282,7 +1876,11 @@ export function SignUpForm() {
               <button
                 type="submit"
                 disabled={
-                  submitting || photoUploading || agreementUploading || anyNomineePhotoUploading
+                  submitting ||
+                  photoUploading ||
+                  signatureUploading ||
+                  agreementUploading ||
+                  anyNomineePhotoUploading
                 }
                 className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all cursor-pointer shrink-0 whitespace-nowrap"
               >

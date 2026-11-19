@@ -51,6 +51,22 @@ export interface NomineeInfo {
   photoUrl?: string;
 }
 
+export interface StructuredBdAddress {
+  careOf: string;
+  villageRoadHouse: string;
+  division: string;
+  district: string;
+  upazila: string;
+  postOffice: string;
+  postCode: string;
+}
+
+export interface MemberSocialMedia {
+  whatsapp?: string;
+  facebook?: string;
+  linkedin?: string;
+}
+
 export interface UserRegistrationDetails {
   dateOfBirth: string;
   referenceMemberName: string;
@@ -60,7 +76,11 @@ export interface UserRegistrationDetails {
   nid: string;
   presentAddress: string;
   permanentAddress: string;
+  presentAddressDetails?: StructuredBdAddress;
+  permanentAddressDetails?: StructuredBdAddress;
+  socialMedia?: MemberSocialMedia;
   photoUrl: string;
+  signatureUrl?: string;
   agreementPhotoUrl?: string;
   nominees?: NomineeInfo[];
 }
@@ -214,6 +234,7 @@ export interface FaqItem {
 export type UploadDocumentCategory =
   | 'cooperative-constitution'
   | 'member-kyc-photo'
+  | 'member-signature'
   | 'member-signed-agreement'
   | 'nominee-kyc-photo'
   | 'contribution-receipt'

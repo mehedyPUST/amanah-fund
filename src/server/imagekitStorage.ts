@@ -28,6 +28,7 @@ const MIME_TO_EXT: Record<string, string> = {
 const CATEGORY_DEFAULT_SLUG: Record<UploadDocumentCategory, string> = {
   'cooperative-constitution': 'cooperative-constitution',
   'member-kyc-photo': 'member-kyc-photo',
+  'member-signature': 'member-signature',
   'member-signed-agreement': 'member-signed-agreement',
   'nominee-kyc-photo': 'nominee-kyc-photo',
   'contribution-receipt': 'contribution-receipt',
@@ -39,6 +40,7 @@ const CATEGORY_DEFAULT_SLUG: Record<UploadDocumentCategory, string> = {
 const CATEGORY_SUBFOLDER: Record<UploadDocumentCategory, string> = {
   'cooperative-constitution': 'governance',
   'member-kyc-photo': 'kyc',
+  'member-signature': 'kyc',
   'member-signed-agreement': 'kyc',
   'nominee-kyc-photo': 'kyc',
   'contribution-receipt': 'receipts',
