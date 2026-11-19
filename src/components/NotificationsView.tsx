@@ -127,6 +127,7 @@ export function NotificationsView({
     return tNotif.has(key) ? tNotif(key) : TYPE_LABELS[type] || type;
   };
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'queued' | 'sent'>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
@@ -586,156 +587,202 @@ export function NotificationsView({
             {t('emptyFiltered')}
           </div>
         ) : (
-          visibleNotifications.map((item) => (
-            <div
-              key={item.id}
-              className={`p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 ${
-                !item.readByRecipient ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''
-              }`}
-            >
-              <div className="space-y-1.5 min-w-0">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                  <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                    {getTypeLabel(item.type)}
-                  </span>
-                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                    ·
-                  </span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
-                    {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
-                  </span>
-                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                    ·
-                  </span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400">
-                    {formatDateTime(item.createdAt)}
-                  </span>
-                </div>
+          visibleNotifications.map((item) => {
+            const isExpanded = Boolean(expandedIds[item.id]);
+            return (
+              <div
+                key={item.id}
+                className={`transition-colors ${
+                  !item.readByRecipient ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedIds((prev) => ({
+                      ...prev,
+                      [item.id]: !prev[item.id],
+                    }))
+                  }
+                  aria-expanded={isExpanded}
+                  className="w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {!item.readByRecipient && (
+                      <span
+                        aria-hidden="true"
+                        className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
+                      />
+                    )}
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                      {item.subject}
+                    </h3>
+                  </div>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                      isExpanded
+                        ? 'rotate-180 text-emerald-600 dark:text-emerald-400'
+                        : 'text-slate-400 dark:text-slate-500'
+                    }`}
+                  />
+                </button>
 
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {item.subject}
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
-                  {item.body}
-                </p>
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-3.5 pb-4 pt-1 sm:px-5 sm:pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 border-t border-slate-100/80 dark:border-slate-800/80">
+                        <div className="space-y-1.5 min-w-0 pt-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                              {getTypeLabel(item.type)}
+                            </span>
+                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                              ·
+                            </span>
+                            <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
+                              {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
+                            </span>
+                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                              ·
+                            </span>
+                            <span className="font-mono text-slate-500 dark:text-slate-400">
+                              {formatDateTime(item.createdAt)}
+                            </span>
+                          </div>
 
-                <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                  {t('deliveryPrefix')}{' '}
-                  {item.deliveryStatus === 'sent_via_gmail'
-                    ? t('sentViaGmailAt', { date: formatDateTime(item.sentAt) })
-                    : t('queuedOutbox')}
-                </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
+                            {item.body}
+                          </p>
+
+                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            {t('deliveryPrefix')}{' '}
+                            {item.deliveryStatus === 'sent_via_gmail'
+                              ? t('sentViaGmailAt', { date: formatDateTime(item.sentAt) })
+                              : t('queuedOutbox')}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:pt-2 shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
+                          {(() => {
+                            const subjLower = item.subject.toLowerCase();
+                            const deskLabel = user.role === 'admin' ? t('governanceDesk') : t('managerDesk');
+                            if (
+                              isStaff &&
+                              item.type === 'loan_vote_requested' &&
+                              (subjLower.includes('initiate vote') || subjLower.includes('ready to initiate')) &&
+                              onOpenManagerDeskTab
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    onOpenManagerDeskTab('qard-hasan');
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{t('reviewInDesk', { desk: deskLabel })}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              );
+                            }
+                            if (
+                              isStaff &&
+                              item.type === 'contribution_placed_manager' &&
+                              onOpenManagerDeskTab
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    onOpenManagerDeskTab('contributions');
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{t('openDesk', { desk: deskLabel })}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              );
+                            }
+                            if (
+                              (item.type === 'loan_vote_requested' || item.type === 'decision_vote_requested') &&
+                              onNavigate
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    onNavigate('ballot');
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{t('openVoting')}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              );
+                            }
+                            if (
+                              (item.type === 'loan_guarantor_requested' ||
+                                item.type === 'loan_approved_confirmation' ||
+                                item.type === 'loan_rejected_notice' ||
+                                item.type === 'loan_repayment_notice' ||
+                                item.type === 'loan_repayment_rejected') &&
+                              user.role !== 'admin' &&
+                              onNavigate
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    onNavigate('quard-hasan');
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{t('openQardHasan')}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
+                          {!item.readByRecipient && (
+                            <button
+                              type="button"
+                              onClick={() => void handleMarkRead(item.id)}
+                              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>{t('markRead')}</span>
+                            </button>
+                          )}
+                          {isStaff && item.deliveryStatus === 'queued' && workspace.connected && (
+                            <button
+                              type="button"
+                              onClick={() => requestGmailSend([item.id])}
+                              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Send className="w-3 h-3" aria-hidden="true" />
+                              <span>{t('sendGmail')}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
-                {(() => {
-                  const subjLower = item.subject.toLowerCase();
-                  const deskLabel = user.role === 'admin' ? t('governanceDesk') : t('managerDesk');
-                  if (
-                    isStaff &&
-                    item.type === 'loan_vote_requested' &&
-                    (subjLower.includes('initiate vote') || subjLower.includes('ready to initiate')) &&
-                    onOpenManagerDeskTab
-                  ) {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!item.readByRecipient) void handleMarkRead(item.id);
-                          onOpenManagerDeskTab('qard-hasan');
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{t('reviewInDesk', { desk: deskLabel })}</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    );
-                  }
-                  if (
-                    isStaff &&
-                    item.type === 'contribution_placed_manager' &&
-                    onOpenManagerDeskTab
-                  ) {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!item.readByRecipient) void handleMarkRead(item.id);
-                          onOpenManagerDeskTab('contributions');
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{t('openDesk', { desk: deskLabel })}</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    );
-                  }
-                  if (
-                    (item.type === 'loan_vote_requested' || item.type === 'decision_vote_requested') &&
-                    onNavigate
-                  ) {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!item.readByRecipient) void handleMarkRead(item.id);
-                          onNavigate('ballot');
-                        }}
-                        className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{t('openVoting')}</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    );
-                  }
-                  if (
-                    (item.type === 'loan_guarantor_requested' ||
-                      item.type === 'loan_approved_confirmation' ||
-                      item.type === 'loan_rejected_notice' ||
-                      item.type === 'loan_repayment_notice' ||
-                      item.type === 'loan_repayment_rejected') &&
-                    user.role !== 'admin' &&
-                    onNavigate
-                  ) {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!item.readByRecipient) void handleMarkRead(item.id);
-                          onNavigate('quard-hasan');
-                        }}
-                        className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{t('openQardHasan')}</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    );
-                  }
-                  return null;
-                })()}
-                {!item.readByRecipient && (
-                  <button
-                    type="button"
-                    onClick={() => void handleMarkRead(item.id)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{t('markRead')}</span>
-                  </button>
-                )}
-                {isStaff && item.deliveryStatus === 'queued' && workspace.connected && (
-                  <button
-                    type="button"
-                    onClick={() => requestGmailSend([item.id])}
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Send className="w-3 h-3" aria-hidden="true" />
-                    <span>{t('sendGmail')}</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </section>
 

@@ -23,6 +23,8 @@ import {
   Menu,
   MessageSquare,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   RefreshCw,
   Settings,
   Sun,
@@ -255,7 +257,30 @@ export function DashboardShell() {
     key: number;
   } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const drawerHistoryPushedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem('amanah.dashboard.sidebarCollapsed') === '1') {
+        setSidebarCollapsed(true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem('amanah.dashboard.sidebarCollapsed', next ? '1' : '0');
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, []);
 
   const openMobileDrawer = useCallback(() => {
     setMobileNavOpen(true);
@@ -979,13 +1004,19 @@ export function DashboardShell() {
     const active = activeSection === item.id;
     const count = pendingBadgeCount(item.id);
     const toneStyle = SIDEBAR_TONE_STYLES[SECTION_TONE_MAP[item.id] || 'emerald'];
+    const collapsed = !isMobile && sidebarCollapsed;
+    const label = getDashboardSectionLabel(item.id, user?.role, locale);
     return (
       <button
         key={item.id}
         type="button"
         onClick={() => navigateToPage(item.id, isMobile)}
         aria-current={active ? 'page' : undefined}
-        className={`relative group w-full px-3 py-2 text-sm rounded-lg flex items-center justify-between gap-3 transition-colors duration-150 cursor-pointer whitespace-nowrap text-left ${active
+        title={collapsed ? label : undefined}
+        aria-label={collapsed ? label : undefined}
+        className={`relative group w-full rounded-lg flex items-center transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+          collapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2 justify-between gap-3 text-left'
+        } text-sm ${active
           ? toneStyle.activeText
           : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/40'
           }`}
@@ -998,7 +1029,7 @@ export function DashboardShell() {
             aria-hidden="true"
           />
         )}
-        <span className="relative z-10 flex items-center gap-3 min-w-0">
+        <span className={`relative z-10 flex items-center ${collapsed ? 'justify-center' : 'gap-3 min-w-0'}`}>
           <Icon
             className={`w-4 h-4 shrink-0 transition-colors ${active
               ? toneStyle.activeIcon
@@ -1006,21 +1037,26 @@ export function DashboardShell() {
               }`}
             aria-hidden="true"
           />
-          <span className="truncate">
-            {getDashboardSectionLabel(item.id, user?.role, locale)}
-          </span>
+          {!collapsed && <span className="truncate">{label}</span>}
         </span>
-        {count > 0 && (
-          <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
-            {count}
-          </span>
-        )}
+        {count > 0 &&
+          (collapsed ? (
+            <span
+              className="absolute top-1.5 right-2 z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"
+              aria-hidden="true"
+            />
+          ) : (
+            <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
+              {count}
+            </span>
+          ))}
       </button>
     );
   }
 
   function renderDashboardNavItems(isMobile = false) {
     const primaryItems = isAdmin ? ADMIN_PRIMARY_ITEMS : MEMBER_NAV_ITEMS;
+    const collapsed = !isMobile && sidebarCollapsed;
     return (
       <div className="space-y-4">
         <div className="space-y-0.5">
@@ -1029,9 +1065,11 @@ export function DashboardShell() {
 
         {isManager && (
           <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
-            <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-              {tNav('groups.manager')}
-            </div>
+            {!collapsed && (
+              <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                {tNav('groups.manager')}
+              </div>
+            )}
             <div className="space-y-0.5">
               {MANAGER_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
             </div>
@@ -1040,9 +1078,11 @@ export function DashboardShell() {
 
         {isAdmin && (
           <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
-            <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-              {tNav('groups.admin')}
-            </div>
+            {!collapsed && (
+              <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                {tNav('groups.admin')}
+              </div>
+            )}
             <div className="space-y-0.5">
               {ADMIN_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
             </div>
@@ -1309,20 +1349,66 @@ export function DashboardShell() {
   }
 
   return (
-    <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
+    <div
+      className={`h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid ${
+        sidebarCollapsed
+          ? 'lg:grid-cols-[80px_minmax(0,1fr)]'
+          : 'lg:grid-cols-[252px_minmax(0,1fr)]'
+      } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-200`}
+    >
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs z-30">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <AmanahLogo size="sm" decorative />
-          <div className="min-w-0">
-            <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              {tCommon('brandName')}
+      <div
+        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs z-30 ${
+          sidebarCollapsed ? 'px-2 justify-center gap-1.5' : 'px-3.5 justify-between gap-2'
+        }`}
+      >
+        {sidebarCollapsed ? (
+          <>
+            <AmanahLogo size="xs" decorative />
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              aria-expanded={false}
+              aria-label={locale === 'bn' ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
+              title={locale === 'bn' ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
+              className="w-7 h-7 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AmanahLogo size="sm" decorative />
+              <div className="min-w-0">
+                <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
+                  {tCommon('brandName')}
+                </div>
+                <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
+                  {tCommon('dashboard')}
+                </div>
+              </div>
             </div>
-            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-              {tCommon('dashboard')}
-            </div>
-          </div>
-        </div>
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              aria-expanded={true}
+              aria-label={
+                locale === 'bn'
+                  ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
+                  : 'Collapse sidebar (icons only)'
+              }
+              title={
+                locale === 'bn'
+                  ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
+                  : 'Collapse sidebar (icons only)'
+              }
+              className="w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* GRID 2 */}
@@ -1419,34 +1505,73 @@ export function DashboardShell() {
 
       {/* GRID 3 */}
       <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs">
-        <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label={tNav('primaryNav')}>
+        <nav
+          className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
+            sidebarCollapsed ? 'px-2' : 'px-2.5'
+          }`}
+          aria-label={tNav('primaryNav')}
+        >
           {renderDashboardNavItems(false)}
         </nav>
 
-        <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 space-y-3">
-          <button
-            type="button"
-            onClick={() => navigateToPage('my-profile', false)}
-            className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
-          >
-            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-              {user.name}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-              {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-              <span className="text-emerald-700 dark:text-emerald-400">
-                {user.status === 'active' ? tCommon('verified') : tCommon('pending')}
-              </span>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSignOut()}
-            className="w-full py-2 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{tNav('signOut')}</span>
-          </button>
+        <div
+          className={`border-t border-slate-200/80 dark:border-slate-800/80 ${
+            sidebarCollapsed ? 'p-2.5 flex flex-col items-center gap-2' : 'p-4 space-y-3'
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <>
+              <button
+                type="button"
+                onClick={() => navigateToPage('my-profile', false)}
+                title={`${user.name} · ${user.memberCode}`}
+                aria-label={user.name}
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
+              >
+                {(user.name || 'AM')
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((p) => p[0]?.toUpperCase() || '')
+                  .join('')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                title={tNav('signOut')}
+                aria-label={tNav('signOut')}
+                className="w-full h-9 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => navigateToPage('my-profile', false)}
+                className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+              >
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {user.name}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+                  <span className="text-emerald-700 dark:text-emerald-400">
+                    {user.status === 'active' ? tCommon('verified') : tCommon('pending')}
+                  </span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                className="w-full py-2 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{tNav('signOut')}</span>
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
