@@ -16,8 +16,6 @@ export interface BalanceSheetPdfOptions {
   preparedBy: PublicUser | null;
 }
 
-export type MonthlySheetPdfOptions = BalanceSheetPdfOptions;
-
 function formatFullMonthLabel(ym: string): string {
   const match = ym.match(/^(\d{4})-(\d{2})$/);
   if (!match) return ym;
@@ -607,5 +605,3 @@ export function exportBalanceSheetPdf({
 
   doc.save(`amanah-balance-sheet-${sheet.month}.pdf`);
 }
-
-export const exportMonthlySheetPdf = exportBalanceSheetPdf;

@@ -495,8 +495,6 @@ export function BalanceSheetView({
     return sorted;
   }, [rows, sortField, sortDir]);
 
-  const isFiltered = false;
-
   const inspectedMemberIndex = useMemo(() => {
     if (!inspectedMemberId) return -1;
     return filteredRows.findIndex((r) => r.userId === inspectedMemberId);
@@ -507,36 +505,6 @@ export function BalanceSheetView({
     if (inspectedMemberIndex >= 0) return filteredRows[inspectedMemberIndex] ?? null;
     return rows.find((r) => r.userId === inspectedMemberId) ?? null;
   }, [filteredRows, inspectedMemberId, inspectedMemberIndex, rows]);
-
-  const filteredTotals = useMemo(() => {
-    return filteredRows.reduce(
-      (acc, r) => {
-        acc.prevContrib += r.previousSummary.contributionAmount;
-        acc.prevQard += r.previousSummary.qardHasanAmount;
-        acc.prevDue += r.previousSummary.dueHasanaAmount;
-        acc.currContrib += r.thisMonth.contributionAmount;
-        acc.currPending += r.contributionPendingAmount || 0;
-        acc.currQard += r.thisMonth.qardHasanAmount;
-        acc.currRefund += r.thisMonth.repaidAmount;
-        acc.closingContrib += r.thisMonthSummary.contributionAmount;
-        acc.closingQard += r.thisMonthSummary.qardHasanAmount;
-        acc.closingDue += r.thisMonthSummary.dueHasanaAmount;
-        return acc;
-      },
-      {
-        prevContrib: 0,
-        prevQard: 0,
-        prevDue: 0,
-        currContrib: 0,
-        currPending: 0,
-        currQard: 0,
-        currRefund: 0,
-        closingContrib: 0,
-        closingQard: 0,
-        closingDue: 0,
-      }
-    );
-  }, [filteredRows]);
 
   const allVariablesRows = useMemo<VariableSummaryRow[]>(() => {
     if (!sheet) return [];
@@ -845,11 +813,10 @@ export function BalanceSheetView({
 
     const safeCol = Math.max(0, Math.min(SHEET_COL_LETTERS.length - 1, selectedCell.col));
     const colLetter = SHEET_COL_LETTERS[safeCol];
-    const lastDataRow = Math.max(1, filteredRows.length);
 
     // Cooperative Totals row (-1)
     if (selectedCell.row === -1 && sheet) {
-      const totalRowNum = filteredRows.length + (isFiltered ? 2 : 1);
+      const totalRowNum = filteredRows.length + 1;
       const ref = `${colLetter}${totalRowNum}`;
       const totValues: Record<number, { value: string; formula: string }> = {
         0: {
@@ -902,64 +869,6 @@ export function BalanceSheetView({
         },
       };
       const entry = totValues[safeCol] || totValues[0];
-      return { ref, formula: entry.formula, copyValue: entry.value };
-    }
-
-    // Filtered Subtotal row (-2)
-    if (selectedCell.row === -2 && isFiltered) {
-      const subRowNum = filteredRows.length + 1;
-      const ref = `${colLetter}${subRowNum}`;
-      const subValues: Record<number, { value: string; formula: string }> = {
-        0: {
-          value: `Filtered Subtotal (${filteredRows.length} rows)`,
-          formula: `="Filtered Subtotal (${filteredRows.length} of ${rows.length} members)"`,
-        },
-        1: {
-          value: `${filteredRows.length} rows`,
-          formula: `=SUBTOTAL(103, B1:B${lastDataRow})`,
-        },
-        2: {
-          value: fmt(filteredTotals.prevContrib),
-          formula: `=SUBTOTAL(109, C1:C${lastDataRow})  →  ${fmt(filteredTotals.prevContrib)}`,
-        },
-        3: {
-          value: fmt(filteredTotals.prevQard),
-          formula: `=SUBTOTAL(109, D1:D${lastDataRow})  →  ${fmt(filteredTotals.prevQard)}`,
-        },
-        4: {
-          value: fmt(filteredTotals.prevDue),
-          formula: `=SUBTOTAL(109, E1:E${lastDataRow})  →  ${fmt(filteredTotals.prevDue)}`,
-        },
-        5: {
-          value: fmt(filteredTotals.currContrib),
-          formula: `=SUBTOTAL(109, F1:F${lastDataRow})  →  ${fmt(filteredTotals.currContrib)}`,
-        },
-        6: {
-          value: fmt(filteredTotals.currQard),
-          formula: `=SUBTOTAL(109, G1:G${lastDataRow})  →  ${fmt(filteredTotals.currQard)}`,
-        },
-        7: {
-          value: fmt(filteredTotals.currRefund),
-          formula: `=SUBTOTAL(109, H1:H${lastDataRow})  →  ${fmt(filteredTotals.currRefund)}`,
-        },
-        8: {
-          value: fmt(filteredTotals.closingContrib),
-          formula: `=SUBTOTAL(109, I1:I${lastDataRow})  →  ${fmt(filteredTotals.closingContrib)}`,
-        },
-        9: {
-          value: fmt(filteredTotals.closingQard),
-          formula: `=SUBTOTAL(109, J1:J${lastDataRow})  →  ${fmt(filteredTotals.closingQard)}`,
-        },
-        10: {
-          value: fmt(filteredTotals.closingDue),
-          formula: `=SUBTOTAL(109, K1:K${lastDataRow})  →  ${fmt(filteredTotals.closingDue)}`,
-        },
-        11: {
-          value: `${filteredRows.length} shown`,
-          formula: `=COUNTA(L1:L${lastDataRow})`,
-        },
-      };
-      const entry = subValues[safeCol] || subValues[0];
       return { ref, formula: entry.formula, copyValue: entry.value };
     }
 
@@ -1056,8 +965,6 @@ export function BalanceSheetView({
     sheet,
     ccy,
     rows.length,
-    isFiltered,
-    filteredTotals,
     collectionRatePct,
     shortMonthLabel,
     filterCounts.paid,
@@ -1126,21 +1033,19 @@ export function BalanceSheetView({
         if (e.key === 'ArrowRight') nextCol = Math.min(maxCol, nextCol + 1);
 
         if (e.key === 'ArrowDown') {
-          if (nextRow === -2) nextRow = -1;
-          else if (nextRow === -1) nextRow = -1;
+          if (nextRow === -1) nextRow = -1;
           else if (nextRow < maxDataIdx) nextRow += 1;
-          else nextRow = isFiltered ? -2 : -1;
+          else nextRow = -1;
         }
         if (e.key === 'ArrowUp') {
-          if (nextRow === -1) nextRow = isFiltered ? -2 : Math.max(0, maxDataIdx);
-          else if (nextRow === -2) nextRow = Math.max(0, maxDataIdx);
+          if (nextRow === -1) nextRow = Math.max(0, maxDataIdx);
           else nextRow = Math.max(0, nextRow - 1);
         }
 
         return { tab: 'balance-sheet', row: nextRow, col: nextCol };
       });
     },
-    [activeTab, visibleVariablesRows.length, filteredRows, inspectedMemberId, isFiltered, selectedCell]
+    [activeTab, visibleVariablesRows.length, filteredRows, inspectedMemberId, selectedCell]
   );
 
   const showToast = useCallback((message: string) => {
@@ -2634,64 +2539,8 @@ export function BalanceSheetView({
                   )}
                 </tbody>
 
-                {/* Filtered Subtotal + Pinned Cooperative Totals Footer */}
+                {/* Pinned Cooperative Totals Footer */}
                 <tfoot className="sticky bottom-0 z-30 shadow-[0_-4px_12px_-4px_rgba(15,23,42,0.08)] dark:shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.4)]">
-                  {isFiltered && filteredRows.length > 0 && (
-                    <tr className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold">
-                      <td
-                        onClick={() => selectSheetCell('balance-sheet', -2, 0)}
-                        className="w-[40px] min-w-[40px] py-2 text-center font-mono text-[11px] border-r border-t border-b border-slate-300 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800 sticky left-0 z-40 cursor-pointer"
-                      >
-                        —
-                      </td>
-                      <td
-                        colSpan={isFullScreen ? 3 : 2}
-                        data-sheet-cell="balance-sheet:-2:0"
-                        onClick={() => selectSheetCell('balance-sheet', -2, 0)}
-                        className={`px-2 py-2 border-r border-t border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-cell whitespace-nowrap ${
-                          freezeIdentityCols
-                            ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
-                            : ''
-                        } ${cellRingClass(isCellActive('balance-sheet', -2, 0))}`}
-                      >
-                        Filtered ({filteredRows.length}/{rows.length})
-                      </td>
-                      {(
-                        [
-                          { col: 2, val: formatMoney(filteredTotals.prevContrib, ccy) },
-                          { col: 3, val: formatMoney(filteredTotals.prevQard, ccy) },
-                          { col: 4, val: formatMoney(filteredTotals.prevDue, ccy) },
-                          { col: 5, val: formatMoney(filteredTotals.currContrib, ccy) },
-                          { col: 6, val: formatMoney(filteredTotals.currQard, ccy) },
-                          { col: 7, val: formatMoney(filteredTotals.currRefund, ccy) },
-                          { col: 8, val: formatMoney(filteredTotals.closingContrib, ccy) },
-                          { col: 9, val: formatMoney(filteredTotals.closingQard, ccy) },
-                          { col: 10, val: formatMoney(filteredTotals.closingDue, ccy) },
-                        ] as const
-                      ).map((c) => (
-                        <td
-                          key={c.col}
-                          data-sheet-cell={`balance-sheet:-2:${c.col}`}
-                          onClick={() => selectSheetCell('balance-sheet', -2, c.col)}
-                          className={`px-2 py-2 text-right font-mono tabular-nums bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
-                            isCellActive('balance-sheet', -2, c.col)
-                          )}`}
-                        >
-                          {c.val}
-                        </td>
-                      ))}
-                      <td
-                        data-sheet-cell="balance-sheet:-2:11"
-                        onClick={() => selectSheetCell('balance-sheet', -2, 11)}
-                        className={`px-2 py-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
-                          isCellActive('balance-sheet', -2, 11)
-                        )}`}
-                      >
-                        {filteredRows.length} rows
-                      </td>
-                    </tr>
-                  )}
-
                   {/* Cooperative Totals Row */}
                   <tr className="bg-[#eef3f8] dark:bg-slate-900 font-bold text-slate-900 dark:text-slate-50">
                     <td
@@ -3028,8 +2877,8 @@ export function BalanceSheetView({
                 Rows:{' '}
                 <strong className="text-slate-900 dark:text-slate-100">
                   {activeTab === 'balance-sheet'
-                    ? `${filteredRows.length}/${rows.length}`
-                    : `${visibleVariablesRows.length}/${allVariablesRows.length}`}
+                    ? rows.length
+                    : allVariablesRows.length}
                 </strong>
               </span>
               <span className="hidden sm:inline" aria-hidden="true">

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
-  CheckCircle2,
   ClipboardCheck,
   ExternalLink,
   FileText,
@@ -20,8 +19,6 @@ import type {
   MemberSummary,
   ProfileChangeRequest,
   PublicUser,
-  UserRole,
-  UserStatus,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';

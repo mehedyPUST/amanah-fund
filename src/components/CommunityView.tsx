@@ -50,7 +50,6 @@ import type {
   CommunityPostLinkKind,
   CommunityReactionType,
   ConversationThreadSummary,
-  FundConfig,
   PrivateMessage,
   PublicUser,
   UserRole,
@@ -64,7 +63,7 @@ import {
   MAX_COMMUNITY_POST_LINKS,
   normalizeCommunityLinkUrl,
 } from '../utils/communityLinks.ts';
-import { formatDateTime, formatMoney } from '../utils/format.ts';
+import { formatDateTime } from '../utils/format.ts';
 import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import {
@@ -75,7 +74,6 @@ import {
 
 interface CommunityViewProps {
   user: PublicUser;
-  currency?: FundConfig['currency'];
   onUnreadDmChange?: (count: number) => void;
   onRefreshWorkspace?: () => Promise<unknown>;
   onViewMemberProfile?: (memberId: string) => void;
@@ -188,7 +186,6 @@ function AvatarBadge({
 
 export function CommunityView({
   user,
-  currency = 'BDT',
   onUnreadDmChange,
   onRefreshWorkspace,
   onViewMemberProfile,

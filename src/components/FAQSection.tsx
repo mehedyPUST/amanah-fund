@@ -585,7 +585,6 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           {filteredItems.map((item, idx) => {
             const isOpen = Boolean(openIds[item.id]);
             const panelId = `${item.id}-panel`;
-            const meta = FAQ_CATEGORY_META[item.category] || FAQ_CATEGORY_META.membership;
             const hue = FAQ_CARD_HUE_CYCLE[idx % FAQ_CARD_HUE_CYCLE.length];
             const itemNumber = faqNumberMap.get(item.id) || `${String(idx + 1).padStart(2, '0')}.`;
 

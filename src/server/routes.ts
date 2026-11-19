@@ -9774,7 +9774,7 @@ apiRouter.post(
       }
 
       const now = new Date().toISOString();
-      let createdFaq: FaqItem | null = null;
+      let createdFaq = null as FaqItem | null;
       let sortedFaqs: FaqItem[] = [];
 
       await updateVaultState((draft) => {

@@ -25,7 +25,6 @@ import {
   HelpCircle,
   Lock,
   Mail,
-  MailCheck,
   RefreshCw,
   RotateCcw,
   Send,

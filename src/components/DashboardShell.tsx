@@ -616,6 +616,7 @@ export function DashboardShell() {
   /** Gate the loan application modal on eligibility BEFORE open.
    *  Once open, the form submits without re-checking eligibility client-side. */
   const openLoanRequestModal = useCallback(async () => {
+    if (loanGateChecking) return;
     if (!user || user.role === 'admin') {
       setLoanGateNotice({
         title: tDash('alerts.adminsCannotBorrow'),
@@ -678,7 +679,7 @@ export function DashboardShell() {
     } finally {
       setLoanGateChecking(false);
     }
-  }, [user, overview, loans, tDash]);
+  }, [loanGateChecking, user, overview, loans, tDash]);
 
   const openManagerDeskTab = useCallback(
     (tab: ManagerDeskTab) => {
@@ -929,8 +930,6 @@ export function DashboardShell() {
       </div>
     );
   }
-
-  const activeNavMeta = visibleNav.find((n) => n.id === activeSection) || visibleNav[0];
 
   const pendingBadgeCount = (sectionId: DashboardSectionId): number => {
     if (!overview) return 0;
@@ -1968,7 +1967,6 @@ export function DashboardShell() {
                 <section id="community" className="space-y-4 pb-8">
                   <CommunityView
                     user={user}
-                    currency={overview?.config.currency}
                     onUnreadDmChange={(nextCount) => {
                       queryClient.setQueryData<{
                         threads: unknown[];

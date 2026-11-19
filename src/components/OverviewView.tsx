@@ -369,7 +369,7 @@ export function OverviewView({
               </div>
               <p className="text-xs text-red-800 dark:text-red-300">
                 {!isAdmin && !personal.eligibility.noOverdueInstallments
-                  ? tOv('overdueMemberNotice', { count: personal.eligibility.overdueCount })
+                  ? tOv('overdueMemberNotice', { count: personal.eligibility.overdueCount ?? 0 })
                   : tOv('overdueCoopNotice')}
               </p>
             </div>

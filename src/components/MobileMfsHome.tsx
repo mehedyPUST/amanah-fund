@@ -897,7 +897,7 @@ export function MobileMfsHome({
                   <div className="text-xs font-semibold text-red-900 dark:text-red-200 truncate">
                     {isAdmin
                       ? tDash('alerts.overdueCoopInstallments', { count: treasury.overdueInstallmentsCount })
-                      : tDash('alerts.overdueInstallments', { count: personal.eligibility.overdueCount })}
+                      : tDash('alerts.overdueInstallments', { count: personal.eligibility.overdueCount ?? 0 })}
                   </div>
                   <div className="text-[11px] text-red-800 dark:text-red-300 truncate">
                     {isAdmin ? tDash('alerts.tapInspectBorrowers') : tDash('alerts.tapSettleLoan')}

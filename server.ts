@@ -88,6 +88,7 @@ async function startServer() {
         return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
       }
       nextFn(err);
+      return;
     }
   );
 
