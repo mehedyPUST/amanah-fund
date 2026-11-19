@@ -45,7 +45,6 @@ import type {
 } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
-import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { StatusText } from './StatusText.tsx';
@@ -754,18 +753,11 @@ export function MobileMfsHome({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <AmanahLogo
-              size="sm"
-              decorative
-              className="ring-1 ring-white/25 shadow-sm"
-            />
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
-              <div className="text-[11px] text-emerald-100/85 truncate mt-0.5">
-                {user.name} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-                {translateRoleLabel(user.role, locale)}
-              </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
+            <div className="text-[11px] text-emerald-100/85 truncate mt-0.5">
+              {user.name} · <span className="font-mono">{user.memberCode}</span> ·{' '}
+              {translateRoleLabel(user.role, locale)}
             </div>
           </div>
 
