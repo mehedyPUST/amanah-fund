@@ -284,7 +284,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       aria-labelledby="faq-section-heading"
       className={`scroll-mt-4 w-full space-y-6 sm:space-y-7 text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-8'
+          ? 'amanah-card-teal backdrop-blur-md border rounded-2xl shadow-xs p-6 sm:p-8'
           : ''
       }`}
     >
@@ -315,7 +315,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={openCreateComposer}
-              className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{tFaq('addFaq')}</span>

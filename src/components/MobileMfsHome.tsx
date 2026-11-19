@@ -197,11 +197,11 @@ function MfsGridTileButton({
       transition={MFS_TAP_SPRING}
       className={`${
         compact ? 'mfs-tile-compact gap-1.5' : 'mfs-tile gap-2'
-      } rounded-2xl bg-white dark:bg-slate-900 border ${
+      } rounded-2xl bg-gradient-to-b from-white to-emerald-50/45 dark:from-slate-900 dark:to-slate-900/95 border ${
         compact
-          ? 'border-slate-200/75 dark:border-slate-800/80'
-          : 'border-slate-200/80 dark:border-slate-800/80'
-      } hover:border-emerald-300/80 dark:hover:border-emerald-700/70 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner shadow-2xs flex flex-col items-center justify-center transition-colors cursor-pointer`}
+          ? 'border-emerald-200/75 dark:border-emerald-800/50'
+          : 'border-emerald-200/85 dark:border-emerald-800/55'
+      } hover:border-emerald-400 dark:hover:border-emerald-500/75 active:bg-emerald-50/60 dark:active:bg-slate-800/90 active:shadow-inner shadow-xs flex flex-col items-center justify-center transition-colors cursor-pointer`}
     >
       <span
         className={`mfs-tile-icon-box relative rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
@@ -454,8 +454,8 @@ export function MobileMfsHome({
           label: tNav('usersAndRoles'),
           Icon: UserCheck,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
           badge: pendingBadgeCount('member-registry'),
           onClick: () => onNavigate('member-registry'),
         },
@@ -464,8 +464,8 @@ export function MobileMfsHome({
           label: tNav('governanceDesk'),
           Icon: ClipboardCheck,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
           badge: pendingBadgeCount('manager-desk'),
           onClick: () => onNavigate('manager-desk'),
         },
@@ -474,8 +474,8 @@ export function MobileMfsHome({
           label: tNav('siteSettings'),
           Icon: Settings,
           iconBgClass:
-            'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
-          iconColorClass: 'text-indigo-700 dark:text-indigo-400',
+            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
           badge: pendingBadgeCount('site-settings'),
           onClick: () => onNavigate('site-settings'),
         },
@@ -484,8 +484,8 @@ export function MobileMfsHome({
           label: tNav('community'),
           Icon: MessageSquare,
           iconBgClass:
-            'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
+            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+          iconColorClass: 'text-teal-600 dark:text-teal-300',
           badge: pendingBadgeCount('community'),
           onClick: () => onNavigate('community'),
         },
@@ -494,8 +494,8 @@ export function MobileMfsHome({
           label: tNav('members'),
           Icon: Users,
           iconBgClass:
-            'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
-          iconColorClass: 'text-sky-700 dark:text-sky-400',
+            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+          iconColorClass: 'text-sky-600 dark:text-sky-300',
           onClick: () => onNavigate('members'),
         },
         {
@@ -503,8 +503,8 @@ export function MobileMfsHome({
           label: tNav('voting'),
           Icon: Vote,
           iconBgClass:
-            'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
-          iconColorClass: 'text-violet-700 dark:text-violet-400',
+            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+          iconColorClass: 'text-violet-600 dark:text-violet-300',
           badge: pendingBadgeCount('ballot'),
           onClick: () => onNavigate('ballot'),
         },
@@ -515,8 +515,8 @@ export function MobileMfsHome({
           label: tNav('contributions'),
           Icon: CreditCard,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
           badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
           onClick: () => onNavigate('monthly-contribution'),
         },
@@ -525,8 +525,8 @@ export function MobileMfsHome({
           label: tNav('requestLoan'),
           Icon: FilePlus2,
           iconBgClass:
-            'bg-teal-50 dark:bg-teal-950/50 border-teal-200/80 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
+            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+          iconColorClass: 'text-teal-600 dark:text-teal-300',
           onClick: () => {
             if (onOpenLoanModal) {
               onOpenLoanModal();
@@ -540,8 +540,8 @@ export function MobileMfsHome({
           label: tNav('myAmanah'),
           Icon: Wallet,
           iconBgClass:
-            'bg-violet-50 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60',
-          iconColorClass: 'text-violet-700 dark:text-violet-400',
+            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+          iconColorClass: 'text-violet-600 dark:text-violet-300',
           onClick: () => onNavigate('my-amanah'),
         },
         {
@@ -549,8 +549,8 @@ export function MobileMfsHome({
           label: tNav('community'),
           Icon: MessageSquare,
           iconBgClass:
-            'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200/80 dark:border-indigo-800/60',
-          iconColorClass: 'text-indigo-700 dark:text-indigo-400',
+            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
           badge: pendingBadgeCount('community'),
           onClick: () => onNavigate('community'),
         },
@@ -559,8 +559,8 @@ export function MobileMfsHome({
           label: tNav('members'),
           Icon: Users,
           iconBgClass:
-            'bg-sky-50 dark:bg-sky-950/50 border-sky-200/80 dark:border-sky-800/60',
-          iconColorClass: 'text-sky-700 dark:text-sky-400',
+            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+          iconColorClass: 'text-sky-600 dark:text-sky-300',
           onClick: () => onNavigate('members'),
         },
         {
@@ -568,8 +568,8 @@ export function MobileMfsHome({
           label: tNav('voting'),
           Icon: Vote,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
           badge: pendingBadgeCount('ballot'),
           onClick: () => onNavigate('ballot'),
         },
@@ -583,8 +583,8 @@ export function MobileMfsHome({
           label: tNav('transactions'),
           Icon: History,
           iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
+            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
           onClick: () => onNavigate('transaction-history'),
         },
         {
@@ -592,8 +592,8 @@ export function MobileMfsHome({
           label: tNav('statistics'),
           Icon: BarChart3,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
           onClick: () => onNavigate('statistics'),
         },
         {
@@ -601,8 +601,8 @@ export function MobileMfsHome({
           label: tNav('balanceSheet'),
           Icon: FileSpreadsheet,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+          iconColorClass: 'text-teal-600 dark:text-teal-300',
           onClick: () => onNavigate('balance-sheet'),
         },
         {
@@ -610,8 +610,8 @@ export function MobileMfsHome({
           label: tNav('managerCycle'),
           Icon: CalendarClock,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
           onClick: () => onNavigate('manager-cycle'),
         },
         {
@@ -619,8 +619,8 @@ export function MobileMfsHome({
           label: tNav('notifications'),
           Icon: Bell,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+          iconColorClass: 'text-orange-600 dark:text-orange-300',
           badge: pendingBadgeCount('notification'),
           onClick: () => onNavigate('notification'),
         },
@@ -629,8 +629,8 @@ export function MobileMfsHome({
           label: tNav('siteActivity'),
           Icon: Activity,
           iconBgClass:
-            'bg-teal-50 dark:bg-teal-950/40 border-teal-200/70 dark:border-teal-800/60',
-          iconColorClass: 'text-teal-700 dark:text-teal-400',
+            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+          iconColorClass: 'text-violet-600 dark:text-violet-300',
           onClick: () => onNavigate('site-activity'),
         },
         {
@@ -638,8 +638,8 @@ export function MobileMfsHome({
           label: tNav('profile'),
           Icon: User,
           iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
+            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+          iconColorClass: 'text-rose-600 dark:text-rose-300',
           onClick: () => onNavigate('my-profile'),
         },
       ]
@@ -649,8 +649,8 @@ export function MobileMfsHome({
           label: tNav('qardHasan'),
           Icon: HandCoins,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
           onClick: () => onNavigate('quard-hasan'),
         },
         {
@@ -658,8 +658,8 @@ export function MobileMfsHome({
           label: tNav('transactions'),
           Icon: History,
           iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
+            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
           onClick: () => onNavigate('transaction-history'),
         },
         {
@@ -667,8 +667,8 @@ export function MobileMfsHome({
           label: tNav('statistics'),
           Icon: BarChart3,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
           onClick: () => onNavigate('statistics'),
         },
         {
@@ -676,8 +676,8 @@ export function MobileMfsHome({
           label: tNav('balanceSheet'),
           Icon: FileSpreadsheet,
           iconBgClass:
-            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/70 dark:border-emerald-800/60',
-          iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+          iconColorClass: 'text-teal-600 dark:text-teal-300',
           onClick: () => onNavigate('balance-sheet'),
         },
         {
@@ -685,8 +685,8 @@ export function MobileMfsHome({
           label: tNav('managerCycle'),
           Icon: CalendarClock,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+          iconColorClass: 'text-violet-600 dark:text-violet-300',
           onClick: () => onNavigate('manager-cycle'),
         },
         {
@@ -694,8 +694,8 @@ export function MobileMfsHome({
           label: tNav('notifications'),
           Icon: Bell,
           iconBgClass:
-            'bg-amber-50 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/60',
-          iconColorClass: 'text-amber-700 dark:text-amber-400',
+            'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+          iconColorClass: 'text-orange-600 dark:text-orange-300',
           badge: pendingBadgeCount('notification'),
           onClick: () => onNavigate('notification'),
         },
@@ -704,8 +704,8 @@ export function MobileMfsHome({
           label: tNav('profile'),
           Icon: User,
           iconBgClass:
-            'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/70',
-          iconColorClass: 'text-slate-700 dark:text-slate-200',
+            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+          iconColorClass: 'text-rose-600 dark:text-rose-300',
           onClick: () => onNavigate('my-profile'),
         },
         ...(isManager
@@ -715,8 +715,8 @@ export function MobileMfsHome({
                 label: tNav('managerDesk'),
                 Icon: ClipboardCheck,
                 iconBgClass:
-                  'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60',
-                iconColorClass: 'text-amber-700 dark:text-amber-400',
+                  'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+                iconColorClass: 'text-amber-600 dark:text-amber-300',
                 badge: pendingBadgeCount('manager-desk'),
                 onClick: () => onNavigate('manager-desk'),
               },
@@ -725,8 +725,8 @@ export function MobileMfsHome({
                 label: tNav('memberRegistry'),
                 Icon: UserCheck,
                 iconBgClass:
-                  'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60',
-                iconColorClass: 'text-emerald-700 dark:text-emerald-400',
+                  'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+                iconColorClass: 'text-sky-600 dark:text-sky-300',
                 badge: pendingBadgeCount('member-registry'),
                 onClick: () => onNavigate('member-registry'),
               },
@@ -741,7 +741,7 @@ export function MobileMfsHome({
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.18 }}
-        className="rounded-2xl bg-gradient-to-br from-emerald-700 via-teal-700 to-emerald-900 text-white p-4 shadow-sm space-y-3"
+        className="rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white p-4 shadow-lg shadow-emerald-600/25 border border-emerald-400/40 space-y-3"
       >
         <div className="flex items-center justify-between gap-2 text-[11px] text-emerald-100/85">
           <span className="truncate font-medium">
@@ -956,7 +956,7 @@ export function MobileMfsHome({
                       loanProgress.loan.status === 'pending_vote' ? 'ballot' : 'quard-hasan'
                     )
                   }
-                  className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[36px] px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <span>
                     {loanProgress.loan.status === 'pending_vote'

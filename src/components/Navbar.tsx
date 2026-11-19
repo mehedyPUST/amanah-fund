@@ -80,7 +80,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/85 dark:bg-slate-900/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-4">
+      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-xl sm:rounded-2xl border border-emerald-200/85 dark:border-emerald-800/60 shadow-sm shadow-emerald-500/10 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-4">
         {/* Zone 1: Clean single-element Brand Wordmark */}
         <Link
           href="/"
@@ -111,8 +111,8 @@ export function Navbar() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative py-1 text-[13px] font-medium transition-colors duration-150 whitespace-nowrap shrink-0 ${
                   active
-                    ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300'
                 }`}
               >
                 <span>{link.label}</span>
@@ -120,7 +120,7 @@ export function Navbar() {
                   <motion.span
                     layoutId="public-navbar-underline"
                     transition={{ type: 'spring', stiffness: 460, damping: 36 }}
-                    className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-emerald-600 dark:bg-emerald-400"
+                    className="absolute left-0 right-0 -bottom-0.5 h-[2.5px] rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
                     aria-hidden="true"
                   />
                 )}
@@ -181,7 +181,7 @@ export function Navbar() {
                   setMobileBrowseMode(false);
                   setMobileOpen(false);
                 }}
-                className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('dashboard')}</span>
@@ -201,13 +201,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-2.5 h-9 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors duration-150 whitespace-nowrap shrink-0"
+                className="hidden sm:inline-flex items-center px-2.5 h-9 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 {tNav('signIn')}
               </Link>
               <Link
                 href="/signup"
-                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors duration-150 whitespace-nowrap shrink-0"
+                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <span>{tNav('joinAmanah')}</span>
                 <ArrowRight
@@ -290,7 +290,7 @@ export function Navbar() {
                       setMobileBrowseMode(false);
                       setMobileOpen(false);
                     }}
-                    className="w-full py-2.5 px-3 rounded-lg bg-emerald-700 text-white text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap"
+                    className="w-full py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
                     <span>{tNav('dashboard')}</span>
@@ -299,7 +299,7 @@ export function Navbar() {
                     type="button"
                     onClick={() => void handleSignOut()}
                     disabled={signingOut}
-                    className="w-full py-2.5 px-3 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                    className="w-full py-2.5 px-3 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap"
                   >
                     <LogOut className="w-4 h-4" aria-hidden="true" />
                     <span>{signingOut ? tNav('signingOut') : tNav('signOut')}</span>
@@ -317,7 +317,7 @@ export function Navbar() {
                   <Link
                     href="/signup"
                     onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center py-2.5 px-3 rounded-lg bg-emerald-700 text-white text-sm font-medium"
+                    className="block w-full text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-semibold shadow-sm"
                   >
                     {tNav('joinAmanah')}
                   </Link>

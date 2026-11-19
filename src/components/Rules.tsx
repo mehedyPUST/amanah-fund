@@ -329,17 +329,17 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                         role="tab"
                         aria-selected={selected}
                         onClick={() => setLocale(option.id)}
-                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                           selected
-                            ? 'text-slate-900 dark:text-white'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'text-white'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300'
                         }`}
                       >
                         {selected && (
                           <motion.span
                             layoutId="charter-language-toggle"
                             transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                            className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                            className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xs border border-emerald-500/70"
                             aria-hidden="true"
                           />
                         )}
@@ -375,17 +375,17 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                         role="tab"
                         aria-selected={selected}
                         onClick={() => setCardLayout(option.id)}
-                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                           selected
-                            ? 'text-slate-900 dark:text-white'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'text-white'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300'
                         }`}
                       >
                         {selected && (
                           <motion.span
                             layoutId="charter-layout-toggle"
                             transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                            className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                            className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xs border border-emerald-500/70"
                             aria-hidden="true"
                           />
                         )}

@@ -86,7 +86,7 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>

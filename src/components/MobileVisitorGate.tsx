@@ -264,7 +264,7 @@ export function MobileVisitorGate() {
               className="w-full max-w-sm max-h-[92dvh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl"
             >
               {/* Brand Header */}
-              <div className="bg-gradient-to-br from-emerald-700 via-teal-700 to-emerald-900 text-white px-5 py-4">
+              <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white px-5 py-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
                     <AmanahLogo
@@ -376,7 +376,7 @@ export function MobileVisitorGate() {
                       <button
                         type="submit"
                         disabled={activating}
-                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                         <span>
@@ -438,7 +438,7 @@ export function MobileVisitorGate() {
                         </p>
                         <Link
                           href="/signup"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs"
                         >
                           <span>{tAuth('signInPage.createFirstAdmin')}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -529,7 +529,7 @@ export function MobileVisitorGate() {
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
                       >
                         <Lock className="w-4 h-4" aria-hidden="true" />
                         <span>{submitting ? tAuth('signingIn') : tAuth('signIn')}</span>

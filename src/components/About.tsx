@@ -27,9 +27,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p1Desc'),
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+        'bg-emerald-500/18 dark:bg-emerald-400/20 border border-emerald-400/70 dark:border-emerald-400/40 text-emerald-700 dark:text-emerald-300',
       badgeClass:
-        'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+        'bg-emerald-500/15 dark:bg-emerald-400/20 border border-emerald-400/60 text-emerald-800 dark:text-emerald-200',
     },
     {
       key: 'p2',
@@ -39,9 +39,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p2Desc'),
       hue: 'violet',
       iconBoxClass:
-        'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+        'bg-violet-500/18 dark:bg-violet-400/20 border border-violet-400/70 dark:border-violet-400/40 text-violet-700 dark:text-violet-300',
       badgeClass:
-        'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
+        'bg-violet-500/15 dark:bg-violet-400/20 border border-violet-400/60 text-violet-800 dark:text-violet-200',
     },
     {
       key: 'p3',
@@ -51,9 +51,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p3Desc'),
       hue: 'teal',
       iconBoxClass:
-        'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
+        'bg-teal-500/18 dark:bg-teal-400/20 border border-teal-400/70 dark:border-teal-400/40 text-teal-700 dark:text-teal-300',
       badgeClass:
-        'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
+        'bg-teal-500/15 dark:bg-teal-400/20 border border-teal-400/60 text-teal-800 dark:text-teal-200',
     },
     {
       key: 'p4',
@@ -63,9 +63,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p4Desc'),
       hue: 'amber',
       iconBoxClass:
-        'bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 text-amber-700 dark:text-amber-300',
+        'bg-amber-500/18 dark:bg-amber-400/20 border border-amber-400/70 dark:border-amber-400/40 text-amber-700 dark:text-amber-300',
       badgeClass:
-        'bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300',
+        'bg-amber-500/15 dark:bg-amber-400/20 border border-amber-400/60 text-amber-800 dark:text-amber-200',
     },
     {
       key: 'p5',
@@ -73,11 +73,11 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: KeyRound,
       title: t('p5Title'),
       description: t('p5Desc'),
-      hue: 'violet',
+      hue: 'sky',
       iconBoxClass:
-        'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+        'bg-sky-500/18 dark:bg-sky-400/20 border border-sky-400/70 dark:border-sky-400/40 text-sky-700 dark:text-sky-300',
       badgeClass:
-        'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
+        'bg-sky-500/15 dark:bg-sky-400/20 border border-sky-400/60 text-sky-800 dark:text-sky-200',
     },
   ];
 
@@ -85,7 +85,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'amanah-card-sky backdrop-blur-md border rounded-2xl shadow-xs p-6 sm:p-7'
           : ''
       }`}
     >

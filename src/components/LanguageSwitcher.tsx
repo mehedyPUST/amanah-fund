@@ -79,22 +79,22 @@ export function LanguageSwitcher({
                 ? active
                   ? 'text-emerald-950 font-semibold'
                   : 'text-white/85 hover:text-white'
-                : active
-                  ? 'text-emerald-800 dark:text-emerald-300 font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {active && (
-              <motion.span
-                layoutId={layoutId}
-                transition={{ type: 'spring', stiffness: 460, damping: 34 }}
-                className={`absolute inset-0 rounded-md shadow-2xs ${
-                  surface === 'inverted'
-                    ? 'bg-white'
-                    : 'bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-700/60'
-                }`}
-                aria-hidden="true"
-              />
+                  : active
+                    ? 'text-white font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300'
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId={layoutId}
+                  transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+                  className={`absolute inset-0 rounded-md shadow-xs ${
+                    surface === 'inverted'
+                      ? 'bg-white'
+                      : 'bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-500/70'
+                  }`}
+                  aria-hidden="true"
+                />
             )}
             <span lang={opt.id} className="relative z-10 leading-none">
               {opt.label}

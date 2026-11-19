@@ -1284,7 +1284,7 @@ export function SignUpForm() {
                 disabled={
                   submitting || photoUploading || agreementUploading || anyNomineePhotoUploading
                 }
-                className="px-6 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? t('submittingApp') : t('submitApp')}</span>

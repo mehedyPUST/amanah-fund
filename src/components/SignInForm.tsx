@@ -465,7 +465,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={activating}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   <span>
@@ -512,7 +512,7 @@ export function SignInForm() {
                   </div>
                   <Link
                     href="/signup"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
                   >
                     <span>{tAuth('signInPage.createFirstAdmin')}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -619,7 +619,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium shadow-xs transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <Lock className="w-4 h-4" aria-hidden="true" />
                   <span>{loading ? tAuth('signingIn') : tAuth('signIn')}</span>

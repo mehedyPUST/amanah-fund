@@ -187,7 +187,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('site-settings')}
-                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
                 <span>{tNav('siteSettings')}</span>
                 <ArrowRight
@@ -199,7 +199,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
+                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
               >
                 <span>{tNav('contributions')}</span>
                 <ArrowRight
@@ -418,7 +418,7 @@ export function OverviewView({
             <span>{tOv('amanahHeightTitle')}</span>
             <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-300">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -438,7 +438,7 @@ export function OverviewView({
             <span>{t('kpi.currentBalance')}</span>
             <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-violet-700 dark:text-violet-300">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -455,7 +455,7 @@ export function OverviewView({
             <span>{tOv('qardHasanTotalCurrent')}</span>
             <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-amber-700 dark:text-amber-300">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -479,7 +479,7 @@ export function OverviewView({
             <span>{tOv('repaymentsReturnedPlus')}</span>
             <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-teal-700 dark:text-teal-300">
             {formatMoney(treasury.totalRepaid, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">

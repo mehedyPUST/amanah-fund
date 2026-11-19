@@ -3262,7 +3262,7 @@ export function BalanceSheetView({
               onClick={() => setIsFullScreen(true)}
               aria-label="Full screen (f)"
               aria-pressed={false}
-              className="h-10 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white border border-emerald-600/40 dark:border-emerald-400/30 shadow-[0_10px_28px_-6px_rgba(5,150,105,0.48)] hover:shadow-[0_14px_32px_-6px_rgba(5,150,105,0.58)] inline-flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+              className="h-10 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white border border-emerald-400/50 shadow-[0_10px_28px_-6px_rgba(16,185,129,0.55)] hover:shadow-[0_14px_32px_-6px_rgba(16,185,129,0.68)] inline-flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             >
               <Maximize
                 className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"

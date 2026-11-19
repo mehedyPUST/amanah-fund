@@ -169,19 +169,24 @@ const SIDEBAR_TONE_STYLES: Record<
     activeText: string;
     activeIcon: string;
     eyebrowText: string;
+    eyebrowLine: string;
   }
 > = {
   emerald: {
-    pillBg: 'bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-900/60',
-    activeText: 'text-emerald-800 dark:text-emerald-300 font-semibold',
-    activeIcon: 'text-emerald-700 dark:text-emerald-400',
-    eyebrowText: 'text-emerald-700 dark:text-emerald-400',
+    pillBg:
+      'bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/10 dark:from-emerald-500/25 dark:via-teal-500/20 dark:to-cyan-500/10 border border-emerald-400/75 dark:border-emerald-400/55 shadow-xs shadow-emerald-500/15',
+    activeText: 'text-emerald-800 dark:text-emerald-200 font-semibold',
+    activeIcon: 'text-emerald-600 dark:text-emerald-300',
+    eyebrowText: 'text-emerald-700 dark:text-emerald-300',
+    eyebrowLine: 'from-emerald-400/75 via-teal-300/40 to-transparent dark:from-emerald-500/55 dark:via-teal-500/25',
   },
   amber: {
-    pillBg: 'bg-amber-50/90 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-900/60',
-    activeText: 'text-amber-800 dark:text-amber-300 font-semibold',
-    activeIcon: 'text-amber-700 dark:text-amber-400',
-    eyebrowText: 'text-amber-700 dark:text-amber-400',
+    pillBg:
+      'bg-gradient-to-r from-amber-500/22 via-orange-500/15 to-yellow-500/10 dark:from-amber-500/25 dark:via-orange-500/18 dark:to-yellow-500/10 border border-amber-400/75 dark:border-amber-400/55 shadow-xs shadow-amber-500/15',
+    activeText: 'text-amber-800 dark:text-amber-200 font-semibold',
+    activeIcon: 'text-amber-600 dark:text-amber-300',
+    eyebrowText: 'text-amber-700 dark:text-amber-300',
+    eyebrowLine: 'from-amber-400/75 via-orange-300/40 to-transparent dark:from-amber-500/55 dark:via-orange-500/25',
   },
 };
 
@@ -1318,14 +1323,14 @@ export function DashboardShell() {
   return (
     <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/88 dark:bg-slate-900/82 backdrop-blur-md rounded-2xl border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/10 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <AmanahLogo size="sm" decorative />
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               {tCommon('brandName')}
             </div>
-            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
+            <div className="text-[11px] bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent font-semibold truncate">
               {tCommon('dashboard')}
             </div>
           </div>
@@ -1333,7 +1338,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/85 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/8 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <AmanahLogo size="xs" className="lg:hidden" decorative />
           <div className="flex items-center gap-2 text-sm min-w-0">
@@ -1428,7 +1433,7 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/88 dark:bg-slate-900/82 backdrop-blur-md rounded-2xl border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/10">
         <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label={tNav('primaryNav')}>
           {renderDashboardNavItems(false)}
         </nav>
@@ -1504,14 +1509,14 @@ export function DashboardShell() {
               </div>
 
               {/* Drawer Top Identity Card */}
-              <div className="p-3 border-b border-slate-200/80 dark:border-slate-800/80 shrink-0 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2.5">
+              <div className="p-3 border-b border-emerald-200/80 dark:border-emerald-800/50 shrink-0 bg-gradient-to-br from-emerald-50 via-teal-50/70 to-cyan-50/50 dark:from-emerald-950/45 dark:via-teal-950/30 dark:to-slate-900 space-y-2.5">
                 <button
                   type="button"
                   onClick={() => navigateToPage('my-profile', true)}
                   className="w-full min-h-[48px] text-left rounded-xl p-2 hover:bg-white/80 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between gap-2.5 cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-9 h-9 rounded-full bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/25">
                       {(user.name || 'AM')
                         .split(/\s+/)
                         .filter(Boolean)
@@ -1581,7 +1586,7 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/80 lg:dark:bg-slate-900/75 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/80 lg:dark:border-slate-800/80 lg:shadow-2xs overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/84 lg:dark:bg-slate-900/80 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-emerald-200/85 lg:dark:border-emerald-800/55 lg:shadow-sm lg:shadow-emerald-500/10 overflow-hidden"
       >
         <div
           ref={mainScrollRef}
@@ -2299,11 +2304,11 @@ function SectionEyebrow({
   label: string;
   tone?: SectionAccentTone;
 }) {
-  const toneClass = SIDEBAR_TONE_STYLES[tone]?.eyebrowText || SIDEBAR_TONE_STYLES.emerald.eyebrowText;
+  const toneStyle = SIDEBAR_TONE_STYLES[tone] || SIDEBAR_TONE_STYLES.emerald;
   return (
     <div className="hidden lg:flex items-center gap-3">
-      <h2 className={`text-xs font-semibold tracking-wide ${toneClass}`}>{label}</h2>
-      <div className="h-px flex-1 bg-slate-200/80 dark:bg-slate-800/80" aria-hidden="true" />
+      <h2 className={`text-xs font-semibold tracking-wide ${toneStyle.eyebrowText}`}>{label}</h2>
+      <div className={`h-px flex-1 bg-gradient-to-r ${toneStyle.eyebrowLine}`} aria-hidden="true" />
     </div>
   );
 }

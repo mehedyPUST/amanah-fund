@@ -94,184 +94,209 @@ html.dark {
 
   input[type="checkbox"],
   input[type="radio"] {
-    accent-color: #059669;
+    accent-color: #10b981;
   }
 }
 
 .amanah-ambient-canvas {
-  background-color: #f4f7f6;
+  background-color: #eefaf5;
   background-image:
-    radial-gradient(1100px 620px at 8% -6%, rgba(16, 185, 129, 0.08), transparent 62%),
-    radial-gradient(920px 580px at 94% 4%, rgba(168, 85, 247, 0.05), transparent 60%),
-    radial-gradient(880px 520px at 52% 102%, rgba(20, 184, 166, 0.06), transparent 64%),
-    linear-gradient(135deg, #f3f7f5 0%, #f6f8fa 52%, #f4f7f6 100%);
+    radial-gradient(1120px 640px at 6% -6%, rgba(16, 185, 129, 0.22), transparent 58%),
+    radial-gradient(960px 600px at 94% 2%, rgba(139, 92, 246, 0.16), transparent 56%),
+    radial-gradient(880px 560px at 52% 102%, rgba(6, 182, 212, 0.18), transparent 60%),
+    radial-gradient(640px 440px at 84% 72%, rgba(245, 158, 11, 0.11), transparent 62%),
+    linear-gradient(135deg, #ecfbf5 0%, #f1f8ff 50%, #f5f2ff 100%);
 }
 
 html.dark .amanah-ambient-canvas {
-  background-color: #050a12;
+  background-color: #040b14;
   background-image:
-    radial-gradient(1150px 680px at 6% -8%, rgba(16, 185, 129, 0.18), transparent 60%),
-    radial-gradient(960px 620px at 96% 6%, rgba(139, 92, 246, 0.1), transparent 58%),
-    radial-gradient(880px 540px at 52% 102%, rgba(20, 184, 166, 0.12), transparent 64%),
-    linear-gradient(135deg, #04080f 0%, #08131d 52%, #050b12 100%);
+    radial-gradient(1180px 700px at 6% -8%, rgba(16, 185, 129, 0.28), transparent 58%),
+    radial-gradient(980px 640px at 96% 4%, rgba(139, 92, 246, 0.22), transparent 56%),
+    radial-gradient(920px 560px at 50% 102%, rgba(6, 182, 212, 0.20), transparent 62%),
+    radial-gradient(640px 460px at 85% 76%, rgba(245, 158, 11, 0.10), transparent 64%),
+    linear-gradient(135deg, #030912 0%, #071923 50%, #0b0f22 100%);
 }
 
-/* Signature crisp-outline + very-light tinted gradient cards */
+/* Signature crisp-outline + vivid tinted gradient cards */
 .amanah-card-emerald {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(247, 254, 250, 0.96) 55%,
-    rgba(232, 253, 243, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(232, 253, 243, 0.94) 52%,
+    rgba(198, 248, 224, 0.92) 100%
   );
-  border-color: rgba(52, 211, 153, 0.65);
+  border-color: rgba(16, 185, 129, 0.72);
+  box-shadow: 0 8px 24px -14px rgba(16, 185, 129, 0.34);
 }
 .amanah-card-emerald:hover {
-  border-color: rgba(16, 185, 129, 0.88);
+  border-color: rgba(5, 150, 105, 0.96);
+  box-shadow: 0 12px 30px -12px rgba(16, 185, 129, 0.45);
 }
 html.dark .amanah-card-emerald {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(6, 78, 59, 0.24) 100%
+    rgba(12, 23, 38, 0.94) 0%,
+    rgba(8, 42, 42, 0.88) 55%,
+    rgba(6, 95, 70, 0.42) 100%
   );
-  border-color: rgba(52, 211, 153, 0.34);
+  border-color: rgba(52, 211, 153, 0.50);
+  box-shadow: 0 10px 26px -14px rgba(16, 185, 129, 0.32);
 }
 html.dark .amanah-card-emerald:hover {
-  border-color: rgba(52, 211, 153, 0.6);
+  border-color: rgba(52, 211, 153, 0.82);
+  box-shadow: 0 14px 32px -12px rgba(16, 185, 129, 0.46);
 }
 
 .amanah-card-violet {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(251, 249, 255, 0.96) 55%,
-    rgba(243, 236, 255, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(244, 238, 255, 0.94) 52%,
+    rgba(229, 212, 255, 0.92) 100%
   );
-  border-color: rgba(192, 132, 252, 0.65);
+  border-color: rgba(168, 85, 247, 0.70);
+  box-shadow: 0 8px 24px -14px rgba(147, 51, 234, 0.30);
 }
 .amanah-card-violet:hover {
-  border-color: rgba(168, 85, 247, 0.88);
+  border-color: rgba(147, 51, 234, 0.95);
+  box-shadow: 0 12px 30px -12px rgba(147, 51, 234, 0.42);
 }
 html.dark .amanah-card-violet {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(88, 28, 135, 0.24) 100%
+    rgba(15, 23, 42, 0.94) 0%,
+    rgba(36, 20, 68, 0.88) 55%,
+    rgba(107, 33, 168, 0.40) 100%
   );
-  border-color: rgba(192, 132, 252, 0.34);
+  border-color: rgba(192, 132, 252, 0.50);
+  box-shadow: 0 10px 26px -14px rgba(168, 85, 247, 0.30);
 }
 html.dark .amanah-card-violet:hover {
-  border-color: rgba(192, 132, 252, 0.6);
+  border-color: rgba(192, 132, 252, 0.82);
+  box-shadow: 0 14px 32px -12px rgba(168, 85, 247, 0.45);
 }
 
 .amanah-card-teal {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(246, 254, 253, 0.96) 55%,
-    rgba(230, 253, 250, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(230, 253, 250, 0.94) 52%,
+    rgba(194, 248, 242, 0.92) 100%
   );
-  border-color: rgba(45, 212, 191, 0.65);
+  border-color: rgba(20, 184, 166, 0.72);
+  box-shadow: 0 8px 24px -14px rgba(20, 184, 166, 0.32);
 }
 .amanah-card-teal:hover {
-  border-color: rgba(20, 184, 166, 0.88);
+  border-color: rgba(13, 148, 136, 0.96);
+  box-shadow: 0 12px 30px -12px rgba(20, 184, 166, 0.44);
 }
 html.dark .amanah-card-teal {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(17, 94, 89, 0.24) 100%
+    rgba(12, 24, 40, 0.94) 0%,
+    rgba(10, 44, 52, 0.88) 55%,
+    rgba(15, 118, 110, 0.42) 100%
   );
-  border-color: rgba(45, 212, 191, 0.34);
+  border-color: rgba(45, 212, 191, 0.50);
+  box-shadow: 0 10px 26px -14px rgba(20, 184, 166, 0.30);
 }
 html.dark .amanah-card-teal:hover {
-  border-color: rgba(45, 212, 191, 0.6);
+  border-color: rgba(45, 212, 191, 0.82);
+  box-shadow: 0 14px 32px -12px rgba(20, 184, 166, 0.44);
 }
 
 .amanah-card-amber {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(255, 253, 245, 0.96) 55%,
-    rgba(254, 246, 224, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 247, 224, 0.94) 52%,
+    rgba(253, 234, 184, 0.92) 100%
   );
-  border-color: rgba(251, 191, 36, 0.62);
+  border-color: rgba(245, 158, 11, 0.72);
+  box-shadow: 0 8px 24px -14px rgba(245, 158, 11, 0.30);
 }
 .amanah-card-amber:hover {
-  border-color: rgba(245, 158, 11, 0.85);
+  border-color: rgba(217, 119, 6, 0.95);
+  box-shadow: 0 12px 30px -12px rgba(245, 158, 11, 0.42);
 }
 html.dark .amanah-card-amber {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(120, 53, 15, 0.22) 100%
+    rgba(15, 23, 42, 0.94) 0%,
+    rgba(48, 28, 12, 0.86) 55%,
+    rgba(146, 64, 14, 0.38) 100%
   );
-  border-color: rgba(251, 191, 36, 0.32);
+  border-color: rgba(251, 191, 36, 0.48);
+  box-shadow: 0 10px 26px -14px rgba(245, 158, 11, 0.28);
 }
 html.dark .amanah-card-amber:hover {
-  border-color: rgba(251, 191, 36, 0.56);
+  border-color: rgba(251, 191, 36, 0.78);
+  box-shadow: 0 14px 32px -12px rgba(245, 158, 11, 0.42);
 }
 
 .amanah-card-sky {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(247, 252, 255, 0.96) 55%,
-    rgba(232, 246, 255, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(232, 247, 255, 0.94) 52%,
+    rgba(199, 235, 254, 0.92) 100%
   );
-  border-color: rgba(56, 189, 248, 0.6);
+  border-color: rgba(14, 165, 233, 0.70);
+  box-shadow: 0 8px 24px -14px rgba(14, 165, 233, 0.30);
 }
 .amanah-card-sky:hover {
-  border-color: rgba(14, 165, 233, 0.85);
+  border-color: rgba(2, 132, 199, 0.95);
+  box-shadow: 0 12px 30px -12px rgba(14, 165, 233, 0.42);
 }
 html.dark .amanah-card-sky {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(12, 74, 110, 0.24) 100%
+    rgba(15, 23, 42, 0.94) 0%,
+    rgba(12, 42, 68, 0.88) 55%,
+    rgba(3, 105, 161, 0.40) 100%
   );
-  border-color: rgba(56, 189, 248, 0.32);
+  border-color: rgba(56, 189, 248, 0.48);
+  box-shadow: 0 10px 26px -14px rgba(14, 165, 233, 0.28);
 }
 html.dark .amanah-card-sky:hover {
-  border-color: rgba(56, 189, 248, 0.56);
+  border-color: rgba(56, 189, 248, 0.78);
+  box-shadow: 0 14px 32px -12px rgba(14, 165, 233, 0.42);
 }
 
 .amanah-card-rose {
   background-image: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(255, 248, 249, 0.96) 55%,
-    rgba(255, 236, 240, 0.92) 100%
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 238, 242, 0.94) 52%,
+    rgba(255, 214, 224, 0.92) 100%
   );
-  border-color: rgba(251, 113, 133, 0.62);
+  border-color: rgba(244, 63, 94, 0.70);
+  box-shadow: 0 8px 24px -14px rgba(244, 63, 94, 0.30);
 }
 .amanah-card-rose:hover {
-  border-color: rgba(244, 63, 94, 0.85);
+  border-color: rgba(225, 29, 72, 0.95);
+  box-shadow: 0 12px 30px -12px rgba(244, 63, 94, 0.42);
 }
 html.dark .amanah-card-rose {
   background-image: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(15, 23, 42, 0.88) 55%,
-    rgba(136, 19, 55, 0.22) 100%
+    rgba(15, 23, 42, 0.94) 0%,
+    rgba(58, 18, 36, 0.88) 55%,
+    rgba(159, 18, 57, 0.38) 100%
   );
-  border-color: rgba(251, 113, 133, 0.34);
+  border-color: rgba(251, 113, 133, 0.50);
+  box-shadow: 0 10px 26px -14px rgba(244, 63, 94, 0.28);
 }
 html.dark .amanah-card-rose:hover {
-  border-color: rgba(251, 113, 133, 0.58);
+  border-color: rgba(251, 113, 133, 0.80);
+  box-shadow: 0 14px 32px -12px rgba(244, 63, 94, 0.42);
 }
 
 /*
- * Nested surface: content lives inside Dashboard/Public shells that are already
- * card-like. Flatten child "cards" so we don't stack card-in-card.
+ * Nested surface inside Dashboard/Public shells: keep crisp per-hue vibrant tinting
+ * and bright colored borders without heavy drop-shadow stacking.
  */
-/* Flatten fill only — keep each hue’s colored border + hover */
 [data-surface='app'] :is(
   .amanah-card-emerald,
   .amanah-card-violet,
@@ -280,97 +305,97 @@ html.dark .amanah-card-rose:hover {
   .amanah-card-sky,
   .amanah-card-rose
 ) {
-  background-image: none;
-  background-color: rgba(255, 255, 255, 0.55);
-  box-shadow: none;
-}
-html.dark [data-surface='app'] :is(
-  .amanah-card-emerald,
-  .amanah-card-violet,
-  .amanah-card-teal,
-  .amanah-card-amber,
-  .amanah-card-sky,
-  .amanah-card-rose
-) {
-  background-color: rgba(15, 23, 42, 0.45);
+  box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.08);
 }
 
 [data-surface='app'] .amanah-card-emerald {
-  border-color: rgba(52, 211, 153, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(222, 252, 238, 0.82) 100%);
+  border-color: rgba(16, 185, 129, 0.65);
 }
 [data-surface='app'] .amanah-card-emerald:hover {
-  border-color: rgba(16, 185, 129, 0.88);
+  border-color: rgba(5, 150, 105, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-emerald {
-  border-color: rgba(52, 211, 153, 0.34);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(6, 78, 59, 0.38) 100%);
+  border-color: rgba(52, 211, 153, 0.46);
 }
 html.dark [data-surface='app'] .amanah-card-emerald:hover {
-  border-color: rgba(52, 211, 153, 0.6);
+  border-color: rgba(52, 211, 153, 0.78);
 }
 
 [data-surface='app'] .amanah-card-violet {
-  border-color: rgba(192, 132, 252, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(237, 224, 255, 0.82) 100%);
+  border-color: rgba(168, 85, 247, 0.65);
 }
 [data-surface='app'] .amanah-card-violet:hover {
-  border-color: rgba(168, 85, 247, 0.88);
+  border-color: rgba(147, 51, 234, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-violet {
-  border-color: rgba(192, 132, 252, 0.34);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(88, 28, 135, 0.38) 100%);
+  border-color: rgba(192, 132, 252, 0.46);
 }
 html.dark [data-surface='app'] .amanah-card-violet:hover {
-  border-color: rgba(192, 132, 252, 0.6);
+  border-color: rgba(192, 132, 252, 0.78);
 }
 
 [data-surface='app'] .amanah-card-teal {
-  border-color: rgba(45, 212, 191, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(214, 251, 246, 0.82) 100%);
+  border-color: rgba(20, 184, 166, 0.65);
 }
 [data-surface='app'] .amanah-card-teal:hover {
-  border-color: rgba(20, 184, 166, 0.88);
+  border-color: rgba(13, 148, 136, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-teal {
-  border-color: rgba(45, 212, 191, 0.34);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(17, 94, 89, 0.38) 100%);
+  border-color: rgba(45, 212, 191, 0.46);
 }
 html.dark [data-surface='app'] .amanah-card-teal:hover {
-  border-color: rgba(45, 212, 191, 0.6);
+  border-color: rgba(45, 212, 191, 0.78);
 }
 
 [data-surface='app'] .amanah-card-amber {
-  border-color: rgba(251, 191, 36, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(254, 238, 196, 0.82) 100%);
+  border-color: rgba(245, 158, 11, 0.65);
 }
 [data-surface='app'] .amanah-card-amber:hover {
-  border-color: rgba(245, 158, 11, 0.85);
+  border-color: rgba(217, 119, 6, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-amber {
-  border-color: rgba(251, 191, 36, 0.32);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(120, 53, 15, 0.36) 100%);
+  border-color: rgba(251, 191, 36, 0.46);
 }
 html.dark [data-surface='app'] .amanah-card-amber:hover {
-  border-color: rgba(251, 191, 36, 0.56);
+  border-color: rgba(251, 191, 36, 0.76);
 }
 
 [data-surface='app'] .amanah-card-sky {
-  border-color: rgba(56, 189, 248, 0.5);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(214, 241, 255, 0.82) 100%);
+  border-color: rgba(14, 165, 233, 0.64);
 }
 [data-surface='app'] .amanah-card-sky:hover {
-  border-color: rgba(14, 165, 233, 0.85);
+  border-color: rgba(2, 132, 199, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-sky {
-  border-color: rgba(56, 189, 248, 0.32);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(12, 74, 110, 0.38) 100%);
+  border-color: rgba(56, 189, 248, 0.46);
 }
 html.dark [data-surface='app'] .amanah-card-sky:hover {
-  border-color: rgba(56, 189, 248, 0.56);
+  border-color: rgba(56, 189, 248, 0.76);
 }
 
 [data-surface='app'] .amanah-card-rose {
-  border-color: rgba(251, 113, 133, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 222, 230, 0.82) 100%);
+  border-color: rgba(244, 63, 94, 0.65);
 }
 [data-surface='app'] .amanah-card-rose:hover {
-  border-color: rgba(244, 63, 94, 0.85);
+  border-color: rgba(225, 29, 72, 0.95);
 }
 html.dark [data-surface='app'] .amanah-card-rose {
-  border-color: rgba(251, 113, 133, 0.34);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(136, 19, 55, 0.36) 100%);
+  border-color: rgba(251, 113, 133, 0.48);
 }
 html.dark [data-surface='app'] .amanah-card-rose:hover {
-  border-color: rgba(251, 113, 133, 0.58);
+  border-color: rgba(251, 113, 133, 0.78);
 }
 
 /* Tighter section spacing on small screens inside app surfaces */
@@ -395,13 +420,13 @@ html.dark [data-surface='app'] .amanah-card-rose:hover {
 
 /* Flat panel utility (prefer over nested full cards for new UI) */
 .amanah-panel {
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background-color: rgba(255, 255, 255, 0.68);
   border-radius: 0.75rem;
 }
 html.dark .amanah-panel {
-  border-color: rgba(51, 65, 85, 0.7);
-  background-color: rgba(15, 23, 42, 0.4);
+  border-color: rgba(45, 212, 191, 0.26);
+  background-color: rgba(15, 23, 42, 0.56);
 }
 
 /* Mobile MFS iconic grids: dynamically scale tile height, icon size & gap by viewport width */

@@ -162,7 +162,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'amanah-card-violet backdrop-blur-md border rounded-2xl shadow-xs p-6 sm:p-7'
           : ''
       }`}
     >
@@ -201,17 +201,17 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                   role="tab"
                   aria-selected={selected}
                   onClick={() => setActiveRole(guide.key)}
-                  className={`relative px-3.5 py-2 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`relative px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                     selected
-                      ? 'text-slate-900 dark:text-white'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ? 'text-white'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300'
                   }`}
                 >
                   {selected && (
                     <motion.span
                       layoutId="how-it-works-role-tab"
                       transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-800 shadow-xs border border-slate-200/70 dark:border-slate-700/70"
+                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 shadow-sm shadow-emerald-600/25 border border-emerald-500/70"
                       aria-hidden="true"
                     />
                   )}
@@ -236,20 +236,20 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
               const stepHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
               const iconBoxClass =
                 stepHue === 'violet'
-                  ? 'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300'
+                  ? 'bg-violet-500/18 dark:bg-violet-400/20 border border-violet-400/70 dark:border-violet-400/40 text-violet-700 dark:text-violet-300'
                   : stepHue === 'teal'
-                    ? 'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300'
+                    ? 'bg-teal-500/18 dark:bg-teal-400/20 border border-teal-400/70 dark:border-teal-400/40 text-teal-700 dark:text-teal-300'
                     : stepHue === 'amber'
-                      ? 'bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 text-amber-700 dark:text-amber-300'
-                      : 'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300';
+                      ? 'bg-amber-500/18 dark:bg-amber-400/20 border border-amber-400/70 dark:border-amber-400/40 text-amber-700 dark:text-amber-300'
+                      : 'bg-emerald-500/18 dark:bg-emerald-400/20 border border-emerald-400/70 dark:border-emerald-400/40 text-emerald-700 dark:text-emerald-300';
               const stepNumberClass =
                 stepHue === 'violet'
-                  ? 'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300'
+                  ? 'bg-violet-500/15 dark:bg-violet-400/20 border border-violet-400/60 text-violet-800 dark:text-violet-200'
                   : stepHue === 'teal'
-                    ? 'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300'
+                    ? 'bg-teal-500/15 dark:bg-teal-400/20 border border-teal-400/60 text-teal-800 dark:text-teal-200'
                     : stepHue === 'amber'
-                      ? 'bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300'
-                      : 'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300';
+                      ? 'bg-amber-500/15 dark:bg-amber-400/20 border border-amber-400/60 text-amber-800 dark:text-amber-200'
+                      : 'bg-emerald-500/15 dark:bg-emerald-400/20 border border-emerald-400/60 text-emerald-800 dark:text-emerald-200';
               return (
                 <MotionCard
                   key={step.number}
@@ -304,7 +304,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
-              className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
+              className="group px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap"
             >
               <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight
