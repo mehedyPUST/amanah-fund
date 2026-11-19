@@ -571,9 +571,9 @@ export function NotificationsView({
       </AnimatePresence>
 
       {/* Notification List */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
+      <section className="space-y-2.5">
         {loading ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
             {[1, 2, 3].map((i) => (
               <div key={i} className="p-3.5 sm:p-5 space-y-2">
                 <Skeleton width={220} height={12} />
@@ -583,7 +583,7 @@ export function NotificationsView({
             ))}
           </div>
         ) : visibleNotifications.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-xs">
             {t('emptyFiltered')}
           </div>
         ) : (
@@ -591,12 +591,12 @@ export function NotificationsView({
             const isExpanded = Boolean(expandedIds[item.id]);
             const rowBgClass =
               idx % 2 === 1
-                ? 'bg-sky-50/75 dark:bg-slate-800/45'
-                : 'bg-white/95 dark:bg-slate-900/80';
+                ? 'bg-sky-50/85 dark:bg-slate-800/55'
+                : 'bg-white/95 dark:bg-slate-900/85';
             return (
               <div
                 key={item.id}
-                className={`transition-colors ${rowBgClass} ${
+                className={`rounded-xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs transition-colors ${rowBgClass} ${
                   !item.readByRecipient ? 'border-l-[3px] border-l-emerald-500' : ''
                 }`}
               >
@@ -609,7 +609,10 @@ export function NotificationsView({
                     }))
                   }
                   aria-expanded={isExpanded}
-                  className="w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-emerald-50/40 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
+                  title={isExpanded ? 'Click to collapse' : 'Click to expand'}
+                  className={`group/notif relative w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-emerald-50/45 dark:hover:bg-slate-800/75 transition-colors cursor-pointer ${
+                    isExpanded ? 'rounded-t-xl' : 'rounded-xl'
+                  }`}
                 >
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
@@ -642,14 +645,24 @@ export function NotificationsView({
                       </span>
                     </div>
                   </div>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                      isExpanded
-                        ? 'rotate-180 text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-400 dark:text-slate-500'
-                    }`}
-                  />
+                  <div className="relative flex items-center shrink-0">
+                    {!isExpanded && (
+                      <span
+                        role="tooltip"
+                        className="hidden md:inline-block pointer-events-none absolute right-7 top-1/2 -translate-y-1/2 z-30 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-x-1 group-hover/notif:opacity-100 group-hover/notif:translate-x-0 group-focus-visible/notif:opacity-100 group-focus-visible/notif:translate-x-0 transition-all duration-150"
+                      >
+                        Click to expand
+                      </span>
+                    )}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                        isExpanded
+                          ? 'rotate-180 text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    />
+                  </div>
                 </button>
 
                 <AnimatePresence initial={false}>
