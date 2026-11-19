@@ -14,13 +14,10 @@ import {
   ClipboardCheck,
   Clock,
   CreditCard,
-  Eye,
-  EyeOff,
   FilePlus2,
   FileSpreadsheet,
   HandCoins,
   History,
-  Lock,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -35,7 +32,6 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
-import { translateRoleLabel } from '../i18n/messages.ts';
 import type {
   Contribution,
   DashboardOverview,
@@ -45,7 +41,6 @@ import type {
 } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
-import { useCoopSession } from './AppProviders.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { StatusText } from './StatusText.tsx';
 
@@ -63,7 +58,6 @@ type MobileSheetId =
   | 'pulse'
   | 'queues'
   | 'borrowers'
-  | 'standing'
   | null;
 
 interface MobileMfsHomeProps {
@@ -237,11 +231,9 @@ export function MobileMfsHome({
   onOpenLoanModal,
   onViewMemberProfile,
 }: MobileMfsHomeProps) {
-  const { locale } = useCoopSession();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
-  const [balanceVisible, setBalanceVisible] = useState(false);
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
 
   const isAdmin = user.role === 'admin';
@@ -309,7 +301,6 @@ export function MobileMfsHome({
   if (loading || !overview) {
     return (
       <div className="space-y-4">
-        <Skeleton height={162} borderRadius={20} />
         <div className="grid grid-cols-2 gap-2.5">
           {Array.from({ length: 4 }).map((_, idx) => (
             <Skeleton key={idx} height={92} borderRadius={16} />
@@ -330,7 +321,7 @@ export function MobileMfsHome({
     );
   }
 
-  const { config, treasury, personal, phase, daysUntilMaturity } = overview;
+  const { config, treasury, personal, phase } = overview;
 
   const myActiveOrPendingLoan = !isAdmin
     ? loans.find(
@@ -735,117 +726,7 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
-      {/* 1. MFS Wallet Card + Fund Phase & Maturity Context */}
-      <motion.section
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18 }}
-        className="rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white p-4 shadow-lg shadow-emerald-600/25 border border-emerald-400/40 space-y-3"
-      >
-        <div className="flex items-center justify-between gap-2 text-[11px] text-emerald-100/85">
-          <span className="truncate font-medium">
-            {phase === 'qard_hasan' ? tDash('phase1Short') : tDash('phase2Short')} ·{' '}
-            {tDash('maturityLabel', { date: formatShortDate(config.maturityDate) })}
-          </span>
-          <span className="font-mono font-semibold tabular-nums shrink-0 text-amber-200">
-            {tCommon('daysLeft', { days: daysUntilMaturity })}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-white truncate">{config.fundName}</div>
-            <div className="text-[11px] text-emerald-100/85 truncate mt-0.5">
-              {user.name} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-              {translateRoleLabel(user.role, locale)}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setBalanceVisible((v) => !v)}
-            aria-label={balanceVisible ? tDash('hideBalance') : tDash('tapForBalance')}
-            className="min-h-[44px] px-3.5 py-2 rounded-full bg-white/95 text-emerald-900 text-xs font-semibold shadow-xs active:scale-95 transition-transform inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            {balanceVisible ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
-                <span className="font-mono tabular-nums">
-                  {formatMoney(
-                    isAdmin ? treasury.currentBalance : personal.totalContributed,
-                    ccy
-                  )}
-                </span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
-                <span>{tDash('tapForBalance')}</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <div className="pt-2.5 border-t border-white/15 grid grid-cols-2 gap-3 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveSheet('standing')}
-            className="text-left min-h-[44px] flex flex-col justify-center cursor-pointer"
-          >
-            <div className="text-[11px] text-emerald-100/75">
-              {isAdmin ? tDash('contributionsPool') : tDash('sheets.yourApprovedDeposits')}
-            </div>
-            <div className="font-mono font-semibold tabular-nums mt-0.5 flex items-center gap-1">
-              <span>
-                {balanceVisible
-                  ? formatMoney(
-                      isAdmin
-                        ? treasury.totalContributionsPool
-                        : personal.totalContributed,
-                      ccy
-                    )
-                  : '••••••'}
-              </span>
-              <ChevronRight className="w-3.5 h-3.5 opacity-75 shrink-0" aria-hidden="true" />
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSheet('standing')}
-            className="text-right min-h-[44px] flex flex-col justify-center items-end cursor-pointer"
-          >
-            <div className="text-[11px] text-emerald-100/75">
-              {isAdmin
-                ? tDash('activeMembers')
-                : personal.activeLoanBalance > 0
-                  ? tDash('activeLoanDue')
-                  : tDash('quotaEligibility')}
-            </div>
-            <div className="font-mono font-semibold tabular-nums mt-0.5 flex items-center gap-1">
-              {isAdmin ? (
-                <span>
-                  {config.maxMembersCap
-                    ? `${treasury.activeMembersCount}/${config.maxMembersCap}`
-                    : `${treasury.activeMembersCount}`}
-                </span>
-              ) : personal.activeLoanBalance > 0 ? (
-                <span>
-                  {balanceVisible ? formatMoney(personal.activeLoanBalance, ccy) : '••••••'}
-                </span>
-              ) : (
-                <span>
-                  {personal.eligibility.loansUsedThisYear}/{personal.eligibility.maxLoansPerYear}{' '}
-                  · {personal.eligibility.eligible ? tCommon('eligible') : tCommon('hold')}
-                </span>
-              )}
-              <ChevronRight className="w-3.5 h-3.5 opacity-75 shrink-0" aria-hidden="true" />
-            </div>
-          </button>
-        </div>
-      </motion.section>
-
-      {/* 2. Actionable Alerts & Active Loan Stage Tracker */}
+      {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
       {(myGuarantorRequests.length > 0 ||
         (!isAdmin && !personal.eligibility.noOverdueInstallments) ||
         (isAdmin && treasury.overdueInstallmentsCount > 0) ||
@@ -1630,150 +1511,6 @@ export function MobileMfsHome({
           <span>{isAdmin ? tDash('alerts.openVoting') : tDash('alerts.openQardHasan')}</span>
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
-      </MobileBottomSheet>
-
-      {/* Sheet 4: Member Standing / Admin Oversight */}
-      <MobileBottomSheet
-        open={activeSheet === 'standing'}
-        onClose={() => setActiveSheet(null)}
-        title={isAdmin ? tDash('sheets.adminStandingTitle') : tDash('sheets.memberStandingTitle')}
-        subtitle={`${user.name} · ${user.memberCode}`}
-      >
-        {isAdmin ? (
-          <div className="space-y-4">
-            <dl className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3.5 text-xs">
-              <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.pendingProfileEdits')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                  {treasury.pendingProfileRequestsCount}
-                </dd>
-              </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.openDecisionPolls')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                  {treasury.openDecisionPollsCount}
-                </dd>
-              </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">{tDash('sheets.upcomingMeetings')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                  {treasury.upcomingMeetingsCount}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSheet(null);
-                  onNavigate('member-registry');
-                }}
-                className="min-h-[44px] py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Users className="w-4 h-4" />
-                <span>{tNav('usersAndRoles')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSheet(null);
-                  onNavigate('site-settings');
-                }}
-                className="min-h-[44px] py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Settings className="w-4 h-4" />
-                <span>{tNav('siteSettings')}</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <dl className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3.5 text-xs">
-              <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.yourApprovedDeposits')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {formatMoney(personal.totalContributed, ccy)}
-                </dd>
-              </div>
-              <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">
-                  {personal.activeLoanBalance > 0
-                    ? tDash('sheets.activeLoanBalance')
-                    : myActiveOrPendingLoan
-                      ? tDash('sheets.pendingQardRequest')
-                      : tDash('sheets.activeLoanBalance')}
-                </dt>
-                <dd className="text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
-                  {personal.activeLoanBalance > 0
-                    ? formatMoney(personal.activeLoanBalance, ccy)
-                    : myActiveOrPendingLoan
-                      ? formatMoney(myActiveOrPendingLoan.amount, ccy)
-                      : formatMoney(0, ccy)}
-                </dd>
-              </div>
-              <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.annualLoanQuota')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-amber-700 dark:text-amber-300">
-                  {tDash('sheets.usedCount', {
-                    used: personal.eligibility.loansUsedThisYear,
-                    max: personal.eligibility.maxLoansPerYear,
-                  })}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-semibold">
-                {personal.eligibility.eligible ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="text-emerald-700 dark:text-emerald-400">
-                      {tDash('sheets.eligibleForLoan')}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                    <span className="text-amber-700 dark:text-amber-400">
-                      {tDash('sheets.notEligibleForLoan')}
-                    </span>
-                  </>
-                )}
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {personal.eligibility.reasons[0]}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {onOpenLoanModal && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSheet(null);
-                    onOpenLoanModal();
-                  }}
-                  className="min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <FilePlus2 className="w-4 h-4" />
-                  <span>{tNav('requestLoan')}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSheet(null);
-                  onNavigate('my-amanah');
-                }}
-                className="min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>{tDash('sheets.openMyAmanah')}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
       </MobileBottomSheet>
     </div>
   );
