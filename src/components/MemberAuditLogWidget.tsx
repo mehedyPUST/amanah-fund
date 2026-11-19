@@ -194,24 +194,24 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
   const [limit, setLimit] = useState(12);
   const syncTimerRef = useRef<number | null>(null);
 
-  const loadLogs = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      setError(null);
-      try {
-        const res = await api.getAuditLogs();
-        setLogs(res.logs);
-        setChainValid(res.chainValid);
-      } catch (err) {
-        if (!silent) {
-          setError(err instanceof Error ? err.message : t('loadFailed'));
-        }
-      } finally {
-        if (!silent) setLoading(false);
+  const tRef = useRef(t);
+  tRef.current = t;
+
+  const loadLogs = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+    try {
+      const res = await api.getAuditLogs();
+      setLogs(res.logs);
+      setChainValid(res.chainValid);
+    } catch (err) {
+      if (!silent) {
+        setError(err instanceof Error ? err.message : tRef.current('loadFailed'));
       }
-    },
-    [t]
-  );
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void loadLogs(false);

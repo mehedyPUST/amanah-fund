@@ -201,8 +201,11 @@ export function AdminSiteSettingsView({
   const [modal, setModal] = useState<SettingsModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const syncFormFromConfig = useCallback((cfg: FundConfig) => {
-    setFundName(cfg.fundName || t('defaultFundName'));
+    setFundName(cfg.fundName || tRef.current('defaultFundName'));
     setCurrency(cfg.currency);
     setMaturityDate(cfg.maturityDate);
     setMembershipIntakeDeadline(cfg.membershipIntakeDeadline || '2027-07-31');
@@ -223,7 +226,7 @@ export function AdminSiteSettingsView({
     setManagerCycleStartDate(cfg.managerCycleStartDate || '2027-01-01');
     setMonthlyReportAutoEmail(cfg.monthlyReportAutoEmail ?? true);
     setHalalThesis(cfg.halalInvestmentThesis);
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     if (config) {

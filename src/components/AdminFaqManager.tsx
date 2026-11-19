@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   ChevronDown,
   Edit3,
@@ -51,6 +51,9 @@ export function AdminFaqManager() {
   const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadFaqs = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     setError(null);
@@ -58,11 +61,11 @@ export function AdminFaqManager() {
       const data = await api.getFaqs();
       setFaqs(sortFaqItems(Array.isArray(data.faqs) ? data.faqs : []));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('loadFailed'));
+      setError(err instanceof Error ? err.message : tRef.current('loadFailed'));
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void loadFaqs(false);

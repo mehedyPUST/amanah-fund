@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   Bell,
@@ -15,8 +16,10 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import { queryKeys } from '../lib/queryKeys.ts';
 import type {
   CoopMeeting,
+  DashboardOverview,
   DashboardSectionId,
   EmailNotification,
   NotificationPreferences,
@@ -165,6 +168,10 @@ export function NotificationsView({
     }
   }, [user.notificationPreferences]);
 
+  const queryClient = useQueryClient();
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -174,16 +181,27 @@ export function NotificationsView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: t('loadFailedTitle'),
-        description: err instanceof Error ? err.message : t('loadFailedDesc'),
+        title: tRef.current('loadFailedTitle'),
+        description: err instanceof Error ? err.message : tRef.current('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void loadNotifications();
+    const handleReadSync = (event: Event) => {
+      const id = (event as CustomEvent<{ id?: string }>).detail?.id;
+      if (!id) return;
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, readByRecipient: true } : n))
+      );
+    };
+    window.addEventListener('amanah:notification-read', handleReadSync);
+    return () => {
+      window.removeEventListener('amanah:notification-read', handleReadSync);
+    };
   }, [loadNotifications]);
 
   function handleGenerateReminders() {
@@ -220,14 +238,49 @@ export function NotificationsView({
   }
 
   async function handleMarkRead(id: string) {
+    let wasUnread = false;
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (n.id !== id) return n;
+        if (!n.readByRecipient) wasUnread = true;
+        return { ...n, readByRecipient: true };
+      })
+    );
+    queryClient.setQueryData<{ notifications: EmailNotification[] }>(
+      queryKeys.dashboard.notifications(),
+      (prev) => {
+        if (!prev) return prev;
+        return {
+          notifications: prev.notifications.map((n) => {
+            if (n.id !== id) return n;
+            if (!n.readByRecipient) wasUnread = true;
+            return { ...n, readByRecipient: true };
+          }),
+        };
+      }
+    );
+    if (wasUnread) {
+      queryClient.setQueryData<DashboardOverview>(queryKeys.dashboard.overview(), (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          treasury: {
+            ...prev.treasury,
+            unreadNotificationsCount: Math.max(0, (prev.treasury.unreadNotificationsCount || 0) - 1),
+          },
+        };
+      });
+    }
     try {
       await api.markNotificationRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, readByRecipient: true } : n))
-      );
-      await onRefresh();
     } catch {
-      // ignore transient error
+      if (wasUnread) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, readByRecipient: false } : n))
+        );
+        void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.notifications() });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview() });
+      }
     }
   }
 

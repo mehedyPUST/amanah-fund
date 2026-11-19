@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -125,6 +125,9 @@ export function MemberPublicProfileView({
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [submittingCommentPostId, setSubmittingCommentPostId] = useState<string | null>(null);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadMemberProfile = useCallback(
     async (silent = false) => {
       if (!memberId) return;
@@ -136,13 +139,13 @@ export function MemberPublicProfileView({
         setProfile(res.profile);
         setPhotoBroken(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('failedLoad'));
+        setError(err instanceof Error ? err.message : tRef.current('failedLoad'));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [memberId, t]
+    [memberId]
   );
 
   useEffect(() => {

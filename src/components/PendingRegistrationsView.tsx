@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Check,
@@ -117,6 +117,9 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     }
   }
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadPendingRegistrations = useCallback(async () => {
     if (!isAdmin) {
       setLoading(false);
@@ -132,13 +135,13 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     } catch (err) {
       showNotice(
         'red',
-        t('loadFailedTitle'),
-        err instanceof Error ? err.message : t('loadFailedDesc')
+        tRef.current('loadFailedTitle'),
+        err instanceof Error ? err.message : tRef.current('loadFailedDesc')
       );
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, t]);
+  }, [isAdmin]);
 
   useEffect(() => {
     void loadPendingRegistrations();

@@ -873,19 +873,42 @@ export function DashboardShell() {
   );
 
   async function handleDismissLoanDecisionAlert(notificationId: string) {
+    let wasUnread = false;
     queryClient.setQueryData<{ notifications: EmailNotification[] }>(
       queryKeys.dashboard.notifications(),
-      (prev) => ({
-        notifications: (prev?.notifications ?? []).map((n) =>
-          n.id === notificationId ? { ...n, readByRecipient: true } : n
-        ),
-      })
+      (prev) => {
+        const list = prev?.notifications ?? [];
+        const target = list.find((n) => n.id === notificationId);
+        wasUnread = Boolean(target && !target.readByRecipient);
+        return {
+          notifications: list.map((n) =>
+            n.id === notificationId ? { ...n, readByRecipient: true } : n
+          ),
+        };
+      }
     );
+    if (wasUnread) {
+      queryClient.setQueryData<DashboardOverview>(queryKeys.dashboard.overview(), (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          treasury: {
+            ...prev.treasury,
+            unreadNotificationsCount: Math.max(0, (prev.treasury.unreadNotificationsCount || 0) - 1),
+          },
+        };
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('amanah:notification-read', { detail: { id: notificationId } })
+      );
+    }
     try {
       await api.markNotificationRead(notificationId);
-      await refreshWorkspace(true);
     } catch {
-      // ignore transient error
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.notifications() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview() });
     }
   }
 

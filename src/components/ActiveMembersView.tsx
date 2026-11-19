@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
@@ -101,8 +101,12 @@ export function ActiveMembersView({
     [t]
   );
 
+  const hasUser = Boolean(user);
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadDirectory = useCallback(async () => {
-    if (!user) {
+    if (!hasUser) {
       setLoading(false);
       return;
     }
@@ -112,11 +116,11 @@ export function ActiveMembersView({
       const res = await api.getActiveMembers();
       setMembers(res.members);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('loadFailed'));
+      setError(err instanceof Error ? err.message : tRef.current('loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [user, t]);
+  }, [hasUser]);
 
   useEffect(() => {
     void loadDirectory();

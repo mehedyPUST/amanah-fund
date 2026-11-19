@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
@@ -113,6 +113,9 @@ export function MemberRegistrySection({
     }
   }
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadMembers = useCallback(async () => {
     if (!isStaff) {
       setLoading(false);
@@ -129,13 +132,13 @@ export function MemberRegistrySection({
     } catch (err) {
       showNotice(
         'red',
-        t('loadFailedTitle'),
-        err instanceof Error ? err.message : t('loadFailedDesc')
+        tRef.current('loadFailedTitle'),
+        err instanceof Error ? err.message : tRef.current('loadFailedDesc')
       );
     } finally {
       setLoading(false);
     }
-  }, [isStaff, t]);
+  }, [isStaff]);
 
   useEffect(() => {
     void loadMembers();

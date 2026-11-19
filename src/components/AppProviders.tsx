@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -219,6 +220,7 @@ export function AppProviders({
 
   const setLocale = useCallback((next: AppLocale) => {
     const normalized = normalizeLocale(next);
+    if (normalized === localeRef.current) return;
     setLocaleState(normalized);
     localeRef.current = normalized;
     if (typeof window !== 'undefined') {
@@ -611,54 +613,88 @@ export function AppProviders({
     setWorkspace(info);
   }, []);
 
-  const activeMessages = getMessagesForLocale(locale);
+  const activeMessages = useMemo(() => getMessagesForLocale(locale), [locale]);
+
+  const getMessageFallback = useCallback(
+    ({ namespace, key }: { namespace?: string; key: string }) => {
+      const enMessages = getMessagesForLocale('en') as unknown as Record<string, unknown>;
+      const path = namespace ? `${namespace}.${key}` : key;
+      const resolved = path
+        .split('.')
+        .reduce<unknown>(
+          (acc, part) =>
+            acc && typeof acc === 'object' && part in (acc as Record<string, unknown>)
+              ? (acc as Record<string, unknown>)[part]
+              : undefined,
+          enMessages
+        );
+      return typeof resolved === 'string' ? resolved : key;
+    },
+    []
+  );
+
+  const sessionContextValue = useMemo<CoopSessionContextValue>(
+    () => ({
+      user,
+      authChecking,
+      hasVisitedBefore,
+      setUser,
+      refreshUser,
+      logout,
+      darkMode,
+      toggleDarkMode,
+      locale,
+      setLocale,
+      workspace,
+      connectingGoogle,
+      handleConnectGoogle,
+      handleDisconnectGoogle,
+      pwaUpdate: {
+        updateAvailable,
+        checkingUpdate,
+        applyingUpdate,
+        lastCheckedAt,
+        statusMessage,
+        checkForUpdates,
+        applyUpdate,
+        dismissStatusMessage,
+      },
+    }),
+    [
+      user,
+      authChecking,
+      hasVisitedBefore,
+      setUser,
+      refreshUser,
+      logout,
+      darkMode,
+      toggleDarkMode,
+      locale,
+      setLocale,
+      workspace,
+      connectingGoogle,
+      handleConnectGoogle,
+      handleDisconnectGoogle,
+      updateAvailable,
+      checkingUpdate,
+      applyingUpdate,
+      lastCheckedAt,
+      statusMessage,
+      checkForUpdates,
+      applyUpdate,
+      dismissStatusMessage,
+    ]
+  );
 
   return (
     <NextIntlClientProvider
       locale={locale}
       messages={activeMessages}
       timeZone="Asia/Dhaka"
-      getMessageFallback={({ namespace, key }) => {
-        const enMessages = getMessagesForLocale('en') as unknown as Record<string, unknown>;
-        const path = namespace ? `${namespace}.${key}` : key;
-        const resolved = path
-          .split('.')
-          .reduce<unknown>(
-            (acc, part) => (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>) ? (acc as Record<string, unknown>)[part] : undefined),
-            enMessages
-          );
-        return typeof resolved === 'string' ? resolved : key;
-      }}
+      getMessageFallback={getMessageFallback}
     >
       <QueryClientProvider client={queryClient}>
-        <CoopSessionContext.Provider
-          value={{
-            user,
-            authChecking,
-            hasVisitedBefore,
-            setUser,
-            refreshUser,
-            logout,
-            darkMode,
-            toggleDarkMode,
-            locale,
-            setLocale,
-            workspace,
-            connectingGoogle,
-            handleConnectGoogle,
-            handleDisconnectGoogle,
-            pwaUpdate: {
-              updateAvailable,
-              checkingUpdate,
-              applyingUpdate,
-              lastCheckedAt,
-              statusMessage,
-              checkForUpdates,
-              applyUpdate,
-              dismissStatusMessage,
-            },
-          }}
-        >
+        <CoopSessionContext.Provider value={sessionContextValue}>
           <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
             <SkeletonTheme
               baseColor={darkMode ? '#1e293b' : '#e2e8f0'}

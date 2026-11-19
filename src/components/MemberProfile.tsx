@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AlertCircle,
   Bell,
@@ -159,6 +159,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     setAgreementBroken(false);
   }, []);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
@@ -172,13 +175,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: t('loadFailedTitle'),
-        description: err instanceof Error ? err.message : t('loadFailedDesc'),
+        title: tRef.current('loadFailedTitle'),
+        description: err instanceof Error ? err.message : tRef.current('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
-  }, [populateForm, t, user.id]);
+  }, [populateForm, user.id]);
 
   useEffect(() => {
     void loadProfile();

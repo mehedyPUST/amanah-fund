@@ -346,6 +346,13 @@ export function AdminAuditLog({
     }
   }, [externalLoading]);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+  const tSysRef = useRef(tSys);
+  tSysRef.current = tSys;
+  const onRefreshExternalRef = useRef(onRefreshExternal);
+  onRefreshExternalRef.current = onRefreshExternal;
+
   const fetchAuditLogs = useCallback(
     async (silent = false, showVerifyBanner = false) => {
       if (!canViewAuditLogs) {
@@ -360,8 +367,8 @@ export function AdminAuditLog({
       }
       setError(null);
       try {
-        if (onRefreshExternal && !silent && !showVerifyBanner) {
-          await onRefreshExternal();
+        if (onRefreshExternalRef.current && !silent && !showVerifyBanner) {
+          await onRefreshExternalRef.current();
         } else {
           const res = await api.getAuditLogs();
           const arrivedIds: string[] = [];
@@ -392,8 +399,8 @@ export function AdminAuditLog({
             const verified = res.integrity?.verifiedEntries ?? res.logs.length;
             setVerificationNote(
               res.chainValid
-                ? tSys('verifySuccess', { verified, total })
-                : tSys('verifyMismatch', { count: res.integrity?.brokenLinks.length || 1 })
+                ? tSysRef.current('verifySuccess', { verified, total })
+                : tSysRef.current('verifyMismatch', { count: res.integrity?.brokenLinks.length || 1 })
             );
           }
 
@@ -403,7 +410,7 @@ export function AdminAuditLog({
         }
       } catch (err) {
         if (!silent) {
-          setError(err instanceof Error ? err.message : t('loadFailed'));
+          setError(err instanceof Error ? err.message : tRef.current('loadFailed'));
         }
       } finally {
         if (!silent) {
@@ -414,7 +421,7 @@ export function AdminAuditLog({
         }
       }
     },
-    [canViewAuditLogs, onRefreshExternal, t, tSys]
+    [canViewAuditLogs]
   );
 
   // Fade out live highlight tags after 15s

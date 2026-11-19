@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowRight,
   CalendarClock,
@@ -70,6 +70,9 @@ export function ManagerCycleView({
   const [modal, setModal] = useState<CycleModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadSchedule = useCallback(async () => {
     setLoading(true);
     try {
@@ -81,13 +84,13 @@ export function ManagerCycleView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: t('loadFailedTitle'),
-        description: err instanceof Error ? err.message : t('loadFailedDesc'),
+        title: tRef.current('loadFailedTitle'),
+        description: err instanceof Error ? err.message : tRef.current('loadFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void loadSchedule();

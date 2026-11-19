@@ -311,6 +311,11 @@ export function CommunityView({
   const selectedPeerIdRef = useRef<string | null>(null);
   selectedPeerIdRef.current = selectedPeerId;
 
+  const tRef = useRef(t);
+  tRef.current = t;
+  const onUnreadDmChangeRef = useRef(onUnreadDmChange);
+  onUnreadDmChangeRef.current = onUnreadDmChange;
+
   const loadPosts = useCallback(async (silent = false) => {
     if (!silent) setPostsLoading(true);
     try {
@@ -320,31 +325,28 @@ export function CommunityView({
       setModal({
         mode: 'notice',
         tone: 'red',
-        title: t('feedUnavailableTitle'),
-        description: err instanceof Error ? err.message : t('feedUnavailableDesc'),
+        title: tRef.current('feedUnavailableTitle'),
+        description: err instanceof Error ? err.message : tRef.current('feedUnavailableDesc'),
       });
     } finally {
       if (!silent) setPostsLoading(false);
     }
-  }, [t]);
+  }, []);
 
-  const loadThreads = useCallback(
-    async (silent = false) => {
-      if (!silent) setThreadsLoading(true);
-      try {
-        const res = await api.getPrivateThreads();
-        setThreads(res.threads);
-        setDirectory(res.directory);
-        setTotalUnread(res.totalUnread);
-        onUnreadDmChange?.(res.totalUnread);
-      } catch (err) {
-        setDmError(err instanceof Error ? err.message : t('threadsUnavailableDesc'));
-      } finally {
-        if (!silent) setThreadsLoading(false);
-      }
-    },
-    [onUnreadDmChange, t]
-  );
+  const loadThreads = useCallback(async (silent = false) => {
+    if (!silent) setThreadsLoading(true);
+    try {
+      const res = await api.getPrivateThreads();
+      setThreads(res.threads);
+      setDirectory(res.directory);
+      setTotalUnread(res.totalUnread);
+      onUnreadDmChangeRef.current?.(res.totalUnread);
+    } catch (err) {
+      setDmError(err instanceof Error ? err.message : tRef.current('threadsUnavailableDesc'));
+    } finally {
+      if (!silent) setThreadsLoading(false);
+    }
+  }, []);
 
   const loadConversation = useCallback(
     async (peerId: string, silent = false) => {
@@ -356,12 +358,12 @@ export function CommunityView({
         setMessages(res.messages);
         await loadThreads(true);
       } catch (err) {
-        setDmError(err instanceof Error ? err.message : t('conversationUnavailableDesc'));
+        setDmError(err instanceof Error ? err.message : tRef.current('conversationUnavailableDesc'));
       } finally {
         if (!silent) setMessagesLoading(false);
       }
     },
-    [loadThreads, t]
+    [loadThreads]
   );
 
   useEffect(() => {

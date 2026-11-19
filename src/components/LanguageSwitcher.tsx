@@ -73,7 +73,9 @@ export function LanguageSwitcher({
             key={opt.id}
             type="button"
             aria-pressed={active}
-            onClick={() => setLocale(opt.id)}
+            onClick={() => {
+              if (!active) setLocale(opt.id);
+            }}
             className={`relative px-2.5 h-7 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 inline-flex items-center justify-center ${
               surface === 'inverted'
                 ? active
