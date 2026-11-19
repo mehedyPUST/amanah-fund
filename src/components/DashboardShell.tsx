@@ -2261,12 +2261,12 @@ export function DashboardShell() {
                 badge: pendingBadgeCount('community'),
               },
               {
-                id: 'notification',
-                label: tNav('notifications'),
-                Icon: Bell,
-                target: 'notification' as DashboardSectionId,
-                active: activeSection === 'notification',
-                badge: pendingBadgeCount('notification'),
+                id: 'my-profile',
+                label: tNav('profile'),
+                Icon: User,
+                target: 'my-profile' as DashboardSectionId,
+                active: activeSection === 'my-profile',
+                badge: 0,
               },
             ] as const
           ).map((tab) => {

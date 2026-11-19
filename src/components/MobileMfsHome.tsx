@@ -301,6 +301,7 @@ export function MobileMfsHome({
   if (loading || !overview) {
     return (
       <div className="space-y-4">
+        <Skeleton height={40} borderRadius={14} />
         <div className="grid grid-cols-2 gap-2.5">
           {Array.from({ length: 4 }).map((_, idx) => (
             <Skeleton key={idx} height={92} borderRadius={16} />
@@ -321,7 +322,7 @@ export function MobileMfsHome({
     );
   }
 
-  const { config, treasury, personal, phase } = overview;
+  const { config, treasury, personal, phase, daysUntilMaturity } = overview;
 
   const myActiveOrPendingLoan = !isAdmin
     ? loans.find(
@@ -726,6 +727,21 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
+      {/* Phase & Maturity Countdown Strip */}
+      <button
+        type="button"
+        onClick={() => setActiveSheet('pulse')}
+        className="w-full px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 dark:from-emerald-600 dark:via-emerald-700 dark:to-teal-800 shadow-sm shadow-emerald-900/15 flex items-center justify-between gap-2 text-left active:scale-[0.99] transition-transform cursor-pointer"
+      >
+        <span className="text-[11px] font-medium text-emerald-50/95 truncate">
+          {phase === 'qard_hasan' ? tDash('phase1Short') : tDash('phase2Short')} ·{' '}
+          {tDash('maturityLabel', { date: formatShortDate(config.maturityDate) })}
+        </span>
+        <span className="text-[11px] font-mono font-bold tabular-nums text-amber-200 shrink-0">
+          {tCommon('daysLeft', { days: daysUntilMaturity })}
+        </span>
+      </button>
+
       {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
       {(myGuarantorRequests.length > 0 ||
         (!isAdmin && !personal.eligibility.noOverdueInstallments) ||
