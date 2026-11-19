@@ -12,7 +12,6 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Languages,
   LayoutGrid,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -223,9 +222,8 @@ const CHARTER_SECTIONS_BN: CharterSection[] = [
 ];
 
 export function Rules({ embedded = false }: { embedded?: boolean }) {
-  const { locale, setLocale } = useCoopSession();
+  const { locale } = useCoopSession();
   const tRules = useTranslations('Public.rules');
-  const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const HeadingTag = embedded ? 'h2' : 'h1';
   const PdfHeadingTag = embedded ? 'h3' : 'h2';
@@ -305,52 +303,6 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
 
           {!embedded ? (
             <div className="flex flex-wrap items-center gap-3 shrink-0 self-start sm:self-end">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="hidden md:inline">{tCommon('language')}</span>
-                </span>
-                <div
-                  role="tablist"
-                  aria-label={tCommon('switchLanguage')}
-                  className="inline-flex items-center gap-1 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/85 dark:bg-slate-950/70"
-                >
-                  {(
-                    [
-                      { id: 'en', label: 'English' },
-                      { id: 'bn', label: 'বাংলা' },
-                    ] as const
-                  ).map((option) => {
-                    const selected = locale === option.id;
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => setLocale(option.id)}
-                        className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
-                          selected
-                            ? 'text-white'
-                            : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300'
-                        }`}
-                      >
-                        {selected && (
-                          <motion.span
-                            layoutId="charter-language-toggle"
-                            transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                            className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xs border border-emerald-500/70"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span lang={option.id} className="relative z-10">
-                          {option.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
               <div className="hidden xl:flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
