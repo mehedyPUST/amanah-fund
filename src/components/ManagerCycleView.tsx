@@ -91,6 +91,13 @@ export function ManagerCycleView({
 
   useEffect(() => {
     void loadSchedule();
+    const handleGlobalRefresh = () => {
+      void loadSchedule();
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
   }, [loadSchedule, config?.managerCycleMonths, config?.managerCycleStartDate]);
 
   async function runConfirmed() {

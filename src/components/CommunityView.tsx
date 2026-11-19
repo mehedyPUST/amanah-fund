@@ -370,7 +370,18 @@ export function CommunityView({
   useEffect(() => {
     void loadPosts(false);
     void loadThreads(false);
-  }, [loadPosts, loadThreads]);
+    const handleGlobalRefresh = () => {
+      void loadPosts(true);
+      void loadThreads(true);
+      if (selectedPeerIdRef.current) {
+        void loadConversation(selectedPeerIdRef.current, true);
+      }
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
+  }, [loadPosts, loadThreads, loadConversation]);
 
   useEffect(() => {
     const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });

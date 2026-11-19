@@ -142,6 +142,13 @@ export function MemberRegistrySection({
 
   useEffect(() => {
     void loadMembers();
+    const handleGlobalRefresh = () => {
+      void loadMembers();
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
   }, [loadMembers]);
 
   function confirmApprovePendingMember(member: MemberSummary) {

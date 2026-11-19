@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   LayoutDashboard,
@@ -19,12 +20,14 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
+import { queryKeys } from '../lib/queryKeys.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const { user, authChecking, refreshUser, logout, darkMode, toggleDarkMode } = useCoopSession();
@@ -49,8 +52,12 @@ export function Navbar() {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await refreshUser();
-      router.refresh();
+      await Promise.all([
+        refreshUser(),
+        queryClient.invalidateQueries({ queryKey: queryKeys.public.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.bootstrapStatus() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.references() }),
+      ]);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('amanah:refresh'));
       }

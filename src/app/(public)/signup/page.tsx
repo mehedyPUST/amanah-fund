@@ -1,8 +1,7 @@
 import { HydrationBoundary } from '@tanstack/react-query';
 import type { Metadata } from 'next';
-import { PublicShell } from '../../components/PublicShell.tsx';
-import { SignUpForm } from '../../components/SignUpForm.tsx';
-import { prefetchSignUpPageState } from '../../server/ssrData.ts';
+import { SignUpForm } from '../../../components/SignUpForm.tsx';
+import { prefetchSignUpPageState } from '../../../server/ssrData.ts';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +14,7 @@ export default async function SignUpPage() {
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <PublicShell>
-        <SignUpForm />
-      </PublicShell>
+      <SignUpForm />
     </HydrationBoundary>
   );
 }

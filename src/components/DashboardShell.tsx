@@ -791,9 +791,17 @@ export function DashboardShell() {
       refreshUser(),
       refreshWorkspace(false),
     ]);
-    router.refresh();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.community.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.public.all }),
+    ]);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('amanah:refresh'));
+    }
     await triggerAutoSheetSyncIfEnabled(freshOverview);
-  }, [refreshUser, refreshWorkspace, router, triggerAutoSheetSyncIfEnabled]);
+  }, [queryClient, refreshUser, refreshWorkspace, triggerAutoSheetSyncIfEnabled]);
 
   const handleLoanCreatedOptimistic = useCallback(
     (createdLoan: LoanRequest) => {

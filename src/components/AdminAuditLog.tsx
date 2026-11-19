@@ -426,11 +426,18 @@ export function AdminAuditLog({
     return () => window.clearTimeout(timer);
   }, [newEntryIds]);
 
-  // Initial load
+  // Initial load & manual API refresh
   useEffect(() => {
     if (initialLogs === undefined) {
       void fetchAuditLogs(false);
     }
+    const handleGlobalRefresh = () => {
+      void fetchAuditLogs(true);
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
   }, [initialLogs, fetchAuditLogs]);
 
   // Direct real-time SSE feed for critical site activity

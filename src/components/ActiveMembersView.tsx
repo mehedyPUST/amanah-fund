@@ -122,6 +122,13 @@ export function ActiveMembersView({
 
   useEffect(() => {
     void loadDirectory();
+    const handleGlobalRefresh = () => {
+      void loadDirectory();
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
   }, [loadDirectory]);
 
   const enriched = useMemo(() => {

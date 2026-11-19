@@ -149,6 +149,13 @@ export function MemberPublicProfileView({
     setActiveTab('all');
     setActionError(null);
     void loadMemberProfile(false);
+    const handleGlobalRefresh = () => {
+      void loadMemberProfile(true);
+    };
+    window.addEventListener('amanah:refresh', handleGlobalRefresh);
+    return () => {
+      window.removeEventListener('amanah:refresh', handleGlobalRefresh);
+    };
   }, [loadMemberProfile]);
 
   useEffect(() => {
