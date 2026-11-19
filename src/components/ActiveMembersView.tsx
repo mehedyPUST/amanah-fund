@@ -7,11 +7,9 @@ import {
   Mail,
   MapPin,
   Phone,
-  RefreshCw,
   Search,
   ShieldAlert,
   User as UserIcon,
-  Users,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
@@ -138,26 +136,6 @@ export function ActiveMembersView({
     });
   }, [members, getMembershipDuration]);
 
-  const stats = useMemo(() => {
-    const totalPool = enriched.reduce((sum, m) => sum + m.totalContributed, 0);
-    const totalApprovedDeposits = enriched.reduce(
-      (sum, m) => sum + m.approvedContributionsCount,
-      0
-    );
-    const avgMonths =
-      enriched.length > 0
-        ? Math.round(
-            enriched.reduce((sum, m) => sum + m.duration.monthsTotal, 0) / enriched.length
-          )
-        : 0;
-    return {
-      totalActive: enriched.length,
-      totalPool,
-      totalApprovedDeposits,
-      avgMonths,
-    };
-  }, [enriched]);
-
   const filteredMembers = useMemo(() => {
     const q = search.trim().toLowerCase();
     return enriched.filter((m) => {
@@ -200,132 +178,58 @@ export function ActiveMembersView({
       transition={{ duration: 0.28 }}
       className="space-y-6"
     >
-      {/* Header & Summary Strip */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-              <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>{t('eyebrow')}</span>
-            </div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('heading')}{' '}
-              <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                ({stats.totalActive})
-              </span>
-            </h2>
+      {/* Search & Role Filter Toolbar */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search
+              className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchAria')}
+              className="pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-full focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 shadow-xs"
+            />
           </div>
 
-          <div className="flex items-center gap-2 w-full lg:w-auto shrink-0">
-            <div className="relative flex-1 sm:flex-initial">
-              <Search
-                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('searchPlaceholder')}
-                aria-label={t('searchAria')}
-                className="pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => void loadDirectory()}
-              disabled={loading}
-              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
-                aria-hidden="true"
-              />
-              <span>{tCommon('refresh')}</span>
-            </button>
+          {/* Role Filter Tabs */}
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit">
+            {(
+              [
+                { id: 'all', label: t('tabAllRoles') },
+                { id: 'admin', label: t('tabAdmins') },
+                { id: 'manager', label: t('tabManagers') },
+                { id: 'member', label: t('tabMembers') },
+              ] as const
+            ).map((tab) => {
+              const active = roleFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setRoleFilter(tab.id)}
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="active-members-role-pill"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Summary KPI Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pt-3.5 border-t border-slate-100 dark:border-slate-800">
-          <div>
-            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiVerifiedActive')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-              {stats.totalActive}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {t('kpiKycStanding')}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiTotalContributed')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
-              {formatMoney(stats.totalPool, ccy)}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {t('kpiApprovedDepositsDesc')}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiApprovedDeposits')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
-              {stats.totalApprovedDeposits}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {t('kpiVerifiedSettlements')}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiAvgMembership')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
-              {t('moOnly', {
-                months: stats.avgMonths,
-                monthUnit: stats.avgMonths === 1 ? t('moSingular') : t('moPlural'),
-              })}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {t('kpiVerifiedTenure')}
-            </div>
-          </div>
-        </div>
-
-        {/* Role Filter Tabs */}
-        <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit">
-          {(
-            [
-              { id: 'all', label: t('tabAllRoles') },
-              { id: 'admin', label: t('tabAdmins') },
-              { id: 'manager', label: t('tabManagers') },
-              { id: 'member', label: t('tabMembers') },
-            ] as const
-          ).map((tab) => {
-            const active = roleFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setRoleFilter(tab.id)}
-                className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  active
-                    ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="active-members-role-pill"
-                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
-                  />
-                )}
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            );
-          })}
         </div>
 
         {error && (
@@ -336,7 +240,7 @@ export function ActiveMembersView({
             {error}
           </div>
         )}
-      </section>
+      </div>
 
       {/* Member Directory Table / Empty / Loading States */}
       {loading ? (
