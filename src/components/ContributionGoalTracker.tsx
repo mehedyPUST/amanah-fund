@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertCircle,
   ArrowRight,
@@ -9,10 +9,6 @@ import {
   Clock,
   CreditCard,
   History,
-  Pencil,
-  RotateCcw,
-  Target,
-  X,
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import { useTranslations } from 'next-intl';
@@ -82,24 +78,8 @@ export function ContributionGoalTracker({
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonthIndex = now.getMonth(); // 0-11
-
-  const availableYears = useMemo(() => {
-    const years = new Set<number>([currentYear]);
-    contributions.forEach((c) => {
-      if (c.userId !== user.id) return;
-      const y = Number((c.billingMonth || c.submittedAt).slice(0, 4));
-      if (Number.isInteger(y) && y >= 2020 && y <= currentYear + 1) {
-        years.add(y);
-      }
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [contributions, user.id, currentYear]);
-
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const selectedYear = currentYear;
   const [customGoal, setCustomGoal] = useState<number | null>(null);
-  const [editingGoal, setEditingGoal] = useState(false);
-  const [goalInput, setGoalInput] = useState(String(defaultYearlyGoal));
-  const [goalError, setGoalError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -108,7 +88,6 @@ export function ContributionGoalTracker({
         const parsed = Number(saved);
         if (Number.isFinite(parsed) && parsed > 0) {
           setCustomGoal(parsed);
-          setGoalInput(String(parsed));
           return;
         }
       }
@@ -116,8 +95,7 @@ export function ContributionGoalTracker({
       // ignore storage unavailability
     }
     setCustomGoal(null);
-    setGoalInput(String(defaultYearlyGoal));
-  }, [user.id, selectedYear, defaultYearlyGoal]);
+  }, [user.id, selectedYear]);
 
   const yearlyGoal = customGoal ?? defaultYearlyGoal;
   const monthlyPaceTarget = yearlyGoal / 12;
@@ -251,45 +229,10 @@ export function ContributionGoalTracker({
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   }, [contributions, user.id]);
 
-  function handleSaveGoal(e: FormEvent) {
-    e.preventDefault();
-    const parsed = Number(goalInput);
-    if (!Number.isFinite(parsed) || parsed < 100) {
-      setGoalError(t('goalMinError'));
-      return;
-    }
-    setGoalError(null);
-    setCustomGoal(parsed);
-    try {
-      window.localStorage.setItem(getGoalStorageKey(user.id, selectedYear), String(parsed));
-    } catch {
-      // ignore storage unavailability
-    }
-    setEditingGoal(false);
-  }
-
-  function handleResetGoal() {
-    setCustomGoal(null);
-    setGoalInput(String(defaultYearlyGoal));
-    setGoalError(null);
-    try {
-      window.localStorage.removeItem(getGoalStorageKey(user.id, selectedYear));
-    } catch {
-      // ignore storage unavailability
-    }
-    setEditingGoal(false);
-  }
-
   if (loading) {
     return (
       <section className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-2">
-            <Skeleton width={180} height={12} />
-            <Skeleton width={280} height={22} />
-          </div>
-          <Skeleton width={140} height={34} />
-        </div>
+        <Skeleton height={56} borderRadius={12} />
         <Skeleton height={14} />
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           {Array.from({ length: 6 }, (_, i) => (
@@ -300,113 +243,14 @@ export function ContributionGoalTracker({
     );
   }
 
-  const currentBillingMonth = `${selectedYear}-${String(
-    selectedYear === currentYear ? currentMonthIndex + 1 : 1
-  ).padStart(2, '0')}`;
-
   return (
     <motion.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      aria-labelledby="contribution-goal-tracker-heading"
+      aria-label={t('eyebrow')}
       className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
     >
-      {/* Top Header & Year / Goal Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Target className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            </span>
-            <span>{t('eyebrow')}</span>
-          </div>
-          <h3
-            id="contribution-goal-tracker-heading"
-            className="text-base font-semibold text-slate-900 dark:text-white"
-          >
-            {t('heading', { year: selectedYear })}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('monthlyPaceTarget')}{' '}
-            <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
-              {tCommon('perMonthShort', { amount: formatMoney(Math.round(monthlyPaceTarget), ccy) })}
-            </span>
-            <span aria-hidden="true"> · </span>
-            {t('coopStandard')}{' '}
-            <span className="font-mono tabular-nums">
-              {tCommon('perYearShort', { amount: formatMoney(defaultYearlyGoal, ccy) })}
-            </span>
-            {customGoal !== null && (
-              <>
-                <span aria-hidden="true"> · </span>
-                <span className="text-indigo-700 dark:text-indigo-400 font-medium">
-                  {t('customGoalActive')}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {availableYears.length > 1 && (
-            <div
-              role="group"
-              aria-label={t('selectYearAria')}
-              className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
-            >
-              {availableYears.map((yr) => {
-                const active = selectedYear === yr;
-                return (
-                  <button
-                    key={yr}
-                    type="button"
-                    onClick={() => setSelectedYear(yr)}
-                    className={`relative px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                      active
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="goal-tracker-year-pill"
-                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
-                      />
-                    )}
-                    <span className="relative z-10">{yr}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              setEditingGoal((prev) => !prev);
-              setGoalInput(String(yearlyGoal));
-              setGoalError(null);
-            }}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/70 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-          >
-            <Pencil className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-            <span>{editingGoal ? t('closeEditor') : t('editYearlyGoal')}</span>
-          </button>
-
-          {onSubmitContribution && (
-            <button
-              type="button"
-              onClick={() => onSubmitContribution(currentBillingMonth)}
-              className="group px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <span>{t('depositMonth')}</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Current Month Contribution Status Banner */}
       <div
@@ -517,68 +361,6 @@ export function ContributionGoalTracker({
         </div>
       </div>
 
-      {/* Inline Custom Yearly Goal Editor */}
-      <AnimatePresence initial={false}>
-        {editingGoal && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            onSubmit={handleSaveGoal}
-            className="overflow-hidden pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-end justify-between gap-3"
-          >
-            <div className="space-y-1 flex-1 max-w-sm">
-              <label
-                htmlFor="yearly-savings-goal-input"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300"
-              >
-                {t('personalGoalLabel', { year: selectedYear, ccy })}
-              </label>
-              <input
-                id="yearly-savings-goal-input"
-                type="number"
-                min={100}
-                step={100}
-                required
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
-              {goalError && (
-                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{goalError}</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
-              >
-                {t('saveGoal')}
-              </button>
-              {customGoal !== null && (
-                <button
-                  type="button"
-                  onClick={handleResetGoal}
-                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{t('resetTo12x', { amount: formatMoney(defaultYearlyGoal, ccy) })}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setEditingGoal(false)}
-                aria-label={t('cancelEditAria')}
-                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
 
       {/* 4-Column Annual Goal Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">

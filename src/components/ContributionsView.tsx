@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Check,
@@ -8,6 +9,7 @@ import {
   FileImage,
   FileText,
   Lock,
+  Plus,
   Search,
   Shield,
   Sparkles,
@@ -26,6 +28,7 @@ import {
   isPdfFileUrl,
   shortHash,
 } from '../utils/format.ts';
+import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { MotionCard } from './MotionCard.tsx';
@@ -102,13 +105,29 @@ export function ContributionsView({
   const [advanceMode, setAdvanceMode] = useState(false);
   const [advanceMonths, setAdvanceMonths] = useState<string[]>([initialBillingMonth || currentMonth]);
 
+  const [mounted, setMounted] = useState(false);
+  const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [prefillBanner, setPrefillBanner] = useState<string | null>(null);
+  const depositModalTokenRef = useRef<symbol | null>(null);
+  if (!depositModalTokenRef.current) {
+    depositModalTokenRef.current = Symbol('SubmitCapitalDepositModal');
+  }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (initialBillingMonth) {
       setBillingMonth(initialBillingMonth);
       setAdvanceMonths([initialBillingMonth]);
       setAdvanceMode(false);
+      if (!isAdmin) {
+        setPrefillBanner(null);
+        setDepositModalOpen(true);
+      }
     }
-  }, [initialBillingMonth]);
+  }, [initialBillingMonth, isAdmin]);
 
   const upcomingMonthOptions = useMemo(
     () => Array.from({ length: 6 }, (_, i) => shiftBillingMonth(billingMonth, i)),
@@ -138,7 +157,6 @@ export function ContributionsView({
   const [receiptAiResult, setReceiptAiResult] = useState<ReceiptAiExtraction | null>(null);
   const [scanningReceipt, setScanningReceipt] = useState(false);
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
-  const depositFormRef = useRef<HTMLElement | null>(null);
   const senderInputRef = useRef<HTMLInputElement | null>(null);
 
   const [modal, setModal] = useState<ContributionModalState | null>(null);
@@ -147,7 +165,40 @@ export function ContributionsView({
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [mobilePane, setMobilePane] = useState<'form' | 'ledger'>(isAdmin ? 'ledger' : 'form');
+
+  useBodyScrollLock(depositModalOpen);
+
+  useEffect(() => {
+    if (!depositModalOpen || !depositModalTokenRef.current) return;
+    const token = depositModalTokenRef.current;
+    const unregister = registerTopModal(token);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isTopModal(token)) {
+        e.preventDefault();
+        e.stopPropagation();
+        setDepositModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      unregister();
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [depositModalOpen]);
+
+  function openDepositModal(targetMonth?: string) {
+    if (targetMonth) {
+      setBillingMonth(targetMonth);
+      setAdvanceMonths([targetMonth]);
+      setAdvanceMode(false);
+    }
+    setPrefillBanner(null);
+    setDepositModalOpen(true);
+    window.setTimeout(() => {
+      senderInputRef.current?.focus();
+    }, 180);
+  }
 
   function showNotice(
     tone: 'emerald' | 'amber' | 'red' | 'slate',
@@ -283,6 +334,8 @@ export function ContributionsView({
         setAdvanceMode(false);
         setAdvanceMonths([billingMonth]);
         amountEditedRef.current = false;
+        setPrefillBanner(null);
+        setDepositModalOpen(false);
         await onRefresh();
         showNotice(
           'emerald',
@@ -359,7 +412,6 @@ export function ContributionsView({
   }
 
   function handlePrefillForCorrection(item: Contribution) {
-    setMobilePane('form');
     setBillingMonth(item.billingMonth);
     setAdvanceMode(false);
     setAdvanceMonths([item.billingMonth]);
@@ -371,15 +423,11 @@ export function ContributionsView({
       item.decryptedDetails?.notes ||
         t('resubmitNote', { month: formatBillingMonth(item.billingMonth) })
     );
-    showNotice(
-      'slate',
-      t('prefilledTitle'),
-      t('prefilledDesc', { month: formatBillingMonth(item.billingMonth) })
-    );
+    setPrefillBanner(t('prefilledDesc', { month: formatBillingMonth(item.billingMonth) }));
+    setDepositModalOpen(true);
     window.setTimeout(() => {
-      depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       senderInputRef.current?.focus();
-    }, 250);
+    }, 180);
   }
 
   const myContributions = useMemo(
@@ -430,16 +478,7 @@ export function ContributionsView({
           contributions={contributions}
           config={config}
           loading={loading}
-          onSubmitContribution={(month) => {
-            if (month) {
-              setBillingMonth(month);
-            }
-            setMobilePane('form');
-            window.setTimeout(() => {
-              depositFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              senderInputRef.current?.focus();
-            }, 250);
-          }}
+          onSubmitContribution={(month) => openDepositModal(month)}
         />
       )}
 
@@ -509,362 +548,28 @@ export function ContributionsView({
         </MotionCard>
       </section>
 
-      {!isAdmin && (
-        <div
-          role="tablist"
-          aria-label={t('workspaceSwitcherAria')}
-          className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mobilePane === 'form'}
-            onClick={() => setMobilePane('form')}
-            className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              mobilePane === 'form'
-                ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400'
-            }`}
-          >
-            {t('depositFormTab')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mobilePane === 'ledger'}
-            onClick={() => setMobilePane('ledger')}
-            className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer tabular-nums ${
-              mobilePane === 'ledger'
-                ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400'
-            }`}
-          >
-            {t('historyQueueTab', { count: contributions.length })}
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {!isAdmin && (
-          <motion.section
-            ref={depositFormRef}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-            className={`${mobilePane === 'form' ? 'block' : 'hidden lg:block'} xl:col-span-4 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200`}
-          >
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {t('submitCapitalDeposit')}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                    <span>{t('slipProofLabel')}</span>
-                  </span>
-                  {receiptPhotoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReceiptPhotoUrl('');
-                        setReceiptAiResult(null);
-                        setReceiptNotice(null);
-                      }}
-                      className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
-                    >
-                      {t('clear')}
-                    </button>
-                  )}
-                </div>
-
-                <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
-                  <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                  <span>
-                    {scanningReceipt
-                      ? t('uploadingScanning')
-                      : receiptPhotoUrl
-                        ? t('replaceReceipt')
-                        : t('uploadAutoFill')}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"
-                    disabled={scanningReceipt}
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void handleReceiptUploadAndScan(file);
-                      e.currentTarget.value = '';
-                    }}
-                  />
-                </label>
-
-                {receiptNotice && (
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                    {receiptNotice}
-                  </p>
-                )}
-                {receiptPhotoUrl && (
-                  <a
-                    href={receiptPhotoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
-                  >
-                    {isPdfFileUrl(receiptPhotoUrl) ? (
-                      <>
-                        <FileText className="w-3 h-3" aria-hidden="true" />
-                        <span>{t('viewSlipPdf')}</span>
-                      </>
-                    ) : (
-                      <span>{t('viewSlipImage')}</span>
-                    )}
-                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                  </a>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {t('primaryMonth')}
-                  </label>
-                  <input
-                    type="month"
-                    required
-                    value={billingMonth}
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setBillingMonth(next);
-                      if (!advanceMode) {
-                        setAdvanceMonths([next]);
-                      }
-                    }}
-                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {effectiveBillingMonths.length > 1
-                      ? t('totalMonthsAmount', { count: effectiveBillingMonths.length, ccy })
-                      : t('amountWithCcy', { ccy })}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    required
-                    value={amount}
-                    onChange={(e) => {
-                      amountEditedRef.current = true;
-                      setAmount(e.target.value);
-                    }}
-                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={advanceMode}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setAdvanceMode(checked);
-                      if (!checked) {
-                        setAdvanceMonths([billingMonth]);
-                      } else {
-                        setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
-                      }
-                    }}
-                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
-                  />
-                  <span>{t('payMultipleAdvance')}</span>
-                </label>
-
-                <AnimatePresence initial={false}>
-                  {advanceMode && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden p-2.5 rounded-lg border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2"
-                    >
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {upcomingMonthOptions.map((m) => {
-                          const active = effectiveBillingMonths.includes(m);
-                          const isPrimary = m === billingMonth;
-                          return (
-                            <button
-                              key={m}
-                              type="button"
-                              disabled={isPrimary}
-                              onClick={() => toggleAdvanceMonth(m)}
-                              className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
-                                active
-                                  ? 'bg-emerald-600 text-white font-medium shadow-2xs'
-                                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400'
-                              }`}
-                            >
-                              {m}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-300">
-                        {t('monthsSelectedSplit', {
-                          count: effectiveBillingMonths.length,
-                          perMonth: formatMoney(
-                            Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
-                            ccy
-                          ),
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  {t('paymentChannel')}
-                </label>
-                <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setChannel('mfs');
-                      setProviderName(MFS_PROVIDERS[0]);
-                    }}
-                    className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      channel === 'mfs'
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {channel === 'mfs' && (
-                      <motion.span
-                        layoutId="contrib-channel-pill"
-                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
-                      />
-                    )}
-                    <span className="relative z-10">{t('mfsWallet')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setChannel('bank');
-                      setProviderName(BANK_PROVIDERS[0]);
-                    }}
-                    className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      channel === 'bank'
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {channel === 'bank' && (
-                      <motion.span
-                        layoutId="contrib-channel-pill"
-                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
-                      />
-                    )}
-                    <span className="relative z-10">{t('bdBankTransfer')}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {channel === 'mfs' ? t('mfsWalletProvider') : t('bdBankName')}
-                </label>
-                <ProviderSelect
-                  options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
-                  value={providerName}
-                  onChange={setProviderName}
-                  placeholder={
-                    channel === 'mfs'
-                      ? t('searchMfsWallet')
-                      : t('searchAllBdBanks', { count: BANK_PROVIDERS.length })
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {channel === 'mfs' ? t('senderMobileLabel') : t('senderAccountRouting')}
-                </label>
-                <input
-                  ref={senderInputRef}
-                  type="text"
-                  required
-                  value={senderAccount}
-                  onChange={(e) => setSenderAccount(e.target.value)}
-                  placeholder={channel === 'mfs' ? '017XX-XXXXXX' : '2050-XXXX-XXXX'}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {channel === 'mfs' ? t('txNumberMfs') : t('txNumberBank')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={referenceId}
-                  onChange={(e) => setReferenceId(e.target.value)}
-                  placeholder={channel === 'mfs' ? 'e.g. BKX9984120A' : 'e.g. IBBL-BEFTN-8821'}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t('optionalNote')}
-                </label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t('optionalNotePlaceholder')}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                />
-              </div>
-
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, delay: 0.04 }}
+        className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              {isReviewer ? t('reviewerLedgerHeading') : t('memberLedgerHeading')}
+            </h2>
+            {!isAdmin && (
               <button
-                type="submit"
-                disabled={modalBusy}
-                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                type="button"
+                onClick={() => openDepositModal()}
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <Lock className="w-4 h-4" aria-hidden="true" />
-                <span>{t('reviewSubmitBtn')}</span>
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{t('submitCapitalDeposit')}</span>
               </button>
-            </form>
-          </motion.section>
-        )}
-
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.04 }}
-          className={`${!isAdmin && mobilePane !== 'ledger' ? 'hidden lg:block' : 'block'} ${
-            isAdmin ? 'xl:col-span-12' : 'xl:col-span-8'
-          } amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs`}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {isReviewer ? t('reviewerLedgerHeading') : t('memberLedgerHeading')}
-              </h2>
-            </div>
+            )}
+          </div>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
@@ -1351,8 +1056,380 @@ export function ContributionsView({
               </div>
             </>
           )}
-        </motion.section>
-      </div>
+      </motion.section>
+
+      {mounted &&
+        !isAdmin &&
+        createPortal(
+          <AnimatePresence>
+            {depositModalOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="submit-capital-deposit-modal-title"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16 }}
+                  onClick={() => setDepositModalOpen(false)}
+                  className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+                  aria-hidden="true"
+                />
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 10 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative z-10 w-full max-w-xl bg-white/92 dark:bg-slate-900/92 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+                >
+                  <div className="px-5 sm:px-6 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-4 shrink-0">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="inline-flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                          <span>{t('aesEnvelope')}</span>
+                        </span>
+                        <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                          ·
+                        </span>
+                        <span className="font-mono">{user.memberCode}</span>
+                      </div>
+                      <h2
+                        id="submit-capital-deposit-modal-title"
+                        className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white"
+                      >
+                        {t('submitCapitalDeposit')}
+                      </h2>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setDepositModalOpen(false)}
+                      aria-label={tCommon('closeDialog')}
+                      className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 overflow-y-auto space-y-4">
+                    {prefillBanner && (
+                      <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-0.5">
+                        <div className="font-semibold">{t('prefilledTitle')}</div>
+                        <p className="text-amber-800 dark:text-amber-300 leading-relaxed">{prefillBanner}</p>
+                      </div>
+                    )}
+
+                    <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                          <span>{t('slipProofLabel')}</span>
+                        </span>
+                        {receiptPhotoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReceiptPhotoUrl('');
+                              setReceiptAiResult(null);
+                              setReceiptNotice(null);
+                            }}
+                            className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                          >
+                            {t('clear')}
+                          </button>
+                        )}
+                      </div>
+
+                      <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                        <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                        <span>
+                          {scanningReceipt
+                            ? t('uploadingScanning')
+                            : receiptPhotoUrl
+                              ? t('replaceReceipt')
+                              : t('uploadAutoFill')}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"
+                          disabled={scanningReceipt}
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void handleReceiptUploadAndScan(file);
+                            e.currentTarget.value = '';
+                          }}
+                        />
+                      </label>
+
+                      {receiptNotice && (
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                          {receiptNotice}
+                        </p>
+                      )}
+                      {receiptPhotoUrl && (
+                        <a
+                          href={receiptPhotoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+                        >
+                          {isPdfFileUrl(receiptPhotoUrl) ? (
+                            <>
+                              <FileText className="w-3 h-3" aria-hidden="true" />
+                              <span>{t('viewSlipPdf')}</span>
+                            </>
+                          ) : (
+                            <span>{t('viewSlipImage')}</span>
+                          )}
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          {t('primaryMonth')}
+                        </label>
+                        <input
+                          type="month"
+                          required
+                          value={billingMonth}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            setBillingMonth(next);
+                            if (!advanceMode) {
+                              setAdvanceMonths([next]);
+                            }
+                          }}
+                          className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          {effectiveBillingMonths.length > 1
+                            ? t('totalMonthsAmount', { count: effectiveBillingMonths.length, ccy })
+                            : t('amountWithCcy', { ccy })}
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          required
+                          value={amount}
+                          onChange={(e) => {
+                            amountEditedRef.current = true;
+                            setAmount(e.target.value);
+                          }}
+                          className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={advanceMode}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setAdvanceMode(checked);
+                            if (!checked) {
+                              setAdvanceMonths([billingMonth]);
+                            } else {
+                              setAdvanceMonths([billingMonth, shiftBillingMonth(billingMonth, 1)]);
+                            }
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600/30 cursor-pointer"
+                        />
+                        <span>{t('payMultipleAdvance')}</span>
+                      </label>
+
+                      <AnimatePresence initial={false}>
+                        {advanceMode && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden p-2.5 rounded-lg border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2"
+                          >
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {upcomingMonthOptions.map((m) => {
+                                const active = effectiveBillingMonths.includes(m);
+                                const isPrimary = m === billingMonth;
+                                return (
+                                  <button
+                                    key={m}
+                                    type="button"
+                                    disabled={isPrimary}
+                                    onClick={() => toggleAdvanceMonth(m)}
+                                    className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
+                                      active
+                                        ? 'bg-emerald-600 text-white font-medium shadow-2xs'
+                                        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400'
+                                    }`}
+                                  >
+                                    {m}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-300">
+                              {t('monthsSelectedSplit', {
+                                count: effectiveBillingMonths.length,
+                                perMonth: formatMoney(
+                                  Math.round((Number(amount) || 0) / Math.max(1, effectiveBillingMonths.length)),
+                                  ccy
+                                ),
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        {t('paymentChannel')}
+                      </label>
+                      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChannel('mfs');
+                            setProviderName(MFS_PROVIDERS[0]);
+                          }}
+                          className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                            channel === 'mfs'
+                              ? 'text-slate-900 dark:text-white'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          {channel === 'mfs' && (
+                            <motion.span
+                              layoutId="contrib-channel-pill"
+                              transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                              className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                            />
+                          )}
+                          <span className="relative z-10">{t('mfsWallet')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChannel('bank');
+                            setProviderName(BANK_PROVIDERS[0]);
+                          }}
+                          className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                            channel === 'bank'
+                              ? 'text-slate-900 dark:text-white'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          {channel === 'bank' && (
+                            <motion.span
+                              layoutId="contrib-channel-pill"
+                              transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                              className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                            />
+                          )}
+                          <span className="relative z-10">{t('bdBankTransfer')}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {channel === 'mfs' ? t('mfsWalletProvider') : t('bdBankName')}
+                      </label>
+                      <ProviderSelect
+                        options={channel === 'mfs' ? MFS_PROVIDERS : BANK_PROVIDERS}
+                        value={providerName}
+                        onChange={setProviderName}
+                        placeholder={
+                          channel === 'mfs'
+                            ? t('searchMfsWallet')
+                            : t('searchAllBdBanks', { count: BANK_PROVIDERS.length })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {channel === 'mfs' ? t('senderMobileLabel') : t('senderAccountRouting')}
+                      </label>
+                      <input
+                        ref={senderInputRef}
+                        type="text"
+                        required
+                        value={senderAccount}
+                        onChange={(e) => setSenderAccount(e.target.value)}
+                        placeholder={channel === 'mfs' ? '017XX-XXXXXX' : '2050-XXXX-XXXX'}
+                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {channel === 'mfs' ? t('txNumberMfs') : t('txNumberBank')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={referenceId}
+                        onChange={(e) => setReferenceId(e.target.value)}
+                        placeholder={channel === 'mfs' ? 'e.g. BKX9984120A' : 'e.g. IBBL-BEFTN-8821'}
+                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('optionalNote')}
+                      </label>
+                      <input
+                        type="text"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder={t('optionalNotePlaceholder')}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                      />
+                    </div>
+
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                      <button
+                        type="button"
+                        onClick={() => setDepositModalOpen(false)}
+                        className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {tCommon('cancel')}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={modalBusy}
+                        className="py-2.5 px-5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-xs sm:text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Lock className="w-4 h-4" aria-hidden="true" />
+                        <span>{t('reviewSubmitBtn')}</span>
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
       <ActionModal
         open={Boolean(modal)}
