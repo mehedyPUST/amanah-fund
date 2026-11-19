@@ -726,7 +726,6 @@ export interface DashboardOverview {
     nextLoanDeadline: string | null;
     nextOverallDeadline: string;
     totalProfitDistributed: number;
-    cooperativeEquity: number;
     eligibility: EligibilityCheck;
   };
   monthlySeries: MonthlyCashflowPoint[];
@@ -882,7 +881,6 @@ export interface MemberPublicProfileFundSummary {
   totalRepaid: number;
   totalLoansTakenCount: number;
   loansRepaidCount: number;
-  cooperativeEquity: number;
   guarantorCount: number;
   recentContributions: MemberPublicProfileContributionItem[];
 }

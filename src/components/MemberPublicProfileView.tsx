@@ -462,7 +462,7 @@ export function MemberPublicProfileView({
         </div>
 
         {/* Top Highlight Metrics Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
           <div>
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiApprovedContributions')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -470,18 +470,6 @@ export function MemberPublicProfileView({
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
               {t('kpiPoolSharePct', { pct: fundSummary.fundSharePct })}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiNetEquity')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
-              {formatMoney(fundSummary.cooperativeEquity, ccy)}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
-              {fundSummary.totalProfitDistributed > 0
-                ? t('kpiIncludesHalal', { amount: formatMoney(fundSummary.totalProfitDistributed, ccy) })
-                : t('kpiNetEquityFallback')}
             </div>
           </div>
 

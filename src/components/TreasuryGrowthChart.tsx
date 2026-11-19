@@ -409,7 +409,7 @@ export function TreasuryGrowthChart({
                 ? t('percentOfFundPool', {
                     pct: Math.round((metrics.memberTotal / metrics.totalPool) * 100),
                   })
-                : t('memberEquityShare')}
+                : t('memberPoolShare')}
             </div>
           </div>
         </div>
@@ -559,7 +559,7 @@ export function TreasuryGrowthChart({
                   <Area
                     type="monotone"
                     dataKey="cumulativePool"
-                    name={t('seriesCumulativePoolEquity')}
+                    name={t('seriesCumulativeContributions')}
                     stroke="#6366f1"
                     strokeWidth={2}
                     fill="url(#contribPoolAreaGrad)"

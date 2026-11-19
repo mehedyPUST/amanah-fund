@@ -220,9 +220,6 @@ export function BalanceSheetMemberModal({
 
   if (!mounted) return null;
 
-  const netEquity = row
-    ? round2(row.thisMonthSummary.contributionAmount - row.thisMonthSummary.dueHasanaAmount)
-    : 0;
   const dueNetChange = row
     ? round2(row.thisMonth.qardHasanAmount - row.thisMonth.repaidAmount)
     : 0;
@@ -606,38 +603,22 @@ export function BalanceSheetMemberModal({
                   </table>
                 </div>
 
-                {/* Net Equity & Scheduled Installment Strip */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
-                  <div className="px-3.5 py-2.5 flex items-center justify-between gap-3">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Closing Net Equity
-                    </span>
-                    <span
-                      className={`font-mono tabular-nums text-sm font-bold ${
-                        netEquity >= 0
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-rose-700 dark:text-rose-400'
-                      }`}
-                    >
-                      {formatMoney(netEquity, currency)}
-                    </span>
-                  </div>
-                  <div className="px-3.5 py-2.5 flex items-center justify-between gap-3">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Scheduled Installment Due
-                    </span>
-                    <span
-                      className={`font-mono tabular-nums text-sm font-bold ${
-                        row.installmentDueThisMonth > 0
-                          ? 'text-amber-700 dark:text-amber-400'
-                          : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {row.installmentDueThisMonth > 0
-                        ? formatMoney(row.installmentDueThisMonth, currency)
-                        : 'None'}
-                    </span>
-                  </div>
+                {/* Scheduled Installment Strip */}
+                <div className="border border-slate-200/90 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/40 px-3.5 py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Scheduled Installment Due
+                  </span>
+                  <span
+                    className={`font-mono tabular-nums text-sm font-bold ${
+                      row.installmentDueThisMonth > 0
+                        ? 'text-amber-700 dark:text-amber-400'
+                        : 'text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {row.installmentDueThisMonth > 0
+                      ? formatMoney(row.installmentDueThisMonth, currency)
+                      : 'None'}
+                  </span>
                 </div>
               </section>
 
@@ -648,14 +629,14 @@ export function BalanceSheetMemberModal({
                 </h3>
 
                 {profileQuery.isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[1, 2, 3, 4].map((k) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[1, 2, 3].map((k) => (
                       <Skeleton key={k} height={54} />
                     ))}
                   </div>
                 ) : profile ? (
                   <>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800">
                       <div className="p-3">
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">
                           Total Contributed
@@ -665,21 +646,6 @@ export function BalanceSheetMemberModal({
                         </div>
                         <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
                           {profile.fundSummary.fundSharePct}% pool share
-                        </div>
-                      </div>
-
-                      <div className="p-3">
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Cooperative Equity
-                        </div>
-                        <div className="mt-1 font-mono tabular-nums text-sm font-bold text-slate-900 dark:text-white">
-                          {formatMoney(
-                            profile.fundSummary.cooperativeEquity,
-                            profile.fundSummary.currency
-                          )}
-                        </div>
-                        <div className="mt-0.5 text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                          Profit: {formatMoney(profile.fundSummary.totalProfitDistributed, profile.fundSummary.currency)}
                         </div>
                       </div>
 

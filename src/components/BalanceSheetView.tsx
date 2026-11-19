@@ -73,7 +73,6 @@ type SortField =
   | 'closingContrib'
   | 'closingQard'
   | 'closingDue'
-  | 'netEquity'
   | 'status';
 type SortDirection = 'asc' | 'desc';
 
@@ -108,7 +107,6 @@ const SHEET_COL_LETTERS = [
   'J',
   'K',
   'L',
-  'M',
 ] as const;
 
 const SUMMARY_COL_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'] as const;
@@ -159,10 +157,6 @@ function escapeCsvCell(value: string | number): string {
 
 function round2(n: number): number {
   return Math.round((n || 0) * 100) / 100;
-}
-
-function getNetEquity(row: MonthlySheetMemberRow): number {
-  return round2(row.thisMonthSummary.contributionAmount - row.thisMonthSummary.dueHasanaAmount);
 }
 
 function statusSortRank(status: MonthlySheetMemberRow['contributionStatus']): number {
@@ -379,7 +373,6 @@ export function BalanceSheetView({
     let qardHasan = 0;
     let pendingContributionTotal = 0;
     let installmentDueTotal = 0;
-    let totalMemberNetEquity = 0;
 
     for (const r of rows) {
       if (r.contributionStatus === 'paid') {
@@ -394,7 +387,6 @@ export function BalanceSheetView({
       }
       pendingContributionTotal += r.contributionPendingAmount || 0;
       installmentDueTotal += r.installmentDueThisMonth || 0;
-      totalMemberNetEquity += getNetEquity(r);
     }
 
     return {
@@ -407,7 +399,6 @@ export function BalanceSheetView({
       qardHasan,
       pendingContributionTotal: round2(pendingContributionTotal),
       installmentDueTotal: round2(installmentDueTotal),
-      totalMemberNetEquity: round2(totalMemberNetEquity),
     };
   }, [rows]);
 
@@ -439,16 +430,12 @@ export function BalanceSheetView({
         inflow: 0,
         outflow: 0,
         netCashFlow: 0,
-        closingNetEquity: 0,
       };
     }
     const inflow = round2(sheet.thisMonthOnly.contributionAmount + sheet.thisMonthRepaidAmount);
     const outflow = round2(sheet.thisMonthOnly.qardHasanAmount);
     const netCashFlow = round2(inflow - outflow);
-    const closingNetEquity = round2(
-      sheet.thisMonthSummary.contributionAmount - sheet.thisMonthSummary.dueHasanaAmount
-    );
-    return { inflow, outflow, netCashFlow, closingNetEquity };
+    return { inflow, outflow, netCashFlow };
   }, [sheet]);
 
   const handleToggleSort = useCallback(
@@ -523,9 +510,6 @@ export function BalanceSheetView({
         case 'closingDue':
           cmp = a.thisMonthSummary.dueHasanaAmount - b.thisMonthSummary.dueHasanaAmount;
           break;
-        case 'netEquity':
-          cmp = getNetEquity(a) - getNetEquity(b);
-          break;
         case 'status':
           cmp = statusSortRank(a.contributionStatus) - statusSortRank(b.contributionStatus);
           break;
@@ -565,7 +549,6 @@ export function BalanceSheetView({
         acc.closingContrib += r.thisMonthSummary.contributionAmount;
         acc.closingQard += r.thisMonthSummary.qardHasanAmount;
         acc.closingDue += r.thisMonthSummary.dueHasanaAmount;
-        acc.netEquity += getNetEquity(r);
         return acc;
       },
       {
@@ -579,7 +562,6 @@ export function BalanceSheetView({
         closingContrib: 0,
         closingQard: 0,
         closingDue: 0,
-        netEquity: 0,
       }
     );
   }, [filteredRows]);
@@ -811,22 +793,6 @@ export function BalanceSheetView({
         highlight: cashFlowMetrics.netCashFlow >= 0 ? 'emerald' : 'rose',
       },
       {
-        id: 'closing-net-equity',
-        group: 'Cash Flow & Treasury',
-        variable: 'Closing Cooperative Net Equity (Savings − Qard Due)',
-        basis: '=ClosingCumulContrib − ClosingQardDue',
-        prevValue: fmt(
-          round2(
-            sheet.previousMonthSummary.contributionAmount -
-              sheet.previousMonthSummary.dueHasanaAmount
-          )
-        ),
-        currValue: fmtSigned(cashFlowMetrics.netCashFlow),
-        closingValue: fmt(cashFlowMetrics.closingNetEquity),
-        formula: `=${fmt(sheet.thisMonthSummary.contributionAmount)} − ${fmt(sheet.thisMonthSummary.dueHasanaAmount)} = ${fmt(cashFlowMetrics.closingNetEquity)}`,
-        highlight: 'emerald',
-      },
-      {
         id: 'all-time-fund-height',
         group: 'Cash Flow & Treasury',
         variable: 'All-Time Cooperative Fund Height',
@@ -968,10 +934,6 @@ export function BalanceSheetView({
           formula: `=E${totalRowNum}+G${totalRowNum}-H${totalRowNum}  →  ${fmt(sheet.thisMonthSummary.dueHasanaAmount)}`,
         },
         11: {
-          value: fmt(cashFlowMetrics.closingNetEquity),
-          formula: `=I${totalRowNum}-K${totalRowNum}  →  ${fmt(cashFlowMetrics.closingNetEquity)}`,
-        },
-        12: {
           value: `${filterCounts.paid}/${rows.length} Paid`,
           formula: `="${filterCounts.paid} of ${rows.length} Paid (${collectionRatePct}%)"`,
         },
@@ -1030,12 +992,8 @@ export function BalanceSheetView({
           formula: `=SUBTOTAL(109, K1:K${lastDataRow})  →  ${fmt(filteredTotals.closingDue)}`,
         },
         11: {
-          value: fmt(filteredTotals.netEquity),
-          formula: `=SUBTOTAL(109, L1:L${lastDataRow})  →  ${fmt(filteredTotals.netEquity)}`,
-        },
-        12: {
           value: `${filteredRows.length} shown`,
-          formula: `=COUNTA(M1:M${lastDataRow})`,
+          formula: `=COUNTA(L1:L${lastDataRow})`,
         },
       };
       const entry = subValues[safeCol] || subValues[0];
@@ -1055,7 +1013,6 @@ export function BalanceSheetView({
       };
     }
 
-    const netEquity = getNetEquity(row);
     const statusLabel =
       row.contributionStatus === 'paid'
         ? t('statusPaid')
@@ -1121,10 +1078,6 @@ export function BalanceSheetView({
         formula: `=E${sheetRowNum}+G${sheetRowNum}-H${sheetRowNum}  // ${fmt(row.previousSummary.dueHasanaAmount)} + ${fmt(row.thisMonth.qardHasanAmount)} − ${fmt(row.thisMonth.repaidAmount)} = ${fmt(row.thisMonthSummary.dueHasanaAmount)}`,
       },
       11: {
-        value: fmt(netEquity),
-        formula: `=I${sheetRowNum}-K${sheetRowNum}  // ${fmt(row.thisMonthSummary.contributionAmount)} − ${fmt(row.thisMonthSummary.dueHasanaAmount)} = ${fmt(netEquity)}`,
-      },
-      12: {
         value: statusLabel,
         formula: `=IF(F${sheetRowNum}>=${row.contributionTarget},"Paid",IF(F${sheetRowNum}>0,"Partial",IF(Pending>0,"Pending","Due")))  →  ${statusLabel}`,
       },
@@ -1144,7 +1097,6 @@ export function BalanceSheetView({
     filteredTotals,
     collectionRatePct,
     shortMonthLabel,
-    cashFlowMetrics.closingNetEquity,
     filterCounts.paid,
     activeMonth,
     prevMonthKey,
@@ -1268,7 +1220,6 @@ export function BalanceSheetView({
       `Closing Cumul. Contribution (${nextMonthLabel} Open)`,
       `Closing Cumul. Qard Hasan`,
       `Closing Qard Due`,
-      `Net Member Equity`,
       'Status',
     ];
 
@@ -1286,7 +1237,6 @@ export function BalanceSheetView({
       row.thisMonthSummary.contributionAmount,
       row.thisMonthSummary.qardHasanAmount,
       row.thisMonthSummary.dueHasanaAmount,
-      getNetEquity(row),
       row.contributionStatus.toUpperCase(),
     ]);
 
@@ -1304,7 +1254,6 @@ export function BalanceSheetView({
       sheet.thisMonthSummary.contributionAmount,
       sheet.thisMonthSummary.qardHasanAmount,
       sheet.thisMonthSummary.dueHasanaAmount,
-      cashFlowMetrics.closingNetEquity,
       `${filterCounts.paid}/${rows.length} PAID (${collectionRatePct}%)`,
     ];
 
@@ -1358,7 +1307,6 @@ export function BalanceSheetView({
     shortMonthLabel,
     nextMonthLabel,
     filterCounts,
-    cashFlowMetrics.closingNetEquity,
     collectionRatePct,
     allVariablesRows,
     showToast,
@@ -1965,7 +1913,6 @@ export function BalanceSheetView({
                   </div>
                 ) : (
                   filteredRows.map((row, idx) => {
-                    const netEquity = getNetEquity(row);
                     const isSelfRow = Boolean(user?.id && row.userId === user.id);
                     return (
                       <div key={row.userId} className="p-3.5 space-y-2.5 bg-white dark:bg-slate-950">
@@ -2081,14 +2028,10 @@ export function BalanceSheetView({
                           </div>
                           <div className="p-2 border-r border-slate-200 dark:border-slate-800">
                             <div className="text-slate-500 dark:text-slate-400">
-                              Closing Contrib / Equity
+                              Closing Contrib
                             </div>
                             <div className="font-mono tabular-nums font-bold text-slate-900 dark:text-slate-50 mt-0.5">
                               {formatMoney(row.thisMonthSummary.contributionAmount, ccy)}
-                              <span className="text-slate-400 font-normal">
-                                {' '}
-                                ({formatMoney(netEquity, ccy)})
-                              </span>
                             </div>
                           </div>
                           <div className="p-2">
@@ -2121,7 +2064,6 @@ export function BalanceSheetView({
                   ['Q. Due', 'Qard Due'],
                   ['Drawn', 'Qard Drawn'],
                   ['Refund', 'Refund Qard'],
-                  ['Equity', 'Net Equity'],
                 ].map(([abbr, full], idx) => (
                   <span key={abbr} className="inline-flex items-center gap-1 whitespace-nowrap">
                     {idx > 0 && (
@@ -2155,7 +2097,7 @@ export function BalanceSheetView({
             >
               <table className="w-full border-collapse text-xs select-none">
                 <thead className="sticky top-0 z-30">
-                  {/* Spreadsheet Column Letters Row (A .. M) */}
+                  {/* Spreadsheet Column Letters Row (A .. L) */}
                   <tr className="bg-[#f8f9fa] dark:bg-slate-900 text-[11px] font-mono text-slate-500 dark:text-slate-400">
                     <th
                       scope="col"
@@ -2225,7 +2167,7 @@ export function BalanceSheetView({
                     </th>
                     <th
                       scope="colgroup"
-                      colSpan={5}
+                      colSpan={4}
                       title={`Closing Summary (Rolls to ${nextMonthLabel})`}
                       className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-sky-50/90 dark:bg-sky-950/45 text-sky-900 dark:text-sky-200 whitespace-nowrap"
                     >
@@ -2233,7 +2175,7 @@ export function BalanceSheetView({
                     </th>
                   </tr>
 
-                  {/* Column Titles Row (S.N + Sortable A..M) */}
+                  {/* Column Titles Row (S.N + Sortable A..L) */}
                   <tr className="bg-white dark:bg-slate-950 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
                     <th
                       scope="col"
@@ -2449,23 +2391,7 @@ export function BalanceSheetView({
                       </button>
                     </th>
 
-                    {/* L: Closing Summary — Net Equity */}
-                    <th
-                      scope="col"
-                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSort('netEquity')}
-                        title="Net Member Equity (Closing Contribution minus Closing Qard Due)"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
-                      >
-                        <span>Equity</span>
-                        {renderSortIcon('netEquity')}
-                      </button>
-                    </th>
-
-                    {/* M: Closing Summary — Status */}
+                    {/* L: Closing Summary — Status */}
                     <th
                       scope="col"
                       className="min-w-[76px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
@@ -2487,7 +2413,7 @@ export function BalanceSheetView({
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={isFullScreen ? 15 : 14}
+                        colSpan={isFullScreen ? 14 : 13}
                         className="py-12 px-4 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
                       >
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -2514,7 +2440,6 @@ export function BalanceSheetView({
                         selectedCell.tab === 'balance-sheet' && selectedCell.row === idx;
                       const isRowMarked = markedRowUserId === row.userId;
                       const isSelfRow = Boolean(user?.id && row.userId === user.id);
-                      const netEquity = getNetEquity(row);
                       const zebraBg = isRowMarked
                         ? 'bg-emerald-100/80 dark:bg-emerald-950/60'
                         : isSelfRow
@@ -2847,25 +2772,12 @@ export function BalanceSheetView({
                               : '—'}
                           </td>
 
-                          {/* L: Net Member Equity */}
+                          {/* L: Status */}
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:11`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 11)}
-                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums font-semibold border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
-                              netEquity >= 0
-                                ? 'text-emerald-800 dark:text-emerald-300'
-                                : 'text-rose-700 dark:text-rose-400'
-                            } ${cellRingClass(isCellActive('balance-sheet', idx, 11))}`}
-                          >
-                            {formatMoney(netEquity, ccy)}
-                          </td>
-
-                          {/* M: Status */}
-                          <td
-                            data-sheet-cell={`balance-sheet:${idx}:12`}
-                            onClick={() => selectSheetCell('balance-sheet', idx, 12)}
                             className={`px-2 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
-                              isCellActive('balance-sheet', idx, 12)
+                              isCellActive('balance-sheet', idx, 11)
                             )}`}
                           >
                             {renderStatusIndicator(row.contributionStatus)}
@@ -2909,7 +2821,6 @@ export function BalanceSheetView({
                           { col: 8, val: formatMoney(filteredTotals.closingContrib, ccy) },
                           { col: 9, val: formatMoney(filteredTotals.closingQard, ccy) },
                           { col: 10, val: formatMoney(filteredTotals.closingDue, ccy) },
-                          { col: 11, val: formatMoney(filteredTotals.netEquity, ccy) },
                         ] as const
                       ).map((c) => (
                         <td
@@ -2924,10 +2835,10 @@ export function BalanceSheetView({
                         </td>
                       ))}
                       <td
-                        data-sheet-cell="balance-sheet:-2:12"
-                        onClick={() => selectSheetCell('balance-sheet', -2, 12)}
+                        data-sheet-cell="balance-sheet:-2:11"
+                        onClick={() => selectSheetCell('balance-sheet', -2, 11)}
                         className={`px-2 py-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
-                          isCellActive('balance-sheet', -2, 12)
+                          isCellActive('balance-sheet', -2, 11)
                         )}`}
                       >
                         {filteredRows.length} rows
@@ -3041,17 +2952,8 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:11"
                       onClick={() => selectSheetCell('balance-sheet', -1, 11)}
-                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-900 dark:text-emerald-200 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
-                        isCellActive('balance-sheet', -1, 11)
-                      )}`}
-                    >
-                      {formatMoney(cashFlowMetrics.closingNetEquity, ccy)}
-                    </td>
-                    <td
-                      data-sheet-cell="balance-sheet:-1:12"
-                      onClick={() => selectSheetCell('balance-sheet', -1, 12)}
                       className={`px-2 py-2.5 font-mono tabular-nums text-[11px] bg-[#eef3f8] dark:bg-slate-900 text-emerald-800 dark:text-emerald-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
-                        isCellActive('balance-sheet', -1, 12)
+                        isCellActive('balance-sheet', -1, 11)
                       )}`}
                     >
                       {filterCounts.paid}/{rows.length} ({collectionRatePct}%)

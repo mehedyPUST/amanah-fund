@@ -445,12 +445,6 @@ export function MyAmanahView({
                     : t('overdueCount', { count: eligibility.overdueCount || 1 })}
                 </dd>
               </div>
-              <div className="py-2.5 flex items-center justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">{t('coopNetEquityRow')}</dt>
-                <dd className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                  {formatMoney(personal.cooperativeEquity, ccy)}
-                </dd>
-              </div>
             </dl>
           </div>
 

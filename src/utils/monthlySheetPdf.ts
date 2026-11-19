@@ -116,10 +116,6 @@ export function exportBalanceSheetPdf({
         sheet.thisMonthOnly.qardHasanAmount) *
         100
     ) / 100;
-  const closingNetEquity =
-    Math.round(
-      (sheet.thisMonthSummary.contributionAmount - sheet.thisMonthSummary.dueHasanaAmount) * 100
-    ) / 100;
 
   // Privacy-safe columns: Member ID only (no name, no phone number, no email)
   // Widths sum strictly to contentWidth (~785.89 pt)
@@ -135,11 +131,10 @@ export function exportBalanceSheetPdf({
     { key: 'cContrib', label: 'Contribution', width: 68, align: 'right' as const },
     { key: 'cQard', label: 'Qard Drawn', width: 64, align: 'right' as const },
     { key: 'cRefund', label: 'Refund Qard', width: 66, align: 'right' as const },
-    // Closing summary (5 cols = 301.89 pt)
+    // Closing summary (4 cols)
     { key: 'nContrib', label: 'Contribution', width: 68, align: 'right' as const },
     { key: 'nQard', label: 'Qard Hasan', width: 64, align: 'right' as const },
     { key: 'nDue', label: 'Qard Due', width: 62, align: 'right' as const },
-    { key: 'equity', label: 'Net Equity', width: 64, align: 'right' as const },
   ];
   const usedWidth = fixedCols.reduce((sum, c) => sum + c.width, 0);
   const colDefs = [
@@ -296,8 +291,7 @@ export function exportBalanceSheetPdf({
       colDefs[8].width +
       colDefs[9].width +
       colDefs[10].width +
-      colDefs[11].width +
-      colDefs[12].width;
+      colDefs[11].width;
 
     doc.setFillColor(241, 245, 249);
     doc.rect(colX[0], startY, idGroupW, groupH, 'F');
@@ -404,10 +398,6 @@ export function exportBalanceSheetPdf({
       }
 
       const baseLine = y + 11.8;
-      const netEquity =
-        Math.round(
-          (row.thisMonthSummary.contributionAmount - row.thisMonthSummary.dueHasanaAmount) * 100
-        ) / 100;
 
       // Member ID only (no name, phone, or email)
       drawCellText(String(idx + 1), 0, baseLine, { color: [100, 116, 139], fontSize: 7.2 });
@@ -478,11 +468,7 @@ export function exportBalanceSheetPdf({
         bold: row.thisMonthSummary.dueHasanaAmount > 0,
         color: row.thisMonthSummary.dueHasanaAmount > 0 ? [180, 83, 9] : [148, 163, 184],
       });
-      drawCellText(fmtAmount(netEquity, ccy, false), 11, baseLine, {
-        bold: true,
-        color: netEquity >= 0 ? [6, 95, 70] : [190, 18, 60],
-      });
-      drawCellText(fmtStatusLabel(row), 12, baseLine, {
+      drawCellText(fmtStatusLabel(row), 11, baseLine, {
         bold: true,
         color: statusColor,
         fontSize: 7,
@@ -555,11 +541,7 @@ export function exportBalanceSheetPdf({
     bold: true,
     color: [180, 83, 9],
   });
-  drawCellText(fmtAmount(closingNetEquity, ccy, false), 11, totY, {
-    bold: true,
-    color: [6, 95, 70],
-  });
-  drawCellText(`${collectionPct}%`, 12, totY, {
+  drawCellText(`${collectionPct}%`, 11, totY, {
     bold: true,
     color: [5, 150, 105],
     fontSize: 7.2,

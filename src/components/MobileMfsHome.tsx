@@ -801,7 +801,7 @@ export function MobileMfsHome({
             className="text-left min-h-[44px] flex flex-col justify-center cursor-pointer"
           >
             <div className="text-[11px] text-emerald-100/75">
-              {isAdmin ? tDash('contributionsPool') : tDash('cooperativeEquity')}
+              {isAdmin ? tDash('contributionsPool') : tDash('sheets.yourApprovedDeposits')}
             </div>
             <div className="font-mono font-semibold tabular-nums mt-0.5 flex items-center gap-1">
               <span>
@@ -809,7 +809,7 @@ export function MobileMfsHome({
                   ? formatMoney(
                       isAdmin
                         ? treasury.totalContributionsPool
-                        : personal.cooperativeEquity,
+                        : personal.totalContributed,
                       ccy
                     )
                   : '••••••'}
@@ -1718,17 +1718,6 @@ export function MobileMfsHome({
                     : myActiveOrPendingLoan
                       ? formatMoney(myActiveOrPendingLoan.amount, ccy)
                       : formatMoney(0, ccy)}
-                </dd>
-              </div>
-              <div className="py-3 flex items-center justify-between gap-2">
-                <dt className="text-slate-600 dark:text-slate-400">{tDash('sheets.coopNetEquity')}</dt>
-                <dd className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {formatMoney(personal.cooperativeEquity, ccy)}
-                  {personal.totalProfitDistributed > 0 && (
-                    <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400 ml-1">
-                      (+{formatMoney(personal.totalProfitDistributed, ccy)})
-                    </span>
-                  )}
                 </dd>
               </div>
               <div className="py-3 flex items-center justify-between gap-2">

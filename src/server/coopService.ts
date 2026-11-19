@@ -598,10 +598,6 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
         0
       ) * 100
     ) / 100;
-  const cooperativeEquity = Math.max(
-    0,
-    Math.round((personalTotalContributed - activeLoanBalance + totalProfitDistributed) * 100) / 100
-  );
 
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
   const diffMs = maturity.getTime() - now.getTime();
@@ -789,7 +785,6 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       nextLoanDeadline,
       nextOverallDeadline,
       totalProfitDistributed,
-      cooperativeEquity,
       eligibility: evaluateLoanEligibility(state, currentUser.id),
     },
     monthlySeries,
@@ -1146,11 +1141,6 @@ export function buildMemberPublicProfile(
   const totalRepaid = takenLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
   const loansRepaidCount = memberLoans.filter((l) => l.status === 'repaid').length;
 
-  const cooperativeEquity = Math.max(
-    0,
-    Math.round((totalContributed - activeLoanBalance + totalProfitDistributed) * 100) / 100
-  );
-
   const guarantorCount = state.loans.filter((l) =>
     (l.guarantors || []).some((g) => g.memberId === target.id && g.status === 'accepted')
   ).length;
@@ -1245,7 +1235,6 @@ export function buildMemberPublicProfile(
       totalRepaid,
       totalLoansTakenCount: takenLoans.length,
       loansRepaidCount,
-      cooperativeEquity,
       guarantorCount,
       recentContributions,
     },

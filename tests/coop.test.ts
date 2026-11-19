@@ -314,7 +314,7 @@ describe('Cooperative accounting, 2/3 quorum & vote anonymization', () => {
     expect(requiredApprovals).toBe(2); // ceil(3 * 2 / 3) = 2
   });
 
-  it('computes Central Fund Balance and Personal Cooperative Equity accurately', () => {
+  it('computes Central Fund Balance and Personal Profit Distribution accurately', () => {
     const state = makeBaseState();
     const loan: LoanRequest = {
       id: 'loan-1',
@@ -361,9 +361,7 @@ describe('Cooperative accounting, 2/3 quorum & vote anonymization', () => {
     const overview = buildDashboardOverview(state, viewerBilal);
     // + 15000 approved contributions - 6000 approved loan + 2000 repaid = 11000
     expect(overview.treasury.centralBalance).toBe(11000);
-    // Bilal contributed 5000, owes 4000 remaining, earned 1000 Halal profit => 2000 equity
     expect(overview.personal.totalProfitDistributed).toBe(1000);
-    expect(overview.personal.cooperativeEquity).toBe(2000);
   });
 
   it('anonymizes other voters while keeping self ballot identifiable', () => {
@@ -777,7 +775,6 @@ describe('Member public profile builder', () => {
     expect(profile?.fundSummary.totalContributed).toBe(5000);
     expect(profile?.fundSummary.totalProfitDistributed).toBe(1000);
     expect(profile?.fundSummary.activeLoanBalance).toBe(4000);
-    expect(profile?.fundSummary.cooperativeEquity).toBe(2000);
     expect(profile?.fundSummary.recentContributions).toHaveLength(1);
     expect(profile?.communityPosts.map((p) => p.id)).toEqual(['post-vis']);
 
