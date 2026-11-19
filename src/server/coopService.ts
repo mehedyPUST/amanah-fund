@@ -29,6 +29,11 @@ import type {
   UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
+import {
+  containsBanglaScript,
+  isValidBanglaName,
+  normalizeRelationToEnglish,
+} from '../utils/inputLanguage.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
 import { getStorageEngine, type VaultState } from './db.ts';
 
@@ -1596,10 +1601,11 @@ export function validateAndNormalizeNominees(
     const label = multiple ? `Nominee #${idx + 1}` : 'Nominee';
 
     const name = String(raw.name || '').trim();
+    const nameBn = String(raw.nameBn || '').trim() || undefined;
     const dateOfBirth = String(raw.dateOfBirth || '').trim();
     const genderRaw = String(raw.gender || '').trim().toLowerCase();
     const occupation = String(raw.occupation || '').trim();
-    const relation = String(raw.relation || '').trim();
+    const relation = normalizeRelationToEnglish(String(raw.relation || '').trim());
     const nidOrBirthReg = String(raw.nidOrBirthReg || '').trim();
     const mobile = String(raw.mobile || '').trim();
     const address = String(raw.address || '').trim();
@@ -1607,6 +1613,12 @@ export function validateAndNormalizeNominees(
 
     if (!name) {
       return { ok: false, error: `${label}: Nominee name is required.` };
+    }
+    if (containsBanglaScript(name)) {
+      return { ok: false, error: `${label}: Nominee Name (English) must be entered in English only.` };
+    }
+    if (nameBn && !isValidBanglaName(nameBn)) {
+      return { ok: false, error: `${label}: Nominee Name (Bangla) must be entered in Bangla script.` };
     }
     if (!dateOfBirth) {
       return { ok: false, error: `${label}: Date of birth is required.` };
@@ -1619,14 +1631,29 @@ export function validateAndNormalizeNominees(
     if (!occupation) {
       return { ok: false, error: `${label}: Occupation is required.` };
     }
+    if (containsBanglaScript(occupation)) {
+      return { ok: false, error: `${label}: Occupation must be entered in English only.` };
+    }
     if (!relation) {
       return { ok: false, error: `${label}: Relation to applicant is required.` };
+    }
+    if (containsBanglaScript(relation)) {
+      return { ok: false, error: `${label}: Relation must be entered in English only.` };
     }
     if (!nidOrBirthReg) {
       return { ok: false, error: `${label}: NID or Birth Registration number is required.` };
     }
+    if (containsBanglaScript(nidOrBirthReg)) {
+      return { ok: false, error: `${label}: NID or Birth Registration number must be entered in English only.` };
+    }
+    if (mobile && containsBanglaScript(mobile)) {
+      return { ok: false, error: `${label}: Mobile number must be entered in English only.` };
+    }
     if (!address) {
       return { ok: false, error: `${label}: Address is required.` };
+    }
+    if (containsBanglaScript(address)) {
+      return { ok: false, error: `${label}: Address must be entered in English only.` };
     }
     if (gender !== 'female' && !photoUrl) {
       return {
@@ -1665,6 +1692,7 @@ export function validateAndNormalizeNominees(
 
     normalized.push({
       name,
+      nameBn,
       dateOfBirth,
       gender,
       occupation,

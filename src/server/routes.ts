@@ -47,6 +47,7 @@ import type {
   UserStatus,
 } from '../types/coop.ts';
 import { formatBdAddress } from '../utils/bdLocations.ts';
+import { containsBanglaScript, isValidBanglaName } from '../utils/inputLanguage.ts';
 import { validateStrongPassword } from '../utils/passwordStrength.ts';
 import {
   decryptAdminActivationView,
@@ -913,10 +914,13 @@ apiRouter.get('/auth/references', async (_req, res) => {
 apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
+    const nameBn = String(req.body?.nameBn || '').trim() || undefined;
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
     const fatherName = String(req.body?.fatherName || '').trim();
+    const fatherNameBn = String(req.body?.fatherNameBn || '').trim() || undefined;
     const motherName = String(req.body?.motherName || '').trim();
+    const motherNameBn = String(req.body?.motherNameBn || '').trim() || undefined;
     const rawGender = String(req.body?.gender || '').trim().toLowerCase();
     const gender: MemberGender | '' =
       rawGender === 'male' || rawGender === 'female' || rawGender === 'other'
@@ -932,6 +936,8 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         : '';
     const rawSpouseName = String(req.body?.spouseName || '').trim();
     const spouseName = maritalStatus === 'single' ? undefined : rawSpouseName || undefined;
+    const rawSpouseNameBn = String(req.body?.spouseNameBn || '').trim();
+    const spouseNameBn = maritalStatus === 'single' ? undefined : rawSpouseNameBn || undefined;
     const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
     const currentVaultSnapshot = await loadVaultState();
     const isFirstAccountBootstrap = currentVaultSnapshot.users.length === 0;
@@ -1026,6 +1032,47 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       return;
     }
 
+    const englishOnlyChecks: Array<{ label: string; value?: string }> = [
+      { label: 'Full Name (English)', value: name },
+      { label: 'Email', value: email },
+      { label: "Father's Name (English)", value: fatherName },
+      { label: "Mother's Name (English)", value: motherName },
+      { label: 'Spouse Name (English)', value: spouseName },
+      { label: 'Reference Member', value: referenceMemberName },
+      { label: 'Mobile Number', value: mobile },
+      { label: 'Occupation', value: occupation },
+      { label: 'Company / Organization', value: companyOrganization },
+      { label: 'National ID (NID)', value: nid },
+      { label: 'Present Address', value: presentAddress },
+      { label: 'Permanent Address', value: permanentAddress },
+      { label: 'WhatsApp Number', value: socialMedia?.whatsapp },
+      { label: 'Facebook Profile', value: socialMedia?.facebook },
+      { label: 'LinkedIn Profile', value: socialMedia?.linkedin },
+    ];
+    for (const check of englishOnlyChecks) {
+      if (check.value && containsBanglaScript(check.value)) {
+        res.status(400).json({
+          error: `${check.label} must be entered in English only.`,
+        });
+        return;
+      }
+    }
+
+    const banglaNameChecks: Array<{ label: string; value?: string }> = [
+      { label: 'Full Name (Bangla)', value: nameBn },
+      { label: "Father's Name (Bangla)", value: fatherNameBn },
+      { label: "Mother's Name (Bangla)", value: motherNameBn },
+      { label: 'Spouse Name (Bangla)', value: spouseNameBn },
+    ];
+    for (const check of banglaNameChecks) {
+      if (check.value && !isValidBanglaName(check.value)) {
+        res.status(400).json({
+          error: `${check.label} must be entered in Bangla script.`,
+        });
+        return;
+      }
+    }
+
     const nomineeValidation = validateAndNormalizeNominees(req.body?.nominees);
     if ('error' in nomineeValidation) {
       res.status(400).json({ error: nomineeValidation.error });
@@ -1033,11 +1080,15 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     }
 
     const registrationDetails: UserRegistrationDetails = {
+      nameBn,
       fatherName,
+      fatherNameBn,
       motherName,
+      motherNameBn,
       gender,
       maritalStatus,
       spouseName,
+      spouseNameBn,
       dateOfBirth,
       referenceMemberName,
       mobile,

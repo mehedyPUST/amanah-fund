@@ -263,13 +263,17 @@ export interface SheetTabBlueprint {
 
 export interface RegisterMemberPayload {
   name: string;
+  nameBn?: string;
   email: string;
   password: string;
   fatherName: string;
+  fatherNameBn?: string;
   motherName: string;
+  motherNameBn?: string;
   gender: MemberGender;
   maritalStatus: MaritalStatus;
   spouseName?: string;
+  spouseNameBn?: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;

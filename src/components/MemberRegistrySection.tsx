@@ -676,11 +676,24 @@ export function MemberRegistrySection({
                             {reg.companyOrganization}
                           </div>
                         </div>
+                        {reg.nameBn && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">নাম (বাংলা)</div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.nameBn}
+                            </div>
+                          </div>
+                        )}
                         {reg.fatherName && (
                           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                             <div className="text-slate-500 dark:text-slate-400">{t('fatherName')}</div>
                             <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
-                              {reg.fatherName}
+                              <div>{reg.fatherName}</div>
+                              {reg.fatherNameBn && (
+                                <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                                  {reg.fatherNameBn}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -688,7 +701,12 @@ export function MemberRegistrySection({
                           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                             <div className="text-slate-500 dark:text-slate-400">{t('motherName')}</div>
                             <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
-                              {reg.motherName}
+                              <div>{reg.motherName}</div>
+                              {reg.motherNameBn && (
+                                <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                                  {reg.motherNameBn}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -720,11 +738,16 @@ export function MemberRegistrySection({
                             </div>
                           </div>
                         )}
-                        {reg.spouseName && (
+                        {(reg.spouseName || reg.spouseNameBn) && (
                           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                             <div className="text-slate-500 dark:text-slate-400">{t('spouseName')}</div>
                             <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
-                              {reg.spouseName}
+                              {reg.spouseName && <div>{reg.spouseName}</div>}
+                              {reg.spouseNameBn && (
+                                <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                                  {reg.spouseNameBn}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}

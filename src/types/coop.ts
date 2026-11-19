@@ -42,6 +42,7 @@ export type MaritalStatus = 'single' | 'married' | 'widowed' | 'divorced';
 
 export interface NomineeInfo {
   name: string;
+  nameBn?: string;
   dateOfBirth: string;
   gender: NomineeGender;
   occupation: string;
@@ -70,11 +71,15 @@ export interface MemberSocialMedia {
 }
 
 export interface UserRegistrationDetails {
+  nameBn?: string;
   fatherName?: string;
+  fatherNameBn?: string;
   motherName?: string;
+  motherNameBn?: string;
   gender?: MemberGender;
   maritalStatus?: MaritalStatus;
   spouseName?: string;
+  spouseNameBn?: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;

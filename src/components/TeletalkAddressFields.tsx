@@ -10,6 +10,7 @@ import {
   getDistrictsForDivision,
   getUpazilasForDistrict,
 } from '../utils/bdLocations.ts';
+import { containsBanglaScript } from '../utils/inputLanguage.ts';
 
 interface TeletalkAddressFieldsProps {
   title: string;
@@ -42,8 +43,18 @@ export function TeletalkAddressFields({
   const selectUpazilaValue = isCustomUpazila ? OTHER_UPAZILA_VALUE : value.upazila;
   const previewText = formatBdAddress(value);
 
-  const inputClass =
-    'w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-65 disabled:cursor-not-allowed';
+  const careOfHasBn = containsBanglaScript(value.careOf);
+  const villageHasBn = containsBanglaScript(value.villageRoadHouse);
+  const customUpazilaHasBn = isCustomUpazila && containsBanglaScript(value.upazila);
+  const postOfficeHasBn = containsBanglaScript(value.postOffice);
+
+  const baseInputClass =
+    'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 disabled:opacity-65 disabled:cursor-not-allowed';
+  const inputClass = `${baseInputClass} border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600`;
+  const getTextInputClass = (invalid: boolean) =>
+    invalid
+      ? `${baseInputClass} border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500`
+      : inputClass;
 
   function updateField<K extends keyof StructuredBdAddress>(
     field: K,
@@ -99,8 +110,13 @@ export function TeletalkAddressFields({
             value={value.careOf}
             onChange={(e) => updateField('careOf', e.target.value)}
             placeholder={t('careOfPh')}
-            className={inputClass}
+            className={getTextInputClass(careOfHasBn)}
           />
+          {careOfHasBn && (
+            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+              {t('errEnglishOnlyHint')}
+            </p>
+          )}
         </div>
 
         <div className="sm:col-span-2">
@@ -118,8 +134,13 @@ export function TeletalkAddressFields({
             value={value.villageRoadHouse}
             onChange={(e) => updateField('villageRoadHouse', e.target.value)}
             placeholder={t('villageRoadHousePh')}
-            className={inputClass}
+            className={getTextInputClass(villageHasBn)}
           />
+          {villageHasBn && (
+            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+              {t('errEnglishOnlyHint')}
+            </p>
+          )}
         </div>
 
         <div>
@@ -204,16 +225,23 @@ export function TeletalkAddressFields({
           </select>
 
           {isCustomUpazila && (
-            <input
-              id={`${idPrefix}-upazila-custom`}
-              type="text"
-              required
-              disabled={disabled}
-              value={value.upazila.trimStart()}
-              onChange={(e) => updateField('upazila', e.target.value || ' ')}
-              placeholder={t('customUpazilaPh')}
-              className={`${inputClass} mt-2`}
-            />
+            <>
+              <input
+                id={`${idPrefix}-upazila-custom`}
+                type="text"
+                required
+                disabled={disabled}
+                value={value.upazila.trimStart()}
+                onChange={(e) => updateField('upazila', e.target.value || ' ')}
+                placeholder={t('customUpazilaPh')}
+                className={`${getTextInputClass(customUpazilaHasBn)} mt-2`}
+              />
+              {customUpazilaHasBn && (
+                <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                  {t('errEnglishOnlyHint')}
+                </p>
+              )}
+            </>
           )}
         </div>
 
@@ -232,8 +260,13 @@ export function TeletalkAddressFields({
             value={value.postOffice}
             onChange={(e) => updateField('postOffice', e.target.value)}
             placeholder={t('postOfficePh')}
-            className={inputClass}
+            className={getTextInputClass(postOfficeHasBn)}
           />
+          {postOfficeHasBn && (
+            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+              {t('errEnglishOnlyHint')}
+            </p>
+          )}
         </div>
 
         <div>

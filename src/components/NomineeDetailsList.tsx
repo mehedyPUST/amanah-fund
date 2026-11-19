@@ -51,6 +51,11 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
                   <span className="font-semibold text-slate-900 dark:text-white">
                     {nominees.length > 1 ? t('nomineeNumber', { number: idx + 1 }) : ''}
                     {nominee.name}
+                    {nominee.nameBn ? (
+                      <span className="ml-1.5 font-normal text-slate-600 dark:text-slate-300">
+                        ({nominee.nameBn})
+                      </span>
+                    ) : null}
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                     ·

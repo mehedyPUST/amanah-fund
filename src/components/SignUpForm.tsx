@@ -19,6 +19,7 @@ import {
   FileText,
   Globe,
   ImagePlus,
+  Languages,
   Loader2,
   PenTool,
   Plus,
@@ -50,6 +51,11 @@ import {
   formatBdAddress,
   isBdAddressComplete,
 } from '../utils/bdLocations.ts';
+import {
+  containsBanglaScript,
+  containsLatinLetters,
+  isValidBanglaName,
+} from '../utils/inputLanguage.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { isPdfFileUrl } from '../utils/format.ts';
 import { evaluatePasswordStrength } from '../utils/passwordStrength.ts';
@@ -116,6 +122,7 @@ function getLogicalRelationOptions(
 interface NomineeDraft {
   id: string;
   name: string;
+  nameBn: string;
   dateOfBirth: string;
   gender: '' | NomineeGender;
   occupation: string;
@@ -134,6 +141,7 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
   return {
     id: fixedId || `nom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: '',
+    nameBn: '',
     dateOfBirth: '',
     gender: '',
     occupation: '',
@@ -172,16 +180,20 @@ export function SignUpForm() {
 
   // Required & optional signup fields
   const [name, setName] = useState('');
+  const [nameBn, setNameBn] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fatherName, setFatherName] = useState('');
+  const [fatherNameBn, setFatherNameBn] = useState('');
   const [motherName, setMotherName] = useState('');
+  const [motherNameBn, setMotherNameBn] = useState('');
   const [gender, setGender] = useState<'' | MemberGender>('');
   const [maritalStatus, setMaritalStatus] = useState<'' | MaritalStatus>('');
   const [spouseName, setSpouseName] = useState('');
+  const [spouseNameBn, setSpouseNameBn] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [referenceMemberName, setReferenceMemberName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -578,6 +590,44 @@ export function SignUpForm() {
       setError(t('errSpouseRequired'));
       return;
     }
+
+    const englishOnlyFields: Array<{ field: string; value: string }> = [
+      { field: t('fullName'), value: name },
+      { field: tAuth('email'), value: email },
+      { field: t('fatherName'), value: fatherName },
+      { field: t('motherName'), value: motherName },
+      { field: t('spouseName'), value: maritalStatus === 'single' ? '' : spouseName },
+      { field: t('mobile'), value: mobile },
+      { field: t('nid'), value: nid },
+      { field: t('referenceLabel'), value: referenceMemberName },
+      { field: t('occupation'), value: occupation },
+      { field: t('company'), value: companyOrganization },
+      { field: t('whatsappLabel'), value: whatsapp },
+      { field: t('facebookLabel'), value: facebook },
+      { field: t('linkedinLabel'), value: linkedin },
+      { field: t('presentAddress'), value: presentAddress },
+      { field: t('permanentAddress'), value: permanentAddress },
+    ];
+    for (const item of englishOnlyFields) {
+      if (item.value && containsBanglaScript(item.value)) {
+        setError(t('errEnglishOnlyField', { field: item.field }));
+        return;
+      }
+    }
+
+    const banglaNameFields: Array<{ field: string; value: string }> = [
+      { field: t('fullNameBn'), value: nameBn },
+      { field: t('fatherNameBn'), value: fatherNameBn },
+      { field: t('motherNameBn'), value: motherNameBn },
+      { field: t('spouseNameBn'), value: maritalStatus === 'single' ? '' : spouseNameBn },
+    ];
+    for (const item of banglaNameFields) {
+      if (item.value.trim() && !isValidBanglaName(item.value)) {
+        setError(t('errBanglaNameField', { field: item.field }));
+        return;
+      }
+    }
+
     if (!isBdAddressComplete(presentAddressDetails)) {
       setError(t('errPresentAddressIncomplete'));
       return;
@@ -620,6 +670,25 @@ export function SignUpForm() {
         return;
       }
 
+      const nomineeEnglishChecks: Array<{ field: string; value: string }> = [
+        { field: `${prefix} · ${t('nomineeName')}`, value: n.name },
+        { field: `${prefix} · ${t('occupation')}`, value: n.occupation },
+        { field: `${prefix} · ${t('relation')}`, value: resolvedRelation },
+        { field: `${prefix} · ${t('nidBirthReg')}`, value: n.nidOrBirthReg },
+        { field: `${prefix} · ${t('nomineeMobile')}`, value: n.mobile },
+        { field: `${prefix} · ${t('nomineeAddress')}`, value: n.address },
+      ];
+      for (const item of nomineeEnglishChecks) {
+        if (item.value && containsBanglaScript(item.value)) {
+          setError(t('errEnglishOnlyField', { field: item.field }));
+          return;
+        }
+      }
+      if (n.nameBn.trim() && !isValidBanglaName(n.nameBn)) {
+        setError(t('errBanglaNameField', { field: `${prefix} · ${t('nomineeNameBn')}` }));
+        return;
+      }
+
       if (n.gender !== 'female' && !n.photoUrl) {
         setError(t('errNomineePhotoRequired', { prefix }));
         return;
@@ -640,6 +709,7 @@ export function SignUpForm() {
 
       preparedNominees.push({
         name: n.name.trim(),
+        nameBn: n.nameBn.trim() || undefined,
         dateOfBirth: n.dateOfBirth.trim(),
         gender: n.gender,
         occupation: n.occupation.trim(),
@@ -665,8 +735,13 @@ export function SignUpForm() {
     const hasSocialMedia = Boolean(
       cleanedSocial.whatsapp || cleanedSocial.facebook || cleanedSocial.linkedin
     );
+    const cleanedNameBn = nameBn.trim() || undefined;
+    const cleanedFatherNameBn = fatherNameBn.trim() || undefined;
+    const cleanedMotherNameBn = motherNameBn.trim() || undefined;
     const cleanedSpouse =
       maritalStatus === 'single' ? undefined : spouseName.trim() || undefined;
+    const cleanedSpouseBn =
+      maritalStatus === 'single' ? undefined : spouseNameBn.trim() || undefined;
 
     setSubmitting(true);
     try {
@@ -674,14 +749,18 @@ export function SignUpForm() {
         referenceMemberName.trim() ||
         (isBootstrapSetup ? 'Founding Administrator (Self)' : '');
       const res = await api.register({
-        name,
+        name: name.trim(),
+        nameBn: cleanedNameBn,
         email,
         password,
         fatherName: fatherName.trim(),
+        fatherNameBn: cleanedFatherNameBn,
         motherName: motherName.trim(),
+        motherNameBn: cleanedMotherNameBn,
         gender: gender as MemberGender,
         maritalStatus: maritalStatus as MaritalStatus,
         spouseName: cleanedSpouse,
+        spouseNameBn: cleanedSpouseBn,
         dateOfBirth,
         referenceMemberName: resolvedReference,
         mobile,
@@ -707,11 +786,15 @@ export function SignUpForm() {
         submittedAt: res.user?.joinedAt || new Date().toISOString(),
         fundName: constitution?.fundName || undefined,
         registrationDetails: {
+          nameBn: cleanedNameBn,
           fatherName: fatherName.trim(),
+          fatherNameBn: cleanedFatherNameBn,
           motherName: motherName.trim(),
+          motherNameBn: cleanedMotherNameBn,
           gender: gender as MemberGender,
           maritalStatus: maritalStatus as MaritalStatus,
           spouseName: cleanedSpouse,
+          spouseNameBn: cleanedSpouseBn,
           dateOfBirth,
           referenceMemberName: resolvedReference,
           mobile,
@@ -739,14 +822,18 @@ export function SignUpForm() {
         setUser(res.user);
       }
       setName('');
+      setNameBn('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
       setFatherName('');
+      setFatherNameBn('');
       setMotherName('');
+      setMotherNameBn('');
       setGender('');
       setMaritalStatus('');
       setSpouseName('');
+      setSpouseNameBn('');
       setDateOfBirth('');
       setReferenceMemberName('');
       setMobile('');
@@ -936,6 +1023,23 @@ export function SignUpForm() {
                 )}
               </div>
 
+              {locale === 'bn' && (
+                <div className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex items-start gap-2.5">
+                  <Languages
+                    className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                  <div className="space-y-0.5 text-xs">
+                    <p className="font-semibold text-emerald-900 dark:text-emerald-200">
+                      {t('englishInputNoticeTitle')}
+                    </p>
+                    <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                      {t('englishInputNoticeDesc')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {isBootstrapSetup && (
                 <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/75 dark:bg-emerald-950/35 space-y-1">
                   <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
@@ -977,8 +1081,39 @@ export function SignUpForm() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t('fullNamePh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(name)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(name) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('fullNameBn')}
+                  </label>
+                  <input
+                    type="text"
+                    value={nameBn}
+                    onChange={(e) => setNameBn(e.target.value)}
+                    placeholder={t('fullNameBnPh')}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsLatinLetters(nameBn)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
+                  />
+                  {containsLatinLetters(nameBn) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errBanglaOnlyHint')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -991,8 +1126,40 @@ export function SignUpForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={tAuth('emailPlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(email)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(email) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('mobile')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder={t('mobilePh')}
+                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(mobile)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
+                  />
+                  {containsBanglaScript(mobile) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1169,8 +1336,39 @@ export function SignUpForm() {
                     value={fatherName}
                     onChange={(e) => setFatherName(e.target.value)}
                     placeholder={t('fatherNamePh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(fatherName)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(fatherName) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('fatherNameBn')}
+                  </label>
+                  <input
+                    type="text"
+                    value={fatherNameBn}
+                    onChange={(e) => setFatherNameBn(e.target.value)}
+                    placeholder={t('fatherNameBnPh')}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsLatinLetters(fatherNameBn)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
+                  />
+                  {containsLatinLetters(fatherNameBn) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errBanglaOnlyHint')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1183,8 +1381,39 @@ export function SignUpForm() {
                     value={motherName}
                     onChange={(e) => setMotherName(e.target.value)}
                     placeholder={t('motherNamePh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(motherName)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(motherName) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('motherNameBn')}
+                  </label>
+                  <input
+                    type="text"
+                    value={motherNameBn}
+                    onChange={(e) => setMotherNameBn(e.target.value)}
+                    placeholder={t('motherNameBnPh')}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsLatinLetters(motherNameBn)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
+                  />
+                  {containsLatinLetters(motherNameBn) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errBanglaOnlyHint')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1231,6 +1460,7 @@ export function SignUpForm() {
                       setMaritalStatus(next);
                       if (next === 'single' || next === '') {
                         setSpouseName('');
+                        setSpouseNameBn('');
                       }
                     }}
                     className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
@@ -1243,60 +1473,7 @@ export function SignUpForm() {
                   </select>
                 </div>
 
-                {maritalStatus && maritalStatus !== 'single' ? (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      {t('spouseName')}{' '}
-                      {maritalStatus === 'married' ? (
-                        <span className="text-red-500">*</span>
-                      ) : (
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">
-                          {t('optional')}
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      required={maritalStatus === 'married'}
-                      value={spouseName}
-                      onChange={(e) => setSpouseName(e.target.value)}
-                      placeholder={t('spouseNamePh')}
-                      className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      {t('mobile')} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      placeholder={t('mobilePh')}
-                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                    />
-                  </div>
-                )}
-
-                {maritalStatus && maritalStatus !== 'single' && (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      {t('mobile')} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      placeholder={t('mobilePh')}
-                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                    />
-                  </div>
-                )}
-
-                <div className={maritalStatus && maritalStatus !== 'single' ? '' : 'sm:col-span-2'}>
+                <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {t('nid')} <span className="text-red-500">*</span>
                   </label>
@@ -1306,9 +1483,74 @@ export function SignUpForm() {
                     value={nid}
                     onChange={(e) => setNid(e.target.value)}
                     placeholder={t('nidPh')}
-                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(nid)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(nid) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
                 </div>
+
+                {maritalStatus && maritalStatus !== 'single' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        {t('spouseName')}{' '}
+                        {maritalStatus === 'married' ? (
+                          <span className="text-red-500">*</span>
+                        ) : (
+                          <span className="text-slate-500 dark:text-slate-400 font-normal">
+                            {t('optional')}
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        required={maritalStatus === 'married'}
+                        value={spouseName}
+                        onChange={(e) => setSpouseName(e.target.value)}
+                        placeholder={t('spouseNamePh')}
+                        className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          containsBanglaScript(spouseName)
+                            ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                            : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                        }`}
+                      />
+                      {containsBanglaScript(spouseName) && (
+                        <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                          {t('errEnglishOnlyHint')}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        {t('spouseNameBn')}
+                      </label>
+                      <input
+                        type="text"
+                        value={spouseNameBn}
+                        onChange={(e) => setSpouseNameBn(e.target.value)}
+                        placeholder={t('spouseNameBnPh')}
+                        className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          containsLatinLetters(spouseNameBn)
+                            ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                            : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                        }`}
+                      />
+                      {containsLatinLetters(spouseNameBn) && (
+                        <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                          {t('errBanglaOnlyHint')}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -1336,8 +1578,17 @@ export function SignUpForm() {
                     value={referenceMemberName}
                     onChange={(e) => setReferenceMemberName(e.target.value)}
                     placeholder={isBootstrapSetup ? t('bootstrapReferencePh') : t('referencePh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(referenceMemberName)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(referenceMemberName) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
                   <datalist id="coop-existing-members">
                     {referenceOptions.map((m) => (
                       <option key={m.memberCode} value={m.name}>
@@ -1357,8 +1608,17 @@ export function SignUpForm() {
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
                     placeholder={t('occupationPh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(occupation)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(occupation) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1371,8 +1631,17 @@ export function SignUpForm() {
                     value={companyOrganization}
                     onChange={(e) => setCompanyOrganization(e.target.value)}
                     placeholder={t('companyPh')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      containsBanglaScript(companyOrganization)
+                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                    }`}
                   />
+                  {containsBanglaScript(companyOrganization) && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                      {t('errEnglishOnlyHint')}
+                    </p>
+                  )}
                 </div>
               </div>
               {/* Optional Social Media Profiles (WhatsApp, Facebook, LinkedIn) */}
@@ -1445,8 +1714,17 @@ export function SignUpForm() {
                             value={whatsapp}
                             onChange={(e) => setWhatsapp(e.target.value)}
                             placeholder={t('whatsappPh')}
-                            className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                            className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(whatsapp)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
                           />
+                          {containsBanglaScript(whatsapp) && (
+                            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                              {t('errEnglishOnlyHint')}
+                            </p>
+                          )}
                         </div>
 
                         <div>
@@ -1462,8 +1740,17 @@ export function SignUpForm() {
                             value={facebook}
                             onChange={(e) => setFacebook(e.target.value)}
                             placeholder={t('facebookPh')}
-                            className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                            className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(facebook)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
                           />
+                          {containsBanglaScript(facebook) && (
+                            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                              {t('errEnglishOnlyHint')}
+                            </p>
+                          )}
                         </div>
 
                         <div>
@@ -1479,8 +1766,17 @@ export function SignUpForm() {
                             value={linkedin}
                             onChange={(e) => setLinkedin(e.target.value)}
                             placeholder={t('linkedinPh')}
-                            className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                            className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(linkedin)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
                           />
+                          {containsBanglaScript(linkedin) && (
+                            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                              {t('errEnglishOnlyHint')}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -1616,8 +1912,39 @@ export function SignUpForm() {
                           value={nominee.name}
                           onChange={(e) => updateNomineeField(idx, 'name', e.target.value)}
                           placeholder={t('fullNamePh')}
-                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            containsBanglaScript(nominee.name)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
                         />
+                        {containsBanglaScript(nominee.name) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errEnglishOnlyHint')}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                          {t('nomineeNameBn')}
+                        </label>
+                        <input
+                          type="text"
+                          value={nominee.nameBn}
+                          onChange={(e) => updateNomineeField(idx, 'nameBn', e.target.value)}
+                          placeholder={t('nomineeNameBnPh')}
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            containsLatinLetters(nominee.nameBn)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
+                        />
+                        {containsLatinLetters(nominee.nameBn) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errBanglaOnlyHint')}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -1662,8 +1989,17 @@ export function SignUpForm() {
                           value={nominee.occupation}
                           onChange={(e) => updateNomineeField(idx, 'occupation', e.target.value)}
                           placeholder={t('nomineeOccupationPh')}
-                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            containsBanglaScript(nominee.occupation)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
                         />
+                        {containsBanglaScript(nominee.occupation) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errEnglishOnlyHint')}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -1700,16 +2036,27 @@ export function SignUpForm() {
                                 )}
                               </select>
                               {nominee.relation === OTHER_RELATION_VALUE && (
-                                <input
-                                  type="text"
-                                  required
-                                  value={nominee.customRelation}
-                                  onChange={(e) =>
-                                    updateNomineeField(idx, 'customRelation', e.target.value)
-                                  }
-                                  placeholder={t('customRelationPh')}
-                                  className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                                />
+                                <>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={nominee.customRelation}
+                                    onChange={(e) =>
+                                      updateNomineeField(idx, 'customRelation', e.target.value)
+                                    }
+                                    placeholder={t('customRelationPh')}
+                                    className={`w-full px-3.5 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                                      containsBanglaScript(nominee.customRelation)
+                                        ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                                    }`}
+                                  />
+                                  {containsBanglaScript(nominee.customRelation) && (
+                                    <p className="text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                                      {t('errEnglishOnlyHint')}
+                                    </p>
+                                  )}
+                                </>
                               )}
                             </div>
                           );
@@ -1726,8 +2073,17 @@ export function SignUpForm() {
                           value={nominee.nidOrBirthReg}
                           onChange={(e) => updateNomineeField(idx, 'nidOrBirthReg', e.target.value)}
                           placeholder={t('nidBirthRegPh')}
-                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            containsBanglaScript(nominee.nidOrBirthReg)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
                         />
+                        {containsBanglaScript(nominee.nidOrBirthReg) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errEnglishOnlyHint')}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -1742,8 +2098,17 @@ export function SignUpForm() {
                           value={nominee.mobile}
                           onChange={(e) => updateNomineeField(idx, 'mobile', e.target.value)}
                           placeholder={t('nomineeMobilePh')}
-                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            containsBanglaScript(nominee.mobile)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
                         />
+                        {containsBanglaScript(nominee.mobile) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errEnglishOnlyHint')}
+                          </p>
+                        )}
                       </div>
 
                       {nominees.length > 1 && (
@@ -1804,8 +2169,17 @@ export function SignUpForm() {
                           value={nominee.address}
                           onChange={(e) => updateNomineeField(idx, 'address', e.target.value)}
                           placeholder={t('nomineeAddressPh')}
-                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 disabled:opacity-70 ${
+                            containsBanglaScript(nominee.address)
+                              ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                          }`}
                         />
+                        {containsBanglaScript(nominee.address) && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            {t('errEnglishOnlyHint')}
+                          </p>
+                        )}
                       </div>
 
                       {/* Nominee Photo (Not required when female) */}

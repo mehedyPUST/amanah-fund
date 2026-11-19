@@ -791,11 +791,24 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         {reg?.dateOfBirth || t('notProvided')}
                       </dd>
                     </div>
+                    {reg?.nameBn && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">নাম (বাংলা)</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.nameBn}
+                        </dd>
+                      </div>
+                    )}
                     {reg?.fatherName && (
                       <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                         <dt className="text-slate-500 dark:text-slate-400">{t('fieldFatherName')}</dt>
                         <dd className="font-semibold text-slate-900 dark:text-white text-right">
-                          {reg.fatherName}
+                          <div>{reg.fatherName}</div>
+                          {reg.fatherNameBn && (
+                            <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                              {reg.fatherNameBn}
+                            </div>
+                          )}
                         </dd>
                       </div>
                     )}
@@ -803,7 +816,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                       <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                         <dt className="text-slate-500 dark:text-slate-400">{t('fieldMotherName')}</dt>
                         <dd className="font-semibold text-slate-900 dark:text-white text-right">
-                          {reg.motherName}
+                          <div>{reg.motherName}</div>
+                          {reg.motherNameBn && (
+                            <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                              {reg.motherNameBn}
+                            </div>
+                          )}
                         </dd>
                       </div>
                     )}
@@ -833,11 +851,16 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         </dd>
                       </div>
                     )}
-                    {reg?.spouseName && (
+                    {(reg?.spouseName || reg?.spouseNameBn) && (
                       <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                         <dt className="text-slate-500 dark:text-slate-400">{t('fieldSpouseName')}</dt>
                         <dd className="font-semibold text-slate-900 dark:text-white text-right">
-                          {reg.spouseName}
+                          {reg.spouseName && <div>{reg.spouseName}</div>}
+                          {reg.spouseNameBn && (
+                            <div className="text-[11px] font-normal text-slate-600 dark:text-slate-300">
+                              {reg.spouseNameBn}
+                            </div>
+                          )}
                         </dd>
                       </div>
                     )}
