@@ -1242,40 +1242,40 @@ export function BalanceSheetView({
   const kpiSummaryStrip = sheet ? (
     <section
       aria-label="Current month balance sheet summary"
-      className="balance-sheet-printable grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
+      className="balance-sheet-printable grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3"
     >
-      <div className="amanah-card-violet border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-violet-800/90 dark:text-violet-200">
+      <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 transition-all min-w-0">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-[11px] sm:text-xs font-semibold text-violet-800/90 dark:text-violet-200 truncate">
             Prev. Opening Savings
           </span>
-          <span className="w-7 h-7 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 inline-flex items-center justify-center shrink-0">
-            <Landmark className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 inline-flex items-center justify-center shrink-0">
+            <Landmark className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
           </span>
         </div>
-        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+        <div className="font-mono tabular-nums text-base sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 truncate">
           {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
         </div>
-        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
+        <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 truncate">
           Prev. Qard: {formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)} · Due:{' '}
           {formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)}
         </div>
       </div>
 
-      <div className="amanah-card-emerald border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+      <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 transition-all min-w-0">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-[11px] sm:text-xs font-semibold text-emerald-800 dark:text-emerald-200 truncate">
             {shortMonthLabel} Collection
           </span>
-          <span className="inline-flex items-center gap-1 font-mono tabular-nums text-xs font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
-            <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="inline-flex items-center gap-0.5 sm:gap-1 font-mono tabular-nums text-[11px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+            <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
             {collectionRatePct}%
           </span>
         </div>
-        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300">
+        <div className="font-mono tabular-nums text-base sm:text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300 truncate">
           +{formatMoney(sheet.thisMonthOnly.contributionAmount, ccy)}
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1 sm:space-y-1.5">
           <div
             className="h-1.5 w-full rounded-full bg-emerald-500/15 overflow-hidden"
             aria-hidden="true"
@@ -1285,47 +1285,47 @@ export function BalanceSheetView({
               style={{ width: `${collectionRatePct}%` }}
             />
           </div>
-          <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
+          <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 truncate">
             {filterCounts.paid}/{rows.length} paid · Target {formatMoney(expectedCollection, ccy)}
           </div>
         </div>
       </div>
 
-      <div className="amanah-card-amber border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+      <div className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 transition-all min-w-0">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-[11px] sm:text-xs font-semibold text-amber-800 dark:text-amber-200 truncate">
             {shortMonthLabel} Qard Refund
           </span>
-          <span className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 inline-flex items-center justify-center shrink-0">
-            <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 inline-flex items-center justify-center shrink-0">
+            <Repeat className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
           </span>
         </div>
-        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300">
+        <div className="font-mono tabular-nums text-base sm:text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300 truncate">
           {sheet.thisMonthRepaidAmount > 0
             ? `+${formatMoney(sheet.thisMonthRepaidAmount, ccy)}`
             : formatMoney(0, ccy)}
         </div>
-        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
-          Drawn: {formatMoney(sheet.thisMonthOnly.qardHasanAmount, ccy)} · Closing Due:{' '}
+        <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 truncate">
+          Drawn: {formatMoney(sheet.thisMonthOnly.qardHasanAmount, ccy)} · Due:{' '}
           <span className="text-amber-700 dark:text-amber-300 font-bold">
             {formatMoney(sheet.thisMonthSummary.dueHasanaAmount, ccy)}
           </span>
         </div>
       </div>
 
-      <div className="amanah-card-teal border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-teal-800 dark:text-teal-200">
+      <div className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 transition-all min-w-0">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-[11px] sm:text-xs font-semibold text-teal-800 dark:text-teal-200 truncate">
             Closing Fund &amp; Flow
           </span>
-          <span className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-700 dark:text-teal-300 inline-flex items-center justify-center shrink-0">
-            <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-teal-500/15 text-teal-700 dark:text-teal-300 inline-flex items-center justify-center shrink-0">
+            <Wallet className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
           </span>
         </div>
-        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+        <div className="font-mono tabular-nums text-base sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 truncate">
           {formatMoney(sheet.thisMonthSummary.contributionAmount, ccy)}
         </div>
-        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
+        <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 truncate">
           Net:{' '}
           <span
             className={
@@ -1352,206 +1352,265 @@ export function BalanceSheetView({
       }`}
     >
       {/* 1. Period, Freeze, Export & Full Screen Controls */}
-      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
-        <div className="flex items-center gap-1.5">
-          {activeTab === 'balance-sheet' && (
-            <>
-              <button
-                type="button"
-                aria-pressed={freezeIdentityCols}
-                onClick={() => setFreezeIdentityCols((v) => !v)}
-                title={
-                  isFullScreen
-                    ? 'Freeze columns A & B (Name & ID)'
-                    : 'Freeze columns A & B (Photo & ID)'
-                }
-                className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
-                  freezeIdentityCols
-                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Freeze A–B</span>
-              </button>
-
-              {/* Mobile Sheet / Cards Switch */}
-              <div className="inline-flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden">
+      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-2.5 sm:px-4 py-2 sm:py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2 print-hidden">
+        {/* Top Row on Mobile: View Switch (Left) + Quick Actions & Top-Right Full Screen (Right) */}
+        <div className="flex items-center justify-between gap-2 md:justify-start">
+          <div className="flex items-center gap-1.5">
+            {activeTab === 'balance-sheet' ? (
+              <>
                 <button
                   type="button"
-                  onClick={() => setMobileViewMode('sheet')}
-                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                    mobileViewMode === 'sheet'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-600 dark:text-slate-300'
+                  aria-pressed={freezeIdentityCols}
+                  onClick={() => setFreezeIdentityCols((v) => !v)}
+                  title={
+                    isFullScreen
+                      ? 'Freeze columns A & B (Name & ID)'
+                      : 'Freeze columns A & B (Photo & ID)'
+                  }
+                  className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                    freezeIdentityCols
+                      ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{t('viewToggleSheet')}</span>
+                  <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Freeze A–B</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileViewMode('cards')}
-                  className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                    mobileViewMode === 'cards'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{t('viewToggleCards')}</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
 
-        {/* Month Switcher + Export Controls + Top-Right Icon-Only Full Screen Toggle */}
-        <div className="flex flex-wrap items-center gap-1.5 print-hidden">
-          <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900 overflow-hidden shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, -1))}
-              aria-label={t('prevMonthAria')}
-              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
-            >
-              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              aria-label={t('selectMonthAria')}
-              className="h-8 px-2.5 bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
-            >
-              {monthOptions.map((ym) => (
-                <option key={ym} value={ym} className="bg-white dark:bg-slate-900">
-                  {formatMonthLong(ym)}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, 1))}
-              aria-label={t('nextMonthAria')}
-              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-l border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
-            >
-              <ChevronRight className="w-4 h-4" aria-hidden="true" />
-            </button>
+                {/* Mobile Sheet / Cards Switch */}
+                <div className="inline-flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMobileViewMode('sheet')}
+                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                      mobileViewMode === 'sheet'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{t('viewToggleSheet')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileViewMode('cards')}
+                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                      mobileViewMode === 'cards'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{t('viewToggleCards')}</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <span className="md:hidden text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 px-1">
+                <Sigma className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>All Variables Summary</span>
+              </span>
+            )}
           </div>
 
-          {selectedMonth !== currentMonthKey && (
+          {/* Mobile-only top-right Refresh + Full Screen (always pinned top-right) */}
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={() => setSelectedMonth(currentMonthKey)}
-              className="h-8 px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/90 dark:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              onClick={() => void sheetQuery.refetch()}
+              disabled={isRefetching}
+              title={tCommon('refresh')}
+              aria-label={tCommon('refresh')}
+              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
-              {t('currentMonthBtn')}
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
             </button>
-          )}
-
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block" />
-
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={!sheet}
-            className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            <span>CSV</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportPdf}
-            disabled={!sheet}
-            className="h-8 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-2xs disabled:opacity-50 inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
-          >
-            <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>PDF</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            disabled={!sheet}
-            title={t('printSheet')}
-            aria-label={t('printSheet')}
-            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-          >
-            <Printer className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => void sheetQuery.refetch()}
-            disabled={isRefetching}
-            title={tCommon('refresh')}
-            aria-label={tCommon('refresh')}
-            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
-          </button>
-
-          {/* Icon-only Full Screen Toggle positioned at Top-Right of Sheet */}
-          <div className="relative group/fs">
             <button
               type="button"
               onClick={() => setIsFullScreen((prev) => !prev)}
-              aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+              aria-label={isFullScreen ? 'Exit full screen' : 'Full screen'}
               aria-pressed={isFullScreen}
               className={`h-8 w-8 rounded-lg inline-flex items-center justify-center transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                 isFullScreen
                   ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs'
-                  : 'border border-emerald-300 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white'
+                  : 'border border-emerald-300 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white'
               }`}
             >
               {isFullScreen ? (
-                <Minimize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
+                <Minimize className="w-4 h-4" strokeWidth={2.2} aria-hidden="true" />
               ) : (
-                <Maximize
-                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
+                <Maximize className="w-4 h-4" strokeWidth={2.2} aria-hidden="true" />
               )}
             </button>
+          </div>
+        </div>
 
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+        {/* Month Switcher + Export Controls + Desktop Top-Right Full Screen Toggle */}
+        <div className="flex flex-wrap items-center justify-between md:justify-end gap-1.5 print-hidden">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900 overflow-hidden shadow-2xs min-w-0">
+              <button
+                type="button"
+                onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, -1))}
+                aria-label={t('prevMonthAria')}
+                className="h-8 w-7 sm:w-8 shrink-0 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+              >
+                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                aria-label={t('selectMonthAria')}
+                className="h-8 px-1.5 sm:px-2.5 bg-transparent text-[11px] sm:text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer min-w-0"
+              >
+                {monthOptions.map((ym) => (
+                  <option key={ym} value={ym} className="bg-white dark:bg-slate-900">
+                    {formatMonthLong(ym)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, 1))}
+                aria-label={t('nextMonthAria')}
+                className="h-8 w-7 sm:w-8 shrink-0 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-l border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+              >
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            {selectedMonth !== currentMonthKey && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(currentMonthKey)}
+                className="h-8 px-2 sm:px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/90 dark:bg-emerald-950/50 text-[11px] sm:text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              >
+                {t('currentMonthBtn')}
+              </button>
+            )}
+          </div>
+
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
+
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto md:ml-0">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={!sheet}
+              className="h-8 px-2.5 sm:px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
-              <span
-                aria-hidden="true"
-                className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-              />
-              {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+              <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              <span>CSV</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={!sheet}
+              className="h-8 px-2.5 sm:px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-2xs disabled:opacity-50 inline-flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+            >
+              <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>PDF</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={!sheet}
+              title={t('printSheet')}
+              aria-label={t('printSheet')}
+              className="hidden sm:inline-flex h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            >
+              <Printer className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void sheetQuery.refetch()}
+              disabled={isRefetching}
+              title={tCommon('refresh')}
+              aria-label={tCommon('refresh')}
+              className="hidden md:inline-flex h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
+            </button>
+
+            {/* Desktop Icon-only Full Screen Toggle positioned at Top-Right of Sheet */}
+            <div className="relative group/fs hidden md:block">
+              <button
+                type="button"
+                onClick={() => setIsFullScreen((prev) => !prev)}
+                aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+                aria-pressed={isFullScreen}
+                className={`h-8 w-8 rounded-lg inline-flex items-center justify-center transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  isFullScreen
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs'
+                    : 'border border-emerald-300 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white'
+                }`}
+              >
+                {isFullScreen ? (
+                  <Minimize
+                    className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Maximize
+                    className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+
+              <div
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+                />
+                {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Authentic Formula Bar (Name Box + fx) */}
-      <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center h-9 print-hidden">
+      {/* 3. Authentic Formula Bar (Name Box + fx; hidden in Mobile Cards mode) */}
+      <div
+        className={`shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 items-center h-9 print-hidden ${
+          activeTab === 'balance-sheet' && mobileViewMode === 'cards' ? 'hidden md:flex' : 'flex'
+        }`}
+      >
         <div
           title="Selected cell reference"
-          className="w-[74px] shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-emerald-50/75 dark:bg-emerald-950/35 flex items-center justify-center font-mono tabular-nums text-xs font-bold text-emerald-700 dark:text-emerald-300 select-all"
+          className="w-[52px] sm:w-[74px] shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-emerald-50/75 dark:bg-emerald-950/35 flex items-center justify-center font-mono tabular-nums text-[11px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-300 select-all"
         >
           {activeCellInfo.ref}
         </div>
-        <div className="w-9 shrink-0 h-full border-r border-slate-200/80 dark:border-slate-800 flex items-center justify-center select-none">
-          <span className="font-serif italic font-bold text-sm text-teal-600 dark:text-teal-400">
+        <div className="w-7 sm:w-9 shrink-0 h-full border-r border-slate-200/80 dark:border-slate-800 flex items-center justify-center select-none">
+          <span className="font-serif italic font-bold text-xs sm:text-sm text-teal-600 dark:text-teal-400">
             fx
           </span>
         </div>
-        <div className="flex-1 min-w-0 px-3 overflow-x-auto whitespace-nowrap font-mono text-xs text-slate-700 dark:text-slate-200">
+        <div className="flex-1 min-w-0 px-2.5 sm:px-3 overflow-x-auto no-scrollbar whitespace-nowrap font-mono text-[11px] sm:text-xs text-slate-700 dark:text-slate-200">
           {activeCellInfo.formula}
         </div>
-        <div className="shrink-0 flex items-center gap-2 pr-3 pl-2 border-l border-slate-200/80 dark:border-slate-800 h-full">
+        <div className="shrink-0 flex items-center gap-1.5 pr-2 sm:pr-3 pl-1.5 sm:pl-2 border-l border-slate-200/80 dark:border-slate-800 h-full">
+          {activeTab === 'balance-sheet' &&
+            selectedCell.tab === 'balance-sheet' &&
+            selectedCell.row >= 0 &&
+            filteredRows[selectedCell.row] && (
+              <button
+                type="button"
+                onClick={() => setInspectedMemberId(filteredRows[selectedCell.row].userId)}
+                className="md:hidden h-6 px-2 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <span>Details</span>
+              </button>
+            )}
           <button
             type="button"
             onClick={() => void handleCopyActiveCell()}
@@ -1621,22 +1680,22 @@ export function BalanceSheetView({
       {/* Loading Skeleton (Geometry-Matched Spreadsheet Rows) */}
       {isInitialLoading && (
         <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900/70 grid grid-cols-6 gap-3">
+          <div className="px-3 sm:px-4 py-2.5 bg-slate-50 dark:bg-slate-900/70 grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
             <Skeleton height={16} />
             <Skeleton height={16} />
             <Skeleton height={16} />
-            <Skeleton height={16} />
-            <Skeleton height={16} />
-            <Skeleton height={16} />
+            <Skeleton height={16} className="hidden sm:block" />
+            <Skeleton height={16} className="hidden sm:block" />
+            <Skeleton height={16} className="hidden sm:block" />
           </div>
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="px-4 py-2.5 grid grid-cols-6 gap-3 items-center">
+            <div key={i} className="px-3 sm:px-4 py-2.5 grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3 items-center">
               <Skeleton height={18} />
               <Skeleton height={18} />
               <Skeleton height={18} />
-              <Skeleton height={18} />
-              <Skeleton height={18} />
-              <Skeleton height={18} />
+              <Skeleton height={18} className="hidden sm:block" />
+              <Skeleton height={18} className="hidden sm:block" />
+              <Skeleton height={18} className="hidden sm:block" />
             </div>
           ))}
         </div>
@@ -1696,7 +1755,7 @@ export function BalanceSheetView({
                                   </button>
                                   <div
                                     role="tooltip"
-                                    className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150"
+                                    className="hidden md:block pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150"
                                   >
                                     <span
                                       aria-hidden="true"
@@ -1750,7 +1809,7 @@ export function BalanceSheetView({
                           {renderStatusIndicator(row.contributionStatus)}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-1.5 text-[11px] border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden bg-slate-50/60 dark:bg-slate-900/50">
+                        <div className="grid grid-cols-2 text-[11px] border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50/60 dark:bg-slate-900/50">
                           <div className="p-2 border-r border-b border-slate-200 dark:border-slate-800">
                             <div className="text-slate-500 dark:text-slate-400">
                               Prev. Cumul. Contrib
@@ -1807,9 +1866,13 @@ export function BalanceSheetView({
               </div>
             )}
 
-            {/* Abbreviation Legend Line at Top of Sheet */}
-            <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+            {/* Abbreviation Legend Line at Top of Sheet (hidden in Mobile Cards mode) */}
+            <div
+              className={`shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 items-center justify-between gap-2 ${
+                mobileViewMode === 'cards' ? 'hidden md:flex' : 'flex'
+              }`}
+            >
+              <div className="flex flex-nowrap overflow-x-auto no-scrollbar md:flex-wrap items-center gap-x-2.5 gap-y-0.5 min-w-0">
                 <span className="font-bold text-emerald-700 dark:text-emerald-400 shrink-0">
                   Abbr:
                 </span>
@@ -1822,7 +1885,7 @@ export function BalanceSheetView({
                   ['Drawn', 'Qard Drawn'],
                   ['Refund', 'Refund Qard'],
                 ].map(([abbr, full], idx) => (
-                  <span key={abbr} className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <span key={abbr} className="inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                     {idx > 0 && (
                       <span aria-hidden="true" className="text-slate-300 dark:text-slate-700 mr-1.5">
                         ·
@@ -2295,7 +2358,7 @@ export function BalanceSheetView({
                                   </button>
                                   <div
                                     role="tooltip"
-                                    className={`pointer-events-none absolute ${avatarTooltipPos} z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150`}
+                                    className={`hidden md:block pointer-events-none absolute ${avatarTooltipPos} z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150`}
                                   >
                                     <span
                                       aria-hidden="true"
@@ -2373,7 +2436,7 @@ export function BalanceSheetView({
                             </span>
                             <div
                               role="tooltip"
-                              className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-sans font-medium whitespace-nowrap shadow-md opacity-0 group-hover/memberid:opacity-100 group-focus-within/memberid:opacity-100 transition-opacity duration-150"
+                              className="hidden md:block pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-sans font-medium whitespace-nowrap shadow-md opacity-0 group-hover/memberid:opacity-100 group-focus-within/memberid:opacity-100 transition-opacity duration-150"
                             >
                               <span
                                 aria-hidden="true"
@@ -2832,8 +2895,12 @@ export function BalanceSheetView({
         )}
 
         {/* 5. Bottom Sheet Tabs & Status Bar */}
-        <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 print-hidden">
-          <div className="flex items-center gap-1.5" role="tablist" aria-label="Balance Sheet tabs">
+        <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2.5 sm:px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 print-hidden">
+          <div
+            className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar"
+            role="tablist"
+            aria-label="Balance Sheet tabs"
+          >
             <button
               type="button"
               role="tab"
@@ -2842,7 +2909,7 @@ export function BalanceSheetView({
                 setActiveTab('balance-sheet');
                 setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
               }}
-              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'balance-sheet'
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
@@ -2860,7 +2927,7 @@ export function BalanceSheetView({
                 setActiveTab('variables-summary');
                 setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
               }}
-              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'variables-summary'
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
@@ -2872,7 +2939,7 @@ export function BalanceSheetView({
           </div>
 
           {sheet && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 px-1">
+            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-3 gap-y-1 text-[11px] sm:text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400 px-0.5 sm:px-1">
               <span>
                 Rows:{' '}
                 <strong className="text-slate-900 dark:text-slate-100">
@@ -2917,7 +2984,7 @@ export function BalanceSheetView({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {!isFullScreen && kpiSummaryStrip}
 
       {isFullScreen && mounted ? (
@@ -2930,7 +2997,7 @@ export function BalanceSheetView({
             <div
               role="region"
               aria-label="Full screen Balance Sheet"
-              className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col"
+              className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               {workbookSection}
             </div>,
