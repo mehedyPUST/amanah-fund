@@ -66,10 +66,10 @@ export function AmanahLoadingLogo({
     <div className={`relative inline-flex items-center justify-center ${className}`}>
       <span
         aria-hidden="true"
-        className={`absolute ${frame.glow} bg-emerald-500/14 dark:bg-emerald-400/14 blur-md pointer-events-none`}
+        className={`absolute ${frame.glow} bg-gradient-to-tr from-blue-500/20 via-indigo-500/18 to-purple-500/20 dark:from-blue-400/20 dark:via-indigo-400/18 dark:to-purple-400/22 blur-md pointer-events-none`}
       />
       <div
-        className={`relative inline-flex items-center justify-center overflow-hidden bg-emerald-500/20 dark:bg-emerald-400/20 shadow-lg shadow-emerald-600/15 dark:shadow-emerald-500/15 ${frame.outer}`}
+        className={`relative inline-flex items-center justify-center overflow-hidden bg-blue-500/18 dark:bg-indigo-400/20 shadow-lg shadow-blue-600/15 dark:shadow-indigo-500/20 ${frame.outer}`}
       >
         <span
           aria-hidden="true"

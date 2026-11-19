@@ -490,11 +490,12 @@ html.dark .amanah-panel {
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    transparent 205deg,
-    rgba(5, 150, 105, 0.22) 250deg,
-    #059669 305deg,
-    #0d9488 338deg,
-    #34d399 354deg,
+    transparent 190deg,
+    rgba(66, 133, 244, 0.2) 235deg,
+    #4285f4 285deg,
+    #6366f1 320deg,
+    #9333ea 342deg,
+    #8ab4f8 355deg,
     transparent 360deg
   );
   animation: amanah-logo-orbit-spin 1.85s linear infinite;
@@ -505,11 +506,12 @@ html.dark .amanah-logo-orbit-sweep {
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    transparent 205deg,
-    rgba(16, 185, 129, 0.24) 250deg,
-    #10b981 305deg,
-    #2dd4bf 338deg,
-    #a7f3d0 354deg,
+    transparent 190deg,
+    rgba(138, 180, 248, 0.22) 235deg,
+    #60a5fa 285deg,
+    #818cf8 320deg,
+    #c084fc 342deg,
+    #dbeafe 355deg,
     transparent 360deg
   );
 }
