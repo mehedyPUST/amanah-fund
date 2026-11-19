@@ -294,7 +294,10 @@ export function ActiveMembersView({
             {filteredMembers.map((m) => {
               const photoBroken = brokenPhotos[m.id];
               return (
-                <div key={m.id} className="p-3.5 space-y-3">
+                <div
+                  key={m.id}
+                  className="p-3.5 space-y-3 odd:bg-white/85 even:bg-slate-100/75 dark:odd:bg-slate-900/35 dark:even:bg-slate-800/50 transition-colors"
+                >
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-start gap-2.5 min-w-0">
                       {m.photoUrl && !photoBroken ? (
@@ -417,7 +420,7 @@ export function ActiveMembersView({
                   return (
                     <tr
                       key={m.id}
-                      className="hover:bg-emerald-50/30 dark:hover:bg-slate-800/40 transition-colors"
+                      className="odd:bg-white/85 even:bg-slate-100/75 dark:odd:bg-slate-900/35 dark:even:bg-slate-800/50 hover:bg-emerald-50/55 dark:hover:bg-emerald-950/30 transition-colors"
                     >
                       <td className="py-3.5 px-4 align-top">
                         <div className="flex items-start gap-3">
