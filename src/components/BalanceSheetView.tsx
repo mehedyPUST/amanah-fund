@@ -2055,6 +2055,44 @@ export function BalanceSheetView({
               </div>
             )}
 
+            {/* Abbreviation Legend Line at Top of Sheet */}
+            <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+                Abbr:
+              </span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">S.N</strong> = Serial No.
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Prev. Cumul.</strong> = Previous Months Cumulative
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Contrib.</strong> = Contribution
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Qard</strong> = Qard Hasan
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Q. Due</strong> = Qard Hasan Due
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Drawn</strong> = Qard Drawn
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Refund</strong> = Refund Qard Hasan
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span>
+                <strong className="font-semibold text-slate-800 dark:text-slate-200">Equity</strong> = Net Member Equity
+              </span>
+            </div>
+
             {/* Authentic Interactive Spreadsheet Grid */}
             <div
               ref={gridContainerRef}
@@ -2071,16 +2109,16 @@ export function BalanceSheetView({
                     <th
                       scope="col"
                       aria-label="Serial number column"
-                      className="w-[48px] min-w-[48px] h-6 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40"
+                      className="w-[40px] min-w-[40px] h-6 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40"
                     />
                     {SHEET_COL_LETTERS.map((letter, colIdx) => {
                       const colActive =
                         selectedCell.tab === 'balance-sheet' && selectedCell.col === colIdx;
                       const stickyClass =
                         freezeIdentityCols && colIdx === 0
-                          ? 'md:sticky md:left-[48px] md:z-40'
+                          ? 'md:sticky md:left-[40px] md:z-40'
                           : freezeIdentityCols && colIdx === 1
-                            ? 'md:sticky md:left-[242px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                            ? 'md:sticky md:left-[214px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                             : '';
                       return (
                         <th
@@ -2103,39 +2141,42 @@ export function BalanceSheetView({
                   <tr className="text-[11px] font-semibold tracking-tight">
                     <th
                       scope="col"
-                      className="w-[48px] min-w-[48px] h-7 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40"
+                      className="w-[40px] min-w-[40px] h-7 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40"
                     />
                     <th
                       scope="colgroup"
                       colSpan={3}
-                      className={`h-7 px-3 text-left border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 ${
+                      className={`h-7 px-2 text-left border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 ${
                         freezeIdentityCols
-                          ? 'md:sticky md:left-[48px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                          ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                           : ''
                       }`}
                     >
-                      Member (A–B)
+                      Member
                     </th>
                     <th
                       scope="colgroup"
                       colSpan={3}
-                      className="h-7 px-3 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300"
+                      title={`Previous Months Cumulative (${prevMonthLabel})`}
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 whitespace-nowrap"
                     >
-                      Previous Months Cumulative ({prevMonthLabel})
+                      Prev. Cumul. ({prevMonthLabel})
                     </th>
                     <th
                       scope="colgroup"
                       colSpan={3}
-                      className="h-7 px-3 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300"
+                      title={`Current Month Activity & Refund (${shortMonthLabel})`}
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 whitespace-nowrap"
                     >
-                      Current Month Activity & Refund ({shortMonthLabel})
+                      Current ({shortMonthLabel})
                     </th>
                     <th
                       scope="colgroup"
                       colSpan={5}
-                      className="h-7 px-3 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100"
+                      title={`Closing Summary (Rolls to ${nextMonthLabel})`}
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 whitespace-nowrap"
                     >
-                      Closing Summary (→ {nextMonthLabel})
+                      Closing (→ {nextMonthLabel})
                     </th>
                   </tr>
 
@@ -2143,12 +2184,12 @@ export function BalanceSheetView({
                   <tr className="bg-white dark:bg-slate-950 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
                     <th
                       scope="col"
-                      className="w-[48px] min-w-[48px] px-1.5 py-2.5 text-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40"
+                      className="w-[40px] min-w-[40px] px-1 py-2 text-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('serialNo')}
-                        title="Sort by Serial Number"
+                        title="Serial Number — Click to sort"
                         className="w-full inline-flex items-center justify-center font-mono font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
                         S.N
@@ -2159,13 +2200,14 @@ export function BalanceSheetView({
                     <th
                       scope="col"
                       colSpan={2}
-                      className={`min-w-[194px] w-[194px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
-                        freezeIdentityCols ? 'md:sticky md:left-[48px] md:z-40' : ''
+                      className={`min-w-[174px] w-[174px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                        freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('name')}
+                        title="Member Name"
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
                         <span>Name</span>
@@ -2176,15 +2218,16 @@ export function BalanceSheetView({
                     {/* B: ID */}
                     <th
                       scope="col"
-                      className={`min-w-[96px] w-[96px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                      className={`min-w-[82px] w-[82px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
                         freezeIdentityCols
-                          ? 'md:sticky md:left-[242px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                          ? 'md:sticky md:left-[214px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                           : ''
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('memberCode')}
+                        title="Member ID"
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
                         <span>ID</span>
@@ -2195,14 +2238,15 @@ export function BalanceSheetView({
                     {/* C: Previous Cumulative — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[120px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevContrib')}
+                        title="Previous Months Cumulative Contribution"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Contribution</span>
+                        <span>Contrib.</span>
                         {renderSortIcon('prevContrib')}
                       </button>
                     </th>
@@ -2210,14 +2254,15 @@ export function BalanceSheetView({
                     {/* D: Previous Cumulative — Qard Hasan */}
                     <th
                       scope="col"
-                      className="min-w-[116px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevQard')}
+                        title="Previous Months Cumulative Qard Hasan Issued"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Qard Hasan</span>
+                        <span>Qard</span>
                         {renderSortIcon('prevQard')}
                       </button>
                     </th>
@@ -2225,14 +2270,15 @@ export function BalanceSheetView({
                     {/* E: Previous Cumulative — Qard Due */}
                     <th
                       scope="col"
-                      className="min-w-[110px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevDue')}
+                        title="Previous Months Opening Qard Hasan Due"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Qard Due</span>
+                        <span>Q. Due</span>
                         {renderSortIcon('prevDue')}
                       </button>
                     </th>
@@ -2240,14 +2286,15 @@ export function BalanceSheetView({
                     {/* F: Current Month — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[120px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currContrib')}
+                        title="Current Month Contribution"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Contribution</span>
+                        <span>Contrib.</span>
                         {renderSortIcon('currContrib')}
                       </button>
                     </th>
@@ -2255,14 +2302,15 @@ export function BalanceSheetView({
                     {/* G: Current Month — Qard Drawn */}
                     <th
                       scope="col"
-                      className="min-w-[114px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currQard')}
+                        title="Current Month Qard Hasan Drawn"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Qard Drawn</span>
+                        <span>Drawn</span>
                         {renderSortIcon('currQard')}
                       </button>
                     </th>
@@ -2270,14 +2318,15 @@ export function BalanceSheetView({
                     {/* H: Current Month — Refund Qard */}
                     <th
                       scope="col"
-                      className="min-w-[120px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currRefund')}
+                        title="Current Month Refund Qard Hasan"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-bold hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
                       >
-                        <span>Refund Qard</span>
+                        <span>Refund</span>
                         {renderSortIcon('currRefund')}
                       </button>
                     </th>
@@ -2285,14 +2334,15 @@ export function BalanceSheetView({
                     {/* I: Closing Summary — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[120px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingContrib')}
+                        title="Closing Cumulative Contribution"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Contribution</span>
+                        <span>Contrib.</span>
                         {renderSortIcon('closingContrib')}
                       </button>
                     </th>
@@ -2300,14 +2350,15 @@ export function BalanceSheetView({
                     {/* J: Closing Summary — Qard Hasan */}
                     <th
                       scope="col"
-                      className="min-w-[114px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingQard')}
+                        title="Closing Cumulative Qard Hasan"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Qard Hasan</span>
+                        <span>Qard</span>
                         {renderSortIcon('closingQard')}
                       </button>
                     </th>
@@ -2315,14 +2366,15 @@ export function BalanceSheetView({
                     {/* K: Closing Summary — Qard Due */}
                     <th
                       scope="col"
-                      className="min-w-[110px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingDue')}
+                        title="Closing Outstanding Qard Hasan Due"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Qard Due</span>
+                        <span>Q. Due</span>
                         {renderSortIcon('closingDue')}
                       </button>
                     </th>
@@ -2330,14 +2382,15 @@ export function BalanceSheetView({
                     {/* L: Closing Summary — Net Equity */}
                     <th
                       scope="col"
-                      className="min-w-[116px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('netEquity')}
+                        title="Net Member Equity (Closing Contribution minus Closing Qard Due)"
                         className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
-                        <span>Net Equity</span>
+                        <span>Equity</span>
                         {renderSortIcon('netEquity')}
                       </button>
                     </th>
@@ -2345,11 +2398,12 @@ export function BalanceSheetView({
                     {/* M: Closing Summary — Status */}
                     <th
                       scope="col"
-                      className="min-w-[96px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                      className="min-w-[76px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('status')}
+                        title="Current Month Payment Status"
                         className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
                       >
                         <span>Status</span>
@@ -2436,7 +2490,7 @@ export function BalanceSheetView({
                                 ? `Clear highlight for row ${idx + 1}: ${row.memberCode}`
                                 : `Highlight row ${idx + 1}: ${row.memberCode}`
                             }
-                            className={`w-[48px] min-w-[48px] ${cellPadY} text-center font-mono tabular-nums text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer transition-colors ${
+                            className={`w-[40px] min-w-[40px] ${cellPadY} text-center font-mono tabular-nums text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer transition-colors ${
                               isRowMarked
                                 ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold'
                                 : rowActive
@@ -2450,9 +2504,9 @@ export function BalanceSheetView({
                           {/* A1: Member Photo (separate cell with invisible vertical separation from Name; click to visit profile) */}
                           <td
                             onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            className={`relative w-[42px] min-w-[42px] pl-2.5 pr-1 ${cellPadY} border-r-0 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap hover:z-40 focus-within:z-40 ${
+                            className={`relative w-[38px] min-w-[38px] pl-2 pr-0.5 ${cellPadY} border-r-0 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
-                                ? `md:sticky md:left-[48px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg}`
+                                ? `md:sticky md:left-[40px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg}`
                                 : ''
                             }`}
                           >
@@ -2510,14 +2564,14 @@ export function BalanceSheetView({
                               selectSheetCell('balance-sheet', idx, 0);
                               setInspectedMemberId(row.userId);
                             }}
-                            className={`w-[152px] min-w-[152px] pl-1.5 pr-3 ${cellPadY} border-l-0 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
+                            className={`w-[136px] min-w-[136px] pl-1 pr-2 ${cellPadY} border-l-0 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
                               freezeIdentityCols
-                                ? `md:sticky md:left-[90px] md:z-20 ${stickyBg}`
+                                ? `md:sticky md:left-[78px] md:z-20 ${stickyBg}`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
                           >
                             <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[112px]">
+                              <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[96px]">
                                 {row.name}
                               </span>
                               {isSelfRow && (
@@ -2536,9 +2590,9 @@ export function BalanceSheetView({
                               selectSheetCell('balance-sheet', idx, 1);
                               setInspectedMemberId(row.userId);
                             }}
-                            className={`relative group/memberid px-3 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
+                            className={`relative group/memberid px-2 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
-                                ? `md:sticky md:left-[242px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
+                                ? `md:sticky md:left-[214px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 1))}`}
                           >
@@ -2559,7 +2613,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:2`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 2)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.previousSummary.contributionAmount > 0
                                 ? 'text-slate-800 dark:text-slate-200'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2574,7 +2628,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:3`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 3)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.previousSummary.qardHasanAmount > 0
                                 ? 'text-slate-800 dark:text-slate-200'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2589,7 +2643,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:4`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 4)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.previousSummary.dueHasanaAmount > 0
                                 ? 'text-amber-700 dark:text-amber-400'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2604,7 +2658,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:5`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 5)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
                               isCellActive('balance-sheet', idx, 5)
                             )}`}
                           >
@@ -2626,7 +2680,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:6`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 6)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.thisMonth.qardHasanAmount > 0
                                 ? 'font-semibold text-amber-700 dark:text-amber-400'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2641,7 +2695,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:7`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 7)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               isRowMarked ? '' : 'bg-emerald-50/25 dark:bg-emerald-950/15'
                             } ${
                               row.thisMonth.repaidAmount > 0
@@ -2658,7 +2712,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:8`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 8)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-slate-100 border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-slate-100 border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
                               isCellActive('balance-sheet', idx, 8)
                             )}`}
                           >
@@ -2669,7 +2723,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:9`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 9)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.thisMonthSummary.qardHasanAmount > 0
                                 ? 'font-medium text-slate-800 dark:text-slate-200'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2684,7 +2738,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:10`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 10)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               row.thisMonthSummary.dueHasanaAmount > 0
                                 ? 'font-semibold text-amber-700 dark:text-amber-400'
                                 : 'text-slate-400 dark:text-slate-600'
@@ -2699,7 +2753,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:11`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 11)}
-                            className={`px-3 ${cellPadY} text-right font-mono tabular-nums font-semibold border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
+                            className={`px-2 ${cellPadY} text-right font-mono tabular-nums font-semibold border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${
                               netEquity >= 0
                                 ? 'text-emerald-800 dark:text-emerald-300'
                                 : 'text-rose-700 dark:text-rose-400'
@@ -2712,7 +2766,7 @@ export function BalanceSheetView({
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:12`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 12)}
-                            className={`px-3 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
+                            className={`px-2 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-cell whitespace-nowrap ${cellRingClass(
                               isCellActive('balance-sheet', idx, 12)
                             )}`}
                           >
@@ -2730,7 +2784,7 @@ export function BalanceSheetView({
                     <tr className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold">
                       <td
                         onClick={() => selectSheetCell('balance-sheet', -2, 0)}
-                        className="w-[48px] min-w-[48px] py-2 text-center font-mono text-[11px] border-r border-t border-b border-slate-300 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800 sticky left-0 z-40 cursor-pointer"
+                        className="w-[40px] min-w-[40px] py-2 text-center font-mono text-[11px] border-r border-t border-b border-slate-300 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800 sticky left-0 z-40 cursor-pointer"
                       >
                         —
                       </td>
@@ -2738,13 +2792,13 @@ export function BalanceSheetView({
                         colSpan={3}
                         data-sheet-cell="balance-sheet:-2:0"
                         onClick={() => selectSheetCell('balance-sheet', -2, 0)}
-                        className={`px-3 py-2 border-r border-t border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-cell whitespace-nowrap ${
+                        className={`px-2 py-2 border-r border-t border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-cell whitespace-nowrap ${
                           freezeIdentityCols
-                            ? 'md:sticky md:left-[48px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                            ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                             : ''
                         } ${cellRingClass(isCellActive('balance-sheet', -2, 0))}`}
                       >
-                        Filtered Subtotal ({filteredRows.length}/{rows.length})
+                        Filtered ({filteredRows.length}/{rows.length})
                       </td>
                       {(
                         [
@@ -2764,7 +2818,7 @@ export function BalanceSheetView({
                           key={c.col}
                           data-sheet-cell={`balance-sheet:-2:${c.col}`}
                           onClick={() => selectSheetCell('balance-sheet', -2, c.col)}
-                          className={`px-3 py-2 text-right font-mono tabular-nums bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
+                          className={`px-2 py-2 text-right font-mono tabular-nums bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
                             isCellActive('balance-sheet', -2, c.col)
                           )}`}
                         >
@@ -2774,7 +2828,7 @@ export function BalanceSheetView({
                       <td
                         data-sheet-cell="balance-sheet:-2:12"
                         onClick={() => selectSheetCell('balance-sheet', -2, 12)}
-                        className={`px-3 py-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
+                        className={`px-2 py-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-900 border-r border-t border-b border-slate-300 dark:border-slate-700 cursor-cell whitespace-nowrap ${cellRingClass(
                           isCellActive('balance-sheet', -2, 12)
                         )}`}
                       >
@@ -2787,7 +2841,7 @@ export function BalanceSheetView({
                   <tr className="bg-[#eef3f8] dark:bg-slate-900 font-bold text-slate-900 dark:text-slate-50">
                     <td
                       onClick={() => selectSheetCell('balance-sheet', -1, 0)}
-                      className="w-[48px] min-w-[48px] py-2.5 text-center font-mono text-xs border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-emerald-700 text-white sticky left-0 z-40 cursor-pointer"
+                      className="w-[40px] min-w-[40px] py-2.5 text-center font-mono text-xs border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-emerald-700 text-white sticky left-0 z-40 cursor-pointer"
                     >
                       Σ
                     </td>
@@ -2795,18 +2849,18 @@ export function BalanceSheetView({
                       colSpan={3}
                       data-sheet-cell="balance-sheet:-1:0"
                       onClick={() => selectSheetCell('balance-sheet', -1, 0)}
-                      className={`px-3 py-2.5 border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-[#eef3f8] dark:bg-slate-900 cursor-cell whitespace-nowrap ${
+                      className={`px-2 py-2.5 border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-[#eef3f8] dark:bg-slate-900 cursor-cell whitespace-nowrap ${
                         freezeIdentityCols
-                          ? 'md:sticky md:left-[48px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                          ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                           : ''
                       } ${cellRingClass(isCellActive('balance-sheet', -1, 0))}`}
                     >
-                      Cooperative Totals ({rows.length})
+                      Totals ({rows.length})
                     </td>
                     <td
                       data-sheet-cell="balance-sheet:-1:2"
                       onClick={() => selectSheetCell('balance-sheet', -1, 2)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 2)
                       )}`}
                     >
@@ -2815,7 +2869,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:3"
                       onClick={() => selectSheetCell('balance-sheet', -1, 3)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 3)
                       )}`}
                     >
@@ -2824,7 +2878,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:4"
                       onClick={() => selectSheetCell('balance-sheet', -1, 4)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 4)
                       )}`}
                     >
@@ -2833,7 +2887,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:5"
                       onClick={() => selectSheetCell('balance-sheet', -1, 5)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-800 dark:text-emerald-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-800 dark:text-emerald-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 5)
                       )}`}
                     >
@@ -2842,7 +2896,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:6"
                       onClick={() => selectSheetCell('balance-sheet', -1, 6)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 6)
                       )}`}
                     >
@@ -2853,7 +2907,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:7"
                       onClick={() => selectSheetCell('balance-sheet', -1, 7)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums text-emerald-800 dark:text-emerald-300 bg-[#e2f5ec] dark:bg-[#0a291f] border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums text-emerald-800 dark:text-emerald-300 bg-[#e2f5ec] dark:bg-[#0a291f] border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 7)
                       )}`}
                     >
@@ -2862,7 +2916,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:8"
                       onClick={() => selectSheetCell('balance-sheet', -1, 8)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-900 dark:text-emerald-200 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-900 dark:text-emerald-200 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 8)
                       )}`}
                     >
@@ -2871,7 +2925,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:9"
                       onClick={() => selectSheetCell('balance-sheet', -1, 9)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 9)
                       )}`}
                     >
@@ -2880,7 +2934,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:10"
                       onClick={() => selectSheetCell('balance-sheet', -1, 10)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-amber-800 dark:text-amber-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 10)
                       )}`}
                     >
@@ -2889,7 +2943,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:11"
                       onClick={() => selectSheetCell('balance-sheet', -1, 11)}
-                      className={`px-3 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-900 dark:text-emerald-200 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 text-right font-mono tabular-nums bg-[#eef3f8] dark:bg-slate-900 text-emerald-900 dark:text-emerald-200 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 11)
                       )}`}
                     >
@@ -2898,7 +2952,7 @@ export function BalanceSheetView({
                     <td
                       data-sheet-cell="balance-sheet:-1:12"
                       onClick={() => selectSheetCell('balance-sheet', -1, 12)}
-                      className={`px-3 py-2.5 font-mono tabular-nums text-[11px] bg-[#eef3f8] dark:bg-slate-900 text-emerald-800 dark:text-emerald-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
+                      className={`px-2 py-2.5 font-mono tabular-nums text-[11px] bg-[#eef3f8] dark:bg-slate-900 text-emerald-800 dark:text-emerald-300 border-r border-t-2 border-slate-400/80 dark:border-slate-600 cursor-cell whitespace-nowrap ${cellRingClass(
                         isCellActive('balance-sheet', -1, 12)
                       )}`}
                     >
@@ -2922,7 +2976,7 @@ export function BalanceSheetView({
             <table className="w-full border-collapse text-xs select-none">
               <thead className="sticky top-0 z-30">
                 <tr className="bg-[#f8f9fa] dark:bg-slate-900 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                  <th className="w-[44px] min-w-[44px] h-6 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40" />
+                  <th className="w-[40px] min-w-[40px] h-6 border-r border-b border-slate-200 dark:border-slate-700 bg-[#eef1f5] dark:bg-slate-800/90 sticky left-0 z-40" />
                   {SUMMARY_COL_LETTERS.map((letter, colIdx) => {
                     const colActive =
                       selectedCell.tab === 'variables-summary' && selectedCell.col === colIdx;
@@ -2941,26 +2995,26 @@ export function BalanceSheetView({
                   })}
                 </tr>
                 <tr className="bg-slate-50 dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                  <th className="w-[44px] min-w-[44px] py-2.5 text-center font-mono text-[11px] font-medium text-slate-500 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40">
+                  <th className="w-[40px] min-w-[40px] py-2 text-center font-mono text-[11px] font-medium text-slate-500 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40">
                     1
                   </th>
-                  <th className="min-w-[165px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700">
-                    Variable Group
+                  <th className="min-w-[130px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                    Group
                   </th>
-                  <th className="min-w-[260px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700">
-                    Current Month Variable
+                  <th className="min-w-[200px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                    Variable
                   </th>
-                  <th className="min-w-[230px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700">
-                    Spreadsheet Formula / Basis
+                  <th className="min-w-[180px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                    Formula / Basis
                   </th>
-                  <th className="min-w-[138px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700">
-                    Previous ({prevMonthLabel})
+                  <th className="min-w-[110px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                    Prev. ({prevMonthLabel})
                   </th>
-                  <th className="min-w-[156px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200">
-                    Current ({shortMonthLabel})
+                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 whitespace-nowrap">
+                    Curr. ({shortMonthLabel})
                   </th>
-                  <th className="min-w-[156px] px-3 py-2.5 text-right border-r border-b-2 border-slate-300 dark:border-slate-700">
-                    Closing / Total
+                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                    Closing
                   </th>
                 </tr>
               </thead>
@@ -3018,7 +3072,7 @@ export function BalanceSheetView({
                       >
                         <td
                           onClick={() => selectSheetCell('variables-summary', idx, 0)}
-                          className={`w-[44px] min-w-[44px] ${cellPadY} text-center font-mono text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer ${
+                          className={`w-[40px] min-w-[40px] ${cellPadY} text-center font-mono text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer ${
                             rowActive
                               ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-900 dark:text-emerald-200 font-bold'
                               : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-500 dark:text-slate-400'
