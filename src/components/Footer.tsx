@@ -16,7 +16,7 @@ export function Footer() {
   const tFooter = useTranslations('Public.footer');
 
   return (
-    <footer className="w-full amanah-card-emerald border rounded-2xl">
+    <footer className="w-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs">
       <div className="px-6 sm:px-8 py-7">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">

@@ -57,7 +57,6 @@ import { MyAmanahView } from './MyAmanahView.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { ActionModal } from './ActionModal.tsx';
-import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
 import { StatisticsView } from './StatisticsView.tsx';
@@ -81,7 +80,7 @@ import type {
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
-import { getDashboardSectionLabel, getDeskLabel, getRegistryLabel } from '../utils/navigation.ts';
+import { getDashboardSectionLabel } from '../utils/navigation.ts';
 
 const EMPTY_CONTRIBUTIONS: Contribution[] = [];
 const EMPTY_LOANS: LoanRequest[] = [];
@@ -168,25 +167,19 @@ const SIDEBAR_TONE_STYLES: Record<
     pillBg: string;
     activeText: string;
     activeIcon: string;
-    eyebrowText: string;
-    eyebrowLine: string;
   }
 > = {
   emerald: {
     pillBg:
-      'bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/10 dark:from-emerald-500/25 dark:via-teal-500/20 dark:to-cyan-500/10 border border-emerald-400/75 dark:border-emerald-400/55 shadow-xs shadow-emerald-500/15',
+      'bg-emerald-500/12 dark:bg-emerald-400/15 border border-emerald-500/25 dark:border-emerald-400/30',
     activeText: 'text-emerald-800 dark:text-emerald-200 font-semibold',
     activeIcon: 'text-emerald-600 dark:text-emerald-300',
-    eyebrowText: 'text-emerald-700 dark:text-emerald-300',
-    eyebrowLine: 'from-emerald-400/75 via-teal-300/40 to-transparent dark:from-emerald-500/55 dark:via-teal-500/25',
   },
   amber: {
     pillBg:
-      'bg-gradient-to-r from-amber-500/22 via-orange-500/15 to-yellow-500/10 dark:from-amber-500/25 dark:via-orange-500/18 dark:to-yellow-500/10 border border-amber-400/75 dark:border-amber-400/55 shadow-xs shadow-amber-500/15',
+      'bg-amber-500/12 dark:bg-amber-400/15 border border-amber-500/25 dark:border-amber-400/30',
     activeText: 'text-amber-800 dark:text-amber-200 font-semibold',
     activeIcon: 'text-amber-600 dark:text-amber-300',
-    eyebrowText: 'text-amber-700 dark:text-amber-300',
-    eyebrowLine: 'from-amber-400/75 via-orange-300/40 to-transparent dark:from-amber-500/55 dark:via-orange-500/25',
   },
 };
 
@@ -1323,14 +1316,14 @@ export function DashboardShell() {
   return (
     <div className="h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
       {/* GRID 1 */}
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/88 dark:bg-slate-900/82 backdrop-blur-md rounded-2xl border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/10 z-30">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center justify-between bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <AmanahLogo size="sm" decorative />
           <div className="min-w-0">
             <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               {tCommon('brandName')}
             </div>
-            <div className="text-[11px] bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent font-semibold truncate">
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
               {tCommon('dashboard')}
             </div>
           </div>
@@ -1338,7 +1331,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/8 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <AmanahLogo size="xs" className="lg:hidden" decorative />
           <div className="flex items-center gap-2 text-sm min-w-0">
@@ -1393,18 +1386,15 @@ export function DashboardShell() {
             disabled={dataLoading}
             title={tCommon('refreshDashboardTitle')}
             aria-label={tCommon('refreshDashboard')}
-            className="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70"
+            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
+              className={`w-4 h-4 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
               aria-hidden="true"
             />
-            <span className="hidden md:inline">{tCommon('refresh')}</span>
           </button>
 
           <PWAUpdateButton compact className="hidden sm:inline-flex" />
-
-          <PWAInstallButton compact className="hidden lg:inline-flex" />
 
           <button
             type="button"
@@ -1433,7 +1423,7 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/88 dark:bg-slate-900/82 backdrop-blur-md rounded-2xl border border-emerald-200/85 dark:border-emerald-800/55 shadow-sm shadow-emerald-500/10">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs">
         <nav className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto scrollbar-subtle" aria-label={tNav('primaryNav')}>
           {renderDashboardNavItems(false)}
         </nav>
@@ -1586,7 +1576,7 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/84 lg:dark:bg-slate-900/80 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-emerald-200/85 lg:dark:border-emerald-800/55 lg:shadow-sm lg:shadow-emerald-500/10 overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:shadow-xs overflow-hidden"
       >
         <div
           ref={mainScrollRef}
@@ -1823,7 +1813,6 @@ export function DashboardShell() {
                     />
                   </div>
                   <div className="hidden lg:block space-y-4">
-                    <SectionEyebrow label={tNav('overview')} tone="emerald" />
                     <OverviewView
                       overview={overview}
                       loans={loans}
@@ -1839,7 +1828,6 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'monthly-contribution' && (
                 <section id="monthly-contribution" className="space-y-4">
-                  <SectionEyebrow label={tNav('contributions')} tone="emerald" />
                   <ContributionsView
                     contributions={contributions}
                     config={overview?.config || null}
@@ -1854,7 +1842,6 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'quard-hasan' && (
                 <section id="quard-hasan" className="space-y-4">
-                  <SectionEyebrow label={tNav('qardHasan')} tone="emerald" />
                   <LoansView
                     loans={loans}
                     eligibility={overview?.personal.eligibility || null}
@@ -1872,7 +1859,6 @@ export function DashboardShell() {
 
               {!isAdmin && activeSection === 'my-amanah' && (
                 <section id="my-amanah" className="space-y-4">
-                  <SectionEyebrow label={tNav('myAmanah')} tone="emerald" />
                   <MyAmanahView
                     overview={overview}
                     loans={loans}
@@ -1886,14 +1872,12 @@ export function DashboardShell() {
 
               {activeSection === 'my-profile' && (
                 <section id="my-profile" className="space-y-4">
-                  <SectionEyebrow label={tNav('profile')} tone="emerald" />
                   <MemberProfile user={user} onRefresh={handleRefreshWithAutoSync} />
                 </section>
               )}
 
               {activeSection === 'notification' && (
                 <section id="notification" className="space-y-4">
-                  <SectionEyebrow label={tNav('notifications')} tone="amber" />
                   <NotificationsView
                     user={user}
                     workspace={workspace}
@@ -1910,7 +1894,6 @@ export function DashboardShell() {
 
               {activeSection === 'statistics' && (
                 <section id="statistics" className="space-y-4">
-                  <SectionEyebrow label={tNav('statistics')} tone="emerald" />
                   <StatisticsView
                     overview={overview}
                     contributions={contributions}
@@ -1925,7 +1908,6 @@ export function DashboardShell() {
 
               {activeSection === 'ballot' && (
                 <section id="ballot" className="space-y-4">
-                  <SectionEyebrow label={tNav('voting')} tone="amber" />
                   <VotingView
                     loans={loans}
                     projects={halalProjects}
@@ -1942,7 +1924,6 @@ export function DashboardShell() {
 
               {activeSection === 'transaction-history' && (
                 <section id="transaction-history" className="space-y-4">
-                  <SectionEyebrow label={tNav('transactions')} tone="emerald" />
                   <TransactionHistory
                     contributions={contributions}
                     loans={loans}
@@ -1957,7 +1938,6 @@ export function DashboardShell() {
 
               {activeSection === 'members' && (
                 <section id="members" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('members')} tone="emerald" />
                   <ActiveMembersView
                     user={user}
                     config={overview?.config || null}
@@ -1968,7 +1948,6 @@ export function DashboardShell() {
 
               {activeSection === 'balance-sheet' && (
                 <section id="balance-sheet" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('balanceSheet')} tone="emerald" />
                   <BalanceSheetView
                     user={user}
                     config={overview?.config || null}
@@ -1979,7 +1958,6 @@ export function DashboardShell() {
 
               {activeSection === 'manager-cycle' && (
                 <section id="manager-cycle" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('managerCycle')} tone="amber" />
                   <ManagerCycleView
                     user={user}
                     config={overview?.config || null}
@@ -1992,7 +1970,6 @@ export function DashboardShell() {
 
               {activeSection === 'community' && (
                 <section id="community" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('community')} tone="emerald" />
                   <CommunityView
                     user={user}
                     currency={overview?.config.currency}
@@ -2017,7 +1994,6 @@ export function DashboardShell() {
 
               {activeSection === 'member-profile' && viewingMemberId && (
                 <section id="member-profile" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('memberProfile')} tone="emerald" />
                   <MemberPublicProfileView
                     memberId={viewingMemberId}
                     currentUser={user}
@@ -2034,7 +2010,6 @@ export function DashboardShell() {
 
               {isStaff && activeSection === 'manager-desk' && (
                 <section id="manager-desk" className="space-y-4 pb-8">
-                  <SectionEyebrow label={getDeskLabel(user.role, locale)} tone="amber" />
                   <ManagerDeskView
                     user={user}
                     config={overview?.config || null}
@@ -2057,14 +2032,12 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-activity' && (
                 <section id="site-activity" className="space-y-4">
-                  <SectionEyebrow label={tNav('siteActivity')} tone="emerald" />
                   <AdminAuditLog user={user} />
                 </section>
               )}
 
               {isStaff && activeSection === 'member-registry' && (
                 <section id="member-registry" className="space-y-4">
-                  <SectionEyebrow label={getRegistryLabel(user.role, locale)} tone="emerald" />
                   <MemberRegistrySection
                     user={user}
                     config={overview?.config || null}
@@ -2075,7 +2048,6 @@ export function DashboardShell() {
 
               {isAdmin && activeSection === 'site-settings' && (
                 <section id="site-settings" className="space-y-4 pb-8">
-                  <SectionEyebrow label={tNav('siteSettings')} tone="emerald" />
                   <AdminSiteSettingsView
                     overview={overview}
                     config={overview?.config || null}
@@ -2293,22 +2265,6 @@ export function DashboardShell() {
         />
       )}
 
-    </div>
-  );
-}
-
-function SectionEyebrow({
-  label,
-  tone = 'emerald',
-}: {
-  label: string;
-  tone?: SectionAccentTone;
-}) {
-  const toneStyle = SIDEBAR_TONE_STYLES[tone] || SIDEBAR_TONE_STYLES.emerald;
-  return (
-    <div className="hidden lg:flex items-center gap-3">
-      <h2 className={`text-xs font-semibold tracking-wide ${toneStyle.eyebrowText}`}>{label}</h2>
-      <div className={`h-px flex-1 bg-gradient-to-r ${toneStyle.eyebrowLine}`} aria-hidden="true" />
     </div>
   );
 }

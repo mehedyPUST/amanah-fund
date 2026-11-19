@@ -21,7 +21,6 @@ import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
-import { PWAInstallButton } from './PWAInstallButton.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 
 export function Navbar() {
@@ -80,7 +79,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-xl sm:rounded-2xl border border-emerald-200/85 dark:border-emerald-800/60 shadow-sm shadow-emerald-500/10 px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-4">
+      <div className="w-full min-h-[52px] sm:min-h-[58px] bg-white/92 dark:bg-slate-900/88 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-4">
         {/* Zone 1: Clean single-element Brand Wordmark */}
         <Link
           href="/"
@@ -129,35 +128,14 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Zone 3: Language, Refresh, PWA Update, Theme & Primary Action */}
+        {/* Zone 3: Language, PWA Update, Theme & Primary Action */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 md:justify-self-end">
           <LanguageSwitcher
-            variant="segmented"
-            layoutId="navbar-lang-pill"
-            className="hidden lg:inline-flex"
-          />
-          <LanguageSwitcher
             variant="compact"
-            className="hidden md:inline-flex lg:hidden"
+            className="hidden md:inline-flex"
           />
-
-          <button
-            type="button"
-            onClick={() => void handleRefreshPage()}
-            disabled={refreshing}
-            title={tCommon('refreshPageTitle')}
-            aria-label={tCommon('refreshPage')}
-            className="w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/35 transition-colors duration-150 flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
 
           <PWAUpdateButton compact className="hidden sm:inline-flex" />
-
-          <PWAInstallButton compact className="hidden xl:inline-flex" />
 
           <button
             type="button"

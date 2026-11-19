@@ -1455,8 +1455,8 @@ export function BalanceSheetView({
           <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-200">
             {shortMonthLabel} Collection
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono tabular-nums text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 shrink-0">
-            <TrendingUp className="w-3 h-3" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 font-mono tabular-nums text-xs font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+            <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
             {collectionRatePct}%
           </span>
         </div>
@@ -1540,7 +1540,7 @@ export function BalanceSheetView({
       }`}
     >
       {/* 1. Spreadsheet Document Header & Period Controls */}
-      <div className="relative z-40 shrink-0 bg-gradient-to-r from-emerald-50/85 via-white to-teal-50/75 dark:from-emerald-950/35 dark:via-slate-950 dark:to-teal-950/25 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
@@ -1550,7 +1550,8 @@ export function BalanceSheetView({
               <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
                 Balance Sheet
               </h1>
-              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+              <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {fullMonthLabel}
               </span>
             </div>
@@ -2108,9 +2109,9 @@ export function BalanceSheetView({
 
             {/* Abbreviation Legend Line at Top of Sheet */}
             <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-bold uppercase tracking-wider text-[10px] text-emerald-700 dark:text-emerald-400 mr-0.5 shrink-0">
-                  Abbr
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                <span className="font-bold text-emerald-700 dark:text-emerald-400 shrink-0">
+                  Abbr:
                 </span>
                 {[
                   ['S.N', 'Serial No.'],
@@ -2121,11 +2122,13 @@ export function BalanceSheetView({
                   ['Drawn', 'Qard Drawn'],
                   ['Refund', 'Refund Qard'],
                   ['Equity', 'Net Equity'],
-                ].map(([abbr, full]) => (
-                  <span
-                    key={abbr}
-                    className="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 px-1.5 py-0.5"
-                  >
+                ].map(([abbr, full], idx) => (
+                  <span key={abbr} className="inline-flex items-center gap-1 whitespace-nowrap">
+                    {idx > 0 && (
+                      <span aria-hidden="true" className="text-slate-300 dark:text-slate-700 mr-1.5">
+                        ·
+                      </span>
+                    )}
                     <strong className="font-semibold text-slate-800 dark:text-slate-200">
                       {abbr}
                     </strong>

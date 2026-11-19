@@ -493,21 +493,19 @@ export function OverviewView({
       </section>
 
       {/* This Month Treasury Pulse */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <MotionCard
-          hue="emerald"
-          delay={0.04}
-          className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-            <span>{tOv('thisMonthContributionWithMonth', { month: treasury.thisMonthKey })}</span>
-            <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-          </div>
-          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(treasury.thisMonthContributionCollected, ccy)}{' '}
-            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {formatMoney(treasury.thisMonthContributionTarget, ccy)}
-            </span>
+      <section className="rounded-xl sm:rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/92 dark:bg-slate-900/85 shadow-xs grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/75 dark:divide-slate-800/80 overflow-hidden">
+        <div className="p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <span>{tOv('thisMonthContributionWithMonth', { month: treasury.thisMonthKey })}</span>
+              <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            </div>
+            <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              {formatMoney(treasury.thisMonthContributionCollected, ccy)}{' '}
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                / {formatMoney(treasury.thisMonthContributionTarget, ccy)}
+              </span>
+            </div>
           </div>
           <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
@@ -532,64 +530,58 @@ export function OverviewView({
               className="h-full bg-emerald-600 rounded-full"
             />
           </div>
-        </MotionCard>
+        </div>
 
-        <MotionCard
-          hue="violet"
-          delay={0.07}
-          className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
-        >
-          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            {t('sheets.thisMonthDue')}
-          </div>
-          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
-            {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
-            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {formatMoney(treasury.thisMonthDueTarget, ccy)}
-            </span>
+        <div className="p-4 flex flex-col justify-between">
+          <div>
+            <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+              {t('sheets.thisMonthDue')}
+            </div>
+            <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
+              {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                / {formatMoney(treasury.thisMonthDueTarget, ccy)}
+              </span>
+            </div>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthDueRemaining === 0
               ? t('sheets.allTargetsCollected')
               : t('sheets.pendingCollectionCycle')}
           </div>
-        </MotionCard>
+        </div>
 
-        <MotionCard
-          hue="sky"
-          delay={0.1}
-          className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
-        >
-          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            {t('sheets.thisMonthHasanInstallment')}
-          </div>
-          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
-            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {formatMoney(treasury.thisMonthHasanInstallmentNeed, ccy)}
-            </span>
+        <div className="p-4 flex flex-col justify-between">
+          <div>
+            <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+              {t('sheets.thisMonthHasanInstallment')}
+            </div>
+            <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              {formatMoney(treasury.thisMonthHasanInstallmentCollected, ccy)}{' '}
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                / {formatMoney(treasury.thisMonthHasanInstallmentNeed, ccy)}
+              </span>
+            </div>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             {treasury.thisMonthHasanInstallmentNeed > 0
               ? t('sheets.installmentsDueCollected')
               : t('sheets.noInstallmentsDue')}
           </div>
-        </MotionCard>
+        </div>
 
-        <MotionCard
-          hue="teal"
-          delay={0.13}
-          className="border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-200"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-            <span>{t('sheets.thisMonthClearance')}</span>
-            <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-          </div>
-          <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {treasury.thisMonthClearanceClearedMembers}{' '}
-            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              / {treasury.thisMonthClearanceTotalMembers} {tOv('clearedMembersSuffix')}
-            </span>
+        <div className="p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <span>{t('sheets.thisMonthClearance')}</span>
+              <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            </div>
+            <div className="mt-1.5 text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+              {treasury.thisMonthClearanceClearedMembers}{' '}
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                / {treasury.thisMonthClearanceTotalMembers} {tOv('clearedMembersSuffix')}
+              </span>
+            </div>
           </div>
           <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
@@ -611,7 +603,7 @@ export function OverviewView({
               className="h-full bg-emerald-600 rounded-full"
             />
           </div>
-        </MotionCard>
+        </div>
       </section>
 
       {/* Active Qard Hasan Borrowers + This Month Member Clearance */}
@@ -744,7 +736,7 @@ export function OverviewView({
                   </div>
 
                   <span
-                    className={`font-semibold text-[11px] uppercase tracking-wide shrink-0 ${
+                    className={`font-semibold text-xs shrink-0 ${
                       entry.status === 'cleared'
                         ? 'text-emerald-700 dark:text-emerald-400'
                         : entry.status === 'pending'
@@ -824,10 +816,8 @@ export function OverviewView({
           </MotionCard>
         )}
 
-        <MotionCard
-          as="section"
-          hue="violet"
-          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md flex flex-col justify-between transition-all duration-200`}
+        <section
+          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} bg-white/92 dark:bg-slate-900/85 border border-slate-200/85 dark:border-slate-800/85 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs flex flex-col justify-between`}
         >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -839,7 +829,7 @@ export function OverviewView({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200/75 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
               <button
                 type="button"
                 onClick={() =>
@@ -847,11 +837,11 @@ export function OverviewView({
                     ? onOpenManagerDeskTab('qard-hasan')
                     : onNavigate(isStaff ? 'manager-desk' : 'quard-hasan')
                 }
-                className="group amanah-card-amber border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
+                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>{t('sheets.pendingLoanReviews')}</span>
-                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingLoansReviewCount}
@@ -868,11 +858,11 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('ballot')}
-                className="group amanah-card-violet border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
+                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-violet-700 dark:text-violet-400 font-medium">
                   <span>{t('sheets.openTwoThirdsBallots')}</span>
-                  <Vote className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+                  <Vote className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true" />
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
@@ -897,12 +887,12 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group amanah-card-emerald border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
+                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>{t('sheets.pendingDeposits')}</span>
                   <ShieldCheck
-                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
                     aria-hidden="true"
                   />
                 </div>
@@ -927,12 +917,12 @@ export function OverviewView({
                     onNavigate(isStaff ? 'manager-desk' : 'ballot');
                   }
                 }}
-                className="group amanah-card-teal border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2"
+                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
                   <span>{t('sheets.awaitingDisbursement')}</span>
                   <ShieldCheck
-                    className="w-4 h-4 text-teal-600 dark:text-teal-400"
+                    className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0"
                     aria-hidden="true"
                   />
                 </div>
@@ -963,12 +953,12 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group amanah-card-emerald border rounded-xl text-left p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
+                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>{t('sheets.pendingRepayments')}</span>
                   <CheckCircle2
-                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
                     aria-hidden="true"
                   />
                 </div>
@@ -985,7 +975,7 @@ export function OverviewView({
               </button>
             </div>
           </div>
-        </MotionCard>
+        </section>
       </div>
     </div>
   );

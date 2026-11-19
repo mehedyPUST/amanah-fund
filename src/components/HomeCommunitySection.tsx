@@ -116,7 +116,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={{ duration: 0.22 }}
-            className="amanah-card-emerald rounded-2xl border p-6 sm:p-8 shadow-xs space-y-6"
+            className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
               <div className="flex items-start gap-4 max-w-2xl">
@@ -130,7 +130,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                     {t('lockedTitle')}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     {t('lockedDesc')}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                       {item.title}
                     </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                       {item.detail}
                     </p>
                   </MotionCard>

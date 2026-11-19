@@ -24,19 +24,19 @@ const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
 
 const HUE_SURFACE_CLASS: Record<CardHue, string> = {
   emerald:
-    'amanah-card-emerald border-emerald-500/75 dark:border-emerald-400/50 hover:border-emerald-600 dark:hover:border-emerald-300/85',
+    'amanah-card-emerald border-emerald-500/35 dark:border-emerald-400/28 hover:border-emerald-600/60 dark:hover:border-emerald-300/50',
   'deep-emerald':
-    'amanah-card-emerald border-emerald-500/85 dark:border-emerald-400/55 hover:border-emerald-600 dark:hover:border-emerald-300/90',
+    'amanah-card-emerald border-emerald-500/42 dark:border-emerald-400/32 hover:border-emerald-600/65 dark:hover:border-emerald-300/55',
   teal:
-    'amanah-card-teal border-teal-500/75 dark:border-teal-400/50 hover:border-teal-600 dark:hover:border-teal-300/85',
+    'amanah-card-teal border-teal-500/35 dark:border-teal-400/28 hover:border-teal-600/60 dark:hover:border-teal-300/50',
   violet:
-    'amanah-card-violet border-violet-500/75 dark:border-violet-400/50 hover:border-violet-600 dark:hover:border-violet-300/85',
+    'amanah-card-violet border-violet-500/35 dark:border-violet-400/28 hover:border-violet-600/60 dark:hover:border-violet-300/50',
   amber:
-    'amanah-card-amber border-amber-500/75 dark:border-amber-400/50 hover:border-amber-600 dark:hover:border-amber-300/85',
+    'amanah-card-amber border-amber-500/35 dark:border-amber-400/28 hover:border-amber-600/60 dark:hover:border-amber-300/50',
   sky:
-    'amanah-card-sky border-sky-500/75 dark:border-sky-400/50 hover:border-sky-600 dark:hover:border-sky-300/85',
+    'amanah-card-sky border-sky-500/35 dark:border-sky-400/28 hover:border-sky-600/60 dark:hover:border-sky-300/50',
   rose:
-    'amanah-card-rose border-rose-500/75 dark:border-rose-400/50 hover:border-rose-600 dark:hover:border-rose-300/85',
+    'amanah-card-rose border-rose-500/35 dark:border-rose-400/28 hover:border-rose-600/60 dark:hover:border-rose-300/50',
 };
 
 const DEPTH_VARIANTS = {

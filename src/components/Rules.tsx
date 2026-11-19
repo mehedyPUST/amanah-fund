@@ -570,7 +570,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       />
                     </button>
                   </div>
-                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
                     {rule.summary}
                   </p>
                   <AnimatePresence initial={false}>
@@ -591,7 +591,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                               className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400"
                               aria-hidden="true"
                             />
-                            <span className="text-justify">{pt}</span>
+                            <span>{pt}</span>
                           </li>
                         ))}
                       </motion.ul>

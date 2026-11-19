@@ -162,7 +162,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'amanah-card-violet backdrop-blur-md border rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs p-6 sm:p-7'
           : ''
       }`}
     >
@@ -242,14 +242,6 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     : stepHue === 'amber'
                       ? 'bg-amber-500/18 dark:bg-amber-400/20 border border-amber-400/70 dark:border-amber-400/40 text-amber-700 dark:text-amber-300'
                       : 'bg-emerald-500/18 dark:bg-emerald-400/20 border border-emerald-400/70 dark:border-emerald-400/40 text-emerald-700 dark:text-emerald-300';
-              const stepNumberClass =
-                stepHue === 'violet'
-                  ? 'bg-violet-500/15 dark:bg-violet-400/20 border border-violet-400/60 text-violet-800 dark:text-violet-200'
-                  : stepHue === 'teal'
-                    ? 'bg-teal-500/15 dark:bg-teal-400/20 border border-teal-400/60 text-teal-800 dark:text-teal-200'
-                    : stepHue === 'amber'
-                      ? 'bg-amber-500/15 dark:bg-amber-400/20 border border-amber-400/60 text-amber-800 dark:text-amber-200'
-                      : 'bg-emerald-500/15 dark:bg-emerald-400/20 border border-emerald-400/60 text-emerald-800 dark:text-emerald-200';
               return (
                 <MotionCard
                   key={step.number}
@@ -262,16 +254,14 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBoxClass}`}>
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </div>
-                      <span
-                        className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full ${stepNumberClass}`}
-                      >
+                      <span className="font-mono text-xs font-semibold text-slate-400 dark:text-slate-500">
                         {step.number}
                       </span>
                     </div>
                     <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       {step.summary}
                     </p>
                   </div>

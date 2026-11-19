@@ -32,7 +32,6 @@ export function Hero({
     value: string;
     sublabel: string;
     hue: CardHue;
-    badgeClass: string;
   }> = [
     {
       key: 'ceiling',
@@ -41,8 +40,6 @@ export function Hero({
       value: tHero('terms.ceilingValue'),
       sublabel: tHero('terms.ceilingSub'),
       hue: 'emerald',
-      badgeClass:
-        'bg-emerald-500/15 dark:bg-emerald-400/20 border border-emerald-400/70 dark:border-emerald-400/40 text-emerald-800 dark:text-emerald-200',
     },
     {
       key: 'contrib',
@@ -51,8 +48,6 @@ export function Hero({
       value: tHero('terms.contribValue'),
       sublabel: tHero('terms.contribSub'),
       hue: 'violet',
-      badgeClass:
-        'bg-violet-500/15 dark:bg-violet-400/20 border border-violet-400/70 dark:border-violet-400/40 text-violet-800 dark:text-violet-200',
     },
     {
       key: 'quorum',
@@ -61,8 +56,6 @@ export function Hero({
       value: tHero('terms.quorumValue'),
       sublabel: tHero('terms.quorumSub'),
       hue: 'teal',
-      badgeClass:
-        'bg-teal-500/15 dark:bg-teal-400/20 border border-teal-400/70 dark:border-teal-400/40 text-teal-800 dark:text-teal-200',
     },
     {
       key: 'term',
@@ -71,8 +64,6 @@ export function Hero({
       value: tHero('terms.termValue'),
       sublabel: tHero('terms.termSub'),
       hue: 'amber',
-      badgeClass:
-        'bg-amber-500/15 dark:bg-amber-400/20 border border-amber-400/70 dark:border-amber-400/40 text-amber-800 dark:text-amber-200',
     },
   ];
 
@@ -105,7 +96,7 @@ export function Hero({
                 {tHero('headline')}
               </h1>
 
-              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl text-justify">
+              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
                 {tHero('subheadline')}
               </p>
             </div>
@@ -167,7 +158,7 @@ export function Hero({
           </div>
 
           <div className="lg:col-span-5 flex">
-            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-xl overflow-hidden border-2 border-emerald-300/75 dark:border-emerald-700/60 bg-slate-100 dark:bg-slate-950 shadow-sm shadow-emerald-500/10">
+            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-xl overflow-hidden border border-slate-200/85 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950 shadow-sm">
               {heroImgFailed ? (
                 <div className="w-full h-full p-8 bg-gradient-to-br from-emerald-950/15 via-slate-100 to-teal-950/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-center gap-3">
                   <AmanahLogo size="lg" decorative className="shadow-md" />
@@ -212,9 +203,7 @@ export function Hero({
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
                 {metric.kicker}
               </span>
-              <span
-                className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${metric.badgeClass}`}
-              >
+              <span className="font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
                 {metric.meta}
               </span>
             </div>
@@ -222,7 +211,7 @@ export function Hero({
               <div className="font-display font-mono text-2xl font-bold tracking-tight tabular-nums text-slate-900 dark:text-white">
                 {metric.value}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {metric.sublabel}
               </p>
             </div>
@@ -293,25 +282,25 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-teal-200/75 dark:border-teal-800/50">
             <div className="space-y-2">
-              <div className="inline-flex font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/50">
+              <div className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 {tLife('stage1Index')}
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {tLife('stage1Title')}
               </h3>
-              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 {tLife('stage1Body')}
               </p>
             </div>
 
             <div className="space-y-2 sm:border-l sm:border-teal-200/75 sm:dark:border-teal-800/50 sm:pl-6">
-              <div className="inline-flex font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-400/50">
+              <div className="font-mono text-xs font-semibold text-violet-700 dark:text-violet-400">
                 {tLife('stage2Index')}
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {tLife('stage2Title')}
               </h3>
-              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 {tLife('stage2Body')}
               </p>
             </div>

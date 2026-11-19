@@ -238,7 +238,7 @@ export function MyAmanahView({
 
       {/* Qard Hasan Personal Summary & Eligibility */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
+        <section className="xl:col-span-7 bg-white/92 dark:bg-slate-900/85 border border-slate-200/85 dark:border-slate-800/85 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -255,8 +255,8 @@ export function MyAmanahView({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
-            <div className="amanah-card-emerald p-3 sm:p-4 rounded-xl border">
+          <div className="grid grid-cols-2 gap-px bg-slate-200/75 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div className="bg-white/95 dark:bg-slate-900/90 p-3 sm:p-4">
               <div className="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                 {personal.activeLoanMainAmount > 0
                   ? t('activeLoanMainDue')
@@ -301,7 +301,7 @@ export function MyAmanahView({
               </div>
             </div>
 
-            <div className="amanah-card-violet p-3 sm:p-4 rounded-xl border">
+            <div className="bg-white/95 dark:bg-slate-900/90 p-3 sm:p-4">
               <div className="text-[11px] sm:text-xs text-violet-700 dark:text-violet-400 font-medium">
                 {t('lastHasanInstallment')}
               </div>
@@ -317,11 +317,7 @@ export function MyAmanahView({
               </div>
             </div>
 
-            <div
-              className={`p-3 sm:p-4 rounded-xl border ${
-                personal.missedInstallmentsCount > 0 ? 'amanah-card-rose' : 'amanah-card-emerald'
-              }`}
-            >
+            <div className="bg-white/95 dark:bg-slate-900/90 p-3 sm:p-4">
               <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium">
                 {t('missedInstallment')}
               </div>
@@ -346,7 +342,7 @@ export function MyAmanahView({
               </div>
             </div>
 
-            <div className="amanah-card-amber p-3 sm:p-4 rounded-xl border">
+            <div className="bg-white/95 dark:bg-slate-900/90 p-3 sm:p-4">
               <div className="text-[11px] sm:text-xs text-amber-700 dark:text-amber-400 font-medium">
                 {t('nextLoanDeadline')}
               </div>
@@ -361,7 +357,7 @@ export function MyAmanahView({
         </section>
 
         {/* Qard Hasan Eligibility Card */}
-        <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-5 shadow-xs">
+        <section className="xl:col-span-5 bg-white/92 dark:bg-slate-900/85 border border-slate-200/85 dark:border-slate-800/85 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-5 shadow-xs">
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -373,12 +369,12 @@ export function MyAmanahView({
                 </p>
               </div>
               {isEligible ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('eligibleBadge')}</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-700 dark:text-rose-400 shrink-0">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 shrink-0">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('notEligibleBadge')}</span>
                 </span>

@@ -284,7 +284,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       aria-labelledby="faq-section-heading"
       className={`scroll-mt-4 w-full space-y-6 sm:space-y-7 text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'amanah-card-teal backdrop-blur-md border rounded-2xl shadow-xs p-6 sm:p-8'
+          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs p-6 sm:p-8'
           : ''
       }`}
     >
@@ -675,7 +675,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                       className="overflow-hidden"
                     >
                       <div className="px-5 pb-5 pt-3 border-t border-slate-200/70 dark:border-slate-800/80">
-                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-justify">
+                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                           {item.answer}
                         </p>
                       </div>
