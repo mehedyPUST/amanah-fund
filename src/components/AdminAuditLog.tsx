@@ -34,6 +34,7 @@ import { translateRoleLabel } from '../i18n/messages.ts';
 import type { AuditLogEntry, PublicUser, UserRole } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, shortHash } from '../utils/format.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 import { MotionCard } from './MotionCard.tsx';
 
 type AuditCategoryFilter =
@@ -447,11 +448,10 @@ export function AdminAuditLog({
     };
   }, [initialLogs, fetchAuditLogs]);
 
-  // Direct real-time SSE feed for critical site activity
+  // Shared real-time feed for critical site activity (gracefully falls back on serverless)
   useEffect(() => {
     if (!canViewAuditLogs) return;
 
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const scheduleSilentSync = () => {
       if (streamPausedRef.current) {
         setQueuedLiveEvents((n) => n + 1);
@@ -463,16 +463,6 @@ export function AdminAuditLog({
       syncTimerRef.current = window.setTimeout(() => {
         void fetchAuditLogs(true);
       }, 160);
-    };
-
-    es.addEventListener('connected', () => {
-      setStreamStatus('live');
-    });
-    es.onopen = () => {
-      setStreamStatus('live');
-    };
-    es.onerror = () => {
-      setStreamStatus('reconnecting');
     };
 
     const liveEvents = [
@@ -492,15 +482,26 @@ export function AdminAuditLog({
       'sheet:synced',
       'community:updated',
     ];
-    liveEvents.forEach((evtName) => {
-      es.addEventListener(evtName, scheduleSilentSync);
+    const handlers: Record<string, () => void> = {};
+    for (const evtName of liveEvents) {
+      handlers[evtName] = scheduleSilentSync;
+    }
+
+    const unsubscribe = subscribeRealtimeEvents(handlers, (status) => {
+      setStreamStatus(status === 'disabled' ? 'live' : status);
     });
+
+    const pollTimer = window.setInterval(() => {
+      if (document.hidden || streamPausedRef.current) return;
+      void fetchAuditLogs(true);
+    }, 60_000);
 
     return () => {
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
       }
-      es.close();
+      window.clearInterval(pollTimer);
+      unsubscribe();
     };
   }, [canViewAuditLogs, fetchAuditLogs]);
 

@@ -97,6 +97,10 @@ import {
 import {
   getStorageDiagnostic,
   getStorageEngine,
+  loadFaqsOnly,
+  loadFundConfigOnly,
+  loadNoticesOnly,
+  loadUserBootstrapSummary,
   loadVaultState,
   type StoredPrivateMessage,
   type StoredUser,
@@ -853,8 +857,10 @@ apiRouter.post('/upload/imgbb', uploadRateLimiter, handleFileUpload);
 
 apiRouter.get('/constitution', async (_req, res) => {
   try {
-    const state = await loadVaultState();
-    const cfg = state.fundConfig;
+    const cfg = await loadFundConfigOnly();
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    res.removeHeader('Pragma');
+    res.removeHeader('Expires');
     res.json({
       constitutionPdfUrl: cfg.constitutionPdfUrl || null,
       constitutionPdfName: cfg.constitutionPdfName || null,
@@ -870,11 +876,14 @@ apiRouter.get('/constitution', async (_req, res) => {
 
 apiRouter.get('/auth/bootstrap-status', async (_req, res) => {
   try {
-    const state = await loadVaultState();
+    const summary = await loadUserBootstrapSummary();
     const diag = getStorageDiagnostic();
+    res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=120');
+    res.removeHeader('Pragma');
+    res.removeHeader('Expires');
     res.json({
-      hasMembers: state.users.length > 0,
-      activeMembersCount: state.users.filter((u) => u.status === 'active').length,
+      hasMembers: summary.hasMembers,
+      activeMembersCount: summary.activeMembersCount,
       storageEngine: diag.storageEngine,
       storageReason: diag.storageReason,
       ...(diag.connectionErrorCode ? { connectionErrorCode: diag.connectionErrorCode } : {}),
@@ -887,13 +896,13 @@ apiRouter.get('/auth/bootstrap-status', async (_req, res) => {
 
 apiRouter.get('/auth/references', async (_req, res) => {
   try {
-    const state = await loadVaultState();
-    const activeMembers = state.users
-      .filter((u) => u.status === 'active')
-      .map((u) => ({ name: u.name, memberCode: u.memberCode }));
+    const summary = await loadUserBootstrapSummary();
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    res.removeHeader('Pragma');
+    res.removeHeader('Expires');
     res.json({
-      members: activeMembers,
-      hasMembers: state.users.length > 0,
+      members: summary.activeReferences,
+      hasMembers: summary.hasMembers,
     });
   } catch (err) {
     console.error('Reference list error:', err);
@@ -9782,8 +9791,8 @@ const VALID_NOTICE_PRIORITIES: ReadonlySet<NoticePriority> = new Set([
 
 apiRouter.get('/notices', requireAuth, async (_req: AuthenticatedRequest, res) => {
   try {
-    const state = await loadVaultState();
-    const notices = [...(state.notices || [])].sort((a, b) => {
+    const rawNotices = await loadNoticesOnly();
+    const notices = [...rawNotices].sort((a, b) => {
       const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
       if (pinDiff !== 0) return pinDiff;
       return b.createdAt.localeCompare(a.createdAt);
@@ -10005,8 +10014,10 @@ const VALID_FAQ_CATEGORIES = new Set<FaqCategory>([
 
 apiRouter.get('/faqs', async (_req, res) => {
   try {
-    const state = await loadVaultState();
-    const faqs = sortFaqItems(Array.isArray(state.faqs) ? state.faqs : []);
+    const faqs = await loadFaqsOnly();
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    res.removeHeader('Pragma');
+    res.removeHeader('Expires');
     res.json({ faqs });
   } catch (err) {
     console.error('Fetch FAQs error:', err);

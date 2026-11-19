@@ -73,6 +73,7 @@ import {
 } from '../utils/communityLinks.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import {
@@ -500,7 +501,6 @@ export function CommunityView({
   }, [loadPosts, loadThreads, loadConversation]);
 
   useEffect(() => {
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleCommunity = () => {
       void loadPosts(true);
     };
@@ -546,20 +546,22 @@ export function CommunityView({
       }
     };
 
-    es.addEventListener('community:updated', handleCommunity);
-    es.addEventListener('members:updated', handleCommunity);
-    es.addEventListener('dm:received', handleDm);
-    es.addEventListener('dm:read', handleDm);
-    es.addEventListener('dm:deleted', handleDm);
-    es.addEventListener('dm:edited', handleDm);
-    es.addEventListener('dm:reacted', handleDm);
-    es.addEventListener('dm:typing', handleTyping);
+    const unsubscribe = subscribeRealtimeEvents({
+      'community:updated': handleCommunity,
+      'members:updated': handleCommunity,
+      'dm:received': handleDm,
+      'dm:read': handleDm,
+      'dm:deleted': handleDm,
+      'dm:edited': handleDm,
+      'dm:reacted': handleDm,
+      'dm:typing': handleTyping,
+    });
 
     return () => {
       if (typingClearTimerRef.current) {
         window.clearTimeout(typingClearTimerRef.current);
       }
-      es.close();
+      unsubscribe();
     };
   }, [loadPosts, loadThreads, loadConversation]);
 

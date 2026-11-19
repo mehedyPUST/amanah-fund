@@ -106,21 +106,11 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
     window.addEventListener('amanah:faq-updated', handleLocalRefresh);
     window.addEventListener('amanah:refresh', handleLocalRefresh);
 
-    let source: EventSource | null = null;
-    if (isActiveMember) {
-      source = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
-      source.addEventListener('faq:updated', handleLocalRefresh);
-    }
-
     return () => {
       window.removeEventListener('amanah:faq-updated', handleLocalRefresh);
       window.removeEventListener('amanah:refresh', handleLocalRefresh);
-      if (source) {
-        source.removeEventListener('faq:updated', handleLocalRefresh);
-        source.close();
-      }
     };
-  }, [isActiveMember, queryClient]);
+  }, [queryClient]);
 
   const faqNumberMap = useMemo(() => {
     const map = new Map<string, string>();

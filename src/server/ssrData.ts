@@ -31,6 +31,10 @@ import {
 import { decryptSensitiveObject } from './crypto.ts';
 import {
   getStorageDiagnostic,
+  loadFaqsOnly,
+  loadFundConfigOnly,
+  loadNoticesOnly,
+  loadUserBootstrapSummary,
   loadVaultState,
   type StorageEngine,
   type StorageReason,
@@ -261,17 +265,38 @@ export function buildDashboardBundleFromState(
 export async function prefetchHomePageState(): Promise<DehydratedState> {
   const queryClient = makeQueryClient();
   try {
-    const [state, user] = await Promise.all([loadVaultState(), getServerSessionUser()]);
+    const [faqs, fundConfig, user] = await Promise.all([
+      loadFaqsOnly(),
+      loadFundConfigOnly(),
+      getServerSessionUser(),
+    ]);
+    const constitution: ConstitutionDocumentInfo = {
+      constitutionPdfUrl: fundConfig.constitutionPdfUrl || null,
+      constitutionPdfName: fundConfig.constitutionPdfName || null,
+      constitutionUploadedAt: fundConfig.constitutionUploadedAt || null,
+      constitutionUploadedBy: fundConfig.constitutionUploadedBy || null,
+      fundName: fundConfig.fundName,
+    };
+
+    const notices =
+      user && user.status === 'active'
+        ? [...(await loadNoticesOnly())].sort((a, b) => {
+            const pinDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+            if (pinDiff !== 0) return pinDiff;
+            return b.createdAt.localeCompare(a.createdAt);
+          })
+        : null;
+
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.public.faqs(),
-        queryFn: async () => buildFaqsFromState(state),
+        queryFn: async () => ({ faqs }),
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.public.constitution(),
-        queryFn: async () => buildConstitutionFromState(state),
+        queryFn: async () => constitution,
       }),
-      ...(user && user.status === 'active'
+      ...(user && user.status === 'active' && notices
         ? [
             queryClient.prefetchQuery({
               queryKey: queryKeys.auth.me(),
@@ -279,7 +304,7 @@ export async function prefetchHomePageState(): Promise<DehydratedState> {
             }),
             queryClient.prefetchQuery({
               queryKey: queryKeys.public.notices(),
-              queryFn: async () => buildNoticesFromState(state),
+              queryFn: async () => ({ notices }),
             }),
           ]
         : []),
@@ -293,15 +318,22 @@ export async function prefetchHomePageState(): Promise<DehydratedState> {
 export async function prefetchRulesPageState(): Promise<DehydratedState> {
   const queryClient = makeQueryClient();
   try {
-    const state = await loadVaultState();
+    const [fundConfig, faqs] = await Promise.all([loadFundConfigOnly(), loadFaqsOnly()]);
+    const constitution: ConstitutionDocumentInfo = {
+      constitutionPdfUrl: fundConfig.constitutionPdfUrl || null,
+      constitutionPdfName: fundConfig.constitutionPdfName || null,
+      constitutionUploadedAt: fundConfig.constitutionUploadedAt || null,
+      constitutionUploadedBy: fundConfig.constitutionUploadedBy || null,
+      fundName: fundConfig.fundName,
+    };
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.public.constitution(),
-        queryFn: async () => buildConstitutionFromState(state),
+        queryFn: async () => constitution,
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.public.faqs(),
-        queryFn: async () => buildFaqsFromState(state),
+        queryFn: async () => ({ faqs }),
       }),
     ]);
   } catch (err) {
@@ -313,19 +345,39 @@ export async function prefetchRulesPageState(): Promise<DehydratedState> {
 export async function prefetchSignUpPageState(): Promise<DehydratedState> {
   const queryClient = makeQueryClient();
   try {
-    const state = await loadVaultState();
+    const [summary, fundConfig] = await Promise.all([
+      loadUserBootstrapSummary(),
+      loadFundConfigOnly(),
+    ]);
+    const diag = getStorageDiagnostic();
+    const constitution: ConstitutionDocumentInfo = {
+      constitutionPdfUrl: fundConfig.constitutionPdfUrl || null,
+      constitutionPdfName: fundConfig.constitutionPdfName || null,
+      constitutionUploadedAt: fundConfig.constitutionUploadedAt || null,
+      constitutionUploadedBy: fundConfig.constitutionUploadedBy || null,
+      fundName: fundConfig.fundName,
+    };
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.auth.references(),
-        queryFn: async () => buildReferencesFromState(state),
+        queryFn: async () => ({
+          members: summary.activeReferences,
+          hasMembers: summary.hasMembers,
+        }),
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.auth.bootstrapStatus(),
-        queryFn: async () => buildBootstrapStatusFromState(state),
+        queryFn: async () => ({
+          hasMembers: summary.hasMembers,
+          activeMembersCount: summary.activeMembersCount,
+          storageEngine: diag.storageEngine,
+          storageReason: diag.storageReason,
+          ...(diag.connectionErrorCode ? { connectionErrorCode: diag.connectionErrorCode } : {}),
+        }),
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.public.constitution(),
-        queryFn: async () => buildConstitutionFromState(state),
+        queryFn: async () => constitution,
       }),
     ]);
   } catch (err) {
@@ -337,10 +389,17 @@ export async function prefetchSignUpPageState(): Promise<DehydratedState> {
 export async function prefetchLoginPageState(): Promise<DehydratedState> {
   const queryClient = makeQueryClient();
   try {
-    const state = await loadVaultState();
+    const summary = await loadUserBootstrapSummary();
+    const diag = getStorageDiagnostic();
     await queryClient.prefetchQuery({
       queryKey: queryKeys.auth.bootstrapStatus(),
-      queryFn: async () => buildBootstrapStatusFromState(state),
+      queryFn: async () => ({
+        hasMembers: summary.hasMembers,
+        activeMembersCount: summary.activeMembersCount,
+        storageEngine: diag.storageEngine,
+        storageReason: diag.storageReason,
+        ...(diag.connectionErrorCode ? { connectionErrorCode: diag.connectionErrorCode } : {}),
+      }),
     });
   } catch (err) {
     console.warn('[SSR] Login page prefetch skipped:', err);

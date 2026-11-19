@@ -20,6 +20,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { AuditLogEntry } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, shortHash } from '../utils/format.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 
 type MemberAuditFilter = 'all' | 'contributions' | 'loans' | 'repayments' | 'members';
 
@@ -216,7 +217,6 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
   useEffect(() => {
     void loadLogs(false);
 
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const scheduleSync = () => {
       if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
       syncTimerRef.current = window.setTimeout(() => {
@@ -224,22 +224,22 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       }, 180);
     };
 
-    [
-      'audit:updated',
-      'contribution:submitted',
-      'contribution:reviewed',
-      'loan:created',
-      'loan:reviewed',
-      'repayment:submitted',
-      'repayment:verified',
-      'profile:update_requested',
-      'profile:update_reviewed',
-      'members:updated',
-    ].forEach((evt) => es.addEventListener(evt, scheduleSync));
+    const unsubscribe = subscribeRealtimeEvents({
+      'audit:updated': scheduleSync,
+      'contribution:submitted': scheduleSync,
+      'contribution:reviewed': scheduleSync,
+      'loan:created': scheduleSync,
+      'loan:reviewed': scheduleSync,
+      'repayment:submitted': scheduleSync,
+      'repayment:verified': scheduleSync,
+      'profile:update_requested': scheduleSync,
+      'profile:update_reviewed': scheduleSync,
+      'members:updated': scheduleSync,
+    });
 
     return () => {
       if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
-      es.close();
+      unsubscribe();
     };
   }, [loadLogs]);
 

@@ -112,6 +112,24 @@ vi.mock('../src/server/db.ts', () => ({
     connectionErrorCode: null,
   }),
   loadVaultState: async () => structuredClone(mockState),
+  findActiveUserByIds: async (ids: string[]) => {
+    for (const id of ids) {
+      const found = mockState.users.find((u) => u.id === id && u.status === 'active');
+      if (found) return structuredClone(found);
+    }
+    return null;
+  },
+  loadFundConfigOnly: async () => structuredClone(mockState.fundConfig),
+  loadFaqsOnly: async () => structuredClone(mockState.faqs || []),
+  loadNoticesOnly: async () => structuredClone(mockState.notices || []),
+  loadUserBootstrapSummary: async () => {
+    const active = mockState.users.filter((u) => u.status === 'active');
+    return {
+      hasMembers: mockState.users.length > 0,
+      activeMembersCount: active.length,
+      activeReferences: active.map((u) => ({ name: u.name, memberCode: u.memberCode })),
+    };
+  },
   updateVaultState: async (mutator: (state: VaultState) => VaultState | Promise<VaultState>) => {
     const next = await mutator(structuredClone(mockState));
     mockState = next;

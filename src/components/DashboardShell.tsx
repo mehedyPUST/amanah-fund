@@ -83,6 +83,7 @@ import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { getDashboardSectionLabel } from '../utils/navigation.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 
 const EMPTY_CONTRIBUTIONS: Contribution[] = [];
 const EMPTY_LOANS: LoanRequest[] = [];
@@ -310,55 +311,90 @@ export function DashboardShell() {
     queryKey: queryKeys.dashboard.overview(),
     queryFn: () => api.getDashboard(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
+    refetchIntervalInBackground: false,
   });
   const contributionsQuery = useQuery({
     queryKey: queryKeys.dashboard.contributions(),
     queryFn: () => api.getContributions(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'monthly-contribution' ||
+      activeSection === 'my-amanah' ||
+      activeSection === 'manager-desk' ||
+      activeSection === 'transaction-history' ||
+      activeSection === 'fund-overview'
+        ? 120_000
+        : false,
+    refetchIntervalInBackground: false,
   });
   const loansQuery = useQuery({
     queryKey: queryKeys.dashboard.loans(),
     queryFn: () => api.getLoans(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'quard-hasan' ||
+      activeSection === 'ballot' ||
+      activeSection === 'manager-desk' ||
+      activeSection === 'my-amanah' ||
+      activeSection === 'fund-overview'
+        ? 120_000
+        : false,
+    refetchIntervalInBackground: false,
   });
   const halalProjectsQuery = useQuery({
     queryKey: queryKeys.dashboard.halalProjects(),
     queryFn: () => api.getHalalProjects(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'ballot' ||
+      activeSection === 'manager-desk' ||
+      activeSection === 'fund-overview'
+        ? 180_000
+        : false,
+    refetchIntervalInBackground: false,
   });
   const notificationsQuery = useQuery({
     queryKey: queryKeys.dashboard.notifications(),
     queryFn: () => api.getNotifications(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval: activeSection === 'notification' ? 60_000 : 180_000,
+    refetchIntervalInBackground: false,
   });
   const privateThreadsQuery = useQuery({
     queryKey: queryKeys.dashboard.privateThreads(),
     queryFn: () => api.getPrivateThreads(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval: activeSection === 'community' ? 45_000 : 180_000,
+    refetchIntervalInBackground: false,
   });
   const pollsQuery = useQuery({
     queryKey: queryKeys.dashboard.polls(),
     queryFn: () => api.getPolls(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'ballot' || activeSection === 'manager-desk' ? 120_000 : false,
+    refetchIntervalInBackground: false,
   });
   const meetingsQuery = useQuery({
     queryKey: queryKeys.dashboard.meetings(),
     queryFn: () => api.getMeetings(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'manager-desk' || activeSection === 'notification' ? 180_000 : false,
+    refetchIntervalInBackground: false,
   });
   const profileChangeRequestsQuery = useQuery({
     queryKey: queryKeys.dashboard.profileChangeRequests(),
     queryFn: () => api.getProfileChangeRequests(),
     enabled: workspaceEnabled,
-    refetchInterval: 30_000,
+    refetchInterval:
+      activeSection === 'my-profile' ||
+      activeSection === 'manager-desk' ||
+      activeSection === 'member-registry'
+        ? 180_000
+        : false,
+    refetchIntervalInBackground: false,
   });
 
   const overview = overviewQuery.data ?? null;
@@ -450,7 +486,6 @@ export function DashboardShell() {
   useEffect(() => {
     if (!activeUserId) return;
 
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const invalidateDashboardKeys = (keys: ReadonlyArray<readonly unknown[]>) => {
       for (const queryKey of keys) {
         void queryClient.invalidateQueries({ queryKey });
@@ -535,41 +570,39 @@ export function DashboardShell() {
       handleDmSync();
     };
 
-    es.addEventListener('investment:voted', handleInvestmentSync);
-    es.addEventListener('investment:created', handleInvestmentSync);
-    es.addEventListener('investment:distributed', handleInvestmentSync);
-    es.addEventListener('investment:revealed', handleInvestmentSync);
-    es.addEventListener('loan:created', handleLoanCreated);
-    es.addEventListener('loan:updated', handleLoanSync);
-    es.addEventListener('loan:reviewed', handleLoanSync);
-    es.addEventListener('loan:voted', handleLoanSync);
-    es.addEventListener('loan:vote_initiated', handleLoanSync);
-    es.addEventListener('loan:vote_revealed', handleLoanSync);
-    es.addEventListener('loan:guarantor', handleLoanSync);
-    es.addEventListener('poll:created', handlePollSync);
-    es.addEventListener('poll:voted', handlePollSync);
-    es.addEventListener('poll:revealed', handlePollSync);
-    es.addEventListener('meeting:scheduled', handleMeetingAlert);
-    es.addEventListener('meeting:updated', handleMeetingSync);
-    es.addEventListener('profile:update_requested', handleProfileRequestSync);
-    es.addEventListener('profile:update_reviewed', handleProfileRequestSync);
-    es.addEventListener('contribution:submitted', handleContributionSync);
-    es.addEventListener('contribution:reviewed', handleContributionSync);
-    es.addEventListener('repayment:submitted', handleLoanSync);
-    es.addEventListener('repayment:verified', handleLoanSync);
-    es.addEventListener('repayment:overdue', handleLoanSync);
-    es.addEventListener('config:updated', handleSyncAll);
-    es.addEventListener('notification:created', handleNotificationAlert);
-    es.addEventListener('email-queue:updated', handleSyncAll);
-    es.addEventListener('members:updated', handleSyncAll);
-    es.addEventListener('sheet:synced', handleSyncAll);
-    es.addEventListener('dm:received', handleDmAlert);
-    es.addEventListener('dm:read', handleDmSync);
-    es.addEventListener('dm:deleted', handleDmSync);
-
-    return () => {
-      es.close();
-    };
+    return subscribeRealtimeEvents({
+      'investment:voted': handleInvestmentSync,
+      'investment:created': handleInvestmentSync,
+      'investment:distributed': handleInvestmentSync,
+      'investment:revealed': handleInvestmentSync,
+      'loan:created': handleLoanCreated,
+      'loan:updated': handleLoanSync,
+      'loan:reviewed': handleLoanSync,
+      'loan:voted': handleLoanSync,
+      'loan:vote_initiated': handleLoanSync,
+      'loan:vote_revealed': handleLoanSync,
+      'loan:guarantor': handleLoanSync,
+      'poll:created': handlePollSync,
+      'poll:voted': handlePollSync,
+      'poll:revealed': handlePollSync,
+      'meeting:scheduled': handleMeetingAlert,
+      'meeting:updated': handleMeetingSync,
+      'profile:update_requested': handleProfileRequestSync,
+      'profile:update_reviewed': handleProfileRequestSync,
+      'contribution:submitted': handleContributionSync,
+      'contribution:reviewed': handleContributionSync,
+      'repayment:submitted': handleLoanSync,
+      'repayment:verified': handleLoanSync,
+      'repayment:overdue': handleLoanSync,
+      'config:updated': handleSyncAll,
+      'notification:created': handleNotificationAlert,
+      'email-queue:updated': handleSyncAll,
+      'members:updated': handleSyncAll,
+      'sheet:synced': handleSyncAll,
+      'dm:received': handleDmAlert,
+      'dm:read': handleDmSync,
+      'dm:deleted': handleDmSync,
+    });
   }, [activeUserId, queryClient]);
 
   const isAdmin = user?.role === 'admin';

@@ -131,6 +131,17 @@ export interface StorageDiagnostic {
   connectionErrorCode: string | null;
 }
 
+interface TimedCacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+export interface UserBootstrapSummary {
+  hasMembers: boolean;
+  activeMembersCount: number;
+  activeReferences: Array<{ name: string; memberCode: string }>;
+}
+
 interface AmanahDbRuntime {
   mongoClient: MongoClient | null;
   mongoDb: Db | null;
@@ -142,9 +153,20 @@ interface AmanahDbRuntime {
   initPromise: Promise<StorageEngine> | null;
   memoryState: VaultState | null;
   vaultWriteQueue: Promise<void>;
+  vaultCache: VaultState | null;
+  vaultCacheExpiresAt: number;
+  vaultLoadPromise: Promise<VaultState> | null;
+  userCache: Map<string, TimedCacheEntry<StoredUser | null>>;
+  fundConfigCache: TimedCacheEntry<FundConfig> | null;
+  faqsCache: TimedCacheEntry<FaqItem[]> | null;
+  noticesCache: TimedCacheEntry<CoopNotice[]> | null;
+  bootstrapSummaryCache: TimedCacheEntry<UserBootstrapSummary> | null;
 }
 
 const MONGO_RETRY_COOLDOWN_MS = 15_000;
+const VAULT_READ_CACHE_TTL_MS = 5_000;
+const PUBLIC_SLICE_CACHE_TTL_MS = 15_000;
+const SCHEMA_INIT_VERSION = 1;
 
 const globalForDb = globalThis as typeof globalThis & {
   __amanahDbRuntime?: AmanahDbRuntime;
@@ -163,7 +185,56 @@ const runtime: AmanahDbRuntime =
     initPromise: null,
     memoryState: null,
     vaultWriteQueue: Promise.resolve(),
+    vaultCache: null,
+    vaultCacheExpiresAt: 0,
+    vaultLoadPromise: null,
+    userCache: new Map(),
+    fundConfigCache: null,
+    faqsCache: null,
+    noticesCache: null,
+    bootstrapSummaryCache: null,
   });
+
+// Ensure fields exist if runtime survived hot reload from an older shape
+if (!runtime.userCache) runtime.userCache = new Map();
+
+function invalidateReadCaches(): void {
+  runtime.vaultCache = null;
+  runtime.vaultCacheExpiresAt = 0;
+  runtime.userCache.clear();
+  runtime.fundConfigCache = null;
+  runtime.faqsCache = null;
+  runtime.noticesCache = null;
+  runtime.bootstrapSummaryCache = null;
+}
+
+function hydrateReadCachesFromState(state: VaultState): void {
+  const now = Date.now();
+  runtime.vaultCache = structuredClone(state);
+  runtime.vaultCacheExpiresAt = now + VAULT_READ_CACHE_TTL_MS;
+  runtime.userCache.clear();
+  runtime.fundConfigCache = {
+    value: structuredClone(state.fundConfig),
+    expiresAt: now + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  runtime.faqsCache = {
+    value: sortFaqItems(Array.isArray(state.faqs) ? structuredClone(state.faqs) : []),
+    expiresAt: now + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  runtime.noticesCache = {
+    value: structuredClone(state.notices || []),
+    expiresAt: now + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  const activeUsers = state.users.filter((u) => u.status === 'active');
+  runtime.bootstrapSummaryCache = {
+    value: {
+      hasMembers: state.users.length > 0,
+      activeMembersCount: activeUsers.length,
+      activeReferences: activeUsers.map((u) => ({ name: u.name, memberCode: u.memberCode })),
+    },
+    expiresAt: now + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+}
 
 export function parseMongoUri(rawUri: string | undefined): {
   uri: string | null;
@@ -446,9 +517,11 @@ export async function initDatabase(): Promise<StorageEngine> {
         runtime.storageReason = 'connected';
         runtime.connectionErrorCode = null;
 
-        const existingConfig = await db.collection<FundConfig>('fundConfig').findOne({
-          id: 'default-config',
-        });
+        const existingConfig = await db
+          .collection<FundConfig & { schemaInitVersion?: number }>('fundConfig')
+          .findOne({
+            id: 'default-config',
+          });
         if (!existingConfig) {
           const empty = createEmptyVaultState();
           await db.collection('fundConfig').insertOne(empty.fundConfig);
@@ -468,87 +541,93 @@ export async function initDatabase(): Promise<StorageEngine> {
             .updateOne({ id: 'default-config' }, { $set: { faqsSeeded: true } });
         }
 
-      // One-time migration: remove historical demo seed accounts & related rows.
-      // Real production members are never matched by these exact seed identifiers.
-      const DEMO_EMAILS = [
-        'admin@amanahcoop.org',
-        'nadia@amanahcoop.org',
-        'imran@amanahcoop.org',
-        'fatima@amanahcoop.org',
-        'yusuf@amanahcoop.org',
-        'ayesha@amanahcoop.org',
-        'bilal@amanahcoop.org',
-      ];
-      const DEMO_USER_IDS = [
-        'usr-admin-1',
-        'usr-mgr-1',
-        'usr-mem-1',
-        'usr-mem-2',
-        'usr-mem-3',
-        'usr-mem-4',
-        'usr-pending-1',
-      ];
-        await Promise.allSettled([
-          db.collection('users').deleteMany({
-            $or: [
-              { email: { $in: DEMO_EMAILS } },
-              { id: { $in: DEMO_USER_IDS } },
-            ],
-          }),
-          db.collection('contributions').deleteMany({
-            userId: { $in: DEMO_USER_IDS },
-          }),
-          db.collection('loans').deleteMany({
-            borrowerId: { $in: DEMO_USER_IDS },
-          }),
-          db.collection('emailNotifications').deleteMany({
-            $or: [
-              { recipientEmail: { $in: DEMO_EMAILS } },
-              { recipientUserId: { $in: DEMO_USER_IDS } },
-            ],
-          }),
-          db.collection('auditLogs').deleteMany({
-            actorId: { $in: DEMO_USER_IDS },
-          }),
-          db.collection('halalProjects').deleteMany({
-            id: { $in: ['halal-proj-1', 'halal-proj-2', 'halal-proj-3'] },
-          }),
-        ]);
-        // No demo users or sample content are inserted. First signup becomes admin.
-        await Promise.allSettled([
-          db.collection('users').createIndex({ id: 1 }, { unique: true }),
-          db.collection('users').createIndex({ email: 1 }),
-          db.collection('contributions').createIndex({ id: 1 }, { unique: true }),
-          db.collection('contributions').createIndex({ userId: 1, billingMonth: 1 }),
-          db.collection('loans').createIndex({ id: 1 }, { unique: true }),
-          db.collection('loans').createIndex({ borrowerId: 1, status: 1 }),
-          db.collection('halalProjects').createIndex({ id: 1 }, { unique: true }),
-          db.collection('emailNotifications').createIndex({ id: 1 }, { unique: true }),
-          db.collection('emailNotifications').createIndex({ recipientUserId: 1, createdAt: -1 }),
-          db.collection('auditLogs').createIndex({ id: 1 }, { unique: true }),
-          db.collection('auditLogs').createIndex({ timestamp: -1 }),
-          db.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
-          db.collection('communityPosts').createIndex({ createdAt: -1 }),
-          db.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
-          db.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
-          db.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
-          db.collection('decisionPolls').createIndex({ createdAt: -1 }),
-          db.collection('meetings').createIndex({ id: 1 }, { unique: true }),
-          db.collection('meetings').createIndex({ scheduledFor: 1 }),
-          db.collection('notices').createIndex({ id: 1 }, { unique: true }),
-          db.collection('notices').createIndex({ createdAt: -1 }),
-          db.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
-          db.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
-          db.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
-          db.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
-          db.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
-          db.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
-          db.collection('emailQueue').createIndex({ createdAt: -1 }),
-          db.collection('faqs').createIndex({ id: 1 }, { unique: true }),
-          db.collection('faqs').createIndex({ sortOrder: 1 }),
-          db.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
-          db.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
-        ]);
+        // Run one-time legacy demo cleanup & index creation only once per database
+        // rather than repeating 37 MongoDB round-trips on every serverless cold start.
+        if (existingConfig?.schemaInitVersion !== SCHEMA_INIT_VERSION) {
+          const DEMO_EMAILS = [
+            'admin@amanahcoop.org',
+            'nadia@amanahcoop.org',
+            'imran@amanahcoop.org',
+            'fatima@amanahcoop.org',
+            'yusuf@amanahcoop.org',
+            'ayesha@amanahcoop.org',
+            'bilal@amanahcoop.org',
+          ];
+          const DEMO_USER_IDS = [
+            'usr-admin-1',
+            'usr-mgr-1',
+            'usr-mem-1',
+            'usr-mem-2',
+            'usr-mem-3',
+            'usr-mem-4',
+            'usr-pending-1',
+          ];
+          await Promise.allSettled([
+            db.collection('users').deleteMany({
+              $or: [
+                { email: { $in: DEMO_EMAILS } },
+                { id: { $in: DEMO_USER_IDS } },
+              ],
+            }),
+            db.collection('contributions').deleteMany({
+              userId: { $in: DEMO_USER_IDS },
+            }),
+            db.collection('loans').deleteMany({
+              borrowerId: { $in: DEMO_USER_IDS },
+            }),
+            db.collection('emailNotifications').deleteMany({
+              $or: [
+                { recipientEmail: { $in: DEMO_EMAILS } },
+                { recipientUserId: { $in: DEMO_USER_IDS } },
+              ],
+            }),
+            db.collection('auditLogs').deleteMany({
+              actorId: { $in: DEMO_USER_IDS },
+            }),
+            db.collection('halalProjects').deleteMany({
+              id: { $in: ['halal-proj-1', 'halal-proj-2', 'halal-proj-3'] },
+            }),
+          ]);
+          // No demo users or sample content are inserted. First signup becomes admin.
+          await Promise.allSettled([
+            db.collection('users').createIndex({ id: 1 }, { unique: true }),
+            db.collection('users').createIndex({ email: 1 }),
+            db.collection('contributions').createIndex({ id: 1 }, { unique: true }),
+            db.collection('contributions').createIndex({ userId: 1, billingMonth: 1 }),
+            db.collection('loans').createIndex({ id: 1 }, { unique: true }),
+            db.collection('loans').createIndex({ borrowerId: 1, status: 1 }),
+            db.collection('halalProjects').createIndex({ id: 1 }, { unique: true }),
+            db.collection('emailNotifications').createIndex({ id: 1 }, { unique: true }),
+            db.collection('emailNotifications').createIndex({ recipientUserId: 1, createdAt: -1 }),
+            db.collection('auditLogs').createIndex({ id: 1 }, { unique: true }),
+            db.collection('auditLogs').createIndex({ timestamp: -1 }),
+            db.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
+            db.collection('communityPosts').createIndex({ createdAt: -1 }),
+            db.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
+            db.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
+            db.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
+            db.collection('decisionPolls').createIndex({ createdAt: -1 }),
+            db.collection('meetings').createIndex({ id: 1 }, { unique: true }),
+            db.collection('meetings').createIndex({ scheduledFor: 1 }),
+            db.collection('notices').createIndex({ id: 1 }, { unique: true }),
+            db.collection('notices').createIndex({ createdAt: -1 }),
+            db.collection('profileChangeRequests').createIndex({ id: 1 }, { unique: true }),
+            db.collection('profileChangeRequests').createIndex({ requestedAt: -1 }),
+            db.collection('passwordResetRequests').createIndex({ id: 1 }, { unique: true }),
+            db.collection('passwordResetRequests').createIndex({ requestedAt: -1 }),
+            db.collection('emailQueue').createIndex({ id: 1 }, { unique: true }),
+            db.collection('emailQueue').createIndex({ status: 1, nextAttemptAt: 1 }),
+            db.collection('emailQueue').createIndex({ createdAt: -1 }),
+            db.collection('faqs').createIndex({ id: 1 }, { unique: true }),
+            db.collection('faqs').createIndex({ sortOrder: 1 }),
+            db.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
+            db.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
+          ]);
+          await db
+            .collection('fundConfig')
+            .updateOne({ id: 'default-config' }, { $set: { schemaInitVersion: SCHEMA_INIT_VERSION } })
+            .catch(() => undefined);
+        }
 
         runtime.initialized = true;
         return runtime.storageEngine;
@@ -600,69 +679,255 @@ export function getStorageDiagnostic(): StorageDiagnostic {
   };
 }
 
-export async function loadVaultState(): Promise<VaultState> {
+async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
+  const [
+    users,
+    configDoc,
+    contributions,
+    loans,
+    halalProjects,
+    emailNotifications,
+    auditLogs,
+    communityPosts,
+    privateMessages,
+    decisionPolls,
+    meetings,
+    notices,
+    profileChangeRequests,
+    passwordResetRequests,
+    emailQueue,
+    faqs,
+    usedActivationOtps,
+  ] = await Promise.all([
+    mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
+    mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
+    mongoDb.collection<Contribution>('contributions').find({}, { projection: { _id: 0 } }).sort({ submittedAt: -1 }).toArray(),
+    mongoDb.collection<LoanRequest>('loans').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+    mongoDb.collection<HalalProject>('halalProjects').find({}, { projection: { _id: 0 } }).toArray(),
+    mongoDb.collection<EmailNotification>('emailNotifications').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+    mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
+    mongoDb.collection<CommunityPost>('communityPosts').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+    mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
+    mongoDb.collection<DecisionPoll>('decisionPolls').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+    mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
+    mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+    mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+    mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
+    mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+    mongoDb.collection<FaqItem>('faqs').find({}, { projection: { _id: 0 } }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
+    mongoDb.collection<UsedActivationOtpRecord>('usedActivationOtps').find({}, { projection: { _id: 0 } }).toArray(),
+  ]);
+
+  return normalizeVaultState({
+    users,
+    fundConfig: configDoc || createEmptyVaultState().fundConfig,
+    contributions,
+    loans,
+    halalProjects,
+    emailNotifications,
+    auditLogs,
+    communityPosts,
+    privateMessages,
+    decisionPolls,
+    meetings,
+    notices,
+    profileChangeRequests,
+    passwordResetRequests,
+    emailQueue,
+    faqs,
+    usedActivationOtps,
+  });
+}
+
+export async function loadVaultState(options?: { bypassCache?: boolean }): Promise<VaultState> {
   await initDatabase();
   const mongoDb = runtime.mongoDb;
   if (mongoDb) {
-    const [
-      users,
-      configDoc,
-      contributions,
-      loans,
-      halalProjects,
-      emailNotifications,
-      auditLogs,
-      communityPosts,
-      privateMessages,
-      decisionPolls,
-      meetings,
-      notices,
-      profileChangeRequests,
-      passwordResetRequests,
-      emailQueue,
-      faqs,
-      usedActivationOtps,
-    ] = await Promise.all([
-      mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
-      mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
-      mongoDb.collection<Contribution>('contributions').find({}, { projection: { _id: 0 } }).sort({ submittedAt: -1 }).toArray(),
-      mongoDb.collection<LoanRequest>('loans').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
-      mongoDb.collection<HalalProject>('halalProjects').find({}, { projection: { _id: 0 } }).toArray(),
-      mongoDb.collection<EmailNotification>('emailNotifications').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-      mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
-      mongoDb.collection<CommunityPost>('communityPosts').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-      mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
-      mongoDb.collection<DecisionPoll>('decisionPolls').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-      mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
-      mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-      mongoDb.collection<ProfileChangeRequest>('profileChangeRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
-      mongoDb.collection<PasswordResetRequest>('passwordResetRequests').find({}, { projection: { _id: 0 } }).sort({ requestedAt: -1 }).toArray(),
-      mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-      mongoDb.collection<FaqItem>('faqs').find({}, { projection: { _id: 0 } }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
-      mongoDb.collection<UsedActivationOtpRecord>('usedActivationOtps').find({}, { projection: { _id: 0 } }).toArray(),
-    ]);
+    const bypass = Boolean(options?.bypassCache);
+    if (!bypass && runtime.vaultCache && Date.now() < runtime.vaultCacheExpiresAt) {
+      return structuredClone(runtime.vaultCache);
+    }
+    if (!bypass && runtime.vaultLoadPromise) {
+      const shared = await runtime.vaultLoadPromise;
+      return structuredClone(shared);
+    }
 
-    return normalizeVaultState({
-      users,
-      fundConfig: configDoc || createEmptyVaultState().fundConfig,
-      contributions,
-      loans,
-      halalProjects,
-      emailNotifications,
-      auditLogs,
-      communityPosts,
-      privateMessages,
-      decisionPolls,
-      meetings,
-      notices,
-      profileChangeRequests,
-      passwordResetRequests,
-      emailQueue,
-      faqs,
-      usedActivationOtps,
-    });
+    const loadPromise = fetchVaultStateFromMongo(mongoDb)
+      .then((normalized) => {
+        hydrateReadCachesFromState(normalized);
+        return normalized;
+      })
+      .finally(() => {
+        if (runtime.vaultLoadPromise === loadPromise) {
+          runtime.vaultLoadPromise = null;
+        }
+      });
+
+    if (!bypass) {
+      runtime.vaultLoadPromise = loadPromise;
+    }
+    const fresh = await loadPromise;
+    return structuredClone(fresh);
   }
   return readLocalVault();
+}
+
+/** Lightweight single-collection auth lookup so middleware does not load all 17 collections. */
+export async function findActiveUserByIds(ids: string[]): Promise<StoredUser | null> {
+  if (ids.length === 0) return null;
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+
+  if (!mongoDb) {
+    const state = readLocalVault();
+    for (const id of ids) {
+      const found = state.users.find((u) => u.id === id && u.status === 'active');
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const now = Date.now();
+  if (runtime.vaultCache && now < runtime.vaultCacheExpiresAt) {
+    for (const id of ids) {
+      const found = runtime.vaultCache.users.find((u) => u.id === id && u.status === 'active');
+      if (found) return structuredClone(found);
+    }
+    return null;
+  }
+
+  // Check per-user short-TTL cache before hitting MongoDB
+  let allCached = true;
+  for (const id of ids) {
+    const cached = runtime.userCache.get(id);
+    if (!cached || now >= cached.expiresAt) {
+      allCached = false;
+      break;
+    }
+    if (cached.value && cached.value.status === 'active') {
+      return structuredClone(cached.value);
+    }
+  }
+  if (allCached) return null;
+
+  const docs = await mongoDb
+    .collection<StoredUser>('users')
+    .find({ id: { $in: ids }, status: 'active' }, { projection: { _id: 0 } })
+    .toArray();
+  const byId = new Map(docs.map((u) => [u.id, u]));
+  const expiresAt = Date.now() + VAULT_READ_CACHE_TTL_MS;
+  for (const id of ids) {
+    runtime.userCache.set(id, { value: byId.get(id) ?? null, expiresAt });
+  }
+  for (const id of ids) {
+    const found = byId.get(id);
+    if (found) return structuredClone(found);
+  }
+  return null;
+}
+
+/** Lightweight single-collection loader for fundConfig / constitution metadata. */
+export async function loadFundConfigOnly(): Promise<FundConfig> {
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+  if (!mongoDb) {
+    return readLocalVault().fundConfig;
+  }
+  const now = Date.now();
+  if (runtime.fundConfigCache && now < runtime.fundConfigCache.expiresAt) {
+    return structuredClone(runtime.fundConfigCache.value);
+  }
+  const doc = await mongoDb
+    .collection<FundConfig>('fundConfig')
+    .findOne({ id: 'default-config' }, { projection: { _id: 0 } });
+  const cfg = doc || createEmptyVaultState().fundConfig;
+  runtime.fundConfigCache = {
+    value: structuredClone(cfg),
+    expiresAt: Date.now() + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  return structuredClone(cfg);
+}
+
+/** Lightweight single-collection loader for FAQs. */
+export async function loadFaqsOnly(): Promise<FaqItem[]> {
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+  if (!mongoDb) {
+    const state = readLocalVault();
+    return sortFaqItems(Array.isArray(state.faqs) ? state.faqs : []);
+  }
+  const now = Date.now();
+  if (runtime.faqsCache && now < runtime.faqsCache.expiresAt) {
+    return structuredClone(runtime.faqsCache.value);
+  }
+  const docs = await mongoDb
+    .collection<FaqItem>('faqs')
+    .find({}, { projection: { _id: 0 } })
+    .sort({ sortOrder: 1, createdAt: 1 })
+    .toArray();
+  const sorted = sortFaqItems(docs);
+  runtime.faqsCache = {
+    value: structuredClone(sorted),
+    expiresAt: Date.now() + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  return structuredClone(sorted);
+}
+
+/** Lightweight single-collection loader for cooperative notices. */
+export async function loadNoticesOnly(): Promise<CoopNotice[]> {
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+  if (!mongoDb) {
+    return readLocalVault().notices || [];
+  }
+  const now = Date.now();
+  if (runtime.noticesCache && now < runtime.noticesCache.expiresAt) {
+    return structuredClone(runtime.noticesCache.value);
+  }
+  const docs = await mongoDb
+    .collection<CoopNotice>('notices')
+    .find({}, { projection: { _id: 0 } })
+    .sort({ createdAt: -1 })
+    .toArray();
+  runtime.noticesCache = {
+    value: structuredClone(docs),
+    expiresAt: Date.now() + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  return structuredClone(docs);
+}
+
+/** Lightweight single-collection loader for login/signup bootstrap & reference lists. */
+export async function loadUserBootstrapSummary(): Promise<UserBootstrapSummary> {
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+  if (!mongoDb) {
+    const state = readLocalVault();
+    const active = state.users.filter((u) => u.status === 'active');
+    return {
+      hasMembers: state.users.length > 0,
+      activeMembersCount: active.length,
+      activeReferences: active.map((u) => ({ name: u.name, memberCode: u.memberCode })),
+    };
+  }
+  const now = Date.now();
+  if (runtime.bootstrapSummaryCache && now < runtime.bootstrapSummaryCache.expiresAt) {
+    return structuredClone(runtime.bootstrapSummaryCache.value);
+  }
+  const docs = await mongoDb
+    .collection<Pick<StoredUser, 'name' | 'memberCode' | 'status'>>('users')
+    .find({}, { projection: { _id: 0, name: 1, memberCode: 1, status: 1 } })
+    .toArray();
+  const active = docs.filter((u) => u.status === 'active');
+  const summary: UserBootstrapSummary = {
+    hasMembers: docs.length > 0,
+    activeMembersCount: active.length,
+    activeReferences: active.map((u) => ({ name: u.name, memberCode: u.memberCode })),
+  };
+  runtime.bootstrapSummaryCache = {
+    value: structuredClone(summary),
+    expiresAt: Date.now() + PUBLIC_SLICE_CACHE_TTL_MS,
+  };
+  return structuredClone(summary);
 }
 
 async function syncCollectionById<T extends { id: string }>(
@@ -699,16 +964,24 @@ export function updateVaultState(
   mutator: (state: VaultState) => VaultState | Promise<VaultState>
 ): Promise<VaultState> {
   const run = async (): Promise<VaultState> => {
-    const current = await loadVaultState();
+    // Always read authoritative state from storage before applying a mutation.
+    const current = await loadVaultState({ bypassCache: true });
     const next = await mutator(structuredClone(current));
 
     const mongoDb = runtime.mongoDb;
     if (mongoDb) {
+      const configChanged = JSON.stringify(current.fundConfig) !== JSON.stringify(next.fundConfig);
       await Promise.all([
         syncCollectionById(mongoDb, 'users', current.users, next.users),
-        mongoDb
-          .collection('fundConfig')
-          .replaceOne({ id: 'default-config' }, next.fundConfig, { upsert: true }),
+        configChanged
+          ? mongoDb
+              .collection('fundConfig')
+              .replaceOne(
+                { id: 'default-config' },
+                { ...next.fundConfig, schemaInitVersion: SCHEMA_INIT_VERSION },
+                { upsert: true }
+              )
+          : Promise.resolve(),
         syncCollectionById(mongoDb, 'contributions', current.contributions, next.contributions),
         syncCollectionById(mongoDb, 'loans', current.loans, next.loans),
         syncCollectionById(mongoDb, 'halalProjects', current.halalProjects, next.halalProjects),
@@ -770,7 +1043,9 @@ export function updateVaultState(
           next.usedActivationOtps || []
         ),
       ]);
+      hydrateReadCachesFromState(next);
     } else {
+      invalidateReadCaches();
       writeLocalVault(next);
     }
     return next;

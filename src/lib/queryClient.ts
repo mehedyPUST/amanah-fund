@@ -4,11 +4,12 @@ export function makeQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Keep SSR-hydrated data fresh for 30s to prevent redundant immediate CSR refetches.
-        staleTime: 30_000,
+        // Keep SSR-hydrated and recently fetched data fresh for 60s to prevent redundant API churn.
+        staleTime: 60_000,
         gcTime: 5 * 60_000,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
+        refetchIntervalInBackground: false,
         retry: (failureCount, error) => {
           const status = (error as { status?: number } | null)?.status;
           if (status === 400 || status === 401 || status === 403 || status === 404) {

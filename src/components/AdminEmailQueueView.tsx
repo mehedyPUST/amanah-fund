@@ -25,6 +25,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 
 interface AdminEmailQueueViewProps {
@@ -109,18 +110,20 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
   useEffect(() => {
     void loadQueue(false);
 
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const onQueueUpdated = () => {
       void loadQueue(true);
     };
-    es.addEventListener('email-queue:updated', onQueueUpdated);
+    const unsubscribe = subscribeRealtimeEvents({
+      'email-queue:updated': onQueueUpdated,
+    });
 
     const timer = window.setInterval(() => {
+      if (document.hidden) return;
       void loadQueue(true);
-    }, 15_000);
+    }, 60_000);
 
     return () => {
-      es.close();
+      unsubscribe();
       window.clearInterval(timer);
     };
   }, [loadQueue]);

@@ -13,6 +13,22 @@ export function registerSseClient(userId: string, res: Response): string {
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
+
+  // On Vercel serverless, holding open SSE streams consumes Fluid Compute CPU/memory
+  // and cannot broadcast across isolated instances. Signal clients to disable SSE cleanly.
+  if (process.env.VERCEL === '1' && process.env.ENABLE_VERCEL_SSE !== '1') {
+    res.setHeader('X-Realtime-Mode', 'serverless-disabled');
+    res.flushHeaders?.();
+    res.write(
+      `retry: 86400000\nevent: disabled\ndata: ${JSON.stringify({
+        mode: 'serverless',
+        timestamp: new Date().toISOString(),
+      })}\n\n`
+    );
+    res.end();
+    return clientId;
+  }
+
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders?.();
 
@@ -34,26 +50,8 @@ export function registerSseClient(userId: string, res: Response): string {
     }
   }, 25000);
 
-  let vercelRecycleTimer: ReturnType<typeof setTimeout> | null = null;
-  if (process.env.VERCEL === '1') {
-    vercelRecycleTimer = setTimeout(() => {
-      clearInterval(heartbeat);
-      clients.delete(clientId);
-      if (!res.writableEnded && !res.destroyed) {
-        try {
-          res.write(': reconnect\n\n');
-          res.end();
-        } catch {
-          // ignore closed stream
-        }
-      }
-    }, 20000);
-    vercelRecycleTimer.unref?.();
-  }
-
   res.on('close', () => {
     clearInterval(heartbeat);
-    if (vercelRecycleTimer) clearTimeout(vercelRecycleTimer);
     clients.delete(clientId);
   });
 

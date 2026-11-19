@@ -42,6 +42,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
 import { ActionModal } from './ActionModal.tsx';
 import {
   CommunityPostLinksList,
@@ -162,19 +163,17 @@ export function MemberPublicProfileView({
   }, [loadMemberProfile]);
 
   useEffect(() => {
-    const es = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
     const handleSync = () => {
       void loadMemberProfile(true);
     };
-    es.addEventListener('community:updated', handleSync);
-    es.addEventListener('members:updated', handleSync);
-    es.addEventListener('contribution:reviewed', handleSync);
-    es.addEventListener('loan:reviewed', handleSync);
-    es.addEventListener('repayment:verified', handleSync);
-    es.addEventListener('investment:distributed', handleSync);
-    return () => {
-      es.close();
-    };
+    return subscribeRealtimeEvents({
+      'community:updated': handleSync,
+      'members:updated': handleSync,
+      'contribution:reviewed': handleSync,
+      'loan:reviewed': handleSync,
+      'repayment:verified': handleSync,
+      'investment:distributed': handleSync,
+    });
   }, [loadMemberProfile]);
 
   const updateSinglePost = useCallback((updated: CommunityPost) => {

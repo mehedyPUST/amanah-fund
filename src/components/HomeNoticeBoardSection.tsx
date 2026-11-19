@@ -132,13 +132,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       void queryClient.invalidateQueries({ queryKey: queryKeys.public.notices() });
     };
     window.addEventListener('amanah:refresh', handleGlobalRefresh);
-
-    const source = new EventSource(api.getEventsStreamUrl(), { withCredentials: true });
-    source.addEventListener('notice:updated', handleGlobalRefresh);
     return () => {
       window.removeEventListener('amanah:refresh', handleGlobalRefresh);
-      source.removeEventListener('notice:updated', handleGlobalRefresh);
-      source.close();
     };
   }, [isActiveMember, queryClient]);
 

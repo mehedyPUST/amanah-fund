@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { PublicUser, UserRole } from '../types/coop.ts';
-import { loadVaultState, type StoredUser } from './db.ts';
+import { findActiveUserByIds, type StoredUser } from './db.ts';
 import { sanitizeRegisteredDevices } from './deviceAuthService.ts';
 
 export const SESSION_COOKIE_NAME = 'amanah_session';
@@ -236,10 +236,7 @@ export async function verifySessionTokenToUser(token: string | undefined | null)
   const validSubs = verifyCandidateJwtSub([token.trim()]);
   if (validSubs.length === 0) return null;
   try {
-    const state = await loadVaultState();
-    const user = validSubs
-      .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
-      .find(Boolean);
+    const user = await findActiveUserByIds(validSubs);
     return user ? sanitizeUser(user) : null;
   } catch {
     return null;
@@ -263,18 +260,14 @@ export async function requireAuth(
     return;
   }
 
-  let state;
+  let user: StoredUser | null;
   try {
-    state = await loadVaultState();
+    user = await findActiveUserByIds(validSubs);
   } catch (err) {
-    console.error('[Auth] Vault load error during session verification:', err);
+    console.error('[Auth] User lookup error during session verification:', err);
     res.status(503).json({ error: 'Authentication service temporarily unavailable.' });
     return;
   }
-
-  const user = validSubs
-    .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
-    .find(Boolean);
 
   if (!user) {
     res.status(401).json({ error: 'Account is inactive or not found.' });
@@ -310,10 +303,7 @@ export async function resolveOptionalAuthUser(
     if (candidates.length === 0) return null;
     const validSubs = verifyCandidateJwtSub(candidates);
     if (validSubs.length === 0) return null;
-    const state = await loadVaultState();
-    const user = validSubs
-      .map((sub) => state.users.find((u) => u.id === sub && u.status === 'active'))
-      .find(Boolean);
+    const user = await findActiveUserByIds(validSubs);
     if (!user) return null;
     const sanitized = sanitizeUser(user);
     req.authUser = sanitized;
