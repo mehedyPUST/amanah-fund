@@ -63,16 +63,48 @@ function formatStatusBangla(status?: UserStatus): string {
   }
 }
 
-function formatGenderEnglish(gender: NomineeInfo['gender']): string {
+function formatGenderEnglish(gender?: NomineeInfo['gender']): string {
   if (gender === 'male') return 'Male';
   if (gender === 'female') return 'Female';
-  return 'Other';
+  if (gender === 'other') return 'Other';
+  return '—';
 }
 
-function formatGenderBangla(gender: NomineeInfo['gender']): string {
+function formatGenderBangla(gender?: NomineeInfo['gender']): string {
   if (gender === 'male') return 'পুরুষ';
   if (gender === 'female') return 'মহিলা';
-  return 'অন্যান্য';
+  if (gender === 'other') return 'অন্যান্য';
+  return '—';
+}
+
+function formatMaritalStatusEnglish(status?: UserRegistrationDetails['maritalStatus']): string {
+  switch (status) {
+    case 'single':
+      return 'Single';
+    case 'married':
+      return 'Married';
+    case 'widowed':
+      return 'Widowed';
+    case 'divorced':
+      return 'Divorced';
+    default:
+      return '—';
+  }
+}
+
+function formatMaritalStatusBangla(status?: UserRegistrationDetails['maritalStatus']): string {
+  switch (status) {
+    case 'single':
+      return 'অবিবাহিত';
+    case 'married':
+      return 'বিবাহিত';
+    case 'widowed':
+      return 'বিধবা / বিপত্নীক';
+    case 'divorced':
+      return 'তালাকপ্রাপ্ত';
+    default:
+      return '—';
+  }
 }
 
 function sanitizeFileSegment(value: string): string {
@@ -464,6 +496,10 @@ function printBanglaApplicationFormViaIframe(input: ApplicationFormPdfInput): vo
       font-size: 9px;
       color: #64748b;
     }
+    .keep-together {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
     .muted { color: #64748b; font-size: 10px; }
   </style>
 </head>
@@ -485,7 +521,18 @@ function printBanglaApplicationFormViaIframe(input: ApplicationFormPdfInput): vo
   <div class="section-title">০১. ব্যক্তিগত ও পেশাগত তথ্য</div>
   <div class="identity-grid">
     <table class="kv-table">
-      <tr><td class="k">পূর্ণ নাম</td><td class="v" colspan="3"><strong>${escapeHtml(applicantName)}</strong></td></tr>
+      <tr>
+        <td class="k">পূর্ণ নাম</td><td class="v"><strong>${escapeHtml(applicantName)}</strong></td>
+        <td class="k">লিঙ্গ</td><td class="v">${escapeHtml(formatGenderBangla(reg.gender))}</td>
+      </tr>
+      <tr>
+        <td class="k">পিতার নাম</td><td class="v">${escapeHtml(reg.fatherName || '—')}</td>
+        <td class="k">মাতার নাম</td><td class="v">${escapeHtml(reg.motherName || '—')}</td>
+      </tr>
+      <tr>
+        <td class="k">বৈবাহিক অবস্থা</td><td class="v">${escapeHtml(formatMaritalStatusBangla(reg.maritalStatus))}</td>
+        <td class="k">স্বামী / স্ত্রীর নাম</td><td class="v">${escapeHtml(reg.spouseName || '—')}</td>
+      </tr>
       <tr><td class="k">ইমেইল</td><td class="v mono">${escapeHtml(email)}</td><td class="k">মোবাইল নম্বর</td><td class="v mono">${escapeHtml(reg.mobile)}</td></tr>
       <tr><td class="k">জন্ম তারিখ</td><td class="v mono">${escapeHtml(reg.dateOfBirth)}</td><td class="k">জাতীয় পরিচয়পত্র (NID)</td><td class="v mono">${escapeHtml(reg.nid)}</td></tr>
       <tr><td class="k">পেশা</td><td class="v">${escapeHtml(reg.occupation)}</td><td class="k">প্রতিষ্ঠান / সংস্থা</td><td class="v">${escapeHtml(reg.companyOrganization)}</td></tr>
@@ -523,33 +570,35 @@ function printBanglaApplicationFormViaIframe(input: ApplicationFormPdfInput): vo
   <div class="section-title">${hasSocial ? '০৪' : '০৩'}. নমিনি তথ্য (${nominees.length} জন · মোট ১০০% অংশ)</div>
   ${nomineesHtml}
 
-  <div class="section-title">${hasSocial ? '০৫' : '০৪'}. ঘোষণা, স্বাক্ষর ও সংযুক্ত নথিপত্র</div>
-  <table class="kv-table">
-    <tr>
-      <td class="k">আবেদনকারীর ছবি</td><td class="v">${reg.photoUrl ? 'সংযুক্ত' : 'সংযুক্ত নয়'}</td>
-      <td class="k">স্বাক্ষর (৩০০×৮০)</td><td class="v">${reg.signatureUrl ? 'সংযুক্ত' : 'সংযুক্ত নয়'}</td>
-      <td class="k">চুক্তিপত্র (ঐচ্ছিক)</td><td class="v">${reg.agreementPhotoUrl ? 'সংযুক্ত' : 'ঐচ্ছিক (সংযুক্ত নয়)'}</td>
-    </tr>
-  </table>
-  <div class="declaration">
-    আমি এই মর্মে ঘোষণা করছি যে, এই সদস্যপদ আবেদন ফরমে প্রদত্ত সকল ব্যক্তিগত, ঠিকানা ও নমিনি তথ্য সম্পূর্ণ সত্য ও নির্ভুল। আমি ${escapeHtml(fundName)}-এর গঠনতন্ত্র (ধারা ৪–৬ · ভিশন-৩৬) এবং সমবায়ের সকল নীতিমালা মেনে চলতে সম্মত আছি।
-  </div>
-  <div class="sig-grid">
-    <div class="sig-box">
-      <div class="sig-frame">
-        ${
-          reg.signatureUrl
-            ? `<img src="${escapeHtml(reg.signatureUrl)}" alt="Signature" referrerpolicy="no-referrer" />`
-            : `<span class="muted">স্বাক্ষর (৩০০ × ৮০ পিক্সেল)</span>`
-        }
-      </div>
-      <div class="sig-line">আবেদনকারীর স্বাক্ষর</div>
-      <div class="sig-sub">${escapeHtml(applicantName)} · ${escapeHtml(submittedLabel)}</div>
+  <div class="keep-together">
+    <div class="section-title">${hasSocial ? '০৫' : '০৪'}. ঘোষণা, স্বাক্ষর ও সংযুক্ত নথিপত্র</div>
+    <table class="kv-table">
+      <tr>
+        <td class="k">আবেদনকারীর ছবি</td><td class="v">${reg.photoUrl ? 'সংযুক্ত' : 'সংযুক্ত নয়'}</td>
+        <td class="k">স্বাক্ষর (৩০০×৮০)</td><td class="v">${reg.signatureUrl ? 'সংযুক্ত' : 'সংযুক্ত নয়'}</td>
+        <td class="k">চুক্তিপত্র (ঐচ্ছিক)</td><td class="v">${reg.agreementPhotoUrl ? 'সংযুক্ত' : 'ঐচ্ছিক (সংযুক্ত নয়)'}</td>
+      </tr>
+    </table>
+    <div class="declaration">
+      আমি এই মর্মে ঘোষণা করছি যে, এই সদস্যপদ আবেদন ফরমে প্রদত্ত সকল ব্যক্তিগত, ঠিকানা ও নমিনি তথ্য সম্পূর্ণ সত্য ও নির্ভুল। আমি ${escapeHtml(fundName)}-এর গঠনতন্ত্র (ধারা ৪–৬ · ভিশন-৩৬) এবং সমবায়ের সকল নীতিমালা মেনে চলতে সম্মত আছি।
     </div>
-    <div class="sig-box">
-      <div class="sig-frame"><span class="muted">অফিসিয়াল অনুমোদনের জন্য</span></div>
-      <div class="sig-line">অ্যাডমিনিস্ট্রেটর স্বাক্ষর ও সিল</div>
-      <div class="sig-sub">আনুষ্ঠানিক সদস্য আইডি ও তারিখ</div>
+    <div class="sig-grid">
+      <div class="sig-box">
+        <div class="sig-frame">
+          ${
+            reg.signatureUrl
+              ? `<img src="${escapeHtml(reg.signatureUrl)}" alt="Signature" referrerpolicy="no-referrer" />`
+              : `<span class="muted">স্বাক্ষর (৩০০ × ৮০ পিক্সেল)</span>`
+          }
+        </div>
+        <div class="sig-line">আবেদনকারীর স্বাক্ষর</div>
+        <div class="sig-sub">${escapeHtml(applicantName)} · ${escapeHtml(submittedLabel)}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-frame"><span class="muted">অফিসিয়াল অনুমোদনের জন্য</span></div>
+        <div class="sig-line">অ্যাডমিনিস্ট্রেটর স্বাক্ষর ও সিল</div>
+        <div class="sig-sub">আনুষ্ঠানিক সদস্য আইডি ও তারিখ</div>
+      </div>
     </div>
   </div>
 
@@ -661,68 +710,75 @@ export async function downloadMembershipApplicationPdf(
   ]);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 36;
+  const pageWidth = doc.internal.pageSize.getWidth(); // 595.28
+  const pageHeight = doc.internal.pageSize.getHeight(); // 841.89
+  const margin = 34;
   const contentWidth = pageWidth - margin * 2;
-  let y = 34;
+  const bottomLimit = pageHeight - 36;
+  let y = 26;
 
   const ensureSpace = (needed: number) => {
-    if (y + needed > pageHeight - 44) {
+    if (y + needed > bottomLimit) {
       doc.addPage();
-      y = 38;
+      y = 32;
     }
   };
 
   const drawSectionBar = (sectionNum: string, title: string) => {
-    ensureSpace(32);
+    ensureSpace(26);
     doc.setFillColor(236, 253, 245); // emerald-50
     doc.setDrawColor(167, 243, 208); // emerald-200
-    doc.roundedRect(margin, y, contentWidth, 21, 3, 3, 'FD');
+    doc.setLineWidth(0.6);
+    doc.roundedRect(margin, y, contentWidth, 18.5, 3, 3, 'FD');
 
     doc.setFillColor(5, 150, 105); // emerald-600 left accent bar
-    doc.rect(margin, y, 4, 21, 'F');
+    doc.rect(margin, y, 4, 18.5, 'F');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
+    doc.setFontSize(8.8);
     doc.setTextColor(6, 95, 70); // emerald-800
-    doc.text(`${sectionNum}. ${title}`, margin + 11, y + 14);
-    y += 28;
+    doc.text(`${sectionNum}. ${title}`, margin + 10, y + 12.2);
+    y += 23;
   };
 
   // Top Emerald Institutional Strip
   doc.setFillColor(5, 150, 105);
-  doc.rect(margin, y, contentWidth, 4.5, 'F');
-  y += 16;
+  doc.rect(margin, y, contentWidth, 4, 'F');
+  y += 10;
 
-  // Header Left: Cooperative Identity
-  const refBoxW = 190;
+  // Header Left: Cooperative Identity (Dynamic vertical flow — zero overlap for multi-line names)
+  const refBoxW = 192;
   const headerLeftW = contentWidth - refBoxW - 14;
+  const headerTopY = y;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
+  doc.setFontSize(13.5);
   doc.setTextColor(15, 23, 42);
-  doc.text(fundName, margin, y + 4, { maxWidth: headerLeftW });
+  const titleLines = doc.splitTextToSize(fundName, headerLeftW) as string[];
+  const titleLineH = 15.5;
+  doc.text(titleLines, margin, headerTopY + 11.5);
 
+  const subtitleY = headerTopY + 11.5 + (titleLines.length - 1) * titleLineH + 12.5;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(5, 150, 105);
-  doc.text('OFFICIAL MEMBERSHIP APPLICATION FORM', margin, y + 20);
+  doc.text('OFFICIAL MEMBERSHIP APPLICATION FORM', margin, subtitleY);
 
+  const charterY = subtitleY + 11;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.2);
+  doc.setFontSize(7.6);
   doc.setTextColor(71, 85, 105);
-  doc.text(
+  const charterLines = doc.splitTextToSize(
     'Shariah-Compliant · Interest-Free Qard Hasan · Constitution Charter (§4–§6 · VISION-36)',
-    margin,
-    y + 33,
-    { maxWidth: headerLeftW }
-  );
+    headerLeftW
+  ) as string[];
+  doc.text(charterLines, margin, charterY);
+  const leftBottomY = charterY + (charterLines.length - 1) * 9.5 + 5;
 
   // Header Right: Application Reference Box
   const refBoxX = pageWidth - margin - refBoxW;
-  const refBoxY = y - 8;
-  const refBoxH = 48;
+  const refBoxY = headerTopY;
+  const refBoxH = Math.max(48, leftBottomY - headerTopY);
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.75);
@@ -734,10 +790,12 @@ export async function downloadMembershipApplicationPdf(
     { k: 'Status:', v: formatStatusEnglish(status) },
     { k: 'Submitted:', v: submittedLabel },
   ];
+  const refStep = 13;
+  const refStartY = refBoxY + (refBoxH - (refLines.length - 1) * refStep) / 2 + 2.5;
   refLines.forEach((line, idx) => {
-    const ry = refBoxY + 13 + idx * 13;
+    const ry = refStartY + idx * refStep;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.4);
     doc.setTextColor(100, 116, 139);
     doc.text(line.k, refBoxX + 8, ry);
     doc.setFont('helvetica', 'bold');
@@ -745,21 +803,20 @@ export async function downloadMembershipApplicationPdf(
     doc.text(line.v, refBoxX + refBoxW - 8, ry, { align: 'right' });
   });
 
-  y += 48;
+  y = Math.max(leftBottomY, refBoxY + refBoxH) + 7;
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.75);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
+  y += 9;
 
   // =========================================================================
   // SECTION 01: Personal, Account & Employment Details + Passport Photo Box
   // =========================================================================
   drawSectionBar('01', 'PERSONAL, ACCOUNT & EMPLOYMENT INFORMATION');
 
-  const photoBoxW = 92;
-  const photoBoxH = 112;
-  const detailsGridW = contentWidth - photoBoxW - 12;
-  const photoBoxX = margin + detailsGridW + 12;
+  const photoBoxW = 94;
+  const detailsGridW = contentWidth - photoBoxW - 10;
+  const photoBoxX = margin + detailsGridW + 10;
   const section1TopY = y;
 
   const drawKeyValueRow = (
@@ -771,34 +828,33 @@ export async function downloadMembershipApplicationPdf(
     const colCount = pairs.length;
     const colW = w / colCount;
 
-    // Measure tallest cell
-    let maxTextH = 11;
+    let maxTextH = 9.5;
     const wrappedPerCol = pairs.map((p) => {
       doc.setFont(p.mono ? 'courier' : 'helvetica', 'bold');
-      doc.setFontSize(8.8);
-      const lines = doc.splitTextToSize(p.value || '—', colW - 14) as string[];
-      maxTextH = Math.max(maxTextH, lines.length * 10.5);
+      doc.setFontSize(8.2);
+      const lines = doc.splitTextToSize(p.value || '—', colW - 12) as string[];
+      maxTextH = Math.max(maxTextH, lines.length * 9.5);
       return lines;
     });
 
-    const rowH = Math.max(30, 14 + maxTextH + 5);
+    const rowH = Math.max(24.5, 11.5 + maxTextH + 4);
 
     pairs.forEach((p, idx) => {
       const cx = x + idx * colW;
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.6);
+      doc.setLineWidth(0.55);
       doc.rect(cx, rowY, colW, rowH, 'FD');
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.2);
+      doc.setFontSize(6.6);
       doc.setTextColor(100, 116, 139);
-      doc.text(p.label.toUpperCase(), cx + 7, rowY + 10);
+      doc.text(p.label.toUpperCase(), cx + 6, rowY + 8.5);
 
       doc.setFont(p.mono ? 'courier' : 'helvetica', 'bold');
-      doc.setFontSize(8.8);
+      doc.setFontSize(8.2);
       doc.setTextColor(15, 23, 42);
-      doc.text(wrappedPerCol[idx], cx + 7, rowY + 21.5);
+      doc.text(wrappedPerCol[idx], cx + 6, rowY + 18.5);
     });
 
     return rowY + rowH;
@@ -807,7 +863,34 @@ export async function downloadMembershipApplicationPdf(
   y = drawKeyValueRow(
     margin,
     detailsGridW,
-    [{ label: 'Full Legal Name', value: applicantName }],
+    [
+      { label: 'Full Legal Name', value: applicantName },
+      { label: 'Gender', value: formatGenderEnglish(reg.gender) },
+    ],
+    y
+  );
+  y = drawKeyValueRow(
+    margin,
+    detailsGridW,
+    [
+      { label: "Father's Name", value: reg.fatherName || '—' },
+      { label: "Mother's Name", value: reg.motherName || '—' },
+    ],
+    y
+  );
+  y = drawKeyValueRow(
+    margin,
+    detailsGridW,
+    reg.spouseName
+      ? [
+          { label: 'Date of Birth', value: reg.dateOfBirth, mono: true },
+          { label: 'Marital Status', value: formatMaritalStatusEnglish(reg.maritalStatus) },
+          { label: 'Spouse Name', value: reg.spouseName },
+        ]
+      : [
+          { label: 'Date of Birth', value: reg.dateOfBirth, mono: true },
+          { label: 'Marital Status', value: formatMaritalStatusEnglish(reg.maritalStatus) },
+        ],
     y
   );
   y = drawKeyValueRow(
@@ -823,8 +906,8 @@ export async function downloadMembershipApplicationPdf(
     margin,
     detailsGridW,
     [
-      { label: 'Date of Birth', value: reg.dateOfBirth, mono: true },
       { label: 'National ID (NID)', value: reg.nid, mono: true },
+      { label: 'Reference (Existing Member)', value: reg.referenceMemberName },
     ],
     y
   );
@@ -837,45 +920,42 @@ export async function downloadMembershipApplicationPdf(
     ],
     y
   );
-  y = drawKeyValueRow(
-    margin,
-    detailsGridW,
-    [{ label: 'Reference (Existing Member)', value: reg.referenceMemberName }],
-    y
-  );
 
-  // Draw Passport Photo Frame on the right
+  // Draw Passport Photo Frame on the right, aligned cleanly with Section 01
+  const section1GridH = y - section1TopY;
+  const photoFrameH = Math.max(126, Math.min(section1GridH, 148));
+  const photoInnerH = photoFrameH - 18;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.75);
-  doc.roundedRect(photoBoxX, section1TopY, photoBoxW, photoBoxH + 16, 4, 4, 'FD');
+  doc.roundedRect(photoBoxX, section1TopY, photoBoxW, photoFrameH, 4, 4, 'FD');
 
   if (memberPhoto) {
-    drawFittedImage(doc, memberPhoto, photoBoxX + 4, section1TopY + 4, photoBoxW - 8, photoBoxH - 4, 1);
+    drawFittedImage(doc, memberPhoto, photoBoxX + 4, section1TopY + 4, photoBoxW - 8, photoInnerH - 4, 1);
   } else {
     doc.setDrawColor(203, 213, 225);
     doc.setLineDashPattern([3, 2], 0);
-    doc.rect(photoBoxX + 6, section1TopY + 6, photoBoxW - 12, photoBoxH - 8);
+    doc.rect(photoBoxX + 6, section1TopY + 6, photoBoxW - 12, photoInnerH - 8);
     doc.setLineDashPattern([], 0);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.4);
     doc.setTextColor(148, 163, 184);
-    doc.text('Applicant', photoBoxX + photoBoxW / 2, section1TopY + photoBoxH / 2 - 4, {
+    doc.text('Applicant', photoBoxX + photoBoxW / 2, section1TopY + photoInnerH / 2 - 4, {
       align: 'center',
     });
-    doc.text('Photo', photoBoxX + photoBoxW / 2, section1TopY + photoBoxH / 2 + 7, {
+    doc.text('Photo', photoBoxX + photoBoxW / 2, section1TopY + photoInnerH / 2 + 7, {
       align: 'center',
     });
   }
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
+  doc.setFontSize(7);
   doc.setTextColor(71, 85, 105);
-  doc.text('APPLICANT PHOTO', photoBoxX + photoBoxW / 2, section1TopY + photoBoxH + 10, {
+  doc.text('APPLICANT PHOTO', photoBoxX + photoBoxW / 2, section1TopY + photoFrameH - 6, {
     align: 'center',
   });
 
-  y = Math.max(y, section1TopY + photoBoxH + 16) + 12;
+  y = Math.max(y, section1TopY + photoFrameH) + 8;
 
   // =========================================================================
   // OPTIONAL SECTION: Social Media Profiles (if provided)
@@ -897,11 +977,11 @@ export async function downloadMembershipApplicationPdf(
       ],
       y
     );
-    y += 12;
+    y += 8;
   }
 
   // =========================================================================
-  // RESIDENTIAL ADDRESSES (Teletalk Standard Side-by-Side Cards)
+  // RESIDENTIAL ADDRESSES
   // =========================================================================
   drawSectionBar(`0${nextSectionNumber}`, 'RESIDENTIAL ADDRESSES');
   nextSectionNumber += 1;
@@ -937,21 +1017,21 @@ export async function downloadMembershipApplicationPdf(
   const permanentRows = buildAddressRows(reg.permanentAddressDetails, reg.permanentAddress);
 
   const measureAddrCardHeight = (rows: Array<{ label: string; value: string }>) => {
-    let h = 22; // title bar
+    let h = 18.5; // title bar
     for (const r of rows) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.4);
-      const valLines = doc.splitTextToSize(r.value, addrColW - 96) as string[];
-      h += Math.max(17, valLines.length * 10 + 7);
+      doc.setFontSize(8);
+      const valLines = doc.splitTextToSize(r.value, addrColW - 92) as string[];
+      h += Math.max(14.5, valLines.length * 9.5 + 5);
     }
-    return h + 4;
+    return h + 3;
   };
 
   const addrBoxH = Math.max(
     measureAddrCardHeight(presentRows),
     measureAddrCardHeight(permanentRows)
   );
-  ensureSpace(addrBoxH + 12);
+  ensureSpace(addrBoxH + 8);
 
   const drawAddressCard = (
     cardX: number,
@@ -962,26 +1042,26 @@ export async function downloadMembershipApplicationPdf(
   ) => {
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.75);
+    doc.setLineWidth(0.7);
     doc.roundedRect(cardX, cardY, addrColW, fixedH, 4, 4, 'FD');
 
     doc.setFillColor(241, 245, 249);
-    doc.roundedRect(cardX, cardY, addrColW, 20, 4, 4, 'F');
-    doc.rect(cardX, cardY + 14, addrColW, 6, 'F');
+    doc.roundedRect(cardX, cardY, addrColW, 18, 4, 4, 'F');
+    doc.rect(cardX, cardY + 12, addrColW, 6, 'F');
     doc.setDrawColor(226, 232, 240);
-    doc.line(cardX, cardY + 20, cardX + addrColW, cardY + 20);
+    doc.line(cardX, cardY + 18, cardX + addrColW, cardY + 18);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8.2);
     doc.setTextColor(30, 41, 59);
-    doc.text(cardTitle, cardX + 8, cardY + 13);
+    doc.text(cardTitle, cardX + 8, cardY + 12);
 
-    let ry = cardY + 22;
+    let ry = cardY + 19;
     rows.forEach((r, idx) => {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.3);
-      const valLines = doc.splitTextToSize(r.value, addrColW - 96) as string[];
-      const lineH = Math.max(17, valLines.length * 10 + 7);
+      doc.setFontSize(8);
+      const valLines = doc.splitTextToSize(r.value, addrColW - 92) as string[];
+      const lineH = Math.max(14.5, valLines.length * 9.5 + 5);
 
       if (idx > 0) {
         doc.setDrawColor(241, 245, 249);
@@ -990,14 +1070,14 @@ export async function downloadMembershipApplicationPdf(
       }
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.4);
+      doc.setFontSize(7.1);
       doc.setTextColor(100, 116, 139);
-      doc.text(r.label, cardX + 8, ry + 11.5);
+      doc.text(r.label, cardX + 8, ry + 10);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.3);
+      doc.setFontSize(8);
       doc.setTextColor(15, 23, 42);
-      doc.text(valLines, cardX + 90, ry + 11.5);
+      doc.text(valLines, cardX + 86, ry + 10);
 
       ry += lineH;
     });
@@ -1005,7 +1085,7 @@ export async function downloadMembershipApplicationPdf(
 
   drawAddressCard(margin, y, 'Present Address', presentRows, addrBoxH);
   drawAddressCard(margin + addrColW + addrGap, y, 'Permanent Address', permanentRows, addrBoxH);
-  y += addrBoxH + 12;
+  y += addrBoxH + 8;
 
   // =========================================================================
   // NOMINEE INFORMATION
@@ -1017,123 +1097,133 @@ export async function downloadMembershipApplicationPdf(
   nextSectionNumber += 1;
 
   if (nominees.length === 0) {
-    ensureSpace(24);
+    ensureSpace(22);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8.2);
     doc.setTextColor(100, 116, 139);
     doc.text('No nominee details attached.', margin + 4, y + 10);
-    y += 22;
+    y += 18;
   } else {
     nominees.forEach((nominee, idx) => {
       const nomPhoto = nomineePhotos[idx] || null;
-      const nomPhotoW = 68;
-      const nomInfoW = contentWidth - nomPhotoW - 18;
+      const nomPhotoW = 64;
+      const nomInfoW = contentWidth - nomPhotoW - 16;
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.2);
-      const addrLines = doc.splitTextToSize(nominee.address || '—', nomInfoW - 72) as string[];
-      const cardH = Math.max(96, 22 + 54 + Math.max(16, addrLines.length * 10 + 6) + 8);
-      ensureSpace(cardH + 8);
+      doc.setFontSize(8);
+      const addrLines = doc.splitTextToSize(nominee.address || '—', nomInfoW - 64) as string[];
+      const cardH = Math.max(88, 19 + 50 + Math.max(14, addrLines.length * 9.5 + 5) + 6);
+      ensureSpace(cardH + 6);
 
       const cardY = y;
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(203, 213, 225);
-      doc.setLineWidth(0.75);
+      doc.setLineWidth(0.7);
       doc.roundedRect(margin, cardY, contentWidth, cardH, 4, 4, 'FD');
 
       // Nominee card header bar
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, cardY, contentWidth, 20, 4, 4, 'F');
-      doc.rect(margin, cardY + 14, contentWidth, 6, 'F');
+      doc.roundedRect(margin, cardY, contentWidth, 18, 4, 4, 'F');
+      doc.rect(margin, cardY + 12, contentWidth, 6, 'F');
       doc.setDrawColor(226, 232, 240);
-      doc.line(margin, cardY + 20, margin + contentWidth, cardY + 20);
+      doc.line(margin, cardY + 18, margin + contentWidth, cardY + 18);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
+      doc.setFontSize(8.2);
       doc.setTextColor(15, 23, 42);
       const nomTitle =
         nominees.length > 1 ? `Nominee #${idx + 1}` : 'Primary Nominee';
-      doc.text(nomTitle, margin + 8, cardY + 13);
+      doc.text(nomTitle, margin + 8, cardY + 12);
 
       // Share badge on right
       const shareText = `${nominee.sharePercentage}% Share`;
       doc.setFillColor(209, 250, 229);
-      doc.roundedRect(margin + contentWidth - 68, cardY + 3.5, 60, 13, 3, 3, 'F');
+      doc.roundedRect(margin + contentWidth - 66, cardY + 3, 58, 12, 3, 3, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(7.2);
       doc.setTextColor(6, 95, 70);
-      doc.text(shareText, margin + contentWidth - 38, cardY + 12.2, { align: 'center' });
+      doc.text(shareText, margin + contentWidth - 37, cardY + 11.2, { align: 'center' });
 
-      // Nominee details grid (3 compact rows + address row)
+      // Nominee details grid
       const colA = margin + 8;
       const colB = margin + 8 + nomInfoW / 2;
-      let ny = cardY + 32;
+      let ny = cardY + 29;
 
       const drawNomField = (fx: number, fy: number, lbl: string, val: string, mono = false) => {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.2);
+        doc.setFontSize(7);
         doc.setTextColor(100, 116, 139);
         doc.text(`${lbl}:`, fx, fy);
         doc.setFont(mono ? 'courier' : 'helvetica', 'normal');
-        doc.setFontSize(8.2);
+        doc.setFontSize(8);
         doc.setTextColor(15, 23, 42);
-        doc.text(val || '—', fx + 62, fy, { maxWidth: nomInfoW / 2 - 66 });
+        doc.text(val || '—', fx + 58, fy, { maxWidth: nomInfoW / 2 - 62 });
       };
 
       drawNomField(colA, ny, 'Full Name', nominee.name);
       drawNomField(colB, ny, 'Relation', nominee.relation);
-      ny += 14;
+      ny += 12.5;
       drawNomField(colA, ny, 'Date of Birth', nominee.dateOfBirth, true);
       drawNomField(colB, ny, 'Gender', formatGenderEnglish(nominee.gender));
-      ny += 14;
+      ny += 12.5;
       drawNomField(colA, ny, 'Occupation', nominee.occupation);
       drawNomField(colB, ny, 'NID / Birth Reg', nominee.nidOrBirthReg, true);
-      ny += 14;
+      ny += 12.5;
       drawNomField(colA, ny, 'Mobile', nominee.mobile || '—', true);
-      ny += 14;
+      ny += 12.5;
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.2);
+      doc.setFontSize(7);
       doc.setTextColor(100, 116, 139);
       doc.text('Address:', colA, ny);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.2);
+      doc.setFontSize(8);
       doc.setTextColor(15, 23, 42);
-      doc.text(addrLines, colA + 62, ny);
+      doc.text(addrLines, colA + 58, ny);
 
       // Nominee photo box on the right
       const nPhotoX = margin + contentWidth - nomPhotoW - 6;
-      const nPhotoY = cardY + 25;
-      const nPhotoH = 66;
+      const nPhotoY = cardY + 23;
+      const nPhotoH = 60;
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(203, 213, 225);
       doc.roundedRect(nPhotoX, nPhotoY, nomPhotoW, nPhotoH, 3, 3, 'FD');
 
       if (nominee.gender === 'female') {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
+        doc.setFontSize(6.6);
         doc.setTextColor(5, 150, 105);
-        doc.text('Female', nPhotoX + nomPhotoW / 2, nPhotoY + 29, { align: 'center' });
-        doc.text('Photo Exempt', nPhotoX + nomPhotoW / 2, nPhotoY + 39, { align: 'center' });
+        doc.text('Female', nPhotoX + nomPhotoW / 2, nPhotoY + 26, { align: 'center' });
+        doc.text('Photo Exempt', nPhotoX + nomPhotoW / 2, nPhotoY + 36, { align: 'center' });
       } else if (nomPhoto) {
         drawFittedImage(doc, nomPhoto, nPhotoX + 2, nPhotoY + 2, nomPhotoW - 4, nPhotoH - 4, 1);
       } else {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
+        doc.setFontSize(6.6);
         doc.setTextColor(148, 163, 184);
-        doc.text('Nominee', nPhotoX + nomPhotoW / 2, nPhotoY + 29, { align: 'center' });
-        doc.text('Photo', nPhotoX + nomPhotoW / 2, nPhotoY + 39, { align: 'center' });
+        doc.text('Nominee', nPhotoX + nomPhotoW / 2, nPhotoY + 26, { align: 'center' });
+        doc.text('Photo', nPhotoX + nomPhotoW / 2, nPhotoY + 36, { align: 'center' });
       }
 
-      y = cardY + cardH + 8;
+      y = cardY + cardH + 6;
     });
-    y += 4;
+    y += 2;
   }
 
   // =========================================================================
   // DECLARATION, ATTACHMENTS CHECKLIST & 300x80 SIGNATURE BLOCK
+  // Pre-measure full block so Section 04 NEVER orphans signatures on page 2
   // =========================================================================
-  ensureSpace(172);
+  const declarationText =
+    `I hereby declare that all personal, address, employment, and nominee information provided in this membership application is true, accurate, and complete. I agree to abide by the Constitution Charter (§4–§6 · VISION-36) and governance policies of ${fundName}, including monthly savings obligations and Shariah-compliant interest-free Qard Hasan principles.`;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.8);
+  const declLines = doc.splitTextToSize(declarationText, contentWidth - 16) as string[];
+  const declH = declLines.length * 9.8 + 12;
+  const sigBoxH = 74;
+  const totalSection4H = 23 + 25 + 6 + declH + 7 + sigBoxH;
+
+  ensureSpace(totalSection4H);
   drawSectionBar(`0${nextSectionNumber}`, 'DECLARATION, ATTACHMENTS & SIGNATURES');
 
   // Attachments Checklist Strip
@@ -1150,67 +1240,61 @@ export async function downloadMembershipApplicationPdf(
     ],
     y
   );
-  y += 8;
+  y += 6;
 
   // Declaration Box
-  const declarationText =
-    `I hereby declare that all personal, address, employment, and nominee information provided in this membership application is true, accurate, and complete. I agree to abide by the Constitution Charter (§4–§6 · VISION-36) and governance policies of ${fundName}, including monthly savings obligations and Shariah-compliant interest-free Qard Hasan principles.`;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.2);
-  const declLines = doc.splitTextToSize(declarationText, contentWidth - 18) as string[];
-  const declH = declLines.length * 10.5 + 14;
-
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.6);
   doc.roundedRect(margin, y, contentWidth, declH, 4, 4, 'FD');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.8);
   doc.setTextColor(51, 65, 85);
-  doc.text(declLines, margin + 9, y + 12.5);
-  y += declH + 10;
+  doc.text(declLines, margin + 8, y + 11);
+  y += declH + 7;
 
   // Dual Signature Blocks (Applicant 300x80 Signature + Admin Office Use Only)
-  const sigBoxGap = 14;
+  const sigBoxGap = 12;
   const sigBoxW = (contentWidth - sigBoxGap) / 2;
-  const sigBoxH = 82;
-  ensureSpace(sigBoxH + 12);
 
   // Left: Applicant Signature
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.75);
+  doc.setLineWidth(0.7);
   doc.roundedRect(margin, y, sigBoxW, sigBoxH, 4, 4, 'FD');
 
-  const sigFrameW = 150;
-  const sigFrameH = 40; // exact 300x80 (15:4) proportion
+  const sigFrameW = 135;
+  const sigFrameH = 36; // exact 300x80 (15:4) proportion
   const sigFrameX = margin + (sigBoxW - sigFrameW) / 2;
-  const sigFrameY = y + 8;
+  const sigFrameY = y + 6;
 
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(226, 232, 240);
-  doc.rect(sigFrameX, sigFrameY, sigFrameW, sigFrameH, 'FD');
+  doc.roundedRect(sigFrameX, sigFrameY, sigFrameW, sigFrameH, 2, 2, 'FD');
 
   if (signatureImg) {
     drawFittedImage(doc, signatureImg, sigFrameX, sigFrameY, sigFrameW, sigFrameH, 2);
   } else {
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.2);
     doc.setTextColor(148, 163, 184);
-    doc.text('Applicant Signature (300 × 80 px)', margin + sigBoxW / 2, sigFrameY + 22, {
+    doc.text('Applicant Signature (300 × 80 px)', margin + sigBoxW / 2, sigFrameY + 20, {
       align: 'center',
     });
   }
 
   doc.setDrawColor(148, 163, 184);
-  doc.line(margin + 24, y + 56, margin + sigBoxW - 24, y + 56);
+  doc.line(margin + 22, y + 49, margin + sigBoxW - 22, y + 49);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.2);
+  doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
-  doc.text('Applicant Signature', margin + sigBoxW / 2, y + 66.5, { align: 'center' });
+  doc.text('Applicant Signature', margin + sigBoxW / 2, y + 59, { align: 'center' });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.2);
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text(`${applicantName} · ${submittedLabel}`, margin + sigBoxW / 2, y + 76, {
+  doc.text(`${applicantName} · ${submittedLabel}`, margin + sigBoxW / 2, y + 68, {
     align: 'center',
-    maxWidth: sigBoxW - 16,
+    maxWidth: sigBoxW - 14,
   });
 
   // Right: Office Use Only (Admin Verification)
@@ -1220,29 +1304,30 @@ export async function downloadMembershipApplicationPdf(
   doc.roundedRect(rightSigX, y, sigBoxW, sigBoxH, 4, 4, 'FD');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text('FOR OFFICE USE ONLY', rightSigX + sigBoxW / 2, y + 15, { align: 'center' });
+  doc.text('FOR OFFICE USE ONLY', rightSigX + sigBoxW / 2, y + 13, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.3);
   doc.setTextColor(148, 163, 184);
-  doc.text('Official Member ID: ______________________', rightSigX + 16, y + 32);
-  doc.text('Approval Date:      ______________________', rightSigX + 16, y + 44);
+  doc.text('Official Member ID: ______________________', rightSigX + 16, y + 28);
+  doc.text('Approval Date:      ______________________', rightSigX + 16, y + 39);
 
   doc.setDrawColor(148, 163, 184);
-  doc.line(rightSigX + 24, y + 56, rightSigX + sigBoxW - 24, y + 56);
+  doc.line(rightSigX + 22, y + 49, rightSigX + sigBoxW - 22, y + 49);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.2);
+  doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
-  doc.text('Authorized Administrator Signature & Seal', rightSigX + sigBoxW / 2, y + 66.5, {
+  doc.text('Authorized Administrator Signature & Seal', rightSigX + sigBoxW / 2, y + 59, {
     align: 'center',
   });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.2);
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text(`${fundName} Administration`, rightSigX + sigBoxW / 2, y + 76, {
+  doc.text(`${fundName} Administration`, rightSigX + sigBoxW / 2, y + 68, {
     align: 'center',
+    maxWidth: sigBoxW - 14,
   });
 
   // =========================================================================
@@ -1253,17 +1338,17 @@ export async function downloadMembershipApplicationPdf(
     doc.setPage(p);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.6);
-    doc.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
+    doc.line(margin, pageHeight - 26, pageWidth - margin, pageHeight - 26);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.2);
     doc.setTextColor(100, 116, 139);
     doc.text(
       `${fundName} · Official Membership Application Form · Confidential KYC Dossier`,
       margin,
-      pageHeight - 18
+      pageHeight - 15
     );
-    doc.text(`Page ${p} of ${totalPages}`, pageWidth - margin, pageHeight - 18, {
+    doc.text(`Page ${p} of ${totalPages}`, pageWidth - margin, pageHeight - 15, {
       align: 'right',
     });
   }

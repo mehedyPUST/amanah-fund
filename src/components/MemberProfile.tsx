@@ -791,6 +791,56 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         {reg?.dateOfBirth || t('notProvided')}
                       </dd>
                     </div>
+                    {reg?.fatherName && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">{t('fieldFatherName')}</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.fatherName}
+                        </dd>
+                      </div>
+                    )}
+                    {reg?.motherName && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">{t('fieldMotherName')}</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.motherName}
+                        </dd>
+                      </div>
+                    )}
+                    {reg?.gender && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">{t('fieldGender')}</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.gender === 'male'
+                            ? t('genderMale')
+                            : reg.gender === 'female'
+                              ? t('genderFemale')
+                              : t('genderOther')}
+                        </dd>
+                      </div>
+                    )}
+                    {reg?.maritalStatus && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">{t('fieldMaritalStatus')}</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.maritalStatus === 'single'
+                            ? t('maritalSingle')
+                            : reg.maritalStatus === 'married'
+                              ? t('maritalMarried')
+                              : reg.maritalStatus === 'widowed'
+                                ? t('maritalWidowed')
+                                : t('maritalDivorced')}
+                        </dd>
+                      </div>
+                    )}
+                    {reg?.spouseName && (
+                      <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <dt className="text-slate-500 dark:text-slate-400">{t('fieldSpouseName')}</dt>
+                        <dd className="font-semibold text-slate-900 dark:text-white text-right">
+                          {reg.spouseName}
+                        </dd>
+                      </div>
+                    )}
                     <div className="py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                       <dt className="text-slate-500 dark:text-slate-400">{t('fieldReferenceMember')}</dt>
                       <dd className="font-semibold text-slate-900 dark:text-white text-right">

@@ -843,6 +843,61 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </dd>
                       </div>
 
+                      {reg.fatherName && (
+                        <div>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('fatherName')}</dt>
+                          <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {reg.fatherName}
+                          </dd>
+                        </div>
+                      )}
+
+                      {reg.motherName && (
+                        <div>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('motherName')}</dt>
+                          <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {reg.motherName}
+                          </dd>
+                        </div>
+                      )}
+
+                      {reg.gender && (
+                        <div>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('gender')}</dt>
+                          <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {reg.gender === 'male'
+                              ? t('genderMale')
+                              : reg.gender === 'female'
+                                ? t('genderFemale')
+                                : t('genderOther')}
+                          </dd>
+                        </div>
+                      )}
+
+                      {reg.maritalStatus && (
+                        <div>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('maritalStatus')}</dt>
+                          <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {reg.maritalStatus === 'single'
+                              ? t('maritalSingle')
+                              : reg.maritalStatus === 'married'
+                                ? t('maritalMarried')
+                                : reg.maritalStatus === 'widowed'
+                                  ? t('maritalWidowed')
+                                  : t('maritalDivorced')}
+                          </dd>
+                        </div>
+                      )}
+
+                      {reg.spouseName && (
+                        <div>
+                          <dt className="text-slate-500 dark:text-slate-400">{t('spouseName')}</dt>
+                          <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {reg.spouseName}
+                          </dd>
+                        </div>
+                      )}
+
                       <div className="col-span-2 lg:col-span-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <dt className="text-slate-500 dark:text-slate-400">{t('presentAddress')}</dt>

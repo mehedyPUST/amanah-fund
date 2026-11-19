@@ -27,6 +27,8 @@ import type {
   LoanGuarantor,
   LoanRequest,
   LoanVote,
+  MaritalStatus,
+  MemberGender,
   MemberSocialMedia,
   NoticePriority,
   NotificationPreferences,
@@ -904,6 +906,23 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     const name = String(req.body?.name || '').trim();
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
+    const fatherName = String(req.body?.fatherName || '').trim();
+    const motherName = String(req.body?.motherName || '').trim();
+    const rawGender = String(req.body?.gender || '').trim().toLowerCase();
+    const gender: MemberGender | '' =
+      rawGender === 'male' || rawGender === 'female' || rawGender === 'other'
+        ? rawGender
+        : '';
+    const rawMaritalStatus = String(req.body?.maritalStatus || '').trim().toLowerCase();
+    const maritalStatus: MaritalStatus | '' =
+      rawMaritalStatus === 'single' ||
+      rawMaritalStatus === 'married' ||
+      rawMaritalStatus === 'widowed' ||
+      rawMaritalStatus === 'divorced'
+        ? rawMaritalStatus
+        : '';
+    const rawSpouseName = String(req.body?.spouseName || '').trim();
+    const spouseName = maritalStatus === 'single' ? undefined : rawSpouseName || undefined;
     const dateOfBirth = String(req.body?.dateOfBirth || '').trim();
     const currentVaultSnapshot = await loadVaultState();
     const isFirstAccountBootstrap = currentVaultSnapshot.users.length === 0;
@@ -970,6 +989,10 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     if (
       !name ||
       !email ||
+      !fatherName ||
+      !motherName ||
+      !gender ||
+      !maritalStatus ||
       !dateOfBirth ||
       (!isFirstAccountBootstrap && !referenceMemberName) ||
       !mobile ||
@@ -982,7 +1005,14 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     ) {
       res.status(400).json({
         error:
-          'All required registration fields (including photo, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
+          'All required registration fields (including photo, father/mother name, gender, marital status, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
+      });
+      return;
+    }
+
+    if (maritalStatus === 'married' && !spouseName) {
+      res.status(400).json({
+        error: 'Spouse name is required when marital status is Married.',
       });
       return;
     }
@@ -994,6 +1024,11 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
     }
 
     const registrationDetails: UserRegistrationDetails = {
+      fatherName,
+      motherName,
+      gender,
+      maritalStatus,
+      spouseName,
       dateOfBirth,
       referenceMemberName,
       mobile,

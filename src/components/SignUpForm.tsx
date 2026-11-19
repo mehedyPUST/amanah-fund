@@ -33,7 +33,13 @@ import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import type { AppLocale } from '../i18n/config.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
-import type { NomineeGender, NomineeInfo, StructuredBdAddress } from '../types/coop.ts';
+import type {
+  MaritalStatus,
+  MemberGender,
+  NomineeGender,
+  NomineeInfo,
+  StructuredBdAddress,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import {
   downloadMembershipApplicationPdf,
@@ -52,6 +58,61 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
 
+const OTHER_RELATION_VALUE = '__other__';
+
+const FEMALE_NOMINEE_RELATIONS = [
+  'Wife',
+  'Mother',
+  'Daughter',
+  'Sister',
+  'Grandmother',
+  'Granddaughter',
+  'Aunt',
+  'Niece',
+  'Mother-in-Law',
+  'Sister-in-Law',
+  'Daughter-in-Law',
+] as const;
+
+const MALE_NOMINEE_RELATIONS = [
+  'Husband',
+  'Father',
+  'Son',
+  'Brother',
+  'Grandfather',
+  'Grandson',
+  'Uncle',
+  'Nephew',
+  'Father-in-Law',
+  'Brother-in-Law',
+  'Son-in-Law',
+] as const;
+
+const OTHER_NOMINEE_RELATIONS = [
+  'Spouse',
+  'Parent',
+  'Child',
+  'Sibling',
+  'Relative',
+  'Guardian',
+] as const;
+
+function getLogicalRelationOptions(
+  nomineeGender: '' | NomineeGender,
+  applicantGender: '' | MemberGender
+): string[] {
+  if (nomineeGender === 'female') {
+    return FEMALE_NOMINEE_RELATIONS.filter((r) => !(applicantGender === 'female' && r === 'Wife'));
+  }
+  if (nomineeGender === 'male') {
+    return MALE_NOMINEE_RELATIONS.filter((r) => !(applicantGender === 'male' && r === 'Husband'));
+  }
+  if (nomineeGender === 'other') {
+    return [...OTHER_NOMINEE_RELATIONS];
+  }
+  return [];
+}
+
 interface NomineeDraft {
   id: string;
   name: string;
@@ -59,6 +120,7 @@ interface NomineeDraft {
   gender: '' | NomineeGender;
   occupation: string;
   relation: string;
+  customRelation: string;
   sharePercentage: string;
   nidOrBirthReg: string;
   mobile: string;
@@ -76,6 +138,7 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
     gender: '',
     occupation: '',
     relation: '',
+    customRelation: '',
     sharePercentage,
     nidOrBirthReg: '',
     mobile: '',
@@ -114,6 +177,11 @@ export function SignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fatherName, setFatherName] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [gender, setGender] = useState<'' | MemberGender>('');
+  const [maritalStatus, setMaritalStatus] = useState<'' | MaritalStatus>('');
+  const [spouseName, setSpouseName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [referenceMemberName, setReferenceMemberName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -227,10 +295,38 @@ export function SignUpForm() {
       prev.map((item, i) => {
         if (i !== index) return item;
         const next: NomineeDraft = { ...item, [field]: value };
-        if (field === 'gender' && value === 'female') {
-          next.photoUrl = '';
+        if (field === 'gender') {
+          const nextGender = value as '' | NomineeGender;
+          if (nextGender === 'female') {
+            next.photoUrl = '';
+          }
+          const allowed = getLogicalRelationOptions(nextGender, gender);
+          if (
+            next.relation &&
+            next.relation !== OTHER_RELATION_VALUE &&
+            !allowed.includes(next.relation)
+          ) {
+            next.relation = '';
+            next.customRelation = '';
+          }
+        }
+        if (field === 'relation' && value !== OTHER_RELATION_VALUE) {
+          next.customRelation = '';
         }
         return next;
+      })
+    );
+  }
+
+  function handleApplicantGenderChange(nextGender: '' | MemberGender) {
+    setGender(nextGender);
+    setNominees((prev) =>
+      prev.map((item) => {
+        if (!item.gender || !item.relation || item.relation === OTHER_RELATION_VALUE) {
+          return item;
+        }
+        const allowed = getLogicalRelationOptions(item.gender, nextGender);
+        return allowed.includes(item.relation) ? item : { ...item, relation: '' };
       })
     );
   }
@@ -478,6 +574,10 @@ export function SignUpForm() {
       setError(t('errPasswordMismatch'));
       return;
     }
+    if (maritalStatus === 'married' && !spouseName.trim()) {
+      setError(t('errSpouseRequired'));
+      return;
+    }
     if (!isBdAddressComplete(presentAddressDetails)) {
       setError(t('errPresentAddressIncomplete'));
       return;
@@ -504,13 +604,15 @@ export function SignUpForm() {
       const prefix = multipleNominees
         ? t('nomineeNumber', { number: i + 1 })
         : t('primaryNominee');
+      const resolvedRelation =
+        n.relation === OTHER_RELATION_VALUE ? n.customRelation.trim() : n.relation.trim();
 
       if (
         !n.name.trim() ||
         !n.dateOfBirth.trim() ||
         !n.gender ||
         !n.occupation.trim() ||
-        !n.relation.trim() ||
+        !resolvedRelation ||
         !n.nidOrBirthReg.trim() ||
         !n.address.trim()
       ) {
@@ -541,7 +643,7 @@ export function SignUpForm() {
         dateOfBirth: n.dateOfBirth.trim(),
         gender: n.gender,
         occupation: n.occupation.trim(),
-        relation: n.relation.trim(),
+        relation: resolvedRelation,
         sharePercentage,
         nidOrBirthReg: n.nidOrBirthReg.trim(),
         mobile: n.mobile.trim() || undefined,
@@ -563,6 +665,8 @@ export function SignUpForm() {
     const hasSocialMedia = Boolean(
       cleanedSocial.whatsapp || cleanedSocial.facebook || cleanedSocial.linkedin
     );
+    const cleanedSpouse =
+      maritalStatus === 'single' ? undefined : spouseName.trim() || undefined;
 
     setSubmitting(true);
     try {
@@ -573,6 +677,11 @@ export function SignUpForm() {
         name,
         email,
         password,
+        fatherName: fatherName.trim(),
+        motherName: motherName.trim(),
+        gender: gender as MemberGender,
+        maritalStatus: maritalStatus as MaritalStatus,
+        spouseName: cleanedSpouse,
         dateOfBirth,
         referenceMemberName: resolvedReference,
         mobile,
@@ -598,6 +707,11 @@ export function SignUpForm() {
         submittedAt: res.user?.joinedAt || new Date().toISOString(),
         fundName: constitution?.fundName || undefined,
         registrationDetails: {
+          fatherName: fatherName.trim(),
+          motherName: motherName.trim(),
+          gender: gender as MemberGender,
+          maritalStatus: maritalStatus as MaritalStatus,
+          spouseName: cleanedSpouse,
           dateOfBirth,
           referenceMemberName: resolvedReference,
           mobile,
@@ -628,6 +742,11 @@ export function SignUpForm() {
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+      setFatherName('');
+      setMotherName('');
+      setGender('');
+      setMaritalStatus('');
+      setSpouseName('');
       setDateOfBirth('');
       setReferenceMemberName('');
       setMobile('');
@@ -1042,6 +1161,34 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('fatherName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={fatherName}
+                    onChange={(e) => setFatherName(e.target.value)}
+                    placeholder={t('fatherNamePh')}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('motherName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={motherName}
+                    onChange={(e) => setMotherName(e.target.value)}
+                    placeholder={t('motherNamePh')}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {t('dob')} <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1055,19 +1202,101 @@ export function SignUpForm() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    {t('mobile')} <span className="text-red-500">*</span>
+                    {t('gender')} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
+                  <select
                     required
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    placeholder={t('mobilePh')}
-                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                  />
+                    value={gender}
+                    onChange={(e) =>
+                      handleApplicantGenderChange(e.target.value as '' | MemberGender)
+                    }
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  >
+                    <option value="">{t('selectGender')}</option>
+                    <option value="male">{t('male')}</option>
+                    <option value="female">{t('female')}</option>
+                    <option value="other">{t('other')}</option>
+                  </select>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    {t('maritalStatus')} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={maritalStatus}
+                    onChange={(e) => {
+                      const next = e.target.value as '' | MaritalStatus;
+                      setMaritalStatus(next);
+                      if (next === 'single' || next === '') {
+                        setSpouseName('');
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                  >
+                    <option value="">{t('selectMaritalStatus')}</option>
+                    <option value="single">{t('maritalSingle')}</option>
+                    <option value="married">{t('maritalMarried')}</option>
+                    <option value="widowed">{t('maritalWidowed')}</option>
+                    <option value="divorced">{t('maritalDivorced')}</option>
+                  </select>
+                </div>
+
+                {maritalStatus && maritalStatus !== 'single' ? (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      {t('spouseName')}{' '}
+                      {maritalStatus === 'married' ? (
+                        <span className="text-red-500">*</span>
+                      ) : (
+                        <span className="text-slate-500 dark:text-slate-400 font-normal">
+                          {t('optional')}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      required={maritalStatus === 'married'}
+                      value={spouseName}
+                      onChange={(e) => setSpouseName(e.target.value)}
+                      placeholder={t('spouseNamePh')}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      {t('mobile')} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      placeholder={t('mobilePh')}
+                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    />
+                  </div>
+                )}
+
+                {maritalStatus && maritalStatus !== 'single' && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      {t('mobile')} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      placeholder={t('mobilePh')}
+                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    />
+                  </div>
+                )}
+
+                <div className={maritalStatus && maritalStatus !== 'single' ? '' : 'sm:col-span-2'}>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {t('nid')} <span className="text-red-500">*</span>
                   </label>
@@ -1349,16 +1578,6 @@ export function SignUpForm() {
                 </div>
               </div>
 
-              <datalist id="coop-nominee-relations">
-                <option value="Spouse" />
-                <option value="Father" />
-                <option value="Mother" />
-                <option value="Son" />
-                <option value="Daughter" />
-                <option value="Brother" />
-                <option value="Sister" />
-              </datalist>
-
               <div className="space-y-4">
                 <AnimatePresence initial={false}>
                   {nominees.map((nominee, idx) => (
@@ -1462,15 +1681,50 @@ export function SignUpForm() {
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                           {t('relation')} <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          type="text"
-                          required
-                          list="coop-nominee-relations"
-                          value={nominee.relation}
-                          onChange={(e) => updateNomineeField(idx, 'relation', e.target.value)}
-                          placeholder={t('relationPh')}
-                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                        />
+                        {(() => {
+                          const relationOptions = getLogicalRelationOptions(nominee.gender, gender);
+                          return (
+                            <div className="space-y-2">
+                              <select
+                                required
+                                disabled={!nominee.gender}
+                                value={nominee.relation}
+                                onChange={(e) =>
+                                  updateNomineeField(idx, 'relation', e.target.value)
+                                }
+                                className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                <option value="">
+                                  {nominee.gender
+                                    ? t('selectRelation')
+                                    : t('selectGenderFirst')}
+                                </option>
+                                {relationOptions.map((relKey) => (
+                                  <option key={relKey} value={relKey}>
+                                    {t(`nomineeRelations.${relKey}`)}
+                                  </option>
+                                ))}
+                                {nominee.gender && (
+                                  <option value={OTHER_RELATION_VALUE}>
+                                    {t('nomineeRelations.Other')}
+                                  </option>
+                                )}
+                              </select>
+                              {nominee.relation === OTHER_RELATION_VALUE && (
+                                <input
+                                  type="text"
+                                  required
+                                  value={nominee.customRelation}
+                                  onChange={(e) =>
+                                    updateNomineeField(idx, 'customRelation', e.target.value)
+                                  }
+                                  placeholder={t('customRelationPh')}
+                                  className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div>

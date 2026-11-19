@@ -37,6 +37,8 @@ export interface NotificationPreferences {
 }
 
 export type NomineeGender = 'male' | 'female' | 'other';
+export type MemberGender = NomineeGender;
+export type MaritalStatus = 'single' | 'married' | 'widowed' | 'divorced';
 
 export interface NomineeInfo {
   name: string;
@@ -68,6 +70,11 @@ export interface MemberSocialMedia {
 }
 
 export interface UserRegistrationDetails {
+  fatherName?: string;
+  motherName?: string;
+  gender?: MemberGender;
+  maritalStatus?: MaritalStatus;
+  spouseName?: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;

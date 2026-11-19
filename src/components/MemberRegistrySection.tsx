@@ -676,6 +676,58 @@ export function MemberRegistrySection({
                             {reg.companyOrganization}
                           </div>
                         </div>
+                        {reg.fatherName && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">{t('fatherName')}</div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.fatherName}
+                            </div>
+                          </div>
+                        )}
+                        {reg.motherName && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">{t('motherName')}</div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.motherName}
+                            </div>
+                          </div>
+                        )}
+                        {reg.gender && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">{t('gender')}</div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.gender === 'male'
+                                ? t('genderMale')
+                                : reg.gender === 'female'
+                                  ? t('genderFemale')
+                                  : t('genderOther')}
+                            </div>
+                          </div>
+                        )}
+                        {reg.maritalStatus && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">
+                              {t('maritalStatus')}
+                            </div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.maritalStatus === 'single'
+                                ? t('maritalSingle')
+                                : reg.maritalStatus === 'married'
+                                  ? t('maritalMarried')
+                                  : reg.maritalStatus === 'widowed'
+                                    ? t('maritalWidowed')
+                                    : t('maritalDivorced')}
+                            </div>
+                          </div>
+                        )}
+                        {reg.spouseName && (
+                          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="text-slate-500 dark:text-slate-400">{t('spouseName')}</div>
+                            <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                              {reg.spouseName}
+                            </div>
+                          </div>
+                        )}
                         <div className="sm:col-span-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                           <div className="text-slate-500 dark:text-slate-400">{t('presentAddress')}</div>
                           <div className="mt-0.5 text-slate-900 dark:text-white">

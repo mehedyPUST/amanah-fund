@@ -30,6 +30,8 @@ import type {
   HalalProject,
   LoanRequest,
   ManagerCycleSchedule,
+  MaritalStatus,
+  MemberGender,
   MemberPublicProfile,
   MemberSocialMedia,
   MemberSummary,
@@ -263,6 +265,11 @@ export interface RegisterMemberPayload {
   name: string;
   email: string;
   password: string;
+  fatherName: string;
+  motherName: string;
+  gender: MemberGender;
+  maritalStatus: MaritalStatus;
+  spouseName?: string;
   dateOfBirth: string;
   referenceMemberName: string;
   mobile: string;
