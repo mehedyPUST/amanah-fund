@@ -1936,29 +1936,38 @@ export function BalanceSheetView({
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="relative group/avatar shrink-0">
                               {onViewMemberProfile ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setIsFullScreen(false);
-                                    onViewMemberProfile(row.userId);
-                                  }}
-                                  title={row.name}
-                                  aria-label={`${row.name} — ${t('viewProfile')}`}
-                                  className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
-                                >
-                                  <SheetMemberAvatar
-                                    key={row.photoUrl || 'init'}
-                                    name={row.name}
-                                    photoUrl={row.photoUrl}
-                                    size="md"
-                                  />
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setIsFullScreen(false);
+                                      onViewMemberProfile(row.userId);
+                                    }}
+                                    aria-label={`${row.name} — ${t('clickToVisitProfile')}`}
+                                    className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
+                                  >
+                                    <SheetMemberAvatar
+                                      key={row.photoUrl || 'init'}
+                                      name={row.name}
+                                      photoUrl={row.photoUrl}
+                                      size="md"
+                                    />
+                                  </button>
+                                  <div
+                                    role="tooltip"
+                                    className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150"
+                                  >
+                                    <span
+                                      aria-hidden="true"
+                                      className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+                                    />
+                                    {t('clickToVisitProfile')}
+                                  </div>
+                                </>
                               ) : (
                                 <div
-                                  tabIndex={0}
-                                  title={row.name}
                                   aria-label={row.name}
-                                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                                  className="rounded-full"
                                 >
                                   <SheetMemberAvatar
                                     key={row.photoUrl || 'init'}
@@ -1968,16 +1977,6 @@ export function BalanceSheetView({
                                   />
                                 </div>
                               )}
-                              <div
-                                role="tooltip"
-                                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150"
-                              >
-                                <span
-                                  aria-hidden="true"
-                                  className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-                                />
-                                {row.name}
-                              </div>
                             </div>
                             <button
                               type="button"
@@ -2081,12 +2080,13 @@ export function BalanceSheetView({
                         freezeIdentityCols && colIdx === 0
                           ? 'md:sticky md:left-[48px] md:z-40'
                           : freezeIdentityCols && colIdx === 1
-                            ? 'md:sticky md:left-[228px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                            ? 'md:sticky md:left-[242px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                             : '';
                       return (
                         <th
                           key={letter}
                           scope="col"
+                          colSpan={colIdx === 0 ? 2 : 1}
                           className={`h-6 px-2 text-center font-semibold border-r border-b border-slate-200 dark:border-slate-700 ${stickyClass} ${
                             colActive
                               ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200'
@@ -2107,7 +2107,7 @@ export function BalanceSheetView({
                     />
                     <th
                       scope="colgroup"
-                      colSpan={2}
+                      colSpan={3}
                       className={`h-7 px-3 text-left border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 ${
                         freezeIdentityCols
                           ? 'md:sticky md:left-[48px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
@@ -2155,10 +2155,11 @@ export function BalanceSheetView({
                       </button>
                     </th>
 
-                    {/* A: Name (with photo) */}
+                    {/* A: Name (photo + name separated invisibly across two cells) */}
                     <th
                       scope="col"
-                      className={`min-w-[180px] w-[180px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                      colSpan={2}
+                      className={`min-w-[194px] w-[194px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
                         freezeIdentityCols ? 'md:sticky md:left-[48px] md:z-40' : ''
                       }`}
                     >
@@ -2177,7 +2178,7 @@ export function BalanceSheetView({
                       scope="col"
                       className={`min-w-[96px] w-[96px] px-3 py-2.5 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
                         freezeIdentityCols
-                          ? 'md:sticky md:left-[228px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                          ? 'md:sticky md:left-[242px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
                           : ''
                       }`}
                     >
@@ -2362,7 +2363,7 @@ export function BalanceSheetView({
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={14}
+                        colSpan={15}
                         className="py-12 px-4 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
                       >
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -2446,24 +2447,18 @@ export function BalanceSheetView({
                             {idx + 1}
                           </td>
 
-                          {/* A: Name + Member Photo (click photo for profile, double-click cell for details modal) */}
+                          {/* A1: Member Photo (separate cell with invisible vertical separation from Name; click to visit profile) */}
                           <td
-                            data-sheet-cell={`balance-sheet:${idx}:0`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            onDoubleClick={() => {
-                              selectSheetCell('balance-sheet', idx, 0);
-                              setInspectedMemberId(row.userId);
-                            }}
-                            title="Double-click to view member details"
-                            className={`relative px-3 ${cellPadY} border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
+                            className={`relative w-[42px] min-w-[42px] pl-2.5 pr-1 ${cellPadY} border-r-0 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
                                 ? `md:sticky md:left-[48px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg}`
                                 : ''
-                            } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
+                            }`}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="relative group/avatar shrink-0">
-                                {onViewMemberProfile ? (
+                            <div className="relative group/avatar inline-flex items-center justify-center">
+                              {onViewMemberProfile ? (
+                                <>
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -2472,7 +2467,7 @@ export function BalanceSheetView({
                                       onViewMemberProfile(row.userId);
                                     }}
                                     onDoubleClick={(e) => e.stopPropagation()}
-                                    aria-label={`${row.name} — ${t('viewProfile')}`}
+                                    aria-label={`${row.name} — ${t('clickToVisitProfile')}`}
                                     className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                   >
                                     <SheetMemberAvatar
@@ -2481,32 +2476,48 @@ export function BalanceSheetView({
                                       photoUrl={row.photoUrl}
                                     />
                                   </button>
-                                ) : (
                                   <div
-                                    tabIndex={0}
-                                    aria-label={row.name}
-                                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                                    role="tooltip"
+                                    className={`pointer-events-none absolute ${avatarTooltipPos} z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150`}
                                   >
-                                    <SheetMemberAvatar
-                                      key={row.photoUrl || 'init'}
-                                      name={row.name}
-                                      photoUrl={row.photoUrl}
+                                    <span
+                                      aria-hidden="true"
+                                      className={`absolute ${avatarTooltipCaret} w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100`}
                                     />
+                                    {t('clickToVisitProfile')}
                                   </div>
-                                )}
+                                </>
+                              ) : (
                                 <div
-                                  role="tooltip"
-                                  className={`pointer-events-none absolute ${avatarTooltipPos} z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 transition-opacity duration-150`}
+                                  aria-label={row.name}
+                                  className="rounded-full"
                                 >
-                                  <span
-                                    aria-hidden="true"
-                                    className={`absolute ${avatarTooltipCaret} w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100`}
+                                  <SheetMemberAvatar
+                                    key={row.photoUrl || 'init'}
+                                    name={row.name}
+                                    photoUrl={row.photoUrl}
                                   />
-                                  {isSelfRow ? `${row.name} (You)` : row.name}
                                 </div>
-                              </div>
+                              )}
+                            </div>
+                          </td>
 
-                              <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[118px]">
+                          {/* A2: Member Name (invisibly separated from Photo cell; double-click cell for details modal; no name tooltip) */}
+                          <td
+                            data-sheet-cell={`balance-sheet:${idx}:0`}
+                            onClick={() => selectSheetCell('balance-sheet', idx, 0)}
+                            onDoubleClick={() => {
+                              selectSheetCell('balance-sheet', idx, 0);
+                              setInspectedMemberId(row.userId);
+                            }}
+                            className={`w-[152px] min-w-[152px] pl-1.5 pr-3 ${cellPadY} border-l-0 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
+                              freezeIdentityCols
+                                ? `md:sticky md:left-[90px] md:z-20 ${stickyBg}`
+                                : ''
+                            } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[112px]">
                                 {row.name}
                               </span>
                               {isSelfRow && (
@@ -2517,7 +2528,7 @@ export function BalanceSheetView({
                             </div>
                           </td>
 
-                          {/* B: Member ID */}
+                          {/* B: Member ID (double-click to show details, with custom hover tooltip) */}
                           <td
                             data-sheet-cell={`balance-sheet:${idx}:1`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 1)}
@@ -2525,14 +2536,23 @@ export function BalanceSheetView({
                               selectSheetCell('balance-sheet', idx, 1);
                               setInspectedMemberId(row.userId);
                             }}
-                            title="Double-click to view member details"
-                            className={`px-3 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
+                            className={`relative group/memberid px-3 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
-                                ? `md:sticky md:left-[228px] md:z-20 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
+                                ? `md:sticky md:left-[242px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 1))}`}
                           >
-                            {row.memberCode}
+                            <span>{row.memberCode}</span>
+                            <div
+                              role="tooltip"
+                              className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-sans font-medium whitespace-nowrap shadow-md opacity-0 group-hover/memberid:opacity-100 group-focus-within/memberid:opacity-100 transition-opacity duration-150"
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+                              />
+                              {t('doubleClickToShowDetails')}
+                            </div>
                           </td>
 
                           {/* C: Prev. Months Cumul. Contribution */}
@@ -2715,7 +2735,7 @@ export function BalanceSheetView({
                         —
                       </td>
                       <td
-                        colSpan={2}
+                        colSpan={3}
                         data-sheet-cell="balance-sheet:-2:0"
                         onClick={() => selectSheetCell('balance-sheet', -2, 0)}
                         className={`px-3 py-2 border-r border-t border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-cell whitespace-nowrap ${
@@ -2772,7 +2792,7 @@ export function BalanceSheetView({
                       Σ
                     </td>
                     <td
-                      colSpan={2}
+                      colSpan={3}
                       data-sheet-cell="balance-sheet:-1:0"
                       onClick={() => selectSheetCell('balance-sheet', -1, 0)}
                       className={`px-3 py-2.5 border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-[#eef3f8] dark:bg-slate-900 cursor-cell whitespace-nowrap ${

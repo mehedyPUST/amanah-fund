@@ -4692,6 +4692,8 @@
     "installmentDueLabel": "Installment due",
     "pendingReviewLabel": "Awaiting review",
     "viewProfile": "View member profile",
+    "clickToVisitProfile": "Click to visit profile",
+    "doubleClickToShowDetails": "Double-click to show details",
     "expandRowAria": "Toggle reconciliation details for {name}",
     "reconciliationFormula": "Opening {opening} + Activity {activity} = Closing {closing}",
     "kpiCollectionTitle": "Monthly Collection",
