@@ -477,6 +477,43 @@ html.dark .amanah-panel {
   font-variant-numeric: tabular-nums;
 }
 
+@keyframes amanah-logo-orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.amanah-logo-orbit-sweep {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 205deg,
+    rgba(5, 150, 105, 0.22) 250deg,
+    #059669 305deg,
+    #0d9488 338deg,
+    #34d399 354deg,
+    transparent 360deg
+  );
+  animation: amanah-logo-orbit-spin 1.85s linear infinite;
+  will-change: transform;
+}
+
+html.dark .amanah-logo-orbit-sweep {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 205deg,
+    rgba(16, 185, 129, 0.24) 250deg,
+    #10b981 305deg,
+    #2dd4bf 338deg,
+    #a7f3d0 354deg,
+    transparent 360deg
+  );
+}
+
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

@@ -1,5 +1,5 @@
 import Skeleton from 'react-loading-skeleton';
-import { AmanahLogo } from '../../components/AmanahLogo.tsx';
+import { AmanahLoadingLogo, AmanahLogo } from '../../components/AmanahLogo.tsx';
 
 export default function DashboardLoading() {
   return (
@@ -10,12 +10,8 @@ export default function DashboardLoading() {
       aria-label="Loading dashboard workspace"
     >
       <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <div className="relative mb-4">
-          <span
-            aria-hidden="true"
-            className="absolute -inset-2 rounded-3xl bg-emerald-500/15 animate-pulse"
-          />
-          <AmanahLogo variant="lockup" size="xl" className="relative shadow-lg" />
+        <div className="mb-4">
+          <AmanahLoadingLogo variant="lockup" size="xl" />
         </div>
         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
           Loading dashboard...

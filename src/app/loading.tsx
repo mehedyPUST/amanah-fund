@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
-import { AmanahLogo } from '../components/AmanahLogo.tsx';
+import { AmanahLoadingLogo } from '../components/AmanahLogo.tsx';
 import { useCoopSession } from '../components/AppProviders.tsx';
 
 export default function AppLoading() {
@@ -13,16 +13,8 @@ export default function AppLoading() {
 
   const logoSplashContent = (
     <div className="relative flex flex-col items-center">
-      <div className="relative mb-5">
-        <span
-          aria-hidden="true"
-          className="absolute -inset-2.5 rounded-3xl bg-emerald-500/15 dark:bg-emerald-400/15 animate-pulse"
-        />
-        <AmanahLogo
-          variant="lockup"
-          size="xl"
-          className="relative shadow-xl ring-emerald-700/20"
-        />
+      <div className="mb-5">
+        <AmanahLoadingLogo variant="lockup" size="xl" />
       </div>
 
       <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">

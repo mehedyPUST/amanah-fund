@@ -39,7 +39,7 @@ import Skeleton from 'react-loading-skeleton';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminSiteSettingsView, type SettingsTabId } from './AdminSiteSettingsView.tsx';
-import { AmanahLogo } from './AmanahLogo.tsx';
+import { AmanahLoadingLogo, AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
@@ -873,12 +873,8 @@ export function DashboardShell() {
       <div className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
         {/* Mobile clean session verification / redirect screen */}
         <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="relative mb-4">
-            <span
-              aria-hidden="true"
-              className="absolute -inset-2 rounded-3xl bg-emerald-500/15 animate-pulse"
-            />
-            <AmanahLogo variant="lockup" size="xl" className="relative shadow-lg" />
+          <div className="mb-4">
+            <AmanahLoadingLogo variant="lockup" size="xl" />
           </div>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             {authChecking ? tCommon('verifyingSession') : tCommon('redirectingSignIn')}

@@ -28,7 +28,7 @@ import {
 import { isMobileBrowseMode, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal } from './ActionModal.tsx';
-import { AmanahLogo } from './AmanahLogo.tsx';
+import { AmanahLoadingLogo, AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
@@ -229,7 +229,7 @@ export function MobileVisitorGate() {
           aria-label={tAuth('mobileGate.checkingSessionAria')}
           className="lg:hidden fixed inset-0 z-50 amanah-ambient-canvas flex flex-col items-center justify-center p-6 text-center"
         >
-          <AmanahLogo size="md" decorative className="shadow-lg mb-3" />
+          <AmanahLoadingLogo variant="mark" size="md" decorative className="mb-3" />
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
             {tCommon('brandName')}
           </div>
