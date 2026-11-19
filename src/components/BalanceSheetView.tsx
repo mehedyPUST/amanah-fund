@@ -19,16 +19,20 @@ import {
   Download,
   FileDown,
   FileSpreadsheet,
+  Landmark,
   LayoutGrid,
   Maximize,
   Minimize,
   Printer,
   RefreshCw,
+  Repeat,
   Rows3,
   Search,
   ShieldAlert,
   Sigma,
   Table2,
+  TrendingUp,
+  Wallet,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -1062,13 +1066,20 @@ export function BalanceSheetView({
             : t('statusDue');
 
     const map: Record<number, { value: string; formula: string }> = {
-      0: {
-        value: row.name,
-        formula: `="${row.name}"  // S.N ${sheetRowNum} · ${row.memberCode} · Double-click for details`,
-      },
+      0: isFullScreen
+        ? {
+            value: row.name,
+            formula: `="${row.name}"  // S.N ${sheetRowNum} · ${row.memberCode} · Double-click for details`,
+          }
+        : {
+            value: row.memberCode,
+            formula: `="${row.memberCode}"  // S.N ${sheetRowNum} · Member Avatar · Double-click for details`,
+          },
       1: {
         value: row.memberCode,
-        formula: `="${row.memberCode}"  // Member ID for ${row.name}`,
+        formula: isFullScreen
+          ? `="${row.memberCode}"  // Member ID for ${row.name}`
+          : `="${row.memberCode}"  // Member ID · Double-click for details`,
       },
       2: {
         value: fmt(row.previousSummary.contributionAmount),
@@ -1137,6 +1148,7 @@ export function BalanceSheetView({
     filterCounts.paid,
     activeMonth,
     prevMonthKey,
+    isFullScreen,
     t,
   ]);
 
@@ -1374,29 +1386,29 @@ export function BalanceSheetView({
     switch (status) {
       case 'paid':
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+            <CheckCircle2 className="w-3 h-3 shrink-0" />
             <span>{t('statusPaid')}</span>
           </span>
         );
       case 'partial':
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
-            <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-amber-500/12 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+            <Clock className="w-3 h-3 shrink-0" />
             <span>{t('statusPartial')}</span>
           </span>
         );
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
-            <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-amber-500/12 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+            <Clock className="w-3 h-3 shrink-0" />
             <span>{t('statusPending')}</span>
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-700 dark:text-rose-400">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-rose-500/12 text-rose-700 dark:text-rose-300 border border-rose-500/25">
+            <AlertCircle className="w-3 h-3 shrink-0" />
             <span>{t('statusDue')}</span>
           </span>
         );
@@ -1407,7 +1419,7 @@ export function BalanceSheetView({
     selectedCell.tab === tab && selectedCell.row === row && selectedCell.col === col;
 
   const cellRingClass = (active: boolean) =>
-    active ? 'ring-2 ring-inset ring-emerald-600 dark:ring-emerald-400' : '';
+    active ? 'ring-2 ring-inset ring-emerald-500 dark:ring-emerald-400' : '';
 
   const cellPadY = density === 'compact' ? 'py-2' : 'py-3';
 
@@ -1418,86 +1430,102 @@ export function BalanceSheetView({
   const kpiSummaryStrip = sheet ? (
     <section
       aria-label="Current month balance sheet summary"
-      className="balance-sheet-printable grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 overflow-hidden"
+      className="balance-sheet-printable grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
     >
-      <div className="px-4 py-4 sm:px-5 flex flex-col justify-between gap-1.5">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Prev. Months Cumul. Contribution
-        </span>
-        <div className="font-mono tabular-nums text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+      <div className="amanah-card-violet border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-violet-800/90 dark:text-violet-200">
+            Prev. Opening Savings
+          </span>
+          <span className="w-7 h-7 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 inline-flex items-center justify-center shrink-0">
+            <Landmark className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
+        </div>
+        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           {formatMoney(sheet.previousMonthSummary.contributionAmount, ccy)}
         </div>
-        <div className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400">
+        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
           Prev. Qard: {formatMoney(sheet.previousMonthSummary.qardHasanAmount, ccy)} · Due:{' '}
           {formatMoney(sheet.previousMonthSummary.dueHasanaAmount, ccy)}
         </div>
       </div>
 
-      <div className="px-4 py-4 sm:px-5 flex flex-col justify-between gap-1.5">
+      <div className="amanah-card-emerald border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Current Month Contribution ({shortMonthLabel})
+          <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+            {shortMonthLabel} Collection
           </span>
-          <span className="font-mono tabular-nums text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono tabular-nums text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 shrink-0">
+            <TrendingUp className="w-3 h-3" aria-hidden="true" />
             {collectionRatePct}%
           </span>
         </div>
-        <div className="font-mono tabular-nums text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300">
           +{formatMoney(sheet.thisMonthOnly.contributionAmount, ccy)}
         </div>
         <div className="space-y-1.5">
           <div
-            className="h-1 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+            className="h-1.5 w-full rounded-full bg-emerald-500/15 overflow-hidden"
             aria-hidden="true"
           >
             <div
-              className="h-full rounded-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
               style={{ width: `${collectionRatePct}%` }}
             />
           </div>
-          <div className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400">
+          <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
             {filterCounts.paid}/{rows.length} paid · Target {formatMoney(expectedCollection, ccy)}
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-4 sm:px-5 flex flex-col justify-between gap-1.5">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Current Month Refund Qard Hasan
-        </span>
-        <div className="font-mono tabular-nums text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+      <div className="amanah-card-amber border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+            {shortMonthLabel} Qard Refund
+          </span>
+          <span className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 inline-flex items-center justify-center shrink-0">
+            <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
+        </div>
+        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300">
           {sheet.thisMonthRepaidAmount > 0
             ? `+${formatMoney(sheet.thisMonthRepaidAmount, ccy)}`
             : formatMoney(0, ccy)}
         </div>
-        <div className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400">
+        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
           Drawn: {formatMoney(sheet.thisMonthOnly.qardHasanAmount, ccy)} · Closing Due:{' '}
-          <span className="text-amber-700 dark:text-amber-400 font-semibold">
+          <span className="text-amber-700 dark:text-amber-300 font-bold">
             {formatMoney(sheet.thisMonthSummary.dueHasanaAmount, ccy)}
           </span>
         </div>
       </div>
 
-      <div className="px-4 py-4 sm:px-5 flex flex-col justify-between gap-1.5">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Closing Savings & Net Cash Flow
-        </span>
-        <div className="font-mono tabular-nums text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+      <div className="amanah-card-teal border rounded-2xl p-4 flex flex-col justify-between gap-2 transition-all">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-teal-800 dark:text-teal-200">
+            Closing Fund &amp; Flow
+          </span>
+          <span className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-700 dark:text-teal-300 inline-flex items-center justify-center shrink-0">
+            <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
+        </div>
+        <div className="font-mono tabular-nums text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           {formatMoney(sheet.thisMonthSummary.contributionAmount, ccy)}
         </div>
-        <div className="text-xs font-mono tabular-nums text-slate-500 dark:text-slate-400">
-          Net Flow:{' '}
+        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
+          Net:{' '}
           <span
             className={
               cashFlowMetrics.netCashFlow >= 0
-                ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-                : 'text-rose-700 dark:text-rose-400 font-semibold'
+                ? 'text-emerald-700 dark:text-emerald-300 font-bold'
+                : 'text-rose-700 dark:text-rose-400 font-bold'
             }
           >
             {cashFlowMetrics.netCashFlow >= 0 ? '+' : '−'}
             {formatMoney(Math.abs(cashFlowMetrics.netCashFlow), ccy)}
           </span>{' '}
-          · Liquid: {formatMoney(netLiquidFund, ccy)}
+          · Liquid {formatMoney(netLiquidFund, ccy)}
         </div>
       </div>
     </section>
@@ -1508,77 +1536,42 @@ export function BalanceSheetView({
       className={`relative balance-sheet-printable bg-white dark:bg-slate-950 overflow-hidden ${
         isFullScreen
           ? 'w-full h-full flex flex-col'
-          : 'rounded-xl border border-slate-200/90 dark:border-slate-800'
+          : 'rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 shadow-[0_12px_36px_-14px_rgba(16,185,129,0.16)]'
       }`}
     >
-      {/* Exit Full Screen Toggle pinned at Top-Right Corner in Full Screen mode */}
-      {isFullScreen && (
-        <div className="absolute top-3 right-3 z-50 print-hidden group/fs">
-          <button
-            type="button"
-            onClick={() => setIsFullScreen(false)}
-            aria-label="Exit full screen (f)"
-            aria-pressed={true}
-            className="h-8 w-8 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white inline-flex items-center justify-center transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-          >
-            <Minimize
-              className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-              strokeWidth={2.2}
-              aria-hidden="true"
-            />
-          </button>
-
-          <div
-            role="tooltip"
-            className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
-          >
-            <span
-              aria-hidden="true"
-              className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-            />
-            Exit full screen (f)
-          </div>
-        </div>
-      )}
-
       {/* 1. Spreadsheet Document Header & Period Controls */}
-      <div
-        className={`relative z-40 shrink-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 ${
-          isFullScreen ? 'pl-4 pr-14' : 'px-4'
-        } py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3`}
-      >
+      <div className="relative z-40 shrink-0 bg-gradient-to-r from-emerald-50/85 via-white to-teal-50/75 dark:from-emerald-950/35 dark:via-slate-950 dark:to-teal-950/25 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4.5 h-4.5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-baseline gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
                 Balance Sheet
               </h1>
-              <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">
-                ·
-              </span>
-              <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
                 {fullMonthLabel}
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
               {fundName} · Target{' '}
-              <span className="font-mono tabular-nums">{formatMoney(monthlyTarget, ccy)}</span>
+              <span className="font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300">
+                {formatMoney(monthlyTarget, ccy)}
+              </span>
               /member · Rolls into {nextMonthLabel}
             </p>
           </div>
         </div>
 
-        {/* Month Switcher + Export Controls */}
+        {/* Month Switcher + Export Controls + Top-Right Icon-Only Full Screen Toggle */}
         <div className="flex flex-wrap items-center gap-1.5 print-hidden">
-          <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900 overflow-hidden">
+          <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900 overflow-hidden shadow-2xs">
             <button
               type="button"
               onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, -1))}
               aria-label={t('prevMonthAria')}
-              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
             >
               <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
@@ -1598,7 +1591,7 @@ export function BalanceSheetView({
               type="button"
               onClick={() => setSelectedMonth((prev) => shiftMonthKey(prev, 1))}
               aria-label={t('nextMonthAria')}
-              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border-l border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+              className="h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 border-l border-slate-200 dark:border-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
             >
               <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
@@ -1608,7 +1601,7 @@ export function BalanceSheetView({
             <button
               type="button"
               onClick={() => setSelectedMonth(currentMonthKey)}
-              className="h-8 px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              className="h-8 px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/90 dark:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
               {t('currentMonthBtn')}
             </button>
@@ -1620,9 +1613,9 @@ export function BalanceSheetView({
             type="button"
             onClick={handleExportCsv}
             disabled={!sheet}
-            className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+            <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             <span>CSV</span>
           </button>
 
@@ -1630,7 +1623,7 @@ export function BalanceSheetView({
             type="button"
             onClick={handleExportPdf}
             disabled={!sheet}
-            className="h-8 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+            className="h-8 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-2xs disabled:opacity-50 inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
           >
             <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
             <span>PDF</span>
@@ -1657,11 +1650,51 @@ export function BalanceSheetView({
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
+
+          {/* Icon-only Full Screen Toggle positioned at Top-Right of Sheet */}
+          <div className="relative group/fs">
+            <button
+              type="button"
+              onClick={() => setIsFullScreen((prev) => !prev)}
+              aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+              aria-pressed={isFullScreen}
+              className={`h-8 w-8 rounded-lg inline-flex items-center justify-center transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                isFullScreen
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs'
+                  : 'border border-emerald-300 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white'
+              }`}
+            >
+              {isFullScreen ? (
+                <Minimize
+                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
+              ) : (
+                <Maximize
+                  className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+
+            <div
+              role="tooltip"
+              className="pointer-events-none absolute right-0 top-full mt-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute -top-1 right-3 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
+              />
+              {isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 2. Search, Segmented Filters & Grid View Controls */}
-      <div className="shrink-0 bg-slate-50/90 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 print-hidden">
+      <div className="shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 print-hidden">
         <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
           {/* Quick Search */}
           <div className="relative w-full sm:w-64">
@@ -1691,7 +1724,7 @@ export function BalanceSheetView({
 
           {activeTab === 'balance-sheet' && (
             <div
-              className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-800/80 flex-wrap"
+              className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800/80 flex-wrap"
               role="group"
               aria-label="Filter members by status"
             >
@@ -1713,18 +1746,18 @@ export function BalanceSheetView({
                       setFilter(item.key);
                       setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
                     }}
-                    className={`h-7 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                    className={`h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                       active
-                        ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-semibold shadow-xs'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
                     }`}
                   >
                     <span>{item.label}</span>
                     <span
-                      className={`font-mono tabular-nums text-[11px] ${
+                      className={`font-mono tabular-nums text-[11px] rounded px-1 ${
                         active
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-slate-400 dark:text-slate-500'
+                          ? 'bg-white/20 text-white'
+                          : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {item.count}
@@ -1744,10 +1777,14 @@ export function BalanceSheetView({
                 type="button"
                 aria-pressed={freezeIdentityCols}
                 onClick={() => setFreezeIdentityCols((v) => !v)}
-                title="Freeze columns A & B (Name & ID)"
+                title={
+                  isFullScreen
+                    ? 'Freeze columns A & B (Name & ID)'
+                    : 'Freeze columns A & B (Photo & ID)'
+                }
                 className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   freezeIdentityCols
-                    ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
+                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -1774,7 +1811,7 @@ export function BalanceSheetView({
                   onClick={() => setMobileViewMode('sheet')}
                   className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
                     mobileViewMode === 'sheet'
-                      ? 'bg-emerald-700 text-white'
+                      ? 'bg-emerald-600 text-white'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -1786,7 +1823,7 @@ export function BalanceSheetView({
                   onClick={() => setMobileViewMode('cards')}
                   className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
                     mobileViewMode === 'cards'
-                      ? 'bg-emerald-700 text-white'
+                      ? 'bg-emerald-600 text-white'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -1803,12 +1840,12 @@ export function BalanceSheetView({
       <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center h-9 print-hidden">
         <div
           title="Selected cell reference"
-          className="w-[74px] shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-center justify-center font-mono tabular-nums text-xs font-bold text-emerald-800 dark:text-emerald-300 select-all"
+          className="w-[74px] shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-emerald-50/75 dark:bg-emerald-950/35 flex items-center justify-center font-mono tabular-nums text-xs font-bold text-emerald-700 dark:text-emerald-300 select-all"
         >
           {activeCellInfo.ref}
         </div>
         <div className="w-9 shrink-0 h-full border-r border-slate-200/80 dark:border-slate-800 flex items-center justify-center select-none">
-          <span className="font-serif italic font-semibold text-sm text-slate-400 dark:text-slate-500">
+          <span className="font-serif italic font-bold text-sm text-teal-600 dark:text-teal-400">
             fx
           </span>
         </div>
@@ -1821,7 +1858,7 @@ export function BalanceSheetView({
             onClick={() => void handleCopyActiveCell()}
             disabled={!activeCellInfo.copyValue}
             title="Copy selected cell value"
-            className="h-6 px-2 rounded text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            className="h-6 px-2 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             {copiedCell ? (
               <>
@@ -1928,6 +1965,7 @@ export function BalanceSheetView({
                 ) : (
                   filteredRows.map((row, idx) => {
                     const netEquity = getNetEquity(row);
+                    const isSelfRow = Boolean(user?.id && row.userId === user.id);
                     return (
                       <div key={row.userId} className="p-3.5 space-y-2.5 bg-white dark:bg-slate-950">
                         <div className="flex items-center justify-between gap-2">
@@ -1941,7 +1979,7 @@ export function BalanceSheetView({
                                       setIsFullScreen(false);
                                       onViewMemberProfile(row.userId);
                                     }}
-                                    aria-label={`${row.name} — ${t('clickToVisitProfile')}`}
+                                    aria-label={`${isFullScreen ? row.name : row.memberCode} — ${t('clickToVisitProfile')}`}
                                     className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                   >
                                     <SheetMemberAvatar
@@ -1964,7 +2002,7 @@ export function BalanceSheetView({
                                 </>
                               ) : (
                                 <div
-                                  aria-label={row.name}
+                                  aria-label={isFullScreen ? row.name : row.memberCode}
                                   className="rounded-full"
                                 >
                                   <SheetMemberAvatar
@@ -1981,12 +2019,27 @@ export function BalanceSheetView({
                               onClick={() => setInspectedMemberId(row.userId)}
                               className="min-w-0 text-left cursor-pointer group/name"
                             >
-                              <div className="text-sm font-semibold text-slate-900 dark:text-slate-50 group-hover/name:text-emerald-700 dark:group-hover/name:text-emerald-400 truncate">
-                                {idx + 1}. {row.name}
-                              </div>
-                              <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                                {row.memberCode}
-                              </div>
+                              {isFullScreen ? (
+                                <>
+                                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-50 group-hover/name:text-emerald-700 dark:group-hover/name:text-emerald-400 truncate">
+                                    {idx + 1}. {row.name}
+                                  </div>
+                                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                                    {row.memberCode}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm font-mono font-semibold text-slate-900 dark:text-slate-50 group-hover/name:text-emerald-700 dark:group-hover/name:text-emerald-400 truncate">
+                                    {idx + 1}. {row.memberCode}
+                                  </span>
+                                  {isSelfRow && (
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </button>
                           </div>
                           {renderStatusIndicator(row.contributionStatus)}
@@ -2054,41 +2107,38 @@ export function BalanceSheetView({
             )}
 
             {/* Abbreviation Legend Line at Top of Sheet */}
-            <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">
-                Abbr:
-              </span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">S.N</strong> = Serial No.
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Prev. Cumul.</strong> = Previous Months Cumulative
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Contrib.</strong> = Contribution
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Qard</strong> = Qard Hasan
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Q. Due</strong> = Qard Hasan Due
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Drawn</strong> = Qard Drawn
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Refund</strong> = Refund Qard Hasan
-              </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-              <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-200">Equity</strong> = Net Member Equity
-              </span>
+            <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/50 px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-bold uppercase tracking-wider text-[10px] text-emerald-700 dark:text-emerald-400 mr-0.5 shrink-0">
+                  Abbr
+                </span>
+                {[
+                  ['S.N', 'Serial No.'],
+                  ['Prev. Cumul.', 'Previous Cumulative'],
+                  ['Contrib.', 'Contribution'],
+                  ['Qard', 'Qard Hasan'],
+                  ['Q. Due', 'Qard Due'],
+                  ['Drawn', 'Qard Drawn'],
+                  ['Refund', 'Refund Qard'],
+                  ['Equity', 'Net Equity'],
+                ].map(([abbr, full]) => (
+                  <span
+                    key={abbr}
+                    className="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 px-1.5 py-0.5"
+                  >
+                    <strong className="font-semibold text-slate-800 dark:text-slate-200">
+                      {abbr}
+                    </strong>
+                    <span className="text-slate-400 dark:text-slate-600">=</span>
+                    <span>{full}</span>
+                  </span>
+                ))}
+              </div>
+              {!isFullScreen && (
+                <span className="hidden lg:inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
+                  Member names visible in full screen
+                </span>
+              )}
             </div>
 
             {/* Authentic Interactive Spreadsheet Grid */}
@@ -2116,13 +2166,15 @@ export function BalanceSheetView({
                         freezeIdentityCols && colIdx === 0
                           ? 'md:sticky md:left-[40px] md:z-40'
                           : freezeIdentityCols && colIdx === 1
-                            ? 'md:sticky md:left-[214px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                            ? `md:sticky ${
+                                isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                              } md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                             : '';
                       return (
                         <th
                           key={letter}
                           scope="col"
-                          colSpan={colIdx === 0 ? 2 : 1}
+                          colSpan={colIdx === 0 ? (isFullScreen ? 2 : 1) : 1}
                           className={`h-6 px-2 text-center font-semibold border-r border-b border-slate-200 dark:border-slate-700 ${stickyClass} ${
                             colActive
                               ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200'
@@ -2143,7 +2195,7 @@ export function BalanceSheetView({
                     />
                     <th
                       scope="colgroup"
-                      colSpan={3}
+                      colSpan={isFullScreen ? 3 : 2}
                       className={`h-7 px-2 text-left border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 ${
                         freezeIdentityCols
                           ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
@@ -2156,7 +2208,7 @@ export function BalanceSheetView({
                       scope="colgroup"
                       colSpan={3}
                       title={`Previous Months Cumulative (${prevMonthLabel})`}
-                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 whitespace-nowrap"
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-indigo-50/85 dark:bg-indigo-950/45 text-indigo-800 dark:text-indigo-200 whitespace-nowrap"
                     >
                       Prev. Cumul. ({prevMonthLabel})
                     </th>
@@ -2164,7 +2216,7 @@ export function BalanceSheetView({
                       scope="colgroup"
                       colSpan={3}
                       title={`Current Month Activity & Refund (${shortMonthLabel})`}
-                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 whitespace-nowrap"
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 whitespace-nowrap"
                     >
                       Current ({shortMonthLabel})
                     </th>
@@ -2172,7 +2224,7 @@ export function BalanceSheetView({
                       scope="colgroup"
                       colSpan={5}
                       title={`Closing Summary (Rolls to ${nextMonthLabel})`}
-                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 whitespace-nowrap"
+                      className="h-7 px-2 text-center border-r border-b border-slate-200 dark:border-slate-700 bg-sky-50/90 dark:bg-sky-950/45 text-sky-900 dark:text-sky-200 whitespace-nowrap"
                     >
                       Closing (→ {nextMonthLabel})
                     </th>
@@ -2194,31 +2246,48 @@ export function BalanceSheetView({
                       </button>
                     </th>
 
-                    {/* A: Name (photo + name separated invisibly across two cells) */}
-                    <th
-                      scope="col"
-                      colSpan={2}
-                      className={`min-w-[174px] w-[174px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
-                        freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSort('name')}
-                        title="Member Name"
-                        className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                    {/* A: Photo + Name (Full Screen) or Photo only (Regular View) */}
+                    {isFullScreen ? (
+                      <th
+                        scope="col"
+                        colSpan={2}
+                        className={`min-w-[174px] w-[174px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                          freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
+                        }`}
                       >
-                        <span>Name</span>
-                        {renderSortIcon('name')}
-                      </button>
-                    </th>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSort('name')}
+                          title="Member Name"
+                          className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        >
+                          <span>Name</span>
+                          {renderSortIcon('name')}
+                        </button>
+                      </th>
+                    ) : (
+                      <th
+                        scope="col"
+                        colSpan={1}
+                        title="Member Avatar"
+                        className={`min-w-[44px] w-[44px] px-1 py-2 text-center border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 ${
+                          freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
+                        }`}
+                      >
+                        Pic
+                      </th>
+                    )}
 
                     {/* B: ID */}
                     <th
                       scope="col"
-                      className={`min-w-[82px] w-[82px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                      className={`${
+                        isFullScreen ? 'min-w-[82px] w-[82px]' : 'min-w-[92px] w-[92px]'
+                      } px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
                         freezeIdentityCols
-                          ? 'md:sticky md:left-[214px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
+                          ? `md:sticky ${
+                              isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                            } md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                           : ''
                       }`}
                     >
@@ -2415,7 +2484,7 @@ export function BalanceSheetView({
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={15}
+                        colSpan={isFullScreen ? 15 : 14}
                         className="py-12 px-4 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
                       >
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -2499,10 +2568,25 @@ export function BalanceSheetView({
                             {idx + 1}
                           </td>
 
-                          {/* A1: Member Photo (separate cell with invisible vertical separation from Name; click to visit profile) */}
+                          {/* A1: Member Photo (separate cell; in regular view carries col 0 focus & border) */}
                           <td
+                            data-sheet-cell={isFullScreen ? undefined : `balance-sheet:${idx}:0`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            className={`relative w-[38px] min-w-[38px] pl-2 pr-0.5 ${cellPadY} border-r-0 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap hover:z-40 focus-within:z-40 ${
+                            onDoubleClick={
+                              isFullScreen
+                                ? undefined
+                                : () => {
+                                    selectSheetCell('balance-sheet', idx, 0);
+                                    setInspectedMemberId(row.userId);
+                                  }
+                            }
+                            className={`relative ${
+                              isFullScreen
+                                ? 'w-[38px] min-w-[38px] pl-2 pr-0.5 border-r-0'
+                                : `w-[44px] min-w-[44px] px-2 text-center border-r border-slate-200 dark:border-slate-800 cursor-pointer ${cellRingClass(
+                                    isCellActive('balance-sheet', idx, 0)
+                                  )}`
+                            } ${cellPadY} border-b border-slate-200 dark:border-slate-800 whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
                                 ? `md:sticky md:left-[40px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg}`
                                 : ''
@@ -2519,7 +2603,9 @@ export function BalanceSheetView({
                                       onViewMemberProfile(row.userId);
                                     }}
                                     onDoubleClick={(e) => e.stopPropagation()}
-                                    aria-label={`${row.name} — ${t('clickToVisitProfile')}`}
+                                    aria-label={`${
+                                      isFullScreen ? row.name : row.memberCode
+                                    } — ${t('clickToVisitProfile')}`}
                                     className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                   >
                                     <SheetMemberAvatar
@@ -2541,7 +2627,7 @@ export function BalanceSheetView({
                                 </>
                               ) : (
                                 <div
-                                  aria-label={row.name}
+                                  aria-label={isFullScreen ? row.name : row.memberCode}
                                   className="rounded-full"
                                 >
                                   <SheetMemberAvatar
@@ -2554,31 +2640,33 @@ export function BalanceSheetView({
                             </div>
                           </td>
 
-                          {/* A2: Member Name (invisibly separated from Photo cell; double-click cell for details modal; no name tooltip) */}
-                          <td
-                            data-sheet-cell={`balance-sheet:${idx}:0`}
-                            onClick={() => selectSheetCell('balance-sheet', idx, 0)}
-                            onDoubleClick={() => {
-                              selectSheetCell('balance-sheet', idx, 0);
-                              setInspectedMemberId(row.userId);
-                            }}
-                            className={`w-[136px] min-w-[136px] pl-1 pr-2 ${cellPadY} border-l-0 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
-                              freezeIdentityCols
-                                ? `md:sticky md:left-[78px] md:z-20 ${stickyBg}`
-                                : ''
-                            } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
-                          >
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[96px]">
-                                {row.name}
-                              </span>
-                              {isSelfRow && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
-                                  You
+                          {/* A2: Member Name (Shown in Full Screen mode; hidden in regular view) */}
+                          {isFullScreen && (
+                            <td
+                              data-sheet-cell={`balance-sheet:${idx}:0`}
+                              onClick={() => selectSheetCell('balance-sheet', idx, 0)}
+                              onDoubleClick={() => {
+                                selectSheetCell('balance-sheet', idx, 0);
+                                setInspectedMemberId(row.userId);
+                              }}
+                              className={`w-[136px] min-w-[136px] pl-1 pr-2 ${cellPadY} border-l-0 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap ${
+                                freezeIdentityCols
+                                  ? `md:sticky md:left-[78px] md:z-20 ${stickyBg}`
+                                  : ''
+                              } ${cellRingClass(isCellActive('balance-sheet', idx, 0))}`}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-semibold text-slate-900 dark:text-slate-50 group-hover/row:text-emerald-800 dark:group-hover/row:text-emerald-300 transition-colors truncate max-w-[96px]">
+                                  {row.name}
                                 </span>
-                              )}
-                            </div>
-                          </td>
+                                {isSelfRow && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          )}
 
                           {/* B: Member ID (double-click to show details, with custom hover tooltip) */}
                           <td
@@ -2590,11 +2678,20 @@ export function BalanceSheetView({
                             }}
                             className={`relative group/memberid px-2 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
-                                ? `md:sticky md:left-[214px] md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
+                                ? `md:sticky ${
+                                    isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                                  } md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 1))}`}
                           >
-                            <span>{row.memberCode}</span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span>{row.memberCode}</span>
+                              {!isFullScreen && isSelfRow && (
+                                <span className="font-sans text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
+                                  You
+                                </span>
+                              )}
+                            </span>
                             <div
                               role="tooltip"
                               className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-sans font-medium whitespace-nowrap shadow-md opacity-0 group-hover/memberid:opacity-100 group-focus-within/memberid:opacity-100 transition-opacity duration-150"
@@ -2787,7 +2884,7 @@ export function BalanceSheetView({
                         —
                       </td>
                       <td
-                        colSpan={3}
+                        colSpan={isFullScreen ? 3 : 2}
                         data-sheet-cell="balance-sheet:-2:0"
                         onClick={() => selectSheetCell('balance-sheet', -2, 0)}
                         className={`px-2 py-2 border-r border-t border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-cell whitespace-nowrap ${
@@ -2844,7 +2941,7 @@ export function BalanceSheetView({
                       Σ
                     </td>
                     <td
-                      colSpan={3}
+                      colSpan={isFullScreen ? 3 : 2}
                       data-sheet-cell="balance-sheet:-1:0"
                       onClick={() => selectSheetCell('balance-sheet', -1, 0)}
                       className={`px-2 py-2.5 border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-[#eef3f8] dark:bg-slate-900 cursor-cell whitespace-nowrap ${
@@ -3142,8 +3239,8 @@ export function BalanceSheetView({
         )}
 
         {/* 5. Bottom Sheet Tabs & Status Bar */}
-        <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 pt-1.5 pb-1.5 flex flex-wrap items-center justify-between gap-2 print-hidden">
-          <div className="flex items-center gap-1" role="tablist" aria-label="Balance Sheet tabs">
+        <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 print-hidden">
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Balance Sheet tabs">
             <button
               type="button"
               role="tab"
@@ -3152,10 +3249,10 @@ export function BalanceSheetView({
                 setActiveTab('balance-sheet');
                 setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
               }}
-              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'balance-sheet'
-                  ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >
               <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -3170,10 +3267,10 @@ export function BalanceSheetView({
                 setActiveTab('variables-summary');
                 setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
               }}
-              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`h-8 px-3 rounded-lg text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'variables-summary'
-                  ? 'bg-white dark:bg-slate-950 text-emerald-800 dark:text-emerald-300 font-semibold border border-slate-200 dark:border-slate-700 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >
               <Sigma className="w-3.5 h-3.5" aria-hidden="true" />
@@ -3228,11 +3325,13 @@ export function BalanceSheetView({
 
   return (
     <div className="space-y-4">
+      {!isFullScreen && kpiSummaryStrip}
+
       {isFullScreen && mounted ? (
         <>
           <div
             aria-hidden="true"
-            className="min-h-[68vh] rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/30"
+            className="min-h-[68vh] rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/30"
           />
           {createPortal(
             <div
@@ -3248,43 +3347,6 @@ export function BalanceSheetView({
       ) : (
         workbookSection
       )}
-
-      {kpiSummaryStrip}
-
-      {/* Floating Full Screen button — always visible as the user scrolls */}
-      {mounted &&
-        !isFullScreen &&
-        !inspectedMemberId &&
-        createPortal(
-          <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 print-hidden group/fs">
-            <button
-              type="button"
-              onClick={() => setIsFullScreen(true)}
-              aria-label="Full screen (f)"
-              aria-pressed={false}
-              className="h-10 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white border border-emerald-400/50 shadow-[0_10px_28px_-6px_rgba(16,185,129,0.55)] hover:shadow-[0_14px_32px_-6px_rgba(16,185,129,0.68)] inline-flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
-            >
-              <Maximize
-                className="w-4 h-4 transition-transform duration-150 group-hover/fs:scale-110"
-                strokeWidth={2.2}
-                aria-hidden="true"
-              />
-              <span className="text-xs font-semibold whitespace-nowrap">Full Screen</span>
-            </button>
-
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute right-0 bottom-full mb-2 z-50 px-2.5 py-1.5 rounded-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-medium whitespace-nowrap shadow-md opacity-0 translate-y-0.5 group-hover/fs:opacity-100 group-hover/fs:translate-y-0 group-focus-within/fs:opacity-100 group-focus-within/fs:translate-y-0 transition-all duration-150"
-            >
-              <span
-                aria-hidden="true"
-                className="absolute -bottom-1 right-4 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-100"
-              />
-              Full screen (f)
-            </div>
-          </div>,
-          document.body
-        )}
 
       <BalanceSheetMemberModal
         row={inspectedMemberRow}
