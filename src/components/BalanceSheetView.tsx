@@ -220,6 +220,7 @@ export function BalanceSheetView({
   const currentMonthKey = useMemo(() => getCurrentMonthKey(), []);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKey());
   const [activeTab, setActiveTab] = useState<WorkbookTab>('balance-sheet');
+  const [displayMode, setDisplayMode] = useState<'sheet' | 'summary'>('sheet');
   const [freezeIdentityCols, setFreezeIdentityCols] = useState(true);
   const [mobileViewMode, setMobileViewMode] = useState<'sheet' | 'cards'>('sheet');
   const [sortField, setSortField] = useState<SortField>('serialNo');
@@ -1361,13 +1362,14 @@ export function BalanceSheetView({
                 <button
                   type="button"
                   aria-pressed={freezeIdentityCols}
+                  disabled={displayMode !== 'sheet'}
                   onClick={() => setFreezeIdentityCols((v) => !v)}
                   title={
                     isFullScreen
                       ? 'Freeze columns A & B (Name & ID)'
                       : 'Freeze columns A & B (Photo & ID)'
                   }
-                  className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  className={`hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                     freezeIdentityCols
                       ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                       : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -1377,13 +1379,50 @@ export function BalanceSheetView({
                   <span>Freeze A–B</span>
                 </button>
 
-                {/* Mobile Sheet / Cards Switch */}
+                {/* Desktop Sheet View (default) / Summary Card Toggle */}
+                <div
+                  role="group"
+                  aria-label="Balance Sheet view mode"
+                  className="hidden md:inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden shrink-0"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={displayMode === 'sheet'}
+                    onClick={() => setDisplayMode('sheet')}
+                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
+                      displayMode === 'sheet'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Sheet View</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={displayMode === 'summary'}
+                    onClick={() => setDisplayMode('summary')}
+                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap ${
+                      displayMode === 'summary'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Summary Card</span>
+                  </button>
+                </div>
+
+                {/* Mobile Sheet / Cards / Summary Switch */}
                 <div className="inline-flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => setMobileViewMode('sheet')}
-                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                      mobileViewMode === 'sheet'
+                    onClick={() => {
+                      setDisplayMode('sheet');
+                      setMobileViewMode('sheet');
+                    }}
+                    className={`h-8 px-2 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                      displayMode === 'sheet' && mobileViewMode === 'sheet'
                         ? 'bg-emerald-600 text-white'
                         : 'text-slate-600 dark:text-slate-300'
                     }`}
@@ -1393,15 +1432,30 @@ export function BalanceSheetView({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMobileViewMode('cards')}
-                    className={`h-8 px-2.5 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer ${
-                      mobileViewMode === 'cards'
+                    onClick={() => {
+                      setDisplayMode('sheet');
+                      setMobileViewMode('cards');
+                    }}
+                    className={`h-8 px-2 text-xs font-semibold inline-flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 cursor-pointer ${
+                      displayMode === 'sheet' && mobileViewMode === 'cards'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Columns3 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{t('viewToggleCards')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMode('summary')}
+                    className={`h-8 px-2 text-xs font-semibold inline-flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 cursor-pointer ${
+                      displayMode === 'summary'
                         ? 'bg-emerald-600 text-white'
                         : 'text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{t('viewToggleCards')}</span>
+                    <span>Summary</span>
                   </button>
                 </div>
               </>
@@ -1578,10 +1632,14 @@ export function BalanceSheetView({
         </div>
       </div>
 
-      {/* 3. Authentic Formula Bar (Name Box + fx; hidden in Mobile Cards mode) */}
+      {/* 3. Authentic Formula Bar (Name Box + fx; hidden in Summary Card or Mobile Cards mode) */}
       <div
         className={`shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 items-center h-9 print-hidden ${
-          activeTab === 'balance-sheet' && mobileViewMode === 'cards' ? 'hidden md:flex' : 'flex'
+          activeTab === 'balance-sheet' && displayMode === 'summary'
+            ? 'hidden'
+            : activeTab === 'balance-sheet' && mobileViewMode === 'cards'
+              ? 'hidden md:flex'
+              : 'flex'
         }`}
       >
         <div
@@ -1701,8 +1759,14 @@ export function BalanceSheetView({
         </div>
       )}
 
-        {/* 4A. TAB 1: GOOGLE SHEETS BALANCE SHEET GRID */}
-        {!isInitialLoading && sheet && activeTab === 'balance-sheet' && (
+        {/* 4A. TAB 1: SUMMARY CARDS OR GOOGLE SHEETS BALANCE SHEET GRID */}
+        {!isInitialLoading && sheet && activeTab === 'balance-sheet' && displayMode === 'summary' && (
+          <div className={isFullScreen ? 'flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5' : 'p-3.5 sm:p-5'}>
+            {kpiSummaryStrip}
+          </div>
+        )}
+
+        {!isInitialLoading && sheet && activeTab === 'balance-sheet' && displayMode === 'sheet' && (
           <>
             {/* Mobile Cards Fallback (Only when mobile user explicitly toggles Cards) */}
             {mobileViewMode === 'cards' && (
@@ -2907,6 +2971,7 @@ export function BalanceSheetView({
               aria-selected={activeTab === 'balance-sheet'}
               onClick={() => {
                 setActiveTab('balance-sheet');
+                setDisplayMode('sheet');
                 setSelectedCell({ tab: 'balance-sheet', row: 0, col: 0 });
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
@@ -2925,6 +2990,7 @@ export function BalanceSheetView({
               aria-selected={activeTab === 'variables-summary'}
               onClick={() => {
                 setActiveTab('variables-summary');
+                setDisplayMode('sheet');
                 setSelectedCell({ tab: 'variables-summary', row: 0, col: 4 });
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
@@ -2985,8 +3051,6 @@ export function BalanceSheetView({
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {!isFullScreen && kpiSummaryStrip}
-
       {isFullScreen && mounted ? (
         <>
           <div
