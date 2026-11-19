@@ -1008,18 +1008,9 @@ export function buildMemberSummaries(
 
     let activationCredentials: MemberActivationAdminView | undefined;
     if (includeRegistrationDetails && u.activationMeta) {
-      let otp = '';
-      if (u.encryptedActivationOtp) {
-        try {
-          const decryptedOtp = decryptSensitiveObject<{ otp?: string }>(u.encryptedActivationOtp);
-          otp = decryptedOtp?.otp ? String(decryptedOtp.otp) : '';
-        } catch {
-          otp = '';
-        }
-      }
       activationCredentials = {
         memberCode: u.activationMeta.memberCode || u.memberCode,
-        otp,
+        hasActiveOtp: Boolean(u.encryptedActivationOtp),
         issuedAt: u.activationMeta.issuedAt,
         issuedByName: u.activationMeta.issuedByName,
         emailSent: Boolean(u.activationMeta.emailSent),

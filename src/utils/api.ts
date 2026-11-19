@@ -16,6 +16,7 @@ import type {
   CoopNotice,
   DashboardOverview,
   DecisionPoll,
+  DigitalAgreementRecord,
   EligibilityCheck,
   EmailNotification,
   EmailQueueCategory,
@@ -572,6 +573,7 @@ export const api = {
       bootstrapAdmin?: boolean;
       message?: string;
       user: PublicUser;
+      digitalAgreement?: DigitalAgreementRecord;
       sessionToken?: string;
     }>('/api/auth/register', {
       method: 'POST',
@@ -771,7 +773,6 @@ export const api = {
       registrations: MemberSummary[];
       suggestedNextMemberCode?: string;
       memberCode: string;
-      otp: string;
       issuedAt: string;
       emailSent: boolean;
       emailReason?: string;
@@ -784,7 +785,6 @@ export const api = {
       emailSent: boolean;
       emailReason?: string;
       memberCode: string;
-      otp: string;
       members: MemberSummary[];
       registrations: MemberSummary[];
     }>(`/api/admin/members/${encodeURIComponent(id)}/resend-activation-email`, {

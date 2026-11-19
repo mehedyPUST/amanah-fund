@@ -50,6 +50,8 @@ import { formatBdAddress } from '../utils/bdLocations.ts';
 import { containsBanglaScript, isValidBanglaName } from '../utils/inputLanguage.ts';
 import { validateStrongPassword } from '../utils/passwordStrength.ts';
 import {
+  buildDigitalAgreementRecord,
+  decryptActivationOtpForEmailDelivery,
   decryptAdminActivationView,
   generateNextAmanahMemberId,
   issueMemberActivationInState,
@@ -1113,6 +1115,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
 
     let adminEmailsForAlert: string[] = [];
     let fundNameForAlert = 'Amanah Cooperative Treasury';
+    let savedDigitalAgreement: UserRegistrationDetails['digitalAgreement'];
     const nextRegisterState = await updateVaultState((draft) => {
       if (draft.users.some((u) => u.email.toLowerCase() === email)) {
         throw new Error('EMAIL_IN_USE');
@@ -1121,6 +1124,17 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       // First account on an empty cooperative becomes the bootstrap administrator.
       const isBootstrapAdmin = draft.users.length === 0;
       fundNameForAlert = draft.fundConfig.fundName;
+      const joinedAtIso = new Date().toISOString();
+
+      savedDigitalAgreement = buildDigitalAgreementRecord({
+        applicantName: name,
+        email,
+        fundName: fundNameForAlert,
+        registrationDetails,
+        signedAt: joinedAtIso,
+        activatedAt: isBootstrapAdmin ? joinedAtIso : undefined,
+      });
+      registrationDetails.digitalAgreement = savedDigitalAgreement;
 
       createdUser = {
         id: `usr-${isBootstrapAdmin ? 'adm' : 'mem'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -1131,7 +1145,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         role: isBootstrapAdmin ? 'admin' : 'member',
         memberCode: nextMemberCode(draft.users),
         status: isBootstrapAdmin ? 'active' : 'pending_approval',
-        joinedAt: new Date().toISOString(),
+        joinedAt: joinedAtIso,
         phoneMasked: maskReference(mobile),
         photoUrl,
         encryptedRegistrationDetails: encryptSensitiveObject(registrationDetails),
@@ -1214,11 +1228,12 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       pendingApproval: createdUser.status === 'pending_approval',
       bootstrapAdmin: isBootstrapAdmin,
       user: sanitized,
+      digitalAgreement: savedDigitalAgreement,
       ...(sessionToken ? { sessionToken } : {}),
       message:
         createdUser.role === 'admin'
           ? 'You are the first member of this cooperative. Your account is the bootstrap administrator and is active immediately.'
-          : 'Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.',
+          : 'Membership application & Digital Agreement saved. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.',
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_IN_USE') {
@@ -5281,7 +5296,6 @@ apiRouter.post(
         registrations,
         suggestedNextMemberCode: generateNextAmanahMemberId(nextState.users),
         memberCode: info.memberCode,
-        otp: info.otp,
         issuedAt: info.issuedAt,
         emailSent,
         emailReason,
@@ -5342,7 +5356,8 @@ apiRouter.post(
       }
 
       const creds = decryptAdminActivationView(target);
-      if (!creds || !creds.otp) {
+      const serverOtp = decryptActivationOtpForEmailDelivery(target);
+      if (!creds || !serverOtp) {
         res.status(400).json({
           error: 'No active 6-digit OTP is stored for this member. Re-issue activation codes instead.',
         });
@@ -5357,7 +5372,7 @@ apiRouter.post(
             to: target.email,
             memberName: target.name,
             memberCode: creds.memberCode,
-            otp: creds.otp,
+            otp: serverOtp,
             adminName: viewer.name,
             fundName: state.fundConfig.fundName,
             templateOverrides: state.fundConfig.emailTemplates,
@@ -5419,7 +5434,6 @@ apiRouter.post(
         emailSent,
         emailReason,
         memberCode: creds.memberCode,
-        otp: creds.otp,
         members: allMembers,
         registrations,
       });

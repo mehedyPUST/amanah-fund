@@ -70,6 +70,16 @@ export interface MemberSocialMedia {
   linkedin?: string;
 }
 
+export interface DigitalAgreementRecord {
+  agreementId: string;
+  charterVersion: string;
+  signedAt: string;
+  activatedAt?: string;
+  declarationText: string;
+  sha256Hash: string;
+  storageFormat: 'encrypted_json';
+}
+
 export interface UserRegistrationDetails {
   nameBn?: string;
   fatherName?: string;
@@ -95,6 +105,7 @@ export interface UserRegistrationDetails {
   signatureUrl?: string;
   agreementPhotoUrl?: string;
   nominees?: NomineeInfo[];
+  digitalAgreement?: DigitalAgreementRecord;
 }
 
 export interface RegisteredDeviceSummary {
@@ -124,7 +135,7 @@ export interface PublicUser {
 
 export interface MemberActivationAdminView {
   memberCode: string;
-  otp: string;
+  hasActiveOtp: boolean;
   issuedAt: string;
   issuedByName: string;
   emailSent: boolean;

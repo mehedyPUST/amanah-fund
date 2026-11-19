@@ -13,7 +13,7 @@ import {
   EyeOff,
   KeyRound,
   Lock,
-  Phone,
+  Mail,
   ShieldCheck,
   Smartphone,
   X,
@@ -475,7 +475,7 @@ export function SignInForm() {
               </form>
 
               <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
-                <Phone className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <Mail className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="leading-relaxed">{tAuth('activation.phoneHelp')}</p>
               </div>
             </div>

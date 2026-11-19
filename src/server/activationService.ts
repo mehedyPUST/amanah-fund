@@ -1,12 +1,69 @@
 import crypto from 'node:crypto';
 import type {
+  DigitalAgreementRecord,
   MemberActivationAdminView,
   PublicUser,
   UsedActivationOtpRecord,
+  UserRegistrationDetails,
 } from '../types/coop.ts';
 import { appendAuditLog, queueEmailNotification } from './coopService.ts';
-import { decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
+import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
 import type { StoredUser, VaultState } from './db.ts';
+
+export const DIGITAL_AGREEMENT_CHARTER_VERSION =
+  'Constitution Charter (§4–§6 · VISION-36: 2027–2036)';
+
+export function buildDigitalAgreementRecord(params: {
+  applicantName: string;
+  email: string;
+  fundName?: string;
+  registrationDetails: UserRegistrationDetails;
+  signedAt: string;
+  activatedAt?: string;
+}): DigitalAgreementRecord {
+  const fundLabel = params.fundName?.trim() || 'Amanah Cooperative';
+  const declarationText = `I hereby declare that all personal, address, employment, and nominee information provided in this membership application is true, accurate, and complete. By signing and submitting this application, I execute my official Digital Membership Agreement with ${fundLabel} and agree to abide by the ${DIGITAL_AGREEMENT_CHARTER_VERSION}, monthly savings obligations, and Shariah-compliant interest-free Qard Hasan governance principles.`;
+
+  const canonicalPayload = {
+    applicantName: params.applicantName.trim(),
+    nameBn: params.registrationDetails.nameBn || undefined,
+    email: params.email.trim().toLowerCase(),
+    fatherName: params.registrationDetails.fatherName || undefined,
+    motherName: params.registrationDetails.motherName || undefined,
+    gender: params.registrationDetails.gender || undefined,
+    maritalStatus: params.registrationDetails.maritalStatus || undefined,
+    spouseName: params.registrationDetails.spouseName || undefined,
+    dateOfBirth: params.registrationDetails.dateOfBirth,
+    nid: params.registrationDetails.nid,
+    mobile: params.registrationDetails.mobile,
+    presentAddress: params.registrationDetails.presentAddress,
+    permanentAddress: params.registrationDetails.permanentAddress,
+    referenceMemberName: params.registrationDetails.referenceMemberName,
+    signatureUrl: params.registrationDetails.signatureUrl || undefined,
+    nominees: (params.registrationDetails.nominees || []).map((n) => ({
+      name: n.name,
+      relation: n.relation,
+      nidOrBirthReg: n.nidOrBirthReg,
+      sharePercentage: n.sharePercentage,
+    })),
+    charterVersion: DIGITAL_AGREEMENT_CHARTER_VERSION,
+    signedAt: params.signedAt,
+  };
+
+  const sha256Hash = computeSha256Hash(canonicalPayload);
+  const dateCompact = params.signedAt.slice(0, 10).replace(/-/g, '') || '00000000';
+  const agreementId = `AGR-${dateCompact}-${sha256Hash.slice(0, 8).toUpperCase()}`;
+
+  return {
+    agreementId,
+    charterVersion: DIGITAL_AGREEMENT_CHARTER_VERSION,
+    signedAt: params.signedAt,
+    ...(params.activatedAt ? { activatedAt: params.activatedAt } : {}),
+    declarationText,
+    sha256Hash,
+    storageFormat: 'encrypted_json',
+  };
+}
 
 const MAX_FAILED_ACTIVATION_ATTEMPTS = 10;
 const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
@@ -118,21 +175,17 @@ export function generateUniqueSixDigitOtp(state: VaultState): string {
   throw new Error('OTP_EXHAUSTED');
 }
 
+/**
+ * Returns non-secret activation metadata for admin panels.
+ * The 6-digit Activation OTP is strictly private to the member's email and
+ * is NEVER exposed to administrators.
+ */
 export function decryptAdminActivationView(user: StoredUser): MemberActivationAdminView | undefined {
   if (!user.activationMeta) return undefined;
-  let otp = '';
-  if (user.encryptedActivationOtp) {
-    try {
-      const decrypted = decryptSensitiveObject<{ otp?: string }>(user.encryptedActivationOtp);
-      otp = decrypted?.otp ? String(decrypted.otp) : '';
-    } catch {
-      otp = '';
-    }
-  }
 
   return {
     memberCode: user.activationMeta.memberCode || user.memberCode,
-    otp,
+    hasActiveOtp: Boolean(user.encryptedActivationOtp),
     issuedAt: user.activationMeta.issuedAt,
     issuedByName: user.activationMeta.issuedByName,
     emailSent: Boolean(user.activationMeta.emailSent),
@@ -142,6 +195,22 @@ export function decryptAdminActivationView(user: StoredUser): MemberActivationAd
     agreementAcceptedAt: user.activationMeta.agreementAcceptedAt,
     failedAttempts: user.activationMeta.failedAttempts || 0,
   };
+}
+
+/**
+ * Server-only helper used exclusively by the SMTP email dispatch pipeline when
+ * an administrator manually triggers an activation email resend.
+ * Must NEVER be serialized into API responses or audit logs.
+ */
+export function decryptActivationOtpForEmailDelivery(user: StoredUser): string | null {
+  if (!user.encryptedActivationOtp) return null;
+  try {
+    const decrypted = decryptSensitiveObject<{ otp?: string }>(user.encryptedActivationOtp);
+    const clean = normalizeOtpInput(String(decrypted?.otp || ''));
+    return isValidSixDigitOtp(clean) ? clean : null;
+  } catch {
+    return null;
+  }
 }
 
 export function issueMemberActivationInState(
@@ -341,7 +410,7 @@ export function verifyMemberActivationInState(
     return {
       ok: false,
       code: 'TOO_MANY_ATTEMPTS',
-      message: `Too many incorrect activation attempts. Please wait ${minsLeft} minute(s) or verify your codes with an administrator by phone.`,
+      message: `Too many incorrect activation attempts. Please wait ${minsLeft} minute(s) or ask an Amanah administrator to resend your activation email.`,
     };
   }
 
@@ -369,7 +438,7 @@ export function verifyMemberActivationInState(
       ok: false,
       code: 'INVALID_ACTIVATION_CODES',
       message:
-        'The Member ID or 6-digit Activation OTP does not match. Please double-check your email or ask an Amanah administrator by phone.',
+        'The Member ID or 6-digit Activation OTP does not match. Please double-check your activation email or ask an Amanah administrator to resend it.',
     };
   }
 
@@ -382,6 +451,29 @@ export function verifyMemberActivationInState(
   user.activationMeta.lastFailedAt = undefined;
   // Clear encrypted OTP from user record while keeping it permanently burned in usedActivationOtps
   user.encryptedActivationOtp = undefined;
+
+  // Stamp activation timestamp onto the stored compact Digital Membership Agreement JSON record
+  if (user.encryptedRegistrationDetails) {
+    try {
+      const regDetails = decryptSensitiveObject<UserRegistrationDetails>(
+        user.encryptedRegistrationDetails
+      );
+      const existingAgreement = regDetails.digitalAgreement;
+      regDetails.digitalAgreement = existingAgreement
+        ? { ...existingAgreement, activatedAt: nowIso }
+        : buildDigitalAgreementRecord({
+            applicantName: user.name,
+            email: user.email,
+            fundName: state.fundConfig.fundName,
+            registrationDetails: regDetails,
+            signedAt: user.joinedAt || nowIso,
+            activatedAt: nowIso,
+          });
+      user.encryptedRegistrationDetails = encryptSensitiveObject(regDetails);
+    } catch {
+      // Preserve activation success even if legacy registration payload cannot be decrypted
+    }
+  }
 
   state.usedActivationOtps = Array.isArray(state.usedActivationOtps)
     ? state.usedActivationOtps

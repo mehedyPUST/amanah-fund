@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Download,
-  ExternalLink,
   Eye,
   EyeOff,
   FileCheck2,
@@ -57,7 +56,6 @@ import {
   isValidBanglaName,
 } from '../utils/inputLanguage.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
-import { isPdfFileUrl } from '../utils/format.ts';
 import { evaluatePasswordStrength } from '../utils/passwordStrength.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { AmanahLogo } from './AmanahLogo.tsx';
@@ -221,7 +219,7 @@ export function SignUpForm() {
     createEmptyNominee('100', 'nom-initial-1'),
   ]);
 
-  // ImageKit.io uploaded photo, 300x80 signature, & agreement paper URLs
+  // ImageKit.io uploaded photo & 300x80 signature URLs + Digital Membership Agreement consent
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
   const [signatureUrl, setSignatureUrl] = useState('');
@@ -232,8 +230,7 @@ export function SignUpForm() {
     width: number;
     height: number;
   } | null>(null);
-  const [agreementPhotoUrl, setAgreementPhotoUrl] = useState('');
-  const [agreementUploading, setAgreementUploading] = useState(false);
+  const [agreedDigitalAgreement, setAgreedDigitalAgreement] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -387,19 +384,11 @@ export function SignUpForm() {
     });
   }
 
-  async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>, target: 'photo' | 'agreement') {
+  async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isPdf =
-      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isImage = file.type.startsWith('image/');
-
-    if (target === 'photo' && !isImage) {
+    if (!file.type.startsWith('image/')) {
       setError(t('errInvalidImage'));
-      return;
-    }
-    if (target === 'agreement' && !isImage && !isPdf) {
-      setError(t('errInvalidAgreement'));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -408,25 +397,19 @@ export function SignUpForm() {
     }
 
     setError(null);
-    if (target === 'photo') setPhotoUploading(true);
-    else setAgreementUploading(true);
+    setPhotoUploading(true);
 
     try {
       const res = await api.uploadFile(file, {
         name: file.name,
-        category: target === 'photo' ? 'member-kyc-photo' : 'member-signed-agreement',
+        category: 'member-kyc-photo',
         subject: name.trim() || email.trim() || 'applicant',
       });
-      if (target === 'photo') {
-        setPhotoUrl(res.url);
-      } else {
-        setAgreementPhotoUrl(res.url);
-      }
+      setPhotoUrl(res.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errUploadFailed'));
     } finally {
-      if (target === 'photo') setPhotoUploading(false);
-      else setAgreementUploading(false);
+      setPhotoUploading(false);
     }
   }
 
@@ -726,6 +709,10 @@ export function SignUpForm() {
       setError(t('errTotalShare', { current: Math.round(shareSum * 100) / 100 }));
       return;
     }
+    if (!agreedDigitalAgreement) {
+      setError(t('errDigitalAgreementRequired'));
+      return;
+    }
 
     const cleanedSocial = {
       whatsapp: whatsapp.trim() || undefined,
@@ -774,7 +761,6 @@ export function SignUpForm() {
         socialMedia: hasSocialMedia ? cleanedSocial : undefined,
         photoUrl,
         signatureUrl,
-        agreementPhotoUrl: agreementPhotoUrl || undefined,
         nominees: preparedNominees,
       });
 
@@ -808,8 +794,8 @@ export function SignUpForm() {
           socialMedia: hasSocialMedia ? cleanedSocial : undefined,
           photoUrl,
           signatureUrl,
-          agreementPhotoUrl: agreementPhotoUrl || undefined,
           nominees: preparedNominees,
+          digitalAgreement: res.digitalAgreement,
         },
       });
 
@@ -850,7 +836,7 @@ export function SignUpForm() {
       setPhotoUrl('');
       setSignatureUrl('');
       setPendingSignature(null);
-      setAgreementPhotoUrl('');
+      setAgreedDigitalAgreement(false);
       setNominees([createEmptyNominee('100')]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errSubmitFailed'));
@@ -2278,7 +2264,7 @@ export function SignUpForm() {
               </div>
             </div>
 
-            {/* Section 5: ImageKit.io Photo & Agreement PDF/Photo Uploads */}
+            {/* Section 5: Identity Photo, Signature & Digital Membership Agreement */}
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div>
                 <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
@@ -2315,7 +2301,7 @@ export function SignUpForm() {
                           type="file"
                           accept="image/*"
                           disabled={photoUploading}
-                          onChange={(e) => void handlePhotoUpload(e, 'photo')}
+                          onChange={(e) => void handlePhotoUpload(e)}
                           className="sr-only"
                         />
                       </label>
@@ -2334,103 +2320,15 @@ export function SignUpForm() {
                         type="file"
                         accept="image/*"
                         disabled={photoUploading}
-                        onChange={(e) => void handlePhotoUpload(e, 'photo')}
+                        onChange={(e) => void handlePhotoUpload(e)}
                         className="sr-only"
                       />
                     </label>
                   )}
                 </div>
 
-                {/* Agreement Paper PDF or Photo (Optional) */}
+                {/* Applicant Signature 300x80 px (Required) */}
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      {t('agreementPaper')}{' '}
-                      <span className="text-slate-500 dark:text-slate-400 font-normal">
-                        {t('optional')}
-                      </span>
-                    </span>
-                    {agreementPhotoUrl && (
-                      <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
-                        <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{t('uploaded')}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {agreementPhotoUrl ? (
-                    <div className="flex items-center gap-3">
-                      {isPdfFileUrl(agreementPhotoUrl) ? (
-                        <a
-                          href={agreementPhotoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="w-16 h-16 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0"
-                        >
-                          <FileText className="w-5 h-5" aria-hidden="true" />
-                          <span>PDF</span>
-                        </a>
-                      ) : (
-                        <img
-                          src={agreementPhotoUrl}
-                          alt={t('agreementPaper')}
-                          referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
-                        />
-                      )}
-                      <div className="flex flex-col gap-1">
-                        {isPdfFileUrl(agreementPhotoUrl) && (
-                          <a
-                            href={agreementPhotoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs font-medium text-slate-700 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
-                          >
-                            <span>{t('previewPdf')}</span>
-                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                          </a>
-                        )}
-                        <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
-                          <span>{agreementUploading ? t('uploading') : t('replaceFile')}</span>
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf,.pdf"
-                            disabled={agreementUploading}
-                            onChange={(e) => void handlePhotoUpload(e, 'agreement')}
-                            className="sr-only"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setAgreementPhotoUrl('')}
-                          className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline cursor-pointer"
-                        >
-                          {tCommon('remove')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
-                      {agreementUploading ? (
-                        <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
-                      ) : (
-                        <FileText className="w-5 h-5 text-slate-400" aria-hidden="true" />
-                      )}
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {agreementUploading ? t('uploadingToCloud') : t('uploadAgreement')}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf,.pdf"
-                        disabled={agreementUploading}
-                        onChange={(e) => void handlePhotoUpload(e, 'agreement')}
-                        className="sr-only"
-                      />
-                    </label>
-                  )}
-                </div>
-                {/* Applicant Signature 300x80 px (Required, Teletalk Standard) */}
-                <div className="sm:col-span-2 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                       {t('signatureLabel')} <span className="text-red-500">*</span>
@@ -2555,6 +2453,35 @@ export function SignUpForm() {
                     </label>
                   )}
                 </div>
+
+                {/* Official Digital Membership Agreement Declaration (Required) */}
+                <div className="sm:col-span-2 p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <FileText
+                      className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <div className="space-y-1">
+                      <h3 className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                        {t('digitalAgreementTitle')}
+                      </h3>
+                      <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 leading-relaxed">
+                        {t('digitalAgreementDesc')}
+                      </p>
+                    </div>
+                  </div>
+                  <label className="flex items-start gap-2.5 pt-2 border-t border-emerald-200/70 dark:border-emerald-900/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreedDigitalAgreement}
+                      onChange={(e) => setAgreedDigitalAgreement(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-600/30 shrink-0 cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                      {t('digitalAgreementCheckbox')} <span className="text-red-500">*</span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -2565,7 +2492,6 @@ export function SignUpForm() {
                   submitting ||
                   photoUploading ||
                   signatureUploading ||
-                  agreementUploading ||
                   anyNomineePhotoUploading
                 }
                 className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all cursor-pointer shrink-0 whitespace-nowrap"

@@ -14,6 +14,8 @@ import {
   validateAndNormalizeNominees,
 } from '../src/server/coopService.ts';
 import {
+  buildDigitalAgreementRecord,
+  decryptActivationOtpForEmailDelivery,
   decryptAdminActivationView,
   generateNextAmanahMemberId,
   generateUniqueSixDigitOtp,
@@ -1768,6 +1770,42 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
         memberCode: 'AC005',
         status: 'pending_approval',
         joinedAt: '2026-11-17T08:00:00.000Z',
+        encryptedRegistrationDetails: (() => {
+          const baseDetails = {
+            dateOfBirth: '1990-05-12',
+            nid: '19902612345678901',
+            mobile: '+8801711000001',
+            occupation: 'Software Engineer',
+            companyOrganization: 'Amanah Tech Ltd.',
+            presentAddress: 'Dhaka',
+            permanentAddress: 'Dhaka',
+            photoUrl: '/uploads/tariq-photo.jpg',
+            referenceMemberName: 'Amina Rahman',
+            nominees: [
+              {
+                name: 'Salma Hassan',
+                relation: 'Spouse',
+                dateOfBirth: '1992-08-15',
+                gender: 'female' as const,
+                occupation: 'Teacher',
+                address: 'Dhaka',
+                nidOrBirthReg: '19922612345678902',
+                sharePercentage: 100,
+              },
+            ],
+          };
+          const digitalAgreement = buildDigitalAgreementRecord({
+            applicantName: 'Tariq Hassan',
+            email: 'tariq@amanahcoop.org',
+            fundName: state.fundConfig.fundName,
+            registrationDetails: baseDetails,
+            signedAt: '2026-11-17T08:00:00.000Z',
+          });
+          return encryptSensitiveObject({
+            ...baseDetails,
+            digitalAgreement,
+          });
+        })(),
       },
       {
         id: 'usr-pending-2',
@@ -1832,16 +1870,20 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
     expect(issued2.otp).not.toBe(issued1.otp);
     expect(issued2.otp).not.toBe('123456');
 
-    // Admin panel lookup returns decrypted OTP for phone support; non-admin summary strips it
+    // Admin views NEVER expose the plaintext 6-digit OTP; server-side email resend helper can still dispatch it
     const adminView = decryptAdminActivationView(issued1.user);
     expect(adminView?.memberCode).toBe('AC010');
-    expect(adminView?.otp).toBe(issued1.otp);
+    expect(adminView?.hasActiveOtp).toBe(true);
+    expect('otp' in (adminView || {})).toBe(false);
+    expect(decryptActivationOtpForEmailDelivery(issued1.user)).toBe(issued1.otp);
 
     const adminSummaries = buildMemberSummaries(state, true);
     const nonAdminSummaries = buildMemberSummaries(state, false);
     const pending1Admin = adminSummaries.find((m) => m.id === 'usr-pending-1');
     const pending1NonAdmin = nonAdminSummaries.find((m) => m.id === 'usr-pending-1');
-    expect(pending1Admin?.activationCredentials?.otp).toBe(issued1.otp);
+    expect(pending1Admin?.activationCredentials?.memberCode).toBe('AC010');
+    expect(pending1Admin?.activationCredentials?.hasActiveOtp).toBe(true);
+    expect('otp' in (pending1Admin?.activationCredentials || {})).toBe(false);
     expect(pending1NonAdmin?.activationCredentials).toBeUndefined();
 
     // Activation challenge token round-trip
@@ -1907,7 +1949,22 @@ describe('Mobile Device Registration & 4-Digit PIN Login', () => {
       expect(activated.user.status).toBe('active');
       expect(activated.user.memberCode).toBe('AC010');
       expect(activated.user.encryptedActivationOtp).toBeUndefined();
+      expect(decryptActivationOtpForEmailDelivery(activated.user)).toBeNull();
       expect(activated.user.activationMeta?.agreementAcceptedAt).toBe('2026-11-17T09:15:00.000Z');
+      const decryptedReg = decryptSensitiveObject<{
+        digitalAgreement?: {
+          agreementId: string;
+          sha256Hash: string;
+          storageFormat: string;
+          signedAt: string;
+          activatedAt?: string;
+        };
+      }>(activated.user.encryptedRegistrationDetails);
+      expect(decryptedReg?.digitalAgreement?.agreementId).toMatch(/^AGR-\d{8}-[A-F0-9]{8}$/);
+      expect(decryptedReg?.digitalAgreement?.sha256Hash).toMatch(/^[a-f0-9]{64}$/);
+      expect(decryptedReg?.digitalAgreement?.storageFormat).toBe('encrypted_json');
+      expect(decryptedReg?.digitalAgreement?.signedAt).toBe('2026-11-17T08:00:00.000Z');
+      expect(decryptedReg?.digitalAgreement?.activatedAt).toBe('2026-11-17T09:15:00.000Z');
     }
 
     // OTP remains permanently recorded in usedActivationOtps and cannot be generated again

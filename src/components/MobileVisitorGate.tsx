@@ -13,7 +13,7 @@ import {
   EyeOff,
   Loader2,
   Lock,
-  Phone,
+  Mail,
   Smartphone,
   UserPlus,
 } from 'lucide-react';
@@ -387,7 +387,7 @@ export function MobileVisitorGate() {
                       </button>
                     </form>
                     <div className="flex items-start gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      <Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                      <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
                       <span>{tAuth('mobileGate.phoneHelpShort')}</span>
                     </div>
                   </div>

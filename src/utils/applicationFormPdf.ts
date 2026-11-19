@@ -308,9 +308,9 @@ export async function downloadMembershipApplicationPdf(
 
   const subtitleY = headerTopY + 11.5 + (titleLines.length - 1) * titleLineH + 12.5;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8.8);
   doc.setTextColor(5, 150, 105);
-  doc.text('OFFICIAL MEMBERSHIP APPLICATION FORM', margin, subtitleY);
+  doc.text('OFFICIAL MEMBERSHIP APPLICATION & DIGITAL AGREEMENT', margin, subtitleY);
 
   const charterY = subtitleY + 11;
   doc.setFont('helvetica', 'normal');
@@ -787,22 +787,30 @@ export async function downloadMembershipApplicationPdf(
   }
 
   // =========================================================================
-  // DECLARATION, ATTACHMENTS CHECKLIST & 300x80 SIGNATURE BLOCK
+  // DIGITAL AGREEMENT DECLARATION, ATTACHMENTS CHECKLIST & 300x80 SIGNATURE BLOCK
   // Pre-measure full block so Section 04 NEVER orphans signatures on page 2
   // =========================================================================
+  const agreement = reg.digitalAgreement;
   const declarationText =
-    `I hereby declare that all personal, address, employment, and nominee information provided in this membership application is true, accurate, and complete. I agree to abide by the Constitution Charter (§4–§6 · VISION-36) and governance policies of ${fundName}, including monthly savings obligations and Shariah-compliant interest-free Qard Hasan principles.`;
+    agreement?.declarationText ||
+    `I hereby declare that all personal, address, employment, and nominee information provided in this membership application is true, accurate, and complete. By signing and submitting this application, I execute my official Digital Membership Agreement with ${fundName} and agree to abide by the Constitution Charter (§4–§6 · VISION-36) and governance policies, including monthly savings obligations and Shariah-compliant interest-free Qard Hasan principles.`;
+  const agreementMetaLine = agreement
+    ? `Agreement ID: ${agreement.agreementId}  ·  Signed: ${formatDateTime(agreement.signedAt)}${
+        agreement.activatedAt ? `  ·  Activated: ${formatDateTime(agreement.activatedAt)}` : ''
+      }  ·  SHA-256: ${agreement.sha256Hash.slice(0, 16).toUpperCase()}…`
+    : null;
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.8);
   const declLines = doc.splitTextToSize(declarationText, contentWidth - 16) as string[];
-  const declH = declLines.length * 9.8 + 12;
+  const declH = declLines.length * 9.8 + (agreementMetaLine ? 24 : 12);
   const sigBoxH = 74;
   const totalSection4H = 23 + 25 + 6 + declH + 7 + sigBoxH;
 
   ensureSpace(totalSection4H);
-  drawSectionBar(`0${nextSectionNumber}`, 'DECLARATION, ATTACHMENTS & SIGNATURES');
+  drawSectionBar(`0${nextSectionNumber}`, 'DIGITAL AGREEMENT DECLARATION, VERIFICATION & SIGNATURES');
 
-  // Attachments Checklist Strip
+  // Attachments & Digital Agreement Verification Strip
   y = drawKeyValueRow(
     margin,
     contentWidth,
@@ -810,8 +818,13 @@ export async function downloadMembershipApplicationPdf(
       { label: 'Member Portrait Photo', value: reg.photoUrl ? 'Attached' : 'Not Attached' },
       { label: 'Signature (300 × 80 px)', value: reg.signatureUrl ? 'Attached (Verified)' : 'Not Attached' },
       {
-        label: 'Signed Agreement Paper',
-        value: reg.agreementPhotoUrl ? 'Attached (Document/Image)' : 'Optional — Not Attached',
+        label: 'Digital Membership Agreement',
+        value: agreement
+          ? `Saved · ${agreement.agreementId}`
+          : reg.agreementPhotoUrl
+            ? 'Attached (Legacy Upload)'
+            : 'Saved (Encrypted Record)',
+        mono: Boolean(agreement),
       },
     ],
     y
@@ -827,6 +840,16 @@ export async function downloadMembershipApplicationPdf(
   doc.setFontSize(7.8);
   doc.setTextColor(51, 65, 85);
   doc.text(declLines, margin + 8, y + 11);
+  if (agreementMetaLine) {
+    const metaY = y + 11 + declLines.length * 9.8 + 4;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.45);
+    doc.line(margin + 8, metaY - 6, margin + contentWidth - 8, metaY - 6);
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(6.9);
+    doc.setTextColor(5, 150, 105);
+    doc.text(agreementMetaLine, margin + 8, metaY + 1.5, { maxWidth: contentWidth - 16 });
+  }
   y += declH + 7;
 
   // Dual Signature Blocks (Applicant 300x80 Signature + Admin Office Use Only)
@@ -920,7 +943,7 @@ export async function downloadMembershipApplicationPdf(
     doc.setFontSize(7.2);
     doc.setTextColor(100, 116, 139);
     doc.text(
-      `${fundName} · Official Membership Application Form · Confidential KYC Dossier`,
+      `${fundName} · Official Digital Membership Agreement · Confidential KYC Dossier`,
       margin,
       pageHeight - 15
     );
@@ -931,5 +954,5 @@ export async function downloadMembershipApplicationPdf(
 
   const dateStamp = new Date().toISOString().slice(0, 10);
   const slug = sanitizeFileSegment(memberCode || applicantName) || 'applicant';
-  doc.save(`amanah-application-${slug}-${dateStamp}.pdf`);
+  doc.save(`amanah-digital-agreement-${slug}-${dateStamp}.pdf`);
 }

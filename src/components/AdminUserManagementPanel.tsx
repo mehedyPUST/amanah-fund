@@ -240,7 +240,7 @@ export function AdminUserManagementPanel({
             details: [
               { label: t('member'), value: member.name },
               { label: t('officialMemberId'), value: res.memberCode },
-              { label: t('activationOtp'), value: res.otp },
+              { label: t('activationOtp'), value: t('otpPrivateEmailOnly') },
               {
                 label: t('emailDispatch'),
                 value: res.emailSent
@@ -276,7 +276,7 @@ export function AdminUserManagementPanel({
       description: t('viewCodesDesc'),
       details: [
         { label: t('officialMemberId'), value: act.memberCode },
-        { label: t('activationOtp'), value: act.otp || t('unavailable') },
+        { label: t('activationOtp'), value: t('otpPrivateEmailOnly') },
         {
           label: t('emailStatus'),
           value: act.emailSent
@@ -303,7 +303,7 @@ export function AdminUserManagementPanel({
                 }),
             details: [
               { label: t('officialMemberId'), value: res.memberCode },
-              { label: t('activationOtp'), value: res.otp },
+              { label: t('activationOtp'), value: t('otpPrivateEmailOnly') },
             ],
           });
         } finally {
