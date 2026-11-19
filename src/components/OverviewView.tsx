@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   ArrowRight,
-  BarChart3,
   CalendarCheck,
   CheckCircle2,
   Clock,
@@ -60,7 +59,6 @@ export function OverviewView({
         <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
           <Skeleton width={260} height={14} />
           <Skeleton width={320} height={22} />
-          <Skeleton width="80%" height={14} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
           {[1, 2, 3, 4].map((k) => (
@@ -151,64 +149,23 @@ export function OverviewView({
         transition={{ duration: 0.22 }}
         className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs transition-all duration-200"
       >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-          <div className="space-y-1.5 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                {t('targetMaturity', { date: formatShortDate(config.maturityDate) })}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
-                {tCommon('daysRemaining', { days: daysUntilMaturity })}
-              </span>
-            </div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {config.fundName}
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              {config.halalInvestmentThesis}
-            </p>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+              {t('targetMaturity', { date: formatShortDate(config.maturityDate) })}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
+              {tCommon('daysRemaining', { days: daysUntilMaturity })}
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => onNavigate('statistics')}
-              className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-              <span>{tNav('statistics')}</span>
-            </button>
-            {isAdmin ? (
-              <button
-                type="button"
-                onClick={() => onNavigate('site-settings')}
-                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
-              >
-                <span>{tNav('siteSettings')}</span>
-                <ArrowRight
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onNavigate('monthly-contribution')}
-                className="group px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
-              >
-                <span>{tNav('contributions')}</span>
-                <ArrowRight
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </button>
-            )}
-          </div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {config.fundName}
+          </h2>
         </div>
       </motion.section>
 
