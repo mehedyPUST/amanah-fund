@@ -587,13 +587,17 @@ export function NotificationsView({
             {t('emptyFiltered')}
           </div>
         ) : (
-          visibleNotifications.map((item) => {
+          visibleNotifications.map((item, idx) => {
             const isExpanded = Boolean(expandedIds[item.id]);
+            const rowBgClass =
+              idx % 2 === 1
+                ? 'bg-sky-50/75 dark:bg-slate-800/45'
+                : 'bg-white/95 dark:bg-slate-900/80';
             return (
               <div
                 key={item.id}
-                className={`transition-colors ${
-                  !item.readByRecipient ? 'bg-emerald-50/30 dark:bg-emerald-950/10' : ''
+                className={`transition-colors ${rowBgClass} ${
+                  !item.readByRecipient ? 'border-l-[3px] border-l-emerald-500' : ''
                 }`}
               >
                 <button
@@ -605,18 +609,38 @@ export function NotificationsView({
                     }))
                   }
                   aria-expanded={isExpanded}
-                  className="w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                  className="w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-emerald-50/40 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {!item.readByRecipient && (
-                      <span
-                        aria-hidden="true"
-                        className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
-                      />
-                    )}
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
-                      {item.subject}
-                    </h3>
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {!item.readByRecipient && (
+                        <span
+                          aria-hidden="true"
+                          className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
+                        />
+                      )}
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                        {item.subject}
+                      </h3>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                      <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                        {getTypeLabel(item.type)}
+                      </span>
+                      <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                        ·
+                      </span>
+                      <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
+                        {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
+                      </span>
+                      <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                        ·
+                      </span>
+                      <span className="font-mono text-slate-500 dark:text-slate-400">
+                        {formatDateTime(item.createdAt)}
+                      </span>
+                    </div>
                   </div>
                   <ChevronDown
                     aria-hidden="true"
@@ -637,26 +661,8 @@ export function NotificationsView({
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-3.5 pb-4 pt-1 sm:px-5 sm:pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 border-t border-slate-100/80 dark:border-slate-800/80">
-                        <div className="space-y-1.5 min-w-0 pt-2">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                              {getTypeLabel(item.type)}
-                            </span>
-                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                              ·
-                            </span>
-                            <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
-                              {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
-                            </span>
-                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                              ·
-                            </span>
-                            <span className="font-mono text-slate-500 dark:text-slate-400">
-                              {formatDateTime(item.createdAt)}
-                            </span>
-                          </div>
-
+                      <div className="px-3.5 pb-4 pt-2 sm:px-5 sm:pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 border-t border-slate-200/70 dark:border-slate-800/80">
+                        <div className="space-y-1.5 min-w-0">
                           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
                             {item.body}
                           </p>
