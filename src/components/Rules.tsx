@@ -245,8 +245,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
   const isBn = activeLang === 'bn';
   const sections = isBn ? CHARTER_SECTIONS_BN : CHARTER_SECTIONS_EN;
 
-  const allExpanded =
-    !embedded || sections.every((section) => Boolean(expandedCodes[section.code]));
+  const allExpanded = sections.every((section) => Boolean(expandedCodes[section.code]));
 
   function toggleSectionCode(code: string) {
     setExpandedCodes((prev) => ({ ...prev, [code]: !prev[code] }));
@@ -305,7 +304,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {!embedded ? (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0 self-start sm:self-end">
+            <div className="flex flex-wrap items-center gap-3 shrink-0 self-start sm:self-end">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -396,6 +395,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   })}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={toggleExpandAll}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {allExpanded ? tRules('collapseAll') : tRules('expandAll')}
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 shrink-0">
@@ -522,11 +528,11 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           className={
             cardLayout === 'single'
               ? 'grid grid-cols-1 gap-4 w-full'
-              : 'grid grid-cols-1 xl:grid-cols-2 gap-4 w-full'
+              : 'grid grid-cols-1 xl:grid-cols-2 gap-4 w-full items-start'
           }
         >
           {sections.map((rule, idx) => {
-            const isOpen = !embedded || Boolean(expandedCodes[rule.code]);
+            const isOpen = Boolean(expandedCodes[rule.code]);
             const ruleHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
             return (
               <MotionCard
@@ -538,13 +544,31 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 className="backdrop-blur-md border rounded-xl p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-200"
               >
                 <div className="space-y-2.5">
-                  <div className="space-y-1">
-                    <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                      {rule.code}
-                    </span>
-                    <ArticleHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
-                      {rule.title}
-                    </ArticleHeadingTag>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <span className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        {rule.code}
+                      </span>
+                      <ArticleHeadingTag className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                        {rule.title}
+                      </ArticleHeadingTag>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionCode(rule.code)}
+                      aria-expanded={isOpen}
+                      aria-label={
+                        isOpen
+                          ? `${rule.code} — ${tRules('hideArticles')}`
+                          : `${rule.code} — ${tRules('readArticles', { count: rule.points.length })}`
+                      }
+                      className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/70 dark:bg-slate-950/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                    >
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+                        aria-hidden="true"
+                      />
+                    </button>
                   </div>
                   <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     {rule.summary}
@@ -575,26 +599,24 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   </AnimatePresence>
                 </div>
 
-                {embedded && (
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => toggleSectionCode(rule.code)}
-                      aria-expanded={isOpen}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
-                    >
-                      <span>
-                        {isOpen
-                          ? tRules('hideArticles')
-                          : tRules('readArticles', { count: rule.points.length })}
-                      </span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                )}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleSectionCode(rule.code)}
+                    aria-expanded={isOpen}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                  >
+                    <span>
+                      {isOpen
+                        ? tRules('hideArticles')
+                        : tRules('readArticles', { count: rule.points.length })}
+                    </span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
               </MotionCard>
             );
           })}
