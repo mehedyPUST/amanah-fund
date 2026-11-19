@@ -6,11 +6,13 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Download,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
   KeyRound,
+  Loader2,
   Mail,
   Phone,
   RefreshCw,
@@ -19,10 +21,12 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
+import type { AppLocale } from '../i18n/config.ts';
 import type { MemberSummary, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
@@ -58,6 +62,7 @@ interface PendingRegistrationsViewProps {
 }
 
 export function PendingRegistrationsView({ user, onRefresh }: PendingRegistrationsViewProps) {
+  const locale = useLocale() as AppLocale;
   const t = useTranslations('Admin.approving');
   const tAdmin = useTranslations('Admin');
   const tCommon = useTranslations('Common');
@@ -72,11 +77,30 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
     id: string;
     type: 'approve' | 'reject' | 'resend';
   } | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const [revealedOtps, setRevealedOtps] = useState<Record<string, boolean>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [modal, setModal] = useState<RegModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+
+  async function handleDownloadApplicantPdf(applicant: MemberSummary) {
+    if (!applicant.registrationDetails || downloadingPdfId) return;
+    setDownloadingPdfId(applicant.id);
+    try {
+      await downloadMembershipApplicationPdf({
+        applicantName: applicant.name,
+        email: applicant.email,
+        memberCode: applicant.activationCredentials?.memberCode || applicant.memberCode,
+        status: applicant.status,
+        submittedAt: applicant.joinedAt,
+        registrationDetails: applicant.registrationDetails,
+        locale,
+      });
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  }
 
   function showNotice(
     tone: 'emerald' | 'amber' | 'red' | 'slate',
@@ -574,7 +598,26 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:flex items-center gap-2.5 shrink-0 w-full md:w-auto">
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 shrink-0 w-full md:w-auto">
+                    {reg && (
+                      <button
+                        type="button"
+                        disabled={downloadingPdfId === applicant.id}
+                        onClick={() => void handleDownloadApplicantPdf(applicant)}
+                        className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+                      >
+                        {downloadingPdfId === applicant.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                        )}
+                        <span>
+                          {downloadingPdfId === applicant.id
+                            ? t('generatingPdf')
+                            : t('downloadApplicationPdf')}
+                        </span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={isBusy || modalBusy}

@@ -2,18 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ClipboardCheck,
+  Download,
   ExternalLink,
   FileText,
   KeyRound,
+  Loader2,
   Mail,
   Phone,
   Users,
   X,
   XCircle,
 } from 'lucide-react';
+import type { AppLocale } from '../i18n/config.ts';
 import type {
   FundConfig,
   MemberSummary,
@@ -21,6 +24,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
@@ -75,6 +79,7 @@ export function MemberRegistrySection({
   config,
   onRefresh,
 }: MemberRegistrySectionProps) {
+  const locale = useLocale() as AppLocale;
   const t = useTranslations('Admin.memberRegistry');
   const tCommon = useTranslations('Common');
   const isStaff = user.role === 'admin' || user.role === 'manager';
@@ -85,8 +90,28 @@ export function MemberRegistrySection({
   const [profileBusyId, setProfileBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [inspectingMember, setInspectingMember] = useState<MemberSummary | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [modal, setModal] = useState<RegistryModalState | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
+
+  async function handleDownloadInspectingPdf(member: MemberSummary) {
+    if (!member.registrationDetails || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      await downloadMembershipApplicationPdf({
+        applicantName: member.name,
+        email: member.email,
+        memberCode: member.activationCredentials?.memberCode || member.memberCode,
+        status: member.status,
+        submittedAt: member.joinedAt,
+        fundName: config?.fundName || undefined,
+        registrationDetails: member.registrationDetails,
+        locale,
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   function showNotice(
     tone: 'emerald' | 'amber' | 'red' | 'slate',
@@ -718,6 +743,23 @@ export function MemberRegistrySection({
             </div>
 
             <div className="sticky bottom-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-end gap-2">
+              {inspectingMember.registrationDetails && (
+                <button
+                  type="button"
+                  disabled={downloadingPdf}
+                  onClick={() => void handleDownloadInspectingPdf(inspectingMember)}
+                  className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                >
+                  {downloadingPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                  <span>
+                    {downloadingPdf ? t('generatingPdf') : t('downloadApplicationPdf')}
+                  </span>
+                </button>
+              )}
               {isAdmin && inspectingMember.status === 'pending_approval' && (
                 <>
                   <button

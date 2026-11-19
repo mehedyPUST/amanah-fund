@@ -36,6 +36,11 @@ export interface ActionModalProps {
   inputRequired?: boolean;
   inputMultiline?: boolean;
   initialInputValue?: string;
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    loading?: boolean;
+  };
   onConfirm?: (inputValue: string) => Promise<void> | void;
   onClose: () => void;
 }
@@ -55,6 +60,7 @@ export function ActionModal({
   inputRequired = false,
   inputMultiline = false,
   initialInputValue = '',
+  secondaryAction,
   onConfirm,
   onClose,
 }: ActionModalProps) {
@@ -501,7 +507,7 @@ export function ActionModal({
                 }`}
               >
                 <div
-                  className={`flex items-center gap-2.5 ${
+                  className={`flex flex-wrap items-center gap-2.5 ${
                     isSuccessNotice ? 'justify-center' : 'justify-end'
                   }`}
                 >
@@ -513,6 +519,19 @@ export function ActionModal({
                       className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {resolvedCancelLabel}
+                    </button>
+                  )}
+                  {secondaryAction && (
+                    <button
+                      type="button"
+                      disabled={isBusy || secondaryAction.loading}
+                      onClick={secondaryAction.onClick}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50/80 dark:bg-emerald-950/40 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer disabled:opacity-55"
+                    >
+                      {secondaryAction.loading && (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                      )}
+                      <span>{secondaryAction.label}</span>
                     </button>
                   )}
                   <button

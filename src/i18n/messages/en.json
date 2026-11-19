@@ -630,6 +630,8 @@
       "submittedFallback": "Membership application submitted. After administrator review, your official Member ID and unique 6-digit Activation OTP will be sent to your email so you can sign in and complete activation.",
       "goToSignIn": "Go to Sign In",
       "submitAnother": "Submit Another Application",
+      "downloadApplicationPdf": "Download Application Form (PDF)",
+      "generatingPdf": "Preparing PDF…",
       "charterBannerTitle": "Constitution Charter (§4–§6 · VISION-36: 2027–2036)",
       "charterBannerDesc": "Capped at 20 shares · ৳5,000/mo savings · ৳200 non-refundable admission fee.",
       "constitutionPdf": "Constitution PDF",
@@ -2290,7 +2292,9 @@
       "socialProfiles": "Social Media",
       "whatsapp": "WhatsApp",
       "facebook": "Facebook",
-      "linkedin": "LinkedIn"
+      "linkedin": "LinkedIn",
+      "downloadApplicationPdf": "Application PDF",
+      "generatingPdf": "Preparing PDF…"
     },
     "users": {
       "issueCodesTitle": "Approve & Issue Activation Codes ({name})?",
@@ -2990,7 +2994,9 @@
       "socialProfiles": "Social Media Profiles",
       "whatsapp": "WhatsApp",
       "facebook": "Facebook",
-      "linkedin": "LinkedIn"
+      "linkedin": "LinkedIn",
+      "downloadApplicationPdf": "Download Application PDF",
+      "generatingPdf": "Preparing PDF…"
     },
     "reports": {
       "loadFailedTitle": "Failed to Load Admin Records",
@@ -4628,6 +4634,8 @@
     "whatsapp": "WhatsApp",
     "facebook": "Facebook",
     "linkedin": "LinkedIn",
+    "downloadApplicationPdf": "Download Application Form (PDF)",
+    "generatingPdf": "Preparing PDF…",
     "updateContactTitle": "Update Contact Information",
     "editsRequireApproval": "Edits require Admin or Manager approval.",
     "pendingUpdateTitle": "Pending Profile Update Request ({date})",

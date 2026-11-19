@@ -7,9 +7,11 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  Download,
   ExternalLink,
   FileText,
   KeyRound,
+  Loader2,
   Lock,
   RefreshCw,
   Save,
@@ -25,6 +27,7 @@ import type { AppLocale } from '../i18n/config.ts';
 import { translateRoleLabel } from '../i18n/messages.ts';
 import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 import {
   detectDefaultMobileDeviceName,
@@ -50,6 +53,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const [profile, setProfile] = useState<PublicUser>(user);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloadingAppPdf, setDownloadingAppPdf] = useState(false);
   const [photoBroken, setPhotoBroken] = useState(false);
   const [agreementBroken, setAgreementBroken] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<{
@@ -921,6 +925,42 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
                   {reg?.nominees && reg.nominees.length > 0 && (
                     <NomineeDetailsList nominees={reg.nominees} compact />
+                  )}
+
+                  {reg && (
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                      <button
+                        type="button"
+                        disabled={downloadingAppPdf}
+                        onClick={async () => {
+                          if (!reg || downloadingAppPdf) return;
+                          setDownloadingAppPdf(true);
+                          try {
+                            await downloadMembershipApplicationPdf({
+                              applicantName: profile.name,
+                              email: profile.email,
+                              memberCode: profile.memberCode,
+                              status: profile.status,
+                              submittedAt: profile.joinedAt,
+                              registrationDetails: reg,
+                              locale,
+                            });
+                          } finally {
+                            setDownloadingAppPdf(false);
+                          }
+                        }}
+                        className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/35 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-55 transition-colors"
+                      >
+                        {downloadingAppPdf ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                        )}
+                        <span>
+                          {downloadingAppPdf ? t('generatingPdf') : t('downloadApplicationPdf')}
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </motion.div>

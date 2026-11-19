@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   AlertCircle,
   ArrowRight,
   Check,
   CheckCircle2,
   ChevronDown,
+  Download,
   ExternalLink,
   Eye,
   EyeOff,
@@ -30,9 +31,14 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
+import type { AppLocale } from '../i18n/config.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
 import type { NomineeGender, NomineeInfo, StructuredBdAddress } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import {
+  downloadMembershipApplicationPdf,
+  type ApplicationFormPdfInput,
+} from '../utils/applicationFormPdf.ts';
 import {
   createEmptyBdAddress,
   formatBdAddress,
@@ -82,6 +88,7 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
 
 export function SignUpForm() {
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
   const { user, authChecking, setUser } = useCoopSession();
   const t = useTranslations('Auth.signUpPage');
   const tAuth = useTranslations('Auth');
@@ -153,6 +160,9 @@ export function SignUpForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [bootstrapActivated, setBootstrapActivated] = useState(false);
+  const [submittedApplication, setSubmittedApplication] =
+    useState<ApplicationFormPdfInput | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const redirectingRef = useRef(false);
 
   const effectivePermanentAddressDetails = useMemo(
@@ -556,14 +566,15 @@ export function SignUpForm() {
 
     setSubmitting(true);
     try {
+      const resolvedReference =
+        referenceMemberName.trim() ||
+        (isBootstrapSetup ? 'Founding Administrator (Self)' : '');
       const res = await api.register({
         name,
         email,
         password,
         dateOfBirth,
-        referenceMemberName:
-          referenceMemberName.trim() ||
-          (isBootstrapSetup ? 'Founding Administrator (Self)' : ''),
+        referenceMemberName: resolvedReference,
         mobile,
         occupation,
         companyOrganization,
@@ -577,6 +588,32 @@ export function SignUpForm() {
         signatureUrl,
         agreementPhotoUrl: agreementPhotoUrl || undefined,
         nominees: preparedNominees,
+      });
+
+      setSubmittedApplication({
+        applicantName: res.user?.name || name.trim(),
+        email: res.user?.email || email.trim(),
+        memberCode: res.user?.memberCode,
+        status: res.user?.status || (res.bootstrapAdmin ? 'active' : 'pending_approval'),
+        submittedAt: res.user?.joinedAt || new Date().toISOString(),
+        fundName: constitution?.fundName || undefined,
+        registrationDetails: {
+          dateOfBirth,
+          referenceMemberName: resolvedReference,
+          mobile,
+          occupation,
+          companyOrganization,
+          nid,
+          presentAddress,
+          permanentAddress,
+          presentAddressDetails: { ...presentAddressDetails },
+          permanentAddressDetails: { ...effectivePermanentAddressDetails },
+          socialMedia: hasSocialMedia ? cleanedSocial : undefined,
+          photoUrl,
+          signatureUrl,
+          agreementPhotoUrl: agreementPhotoUrl || undefined,
+          nominees: preparedNominees,
+        },
       });
 
       const msg = res.message || t('submittedFallback');
@@ -613,6 +650,19 @@ export function SignUpForm() {
       setError(err instanceof Error ? err.message : t('errSubmitFailed'));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDownloadSubmittedPdf() {
+    if (!submittedApplication || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      await downloadMembershipApplicationPdf({
+        ...submittedApplication,
+        locale,
+      });
+    } finally {
+      setDownloadingPdf(false);
     }
   }
 
@@ -698,6 +748,23 @@ export function SignUpForm() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 pt-1">
+                {submittedApplication && (
+                  <button
+                    type="button"
+                    disabled={downloadingPdf}
+                    onClick={() => void handleDownloadSubmittedPdf()}
+                    className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap transition-colors"
+                  >
+                    {downloadingPdf ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    )}
+                    <span>
+                      {downloadingPdf ? t('generatingPdf') : t('downloadApplicationPdf')}
+                    </span>
+                  </button>
+                )}
                 <Link
                   href="/login"
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap"
@@ -707,7 +774,10 @@ export function SignUpForm() {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => setSuccessMessage(null)}
+                  onClick={() => {
+                    setSuccessMessage(null);
+                    setSubmittedApplication(null);
+                  }}
                   className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap"
                 >
                   {t('submitAnother')}
@@ -1900,6 +1970,15 @@ export function SignUpForm() {
         title={bootstrapActivated ? t('bootstrapSuccessTitle') : t('submittedTitle')}
         description={successMessage || t('submittedFallback')}
         confirmLabel={bootstrapActivated ? t('openDashboardNow') : tCommon('okGotIt')}
+        secondaryAction={
+          submittedApplication
+            ? {
+                label: downloadingPdf ? t('generatingPdf') : t('downloadApplicationPdf'),
+                loading: downloadingPdf,
+                onClick: () => void handleDownloadSubmittedPdf(),
+              }
+            : undefined
+        }
         onClose={() => {
           if (bootstrapActivated) {
             redirectingRef.current = true;

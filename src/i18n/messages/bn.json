@@ -630,6 +630,8 @@
       "submittedFallback": "সদস্যপদ আবেদন জমা হয়েছে। অ্যাডমিন পর্যালোচনার পর আপনার আনুষ্ঠানিক সদস্য আইডি এবং ৬-ডিজিট অ্যাক্টিভেশন ওটিপি ইমেইলে পাঠানো হবে।",
       "goToSignIn": "লগইন পৃষ্ঠায় যান",
       "submitAnother": "আরেকটি আবেদন জমা দিন",
+      "downloadApplicationPdf": "আবেদন ফরম ডাউনলোড (PDF)",
+      "generatingPdf": "পিডিএফ তৈরি হচ্ছে…",
       "charterBannerTitle": "সমবায় গঠনতন্ত্র (ধারা ৪–৬ · ভিশন-৩৬: ২০২৭–২০৩৬)",
       "charterBannerDesc": "সর্বোচ্চ ২০ শেয়ার · মাসে ৳৫,০০০ সঞ্চয় · ৳২০০ অফেরতযোগ্য ভর্তি ফি।",
       "constitutionPdf": "গঠনতন্ত্র পিডিএফ",
@@ -2290,7 +2292,9 @@
       "socialProfiles": "সোশ্যাল মিডিয়া",
       "whatsapp": "হোয়াটসঅ্যাপ",
       "facebook": "ফেসবুক",
-      "linkedin": "লিংকডইন"
+      "linkedin": "লিংকডইন",
+      "downloadApplicationPdf": "আবেদন ফরম (PDF)",
+      "generatingPdf": "পিডিএফ তৈরি হচ্ছে…"
     },
     "users": {
       "issueCodesTitle": "অনুমোদন ও অ্যাক্টিভেশন কোড ইস্যু করবেন ({name})?",
@@ -2990,7 +2994,9 @@
       "socialProfiles": "সোশ্যাল মিডিয়া প্রোফাইল",
       "whatsapp": "হোয়াটসঅ্যাপ",
       "facebook": "ফেসবুক",
-      "linkedin": "লিংকডইন"
+      "linkedin": "লিংকডইন",
+      "downloadApplicationPdf": "আবেদন ফরম ডাউনলোড (PDF)",
+      "generatingPdf": "পিডিএফ তৈরি হচ্ছে…"
     },
     "reports": {
       "loadFailedTitle": "অ্যাডমিন রেকর্ড লোড ব্যর্থ হয়েছে",
@@ -4628,6 +4634,8 @@
     "whatsapp": "হোয়াটসঅ্যাপ",
     "facebook": "ফেসবুক",
     "linkedin": "লিংকডইন",
+    "downloadApplicationPdf": "আবেদন ফরম ডাউনলোড (PDF)",
+    "generatingPdf": "পিডিএফ তৈরি হচ্ছে…",
     "updateContactTitle": "যোগাযোগের তথ্য হালনাগাদ করুন",
     "editsRequireApproval": "পরিবর্তনের জন্য অ্যাডমিন বা ম্যানেজারের অনুমোদন প্রয়োজন।",
     "pendingUpdateTitle": "অপেক্ষমাণ প্রোফাইল আপডেট অনুরোধ ({date})",
