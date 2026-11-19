@@ -1915,7 +1915,14 @@ export function BalanceSheetView({
                   filteredRows.map((row, idx) => {
                     const isSelfRow = Boolean(user?.id && row.userId === user.id);
                     return (
-                      <div key={row.userId} className="p-3.5 space-y-2.5 bg-white dark:bg-slate-950">
+                      <div
+                        key={row.userId}
+                        className={`p-3.5 space-y-2.5 ${
+                          idx % 2 === 1
+                            ? 'bg-sky-50/65 dark:bg-slate-900/75'
+                            : 'bg-white dark:bg-slate-950'
+                        }`}
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="relative group/avatar shrink-0">
@@ -2175,11 +2182,11 @@ export function BalanceSheetView({
                     </th>
                   </tr>
 
-                  {/* Column Titles Row (S.N + Sortable A..L) */}
-                  <tr className="bg-white dark:bg-slate-950 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  {/* Column Titles Row (S.N + Sortable A..L with distinct column header colors) */}
+                  <tr className="text-[11px] font-semibold">
                     <th
                       scope="col"
-                      className="w-[40px] min-w-[40px] px-1 py-2 text-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40"
+                      className="w-[40px] min-w-[40px] px-1 py-2 text-center font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-200 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 sticky left-0 z-40"
                     >
                       <button
                         type="button"
@@ -2196,7 +2203,7 @@ export function BalanceSheetView({
                       <th
                         scope="col"
                         colSpan={2}
-                        className={`min-w-[174px] w-[174px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                        className={`min-w-[174px] w-[174px] px-2 py-2 text-left border-r border-b-2 border-sky-300/80 dark:border-sky-800 bg-sky-100 dark:bg-sky-950 text-sky-950 dark:text-sky-100 ${
                           freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
                         }`}
                       >
@@ -2204,7 +2211,7 @@ export function BalanceSheetView({
                           type="button"
                           onClick={() => handleToggleSort('name')}
                           title="Member Name"
-                          className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                          className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-sky-700 dark:hover:text-sky-300 cursor-pointer"
                         >
                           <span>Name</span>
                           {renderSortIcon('name')}
@@ -2215,7 +2222,7 @@ export function BalanceSheetView({
                         scope="col"
                         colSpan={1}
                         title="Member Avatar"
-                        className={`min-w-[44px] w-[44px] px-1 py-2 text-center border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 ${
+                        className={`min-w-[44px] w-[44px] px-1 py-2 text-center border-r border-b-2 border-sky-300/80 dark:border-sky-800 bg-sky-100 dark:bg-sky-950 text-sky-900 dark:text-sky-200 ${
                           freezeIdentityCols ? 'md:sticky md:left-[40px] md:z-40' : ''
                         }`}
                       >
@@ -2228,7 +2235,7 @@ export function BalanceSheetView({
                       scope="col"
                       className={`${
                         isFullScreen ? 'min-w-[82px] w-[82px]' : 'min-w-[92px] w-[92px]'
-                      } px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 ${
+                      } px-2 py-2 text-left border-r border-b-2 border-indigo-300/80 dark:border-indigo-800 bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-100 ${
                         freezeIdentityCols
                           ? `md:sticky ${
                               isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
@@ -2240,7 +2247,7 @@ export function BalanceSheetView({
                         type="button"
                         onClick={() => handleToggleSort('memberCode')}
                         title="Member ID"
-                        className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
                       >
                         <span>ID</span>
                         {renderSortIcon('memberCode')}
@@ -2250,13 +2257,13 @@ export function BalanceSheetView({
                     {/* C: Previous Cumulative — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-blue-300/80 dark:border-blue-800 bg-blue-100/85 dark:bg-blue-950/75 text-blue-950 dark:text-blue-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevContrib')}
                         title="Previous Months Cumulative Contribution"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer"
                       >
                         <span>Contrib.</span>
                         {renderSortIcon('prevContrib')}
@@ -2266,13 +2273,13 @@ export function BalanceSheetView({
                     {/* D: Previous Cumulative — Qard Hasan */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-violet-300/80 dark:border-violet-800 bg-violet-100/85 dark:bg-violet-950/75 text-violet-950 dark:text-violet-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevQard')}
                         title="Previous Months Cumulative Qard Hasan Issued"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                       >
                         <span>Qard</span>
                         {renderSortIcon('prevQard')}
@@ -2282,13 +2289,13 @@ export function BalanceSheetView({
                     {/* E: Previous Cumulative — Qard Due */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-amber-300/80 dark:border-amber-800 bg-amber-100/85 dark:bg-amber-950/75 text-amber-950 dark:text-amber-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('prevDue')}
                         title="Previous Months Opening Qard Hasan Due"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer"
                       >
                         <span>Q. Due</span>
                         {renderSortIcon('prevDue')}
@@ -2298,13 +2305,13 @@ export function BalanceSheetView({
                     {/* F: Current Month — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30 whitespace-nowrap"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-emerald-300/80 dark:border-emerald-800 bg-emerald-100/90 dark:bg-emerald-950/75 text-emerald-950 dark:text-emerald-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currContrib')}
                         title="Current Month Contribution"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
                       >
                         <span>Contrib.</span>
                         {renderSortIcon('currContrib')}
@@ -2314,13 +2321,13 @@ export function BalanceSheetView({
                     {/* G: Current Month — Qard Drawn */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/30 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-rose-300/80 dark:border-rose-800 bg-rose-100/85 dark:bg-rose-950/75 text-rose-950 dark:text-rose-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currQard')}
                         title="Current Month Qard Hasan Drawn"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-rose-700 dark:hover:text-rose-300 cursor-pointer"
                       >
                         <span>Drawn</span>
                         {renderSortIcon('currQard')}
@@ -2330,13 +2337,13 @@ export function BalanceSheetView({
                     {/* H: Current Month — Refund Qard */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-teal-300/80 dark:border-teal-800 bg-teal-100/90 dark:bg-teal-950/80 text-teal-950 dark:text-teal-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('currRefund')}
                         title="Current Month Refund Qard Hasan"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-bold hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-bold hover:text-teal-700 dark:hover:text-teal-300 cursor-pointer"
                       >
                         <span>Refund</span>
                         {renderSortIcon('currRefund')}
@@ -2346,13 +2353,13 @@ export function BalanceSheetView({
                     {/* I: Closing Summary — Contribution */}
                     <th
                       scope="col"
-                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[78px] px-2 py-2 text-right border-r border-b-2 border-cyan-300/80 dark:border-cyan-800 bg-cyan-100/85 dark:bg-cyan-950/75 text-cyan-950 dark:text-cyan-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingContrib')}
                         title="Closing Cumulative Contribution"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-cyan-700 dark:hover:text-cyan-300 cursor-pointer"
                       >
                         <span>Contrib.</span>
                         {renderSortIcon('closingContrib')}
@@ -2362,13 +2369,13 @@ export function BalanceSheetView({
                     {/* J: Closing Summary — Qard Hasan */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-purple-300/80 dark:border-purple-800 bg-purple-100/85 dark:bg-purple-950/75 text-purple-950 dark:text-purple-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingQard')}
                         title="Closing Cumulative Qard Hasan"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-purple-700 dark:hover:text-purple-300 cursor-pointer"
                       >
                         <span>Qard</span>
                         {renderSortIcon('closingQard')}
@@ -2378,13 +2385,13 @@ export function BalanceSheetView({
                     {/* K: Closing Summary — Qard Due */}
                     <th
                       scope="col"
-                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[72px] px-2 py-2 text-right border-r border-b-2 border-orange-300/80 dark:border-orange-800 bg-orange-100/85 dark:bg-orange-950/75 text-orange-950 dark:text-orange-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('closingDue')}
                         title="Closing Outstanding Qard Hasan Due"
-                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-end gap-1 text-right font-semibold hover:text-orange-700 dark:hover:text-orange-300 cursor-pointer"
                       >
                         <span>Q. Due</span>
                         {renderSortIcon('closingDue')}
@@ -2394,13 +2401,13 @@ export function BalanceSheetView({
                     {/* L: Closing Summary — Status */}
                     <th
                       scope="col"
-                      className="min-w-[76px] px-2 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 whitespace-nowrap"
+                      className="min-w-[76px] px-2 py-2 text-left border-r border-b-2 border-lime-300/80 dark:border-lime-800 bg-lime-100/85 dark:bg-lime-950/70 text-lime-950 dark:text-lime-100 whitespace-nowrap"
                     >
                       <button
                         type="button"
                         onClick={() => handleToggleSort('status')}
                         title="Current Month Payment Status"
-                        className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+                        className="w-full inline-flex items-center justify-between gap-1 text-left font-semibold hover:text-lime-700 dark:hover:text-lime-300 cursor-pointer"
                       >
                         <span>Status</span>
                         {renderSortIcon('status')}
@@ -2441,19 +2448,23 @@ export function BalanceSheetView({
                       const isRowMarked = markedRowUserId === row.userId;
                       const isSelfRow = Boolean(user?.id && row.userId === user.id);
                       const zebraBg = isRowMarked
-                        ? 'bg-emerald-100/80 dark:bg-emerald-950/60'
+                        ? 'bg-emerald-100/85 dark:bg-emerald-950/70'
                         : isSelfRow
-                          ? 'bg-emerald-50/35 dark:bg-emerald-950/20'
+                          ? idx % 2 === 1
+                            ? 'bg-emerald-50/75 dark:bg-emerald-950/40'
+                            : 'bg-emerald-50/45 dark:bg-emerald-950/25'
                           : idx % 2 === 1
-                            ? 'bg-slate-50/45 dark:bg-slate-900/35'
+                            ? 'bg-sky-50/80 dark:bg-slate-900/85'
                             : 'bg-white dark:bg-slate-950';
                       const stickyBg = isRowMarked
                         ? 'bg-[#dcf3e7] dark:bg-[#0d3326] group-hover/row:bg-[#d1ecde] dark:group-hover/row:bg-[#113d2e]'
                         : isSelfRow
-                          ? 'bg-[#f4fbf8] dark:bg-[#081f17] group-hover/row:bg-[#ebf8f3] dark:group-hover/row:bg-[#0b291f]'
+                          ? idx % 2 === 1
+                            ? 'bg-[#e7f8f0] dark:bg-[#09271d] group-hover/row:bg-[#dcf3e7] dark:group-hover/row:bg-[#0d3326]'
+                            : 'bg-[#f2fbf7] dark:bg-[#071f17] group-hover/row:bg-[#e7f8f0] dark:group-hover/row:bg-[#0b291f]'
                           : idx % 2 === 1
-                            ? 'bg-[#fafbfc] dark:bg-[#0d1424] group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]'
-                            : 'bg-white dark:bg-slate-950 group-hover/row:bg-[#f2fbf7] dark:group-hover/row:bg-[#0a231b]';
+                            ? 'bg-[#eff7ff] dark:bg-[#10192b] group-hover/row:bg-[#e6f7f0] dark:group-hover/row:bg-[#0c261f]'
+                            : 'bg-white dark:bg-slate-950 group-hover/row:bg-[#eefaf5] dark:group-hover/row:bg-[#0a231b]';
                       const avatarTooltipPos = 'left-full ml-2 top-1/2 -translate-y-1/2';
                       const avatarTooltipCaret = '-left-1 top-1/2 -translate-y-1/2';
 
@@ -2463,8 +2474,8 @@ export function BalanceSheetView({
                           aria-selected={isRowMarked}
                           className={`group/row ${zebraBg} ${
                             isRowMarked
-                              ? '[&>td]:border-b-emerald-500/60 dark:[&>td]:border-b-emerald-500/50 hover:bg-emerald-100/90 dark:hover:bg-emerald-950/70'
-                              : 'hover:bg-emerald-50/45 dark:hover:bg-emerald-950/25'
+                              ? '[&>td]:border-b-emerald-500/60 dark:[&>td]:border-b-emerald-500/50 hover:bg-emerald-100/95 dark:hover:bg-emerald-950/80'
+                              : 'hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30'
                           } transition-colors`}
                         >
                           {/* S.N Column (starts at 1; click to mark/highlight full row) */}
@@ -2490,7 +2501,9 @@ export function BalanceSheetView({
                                 ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold'
                                 : rowActive
                                   ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-900 dark:text-emerald-200 font-bold'
-                                  : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300'
+                                  : idx % 2 === 1
+                                    ? 'bg-[#e8f1fb] dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300'
+                                    : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300'
                             }`}
                           >
                             {idx + 1}
@@ -2994,26 +3007,26 @@ export function BalanceSheetView({
                     );
                   })}
                 </tr>
-                <tr className="bg-slate-50 dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                  <th className="w-[40px] min-w-[40px] py-2 text-center font-mono text-[11px] font-medium text-slate-500 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-[#f8f9fa] dark:bg-slate-900 sticky left-0 z-40">
+                <tr className="text-[11px] font-semibold">
+                  <th className="w-[40px] min-w-[40px] py-2 text-center font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-200 border-r border-b-2 border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 sticky left-0 z-40">
                     1
                   </th>
-                  <th className="min-w-[130px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                  <th className="min-w-[130px] px-2.5 py-2 text-left border-r border-b-2 border-indigo-300/80 dark:border-indigo-800 bg-indigo-100/85 dark:bg-indigo-950/75 text-indigo-950 dark:text-indigo-100 whitespace-nowrap">
                     Group
                   </th>
-                  <th className="min-w-[200px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                  <th className="min-w-[200px] px-2.5 py-2 text-left border-r border-b-2 border-sky-300/80 dark:border-sky-800 bg-sky-100/85 dark:bg-sky-950/75 text-sky-950 dark:text-sky-100 whitespace-nowrap">
                     Variable
                   </th>
-                  <th className="min-w-[180px] px-2.5 py-2 text-left border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                  <th className="min-w-[180px] px-2.5 py-2 text-left border-r border-b-2 border-violet-300/80 dark:border-violet-800 bg-violet-100/85 dark:bg-violet-950/75 text-violet-950 dark:text-violet-100 whitespace-nowrap">
                     Formula / Basis
                   </th>
-                  <th className="min-w-[110px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                  <th className="min-w-[110px] px-2.5 py-2 text-right border-r border-b-2 border-amber-300/80 dark:border-amber-800 bg-amber-100/85 dark:bg-amber-950/75 text-amber-950 dark:text-amber-100 whitespace-nowrap">
                     Prev. ({prevMonthLabel})
                   </th>
-                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 whitespace-nowrap">
+                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-emerald-300/80 dark:border-emerald-800 bg-emerald-100/90 dark:bg-emerald-950/75 text-emerald-950 dark:text-emerald-100 whitespace-nowrap">
                     Curr. ({shortMonthLabel})
                   </th>
-                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                  <th className="min-w-[120px] px-2.5 py-2 text-right border-r border-b-2 border-cyan-300/80 dark:border-cyan-800 bg-cyan-100/85 dark:bg-cyan-950/75 text-cyan-950 dark:text-cyan-100 whitespace-nowrap">
                     Closing
                   </th>
                 </tr>
@@ -3062,20 +3075,22 @@ export function BalanceSheetView({
                         key={item.id}
                         className={`${
                           idx % 2 === 1
-                            ? 'bg-slate-50/45 dark:bg-slate-900/35'
+                            ? 'bg-sky-50/80 dark:bg-slate-900/85'
                             : 'bg-white dark:bg-slate-950'
                         } ${
                           isNewGroup
                             ? 'border-t-2 border-t-slate-300/80 dark:border-t-slate-700'
                             : ''
-                        } hover:bg-emerald-50/35 dark:hover:bg-emerald-950/20 transition-colors`}
+                        } hover:bg-emerald-50/50 dark:hover:bg-emerald-950/25 transition-colors`}
                       >
                         <td
                           onClick={() => selectSheetCell('variables-summary', idx, 0)}
                           className={`w-[40px] min-w-[40px] ${cellPadY} text-center font-mono text-[11px] border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 cursor-pointer ${
                             rowActive
                               ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-900 dark:text-emerald-200 font-bold'
-                              : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-500 dark:text-slate-400'
+                              : idx % 2 === 1
+                                ? 'bg-[#e8f1fb] dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                : 'bg-[#f8f9fa] dark:bg-slate-900 text-slate-500 dark:text-slate-400'
                           }`}
                         >
                           {idx + 2}
