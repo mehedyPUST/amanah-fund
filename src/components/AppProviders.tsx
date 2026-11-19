@@ -66,6 +66,7 @@ export interface PwaUpdateContextState {
 interface CoopSessionContextValue {
   user: PublicUser | null;
   authChecking: boolean;
+  hasVisitedBefore: boolean;
   setUser: (user: PublicUser | null) => void;
   refreshUser: () => Promise<PublicUser | null>;
   logout: () => Promise<void>;
@@ -94,16 +95,19 @@ export function AppProviders({
   children,
   initialLocale = defaultLocale,
   initialUser = null,
+  initialVisited = false,
 }: {
   children: ReactNode;
   initialLocale?: AppLocale;
   initialUser?: PublicUser | null;
+  initialVisited?: boolean;
 }) {
   const queryClient = getQueryClient();
   const [user, setUserState] = useState<PublicUser | null>(initialUser);
   const userRef = useRef<PublicUser | null>(initialUser);
   userRef.current = user;
   const [authChecking, setAuthChecking] = useState<boolean>(() => !initialUser);
+  const [hasVisitedBefore, setHasVisitedBefore] = useState<boolean>(initialVisited);
   const [darkMode, setDarkMode] = useState(false);
   const [locale, setLocaleState] = useState<AppLocale>(() => normalizeLocale(initialLocale));
   const localeRef = useRef<AppLocale>(locale);
@@ -182,6 +186,16 @@ export function AppProviders({
     setTotpPrompt(null);
     resolve?.(null);
   };
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('amanah_visited', '1');
+    } catch {
+      // ignore storage errors
+    }
+    document.cookie = 'amanah_visited=1; path=/; max-age=31536000; SameSite=Lax';
+    setHasVisitedBefore(true);
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('amanah_theme');
@@ -621,6 +635,7 @@ export function AppProviders({
           value={{
             user,
             authChecking,
+            hasVisitedBefore,
             setUser,
             refreshUser,
             logout,

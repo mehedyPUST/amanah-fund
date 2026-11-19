@@ -14,7 +14,6 @@ import {
   Loader2,
   Lock,
   Phone,
-  Shield,
   Smartphone,
   UserPlus,
 } from 'lucide-react';
@@ -29,6 +28,7 @@ import {
 import { isMobileBrowseMode, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { ActionModal } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { MobilePinLoginPanel } from './MobilePinLoginPanel.tsx';
@@ -229,9 +229,7 @@ export function MobileVisitorGate() {
           aria-label={tAuth('mobileGate.checkingSessionAria')}
           className="lg:hidden fixed inset-0 z-50 amanah-ambient-canvas flex flex-col items-center justify-center p-6 text-center"
         >
-          <div className="w-12 h-12 rounded-2xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-lg mb-3">
-            <Shield className="w-6 h-6" aria-hidden="true" />
-          </div>
+          <AmanahLogo size="md" decorative className="shadow-lg mb-3" />
           <div className="font-display font-bold text-base text-slate-900 dark:text-white">
             {tCommon('brandName')}
           </div>
@@ -269,9 +267,11 @@ export function MobileVisitorGate() {
               <div className="bg-gradient-to-br from-emerald-700 via-teal-700 to-emerald-900 text-white px-5 py-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-10 h-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
-                      <Shield className="w-5 h-5 text-white" aria-hidden="true" />
-                    </span>
+                    <AmanahLogo
+                      size="md"
+                      decorative
+                      className="ring-white/30 shadow-sm"
+                    />
                     <div className="min-w-0">
                       <h2
                         id="mobile-visitor-gate-title"

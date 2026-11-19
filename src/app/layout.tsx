@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Anek_Bangla, Inter, Open_Sans, Space_Mono } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppProviders } from '../components/AppProviders.tsx';
@@ -71,8 +72,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [rawLocale, initialUser] = await Promise.all([getLocale(), getServerSessionUser()]);
+  const [rawLocale, initialUser, cookieStore] = await Promise.all([
+    getLocale(),
+    getServerSessionUser(),
+    cookies(),
+  ]);
   const locale = normalizeLocale(rawLocale);
+  const hasVisitedBefore = cookieStore.get('amanah_visited')?.value === '1';
 
   return (
     <html
@@ -81,7 +87,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${interHeading.variable} ${openSansBody.variable} ${spaceMono.variable} ${anekBangla.variable}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
-        <AppProviders initialLocale={locale} initialUser={initialUser}>
+        <AppProviders
+          initialLocale={locale}
+          initialUser={initialUser}
+          initialVisited={hasVisitedBefore}
+        >
           {children}
         </AppProviders>
       </body>
