@@ -1352,68 +1352,78 @@ export function DashboardShell() {
     <div
       className={`h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid ${
         sidebarCollapsed
-          ? 'lg:grid-cols-[80px_minmax(0,1fr)]'
+          ? 'lg:grid-cols-[76px_minmax(0,1fr)]'
           : 'lg:grid-cols-[252px_minmax(0,1fr)]'
       } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-200`}
     >
       {/* GRID 1 */}
       <div
         className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs z-30 ${
-          sidebarCollapsed ? 'px-2 justify-center gap-1.5' : 'px-3.5 justify-between gap-2'
+          sidebarCollapsed ? 'px-2 justify-center' : 'px-4 justify-start gap-2.5'
         }`}
       >
-        {sidebarCollapsed ? (
-          <>
-            <AmanahLogo size="xs" decorative />
-            <button
-              type="button"
-              onClick={toggleSidebarCollapsed}
-              aria-expanded={false}
-              aria-label={locale === 'bn' ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
-              title={locale === 'bn' ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
-              className="w-7 h-7 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            >
-              <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AmanahLogo size="sm" decorative />
-              <div className="min-w-0">
-                <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-                  {tCommon('brandName')}
-                </div>
-                <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-                  {tCommon('dashboard')}
-                </div>
-              </div>
+        <AmanahLogo size="sm" decorative />
+        {!sidebarCollapsed && (
+          <div className="min-w-0">
+            <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
+              {tCommon('brandName')}
             </div>
-            <button
-              type="button"
-              onClick={toggleSidebarCollapsed}
-              aria-expanded={true}
-              aria-label={
-                locale === 'bn'
-                  ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
-                  : 'Collapse sidebar (icons only)'
-              }
-              title={
-                locale === 'bn'
-                  ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
-                  : 'Collapse sidebar (icons only)'
-              }
-              className="w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            >
-              <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
+              {tCommon('dashboard')}
+            </div>
+          </div>
         )}
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              aria-expanded={!sidebarCollapsed}
+              aria-controls="dashboard-desktop-sidebar"
+              aria-label={
+                sidebarCollapsed
+                  ? locale === 'bn'
+                    ? 'সাইডবার প্রসারিত করুন'
+                    : 'Expand sidebar'
+                  : locale === 'bn'
+                    ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
+                    : 'Collapse sidebar (icons only)'
+              }
+              className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/55 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/85 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700/80 hover:text-emerald-700 dark:hover:text-emerald-300 active:scale-[0.96] transition-all duration-150 flex items-center justify-center cursor-pointer shadow-2xs"
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen
+                  className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-toggle:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              ) : (
+                <PanelLeftClose
+                  className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-toggle:-translate-x-0.5"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-0 top-full mt-2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 opacity-0 -translate-y-0.5 group-hover/sidebar-toggle:opacity-100 group-hover/sidebar-toggle:translate-y-0 group-focus-within/sidebar-toggle:opacity-100 group-focus-within/sidebar-toggle:translate-y-0 transition-all duration-150"
+            >
+              {sidebarCollapsed
+                ? locale === 'bn'
+                  ? 'সাইডবার প্রসারিত করুন'
+                  : 'Expand sidebar'
+                : locale === 'bn'
+                  ? 'সাইডবার সংকুচিত করুন'
+                  : 'Collapse sidebar'}
+            </span>
+          </div>
+          <span
+            aria-hidden="true"
+            className="hidden lg:block h-5 w-px bg-slate-200/90 dark:bg-slate-800 shrink-0"
+          />
           <AmanahLogo size="xs" className="lg:hidden" decorative />
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
@@ -1504,7 +1514,10 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs">
+      <aside
+        id="dashboard-desktop-sidebar"
+        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs"
+      >
         <nav
           className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
             sidebarCollapsed ? 'px-2' : 'px-2.5'
