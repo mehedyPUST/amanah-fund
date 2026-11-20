@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import {
   AlertCircle,
   Bell,
@@ -44,6 +44,7 @@ import type {
   ProfileChangeRequest,
   PublicUser,
   StructuredBdAddress,
+  UserRegistrationDetails,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
@@ -76,6 +77,7 @@ import {
 } from '../utils/profileChanges.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
+import { MemberAgreementPaperPreview } from './MemberAgreementPaperPreview.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
 
@@ -209,6 +211,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         title: string;
         description: string;
         details?: ActionModalDetailItem[];
+        customContent?: ReactNode;
+        maxWidthClass?: string;
+        secondaryAction?: {
+          label: string;
+          onClick: () => void;
+          loading?: boolean;
+        };
         confirmLabel: string;
         run: () => Promise<void>;
       }
@@ -839,9 +848,136 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       nominees: preparedNominees,
     };
 
+    const savedReg = profile.registrationDetails;
+    const savedPresentDetails = hydrateStructuredBdAddress(
+      savedReg?.presentAddressDetails,
+      savedReg?.presentAddress
+    );
+    const savedPermanentDetails = hydrateStructuredBdAddress(
+      savedReg?.permanentAddressDetails,
+      savedReg?.permanentAddress
+    );
+
+    const changedFields = new Set<string>();
+    if ((payload.name || '') !== (profile.name || '').trim()) changedFields.add('name');
+    if ((payload.nameBn || '') !== (savedReg?.nameBn || '').trim()) changedFields.add('nameBn');
+    if ((payload.email || '').toLowerCase() !== (profile.email || '').trim().toLowerCase()) {
+      changedFields.add('email');
+    }
+    if ((payload.fatherName || '') !== (savedReg?.fatherName || '').trim()) {
+      changedFields.add('fatherName');
+    }
+    if ((payload.fatherNameBn || '') !== (savedReg?.fatherNameBn || '').trim()) {
+      changedFields.add('fatherNameBn');
+    }
+    if ((payload.motherName || '') !== (savedReg?.motherName || '').trim()) {
+      changedFields.add('motherName');
+    }
+    if ((payload.motherNameBn || '') !== (savedReg?.motherNameBn || '').trim()) {
+      changedFields.add('motherNameBn');
+    }
+    if ((payload.gender || '') !== (savedReg?.gender || '')) changedFields.add('gender');
+    if ((payload.maritalStatus || '') !== (savedReg?.maritalStatus || '')) {
+      changedFields.add('maritalStatus');
+    }
+    const savedSpouse = savedReg?.maritalStatus === 'single' ? '' : (savedReg?.spouseName || '').trim();
+    const savedSpouseBn =
+      savedReg?.maritalStatus === 'single' ? '' : (savedReg?.spouseNameBn || '').trim();
+    if ((payload.spouseName || '') !== savedSpouse) changedFields.add('spouseName');
+    if ((payload.spouseNameBn || '') !== savedSpouseBn) changedFields.add('spouseNameBn');
+    if ((payload.dateOfBirth || '') !== (savedReg?.dateOfBirth || '').trim()) {
+      changedFields.add('dateOfBirth');
+    }
+    if ((payload.referenceMemberName || '') !== (savedReg?.referenceMemberName || '').trim()) {
+      changedFields.add('referenceMemberName');
+    }
+    if ((payload.mobile || '') !== (savedReg?.mobile || '').trim()) changedFields.add('mobile');
+    if ((payload.occupation || '') !== (savedReg?.occupation || '').trim()) {
+      changedFields.add('occupation');
+    }
+    if ((payload.companyOrganization || '') !== (savedReg?.companyOrganization || '').trim()) {
+      changedFields.add('companyOrganization');
+    }
+    if ((payload.nid || '') !== (savedReg?.nid || '').trim()) changedFields.add('nid');
+    if (
+      !areBdAddressesEqual(presentAddressDetails, savedPresentDetails) ||
+      presentAddress !== (savedReg?.presentAddress || '').trim()
+    ) {
+      changedFields.add('presentAddress');
+    }
+    if (
+      !areBdAddressesEqual(effectivePermanentAddressDetails, savedPermanentDetails) ||
+      permanentAddress !== (savedReg?.permanentAddress || '').trim()
+    ) {
+      changedFields.add('permanentAddress');
+    }
+    if (
+      (payload.socialMedia?.whatsapp || '') !== (savedReg?.socialMedia?.whatsapp || '').trim() ||
+      (payload.socialMedia?.facebook || '') !== (savedReg?.socialMedia?.facebook || '').trim() ||
+      (payload.socialMedia?.linkedin || '') !== (savedReg?.socialMedia?.linkedin || '').trim()
+    ) {
+      changedFields.add('socialMedia');
+    }
+    if ((payload.photoUrl || '') !== (savedReg?.photoUrl || profile.photoUrl || '').trim()) {
+      changedFields.add('photoUrl');
+    }
+    if ((payload.signatureUrl || '') !== (savedReg?.signatureUrl || '').trim()) {
+      changedFields.add('signatureUrl');
+    }
+    const normalizeNomineeCompare = (list: NomineeInfo[] = []) =>
+      list.map((item) => ({
+        name: item.name.trim(),
+        nameBn: (item.nameBn || '').trim(),
+        dateOfBirth: item.dateOfBirth.trim(),
+        gender: item.gender,
+        occupation: item.occupation.trim(),
+        relation: item.relation.trim(),
+        sharePercentage: Number(item.sharePercentage),
+        nidOrBirthReg: item.nidOrBirthReg.trim(),
+        mobile: (item.mobile || '').trim(),
+        address: item.address.trim(),
+        photoUrl: item.gender === 'female' ? '' : (item.photoUrl || '').trim(),
+      }));
+    if (
+      JSON.stringify(normalizeNomineeCompare(preparedNominees)) !==
+      JSON.stringify(normalizeNomineeCompare(savedReg?.nominees || []))
+    ) {
+      changedFields.add('nominees');
+    }
+
+    const previewRegistrationDetails: UserRegistrationDetails = {
+      nameBn: payload.nameBn || undefined,
+      fatherName: payload.fatherName || undefined,
+      fatherNameBn: payload.fatherNameBn || undefined,
+      motherName: payload.motherName || undefined,
+      motherNameBn: payload.motherNameBn || undefined,
+      gender: payload.gender,
+      maritalStatus: payload.maritalStatus,
+      spouseName: payload.spouseName || undefined,
+      spouseNameBn: payload.spouseNameBn || undefined,
+      dateOfBirth: payload.dateOfBirth || '',
+      referenceMemberName: payload.referenceMemberName || '',
+      mobile: payload.mobile || '',
+      occupation: payload.occupation || '',
+      companyOrganization: payload.companyOrganization || '',
+      nid: payload.nid || '',
+      presentAddress: payload.presentAddress || '',
+      permanentAddress: payload.permanentAddress || '',
+      presentAddressDetails: payload.presentAddressDetails,
+      permanentAddressDetails: payload.permanentAddressDetails,
+      socialMedia: payload.socialMedia,
+      photoUrl: payload.photoUrl || '',
+      signatureUrl: payload.signatureUrl || undefined,
+      agreementPhotoUrl: savedReg?.agreementPhotoUrl,
+      nominees: preparedNominees,
+      digitalAgreement: savedReg?.digitalAgreement,
+    };
+    const previewSubmittedAt = new Date().toISOString();
+
     setModal({
       mode: 'confirm',
       tone: 'emerald',
+      maxWidthClass: 'max-w-4xl',
       title:
         user.role === 'admin'
           ? t('confirmSaveAdminTitle')
@@ -850,12 +986,34 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         user.role === 'admin'
           ? t('confirmSaveAdminDesc')
           : t('confirmSaveMemberDesc'),
-      details: [
-        { label: t('detailFullName'), value: name.trim() },
-        { label: t('detailEmail'), value: email.trim() },
-        { label: t('detailMobile'), value: mobile.trim() },
-        { label: t('detailOccupation'), value: occupation.trim() || '—' },
-      ],
+      customContent: (
+        <MemberAgreementPaperPreview
+          applicantName={payload.name || profile.name}
+          email={payload.email || profile.email}
+          memberCode={profile.memberCode}
+          status={profile.status}
+          submittedAt={previewSubmittedAt}
+          registrationDetails={previewRegistrationDetails}
+          changedFields={changedFields}
+          statusNote={
+            user.role === 'admin' ? 'Direct Admin Update' : 'Pending Admin Approval'
+          }
+        />
+      ),
+      secondaryAction: {
+        label: tCommon('downloadPdf'),
+        onClick: () => {
+          void downloadMembershipApplicationPdf({
+            applicantName: payload.name || profile.name,
+            email: payload.email || profile.email,
+            memberCode: profile.memberCode,
+            status: profile.status,
+            submittedAt: previewSubmittedAt,
+            registrationDetails: previewRegistrationDetails,
+            locale,
+          });
+        },
+      },
       confirmLabel: user.role === 'admin' ? t('confirmSaveAdminBtn') : t('confirmSaveMemberBtn'),
       run: async () => {
         setSaving(true);
@@ -3561,6 +3719,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
+        customContent={modal?.mode === 'confirm' ? modal.customContent : undefined}
+        maxWidthClass={modal?.mode === 'confirm' ? modal.maxWidthClass : undefined}
+        secondaryAction={modal?.mode === 'confirm' ? modal.secondaryAction : undefined}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         busy={modalBusy}
         onConfirm={

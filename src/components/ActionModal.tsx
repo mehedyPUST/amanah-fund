@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
@@ -28,6 +28,8 @@ export interface ActionModalProps {
   title: string;
   description: string;
   details?: ActionModalDetailItem[];
+  customContent?: ReactNode;
+  maxWidthClass?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   busy?: boolean;
@@ -52,6 +54,8 @@ export function ActionModal({
   title,
   description,
   details,
+  customContent,
+  maxWidthClass,
   confirmLabel,
   cancelLabel,
   busy = false,
@@ -285,15 +289,20 @@ export function ActionModal({
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ type: 'spring', stiffness: 420, damping: 28, mass: 0.8 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-[26rem] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55)] overflow-hidden my-auto"
+            className={`relative z-10 w-full ${
+              maxWidthClass || 'max-w-[26rem]'
+            } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55)] overflow-hidden my-auto flex flex-col max-h-[92vh]`}
           >
             {/* Top accent bar */}
             <div
-              className={`h-1 w-full bg-gradient-to-r ${toneAccent.bar}`}
+              className={`h-1 w-full bg-gradient-to-r shrink-0 ${toneAccent.bar}`}
               aria-hidden="true"
             />
 
-            <form onSubmit={handleSubmit} className="relative">
+            <form
+              onSubmit={handleSubmit}
+              className="relative flex flex-col min-h-0 max-h-[92vh]"
+            >
               {/* Soft radial glow behind success icon */}
               {isSuccessNotice && (
                 <div
@@ -302,7 +311,11 @@ export function ActionModal({
                 />
               )}
 
-              <div className={`relative p-5 sm:p-6 ${isSuccessNotice ? 'pt-7 sm:pt-8' : ''}`}>
+              <div
+                className={`relative p-5 sm:p-6 ${
+                  isSuccessNotice ? 'pt-7 sm:pt-8' : ''
+                } flex-1 min-h-0 overflow-y-auto`}
+              >
                 {/* ── SUCCESS NOTICE LAYOUT ── */}
                 {isSuccessNotice ? (
                   <div className="flex flex-col items-center text-center space-y-4">
@@ -455,6 +468,10 @@ export function ActionModal({
                   </div>
                 )}
 
+                {!isSuccessNotice && customContent ? (
+                  <div className="mt-4">{customContent}</div>
+                ) : null}
+
                 {/* Optional input (confirm mode only) */}
                 {mode === 'confirm' && inputLabel && (
                   <div className="mt-4 space-y-1.5">
@@ -500,7 +517,7 @@ export function ActionModal({
 
               {/* Footer actions */}
               <div
-                className={`px-5 sm:px-6 pb-5 sm:pb-6 ${
+                className={`px-5 sm:px-6 pb-5 sm:pb-6 shrink-0 bg-white dark:bg-slate-900 ${
                   isSuccessNotice
                     ? 'pt-1'
                     : 'pt-3 border-t border-slate-100 dark:border-slate-800/80'
