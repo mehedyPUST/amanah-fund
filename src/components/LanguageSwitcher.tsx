@@ -34,13 +34,16 @@ export function LanguageSwitcher({
     const hasCustomHeight = /(?:^|\s)h-/.test(className);
     const hasCustomPaddingX = /(?:^|\s)px-/.test(className);
     const hasCustomTextSize = /(?:^|\s)text-(?:xs|sm|base|lg|\[)/.test(className);
+    const hasCustomGap = /(?:^|\s)gap-/.test(className);
     return (
       <button
         type="button"
         onClick={() => setLocale(nextLocale)}
         title={t('switchLanguage')}
         aria-label={t('switchLanguage')}
-        className={`${baseDisplayClass} items-center justify-center gap-1 ${
+        className={`${baseDisplayClass} items-center justify-center ${
+          hasCustomGap ? '' : 'gap-1'
+        } ${
           hasCustomHeight ? '' : 'h-9'
         } ${hasCustomPaddingX ? '' : 'px-2.5'} ${
           hasCustomTextSize ? '' : 'text-xs'

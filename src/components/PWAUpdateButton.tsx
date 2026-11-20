@@ -117,7 +117,7 @@ export function PWAUpdateButton({
           fullWidth
             ? compact
               ? 'w-full min-h-[34px] py-1.5 px-2 rounded-xl text-[11px]'
-              : 'w-full min-h-[38px] py-2 px-3 rounded-xl text-xs'
+              : 'w-full min-h-[42px] py-2 px-3 rounded-xl text-[14px]'
             : compact
               ? 'h-9 px-2.5 rounded-lg text-xs'
               : 'h-9 px-3 rounded-lg text-xs'
@@ -128,9 +128,15 @@ export function PWAUpdateButton({
         }`}
       >
         {applyingUpdate || checkingUpdate ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" aria-hidden="true" />
+          <Loader2
+            className={`${fullWidth && !compact ? 'w-4 h-4' : 'w-3.5 h-3.5'} animate-spin shrink-0`}
+            aria-hidden="true"
+          />
         ) : (
-          <ArrowUpCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <ArrowUpCircle
+            className={`${fullWidth && !compact ? 'w-4 h-4' : 'w-3.5 h-3.5'} shrink-0`}
+            aria-hidden="true"
+          />
         )}
         <span className={compact && !fullWidth ? 'hidden sm:inline' : 'truncate'}>
           {applyingUpdate

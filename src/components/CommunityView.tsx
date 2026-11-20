@@ -2828,7 +2828,7 @@ export function CommunityView({
             <Smile className="w-5 h-5" aria-hidden="true" />
           </button>
 
-          <div className="flex-1 rounded-[22px] bg-[#F0F2F5] dark:bg-[#242526] px-4 py-1 flex items-center">
+          <div className="flex-1 rounded-[22px] bg-[#F0F2F5] dark:bg-[#242526] px-4 py-1 flex items-center ring-1 ring-inset ring-transparent focus-within:ring-emerald-500/45 dark:focus-within:ring-emerald-400/45 transition-shadow">
             <textarea
               ref={composerRef}
               rows={1}
@@ -2855,7 +2855,7 @@ export function CommunityView({
                   ? t('dmMobilePlaceholder', { name: selectedPeer.name })
                   : t('dmPlaceholder', { name: selectedPeer.name })
               }
-              className={`w-full bg-transparent leading-snug text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none resize-none ${
+              className={`w-full bg-transparent border-0 appearance-none leading-snug text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 resize-none ${
                 isMobileModal
                   ? 'min-h-[36px] max-h-28 py-1.5 text-[16px]'
                   : 'max-h-24 py-1 text-[14px]'

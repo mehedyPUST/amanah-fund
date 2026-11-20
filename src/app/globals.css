@@ -104,6 +104,15 @@ html.dark {
   input[type="radio"] {
     accent-color: #10b981;
   }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgba(5, 150, 105, 0.65);
+    outline-offset: 2px;
+  }
 }
 
 .amanah-ambient-canvas {
@@ -541,15 +550,6 @@ html.dark .amanah-logo-orbit-sweep {
 html.dark .react-loading-skeleton {
   --base-color: #1e293b;
   --highlight-color: #334155;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(5, 150, 105, 0.65);
-  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
