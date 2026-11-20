@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   Send,
   SlidersHorizontal,
   Smartphone,
+  Users,
   Volume2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -49,6 +50,7 @@ import {
   isMeetingOrNoticeBoardNotification,
   isNotificationForUser,
 } from './NotificationBlinkMarker.tsx';
+import { groupNotificationsForView } from '../utils/notificationGroups.ts';
 
 interface NotificationsViewProps {
   user: PublicUser;
@@ -325,6 +327,11 @@ export function NotificationsView({
     }
   }
 
+  async function handleMarkGroupRead(ids: string[]) {
+    if (ids.length === 0) return;
+    await Promise.allSettled(ids.map((id) => handleMarkRead(id)));
+  }
+
   async function handleTogglePreference(key: keyof NotificationPreferences) {
     const currentVal = key === 'pushAlerts' ? prefs.pushAlerts !== false : Boolean(prefs[key]);
     const nextVal = !currentVal;
@@ -501,16 +508,37 @@ export function NotificationsView({
     });
   }
 
-  const queuedItems = notifications.filter((n) => n.deliveryStatus === 'queued');
+  const queuedItems = useMemo(
+    () => notifications.filter((n) => n.deliveryStatus === 'queued'),
+    [notifications]
+  );
 
-  const visibleNotifications = notifications.filter((n) => {
-    if (filterType === 'queued' && n.deliveryStatus !== 'queued') return false;
-    if (filterType === 'sent' && n.deliveryStatus !== 'sent_via_gmail') return false;
-    if (categoryFilter !== 'all' && getNotificationCategory(n.type) !== categoryFilter) {
-      return false;
-    }
-    return true;
-  });
+  const groupedNotifications = useMemo(
+    () => groupNotificationsForView(notifications, user),
+    [notifications, user]
+  );
+
+  const queuedGroupsCount = useMemo(
+    () => groupedNotifications.filter((g) => g.queuedIds.length > 0).length,
+    [groupedNotifications]
+  );
+  const sentGroupsCount = useMemo(
+    () => groupedNotifications.filter((g) => g.sentItems.length > 0).length,
+    [groupedNotifications]
+  );
+
+  const visibleGroups = useMemo(
+    () =>
+      groupedNotifications.filter((g) => {
+        if (filterType === 'queued' && g.queuedIds.length === 0) return false;
+        if (filterType === 'sent' && g.sentItems.length === 0) return false;
+        if (categoryFilter !== 'all' && getNotificationCategory(g.type) !== categoryFilter) {
+          return false;
+        }
+        return true;
+      }),
+    [groupedNotifications, filterType, categoryFilter]
+  );
 
   const upcomingMeetings = meetings.filter((m) => m.status === 'scheduled');
 
@@ -645,13 +673,12 @@ export function NotificationsView({
           <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-full sm:w-fit max-w-full">
             {(
               [
-                { id: 'all', label: t('filterAll', { count: notifications.length }) },
-                { id: 'queued', label: t('filterQueued', { count: queuedItems.length }) },
+                { id: 'all', label: t('filterAll', { count: groupedNotifications.length }) },
+                { id: 'queued', label: t('filterQueued', { count: queuedGroupsCount }) },
                 {
                   id: 'sent',
                   label: t('filterSent', {
-                    count: notifications.filter((n) => n.deliveryStatus === 'sent_via_gmail')
-                      .length,
+                    count: sentGroupsCount,
                   }),
                 },
               ] as const
@@ -882,14 +909,15 @@ export function NotificationsView({
               </div>
             ))}
           </div>
-        ) : visibleNotifications.length === 0 ? (
+        ) : visibleGroups.length === 0 ? (
           <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-xs">
             {t('emptyFiltered')}
           </div>
         ) : (
-          visibleNotifications.map((item, idx) => {
-            const isExpanded = Boolean(expandedIds[item.id]);
-            const isUnread = !item.readByRecipient;
+          visibleGroups.map((group, idx) => {
+            const item = group.primary;
+            const isExpanded = Boolean(expandedIds[group.id]);
+            const isUnread = group.isUnread;
             const isPriorityAlert = isMeetingOrNoticeBoardNotification(item);
             const rowBgClass =
               isUnread && isPriorityAlert
@@ -904,7 +932,7 @@ export function NotificationsView({
               : 'border-slate-200/85 dark:border-slate-800/85';
             return (
               <div
-                key={item.id}
+                key={group.id}
                 className={`rounded-xl border shadow-2xs transition-colors ${borderClass} ${rowBgClass}`}
               >
                 <button
@@ -912,7 +940,7 @@ export function NotificationsView({
                   onClick={() =>
                     setExpandedIds((prev) => ({
                       ...prev,
-                      [item.id]: !prev[item.id],
+                      [group.id]: !prev[group.id],
                     }))
                   }
                   aria-expanded={isExpanded}
@@ -937,7 +965,7 @@ export function NotificationsView({
                         />
                       )}
                       <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
-                        {item.subject}
+                        {group.title}
                       </h3>
                       {isUnread && (
                         <span
@@ -960,19 +988,26 @@ export function NotificationsView({
                             : 'text-emerald-700 dark:text-emerald-400'
                         }`}
                       >
-                        {getTypeLabel(item.type)}
+                        {getTypeLabel(group.type)}
                       </span>
                       <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                         ·
                       </span>
-                      <span className="font-mono text-slate-500 dark:text-slate-400 break-all">
-                        {t('toPrefix', { name: item.recipientName, email: item.recipientEmail })}
+                      <span className="font-mono text-slate-500 dark:text-slate-400 break-all inline-flex items-center gap-1">
+                        {group.isBroadcast ? (
+                          <>
+                            <Users className="w-3 h-3 shrink-0" aria-hidden="true" />
+                            <span>{t('broadcastToCount', { count: group.items.length })}</span>
+                          </>
+                        ) : (
+                          t('toPrefix', { name: item.recipientName, email: item.recipientEmail })
+                        )}
                       </span>
                       <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                         ·
                       </span>
                       <span className="font-mono text-slate-500 dark:text-slate-400">
-                        {formatDateTime(item.createdAt)}
+                        {formatDateTime(group.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -1006,26 +1041,62 @@ export function NotificationsView({
                       className="overflow-hidden"
                     >
                       <div className="px-3.5 pb-4 pt-2 sm:px-5 sm:pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 border-t border-slate-200/70 dark:border-slate-800/80">
-                        <div className="space-y-1.5 min-w-0">
+                        <div className="space-y-2.5 min-w-0 flex-1">
                           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
-                            {item.body}
+                            {group.body}
                           </p>
 
                           <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                             {t('deliveryPrefix')}{' '}
-                            {item.deliveryStatus === 'sent_via_gmail'
-                              ? t('sentViaGmailAt', { date: formatDateTime(item.sentAt) })
-                              : t('queuedOutbox')}
+                            {group.isBroadcast
+                              ? t('broadcastDeliverySummary', {
+                                  sent: group.sentItems.length,
+                                  queued: group.queuedIds.length,
+                                  read: group.readCount,
+                                  total: group.items.length,
+                                })
+                              : item.deliveryStatus === 'sent_via_gmail'
+                                ? t('sentViaGmailAt', { date: formatDateTime(item.sentAt) })
+                                : t('queuedOutbox')}
                           </div>
+
+                          {group.isBroadcast && isStaff && (
+                            <div className="pt-1 space-y-1.5">
+                              <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                                {t('recipientsBreakdown', { count: group.items.length })}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1.5 max-h-44 overflow-y-auto scrollbar-subtle pr-1">
+                                {group.items.map((rec) => (
+                                  <div
+                                    key={rec.id}
+                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/55 flex items-center justify-between gap-2 text-[11px] min-w-0"
+                                  >
+                                    <span className="truncate font-medium text-slate-700 dark:text-slate-200">
+                                      {rec.recipientName || rec.recipientEmail}
+                                    </span>
+                                    <span className="font-mono shrink-0 text-slate-500 dark:text-slate-400">
+                                      {rec.deliveryStatus === 'sent_via_gmail'
+                                        ? t('statusSent')
+                                        : t('statusQueued')}{' '}
+                                      ·{' '}
+                                      {rec.readByRecipient
+                                        ? t('statusRead')
+                                        : t('statusUnread')}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:pt-2 shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
                           {(() => {
-                            const subjLower = item.subject.toLowerCase();
+                            const subjLower = group.title.toLowerCase();
                             const deskLabel = user.role === 'admin' ? t('governanceDesk') : t('managerDesk');
                             if (
                               isStaff &&
-                              item.type === 'loan_vote_requested' &&
+                              group.type === 'loan_vote_requested' &&
                               (subjLower.includes('initiate vote') || subjLower.includes('ready to initiate')) &&
                               onOpenManagerDeskTab
                             ) {
@@ -1033,7 +1104,9 @@ export function NotificationsView({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    if (group.viewerUnreadIds.length > 0) {
+                                      void handleMarkGroupRead(group.viewerUnreadIds);
+                                    }
                                     onOpenManagerDeskTab('qard-hasan');
                                   }}
                                   className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
@@ -1045,14 +1118,16 @@ export function NotificationsView({
                             }
                             if (
                               isStaff &&
-                              item.type === 'contribution_placed_manager' &&
+                              group.type === 'contribution_placed_manager' &&
                               onOpenManagerDeskTab
                             ) {
                               return (
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    if (group.viewerUnreadIds.length > 0) {
+                                      void handleMarkGroupRead(group.viewerUnreadIds);
+                                    }
                                     onOpenManagerDeskTab('contributions');
                                   }}
                                   className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
@@ -1063,14 +1138,16 @@ export function NotificationsView({
                               );
                             }
                             if (
-                              (item.type === 'loan_vote_requested' || item.type === 'decision_vote_requested') &&
+                              (group.type === 'loan_vote_requested' || group.type === 'decision_vote_requested') &&
                               onNavigate
                             ) {
                               return (
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    if (group.viewerUnreadIds.length > 0) {
+                                      void handleMarkGroupRead(group.viewerUnreadIds);
+                                    }
                                     onNavigate('ballot');
                                   }}
                                   className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
@@ -1081,11 +1158,11 @@ export function NotificationsView({
                               );
                             }
                             if (
-                              (item.type === 'loan_guarantor_requested' ||
-                                item.type === 'loan_approved_confirmation' ||
-                                item.type === 'loan_rejected_notice' ||
-                                item.type === 'loan_repayment_notice' ||
-                                item.type === 'loan_repayment_rejected') &&
+                              (group.type === 'loan_guarantor_requested' ||
+                                group.type === 'loan_approved_confirmation' ||
+                                group.type === 'loan_rejected_notice' ||
+                                group.type === 'loan_repayment_notice' ||
+                                group.type === 'loan_repayment_rejected') &&
                               user.role !== 'admin' &&
                               onNavigate
                             ) {
@@ -1093,7 +1170,9 @@ export function NotificationsView({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (!item.readByRecipient) void handleMarkRead(item.id);
+                                    if (group.viewerUnreadIds.length > 0) {
+                                      void handleMarkGroupRead(group.viewerUnreadIds);
+                                    }
                                     onNavigate('quard-hasan');
                                   }}
                                   className="px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
@@ -1105,24 +1184,30 @@ export function NotificationsView({
                             }
                             return null;
                           })()}
-                          {!item.readByRecipient && (
+                          {group.viewerUnreadIds.length > 0 && (
                             <button
                               type="button"
-                              onClick={() => void handleMarkRead(item.id)}
+                              onClick={() => void handleMarkGroupRead(group.viewerUnreadIds)}
                               className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('markRead')}</span>
                             </button>
                           )}
-                          {isStaff && item.deliveryStatus === 'queued' && workspace.connected && (
+                          {isStaff && group.queuedIds.length > 0 && workspace.connected && (
                             <button
                               type="button"
-                              onClick={() => requestGmailSend([item.id])}
+                              onClick={() => requestGmailSend(group.queuedIds.slice(0, 15))}
                               className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Send className="w-3 h-3" aria-hidden="true" />
-                              <span>{t('sendGmail')}</span>
+                              <span>
+                                {group.queuedIds.length > 1
+                                  ? t('sendGmailBatch', {
+                                      count: Math.min(group.queuedIds.length, 15),
+                                    })
+                                  : t('sendGmail')}
+                              </span>
                             </button>
                           )}
                         </div>
