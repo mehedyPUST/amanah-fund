@@ -371,9 +371,11 @@ export function OverviewView({
           delay={0.02}
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('amanahHeightTitle')}</span>
-            <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+              <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            </span>
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-300">
             {formatMoney(treasury.amanahHeight, ccy)}
@@ -391,9 +393,11 @@ export function OverviewView({
           delay={0.06}
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{t('kpi.currentBalance')}</span>
-            <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/80 dark:border-violet-500/30 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+            </span>
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-violet-700 dark:text-violet-300">
             {formatMoney(treasury.currentBalance, ccy)}
@@ -408,9 +412,11 @@ export function OverviewView({
           delay={0.1}
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('qardHasanTotalCurrent')}</span>
-            <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
+              <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            </span>
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-amber-700 dark:text-amber-300">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
@@ -432,9 +438,11 @@ export function OverviewView({
           delay={0.14}
           className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('repaymentsReturnedPlus')}</span>
-            <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            </span>
           </div>
           <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-teal-700 dark:text-teal-300">
             {formatMoney(treasury.totalRepaid, ccy)}
@@ -796,9 +804,11 @@ export function OverviewView({
                 }
                 className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>{t('sheets.pendingLoanReviews')}</span>
-                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+                  <span className="w-8 h-8 rounded-[10px] bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingLoansReviewCount}
@@ -817,9 +827,11 @@ export function OverviewView({
                 onClick={() => onNavigate('ballot')}
                 className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between text-xs text-violet-700 dark:text-violet-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-violet-700 dark:text-violet-400 font-medium">
                   <span>{t('sheets.openTwoThirdsBallots')}</span>
-                  <Vote className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true" />
+                  <span className="w-8 h-8 rounded-[10px] bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/80 dark:border-violet-500/30 flex items-center justify-center shrink-0">
+                    <Vote className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+                  </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
@@ -846,12 +858,14 @@ export function OverviewView({
                 }}
                 className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>{t('sheets.pendingDeposits')}</span>
-                  <ShieldCheck
-                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
-                    aria-hidden="true"
-                  />
+                  <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <ShieldCheck
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingContributionsCount}
@@ -876,12 +890,14 @@ export function OverviewView({
                 }}
                 className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between text-xs text-teal-700 dark:text-teal-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-teal-700 dark:text-teal-400 font-medium">
                   <span>{t('sheets.awaitingDisbursement')}</span>
-                  <ShieldCheck
-                    className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0"
-                    aria-hidden="true"
-                  />
+                  <span className="w-8 h-8 rounded-[10px] bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
+                    <ShieldCheck
+                      className="w-4 h-4 text-teal-600 dark:text-teal-400"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingDisbursementsCount}
@@ -912,12 +928,14 @@ export function OverviewView({
                 }}
                 className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                   <span>{t('sheets.pendingRepayments')}</span>
-                  <CheckCircle2
-                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
-                    aria-hidden="true"
-                  />
+                  <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <CheckCircle2
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingRepaymentsCount}

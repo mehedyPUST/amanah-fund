@@ -456,33 +456,33 @@ html.dark .amanah-panel {
 }
 
 .mfs-tile {
-  min-height: clamp(4.6rem, 20vw, 5.75rem);
+  min-height: clamp(5.2rem, 22.5vw, 6.5rem);
   padding: clamp(0.35rem, 1.5vw, 0.5rem) clamp(0.2rem, 1vw, 0.35rem);
 }
 
 .mfs-tile-compact {
-  min-height: clamp(4.05rem, 17.5vw, 5rem);
+  min-height: clamp(4.65rem, 20vw, 5.65rem);
   padding: clamp(0.25rem, 1.2vw, 0.4rem) clamp(0.15rem, 0.8vw, 0.3rem);
 }
 
 .mfs-tile .mfs-tile-icon-box {
-  width: clamp(3.35rem, 15vw, 4.25rem);
-  height: clamp(2.55rem, 11.4vw, 3.2rem);
+  width: clamp(3.6rem, 15.8vw, 4.45rem);
+  height: clamp(3.6rem, 15.8vw, 4.45rem);
 }
 
 .mfs-tile .mfs-tile-icon {
-  width: clamp(1.2rem, 5.2vw, 1.5rem);
-  height: clamp(1.2rem, 5.2vw, 1.5rem);
+  width: clamp(1.5rem, 6.4vw, 1.9rem);
+  height: clamp(1.5rem, 6.4vw, 1.9rem);
 }
 
 .mfs-tile-compact .mfs-tile-icon-box {
-  width: clamp(2.85rem, 12.6vw, 3.6rem);
-  height: clamp(2.15rem, 9.6vw, 2.7rem);
+  width: clamp(3.15rem, 13.8vw, 3.9rem);
+  height: clamp(3.15rem, 13.8vw, 3.9rem);
 }
 
 .mfs-tile-compact .mfs-tile-icon {
-  width: clamp(1.05rem, 4.6vw, 1.35rem);
-  height: clamp(1.05rem, 4.6vw, 1.35rem);
+  width: clamp(1.3rem, 5.6vw, 1.65rem);
+  height: clamp(1.3rem, 5.6vw, 1.65rem);
 }
 
 .mfs-tile-label {

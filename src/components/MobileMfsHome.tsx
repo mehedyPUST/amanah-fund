@@ -197,7 +197,7 @@ function MfsGridTileButton({
     >
       <span
         className={`mfs-tile-icon-box relative ${
-          compact ? 'rounded-lg' : 'rounded-[10px]'
+          compact ? 'rounded-xl' : 'rounded-[14px]'
         } border shadow-xs group-hover:shadow-sm flex items-center justify-center shrink-0 transition-shadow ${tile.iconBgClass}`}
       >
         <Icon className={`mfs-tile-icon ${tile.iconColorClass}`} aria-hidden="true" />
@@ -335,7 +335,7 @@ export function MobileMfsHome({
         <div className="mfs-icon-grid-3">
           {Array.from({ length: 6 }).map((_, idx) => (
             <div key={idx} className="mfs-tile flex flex-col items-center justify-start gap-2">
-              <Skeleton width={60} height={46} borderRadius={10} />
+              <Skeleton width={60} height={60} borderRadius={14} />
               <Skeleton width={52} height={10} borderRadius={4} />
             </div>
           ))}
@@ -343,7 +343,7 @@ export function MobileMfsHome({
         <div className="mfs-icon-grid-4">
           {Array.from({ length: 4 }).map((_, idx) => (
             <div key={idx} className="mfs-tile-compact flex flex-col items-center justify-start gap-1.5">
-              <Skeleton width={50} height={38} borderRadius={8} />
+              <Skeleton width={52} height={52} borderRadius={12} />
               <Skeleton width={44} height={10} borderRadius={4} />
             </div>
           ))}
@@ -926,8 +926,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-7 h-7 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+              <span className="w-8 h-8 rounded-[10px] bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               </span>
             </div>
             <div>
@@ -954,8 +954,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-3.5 h-3.5 text-violet-700 dark:text-violet-400" />
+              <span className="w-8 h-8 rounded-[10px] bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4 text-violet-700 dark:text-violet-400" />
               </span>
             </div>
             <div>
@@ -979,8 +979,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentQardHasan')}
               </span>
-              <span className="w-7 h-7 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0">
-                <HandCoins className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span className="w-8 h-8 rounded-[10px] bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+                <HandCoins className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               </span>
             </div>
             <div>
@@ -1010,8 +1010,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.repaymentsReturned')}
               </span>
-              <span className="w-7 h-7 rounded-xl bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
+              <span className="w-8 h-8 rounded-[10px] bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-teal-700 dark:text-teal-400" />
               </span>
             </div>
             <div>
@@ -1085,16 +1085,16 @@ export function MobileMfsHome({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                    className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
                       item.kind === 'contribution'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60 text-amber-700 dark:text-amber-400'
                     }`}
                   >
                     {item.kind === 'contribution' ? (
-                      <CreditCard className="w-4 h-4" aria-hidden="true" />
+                      <CreditCard className="w-[18px] h-[18px]" aria-hidden="true" />
                     ) : (
-                      <HandCoins className="w-4 h-4" aria-hidden="true" />
+                      <HandCoins className="w-[18px] h-[18px]" aria-hidden="true" />
                     )}
                   </span>
                   <div className="min-w-0">

@@ -174,6 +174,7 @@ const SIDEBAR_TONE_STYLES: Record<
     pillBg: string;
     activeText: string;
     activeIcon: string;
+    activeIconBox: string;
   }
 > = {
   emerald: {
@@ -181,12 +182,16 @@ const SIDEBAR_TONE_STYLES: Record<
       'bg-emerald-500/12 dark:bg-emerald-400/15 border border-emerald-500/25 dark:border-emerald-400/30',
     activeText: 'text-emerald-800 dark:text-emerald-200 font-semibold',
     activeIcon: 'text-emerald-600 dark:text-emerald-300',
+    activeIconBox:
+      'bg-emerald-500/15 dark:bg-emerald-400/20 border-emerald-500/30 dark:border-emerald-400/35',
   },
   amber: {
     pillBg:
       'bg-amber-500/12 dark:bg-amber-400/15 border border-amber-500/25 dark:border-amber-400/30',
     activeText: 'text-amber-800 dark:text-amber-200 font-semibold',
     activeIcon: 'text-amber-600 dark:text-amber-300',
+    activeIconBox:
+      'bg-amber-500/15 dark:bg-amber-400/20 border-amber-500/30 dark:border-amber-400/35',
   },
 };
 
@@ -580,7 +585,12 @@ export function DashboardShell() {
     if (signingOutRef.current) return;
     if (!authChecking && !user) {
       setMobileBrowseMode(false);
-      router.replace(isMobileViewport() ? '/' : '/login');
+      const target = isMobileViewport() ? '/' : '/login';
+      if (typeof window !== 'undefined') {
+        window.location.replace(target);
+      } else {
+        router.replace(target);
+      }
     } else if (!authChecking && user) {
       setMobileBrowseMode(false);
     }
@@ -1269,14 +1279,21 @@ export function DashboardShell() {
             aria-hidden="true"
           />
         )}
-        <span className={`relative z-10 flex items-center ${collapsed ? 'justify-center' : 'gap-3 min-w-0'}`}>
-          <Icon
-            className={`w-4 h-4 shrink-0 transition-colors ${active
-              ? toneStyle.activeIcon
-              : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+        <span className={`relative z-10 flex items-center ${collapsed ? 'justify-center' : 'gap-2.5 min-w-0'}`}>
+          <span
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${active
+              ? toneStyle.activeIconBox
+              : 'bg-slate-100/85 dark:bg-slate-800/75 border-slate-200/70 dark:border-slate-700/60 group-hover:bg-white dark:group-hover:bg-slate-800 group-hover:border-slate-300/80 dark:group-hover:border-slate-600/80'
               }`}
-            aria-hidden="true"
-          />
+          >
+            <Icon
+              className={`w-[17px] h-[17px] shrink-0 transition-colors ${active
+                ? toneStyle.activeIcon
+                : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+                }`}
+              aria-hidden="true"
+            />
+          </span>
           {!collapsed && <span className="truncate">{label}</span>}
         </span>
         {count > 0 &&
@@ -1391,12 +1408,20 @@ export function DashboardShell() {
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      item.active ? toneStyle.activeIcon : 'text-slate-500 dark:text-slate-400'
+                  <span
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+                      item.active
+                        ? toneStyle.activeIconBox
+                        : 'bg-slate-100/85 dark:bg-slate-800/75 border-slate-200/70 dark:border-slate-700/60'
                     }`}
-                    aria-hidden="true"
-                  />
+                  >
+                    <Icon
+                      className={`w-[17px] h-[17px] shrink-0 ${
+                        item.active ? toneStyle.activeIcon : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </span>
                   <span className="truncate">{item.label}</span>
                 </span>
                 {typeof item.badge === 'number' && item.badge > 0 && (
