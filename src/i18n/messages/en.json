@@ -3617,6 +3617,7 @@
       "topicCommunityProfile": "Members & Community",
       "prefsHeading": "Notification & In-App Sound Preferences",
       "saving": "Saving…",
+      "prefPushAlerts": "Device Push Alerts",
       "prefInAppAlerts": "In-App Alerts",
       "prefSoundEnabled": "Subtle Sound Chime",
       "prefEmailBallots": "Ballot & Guarantor",
@@ -3635,7 +3636,33 @@
       "openQardHasan": "Open Qard Hasan",
       "markRead": "Mark Read",
       "sendGmail": "Send Gmail",
-      "okGotIt": "OK, Got It"
+      "okGotIt": "OK, Got It",
+      "push": {
+        "working": "Syncing…",
+        "enableBtn": "Enable Push Alerts",
+        "syncDeviceBtn": "Sync This Device",
+        "testPushBtn": "Send Test Push",
+        "removeDeviceBtn": "Unsubscribe Device",
+        "cardTitle": "Firebase Cloud Messaging (Web Push)",
+        "devicesRegistered": "{count} device(s) active",
+        "cardDesc": "Receive instant background push notifications for contributions, Qard Hasan ballots, private messages, and meetings.",
+        "enabledTitle": "Push Notifications Enabled",
+        "enabledDesc": "This browser/PWA device is now registered to receive real-time Firebase Cloud Messaging alerts.",
+        "enabledClientPendingServerDesc": "This device token is saved. Configure Firebase Admin credentials on the server to start delivering background pushes.",
+        "setupNoticeTitle": "Push Notification Setup",
+        "iosInstallRequired": "On iPhone/iPad, tap Share → Add to Home Screen first, then open the installed Amanah app to enable push notifications.",
+        "browserUnsupported": "This browser does not support Web Push notifications.",
+        "permissionDenied": "Notifications are currently blocked in your browser permissions. Allow notifications for this site and try again.",
+        "vapidMissing": "Set FIREBASE_VAPID_KEY (or NEXT_PUBLIC_FIREBASE_VAPID_KEY) on the server to enable Web Push registration.",
+        "serverCredsMissing": "Device is ready, but server Firebase Admin credentials (FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY) are not configured yet.",
+        "enableFailed": "Could not register this device for push notifications.",
+        "deviceRemovedTitle": "Device Unsubscribed",
+        "deviceRemovedDesc": "This browser will no longer receive push notifications for your account.",
+        "testSuccessTitle": "Test Push Delivered",
+        "testSuccessDesc": "Successfully delivered a Firebase Cloud Messaging push notification to {count} registered device(s).",
+        "testFailedTitle": "Test Push Failed",
+        "testFailedDesc": "Could not deliver the test push notification."
+      }
     },
     "bell": {
       "yourLoanApproved": "Your Loan Was Approved",
@@ -4836,6 +4863,10 @@
     "alertsHeading": "Alert & Sound Preferences",
     "alertsSubheading": "Customize real-time chimes and email digest categories.",
     "prefRows": {
+      "pushAlerts": {
+        "title": "Device Web Push Alerts (FCM)",
+        "desc": "Deliver real-time push notifications to your browser or installed PWA even when the tab is closed."
+      },
       "inAppAlerts": {
         "title": "In-App Treasury Alerts",
         "desc": "Show live decision banners and notification badges inside the dashboard."

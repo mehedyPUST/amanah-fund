@@ -5,12 +5,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   Bell,
+  BellOff,
+  BellRing,
   Calendar,
   Check,
   ChevronDown,
   Mail,
   Send,
   SlidersHorizontal,
+  Smartphone,
   Volume2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -25,8 +28,15 @@ import type {
   NotificationPreferences,
   NotificationType,
   PublicUser,
+  PushNotificationStatusResponse,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import {
+  getPushClientCapabilities,
+  syncFcmPushSubscription,
+  unregisterFcmPushSubscription,
+  type PushClientCapabilities,
+} from '../utils/fcmClient.ts';
 import { formatDateTime } from '../utils/format.ts';
 import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { scrollFilterButtonWithNeighbors } from '../utils/scrollFilterBar.ts';
@@ -112,6 +122,7 @@ const DEFAULT_PREFS: NotificationPreferences = {
   emailBallots: true,
   emailRepayments: true,
   emailCommunity: true,
+  pushAlerts: true,
 };
 
 export function NotificationsView({
@@ -146,6 +157,12 @@ export function NotificationsView({
   const [prefs, setPrefs] = useState<NotificationPreferences>(
     user.notificationPreferences || DEFAULT_PREFS
   );
+  const [pushStatus, setPushStatus] = useState<PushNotificationStatusResponse | null>(null);
+  const [pushCaps, setPushCaps] = useState<PushClientCapabilities>(() =>
+    getPushClientCapabilities()
+  );
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushTestBusy, setPushTestBusy] = useState(false);
   const [modal, setModal] = useState<
     | {
         mode: 'confirm';
@@ -194,8 +211,19 @@ export function NotificationsView({
     }
   }, []);
 
+  const loadPushStatus = useCallback(async () => {
+    setPushCaps(getPushClientCapabilities());
+    try {
+      const status = await api.getPushStatus();
+      setPushStatus(status);
+    } catch {
+      // ignore push diagnostics load errors silently
+    }
+  }, []);
+
   useEffect(() => {
     void loadNotifications();
+    void loadPushStatus();
     const handleReadSync = (event: Event) => {
       const id = (event as CustomEvent<{ id?: string }>).detail?.id;
       if (!id) return;
@@ -207,7 +235,7 @@ export function NotificationsView({
     return () => {
       window.removeEventListener('amanah:notification-read', handleReadSync);
     };
-  }, [loadNotifications]);
+  }, [loadNotifications, loadPushStatus]);
 
   function handleGenerateReminders() {
     setModal({
@@ -290,13 +318,23 @@ export function NotificationsView({
   }
 
   async function handleTogglePreference(key: keyof NotificationPreferences) {
-    const next = { ...prefs, [key]: !prefs[key] };
+    const currentVal = key === 'pushAlerts' ? prefs.pushAlerts !== false : Boolean(prefs[key]);
+    const nextVal = !currentVal;
+    const next = { ...prefs, [key]: nextVal };
     setPrefs(next);
     setSavingPrefs(true);
     try {
-      const res = await api.updatePreferences({ [key]: next[key] });
+      const res = await api.updatePreferences({ [key]: nextVal });
       setUser(res.user);
       setPrefs(res.user.notificationPreferences || next);
+      if (key === 'pushAlerts') {
+        if (nextVal) {
+          await handleEnablePushAlerts(true);
+        } else {
+          await unregisterFcmPushSubscription(pushStatus?.firebaseConfig);
+          await loadPushStatus();
+        }
+      }
     } catch (err) {
       setPrefs(prefs);
       setModal({
@@ -307,6 +345,87 @@ export function NotificationsView({
       });
     } finally {
       setSavingPrefs(false);
+    }
+  }
+
+  async function handleEnablePushAlerts(skipPrefSave = false) {
+    setPushBusy(true);
+    try {
+      if (!skipPrefSave && prefs.pushAlerts === false) {
+        const prefRes = await api.updatePreferences({ pushAlerts: true });
+        setUser(prefRes.user);
+        setPrefs(prefRes.user.notificationPreferences || { ...prefs, pushAlerts: true });
+      }
+      const result = await syncFcmPushSubscription({ requestPermission: true });
+      setPushCaps(getPushClientCapabilities());
+      await loadPushStatus();
+      if (result.ok) {
+        setModal({
+          mode: 'notice',
+          tone: 'emerald',
+          title: t('push.enabledTitle'),
+          description: result.status?.configuredServer
+            ? t('push.enabledDesc')
+            : t('push.enabledClientPendingServerDesc'),
+        });
+      } else {
+        setModal({
+          mode: 'notice',
+          tone: result.reason === 'permission_denied' ? 'red' : 'amber',
+          title: t('push.setupNoticeTitle'),
+          description:
+            result.reason === 'ios_install_required'
+              ? t('push.iosInstallRequired')
+              : result.reason === 'permission_denied'
+                ? t('push.permissionDenied')
+                : result.reason === 'not_configured_client'
+                  ? t('push.vapidMissing')
+                  : result.message || t('push.enableFailed'),
+        });
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleDisablePushOnDevice() {
+    setPushBusy(true);
+    try {
+      await unregisterFcmPushSubscription(pushStatus?.firebaseConfig);
+      await loadPushStatus();
+      setModal({
+        mode: 'notice',
+        tone: 'slate',
+        title: t('push.deviceRemovedTitle'),
+        description: t('push.deviceRemovedDesc'),
+      });
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleSendTestPush() {
+    setPushTestBusy(true);
+    try {
+      const res = await api.sendTestPushNotification();
+      await loadPushStatus();
+      setModal({
+        mode: 'notice',
+        tone: res.ok ? 'emerald' : res.configuredServer ? 'red' : 'amber',
+        title: res.ok ? t('push.testSuccessTitle') : t('push.testFailedTitle'),
+        description: res.ok
+          ? t('push.testSuccessDesc', { count: res.deliveredCount })
+          : res.reason || t('push.testFailedDesc'),
+      });
+    } catch (err) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: t('push.testFailedTitle'),
+        description: err instanceof Error ? err.message : t('push.testFailedDesc'),
+      });
+    } finally {
+      setPushTestBusy(false);
     }
   }
 
@@ -453,6 +572,32 @@ export function NotificationsView({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {pushCaps.supported && (
+              <button
+                type="button"
+                disabled={pushBusy}
+                onClick={() =>
+                  pushCaps.permission === 'granted' && (pushStatus?.devicesCount || 0) > 0
+                    ? void handleSendTestPush()
+                    : void handleEnablePushAlerts(false)
+                }
+                className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50 ${
+                  pushCaps.permission === 'granted' && (pushStatus?.devicesCount || 0) > 0
+                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/60'
+                    : 'border-amber-300 dark:border-amber-800 bg-amber-50/85 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100/85 dark:hover:bg-amber-950/60'
+                }`}
+              >
+                <BellRing className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  {pushBusy || pushTestBusy
+                    ? t('push.working')
+                    : pushCaps.permission === 'granted' && (pushStatus?.devicesCount || 0) > 0
+                      ? t('push.testPushBtn')
+                      : t('push.enableBtn')}
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setShowSettings((prev) => !prev)}
@@ -620,31 +765,98 @@ export function NotificationsView({
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-2.5">
               {(
                 [
+                  { key: 'pushAlerts', label: t('prefPushAlerts') },
                   { key: 'inAppAlerts', label: t('prefInAppAlerts') },
                   { key: 'soundEnabled', label: t('prefSoundEnabled') },
                   { key: 'emailBallots', label: t('prefEmailBallots') },
                   { key: 'emailRepayments', label: t('prefEmailRepayments') },
                   { key: 'emailCommunity', label: t('prefEmailCommunity') },
                 ] as const
-              ).map((item, idx) => (
+              ).map((item) => (
                 <label
                   key={item.key}
-                  className={`min-h-[44px] sm:min-h-0 flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors ${
-                    idx === 4 ? 'col-span-2 lg:col-span-1' : ''
-                  }`}
+                  className="min-h-[44px] sm:min-h-0 flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
                 >
                   <span className="font-medium truncate">{item.label}</span>
                   <input
                     type="checkbox"
-                    checked={Boolean(prefs[item.key])}
+                    checked={
+                      item.key === 'pushAlerts'
+                        ? prefs.pushAlerts !== false
+                        : Boolean(prefs[item.key])
+                    }
                     onChange={() => void handleTogglePreference(item.key)}
                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600 focus:ring-indigo-600 shrink-0"
                   />
                 </label>
               ))}
+            </div>
+
+            {/* Firebase Cloud Messaging Device & Push Controls */}
+            <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5 text-xs min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                  <Smartphone className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-semibold text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+                    <span>{t('push.cardTitle')}</span>
+                    <span className="font-mono text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                      {t('push.devicesRegistered', { count: pushStatus?.devicesCount || 0 })}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {pushCaps.isIosSafariNeedsInstall
+                      ? t('push.iosInstallRequired')
+                      : !pushCaps.supported
+                        ? t('push.browserUnsupported')
+                        : pushCaps.permission === 'denied'
+                          ? t('push.permissionDenied')
+                          : pushStatus && !pushStatus.configuredClient
+                            ? t('push.vapidMissing')
+                            : pushStatus && !pushStatus.configuredServer
+                              ? t('push.serverCredsMissing')
+                              : t('push.cardDesc')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  disabled={pushBusy || !pushCaps.supported}
+                  onClick={() => void handleEnablePushAlerts(false)}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+                >
+                  <BellRing className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{pushBusy ? t('push.working') : t('push.syncDeviceBtn')}</span>
+                </button>
+                {(pushStatus?.devicesCount || 0) > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={pushTestBusy}
+                      onClick={() => void handleSendTestPush()}
+                      className="px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 disabled:opacity-50 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{pushTestBusy ? t('push.working') : t('push.testPushBtn')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pushBusy}
+                      onClick={() => void handleDisablePushOnDevice()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      <BellOff className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{t('push.removeDeviceBtn')}</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </motion.section>
         )}

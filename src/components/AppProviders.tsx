@@ -13,7 +13,7 @@ import {
 } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
-import { ShieldCheck, X } from 'lucide-react';
+import { BellRing, ShieldCheck, X } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 import { getQueryClient } from '../lib/queryClient.ts';
@@ -51,6 +51,12 @@ import {
   type WorkspaceSessionInfo,
 } from '../utils/googleWorkspace.ts';
 import { resetRealtimeClient } from '../utils/realtimeClient.ts';
+import {
+  getCachedFcmToken,
+  subscribeForegroundFcmMessages,
+  syncFcmPushSubscription,
+  type IncomingForegroundPush,
+} from '../utils/fcmClient.ts';
 import { OfflineIndicator } from './OfflineIndicator.tsx';
 
 
@@ -137,6 +143,9 @@ export function AppProviders({
   const lastAuthCheckRef = useRef<number>(initialUser ? Date.now() : 0);
   const sessionVersionRef = useRef(0);
   const loggedOutClientSideRef = useRef(false);
+  const [pushToast, setPushToast] = useState<(IncomingForegroundPush & { id: number }) | null>(null);
+  const lastPushDedupRef = useRef<{ key: string; at: number }>({ key: '', at: 0 });
+  const pushToastTimerRef = useRef<number | null>(null);
 
   const clearCachedHtmlPages = useCallback(async () => {
     if (typeof window === 'undefined') return;
@@ -428,11 +437,30 @@ export function AppProviders({
 
   const logout = useCallback(async () => {
     const tokenSnapshot = getClientSessionToken();
+    const cachedFcmToken = getCachedFcmToken();
     clearLocalSessionState();
     try {
       await queryClient.cancelQueries();
     } catch {
       // ignore cancellation errors
+    }
+
+    if (cachedFcmToken && tokenSnapshot) {
+      await Promise.race([
+        fetch('/api/notifications/push/subscribe', {
+          method: 'DELETE',
+          credentials: 'include',
+          keepalive: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Amanah-Session': tokenSnapshot,
+          },
+          body: JSON.stringify({ token: cachedFcmToken }),
+        }).catch(() => undefined),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 600);
+        }),
+      ]);
     }
 
     try {
@@ -782,6 +810,115 @@ export function AppProviders({
     };
   }, [attachRegistrationListeners, checkForUpdates]);
 
+  const handleIncomingForegroundPush = useCallback(
+    (push: IncomingForegroundPush) => {
+      const dedupKey = `${push.tag}::${push.title}::${push.body}`;
+      const now = Date.now();
+      if (
+        lastPushDedupRef.current.key === dedupKey &&
+        now - lastPushDedupRef.current.at < 4000
+      ) {
+        return;
+      }
+      lastPushDedupRef.current = { key: dedupKey, at: now };
+
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.notifications() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.privateThreads() });
+      if (push.data?.type?.startsWith('loan_')) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.loans() });
+      }
+      if (push.data?.type?.startsWith('contribution_')) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.contributions() });
+      }
+      if (push.data?.type === 'meeting_scheduled') {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.meetings() });
+      }
+
+      if (pushToastTimerRef.current) {
+        window.clearTimeout(pushToastTimerRef.current);
+      }
+      setPushToast({ ...push, id: now });
+      pushToastTimerRef.current = window.setTimeout(() => {
+        setPushToast(null);
+      }, 6500);
+    },
+    [queryClient]
+  );
+
+  const navigateFromPushUrl = useCallback((rawUrl: string) => {
+    if (typeof window === 'undefined') return;
+    const targetUrl = rawUrl || '/dashboard?page=notification';
+    if (window.location.pathname.startsWith('/dashboard')) {
+      window.dispatchEvent(
+        new CustomEvent('amanah:push-navigate', { detail: { url: targetUrl } })
+      );
+    } else {
+      window.location.assign(targetUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !user || user.status !== 'active') return;
+    if (user.notificationPreferences?.pushAlerts === false) return;
+
+    let cancelled = false;
+    let unsubForeground: (() => void) | null = null;
+
+    const setupPush = async () => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const res = await syncFcmPushSubscription({ requestPermission: false });
+        if (!cancelled && res.status?.firebaseConfig) {
+          unsubForeground = await subscribeForegroundFcmMessages(
+            res.status.firebaseConfig,
+            handleIncomingForegroundPush
+          );
+        }
+      }
+    };
+
+    void setupPush();
+
+    const handleSwMessage = (event: MessageEvent) => {
+      const msg = event.data as
+        | {
+            type?: string;
+            url?: string;
+            notification?: IncomingForegroundPush;
+          }
+        | undefined;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'AMANAH_PUSH_RECEIVED' && msg.notification) {
+        handleIncomingForegroundPush(msg.notification);
+      } else if (msg.type === 'AMANAH_PUSH_NAVIGATE' && msg.url) {
+        navigateFromPushUrl(msg.url);
+      } else if (msg.type === 'AMANAH_PUSH_RESUBSCRIBE') {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          void syncFcmPushSubscription({ requestPermission: false });
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    }
+
+    return () => {
+      cancelled = true;
+      unsubForeground?.();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+      }
+    };
+  }, [
+    user,
+    user?.id,
+    user?.status,
+    user?.notificationPreferences?.pushAlerts,
+    handleIncomingForegroundPush,
+    navigateFromPushUrl,
+  ]);
+
   const clearGoogleAuthError = useCallback(() => {
     setGoogleAuthError(null);
   }, []);
@@ -901,6 +1038,54 @@ export function AppProviders({
             >
               {children}
               <OfflineIndicator />
+              <AnimatePresence>
+                {pushToast && (
+                  <motion.div
+                    key={pushToast.id}
+                    initial={{ opacity: 0, y: -12, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                    className="fixed top-4 right-4 left-4 sm:left-auto sm:w-[360px] z-[95] rounded-xl border border-emerald-200/90 dark:border-emerald-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl p-3.5"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = pushToast.url;
+                          setPushToast(null);
+                          navigateFromPushUrl(target);
+                        }}
+                        className="flex-1 min-w-0 flex items-start gap-2.5 text-left cursor-pointer"
+                      >
+                        <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
+                          <BellRing className="w-4 h-4" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-semibold text-slate-900 dark:text-white line-clamp-1">
+                            {pushToast.title}
+                          </span>
+                          {pushToast.body && (
+                            <span className="mt-0.5 block text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-snug">
+                              {pushToast.body}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPushToast(null)}
+                        aria-label={activeMessages.Common.close}
+                        className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center shrink-0 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <AnimatePresence>
                 {totpPrompt && (
                   <motion.div

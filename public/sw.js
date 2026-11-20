@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanah-pwa-v14';
+const CACHE_NAME = 'amanah-pwa-v15';
 const PRIVATE_NAV_PREFIXES = ['/dashboard', '/community', '/login', '/signup'];
 const APP_SHELL_URLS = [
   '/manifest.webmanifest',
@@ -211,3 +211,138 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    try {
+      payload = { notification: { title: 'Amanah Co-op Treasury', body: event.data.text() } };
+    } catch {
+      payload = {};
+    }
+  }
+
+  const notif = (payload && typeof payload.notification === 'object' && payload.notification) || {};
+  const data = (payload && typeof payload.data === 'object' && payload.data) || {};
+  const fcmOptions =
+    (payload && typeof payload.fcmOptions === 'object' && payload.fcmOptions) || {};
+
+  const title = notif.title || data.title || 'Amanah Co-op Treasury';
+  const body = notif.body || data.body || '';
+  const targetUrl =
+    data.url || fcmOptions.link || notif.click_action || '/dashboard?page=notification';
+  const tag = notif.tag || data.tag || 'amanah-push';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        let hasFocusedVisibleClient = false;
+        for (const client of windowClients) {
+          if (client.visibilityState === 'visible' && client.focused) {
+            hasFocusedVisibleClient = true;
+          }
+          try {
+            client.postMessage({
+              type: 'AMANAH_PUSH_RECEIVED',
+              notification: {
+                title,
+                body,
+                url: targetUrl,
+                tag,
+                data,
+              },
+            });
+          } catch {
+            // ignore client postMessage error
+          }
+        }
+
+        if (hasFocusedVisibleClient) {
+          return undefined;
+        }
+
+        return self.registration.showNotification(title, {
+          body,
+          icon: notif.icon || '/pwa-192x192.png',
+          badge: notif.badge || '/favicon-32x32.png',
+          tag,
+          renotify: true,
+          data: {
+            ...data,
+            url: targetUrl,
+          },
+        });
+      })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const rawData = (event.notification && event.notification.data) || {};
+  const rawUrl =
+    typeof rawData.url === 'string' && rawData.url.trim()
+      ? rawData.url.trim()
+      : '/dashboard?page=notification';
+
+  let targetUrl = '/dashboard?page=notification';
+  try {
+    const resolved = new URL(rawUrl, self.location.origin);
+    targetUrl =
+      resolved.origin === self.location.origin
+        ? `${resolved.pathname}${resolved.search}${resolved.hash}`
+        : '/dashboard?page=notification';
+  } catch {
+    targetUrl = '/dashboard?page=notification';
+  }
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then(async (windowClients) => {
+        for (const client of windowClients) {
+          if ('focus' in client) {
+            try {
+              const clientUrl = new URL(client.url);
+              if (clientUrl.origin === self.location.origin) {
+                await client.focus();
+                client.postMessage({
+                  type: 'AMANAH_PUSH_NAVIGATE',
+                  url: targetUrl,
+                  data: rawData,
+                });
+                return;
+              }
+            } catch {
+              // continue checking other clients
+            }
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+        return undefined;
+      })
+  );
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          try {
+            client.postMessage({ type: 'AMANAH_PUSH_RESUBSCRIBE' });
+          } catch {
+            // ignore client postMessage error
+          }
+        }
+      })
+  );
+});
+

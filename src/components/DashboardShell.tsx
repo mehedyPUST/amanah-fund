@@ -966,9 +966,42 @@ export function DashboardShell() {
     };
 
     syncFromUrl();
+    const handlePushNavigate = (event: Event) => {
+      const detail = (event as CustomEvent<{ url?: string }>).detail;
+      if (!detail?.url) return;
+      try {
+        const parsed = new URL(detail.url, window.location.origin);
+        if (parsed.origin !== window.location.origin || !parsed.pathname.startsWith('/dashboard')) {
+          return;
+        }
+        const dmPeerId = parsed.searchParams.get('dm');
+        if (dmPeerId) {
+          const dir = privateThreadsQuery.data?.directory || [];
+          const matchedPeer = dir.find((m) => m.id === dmPeerId);
+          if (matchedPeer) {
+            setPendingDmPeer(matchedPeer);
+          }
+        }
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.pathname + currentUrl.search !== parsed.pathname + parsed.search) {
+          window.history.pushState(
+            { page: parsed.searchParams.get('page') || 'fund-overview', dm: dmPeerId || undefined },
+            '',
+            parsed.pathname + parsed.search + parsed.hash
+          );
+        }
+        syncFromUrl();
+      } catch {
+        // ignore malformed push URL
+      }
+    };
     window.addEventListener('popstate', syncFromUrl);
-    return () => window.removeEventListener('popstate', syncFromUrl);
-  }, [visibleNav]);
+    window.addEventListener('amanah:push-navigate', handlePushNavigate);
+    return () => {
+      window.removeEventListener('popstate', syncFromUrl);
+      window.removeEventListener('amanah:push-navigate', handlePushNavigate);
+    };
+  }, [visibleNav, privateThreadsQuery.data?.directory]);
 
   async function handleSignOut() {
     if (signingOutRef.current) return;

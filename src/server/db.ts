@@ -13,6 +13,7 @@ import type {
   EmailQueueItem,
   EncryptedEnvelope,
   FaqItem,
+  FcmDeviceTokenRecord,
   FundConfig,
   HalalProject,
   LoanRequest,
@@ -117,6 +118,7 @@ export interface VaultState {
   faqs?: FaqItem[];
   usedActivationOtps?: UsedActivationOtpRecord[];
   revokedTokens?: RevokedTokenRecord[];
+  fcmTokens?: FcmDeviceTokenRecord[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -171,6 +173,9 @@ interface AmanahDbRuntime {
   bootstrapSummaryCache: TimedCacheEntry<UserBootstrapSummary> | null;
   revokedTokenIds: Map<string, number>;
   revokedTokenIndexesReady: boolean;
+  notificationsCommitHook:
+    | ((addedNotifications: EmailNotification[], nextState: VaultState) => Promise<void>)
+    | null;
 }
 
 const MONGO_RETRY_COOLDOWN_MS = 15_000;
@@ -205,7 +210,14 @@ const runtime: AmanahDbRuntime =
     bootstrapSummaryCache: null,
     revokedTokenIds: new Map(),
     revokedTokenIndexesReady: false,
+    notificationsCommitHook: null,
   });
+
+export function registerVaultNotificationsCommitHook(
+  hook: ((addedNotifications: EmailNotification[], nextState: VaultState) => Promise<void>) | null
+): void {
+  runtime.notificationsCommitHook = hook;
+}
 
 // Ensure fields exist if runtime survived hot reload from an older shape
 if (!runtime.userCache) runtime.userCache = new Map();
@@ -340,6 +352,7 @@ function createEmptyVaultState(): VaultState {
     faqs: createDefaultFaqs(now),
     usedActivationOtps: [],
     revokedTokens: [],
+    fcmTokens: [],
   };
 }
 
@@ -361,6 +374,12 @@ function purgeOrphanRecords(state: VaultState): { state: VaultState; changed: bo
     (n) => !n.recipientUserId || realUserIds.has(n.recipientUserId)
   );
   if (state.emailNotifications.length !== beforeNotifs) changed = true;
+
+  const beforeTokens = (state.fcmTokens || []).length;
+  state.fcmTokens = (state.fcmTokens || []).filter(
+    (t) => t && typeof t.token === 'string' && t.token.trim().length > 0 && realUserIds.has(t.userId)
+  );
+  if (state.fcmTokens.length !== beforeTokens) changed = true;
 
   return { state, changed };
 }
@@ -397,6 +416,7 @@ function normalizeVaultState(state: VaultState): VaultState {
   state.usedActivationOtps = Array.isArray(state.usedActivationOtps)
     ? state.usedActivationOtps
     : [];
+  state.fcmTokens = Array.isArray(state.fcmTokens) ? state.fcmTokens : [];
   const nowMs = Date.now();
   state.revokedTokens = Array.isArray(state.revokedTokens)
     ? state.revokedTokens.filter((entry) => {
@@ -644,6 +664,9 @@ export async function initDatabase(): Promise<StorageEngine> {
             db.collection('faqs').createIndex({ sortOrder: 1 }),
             db.collection('usedActivationOtps').createIndex({ id: 1 }, { unique: true }),
             db.collection('usedActivationOtps').createIndex({ otp: 1 }, { unique: true }),
+            db.collection('fcmTokens').createIndex({ id: 1 }, { unique: true }),
+            db.collection('fcmTokens').createIndex({ userId: 1 }),
+            db.collection('fcmTokens').createIndex({ token: 1 }),
           ]);
           await db
             .collection('fundConfig')
@@ -720,6 +743,7 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     emailQueue,
     faqs,
     usedActivationOtps,
+    fcmTokens,
   ] = await Promise.all([
     mongoDb.collection<StoredUser>('users').find({}, { projection: { _id: 0 } }).toArray(),
     mongoDb.collection<FundConfig>('fundConfig').findOne({ id: 'default-config' }, { projection: { _id: 0 } }),
@@ -738,6 +762,7 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     mongoDb.collection<EmailQueueItem>('emailQueue').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
     mongoDb.collection<FaqItem>('faqs').find({}, { projection: { _id: 0 } }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
     mongoDb.collection<UsedActivationOtpRecord>('usedActivationOtps').find({}, { projection: { _id: 0 } }).toArray(),
+    mongoDb.collection<FcmDeviceTokenRecord>('fcmTokens').find({}, { projection: { _id: 0 } }).toArray(),
   ]);
 
   return normalizeVaultState({
@@ -758,6 +783,7 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     emailQueue,
     faqs,
     usedActivationOtps,
+    fcmTokens,
   });
 }
 
@@ -982,9 +1008,10 @@ async function syncCollectionById<T extends { id: string }>(
   }
 }
 
-export function updateVaultState(
+export async function updateVaultState(
   mutator: (state: VaultState) => VaultState | Promise<VaultState>
 ): Promise<VaultState> {
+  let addedNotifications: EmailNotification[] = [];
   const run = async (): Promise<VaultState> => {
     // Always read authoritative state from storage before applying a mutation.
     const current = await loadVaultState({ bypassCache: true });
@@ -1064,12 +1091,26 @@ export function updateVaultState(
           current.usedActivationOtps || [],
           next.usedActivationOtps || []
         ),
+        syncCollectionById(
+          mongoDb,
+          'fcmTokens',
+          current.fcmTokens || [],
+          next.fcmTokens || []
+        ),
       ]);
       hydrateReadCachesFromState(next);
     } else {
       invalidateReadCaches();
       writeLocalVault(next);
     }
+
+    if (runtime.notificationsCommitHook && (next.fcmTokens?.length || 0) > 0) {
+      const prevNotifIds = new Set((current.emailNotifications || []).map((n) => n.id));
+      addedNotifications = (next.emailNotifications || []).filter(
+        (n) => !prevNotifIds.has(n.id)
+      );
+    }
+
     return next;
   };
 
@@ -1078,7 +1119,20 @@ export function updateVaultState(
     () => undefined,
     () => undefined
   );
-  return result;
+  const next = await result;
+
+  if (runtime.notificationsCommitHook && addedNotifications.length > 0) {
+    try {
+      await Promise.race([
+        runtime.notificationsCommitHook(addedNotifications, structuredClone(next)),
+        new Promise<void>((resolve) => setTimeout(resolve, 2500)),
+      ]);
+    } catch (err) {
+      console.warn('[FCM] Post-commit notification push hook failed:', err);
+    }
+  }
+
+  return next;
 }
 
 function pruneInMemoryRevokedTokens(nowMs: number): void {

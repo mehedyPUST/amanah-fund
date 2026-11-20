@@ -135,6 +135,7 @@ vi.mock('../src/server/db.ts', () => ({
     mockState = next;
     return structuredClone(mockState);
   },
+  registerVaultNotificationsCommitHook: () => undefined,
   revokeSessionTokens: async (
     entries: Array<{ id: string; userId?: string; expiresAt: string }>
   ) => {

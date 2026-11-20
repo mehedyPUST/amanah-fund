@@ -27,6 +27,7 @@ import type {
   EmailTemplateKey,
   FaqCategory,
   FaqItem,
+  FcmPushPlatform,
   FundConfig,
   HalalProject,
   LoanRequest,
@@ -45,6 +46,8 @@ import type {
   ProfileChangePayload,
   ProfileChangeRequest,
   PublicUser,
+  PushNotificationStatusResponse,
+  PushTestResponse,
   ReceiptAiExtraction,
   RegisteredDeviceSummary,
   StructuredBdAddress,
@@ -1023,6 +1026,33 @@ export const api = {
         body: JSON.stringify({ billingMonth }),
       }
     ),
+  getPushStatus: () =>
+    apiRequest<PushNotificationStatusResponse>('/api/notifications/push/status'),
+  subscribePushToken: (payload: {
+    token: string;
+    platform?: FcmPushPlatform;
+    userAgentLabel?: string;
+  }) =>
+    apiRequest<{ ok: boolean; deviceId: string; devicesCount: number; configuredServer: boolean }>(
+      '/api/notifications/push/subscribe',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+  unsubscribePushToken: (token?: string) =>
+    apiRequest<{ ok: boolean; removedCount: number; devicesCount: number }>(
+      '/api/notifications/push/subscribe',
+      {
+        method: 'DELETE',
+        body: JSON.stringify(token ? { token } : {}),
+      }
+    ),
+  sendTestPushNotification: () =>
+    apiRequest<PushTestResponse>('/api/notifications/push/test', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 
   getBlueprint: (month?: string) =>
     apiRequest<{ tabs: SheetTabBlueprint[]; config: FundConfig; month?: string }>(

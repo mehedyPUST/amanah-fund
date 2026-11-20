@@ -47,6 +47,10 @@ import type {
   UserRegistrationDetails,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import {
+  syncFcmPushSubscription,
+  unregisterFcmPushSubscription,
+} from '../utils/fcmClient.ts';
 import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import {
   areBdAddressesEqual,
@@ -240,6 +244,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       emailBallots: true,
       emailRepayments: true,
       emailCommunity: true,
+      pushAlerts: true,
     }
   );
   const [prefsBusy, setPrefsBusy] = useState(false);
@@ -1329,14 +1334,23 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   }
 
   async function handleTogglePref(key: keyof NotificationPreferences) {
-    const next = { ...prefs, [key]: !prefs[key] };
+    const currentVal = key === 'pushAlerts' ? prefs.pushAlerts !== false : Boolean(prefs[key]);
+    const nextVal = !currentVal;
+    const next = { ...prefs, [key]: nextVal };
     setPrefs(next);
     setPrefsBusy(true);
     try {
-      const res = await api.updatePreferences({ [key]: next[key] });
+      const res = await api.updatePreferences({ [key]: nextVal });
       setUser(res.user);
       setProfile(res.user);
       setPrefs(res.user.notificationPreferences || next);
+      if (key === 'pushAlerts') {
+        if (nextVal) {
+          void syncFcmPushSubscription({ requestPermission: true });
+        } else {
+          void unregisterFcmPushSubscription();
+        }
+      }
     } catch (err) {
       setPrefs(prefs);
       setModal({
@@ -3662,6 +3676,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     {(
                       [
                         {
+                          key: 'pushAlerts',
+                          title: t('prefRows.pushAlerts.title'),
+                          desc: t('prefRows.pushAlerts.desc'),
+                        },
+                        {
                           key: 'inAppAlerts',
                           title: t('prefRows.inAppAlerts.title'),
                           desc: t('prefRows.inAppAlerts.desc'),
@@ -3698,7 +3717,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         </div>
                         <input
                           type="checkbox"
-                          checked={Boolean(prefs[row.key])}
+                          checked={
+                            row.key === 'pushAlerts'
+                              ? prefs.pushAlerts !== false
+                              : Boolean(prefs[row.key])
+                          }
                           onChange={() => void handleTogglePref(row.key)}
                           className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600 shrink-0"
                         />

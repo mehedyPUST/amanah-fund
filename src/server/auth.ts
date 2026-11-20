@@ -36,6 +36,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES = {
   emailRepayments: true,
   emailCommunity: true,
   soundEnabled: false,
+  pushAlerts: true,
 };
 
 export function sanitizeUser(user: StoredUser): PublicUser {

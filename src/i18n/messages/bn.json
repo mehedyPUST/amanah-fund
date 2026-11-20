@@ -3617,6 +3617,7 @@
       "topicCommunityProfile": "সদস্য ও কমিউনিটি",
       "prefsHeading": "নোটিফিকেশন ও ইন-অ্যাপ সাউন্ড পছন্দসমূহ",
       "saving": "সংরক্ষণ হচ্ছে…",
+      "prefPushAlerts": "ডিভাইস পুশ সতর্কতা",
       "prefInAppAlerts": "ইন-অ্যাপ সতর্কবার্তা",
       "prefSoundEnabled": "মৃদু সাউন্ড নোটিফিকেশন",
       "prefEmailBallots": "ব্যালট ও জামিনদার",
@@ -3635,7 +3636,33 @@
       "openQardHasan": "কর্জে হাসানা খুলুন",
       "markRead": "পঠিত করুন",
       "sendGmail": "জিমেইল পাঠান",
-      "okGotIt": "ঠিক আছে"
+      "okGotIt": "ঠিক আছে",
+      "push": {
+        "working": "সিঙ্ক হচ্ছে…",
+        "enableBtn": "পুশ সতর্কতা চালু করুন",
+        "syncDeviceBtn": "এই ডিভাইস সিঙ্ক করুন",
+        "testPushBtn": "টেস্ট পুশ পাঠান",
+        "removeDeviceBtn": "ডিভাইস বাতিল করুন",
+        "cardTitle": "Firebase Cloud Messaging (ওয়েব পুশ)",
+        "devicesRegistered": "{count}টি ডিভাইস সক্রিয়",
+        "cardDesc": "মাসিক জমা, কর্জে হাসানা ব্যালট, ব্যক্তিগত বার্তা ও মিটিংয়ের তাৎক্ষণিক ব্যাকগ্রাউন্ড পুশ নোটিফিকেশন পান।",
+        "enabledTitle": "পুশ নোটিফিকেশন সক্রিয় হয়েছে",
+        "enabledDesc": "এই ব্রাউজার/PWA ডিভাইসটি এখন রিয়েল-টাইম Firebase Cloud Messaging সতর্কতা পাওয়ার জন্য নিবন্ধিত।",
+        "enabledClientPendingServerDesc": "এই ডিভাইসের টোকেন সংরক্ষিত হয়েছে। ব্যাকগ্রাউন্ড পুশ পাঠাতে সার্ভারে Firebase Admin ক্রেডেনশিয়াল সেট করুন।",
+        "setupNoticeTitle": "পুশ নোটিফিকেশন সেটআপ",
+        "iosInstallRequired": "iPhone/iPad-এ পুশ নোটিফিকেশন চালু করতে প্রথমে Share → Add to Home Screen চেপে আমানাহ অ্যাপ ইনস্টল করুন এবং সেখান থেকে খুলুন।",
+        "browserUnsupported": "এই ব্রাউজারে ওয়েব পুশ নোটিফিকেশন সমর্থিত নয়।",
+        "permissionDenied": "আপনার ব্রাউজারে নোটিফিকেশন অনুমতি ব্লক করা আছে। সাইট সেটিংস থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
+        "vapidMissing": "ওয়েব পুশ নিবন্ধন চালু করতে সার্ভারে FIREBASE_VAPID_KEY (অথবা NEXT_PUBLIC_FIREBASE_VAPID_KEY) সেট করুন।",
+        "serverCredsMissing": "ডিভাইস প্রস্তুত, তবে সার্ভারে Firebase Admin ক্রেডেনশিয়াল (FIREBASE_SERVICE_ACCOUNT_JSON বা FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY) এখনো কনফিগার করা হয়নি।",
+        "enableFailed": "এই ডিভাইসটি পুশ নোটিফিকেশনের জন্য নিবন্ধন করা যায়নি।",
+        "deviceRemovedTitle": "ডিভাইস আনসাবস্ক্রাইব হয়েছে",
+        "deviceRemovedDesc": "এই ব্রাউজারটি আপনার অ্যাকাউন্টের জন্য আর পুশ নোটিফিকেশন পাবে না।",
+        "testSuccessTitle": "টেস্ট পুশ পাঠানো হয়েছে",
+        "testSuccessDesc": "{count}টি নিবন্ধিত ডিভাইসে Firebase Cloud Messaging টেস্ট পুশ সফলভাবে পাঠানো হয়েছে।",
+        "testFailedTitle": "টেস্ট পুশ ব্যর্থ",
+        "testFailedDesc": "টেস্ট পুশ নোটিফিকেশন পাঠানো যায়নি।"
+      }
     },
     "bell": {
       "yourLoanApproved": "আপনার ঋণ অনুমোদিত হয়েছে",
@@ -4836,6 +4863,10 @@
     "alertsHeading": "সতর্কতা ও শব্দের পছন্দসমূহ",
     "alertsSubheading": "রিয়েল-টাইম শব্দ ও ইমেইল সারসংক্ষেপের ধরন কাস্টমাইজ করুন।",
     "prefRows": {
+      "pushAlerts": {
+        "title": "ডিভাইস ওয়েব পুশ সতর্কতা (FCM)",
+        "desc": "ট্যাব বন্ধ থাকলেও আপনার ব্রাউজার বা ইনস্টল করা PWA-তে তাৎক্ষণিক পুশ নোটিফিকেশন পান।"
+      },
       "inAppAlerts": {
         "title": "অ্যাপের অভ্যন্তরীণ তহবিল সতর্কতা",
         "desc": "ড্যাশবোর্ডের ভেতরে সরাসরি সিদ্ধান্ত ব্যানার ও নোটিফিকেশন ব্যাজ দেখান।"

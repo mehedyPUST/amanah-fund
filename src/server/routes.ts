@@ -109,6 +109,7 @@ import {
   loadNoticesOnly,
   loadUserBootstrapSummary,
   loadVaultState,
+  registerVaultNotificationsCommitHook,
   type StoredPrivateMessage,
   type StoredUser,
   updateVaultState,
@@ -174,6 +175,19 @@ import {
   isValidEmailTemplateKey,
   mergeEmailTemplateCollections,
 } from '../utils/emailTemplates.ts';
+import {
+  dispatchPushForNewNotifications,
+  dispatchPushForPrivateMessage,
+  getFirebaseVapidPublicKey,
+  getPublicFirebaseWebConfig,
+  isPushServerConfigured,
+  removeFcmDeviceTokenInState,
+  sanitizeFcmPlatform,
+  sendTestPushToUser,
+  upsertFcmDeviceTokenInState,
+} from './fcmService.ts';
+
+registerVaultNotificationsCommitHook(dispatchPushForNewNotifications);
 
 function dispatchTransactionEmails(items: TransactionEmailSummaryInput[]): void {
   if (items.length === 0) return;
@@ -1650,6 +1664,7 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
           ? { emailCommunity: body.emailCommunity }
           : {}),
         ...(typeof body.soundEnabled === 'boolean' ? { soundEnabled: body.soundEnabled } : {}),
+        ...(typeof body.pushAlerts === 'boolean' ? { pushAlerts: body.pushAlerts } : {}),
       };
       updatedUser = sanitizeUser(target);
       return draft;
@@ -6969,6 +6984,12 @@ apiRouter.get(
             'Community Link & Spam Shield',
           ],
         },
+        fcmPush: {
+          configuredServer: isPushServerConfigured(),
+          vapidConfigured: Boolean(getFirebaseVapidPublicKey()),
+          registeredDevicesCount: (state.fcmTokens || []).length,
+          subscribedMembersCount: new Set((state.fcmTokens || []).map((t) => t.userId)).size,
+        },
         totals: {
           activeMembers: state.users.filter((u) => u.status === 'active').length,
           pendingMembers: state.users.filter(
@@ -7617,6 +7638,123 @@ apiRouter.post(
     }
   }
 );
+
+apiRouter.get('/notifications/push/status', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const state = await loadVaultState();
+    const storedUser = state.users.find((u) => u.id === viewer.id);
+    const firebaseConfig = getPublicFirebaseWebConfig();
+    const vapidPublicKey = getFirebaseVapidPublicKey();
+    const userDevices = (state.fcmTokens || [])
+      .filter((t) => t.userId === viewer.id)
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+      .map((d) => ({
+        id: d.id,
+        platform: d.platform,
+        userAgentLabel: d.userAgentLabel,
+        updatedAt: d.updatedAt,
+        lastSuccessAt: d.lastSuccessAt,
+      }));
+
+    res.json({
+      configuredServer: isPushServerConfigured(),
+      configuredClient: Boolean(firebaseConfig && vapidPublicKey),
+      vapidPublicKey,
+      firebaseConfig,
+      devicesCount: userDevices.length,
+      devices: userDevices,
+      pushAlertsEnabled: storedUser?.notificationPreferences?.pushAlerts !== false,
+    });
+  } catch (err) {
+    console.error('Push status error:', err);
+    res.status(500).json({ error: 'Failed to load push notification status.' });
+  }
+});
+
+apiRouter.post('/notifications/push/subscribe', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    const platform = sanitizeFcmPlatform(req.body?.platform);
+    const userAgentLabel =
+      typeof req.body?.userAgentLabel === 'string' ? req.body.userAgentLabel.trim() : undefined;
+
+    if (!token || token.length < 20 || token.length > 4096 || /\s/.test(token)) {
+      res.status(400).json({ error: 'Valid FCM registration token is required.' });
+      return;
+    }
+
+    let deviceId = '';
+    let devicesCount = 0;
+    await updateVaultState((draft) => {
+      const target = draft.users.find((u) => u.id === viewer.id && u.status === 'active');
+      if (!target) {
+        throw new Error('ACTIVE_USER_NOT_FOUND');
+      }
+      const { record } = upsertFcmDeviceTokenInState(draft, {
+        userId: viewer.id,
+        token,
+        platform,
+        userAgentLabel,
+      });
+      deviceId = record.id;
+      devicesCount = (draft.fcmTokens || []).filter((t) => t.userId === viewer.id).length;
+      return draft;
+    });
+
+    res.json({
+      ok: true,
+      deviceId,
+      devicesCount,
+      configuredServer: isPushServerConfigured(),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'ACTIVE_USER_NOT_FOUND') {
+      res.status(403).json({ error: 'Only active cooperative members can subscribe to push notifications.' });
+      return;
+    }
+    console.error('Push subscribe error:', err);
+    res.status(500).json({ error: 'Failed to register push notification device.' });
+  }
+});
+
+apiRouter.delete('/notifications/push/subscribe', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const rawToken =
+      typeof req.body?.token === 'string'
+        ? req.body.token.trim()
+        : typeof req.query?.token === 'string'
+          ? req.query.token.trim()
+          : '';
+
+    let removedCount = 0;
+    let devicesCount = 0;
+    await updateVaultState((draft) => {
+      removedCount = removeFcmDeviceTokenInState(draft, viewer.id, rawToken || undefined);
+      devicesCount = (draft.fcmTokens || []).filter((t) => t.userId === viewer.id).length;
+      return draft;
+    });
+
+    res.json({ ok: true, removedCount, devicesCount });
+  } catch (err) {
+    console.error('Push unsubscribe error:', err);
+    res.status(500).json({ error: 'Failed to remove push notification subscription.' });
+  }
+});
+
+apiRouter.post('/notifications/push/test', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = req.authUser!;
+    const state = await loadVaultState();
+    const result = await sendTestPushToUser(state, viewer.id);
+    res.json(result);
+  } catch (err) {
+    console.error('Push test error:', err);
+    res.status(500).json({ error: 'Failed to send test push notification.' });
+  }
+});
 
 // ---------------------------------------------------------------------------
 // 8. Google Workspace Integration (Google Sheets Blueprint Auto-Sync & Gmail)
@@ -9974,7 +10112,7 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
     }
 
     let createdStored: StoredPrivateMessage | null = null;
-    await updateVaultState((draft) => {
+    const nextState = await updateVaultState((draft) => {
       const peer = draft.users.find((u) => u.id === peerId && u.status === 'active');
       if (!peer) {
         throw new Error('PEER_NOT_FOUND');
@@ -10038,6 +10176,10 @@ apiRouter.post('/messages/with/:peerId', requireAuth, async (req: AuthenticatedR
       senderId: viewer.id,
       recipientId: peerId,
     });
+    await Promise.race([
+      dispatchPushForPrivateMessage(nextState, hydrated).catch(() => undefined),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]);
 
     res.status(201).json({ message: hydrated });
   } catch (err) {

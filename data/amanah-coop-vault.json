@@ -179,10 +179,29 @@
       "expiresAt": "2026-11-27T04:14:17.000Z"
     },
     {
-      "id": "sha:d8b58feeec0886c437499fb519a6d8520a6bcb45",
+      "id": "jti:137ebce2-c34b-41f3-82a0-8453577d5be1",
       "userId": "u-2",
-      "revokedAt": "2026-11-20T04:14:17.319Z",
-      "expiresAt": "2026-11-20T04:16:17.000Z"
+      "revokedAt": "2026-11-20T14:53:56.641Z",
+      "expiresAt": "2026-11-27T14:53:56.000Z"
+    },
+    {
+      "id": "sha:31bbce4e43c59056d7343ab5db035e9675bf8c29",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T14:53:56.641Z",
+      "expiresAt": "2026-11-20T14:55:56.000Z"
+    },
+    {
+      "id": "jti:2ccc6ba2-9912-45cb-9670-aef48cc8560b",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T14:54:47.198Z",
+      "expiresAt": "2026-11-27T14:54:47.000Z"
+    },
+    {
+      "id": "sha:eafb54d8c664a455c5df51a2cc45bc33aabb903b",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T14:54:47.198Z",
+      "expiresAt": "2026-11-20T14:56:47.000Z"
     }
-  ]
+  ],
+  "fcmTokens": []
 }

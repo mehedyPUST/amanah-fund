@@ -34,6 +34,7 @@ export interface NotificationPreferences {
   emailRepayments: boolean;
   emailCommunity: boolean;
   soundEnabled: boolean;
+  pushAlerts?: boolean;
 }
 
 export type NomineeGender = 'male' | 'female' | 'other';
@@ -667,6 +668,54 @@ export interface EmailNotification {
   readByRecipient?: boolean;
 }
 
+export type FcmPushPlatform = 'web' | 'pwa' | 'android' | 'ios';
+
+export interface FcmDeviceTokenRecord {
+  id: string;
+  userId: string;
+  token: string;
+  platform: FcmPushPlatform;
+  userAgentLabel?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastSuccessAt?: string;
+}
+
+export interface FirebaseClientWebConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
+
+export interface PushNotificationStatusResponse {
+  configuredServer: boolean;
+  configuredClient: boolean;
+  vapidPublicKey: string;
+  firebaseConfig: FirebaseClientWebConfig | null;
+  devicesCount: number;
+  devices: Array<{
+    id: string;
+    platform: FcmPushPlatform;
+    userAgentLabel?: string;
+    updatedAt: string;
+    lastSuccessAt?: string;
+  }>;
+  pushAlertsEnabled: boolean;
+}
+
+export interface PushTestResponse {
+  ok: boolean;
+  deliveredCount: number;
+  failedCount: number;
+  removedInvalidCount: number;
+  totalDevices: number;
+  configuredServer: boolean;
+  reason?: string;
+}
+
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
@@ -1103,6 +1152,12 @@ export interface AdminSystemStatus {
     configured: boolean;
     model: string;
     features: string[];
+  };
+  fcmPush?: {
+    configuredServer: boolean;
+    vapidConfigured: boolean;
+    registeredDevicesCount: number;
+    subscribedMembersCount: number;
   };
   totals: {
     activeMembers: number;
