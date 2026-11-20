@@ -31,13 +31,17 @@ export function LanguageSwitcher({
 
   if (variant === 'compact') {
     const nextLocale: AppLocale = locale === 'en' ? 'bn' : 'en';
+    const hasCustomHeight = /(?:^|\s)h-/.test(className);
+    const hasCustomPaddingX = /(?:^|\s)px-/.test(className);
     return (
       <button
         type="button"
         onClick={() => setLocale(nextLocale)}
         title={t('switchLanguage')}
         aria-label={t('switchLanguage')}
-        className={`${baseDisplayClass} items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+        className={`${baseDisplayClass} items-center justify-center gap-1.5 ${
+          hasCustomHeight ? '' : 'h-9'
+        } ${hasCustomPaddingX ? '' : 'px-2.5'} rounded-lg border text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
           surface === 'inverted'
             ? 'border-white/25 bg-white/15 hover:bg-white/25 text-white'
             : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-700 dark:hover:text-emerald-300'

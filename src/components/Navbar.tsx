@@ -219,10 +219,10 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden absolute left-0 right-0 top-[60px] sm:top-[62px] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3.5 space-y-2.5 shadow-xl"
+            className="md:hidden absolute right-0 top-[60px] sm:top-[62px] w-60 max-w-[74vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3 space-y-2 shadow-xl"
           >
-            <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
-              <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <AmanahLogo size="xs" decorative />
                 <span className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
                   {tCommon('brandName')}
@@ -232,16 +232,16 @@ export function Navbar() {
                   onClick={toggleDarkMode}
                   title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                   aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                  className="ml-1 w-8 h-8 rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white/85 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                  className="ml-0.5 w-7 h-7 rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white/85 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0"
                 >
                   {darkMode ? (
-                    <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
+                    <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
                   ) : (
-                    <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" aria-hidden="true" />
+                    <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" aria-hidden="true" />
                   )}
                 </button>
               </div>
-              <LanguageSwitcher variant="segmented" layoutId="mobile-navbar-lang-pill" />
+              <LanguageSwitcher variant="compact" className="h-7 px-2" />
             </div>
 
             <div className="flex flex-col gap-1">

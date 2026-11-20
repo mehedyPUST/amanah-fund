@@ -193,7 +193,7 @@ export function PWAUpdateButton({
               </span>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-1">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => void checkForUpdates(true)}
