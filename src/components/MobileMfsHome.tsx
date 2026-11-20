@@ -189,18 +189,16 @@ function MfsGridTileButton({
     <motion.button
       type="button"
       onClick={tile.onClick}
-      whileTap={{ scale: 0.94, y: 1.5 }}
+      whileTap={{ scale: 0.93, y: 1.5 }}
       transition={MFS_TAP_SPRING}
-      className={`${
+      className={`group ${
         compact ? 'mfs-tile-compact gap-1.5' : 'mfs-tile gap-2'
-      } rounded-2xl bg-gradient-to-b from-white to-emerald-50/45 dark:from-slate-900 dark:to-slate-900/95 border ${
-        compact
-          ? 'border-emerald-200/75 dark:border-emerald-800/50'
-          : 'border-emerald-200/85 dark:border-emerald-800/55'
-      } hover:border-emerald-400 dark:hover:border-emerald-500/75 active:bg-emerald-50/60 dark:active:bg-slate-800/90 active:shadow-inner shadow-xs flex flex-col items-center justify-center transition-colors cursor-pointer`}
+      } rounded-xl bg-transparent border-0 hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.04] active:bg-slate-900/[0.06] dark:active:bg-white/[0.07] flex flex-col items-center justify-start transition-colors cursor-pointer`}
     >
       <span
-        className={`mfs-tile-icon-box relative rounded-2xl border flex items-center justify-center shrink-0 ${tile.iconBgClass}`}
+        className={`mfs-tile-icon-box relative ${
+          compact ? 'rounded-lg' : 'rounded-[10px]'
+        } border shadow-xs group-hover:shadow-sm flex items-center justify-center shrink-0 transition-shadow ${tile.iconBgClass}`}
       >
         <Icon className={`mfs-tile-icon ${tile.iconColorClass}`} aria-hidden="true" />
         {typeof tile.badge === 'number' && tile.badge > 0 && (
@@ -336,12 +334,18 @@ export function MobileMfsHome({
         </div>
         <div className="mfs-icon-grid-3">
           {Array.from({ length: 6 }).map((_, idx) => (
-            <Skeleton key={idx} height={96} borderRadius={16} />
+            <div key={idx} className="mfs-tile flex flex-col items-center justify-start gap-2">
+              <Skeleton width={60} height={46} borderRadius={10} />
+              <Skeleton width={52} height={10} borderRadius={4} />
+            </div>
           ))}
         </div>
         <div className="mfs-icon-grid-4">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <Skeleton key={idx} height={82} borderRadius={16} />
+            <div key={idx} className="mfs-tile-compact flex flex-col items-center justify-start gap-1.5">
+              <Skeleton width={50} height={38} borderRadius={8} />
+              <Skeleton width={44} height={10} borderRadius={4} />
+            </div>
           ))}
         </div>
         <Skeleton height={160} borderRadius={16} />
