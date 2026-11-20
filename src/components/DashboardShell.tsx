@@ -7,14 +7,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   ArrowRight,
+  BadgeCheck,
   BarChart3,
   Bell,
   CalendarClock,
   CheckCircle2,
-  ChevronRight,
   ClipboardCheck,
   CreditCard,
-  FilePlus2,
   FileSpreadsheet,
   HandCoins,
   History,
@@ -260,6 +259,7 @@ export function DashboardShell() {
     key: number;
   } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [failedDrawerPhotoUrl, setFailedDrawerPhotoUrl] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const drawerHistoryPushedRef = useRef(false);
 
@@ -1259,15 +1259,6 @@ export function DashboardShell() {
             onClick: () => navigateToPage('monthly-contribution', true),
           },
           {
-            id: 'apply-qard-hasan',
-            label: tNav('requestLoan'),
-            Icon: FilePlus2,
-            onClick: () => {
-              closeMobileDrawer();
-              void openLoanRequestModal();
-            },
-          },
-          {
             id: 'quard-hasan',
             label: tNav('qardHasan'),
             Icon: HandCoins,
@@ -1666,77 +1657,70 @@ export function DashboardShell() {
               aria-label={tCommon('dashboardMenuAria')}
               className="relative z-10 w-60 max-w-[74vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
-              <div className="h-[52px] sm:h-[54px] px-3 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-1.5 shrink-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <AmanahLogo size="xs" decorative />
-                  <div className="min-w-0">
-                    <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-                      {tCommon('brandName')}
+              {/* Drawer Top User Header (photo, name & verified badge) */}
+              <div className="min-h-[58px] px-3 py-2.5 border-b border-emerald-200/80 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/90 via-teal-50/60 to-white dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900 flex items-center justify-between gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => navigateToPage('my-profile', true)}
+                  className="flex-1 min-w-0 text-left rounded-xl p-1 -m-1 hover:bg-white/75 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2.5 cursor-pointer"
+                >
+                  {(() => {
+                    const drawerPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
+                    const showPhoto = Boolean(
+                      drawerPhotoUrl && failedDrawerPhotoUrl !== drawerPhotoUrl
+                    );
+                    return showPhoto ? (
+                      <img
+                        src={drawerPhotoUrl}
+                        alt={user.name}
+                        referrerPolicy="no-referrer"
+                        onError={() => setFailedDrawerPhotoUrl(drawerPhotoUrl || null)}
+                        className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-500/30 dark:ring-emerald-400/30 shadow-xs shrink-0"
+                      />
+                    ) : (
+                      <span className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/25">
+                        {(user.name || 'AM')
+                          .split(/\s+/)
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((p) => p[0]?.toUpperCase() || '')
+                          .join('')}
+                      </span>
+                    );
+                  })()}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
+                        {user.name}
+                      </span>
+                      {user.status === 'active' && (
+                        <BadgeCheck
+                          className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
+                          aria-label={tCommon('verified')}
+                        />
+                      )}
                     </div>
-                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-                      {tCommon('dashboard')}
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                      {translateRoleLabel(user.role, locale)}
+                      {user.status !== 'active' && (
+                        <>
+                          {' · '}
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                            {tCommon('pending')}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={toggleDarkMode}
-                    title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    className="ml-0.5 w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                  >
-                    {darkMode ? (
-                      <Sun className="w-4 h-4 text-amber-500" aria-hidden="true" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
+                </button>
                 <button
                   type="button"
                   onClick={closeMobileDrawer}
                   aria-label={tCommon('closeNavigationMenu')}
-                  className="w-8 h-8 -mr-0.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
+                  className="w-8 h-8 -mr-0.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
                 >
                   <X className="w-4.5 h-4.5" />
                 </button>
-              </div>
-
-              {/* Drawer Top Identity Card */}
-              <div className="p-2.5 border-b border-emerald-200/80 dark:border-emerald-800/50 shrink-0 bg-gradient-to-br from-emerald-50 via-teal-50/70 to-cyan-50/50 dark:from-emerald-950/45 dark:via-teal-950/30 dark:to-slate-900 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => navigateToPage('my-profile', true)}
-                  className="w-full min-h-[44px] text-left rounded-xl p-1.5 hover:bg-white/80 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between gap-2 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/25">
-                      {(user.name || 'AM')
-                        .split(/\s+/)
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((p) => p[0]?.toUpperCase() || '')
-                        .join('')}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
-                        {user.name}
-                      </div>
-                      <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                        {translateRoleLabel(user.role, locale)} ·{' '}
-                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                          {user.status === 'active' ? tCommon('verified') : tCommon('pending')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
-                </button>
-                <div className="flex items-center justify-between gap-2 px-1.5">
-                  <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                    {tCommon('language')}
-                  </span>
-                  <LanguageSwitcher variant="compact" className="h-8 px-2.5" />
-                </div>
               </div>
 
               <nav
@@ -1768,6 +1752,23 @@ export function DashboardShell() {
                   <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{tNav('signOut')}</span>
                 </button>
+                <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                  <LanguageSwitcher variant="compact" className="h-8 px-2.5" />
+                  <button
+                    type="button"
+                    onClick={toggleDarkMode}
+                    title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                    aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                    className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-xs font-medium cursor-pointer shrink-0"
+                  >
+                    {darkMode ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
+                    )}
+                    <span>{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
+                  </button>
+                </div>
               </div>
             </motion.aside>
           </div>

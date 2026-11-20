@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
+  BadgeCheck,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -19,6 +20,7 @@ import { useTranslations } from 'next-intl';
 import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
+import { translateRoleLabel } from '../i18n/messages.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
@@ -29,8 +31,9 @@ export function Navbar() {
   const queryClient = useQueryClient();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
-  const { user, authChecking, refreshUser, logout, darkMode, toggleDarkMode } = useCoopSession();
+  const { user, authChecking, refreshUser, logout, darkMode, toggleDarkMode, locale } = useCoopSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [failedMenuPhotoUrl, setFailedMenuPhotoUrl] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -221,28 +224,55 @@ export function Navbar() {
             transition={{ duration: 0.16 }}
             className="md:hidden absolute right-0 top-[60px] sm:top-[62px] w-60 max-w-[74vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3 space-y-2 shadow-xl"
           >
-            <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <AmanahLogo size="xs" decorative />
-                <span className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-                  {tCommon('brandName')}
-                </span>
-                <button
-                  type="button"
-                  onClick={toggleDarkMode}
-                  title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                  aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                  className="ml-0.5 w-7 h-7 rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white/85 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                >
-                  {darkMode ? (
-                    <Sun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+            {isAuthenticated && user && (
+              <Link
+                href="/dashboard"
+                onClick={() => {
+                  setMobileBrowseMode(false);
+                  setMobileOpen(false);
+                }}
+                className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800 min-w-0"
+              >
+                {(() => {
+                  const menuPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
+                  const showPhoto = Boolean(menuPhotoUrl && failedMenuPhotoUrl !== menuPhotoUrl);
+                  return showPhoto ? (
+                    <img
+                      src={menuPhotoUrl}
+                      alt={user.name}
+                      referrerPolicy="no-referrer"
+                      onError={() => setFailedMenuPhotoUrl(menuPhotoUrl || null)}
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/30 shrink-0"
+                    />
                   ) : (
-                    <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-              <LanguageSwitcher variant="compact" className="h-7 px-2" />
-            </div>
+                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                      {(user.name || 'AM')
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((p) => p[0]?.toUpperCase() || '')
+                        .join('')}
+                    </span>
+                  );
+                })()}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
+                      {user.name}
+                    </span>
+                    {user.status === 'active' && (
+                      <BadgeCheck
+                        className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        aria-label={tCommon('verified')}
+                      />
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                    {translateRoleLabel(user.role, locale)}
+                  </div>
+                </div>
+              </Link>
+            )}
 
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => {
@@ -322,6 +352,24 @@ export function Navbar() {
                   </Link>
                 </>
               )}
+
+              <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                <LanguageSwitcher variant="compact" className="h-8 px-2.5" />
+                <button
+                  type="button"
+                  onClick={toggleDarkMode}
+                  title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                  aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-xs font-medium cursor-pointer shrink-0"
+                >
+                  {darkMode ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
+                  )}
+                  <span>{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
