@@ -533,7 +533,15 @@ export function DashboardShell() {
   const profileChangeRequests =
     profileChangeRequestsQuery.data?.requests ?? EMPTY_PROFILE_REQUESTS;
   const notifications = notificationsQuery.data?.notifications ?? EMPTY_NOTIFICATIONS;
+  const notificationsLoaded = notificationsQuery.data !== undefined;
+  const notificationsLoading = workspaceEnabled && notificationsQuery.isPending && !notificationsLoaded;
   const unreadDmCount = privateThreadsQuery.data?.totalUnread ?? 0;
+  const userUnreadCount = useMemo(() => {
+    if (!user) return 0;
+    return notifications.filter(
+      (n) => !n.readByRecipient && isNotificationForUser(n, user)
+    ).length;
+  }, [notifications, user]);
   const hasUnreadPriorityNotification = useMemo(() => {
     if (!user) return false;
     return notifications.some(
@@ -1212,7 +1220,9 @@ export function DashboardShell() {
       return overview.treasury.pendingContributionsCount;
     }
     if (sectionId === 'notification') {
-      return overview.treasury.unreadNotificationsCount;
+      return notificationsLoaded
+        ? userUnreadCount
+        : overview.treasury.unreadNotificationsCount;
     }
     if (sectionId === 'community') {
       return unreadDmCount;
@@ -1739,6 +1749,7 @@ export function DashboardShell() {
             contributions={contributions}
             loans={loans}
             notifications={notifications}
+            notificationsLoading={notificationsLoading}
             onNavigate={(section) => navigateToPage(section, false)}
             onOpenManagerDeskTab={openManagerDeskTab}
             onOpenContributionMonth={(month) => {

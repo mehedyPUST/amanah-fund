@@ -3690,6 +3690,8 @@
       "categoryAccount": "অ্যাকাউন্ট",
       "categoryQueue": "অপেক্ষমাণ সারি",
       "categoryNotice": "নোটিশ",
+      "categoryProfit": "হালাল মুনাফা",
+      "loadingAlerts": "নোটিফিকেশন লোড হচ্ছে…",
       "newLabel": "নতুন",
       "emptyTabTitle": "এই বিভাগে কোনো সতর্কবার্তা নেই",
       "emptyTabAction": "সব সতর্কবার্তা দেখুন"

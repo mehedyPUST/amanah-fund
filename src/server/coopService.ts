@@ -37,6 +37,7 @@ import {
   normalizeRelationToEnglish,
 } from '../utils/inputLanguage.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
+import { isNotificationForUser } from '../utils/notificationAlerts.ts';
 import { getStorageEngine, type StoredUser, type VaultState } from './db.ts';
 
 export function queueEmailNotification(
@@ -650,13 +651,9 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     (m) => m.status === 'scheduled' && m.scheduledFor >= now.toISOString()
   ).length;
 
-  const unreadNotificationsCount = state.emailNotifications.filter((n) => {
-    if (n.readByRecipient) return false;
-    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
-      if (!n.recipientUserId && !n.recipientEmail) return true;
-    }
-    return n.recipientUserId === currentUser.id || n.recipientEmail === currentUser.email;
-  }).length;
+  const unreadNotificationsCount = state.emailNotifications.filter(
+    (n) => !n.readByRecipient && isNotificationForUser(n, currentUser)
+  ).length;
 
   const emailQueueAttentionCount =
     currentUser.role === 'admin'

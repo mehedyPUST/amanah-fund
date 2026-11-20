@@ -271,11 +271,17 @@ export function NotificationsView({
   }
 
   async function handleMarkRead(id: string) {
-    let wasUnread = false;
+    let wasUnreadInView = false;
+    let wasUnreadForUser = false;
     setNotifications((prev) =>
       prev.map((n) => {
         if (n.id !== id) return n;
-        if (!n.readByRecipient) wasUnread = true;
+        if (!n.readByRecipient) {
+          wasUnreadInView = true;
+          if (isNotificationForUser(n, user)) {
+            wasUnreadForUser = true;
+          }
+        }
         return { ...n, readByRecipient: true };
       })
     );
@@ -286,13 +292,15 @@ export function NotificationsView({
         return {
           notifications: prev.notifications.map((n) => {
             if (n.id !== id) return n;
-            if (!n.readByRecipient) wasUnread = true;
+            if (!n.readByRecipient && isNotificationForUser(n, user)) {
+              wasUnreadForUser = true;
+            }
             return { ...n, readByRecipient: true };
           }),
         };
       }
     );
-    if (wasUnread) {
+    if (wasUnreadForUser) {
       queryClient.setQueryData<DashboardOverview>(queryKeys.dashboard.overview(), (prev) => {
         if (!prev) return prev;
         return {
@@ -307,7 +315,7 @@ export function NotificationsView({
     try {
       await api.markNotificationRead(id);
     } catch {
-      if (wasUnread) {
+      if (wasUnreadInView) {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, readByRecipient: false } : n))
         );

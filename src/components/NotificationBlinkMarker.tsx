@@ -1,48 +1,13 @@
 'use client';
 
-import type { EmailNotification, PublicUser } from '../types/coop.ts';
+import {
+  isMeetingOrNoticeBoardNotification,
+  isNotificationForUser,
+} from '../utils/notificationAlerts.ts';
+
+export { isMeetingOrNoticeBoardNotification, isNotificationForUser };
 
 export type BlinkMarkerVariant = 'emerald' | 'amber' | 'red';
-
-export function isMeetingOrNoticeBoardNotification(
-  n: Pick<EmailNotification, 'type' | 'relatedId' | 'subject'>
-): boolean {
-  if (n.type === 'meeting_scheduled') {
-    return true;
-  }
-  if (n.type === 'cooperative_notice') {
-    if (n.relatedId?.startsWith('notice-')) {
-      return true;
-    }
-    const subj = (n.subject || '').toLowerCase();
-    if (
-      subj.startsWith('password reset request') ||
-      subj.startsWith('temporary password issued')
-    ) {
-      return false;
-    }
-    return true;
-  }
-  return false;
-}
-
-export function isNotificationForUser(
-  n: Pick<EmailNotification, 'recipientUserId' | 'recipientEmail'>,
-  user: Pick<PublicUser, 'id' | 'email' | 'role'>
-): boolean {
-  if (
-    (user.role === 'admin' || user.role === 'manager') &&
-    !n.recipientUserId &&
-    !n.recipientEmail
-  ) {
-    return true;
-  }
-  return (
-    n.recipientUserId === user.id ||
-    (Boolean(n.recipientEmail) &&
-      n.recipientEmail.toLowerCase() === user.email.toLowerCase())
-  );
-}
 
 const VARIANT_CLASSES: Record<
   BlinkMarkerVariant,

@@ -185,22 +185,34 @@
       "expiresAt": "2026-11-27T14:53:56.000Z"
     },
     {
-      "id": "sha:31bbce4e43c59056d7343ab5db035e9675bf8c29",
-      "userId": "u-2",
-      "revokedAt": "2026-11-20T14:53:56.641Z",
-      "expiresAt": "2026-11-20T14:55:56.000Z"
-    },
-    {
       "id": "jti:2ccc6ba2-9912-45cb-9670-aef48cc8560b",
       "userId": "u-2",
       "revokedAt": "2026-11-20T14:54:47.198Z",
       "expiresAt": "2026-11-27T14:54:47.000Z"
     },
     {
-      "id": "sha:eafb54d8c664a455c5df51a2cc45bc33aabb903b",
+      "id": "jti:c406e967-2fd0-48e5-a5ae-5d47f25e8b17",
       "userId": "u-2",
-      "revokedAt": "2026-11-20T14:54:47.198Z",
-      "expiresAt": "2026-11-20T14:56:47.000Z"
+      "revokedAt": "2026-11-20T16:41:26.892Z",
+      "expiresAt": "2026-11-27T16:41:26.000Z"
+    },
+    {
+      "id": "sha:261f76e14fc7def7e70bd0383d723196b24f86a0",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T16:41:26.892Z",
+      "expiresAt": "2026-11-20T16:43:26.000Z"
+    },
+    {
+      "id": "jti:6da529fd-22bd-4c4c-8dd1-be4f583e7e81",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T16:42:01.234Z",
+      "expiresAt": "2026-11-27T16:42:01.000Z"
+    },
+    {
+      "id": "sha:9acc9eaf3303f224db008f9740adb76c0d909a20",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T16:42:01.234Z",
+      "expiresAt": "2026-11-20T16:44:01.000Z"
     }
   ],
   "fcmTokens": []

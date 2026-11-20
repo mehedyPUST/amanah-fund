@@ -3690,6 +3690,8 @@
       "categoryAccount": "Account",
       "categoryQueue": "Action Queue",
       "categoryNotice": "Notice",
+      "categoryProfit": "Halal Profit",
+      "loadingAlerts": "Loading notifications…",
       "newLabel": "New",
       "emptyTabTitle": "No alerts in this category",
       "emptyTabAction": "Show all alerts"

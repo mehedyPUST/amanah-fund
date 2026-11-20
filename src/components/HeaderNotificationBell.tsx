@@ -30,8 +30,13 @@ import type {
   LoanRequest,
   PublicUser,
 } from '../types/coop.ts';
-import { formatBillingMonth, formatDateTime, formatMoney } from '../utils/format.ts';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
+import {
+  buildBellAlerts,
+  type AlertIconKey,
+  type AlertTone,
+  type BellAlertItem,
+} from '../utils/notificationAlerts.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import {
   NotificationBlinkMarker,
@@ -45,6 +50,7 @@ interface HeaderNotificationBellProps {
   contributions: Contribution[];
   loans: LoanRequest[];
   notifications: EmailNotification[];
+  notificationsLoading?: boolean;
   onNavigate: (tab: DashboardSectionId) => void;
   onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onOpenContributionMonth: (billingMonth: string) => void;
@@ -53,35 +59,6 @@ interface HeaderNotificationBellProps {
 }
 
 type BellFilterTab = 'all' | 'treasury' | 'governance';
-
-type AlertTone = 'emerald' | 'amber' | 'rose' | 'red' | 'sky' | 'slate';
-
-type AlertIconKey =
-  | 'loan'
-  | 'contribution'
-  | 'poll'
-  | 'meeting'
-  | 'community'
-  | 'account'
-  | 'queue'
-  | 'notice'
-  | 'alert';
-
-interface BellAlertItem {
-  id: string;
-  notificationId?: string;
-  group: 'treasury' | 'governance';
-  tone: AlertTone;
-  iconKey: AlertIconKey;
-  isPriorityBlink?: boolean;
-  categoryLabel: string;
-  title: string;
-  detail: string;
-  timestampLabel: string;
-  targetTab: DashboardSectionId;
-  managerDeskTab?: ManagerDeskTab;
-  billingMonth?: string;
-}
 
 const TONE_ICON_SURFACE: Record<AlertTone, string> = {
   emerald:
@@ -129,6 +106,7 @@ export function HeaderNotificationBell({
   contributions,
   loans,
   notifications,
+  notificationsLoading = false,
   onNavigate,
   onOpenManagerDeskTab,
   onOpenContributionMonth,
@@ -236,9 +214,6 @@ export function HeaderNotificationBell({
     };
   }, [open, closeModal]);
 
-  const ccy = overview?.config.currency || 'BDT';
-  const isStaff = user.role === 'admin' || user.role === 'manager';
-
   const userUnread = useMemo(
     () =>
       notifications.filter(
@@ -252,301 +227,18 @@ export function HeaderNotificationBell({
     [userUnread]
   );
 
-  const alerts = useMemo<BellAlertItem[]>(() => {
-    const list: BellAlertItem[] = [];
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const currentMonthLabel = formatBillingMonth(currentMonth);
-
-    const coveredLoanIds = new Set<string>();
-
-    userUnread.forEach((n) => {
-      if (n.type === 'loan_approved_confirmation') {
-        if (n.relatedId) coveredLoanIds.add(n.relatedId);
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'treasury',
-          tone: 'emerald',
-          iconKey: 'loan',
-          categoryLabel: tNotif('bell.categoryLoan'),
-          title: tNotif('types.loan_approved_confirmation'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: user.role === 'admin' ? 'ballot' : 'quard-hasan',
-        });
-      } else if (n.type === 'contribution_accepted' || n.type === 'contribution_rejected') {
-        const isAccepted = n.type === 'contribution_accepted';
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'treasury',
-          tone: isAccepted ? 'emerald' : 'rose',
-          iconKey: isAccepted ? 'contribution' : 'alert',
-          categoryLabel: tNotif('bell.categoryContribution'),
-          title: isAccepted
-            ? tNotif('types.contribution_accepted')
-            : tNotif('types.contribution_rejected'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: user.role === 'admin' ? 'notification' : 'monthly-contribution',
-        });
-      } else if (n.type === 'loan_repayment_rejected' || n.type === 'loan_repayment_notice') {
-        const isRejected = n.type === 'loan_repayment_rejected';
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'treasury',
-          tone: isRejected ? 'rose' : 'emerald',
-          iconKey: isRejected ? 'alert' : 'loan',
-          categoryLabel: tNotif('bell.categoryLoan'),
-          title: isRejected
-            ? tNotif('types.loan_repayment_rejected')
-            : tNotif('types.loan_repayment_notice'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: user.role === 'admin' ? 'notification' : 'quard-hasan',
-        });
-      } else if (n.type === 'meeting_scheduled') {
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: 'red',
-          iconKey: 'meeting',
-          isPriorityBlink: true,
-          categoryLabel: tNotif('bell.categoryMeeting'),
-          title: tNotif('types.meeting_scheduled'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'notification',
-        });
-      } else if (n.type === 'cooperative_notice') {
-        const isNoticeBoardAlert = isMeetingOrNoticeBoardNotification(n);
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: isNoticeBoardAlert ? 'red' : 'slate',
-          iconKey: 'notice',
-          isPriorityBlink: isNoticeBoardAlert,
-          categoryLabel: tNotif('bell.categoryNotice'),
-          title: tNotif('types.cooperative_notice'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'notification',
-        });
-      } else if (n.type === 'loan_guarantor_requested') {
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: 'amber',
-          iconKey: 'loan',
-          categoryLabel: tNotif('bell.categoryLoan'),
-          title: tNotif('types.loan_guarantor_requested'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'quard-hasan',
-        });
-      } else if (n.type === 'loan_vote_requested' || n.type === 'decision_vote_requested') {
-        const isManagerReviewNotice =
-          isStaff &&
-          n.type === 'loan_vote_requested' &&
-          (n.subject.toLowerCase().includes('initiate vote') ||
-            n.subject.toLowerCase().includes('ready to initiate'));
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: isManagerReviewNotice ? 'treasury' : 'governance',
-          tone: isManagerReviewNotice ? 'amber' : 'sky',
-          iconKey: isManagerReviewNotice ? 'queue' : 'poll',
-          categoryLabel: isManagerReviewNotice
-            ? tNotif('bell.categoryQueue')
-            : tNotif('bell.categoryPoll'),
-          title:
-            n.type === 'decision_vote_requested'
-              ? tNotif('types.decision_vote_requested')
-              : tNotif('types.loan_vote_requested'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: isManagerReviewNotice ? 'manager-desk' : 'ballot',
-          managerDeskTab: isManagerReviewNotice ? 'qard-hasan' : undefined,
-        });
-      } else if (n.type === 'community_post_created' || n.type === 'community_mention') {
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: 'sky',
-          iconKey: 'community',
-          categoryLabel: tNotif('bell.categoryCommunity'),
-          title:
-            n.type === 'community_mention'
-              ? tNotif('types.community_mention')
-              : tNotif('types.community_post_created'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'community',
-        });
-      } else if (n.type === 'profile_update_requested') {
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: 'amber',
-          iconKey: 'account',
-          categoryLabel: tNotif('bell.categoryAccount'),
-          title: tNotif('types.profile_update_requested'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'member-registry',
-        });
-      } else if (n.type === 'profile_update_reviewed') {
-        list.push({
-          id: `notif-${n.id}`,
-          notificationId: n.id,
-          group: 'governance',
-          tone: 'emerald',
-          iconKey: 'account',
-          categoryLabel: tNotif('bell.categoryAccount'),
-          title: tNotif('types.profile_update_reviewed'),
-          detail: n.subject,
-          timestampLabel: formatDateTime(n.createdAt),
-          targetTab: 'my-profile',
-        });
-      }
-    });
-
-    // Surface loans newly approved (awaiting disbursement) if not already represented by an unread alert
-    loans
-      .filter(
-        (l) =>
-          l.status === 'approved_pending_disbursement' &&
-          !coveredLoanIds.has(l.id) &&
-          (l.borrowerId === user.id || isStaff)
-      )
-      .forEach((l) => {
-        list.push({
-          id: `loan-approved-${l.id}`,
-          group: 'treasury',
-          tone: 'emerald',
-          iconKey: 'loan',
-          categoryLabel: tNotif('bell.categoryLoan'),
-          title:
-            l.borrowerId === user.id
-              ? tNotif('bell.yourLoanApproved')
-              : tNotif('bell.approvedLoanReadyDisburse'),
-          detail: `${l.id} · ${l.borrowerName} · ${formatMoney(l.amount, ccy)}`,
-          timestampLabel: formatDateTime(l.approvedAt || l.requestedAt),
-          targetTab: isStaff ? 'manager-desk' : 'quard-hasan',
-          managerDeskTab: isStaff ? 'qard-hasan' : undefined,
-        });
-      });
-
-    // Admins do not contribute, so skip personal contribution due reminders for Admins
-    if (user.role !== 'admin') {
-      let hasReminderNotif = false;
-      userUnread.forEach((n) => {
-        if (n.type === 'monthly_contribution_reminder') {
-          hasReminderNotif = true;
-          list.push({
-            id: `notif-${n.id}`,
-            notificationId: n.id,
-            group: 'treasury',
-            tone: 'amber',
-            iconKey: 'contribution',
-            categoryLabel: tNotif('bell.categoryContribution'),
-            title: tNotif('bell.pendingContributionReminder'),
-            detail: n.subject,
-            timestampLabel: formatDateTime(n.createdAt),
-            targetTab: 'monthly-contribution',
-            billingMonth: currentMonth,
-          });
-        }
-      });
-
-      const myCurrentMonthContribs = contributions.filter(
-        (c) => c.userId === user.id && c.billingMonth === currentMonth
-      );
-      const hasApprovedOrPendingCurrentMonth = myCurrentMonthContribs.some(
-        (c) => c.status === 'approved' || c.status === 'pending'
-      );
-      const myPendingContribs = contributions.filter(
-        (c) => c.userId === user.id && c.status === 'pending'
-      );
-
-      if (!hasReminderNotif && !hasApprovedOrPendingCurrentMonth) {
-        const targetAmount = overview?.config.monthlyContributionAmount || 5000;
-        list.push({
-          id: `due-contrib-${currentMonth}`,
-          group: 'treasury',
-          tone: 'amber',
-          iconKey: 'contribution',
-          categoryLabel: tNotif('bell.categoryContribution'),
-          title: tNotif('bell.contributionDueTitle', { month: currentMonthLabel }),
-          detail: tNotif('bell.contributionDueDetail', { amount: formatMoney(targetAmount, ccy) }),
-          timestampLabel: tNotif('bell.currentBillingCycle'),
-          targetTab: 'monthly-contribution',
-          billingMonth: currentMonth,
-        });
-      } else if (myPendingContribs.length > 0) {
-        list.push({
-          id: `pending-contrib-${myPendingContribs[0].id}`,
-          group: 'treasury',
-          tone: 'amber',
-          iconKey: 'contribution',
-          categoryLabel: tNotif('bell.categoryContribution'),
-          title: tNotif('bell.contributionPendingVerification'),
-          detail: tNotif('bell.contributionPendingDetail', {
-            month: formatBillingMonth(myPendingContribs[0].billingMonth),
-            amount: formatMoney(myPendingContribs[0].amount, ccy),
-          }),
-          timestampLabel: formatDateTime(myPendingContribs[0].submittedAt),
-          targetTab: 'monthly-contribution',
-        });
-      }
-    }
-
-    if (isStaff && (overview?.treasury.pendingLoansReviewCount || 0) > 0) {
-      const count = overview?.treasury.pendingLoansReviewCount || 0;
-      const deskLabel =
-        user.role === 'admin' ? tNotif('view.governanceDesk') : tNotif('view.managerDesk');
-      list.push({
-        id: 'staff-pending-loan-reviews',
-        group: 'treasury',
-        tone: 'amber',
-        iconKey: 'queue',
-        categoryLabel: tNotif('bell.categoryQueue'),
-        title: tNotif('bell.loansAwaitingVoteTitle'),
-        detail: tNotif('bell.loansAwaitingVoteDetail', { count, desk: deskLabel }),
-        timestampLabel:
-          user.role === 'admin'
-            ? tNotif('bell.governanceDeskQueue')
-            : tNotif('bell.managerDeskQueue'),
-        targetTab: 'manager-desk',
-        managerDeskTab: 'qard-hasan',
-      });
-    }
-
-    if (user.role === 'manager' && (overview?.treasury.pendingContributionsCount || 0) > 0) {
-      const count = overview?.treasury.pendingContributionsCount || 0;
-      list.push({
-        id: 'staff-pending-contribs',
-        group: 'treasury',
-        tone: 'amber',
-        iconKey: 'queue',
-        categoryLabel: tNotif('bell.categoryQueue'),
-        title: tNotif('bell.depositsAwaitingVerificationTitle'),
-        detail: tNotif('bell.depositsAwaitingVerificationDetail', { count }),
-        timestampLabel: tNotif('bell.managerDeskQueue'),
-        targetTab: 'manager-desk',
-        managerDeskTab: 'contributions',
-      });
-    }
-
-    return list;
-  }, [userUnread, loans, contributions, user.id, user.role, isStaff, ccy, overview, tNotif]);
+  const alerts = useMemo<BellAlertItem[]>(
+    () =>
+      buildBellAlerts({
+        user,
+        userUnread,
+        overview,
+        contributions,
+        loans,
+        tNotif,
+      }),
+    [user, userUnread, overview, contributions, loans, tNotif]
+  );
 
   const treasuryCount = useMemo(
     () => alerts.filter((a) => a.group === 'treasury').length,
@@ -571,9 +263,12 @@ export function HeaderNotificationBell({
     [alerts, activeFilter]
   );
 
-  const unreadInboxCount = overview?.treasury.unreadNotificationsCount || 0;
-  const hasUnreadNotifications = userUnread.length > 0 || unreadInboxCount > 0;
-  const badgeCount = alerts.length > 0 ? alerts.length : unreadInboxCount;
+  const serverUnreadCount = overview?.treasury.unreadNotificationsCount || 0;
+  const unreadInboxCount = notificationsLoading ? serverUnreadCount : userUnread.length;
+  const hasUnreadNotifications =
+    userUnread.length > 0 || (notificationsLoading && serverUnreadCount > 0);
+  const badgeCount =
+    alerts.length > 0 ? alerts.length : notificationsLoading ? serverUnreadCount : 0;
 
   async function handleAlertClick(alert: BellAlertItem) {
     setOpen(false);
@@ -620,7 +315,13 @@ export function HeaderNotificationBell({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          setOpen((prev) => {
+            const next = !prev;
+            if (next) setActiveFilter('all');
+            return next;
+          });
+        }}
         aria-expanded={open}
         aria-haspopup="dialog"
         title={tNotif('bellAria')}
@@ -801,17 +502,31 @@ export function HeaderNotificationBell({
               {/* Scrollable Feed */}
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle">
                 {alerts.length === 0 ? (
-                  <div className="px-6 py-10 text-center flex flex-col items-center">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-                      <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+                  notificationsLoading ? (
+                    <div className="px-4 py-6 space-y-3" aria-busy="true">
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
+                        {tNotif('bell.loadingAlerts')}
+                      </p>
+                      {[0, 1, 2].map((idx) => (
+                        <div
+                          key={idx}
+                          className="h-14 rounded-xl bg-slate-100 dark:bg-slate-800/70 animate-pulse"
+                        />
+                      ))}
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {tNotif('allCaughtUp')}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-[270px] leading-relaxed">
-                      {tNotif('allCaughtUpDesc')}
-                    </p>
-                  </div>
+                  ) : (
+                    <div className="px-6 py-10 text-center flex flex-col items-center">
+                      <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                        <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {tNotif('allCaughtUp')}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-[270px] leading-relaxed">
+                        {tNotif('allCaughtUpDesc')}
+                      </p>
+                    </div>
+                  )
                 ) : visibleAlerts.length === 0 ? (
                   <div className="px-6 py-9 text-center flex flex-col items-center">
                     <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
