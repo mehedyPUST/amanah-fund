@@ -29,16 +29,23 @@ import {
   encryptSensitiveObject,
 } from '../src/server/crypto.ts';
 import type { VaultState } from '../src/server/db.ts';
+import jwt from 'jsonwebtoken';
 import {
   clearAuthCookie,
+  computeTokenRevocationId,
   extractSessionToken,
   extractSessionTokenCandidates,
   isHttpsRequest,
+  requireAuth,
+  revokeRequestSessions,
   sanitizeUser,
   setAuthCookie,
   signActivationChallengeToken,
+  signAuthToken,
   verifyActivationChallengeToken,
+  verifySessionTokenToUser,
 } from '../src/server/auth.ts';
+import { findRevokedTokenIds } from '../src/server/db.ts';
 import {
   isValidFourDigitPin,
   registerDeviceOnUser,
@@ -2586,7 +2593,140 @@ describe('Member credentials editing helpers & Admin-only approval visibility', 
       },
     ]);
   });
+
+  it('clears partitioned, unpartitioned, SameSite=None, and SameSite=Lax session cookies on logout', () => {
+    const clearCalls: Array<{ name: string; options: Record<string, unknown> }> = [];
+    const fakeRes = {
+      clearCookie: (name: string, options: Record<string, unknown>) => {
+        clearCalls.push({ name, options });
+      },
+    };
+    const httpsReq = {
+      secure: true,
+      headers: { 'x-forwarded-proto': 'https' },
+    };
+
+    clearAuthCookie(httpsReq as never, fakeRes as never);
+
+    expect(clearCalls.length).toBeGreaterThanOrEqual(4);
+    expect(clearCalls[0].options).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      partitioned: true,
+      path: '/',
+      maxAge: 0,
+    });
+    expect(
+      clearCalls.some(
+        (c) =>
+          c.options.sameSite === 'none' &&
+          c.options.secure === true &&
+          c.options.partitioned === undefined &&
+          c.options.maxAge === 0
+      )
+    ).toBe(true);
+    expect(
+      clearCalls.some(
+        (c) =>
+          c.options.sameSite === 'lax' &&
+          c.options.secure === true &&
+          c.options.maxAge === 0
+      )
+    ).toBe(true);
+    expect(
+      clearCalls.some(
+        (c) =>
+          c.options.sameSite === 'lax' &&
+          c.options.secure === false &&
+          c.options.maxAge === 0
+      )
+    ).toBe(true);
+  });
+
+  it('issues unique jti claims and revokes signed-out JWTs (including legacy tokens without jti)', async () => {
+    const baseState = makeBaseState();
+    const member = baseState.users[1];
+
+    const token1 = signAuthToken(member);
+    const token2 = signAuthToken(member);
+    const decoded1 = jwt.decode(token1) as { jti?: string; sub?: string };
+    const decoded2 = jwt.decode(token2) as { jti?: string; sub?: string };
+
+    expect(decoded1?.jti).toBeTruthy();
+    expect(decoded2?.jti).toBeTruthy();
+    expect(decoded1?.jti).not.toBe(decoded2?.jti);
+
+    // Build a legacy JWT (no jti) signed with the same dev/env secret
+    const legacySecret =
+      process.env.JWT_SECRET?.trim() || 'amanah-coop-jwt-dev-secret-2026-change-in-prod';
+    const legacyToken = jwt.sign(
+      { sub: member.id, email: member.email, role: member.role },
+      legacySecret,
+      { expiresIn: '2m' }
+    );
+
+    // Revoke both token1 (via header) and legacyToken (via duplicate Cookie + body)
+    const logoutReq = {
+      path: '/auth/logout',
+      headers: {
+        'x-amanah-session': token1,
+        cookie: `amanah_session=${encodeURIComponent(legacyToken)}; amanah_session=${encodeURIComponent(token1)}`,
+      },
+      cookies: { amanah_session: legacyToken },
+      query: {},
+    };
+
+    const revokedCount = await revokeRequestSessions(logoutReq as never, [token1]);
+    expect(revokedCount).toBe(2);
+
+    const token1Id = computeTokenRevocationId(token1, decoded1.jti);
+    const token2Id = computeTokenRevocationId(token2, decoded2.jti);
+    const legacyId = computeTokenRevocationId(legacyToken);
+
+    const revokedSet = await findRevokedTokenIds([token1Id, token2Id, legacyId]);
+    expect(revokedSet.has(token1Id)).toBe(true);
+    expect(revokedSet.has(legacyId)).toBe(true);
+    expect(revokedSet.has(token2Id)).toBe(false);
+
+    // SSR helper must reject the revoked token immediately
+    expect(await verifySessionTokenToUser(token1)).toBeNull();
+    expect(await verifySessionTokenToUser(legacyToken)).toBeNull();
+
+    // requireAuth middleware must respond 401 when a signed-out token is replayed
+    let statusCode = 0;
+    let bodyPayload: Record<string, unknown> | null = null;
+    let nextCalled = false;
+    const replayRes = {
+      status(code: number) {
+        statusCode = code;
+        return this;
+      },
+      json(payload: Record<string, unknown>) {
+        bodyPayload = payload;
+        return this;
+      },
+    };
+    const replayReq = {
+      path: '/auth/me',
+      headers: {
+        'x-amanah-session': token1,
+        cookie: `amanah_session=${encodeURIComponent(legacyToken)}`,
+      },
+      cookies: { amanah_session: legacyToken },
+      query: {},
+    };
+
+    await requireAuth(replayReq as never, replayRes as never, () => {
+      nextCalled = true;
+    });
+
+    expect(nextCalled).toBe(false);
+    expect(statusCode).toBe(401);
+    expect(bodyPayload?.error).toMatch(/expired or invalid/i);
+  });
 });
+
 
 
 

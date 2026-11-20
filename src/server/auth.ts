@@ -1,7 +1,13 @@
+import crypto from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { PublicUser, UserRole } from '../types/coop.ts';
-import { findActiveUserByIds, type StoredUser } from './db.ts';
+import {
+  findActiveUserByIds,
+  findRevokedTokenIds,
+  revokeSessionTokens,
+  type StoredUser,
+} from './db.ts';
 import { sanitizeRegisteredDevices } from './deviceAuthService.ts';
 
 export const SESSION_COOKIE_NAME = 'amanah_session';
@@ -54,6 +60,13 @@ export function sanitizeUser(user: StoredUser): PublicUser {
   };
 }
 
+export function computeTokenRevocationId(token: string, decodedJti?: string): string {
+  const cleanJti = typeof decodedJti === 'string' ? decodedJti.trim() : '';
+  if (cleanJti) return `jti:${cleanJti}`;
+  const digest = crypto.createHash('sha256').update(token.trim()).digest('hex').slice(0, 40);
+  return `sha:${digest}`;
+}
+
 export function signAuthToken(user: StoredUser): string {
   return jwt.sign(
     {
@@ -62,7 +75,7 @@ export function signAuthToken(user: StoredUser): string {
       role: user.role,
     },
     getJwtSecret(),
-    { expiresIn: '7d' }
+    { expiresIn: '7d', jwtid: crypto.randomUUID() }
   );
 }
 
@@ -206,34 +219,148 @@ export function setAuthCookie(req: Request, res: Response, token: string): void 
 
 export function clearAuthCookie(req: Request, res: Response): void {
   const isHttps = isHttpsRequest(req);
+  // Primary variant matching setAuthCookie (kept first for predictable Set-Cookie ordering)
   res.clearCookie(SESSION_COOKIE_NAME, {
     httpOnly: true,
     secure: isHttps,
     sameSite: isHttps ? 'none' : 'lax',
     ...(isHttps ? { partitioned: true } : {}),
     path: '/',
+    maxAge: 0,
   });
+
+  // Also expire alternate cookie-jar attribute variants (unpartitioned, SameSite=Lax, non-Secure)
+  // so legacy or cross-partition amanah_session cookies can never survive sign-out.
+  if (isHttps) {
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 0,
+    });
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    });
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    });
+  } else {
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      partitioned: true,
+      path: '/',
+      maxAge: 0,
+    });
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 0,
+    });
+  }
 }
 
-function verifyCandidateJwtSub(candidates: string[]): string[] {
+interface VerifiedSessionCandidate {
+  sub: string;
+  tokenId: string;
+  expiresAt: string;
+}
+
+function decodeValidSessionCandidates(candidates: string[]): VerifiedSessionCandidate[] {
   const secret = getJwtSecret();
-  const subs: string[] = [];
-  for (const token of candidates) {
+  const decodedList: VerifiedSessionCandidate[] = [];
+  const seenTokenIds = new Set<string>();
+  for (const rawToken of candidates) {
+    const token = rawToken.trim();
+    if (!token) continue;
     try {
-      const decoded = jwt.verify(token, secret) as { sub?: string };
-      if (decoded?.sub && !subs.includes(decoded.sub)) {
-        subs.push(decoded.sub);
-      }
+      const decoded = jwt.verify(token, secret) as {
+        sub?: string;
+        jti?: string;
+        exp?: number;
+        purpose?: string;
+      };
+      // Reject non-session challenge tokens (e.g., member activation challenge JWT)
+      if (!decoded?.sub || decoded.purpose) continue;
+      const tokenId = computeTokenRevocationId(token, decoded.jti);
+      if (seenTokenIds.has(tokenId)) continue;
+      seenTokenIds.add(tokenId);
+      const expiresAt =
+        typeof decoded.exp === 'number' && Number.isFinite(decoded.exp)
+          ? new Date(decoded.exp * 1000).toISOString()
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      decodedList.push({ sub: decoded.sub, tokenId, expiresAt });
     } catch {
       // Try next candidate token (e.g., valid X-Amanah-Session after stale cookie)
+    }
+  }
+  return decodedList;
+}
+
+async function verifyCandidateJwtSub(candidates: string[]): Promise<string[]> {
+  const decodedList = decodeValidSessionCandidates(candidates);
+  if (decodedList.length === 0) return [];
+
+  const revokedIds = await findRevokedTokenIds(decodedList.map((item) => item.tokenId));
+  const subs: string[] = [];
+  for (const item of decodedList) {
+    if (revokedIds.has(item.tokenId)) continue;
+    if (!subs.includes(item.sub)) {
+      subs.push(item.sub);
     }
   }
   return subs;
 }
 
-export async function verifySessionTokenToUser(token: string | undefined | null): Promise<PublicUser | null> {
-  if (!token || !token.trim()) return null;
-  const validSubs = verifyCandidateJwtSub([token.trim()]);
+/** Revoke all valid session tokens presented on a logout request (cookies, header, and optional body). */
+export async function revokeRequestSessions(
+  req: Request,
+  extraTokens: string[] = []
+): Promise<number> {
+  const candidates = [...extractSessionTokenCandidates(req)];
+  for (const extra of extraTokens) {
+    if (typeof extra === 'string' && extra.trim() && !candidates.includes(extra.trim())) {
+      candidates.push(extra.trim());
+    }
+  }
+  const queryToken = req.query?.sessionToken;
+  if (typeof queryToken === 'string' && queryToken.trim() && !candidates.includes(queryToken.trim())) {
+    candidates.push(queryToken.trim());
+  }
+
+  const decodedList = decodeValidSessionCandidates(candidates);
+  if (decodedList.length === 0) return 0;
+
+  await revokeSessionTokens(
+    decodedList.map((item) => ({
+      id: item.tokenId,
+      userId: item.sub,
+      expiresAt: item.expiresAt,
+    }))
+  );
+  return decodedList.length;
+}
+
+export async function verifySessionTokensToUser(
+  tokens: Array<string | undefined | null>
+): Promise<PublicUser | null> {
+  const cleanTokens = tokens
+    .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
+    .map((t) => t.trim());
+  if (cleanTokens.length === 0) return null;
+  const validSubs = await verifyCandidateJwtSub(cleanTokens);
   if (validSubs.length === 0) return null;
   try {
     const user = await findActiveUserByIds(validSubs);
@@ -241,6 +368,12 @@ export async function verifySessionTokenToUser(token: string | undefined | null)
   } catch {
     return null;
   }
+}
+
+export async function verifySessionTokenToUser(
+  token: string | undefined | null
+): Promise<PublicUser | null> {
+  return verifySessionTokensToUser([token]);
 }
 
 export async function requireAuth(
@@ -254,7 +387,7 @@ export async function requireAuth(
     return;
   }
 
-  const validSubs = verifyCandidateJwtSub(candidates);
+  const validSubs = await verifyCandidateJwtSub(candidates);
   if (validSubs.length === 0) {
     res.status(401).json({ error: 'Session expired or invalid. Please sign in again.' });
     return;
@@ -301,7 +434,7 @@ export async function resolveOptionalAuthUser(
   try {
     const candidates = extractSessionTokenCandidates(req);
     if (candidates.length === 0) return null;
-    const validSubs = verifyCandidateJwtSub(candidates);
+    const validSubs = await verifyCandidateJwtSub(candidates);
     if (validSubs.length === 0) return null;
     const user = await findActiveUserByIds(validSubs);
     if (!user) return null;

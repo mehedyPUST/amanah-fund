@@ -25,6 +25,26 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/**': ['./firebase-applet-config.json'],
   },
+  async headers() {
+    const noStoreHeaders = [
+      { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, private' },
+      { key: 'Pragma', value: 'no-cache' },
+    ];
+    return [
+      {
+        source: '/dashboard',
+        headers: noStoreHeaders,
+      },
+      {
+        source: '/dashboard/:path*',
+        headers: noStoreHeaders,
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: noStoreHeaders,
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

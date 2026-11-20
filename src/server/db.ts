@@ -91,6 +91,13 @@ export interface StoredPrivateMessage {
   readAt?: string;
 }
 
+export interface RevokedTokenRecord {
+  id: string;
+  userId?: string;
+  revokedAt: string;
+  expiresAt: string;
+}
+
 export interface VaultState {
   users: StoredUser[];
   fundConfig: FundConfig;
@@ -109,6 +116,7 @@ export interface VaultState {
   emailQueue?: EmailQueueItem[];
   faqs?: FaqItem[];
   usedActivationOtps?: UsedActivationOtpRecord[];
+  revokedTokens?: RevokedTokenRecord[];
 }
 
 const VAULT_DIR = process.env.VERCEL
@@ -161,6 +169,8 @@ interface AmanahDbRuntime {
   faqsCache: TimedCacheEntry<FaqItem[]> | null;
   noticesCache: TimedCacheEntry<CoopNotice[]> | null;
   bootstrapSummaryCache: TimedCacheEntry<UserBootstrapSummary> | null;
+  revokedTokenIds: Map<string, number>;
+  revokedTokenIndexesReady: boolean;
 }
 
 const MONGO_RETRY_COOLDOWN_MS = 15_000;
@@ -193,10 +203,13 @@ const runtime: AmanahDbRuntime =
     faqsCache: null,
     noticesCache: null,
     bootstrapSummaryCache: null,
+    revokedTokenIds: new Map(),
+    revokedTokenIndexesReady: false,
   });
 
 // Ensure fields exist if runtime survived hot reload from an older shape
 if (!runtime.userCache) runtime.userCache = new Map();
+if (!runtime.revokedTokenIds) runtime.revokedTokenIds = new Map();
 
 function invalidateReadCaches(): void {
   runtime.vaultCache = null;
@@ -326,6 +339,7 @@ function createEmptyVaultState(): VaultState {
     emailQueue: [],
     faqs: createDefaultFaqs(now),
     usedActivationOtps: [],
+    revokedTokens: [],
   };
 }
 
@@ -382,6 +396,14 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.usedActivationOtps = Array.isArray(state.usedActivationOtps)
     ? state.usedActivationOtps
+    : [];
+  const nowMs = Date.now();
+  state.revokedTokens = Array.isArray(state.revokedTokens)
+    ? state.revokedTokens.filter((entry) => {
+        if (!entry || typeof entry.id !== 'string' || !entry.id.trim()) return false;
+        const expMs = Date.parse(entry.expiresAt);
+        return Number.isFinite(expMs) && expMs > nowMs;
+      })
     : [];
   if (!Array.isArray(state.faqs)) {
     state.faqs = createDefaultFaqs();
@@ -1058,3 +1080,151 @@ export function updateVaultState(
   );
   return result;
 }
+
+function pruneInMemoryRevokedTokens(nowMs: number): void {
+  for (const [id, expMs] of runtime.revokedTokenIds.entries()) {
+    if (!Number.isFinite(expMs) || expMs <= nowMs) {
+      runtime.revokedTokenIds.delete(id);
+    }
+  }
+}
+
+async function ensureRevokedTokenIndexes(mongoDb: Db): Promise<void> {
+  if (runtime.revokedTokenIndexesReady) return;
+  runtime.revokedTokenIndexesReady = true;
+  await Promise.allSettled([
+    mongoDb.collection('revokedTokens').createIndex({ id: 1 }, { unique: true }),
+    mongoDb.collection('revokedTokens').createIndex({ expiresAt: 1 }),
+  ]);
+}
+
+/** Persist revoked JWT identifiers so signed-out sessions cannot be replayed across instances. */
+export async function revokeSessionTokens(
+  entries: Array<{ id: string; userId?: string; expiresAt: string }>
+): Promise<void> {
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  pruneInMemoryRevokedTokens(nowMs);
+
+  const normalized: RevokedTokenRecord[] = [];
+  const seen = new Set<string>();
+  for (const raw of entries) {
+    const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+    if (!id || seen.has(id)) continue;
+    const expMs = Date.parse(raw.expiresAt);
+    const validExpMs =
+      Number.isFinite(expMs) && expMs > nowMs ? expMs : nowMs + 7 * 24 * 60 * 60 * 1000;
+    seen.add(id);
+    runtime.revokedTokenIds.set(id, validExpMs);
+    normalized.push({
+      id,
+      ...(raw.userId ? { userId: raw.userId } : {}),
+      revokedAt: nowIso,
+      expiresAt: new Date(validExpMs).toISOString(),
+    });
+  }
+
+  if (normalized.length === 0) return;
+
+  await initDatabase();
+  const mongoDb = runtime.mongoDb;
+  if (mongoDb) {
+    await ensureRevokedTokenIndexes(mongoDb);
+    const col = mongoDb.collection<RevokedTokenRecord>('revokedTokens');
+    await col.bulkWrite(
+      normalized.map((doc) => ({
+        replaceOne: {
+          filter: { id: doc.id },
+          replacement: doc,
+          upsert: true,
+        },
+      })),
+      { ordered: false }
+    );
+    // Best-effort cleanup of already-expired revocation tombstones
+    void col.deleteMany({ expiresAt: { $lt: nowIso } }).catch(() => undefined);
+    return;
+  }
+
+  // Local encrypted vault mode: serialize write onto vaultWriteQueue so it never races with updateVaultState
+  const persistLocal = async (): Promise<void> => {
+    const state = readLocalVault();
+    const byId = new Map<string, RevokedTokenRecord>();
+    for (const existing of state.revokedTokens || []) {
+      const expMs = Date.parse(existing.expiresAt);
+      if (existing.id && Number.isFinite(expMs) && expMs > nowMs) {
+        byId.set(existing.id, existing);
+      }
+    }
+    for (const item of normalized) {
+      byId.set(item.id, item);
+    }
+    state.revokedTokens = Array.from(byId.values());
+    writeLocalVault(state);
+  };
+
+  const queued = runtime.vaultWriteQueue.then(persistLocal, persistLocal);
+  runtime.vaultWriteQueue = queued.then(
+    () => undefined,
+    () => undefined
+  );
+  await queued;
+}
+
+/** Check which of the given token IDs have been revoked (checks memory + persistent store). */
+export async function findRevokedTokenIds(tokenIds: string[]): Promise<Set<string>> {
+  const revoked = new Set<string>();
+  if (tokenIds.length === 0) return revoked;
+
+  const nowMs = Date.now();
+  pruneInMemoryRevokedTokens(nowMs);
+
+  const unchecked: string[] = [];
+  for (const rawId of tokenIds) {
+    const id = rawId.trim();
+    if (!id) continue;
+    const memExp = runtime.revokedTokenIds.get(id);
+    if (memExp !== undefined && memExp > nowMs) {
+      revoked.add(id);
+    } else if (!unchecked.includes(id)) {
+      unchecked.push(id);
+    }
+  }
+
+  if (unchecked.length === 0) return revoked;
+
+  try {
+    await initDatabase();
+    const mongoDb = runtime.mongoDb;
+    if (mongoDb) {
+      const docs = await mongoDb
+        .collection<RevokedTokenRecord>('revokedTokens')
+        .find({ id: { $in: unchecked } }, { projection: { _id: 0, id: 1, expiresAt: 1 } })
+        .toArray();
+      for (const doc of docs) {
+        const expMs = Date.parse(doc.expiresAt);
+        if (doc.id && Number.isFinite(expMs) && expMs > nowMs) {
+          runtime.revokedTokenIds.set(doc.id, expMs);
+          revoked.add(doc.id);
+        }
+      }
+      return revoked;
+    }
+
+    const state = readLocalVault();
+    const uncheckedSet = new Set(unchecked);
+    for (const entry of state.revokedTokens || []) {
+      if (!entry.id || !uncheckedSet.has(entry.id)) continue;
+      const expMs = Date.parse(entry.expiresAt);
+      if (Number.isFinite(expMs) && expMs > nowMs) {
+        runtime.revokedTokenIds.set(entry.id, expMs);
+        revoked.add(entry.id);
+      }
+    }
+  } catch (err) {
+    console.warn('[Auth] Revocation lookup error (falling back to in-memory revocation set):', err);
+  }
+
+  return revoked;
+}
+

@@ -66,12 +66,17 @@ export function Navbar() {
   }
 
   async function handleSignOut() {
+    if (signingOut) return;
     setSigningOut(true);
     try {
       setMobileBrowseMode(false);
       await logout();
       setMobileOpen(false);
-      router.replace('/');
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      } else {
+        router.replace('/');
+      }
     } finally {
       setSigningOut(false);
     }

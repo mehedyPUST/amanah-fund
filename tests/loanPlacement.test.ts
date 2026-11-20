@@ -135,6 +135,32 @@ vi.mock('../src/server/db.ts', () => ({
     mockState = next;
     return structuredClone(mockState);
   },
+  revokeSessionTokens: async (
+    entries: Array<{ id: string; userId?: string; expiresAt: string }>
+  ) => {
+    const existing = Array.isArray(mockState.revokedTokens) ? mockState.revokedTokens : [];
+    const byId = new Map(existing.map((e) => [e.id, e]));
+    const nowIso = new Date().toISOString();
+    for (const entry of entries) {
+      byId.set(entry.id, {
+        id: entry.id,
+        userId: entry.userId,
+        revokedAt: nowIso,
+        expiresAt: entry.expiresAt,
+      });
+    }
+    mockState.revokedTokens = Array.from(byId.values());
+  },
+  findRevokedTokenIds: async (tokenIds: string[]) => {
+    const nowMs = Date.now();
+    const revoked = new Set<string>();
+    for (const entry of mockState.revokedTokens || []) {
+      if (tokenIds.includes(entry.id) && Date.parse(entry.expiresAt) > nowMs) {
+        revoked.add(entry.id);
+      }
+    }
+    return revoked;
+  },
 }));
 
 const { apiRouter } = await import('../src/server/routes.ts');
@@ -425,5 +451,60 @@ describe('POST /api/loans Qard Hasan placement integration', () => {
       }),
     });
     expect(withinCapRes.status).toBe(201);
+  });
+
+  it('revokes session token and clears cookies completely on POST /api/auth/logout', async () => {
+    const member = mockState.users.find((u) => u.id === 'u-member-1')!;
+    const activeToken = signAuthToken(member);
+
+    // Token works before sign-out
+    const beforeRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: {
+        Cookie: `${SESSION_COOKIE_NAME}=${activeToken}`,
+        'X-Amanah-Session': activeToken,
+      },
+    });
+    expect(beforeRes.status).toBe(200);
+    expect(beforeRes.headers.get('cache-control')).toContain('no-store');
+
+    // Sign out
+    const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${activeToken}`,
+        'X-Amanah-Session': activeToken,
+      },
+      body: JSON.stringify({ sessionToken: activeToken }),
+    });
+    expect(logoutRes.status).toBe(200);
+    expect(logoutRes.headers.get('cache-control')).toContain('no-store');
+    const setCookies = logoutRes.headers.getSetCookie?.() || [];
+    expect(setCookies.length).toBeGreaterThanOrEqual(3);
+    expect(
+      setCookies.some(
+        (c) =>
+          c.startsWith(`${SESSION_COOKIE_NAME}=;`) &&
+          (c.includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT') || c.includes('Max-Age=0'))
+      )
+    ).toBe(true);
+
+    // Replaying the signed-out token via Cookie or X-Amanah-Session must return 401
+    const replayCookieRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Cookie: `${SESSION_COOKIE_NAME}=${activeToken}` },
+    });
+    expect(replayCookieRes.status).toBe(401);
+
+    const replayHeaderRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { 'X-Amanah-Session': activeToken },
+    });
+    expect(replayHeaderRes.status).toBe(401);
+
+    // A fresh login issues a distinct jti that authenticates cleanly
+    const freshToken = signAuthToken(member);
+    const freshRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { 'X-Amanah-Session': freshToken },
+    });
+    expect(freshRes.status).toBe(200);
   });
 });

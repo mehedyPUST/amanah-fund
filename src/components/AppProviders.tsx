@@ -29,7 +29,10 @@ import { getMessagesForLocale } from '../i18n/messages.ts';
 import type { PublicUser } from '../types/coop.ts';
 import {
   api,
+  AUTH_BROADCAST_CHANNEL,
   clearClientSessionToken,
+  getClientSessionToken,
+  LOGOUT_MARKER_STORAGE_KEY,
   registerTotpChallengeHandler,
   SESSION_TOKEN_STORAGE_KEY,
   syncClientSessionTokenFromStorage,
@@ -47,6 +50,7 @@ import {
   subscribeWorkspaceAuth,
   type WorkspaceSessionInfo,
 } from '../utils/googleWorkspace.ts';
+import { resetRealtimeClient } from '../utils/realtimeClient.ts';
 import { OfflineIndicator } from './OfflineIndicator.tsx';
 
 
@@ -129,13 +133,77 @@ export function AppProviders({
   const manualUpdateRequestedRef = useRef(false);
   const lastAuthCheckRef = useRef<number>(initialUser ? Date.now() : 0);
   const sessionVersionRef = useRef(0);
+  const loggedOutClientSideRef = useRef(false);
+
+  const clearCachedHtmlPages = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.controller?.postMessage({ type: 'CLEAR_HTML_CACHES' });
+        swRegRef.current?.active?.postMessage({ type: 'CLEAR_HTML_CACHES' });
+      }
+    } catch {
+      // ignore SW messaging errors
+    }
+    try {
+      if (!('caches' in window)) return;
+      const cacheNames = await window.caches.keys();
+      await Promise.all(
+        cacheNames.map(async (cacheName) => {
+          const cache = await window.caches.open(cacheName);
+          const requests = await cache.keys();
+          await Promise.all(
+            requests.map(async (req) => {
+              try {
+                const url = new URL(req.url);
+                const isHtmlRoute =
+                  url.pathname === '/' ||
+                  url.pathname.startsWith('/dashboard') ||
+                  url.pathname.startsWith('/community') ||
+                  url.pathname.startsWith('/login') ||
+                  url.pathname.startsWith('/signup');
+                if (isHtmlRoute) {
+                  await cache.delete(req);
+                  return;
+                }
+                const match = await cache.match(req);
+                const ct = (match?.headers.get('content-type') || '').toLowerCase();
+                if (ct.includes('text/html')) {
+                  await cache.delete(req);
+                }
+              } catch {
+                // ignore individual cache entry errors
+              }
+            })
+          );
+        })
+      );
+    } catch {
+      // ignore Cache Storage errors
+    }
+  }, []);
 
   const clearPrivateQueryCaches = useCallback(() => {
+    void queryClient.cancelQueries();
     queryClient.setQueryData(queryKeys.auth.me(), null);
+    queryClient.removeQueries({ queryKey: queryKeys.auth.all });
     queryClient.removeQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.removeQueries({ queryKey: queryKeys.members.all });
+    queryClient.removeQueries({ queryKey: queryKeys.community.all });
     queryClient.removeQueries({ queryKey: queryKeys.public.notices() });
     queryClient.removeQueries({ queryKey: queryKeys.admin.all });
   }, [queryClient]);
+
+  const broadcastAuthEvent = useCallback((type: 'logout' | 'login') => {
+    if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return;
+    try {
+      const channel = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
+      channel.postMessage({ type, at: Date.now() });
+      channel.close();
+    } catch {
+      // BroadcastChannel may be unavailable in restricted contexts
+    }
+  }, []);
 
   const setUser = useCallback(
     (nextUser: PublicUser | null) => {
@@ -143,15 +211,19 @@ export function AppProviders({
       setUserState(nextUser);
       setAuthChecking(false);
       if (nextUser) {
+        loggedOutClientSideRef.current = false;
         queryClient.setQueryData(queryKeys.auth.me(), { user: nextUser });
         syncLocalAccountsWithServerUser(nextUser);
         setMobileBackgroundHiddenAt(null);
         setMobileAutoLogoutNotice(null);
+        broadcastAuthEvent('login');
       } else {
+        loggedOutClientSideRef.current = true;
+        resetRealtimeClient();
         clearPrivateQueryCaches();
       }
     },
-    [queryClient, clearPrivateQueryCaches]
+    [queryClient, clearPrivateQueryCaches, broadcastAuthEvent]
   );
 
   const [totpPrompt, setTotpPrompt] = useState<{ message: string } | null>(null);
@@ -304,6 +376,7 @@ export function AppProviders({
       if (requestSeq !== sessionVersionRef.current) {
         return userRef.current;
       }
+      loggedOutClientSideRef.current = false;
       setUserState(res.user);
       syncLocalAccountsWithServerUser(res.user);
       setMobileBackgroundHiddenAt(null);
@@ -326,6 +399,7 @@ export function AppProviders({
   }, [queryClient, clearPrivateQueryCaches]);
 
   useEffect(() => {
+    if (loggedOutClientSideRef.current) return;
     if (initialUser) {
       queryClient.setQueryData(queryKeys.auth.me(), { user: initialUser });
       syncLocalAccountsWithServerUser(initialUser);
@@ -334,17 +408,61 @@ export function AppProviders({
     void refreshUser();
   }, [initialUser, queryClient, refreshUser]);
 
-  const logout = useCallback(async () => {
+  const clearLocalSessionState = useCallback(() => {
+    loggedOutClientSideRef.current = true;
     sessionVersionRef.current += 1;
+    resetRealtimeClient();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('amanah:logout'));
+    }
     setMobileBackgroundHiddenAt(null);
+    setMobileAutoLogoutNotice(null);
+    setMobileBrowseMode(false);
+    setUserState(null);
+    setAuthChecking(false);
+    clearPrivateQueryCaches();
+  }, [clearPrivateQueryCaches]);
+
+  const logout = useCallback(async () => {
+    const tokenSnapshot = getClientSessionToken();
+    clearLocalSessionState();
     try {
-      await api.logout();
+      await queryClient.cancelQueries();
+    } catch {
+      // ignore cancellation errors
+    }
+
+    try {
+      await api.logout(tokenSnapshot);
+    } catch {
+      // Even if offline, proceed with local teardown below
     } finally {
-      setMobileBrowseMode(false);
-      setUserState(null);
+      clearClientSessionToken();
+      broadcastAuthEvent('logout');
+
+      // Best-effort cleanup of Firebase/Google Workspace auth and cached HTML pages
+      // with a tight timeout so sign-out stays responsive even on poor networks.
+      await Promise.race([
+        Promise.allSettled([
+          disconnectGoogleWorkspace()
+            .then((info) => setWorkspace(info))
+            .catch(() => undefined),
+          clearCachedHtmlPages(),
+        ]),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 1200);
+        }),
+      ]);
+
       clearPrivateQueryCaches();
     }
-  }, [clearPrivateQueryCaches]);
+  }, [
+    clearLocalSessionState,
+    queryClient,
+    broadcastAuthEvent,
+    clearCachedHtmlPages,
+    clearPrivateQueryCaches,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -353,55 +471,118 @@ export function AppProviders({
     setMobileBackgroundHiddenAt(null);
     setMobileAutoLogoutNotice(null);
 
+    const handleRemoteSignOut = () => {
+      syncClientSessionTokenFromStorage(null);
+      clearLocalSessionState();
+      void clearCachedHtmlPages();
+      if (window.location.pathname.startsWith('/dashboard')) {
+        window.location.replace('/');
+      }
+    };
+
     const handleUnauthorized = () => {
-      sessionVersionRef.current += 1;
       clearClientSessionToken();
-      setMobileBackgroundHiddenAt(null);
-      setMobileBrowseMode(false);
-      setUserState(null);
-      setAuthChecking(false);
-      clearPrivateQueryCaches();
+      clearLocalSessionState();
+      void clearCachedHtmlPages();
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && userRef.current) {
-        if (Date.now() - lastAuthCheckRef.current >= 5 * 60 * 1000) {
-          void refreshUser();
+      if (document.visibilityState !== 'visible') return;
+      // If another tab signed out while this tab was hidden/frozen, tear down immediately
+      try {
+        if (
+          userRef.current &&
+          window.localStorage.getItem(LOGOUT_MARKER_STORAGE_KEY) &&
+          !window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY)
+        ) {
+          handleRemoteSignOut();
+          return;
         }
+      } catch {
+        // ignore storage errors
+      }
+      if (userRef.current && Date.now() - lastAuthCheckRef.current >= 5 * 60 * 1000) {
+        void refreshUser();
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // Browser Back/Forward cache (bfcache) restore: always verify live session state
+      if (event.persisted) {
+        try {
+          if (
+            window.localStorage.getItem(LOGOUT_MARKER_STORAGE_KEY) &&
+            !window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY)
+          ) {
+            handleRemoteSignOut();
+            return;
+          }
+        } catch {
+          // ignore storage errors
+        }
+        void refreshUser();
       }
     };
 
     const handleStorage = (event: StorageEvent) => {
+      if (event.key === LOGOUT_MARKER_STORAGE_KEY && event.newValue) {
+        handleRemoteSignOut();
+        return;
+      }
       if (event.key !== SESSION_TOKEN_STORAGE_KEY) return;
       const nextToken = event.newValue && event.newValue.trim() ? event.newValue.trim() : null;
       if (!nextToken) {
         if (event.oldValue) {
-          sessionVersionRef.current += 1;
-          syncClientSessionTokenFromStorage(null);
-          setMobileBackgroundHiddenAt(null);
-          setMobileBrowseMode(false);
-          setUserState(null);
-          setAuthChecking(false);
-          clearPrivateQueryCaches();
+          handleRemoteSignOut();
         }
         return;
       }
       if (nextToken !== event.oldValue) {
+        loggedOutClientSideRef.current = false;
         syncClientSessionTokenFromStorage(nextToken);
         void refreshUser();
       }
     };
 
+    let authChannel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        authChannel = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
+        authChannel.onmessage = (event: MessageEvent<{ type?: string }>) => {
+          const msgType = event.data?.type;
+          if (msgType === 'logout') {
+            handleRemoteSignOut();
+          } else if (msgType === 'login') {
+            loggedOutClientSideRef.current = false;
+            const latestToken = getClientSessionToken();
+            syncClientSessionTokenFromStorage(latestToken);
+            void refreshUser();
+          }
+        };
+      } catch {
+        authChannel = null;
+      }
+    }
+
     window.addEventListener('amanah:unauthorized', handleUnauthorized);
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('pageshow', handlePageShow);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.removeEventListener('amanah:unauthorized', handleUnauthorized);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('visibilitychange', handleVisibility);
+      if (authChannel) {
+        try {
+          authChannel.close();
+        } catch {
+          // ignore close errors
+        }
+      }
     };
-  }, [refreshUser, clearPrivateQueryCaches]);
+  }, [refreshUser, clearLocalSessionState, clearCachedHtmlPages]);
 
   const attachRegistrationListeners = useCallback((reg: ServiceWorkerRegistration) => {
     swRegRef.current = reg;

@@ -19,7 +19,7 @@ import type {
   UserRole,
 } from '../types/coop.ts';
 import { sortFaqItems } from '../utils/faqDefaults.ts';
-import { SESSION_COOKIE_NAME, verifySessionTokenToUser } from './auth.ts';
+import { SESSION_COOKIE_NAME, verifySessionTokensToUser } from './auth.ts';
 import {
   buildDashboardOverview,
   buildMonthlySheetData,
@@ -46,9 +46,12 @@ import {
 export async function getServerSessionUser(): Promise<PublicUser | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    if (!token) return null;
-    return await verifySessionTokenToUser(token);
+    const tokens = cookieStore
+      .getAll(SESSION_COOKIE_NAME)
+      .map((entry) => entry.value)
+      .filter((val) => Boolean(val && val.trim()));
+    if (tokens.length === 0) return null;
+    return await verifySessionTokensToUser(tokens);
   } catch {
     return null;
   }

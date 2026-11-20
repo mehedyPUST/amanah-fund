@@ -188,6 +188,13 @@ class SharedRealtimeClient {
       }
     };
   }
+
+  /** Immediately close any open EventSource connection and clear session-bound stream state. */
+  resetForSessionChange(): void {
+    this.teardownConnection();
+    this.permanentlyDisabled = false;
+    this.setStatus('disabled');
+  }
 }
 
 const sharedRealtimeClient = new SharedRealtimeClient();
@@ -197,4 +204,8 @@ export function subscribeRealtimeEvents(
   onStatus?: StatusHandler
 ): () => void {
   return sharedRealtimeClient.subscribe(eventHandlers, onStatus);
+}
+
+export function resetRealtimeClient(): void {
+  sharedRealtimeClient.resetForSessionChange();
 }

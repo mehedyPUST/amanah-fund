@@ -72,14 +72,19 @@ function getClientLocaleHeader(): 'en' | 'bn' {
 }
 
 export const SESSION_TOKEN_STORAGE_KEY = 'amanah_session_token_v1';
+export const LOGOUT_MARKER_STORAGE_KEY = 'amanah_session_logged_out_v1';
+export const AUTH_BROADCAST_CHANNEL = 'amanah_auth_channel';
+const GOOGLE_ONBOARDING_KEY = 'amanah_google_onboarding';
 let memorySessionToken: string | null = null;
 let pendingSessionCheck: Promise<boolean> | null = null;
 
 export function getClientSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
   // Read localStorage first so cross-tab logins/logouts take precedence over per-tab sessionStorage.
+  let localStorageReadable = false;
   try {
     const fromLocal = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    localStorageReadable = true;
     if (fromLocal && fromLocal.trim()) {
       const clean = fromLocal.trim();
       memorySessionToken = clean;
@@ -90,9 +95,36 @@ export function getClientSessionToken(): string | null {
       }
       return memorySessionToken;
     }
+    // If localStorage explicitly records a logout (or cleared token across tabs),
+    // never resurrect a stale token lingering in per-tab sessionStorage or memory.
+    const loggedOutMarker = window.localStorage.getItem(LOGOUT_MARKER_STORAGE_KEY);
+    if (loggedOutMarker) {
+      memorySessionToken = null;
+      try {
+        window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+      } catch {
+        // ignore storage errors
+      }
+      return null;
+    }
   } catch {
-    // ignore storage errors
+    // localStorage unavailable (e.g., third-party iframe restriction) — fall through to sessionStorage
   }
+  if (!localStorageReadable) {
+    try {
+      const fromSession = window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+      if (fromSession && fromSession.trim()) {
+        memorySessionToken = fromSession.trim();
+        return memorySessionToken;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return memorySessionToken;
+  }
+  // localStorage is readable and has no session token and no logout marker:
+  // allow sessionStorage/memory fallback only when localStorage write was unavailable (quota),
+  // otherwise keep consistent with empty storage.
   try {
     const fromSession = window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
     if (fromSession && fromSession.trim()) {
@@ -114,6 +146,7 @@ export function syncClientSessionTokenFromStorage(token: string | null): void {
       window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
     } else {
       window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
     }
   } catch {
     // ignore storage errors
@@ -129,15 +162,19 @@ export function setClientSessionToken(token: string | null): void {
       window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
     } else {
       window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+      window.sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
     }
   } catch {
     // ignore storage errors
   }
   try {
     if (clean) {
+      window.localStorage.removeItem(LOGOUT_MARKER_STORAGE_KEY);
       window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, clean);
     } else {
       window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+      window.localStorage.removeItem(GOOGLE_ONBOARDING_KEY);
+      window.localStorage.setItem(LOGOUT_MARKER_STORAGE_KEY, String(Date.now()));
     }
   } catch {
     // ignore storage errors
@@ -577,9 +614,15 @@ export const api = {
     }
     return res;
   },
-  logout: async () => {
+  logout: async (explicitToken?: string | null) => {
+    const tokenToRevoke = explicitToken ?? getClientSessionToken();
     try {
-      return await apiRequest<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });
+      return await apiRequest<{ ok: boolean }>('/api/auth/logout', {
+        method: 'POST',
+        keepalive: true,
+        headers: tokenToRevoke ? { 'X-Amanah-Session': tokenToRevoke } : undefined,
+        body: JSON.stringify(tokenToRevoke ? { sessionToken: tokenToRevoke } : {}),
+      });
     } finally {
       clearClientSessionToken();
     }

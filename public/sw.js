@@ -1,4 +1,5 @@
-const CACHE_NAME = 'amanah-pwa-v13';
+const CACHE_NAME = 'amanah-pwa-v14';
+const PRIVATE_NAV_PREFIXES = ['/dashboard', '/community', '/login', '/signup'];
 const APP_SHELL_URLS = [
   '/manifest.webmanifest',
   '/brand-logo.png',
@@ -44,6 +45,37 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
     );
+    return;
+  }
+  if (event.data.type === 'CLEAR_HTML_CACHES') {
+    event.waitUntil(
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.map((key) =>
+            caches.open(key).then((cache) =>
+              cache.keys().then((requests) =>
+                Promise.all(
+                  requests.map((req) =>
+                    cache.match(req).then((resp) => {
+                      const reqUrl = new URL(req.url);
+                      const ct = (resp?.headers.get('content-type') || '').toLowerCase();
+                      const isHtml =
+                        ct.includes('text/html') ||
+                        reqUrl.pathname === '/' ||
+                        PRIVATE_NAV_PREFIXES.some((prefix) => reqUrl.pathname.startsWith(prefix));
+                      if (isHtml) {
+                        return cache.delete(req);
+                      }
+                      return undefined;
+                    })
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
   }
 });
 
@@ -81,25 +113,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests: network first with cached fallback
+  // Navigation requests: network first; never cache private/authenticated HTML pages
   if (request.mode === 'navigate') {
+    const isPrivateNav = PRIVATE_NAV_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
     event.respondWith(
       fetch(request)
         .then((res) => {
           const ct = (res.headers.get('content-type') || '').toLowerCase();
-          if (res && res.ok && ct.includes('text/html')) {
+          const cc = (res.headers.get('cache-control') || '').toLowerCase();
+          const cacheableHtml =
+            !isPrivateNav &&
+            res &&
+            res.ok &&
+            ct.includes('text/html') &&
+            !cc.includes('no-store') &&
+            !cc.includes('private');
+          if (cacheableHtml) {
             const copy = res.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
           }
           return res;
         })
         .catch(() =>
-          caches
-            .match(request)
-            .then((cached) => cached || caches.match('/'))
-            .then(
-              (fallback) =>
-                fallback ||
+          (isPrivateNav
+            ? Promise.resolve(undefined)
+            : caches.match(request).then((cached) => cached || caches.match('/'))
+          ).then(
+            (fallback) =>
+              fallback ||
                 new Response(
                   `<!doctype html>
 <html lang="en">

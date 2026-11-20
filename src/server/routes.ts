@@ -64,6 +64,7 @@ import {
   requireAuth,
   requireRole,
   resolveOptionalAuthUser,
+  revokeRequestSessions,
   sanitizeUser,
   setAuthCookie,
   signActivationChallengeToken,
@@ -357,6 +358,13 @@ apiRouter.get('/events', requireAuth, (req: AuthenticatedRequest, res) => {
 // ---------------------------------------------------------------------------
 // 1. Authentication (JWT + HttpOnly Cookie) & Step-Up 2FA (TOTP)
 // ---------------------------------------------------------------------------
+
+apiRouter.use('/auth', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 
 apiRouter.post('/auth/login', authRateLimiter, async (req, res) => {
   try {
@@ -1247,12 +1255,23 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
   }
 });
 
-apiRouter.post('/auth/logout', (req, res) => {
+apiRouter.post('/auth/logout', async (req, res) => {
+  try {
+    const bodyToken =
+      typeof req.body?.sessionToken === 'string' ? req.body.sessionToken.trim() : '';
+    await revokeRequestSessions(req, bodyToken ? [bodyToken] : []);
+  } catch (err) {
+    console.warn('[Auth] Failed to persist revoked session token during logout:', err);
+  }
   clearAuthCookie(req, res);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.json({ ok: true });
 });
 
 apiRouter.get('/auth/me', requireAuth, (req: AuthenticatedRequest, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.json({ user: req.authUser });
 });
 

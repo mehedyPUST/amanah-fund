@@ -835,12 +835,17 @@ export function DashboardShell() {
   }, [visibleNav]);
 
   async function handleSignOut() {
+    if (signingOutRef.current) return;
     signingOutRef.current = true;
     drawerHistoryPushedRef.current = false;
     setMobileNavOpen(false);
     setMobileBrowseMode(false);
     await logout();
-    router.replace('/');
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+    } else {
+      router.replace('/');
+    }
   }
 
   const handleRefreshWithAutoSync = useCallback(async () => {
