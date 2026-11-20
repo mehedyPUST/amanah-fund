@@ -673,8 +673,8 @@ html.dark ::-webkit-scrollbar-thumb:active {
 }
 
 .scrollbar-subtle::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-subtle::-webkit-scrollbar-track {

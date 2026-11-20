@@ -1965,11 +1965,11 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:shadow-xs overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1.5 lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:shadow-xs overflow-hidden"
       >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle pl-3 pt-3 pb-6 pr-0 sm:pl-4 sm:pt-4 sm:pb-6 lg:pl-5 lg:pt-5 lg:pb-5"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle pl-1.5 pt-3 pb-6 pr-0 sm:pt-4 sm:pb-6 lg:pl-0 lg:pt-5 lg:pb-5"
         >
           <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
