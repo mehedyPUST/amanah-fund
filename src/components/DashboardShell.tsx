@@ -244,6 +244,7 @@ export function DashboardShell() {
   } = useCoopSession();
 
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('fund-overview');
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
   const [profileReturnSection, setProfileReturnSection] =
     useState<DashboardSectionId>('fund-overview');
@@ -1577,11 +1578,15 @@ export function DashboardShell() {
 
   return (
     <div
+      inert={notificationModalOpen}
+      aria-hidden={notificationModalOpen || undefined}
       className={`h-dvh overflow-hidden amanah-ambient-canvas text-slate-900 dark:text-slate-100 p-0 lg:p-3 flex flex-col lg:grid ${
         sidebarCollapsed
           ? 'lg:grid-cols-[76px_minmax(0,1fr)]'
           : 'lg:grid-cols-[252px_minmax(0,1fr)]'
-      } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-200`}
+      } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-200 ${
+        notificationModalOpen ? 'pointer-events-none select-none' : ''
+      }`}
     >
       {/* GRID 1 */}
       <div
@@ -1696,6 +1701,7 @@ export function DashboardShell() {
               navigateToPage('monthly-contribution', false, true, true);
             }}
             onMarkRead={handleDismissLoanDecisionAlert}
+            onOpenChange={setNotificationModalOpen}
           />
 
           <button

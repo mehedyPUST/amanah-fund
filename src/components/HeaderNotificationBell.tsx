@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertCircle,
   ArrowRight,
@@ -30,6 +31,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney } from '../utils/format.ts';
+import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import {
   NotificationBlinkMarker,
@@ -47,6 +49,7 @@ interface HeaderNotificationBellProps {
   onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onOpenContributionMonth: (billingMonth: string) => void;
   onMarkRead: (notificationId: string) => Promise<void>;
+  onOpenChange?: (open: boolean) => void;
 }
 
 type BellFilterTab = 'all' | 'treasury' | 'governance';
@@ -130,36 +133,108 @@ export function HeaderNotificationBell({
   onOpenManagerDeskTab,
   onOpenContributionMonth,
   onMarkRead,
+  onOpenChange,
 }: HeaderNotificationBellProps) {
   const tNotif = useTranslations('Notifications');
   const tCommon = useTranslations('Common');
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<BellFilterTab>('all');
   const [markingAll, setMarkingAll] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const modalTokenRef = useRef<symbol | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    setMounted(true);
+  }, []);
 
-    function handleClickOutside(evt: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(evt.target as Node)) {
-        setOpen(false);
+  useBodyScrollLock(open);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+    return () => {
+      if (open) {
+        onOpenChange?.(false);
       }
+    };
+  }, [open, onOpenChange]);
+
+  const closeModal = useCallback((restoreFocus = false) => {
+    setOpen(false);
+    if (restoreFocus && typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        triggerRef.current?.focus({ preventScroll: true });
+      });
     }
+  }, []);
+
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+
+    const root = document.documentElement;
+    const syncPosition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const top = Math.max(56, Math.round(rect.bottom + 10));
+      const right = Math.max(12, Math.round(window.innerWidth - rect.right));
+      root.style.setProperty('--notif-modal-top', `${top}px`);
+      root.style.setProperty('--notif-modal-right', `${right}px`);
+    };
+
+    syncPosition();
+    window.addEventListener('resize', syncPosition);
+
+    const token = modalTokenRef.current ?? (modalTokenRef.current = Symbol('notification-modal'));
+    const unregister = registerTopModal(token);
+
+    const rafId = window.requestAnimationFrame(() => {
+      dialogRef.current?.focus({ preventScroll: true });
+    });
+
     function handleKeyDown(evt: KeyboardEvent) {
-      if (evt.key === 'Escape') {
-        setOpen(false);
+      if (evt.key === 'Escape' && isTopModal(token)) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        closeModal(true);
+        return;
+      }
+
+      if (evt.key === 'Tab' && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) {
+          evt.preventDefault();
+          dialogRef.current.focus({ preventScroll: true });
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (evt.shiftKey) {
+          if (!active || active === first || !dialogRef.current.contains(active)) {
+            evt.preventDefault();
+            last.focus();
+          }
+        } else if (!active || active === last || !dialogRef.current.contains(active)) {
+          evt.preventDefault();
+          first.focus();
+        }
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', syncPosition);
       document.removeEventListener('keydown', handleKeyDown);
+      unregister();
+      root.style.removeProperty('--notif-modal-top');
+      root.style.removeProperty('--notif-modal-right');
     };
-  }, [open]);
+  }, [open, closeModal]);
 
   const ccy = overview?.config.currency || 'BDT';
   const isStaff = user.role === 'admin' || user.role === 'manager';
@@ -541,8 +616,9 @@ export function HeaderNotificationBell({
   ];
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
@@ -583,30 +659,44 @@ export function HeaderNotificationBell({
         )}
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Mobile focus scrim */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-              className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-40 sm:hidden"
-            />
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                key="notification-modal-layer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.14 }}
+                className="fixed inset-0 z-[60]"
+                data-no-drawer-swipe="true"
+              >
+                {/* Full-viewport blocking backdrop disabling all content underneath */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeModal(true);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  aria-hidden="true"
+                  className="fixed inset-0 bg-slate-950/45 dark:bg-slate-950/65 backdrop-blur-[3px] touch-none select-none cursor-default"
+                />
 
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 4, scale: 0.98 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              role="dialog"
-              aria-modal="false"
-              aria-label={tNotif('panelAria')}
-              className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-[60px] sm:top-full sm:right-0 sm:mt-2.5 sm:w-[420px] max-h-[min(560px,calc(100dvh-76px))] flex flex-col rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.22)] dark:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.65)] z-50 overflow-hidden"
-            >
+                <motion.div
+                  ref={dialogRef}
+                  tabIndex={-1}
+                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                  transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={tNotif('panelAria')}
+                  onClick={(e) => e.stopPropagation()}
+                  className="fixed inset-x-3 sm:inset-x-auto top-[60px] sm:top-[var(--notif-modal-top,68px)] sm:right-[var(--notif-modal-right,20px)] sm:w-[420px] max-h-[min(560px,calc(100dvh-76px))] flex flex-col rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.28)] dark:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.72)] z-[61] overflow-hidden focus:outline-none"
+                >
               {/* Header */}
               <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800/90 shrink-0 space-y-3">
                 <div className="flex items-start justify-between gap-3">
@@ -659,7 +749,7 @@ export function HeaderNotificationBell({
                     )}
                     <button
                       type="button"
-                      onClick={() => setOpen(false)}
+                      onClick={() => closeModal(true)}
                       aria-label={tCommon('closeDialog')}
                       title={tCommon('close')}
                       className="w-8 h-8 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
@@ -709,7 +799,7 @@ export function HeaderNotificationBell({
               </div>
 
               {/* Scrollable Feed */}
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle">
                 {alerts.length === 0 ? (
                   <div className="px-6 py-10 text-center flex flex-col items-center">
                     <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
@@ -847,7 +937,7 @@ export function HeaderNotificationBell({
                 <button
                   type="button"
                   onClick={() => {
-                    setOpen(false);
+                    closeModal(false);
                     onNavigate('notification');
                   }}
                   className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-emerald-700 dark:hover:bg-emerald-100 text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0"
@@ -856,10 +946,12 @@ export function HeaderNotificationBell({
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
-            </motion.div>
-          </>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 }
