@@ -3,7 +3,12 @@ import type {
   NomineeGender,
   NomineeInfo,
   ProfileChangePayload,
+  StructuredBdAddress,
 } from '../types/coop.ts';
+import {
+  normalizeGenderToEnglish,
+  normalizeMaritalStatusToEnglish,
+} from './inputLanguage.ts';
 
 export const OTHER_RELATION_VALUE = '__other__';
 
@@ -248,3 +253,170 @@ export function formatProfileChangeEntries(
 
   return entries;
 }
+
+export interface ProfileDiffEntry {
+  key: string;
+  label: string;
+  previousValue: string;
+  updatedValue: string;
+  kind: 'text' | 'image' | 'nominees' | 'social' | 'address';
+  previousImageUrl?: string;
+  updatedImageUrl?: string;
+  previousNominees?: NomineeInfo[];
+  updatedNominees?: NomineeInfo[];
+}
+
+function formatStructuredAddr(addr: StructuredBdAddress | undefined): string {
+  if (!addr || typeof addr !== 'object') return '';
+  return [
+    addr.careOf ? `C/O: ${addr.careOf}` : '',
+    addr.villageRoadHouse,
+    addr.postOffice
+      ? `P.O: ${addr.postOffice}${addr.postCode ? ` (${addr.postCode})` : ''}`
+      : '',
+    addr.upazila ? `P.S/Upazila: ${addr.upazila}` : '',
+    addr.district ? `Dist: ${addr.district}` : '',
+    addr.division ? `Div: ${addr.division}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
+function formatScalarDiffValue(key: string, val: unknown): string {
+  if (val === undefined || val === null) return '';
+  const text = String(val).trim();
+  if (!text) return '';
+  if (key === 'gender') return normalizeGenderToEnglish(text);
+  if (key === 'maritalStatus') return normalizeMaritalStatusToEnglish(text);
+  return text;
+}
+
+function formatSocialDiff(sm: ProfileChangePayload['socialMedia'] | undefined): string {
+  if (!sm || typeof sm !== 'object') return '';
+  return [
+    sm.whatsapp ? `WhatsApp: ${sm.whatsapp}` : '',
+    sm.facebook ? `Facebook: ${sm.facebook}` : '',
+    sm.linkedin ? `LinkedIn: ${sm.linkedin}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+export function buildProfileDiffEntries(
+  requestedChanges: ProfileChangePayload | undefined | null,
+  previousValues?: ProfileChangePayload | undefined | null
+): ProfileDiffEntry[] {
+  if (!requestedChanges || typeof requestedChanges !== 'object') return [];
+
+  const prev = previousValues || {};
+  const entries: ProfileDiffEntry[] = [];
+  const skipPresentDetails = Boolean(requestedChanges.presentAddress);
+  const skipPermanentDetails = Boolean(requestedChanges.permanentAddress);
+
+  for (const [key, rawNext] of Object.entries(requestedChanges)) {
+    if (rawNext === undefined || rawNext === null) continue;
+    if (key === 'presentAddressDetails' && skipPresentDetails) continue;
+    if (key === 'permanentAddressDetails' && skipPermanentDetails) continue;
+
+    const label =
+      key === 'presentAddressDetails'
+        ? 'Present Address'
+        : key === 'permanentAddressDetails'
+          ? 'Permanent Address'
+          : PROFILE_FIELD_LABELS[key] || key;
+
+    if (key === 'nominees' && Array.isArray(rawNext)) {
+      const nextList = rawNext as NomineeInfo[];
+      const prevList = Array.isArray(prev.nominees) ? prev.nominees : [];
+      const summarize = (list: NomineeInfo[]) =>
+        list.length > 0
+          ? list.map((n) => `${n.name} (${n.relation}, ${n.sharePercentage}%)`).join('; ')
+          : 'No nominees';
+      entries.push({
+        key,
+        label,
+        previousValue: summarize(prevList),
+        updatedValue: summarize(nextList),
+        kind: 'nominees',
+        previousNominees: prevList,
+        updatedNominees: nextList,
+      });
+      continue;
+    }
+
+    if (key === 'socialMedia' && typeof rawNext === 'object') {
+      const prevStr = formatSocialDiff(prev.socialMedia);
+      const nextStr = formatSocialDiff(rawNext as ProfileChangePayload['socialMedia']);
+      entries.push({
+        key,
+        label,
+        previousValue: prevStr || 'Not provided',
+        updatedValue: nextStr || 'Cleared',
+        kind: 'social',
+      });
+      continue;
+    }
+
+    if (key === 'presentAddress' || key === 'permanentAddress') {
+      const detailsKey =
+        key === 'presentAddress' ? 'presentAddressDetails' : 'permanentAddressDetails';
+      const prevText =
+        String(prev[key] || '').trim() || formatStructuredAddr(prev[detailsKey]);
+      const nextText =
+        String(rawNext || '').trim() || formatStructuredAddr(requestedChanges[detailsKey]);
+      entries.push({
+        key,
+        label,
+        previousValue: prevText || 'Not provided',
+        updatedValue: nextText || 'Cleared',
+        kind: 'address',
+      });
+      continue;
+    }
+
+    if (
+      (key === 'presentAddressDetails' || key === 'permanentAddressDetails') &&
+      typeof rawNext === 'object'
+    ) {
+      const prevStr = formatStructuredAddr(prev[key]);
+      const nextStr = formatStructuredAddr(rawNext as StructuredBdAddress);
+      entries.push({
+        key,
+        label,
+        previousValue: prevStr || 'Not provided',
+        updatedValue: nextStr || 'Cleared',
+        kind: 'address',
+      });
+      continue;
+    }
+
+    if (key === 'photoUrl' || key === 'signatureUrl') {
+      const nextImg = String(rawNext || '').trim();
+      const prevImg = String(prev[key] || '').trim();
+      if (!nextImg) continue;
+      entries.push({
+        key,
+        label,
+        previousValue: prevImg ? 'Previous image' : 'Not provided',
+        updatedValue: 'New image uploaded',
+        kind: 'image',
+        previousImageUrl: prevImg || undefined,
+        updatedImageUrl: nextImg,
+      });
+      continue;
+    }
+
+    const prevFormatted = formatScalarDiffValue(key, (prev as Record<string, unknown>)[key]);
+    const nextFormatted = formatScalarDiffValue(key, rawNext);
+    entries.push({
+      key,
+      label,
+      previousValue: prevFormatted || 'Not provided',
+      updatedValue: nextFormatted || 'Cleared',
+      kind: 'text',
+    });
+  }
+
+  return entries;
+}
+

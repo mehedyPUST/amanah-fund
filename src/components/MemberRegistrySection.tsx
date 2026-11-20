@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -32,6 +32,7 @@ import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { PendingRegistrationsView } from './PendingRegistrationsView.tsx';
+import { ProfileChangeDiffPreview } from './ProfileChangeDiffPreview.tsx';
 
 type RegistryModalState =
   | {
@@ -40,6 +41,8 @@ type RegistryModalState =
       title: string;
       description: string;
       details?: ActionModalDetailItem[];
+      customContent?: ReactNode;
+      maxWidthClass?: string;
       confirmLabel: string;
       inputLabel?: string;
       inputPlaceholder?: string;
@@ -294,20 +297,14 @@ export function MemberRegistrySection({
     req: ProfileChangeRequest,
     decision: 'approved' | 'rejected'
   ) {
-    const changesSummary = formatProfileChangeEntries(req.requestedChanges)
-      .map((item) => `${item.label}: ${item.value}`)
-      .join(' | ');
-
     if (decision === 'approved') {
       setModal({
         mode: 'confirm',
         tone: 'emerald',
+        maxWidthClass: 'max-w-3xl',
         title: t('approveProfileTitle', { name: req.memberName }),
         description: t('approveProfileDesc'),
-        details: [
-          { label: t('detailMember'), value: `${req.memberName} (${req.memberCode})` },
-          { label: t('detailChanges'), value: changesSummary || t('profileUpdateFallback') },
-        ],
+        customContent: <ProfileChangeDiffPreview request={req} />,
         confirmLabel: t('approveProfileConfirm'),
         run: async () => {
           setProfileBusyId(req.id);
@@ -328,12 +325,10 @@ export function MemberRegistrySection({
       setModal({
         mode: 'confirm',
         tone: 'red',
+        maxWidthClass: 'max-w-3xl',
         title: t('declineProfileTitle', { name: req.memberName }),
         description: t('declineProfileDesc'),
-        details: [
-          { label: t('detailMember'), value: `${req.memberName} (${req.memberCode})` },
-          { label: t('detailChanges'), value: changesSummary || t('profileUpdateFallback') },
-        ],
+        customContent: <ProfileChangeDiffPreview request={req} />,
         inputLabel: t('declineProfileInputLabel'),
         inputPlaceholder: t('declineProfileInputPh'),
         inputRequired: true,
@@ -944,6 +939,8 @@ export function MemberRegistrySection({
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
+        customContent={modal?.mode === 'confirm' ? modal.customContent : undefined}
+        maxWidthClass={modal?.mode === 'confirm' ? modal.maxWidthClass : undefined}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}

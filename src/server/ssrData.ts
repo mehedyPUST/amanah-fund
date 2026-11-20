@@ -27,6 +27,7 @@ import {
   hydrateDecisionPollForViewer,
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
+  hydrateProfileChangeRequestsForViewer,
 } from './coopService.ts';
 import { decryptSensitiveObject } from './crypto.ts';
 import {
@@ -231,9 +232,7 @@ export function buildDashboardBundleFromState(
     b.scheduledFor.localeCompare(a.scheduledFor)
   );
 
-  const profileRequestsList = (state.profileChangeRequests || []).filter((r) =>
-    viewer.role === 'admin' ? true : r.userId === viewer.id
-  );
+  const profileRequestsList = hydrateProfileChangeRequestsForViewer(state, viewer);
 
   return {
     overview: buildDashboardOverview(state, viewer),

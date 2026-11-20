@@ -24,6 +24,8 @@ import type {
   NomineeGender,
   NomineeInfo,
   NotificationType,
+  ProfileChangePayload,
+  ProfileChangeRequest,
   PublicUser,
   RepaymentReceiptDetails,
   UserRegistrationDetails,
@@ -35,7 +37,7 @@ import {
   normalizeRelationToEnglish,
 } from '../utils/inputLanguage.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
-import { getStorageEngine, type VaultState } from './db.ts';
+import { getStorageEngine, type StoredUser, type VaultState } from './db.ts';
 
 export function queueEmailNotification(
   state: VaultState,
@@ -2027,6 +2029,95 @@ export function buildMonthlySheetData(
     rows,
   };
 }
+
+export function extractPreviousProfileValues(
+  requestedChanges: ProfileChangePayload,
+  member: Pick<StoredUser, 'name' | 'email' | 'photoUrl'>,
+  regDetails?: UserRegistrationDetails
+): ProfileChangePayload {
+  const prev: ProfileChangePayload = {};
+
+  if (requestedChanges.name !== undefined) prev.name = member.name || '';
+  if (requestedChanges.nameBn !== undefined) prev.nameBn = regDetails?.nameBn || '';
+  if (requestedChanges.email !== undefined) prev.email = member.email || '';
+  if (requestedChanges.fatherName !== undefined) prev.fatherName = regDetails?.fatherName || '';
+  if (requestedChanges.fatherNameBn !== undefined) prev.fatherNameBn = regDetails?.fatherNameBn || '';
+  if (requestedChanges.motherName !== undefined) prev.motherName = regDetails?.motherName || '';
+  if (requestedChanges.motherNameBn !== undefined) prev.motherNameBn = regDetails?.motherNameBn || '';
+  if (requestedChanges.gender !== undefined && regDetails?.gender) prev.gender = regDetails.gender;
+  if (requestedChanges.maritalStatus !== undefined && regDetails?.maritalStatus) {
+    prev.maritalStatus = regDetails.maritalStatus;
+  }
+  if (requestedChanges.spouseName !== undefined) prev.spouseName = regDetails?.spouseName || '';
+  if (requestedChanges.spouseNameBn !== undefined) prev.spouseNameBn = regDetails?.spouseNameBn || '';
+  if (requestedChanges.dateOfBirth !== undefined) prev.dateOfBirth = regDetails?.dateOfBirth || '';
+  if (requestedChanges.referenceMemberName !== undefined) {
+    prev.referenceMemberName = regDetails?.referenceMemberName || '';
+  }
+  if (requestedChanges.mobile !== undefined) prev.mobile = regDetails?.mobile || '';
+  if (requestedChanges.occupation !== undefined) prev.occupation = regDetails?.occupation || '';
+  if (requestedChanges.companyOrganization !== undefined) {
+    prev.companyOrganization = regDetails?.companyOrganization || '';
+  }
+  if (requestedChanges.nid !== undefined) prev.nid = regDetails?.nid || '';
+  if (requestedChanges.presentAddress !== undefined) {
+    prev.presentAddress = regDetails?.presentAddress || '';
+  }
+  if (requestedChanges.permanentAddress !== undefined) {
+    prev.permanentAddress = regDetails?.permanentAddress || '';
+  }
+  if (requestedChanges.presentAddressDetails !== undefined && regDetails?.presentAddressDetails) {
+    prev.presentAddressDetails = regDetails.presentAddressDetails;
+  }
+  if (requestedChanges.permanentAddressDetails !== undefined && regDetails?.permanentAddressDetails) {
+    prev.permanentAddressDetails = regDetails.permanentAddressDetails;
+  }
+  if (requestedChanges.socialMedia !== undefined) {
+    prev.socialMedia = regDetails?.socialMedia || {};
+  }
+  if (requestedChanges.photoUrl !== undefined) {
+    prev.photoUrl = regDetails?.photoUrl || member.photoUrl || '';
+  }
+  if (requestedChanges.signatureUrl !== undefined) {
+    prev.signatureUrl = regDetails?.signatureUrl || '';
+  }
+  if (requestedChanges.nominees !== undefined) {
+    prev.nominees = regDetails?.nominees || [];
+  }
+
+  return prev;
+}
+
+export function hydrateProfileChangeRequestsForViewer(
+  state: VaultState,
+  viewer: { id: string; role: UserRole }
+): ProfileChangeRequest[] {
+  const isAdmin = viewer.role === 'admin';
+  return (state.profileChangeRequests || [])
+    .filter((r) => (isAdmin ? true : r.userId === viewer.id))
+    .map((req) => {
+      if (req.previousValues || req.status !== 'pending') {
+        return req;
+      }
+      const member = state.users.find((u) => u.id === req.userId);
+      if (!member) return req;
+      let regDetails: UserRegistrationDetails | undefined;
+      if (member.encryptedRegistrationDetails) {
+        try {
+          regDetails = decryptSensitiveObject<UserRegistrationDetails>(
+            member.encryptedRegistrationDetails
+          );
+        } catch {
+          regDetails = undefined;
+        }
+      }
+      return {
+        ...req,
+        previousValues: extractPreviousProfileValues(req.requestedChanges, member, regDetails),
+      };
+    });
+}
+
 
 
 

@@ -11,6 +11,7 @@ import {
   evaluateLoanEligibility,
   extractMentionedUsers,
   hydrateLoanForViewer,
+  hydrateProfileChangeRequestsForViewer,
   validateAndNormalizeNominees,
 } from '../src/server/coopService.ts';
 import {
@@ -114,7 +115,10 @@ import {
   areBdAddressesEqual,
   hydrateStructuredBdAddress,
 } from '../src/utils/bdLocations.ts';
-import { formatProfileChangeEntries } from '../src/utils/profileChanges.ts';
+import {
+  buildProfileDiffEntries,
+  formatProfileChangeEntries,
+} from '../src/utils/profileChanges.ts';
 import {
   api,
   clearClientSessionToken,
@@ -2510,7 +2514,80 @@ describe('Member credentials editing helpers & Admin-only approval visibility', 
     expect(managerOverview.treasury.pendingProfileRequestsCount).toBe(0);
     expect(memberOverview.treasury.pendingProfileRequestsCount).toBe(0);
   });
+
+  it('hydrates previousValues on pending requests for admin and builds previous vs updated diff entries', () => {
+    const state = makeBaseState();
+    state.users[1].encryptedRegistrationDetails = encryptSensitiveObject({
+      dateOfBirth: '1992-05-15',
+      referenceMemberName: 'Amina Rahman',
+      mobile: '01711111111',
+      occupation: 'Teacher',
+      companyOrganization: 'City College',
+      nid: '1992123456789',
+      presentAddress: 'Old Road, Dhaka',
+      permanentAddress: 'Old Village, Bogura',
+      photoUrl: 'https://ik.imagekit.io/amanah/old-photo.jpg',
+    });
+    state.profileChangeRequests = [
+      {
+        id: 'pcr-diff-1',
+        userId: 'u-2',
+        memberName: 'Bilal Hasan',
+        memberCode: 'AC-002',
+        memberRole: 'member',
+        requestedAt: '2026-11-19T08:00:00.000Z',
+        status: 'pending',
+        requestedChanges: {
+          mobile: '01799999999',
+          occupation: 'Senior Lecturer',
+          photoUrl: 'https://ik.imagekit.io/amanah/new-photo.jpg',
+        },
+      },
+    ];
+
+    const hydratedForAdmin = hydrateProfileChangeRequestsForViewer(state, {
+      id: state.users[0].id,
+      role: 'admin',
+    });
+    expect(hydratedForAdmin).toHaveLength(1);
+    expect(hydratedForAdmin[0].previousValues).toEqual({
+      mobile: '01711111111',
+      occupation: 'Teacher',
+      photoUrl: 'https://ik.imagekit.io/amanah/old-photo.jpg',
+    });
+
+    const diff = buildProfileDiffEntries(
+      hydratedForAdmin[0].requestedChanges,
+      hydratedForAdmin[0].previousValues
+    );
+    expect(diff).toEqual([
+      {
+        key: 'mobile',
+        label: 'Mobile Number',
+        previousValue: '01711111111',
+        updatedValue: '01799999999',
+        kind: 'text',
+      },
+      {
+        key: 'occupation',
+        label: 'Occupation',
+        previousValue: 'Teacher',
+        updatedValue: 'Senior Lecturer',
+        kind: 'text',
+      },
+      {
+        key: 'photoUrl',
+        label: 'Member Photo',
+        previousValue: 'Previous image',
+        updatedValue: 'New image uploaded',
+        kind: 'image',
+        previousImageUrl: 'https://ik.imagekit.io/amanah/old-photo.jpg',
+        updatedImageUrl: 'https://ik.imagekit.io/amanah/new-photo.jpg',
+      },
+    ]);
+  });
 });
+
 
 
 

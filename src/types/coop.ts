@@ -594,6 +594,7 @@ export interface ProfileChangeRequest {
   memberCode: string;
   memberRole: UserRole;
   requestedChanges: ProfileChangePayload;
+  previousValues?: ProfileChangePayload;
   status: 'pending' | 'approved' | 'rejected';
   requestedAt: string;
   reviewedBy?: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import Skeleton from 'react-loading-skeleton';
 import {
@@ -42,6 +42,7 @@ import { useTranslations } from 'next-intl';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
 import { MemberAuditLogWidget } from './MemberAuditLogWidget.tsx';
+import { ProfileChangeDiffPreview } from './ProfileChangeDiffPreview.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export type ManagerDeskTab =
@@ -59,6 +60,8 @@ type DeskModalState =
       title: string;
       description: string;
       details?: ActionModalDetailItem[];
+      customContent?: ReactNode;
+      maxWidthClass?: string;
       confirmLabel: string;
       inputLabel?: string;
       inputPlaceholder?: string;
@@ -682,23 +685,14 @@ export function ManagerDeskView({
   }
 
   function confirmProfileReqReview(req: ProfileChangeRequest, decision: 'approved' | 'rejected') {
-    const changesSummary = formatProfileChangeEntries(req.requestedChanges)
-      .map((item) => `${item.label}: ${item.value}`)
-      .join(' | ');
-
     if (decision === 'approved') {
       setModal({
         mode: 'confirm',
         tone: 'emerald',
+        maxWidthClass: 'max-w-3xl',
         title: t('approveProfileTitle', { name: req.memberName }),
         description: t('approveProfileDesc'),
-        details: [
-          { label: t('member'), value: `${req.memberName} (${req.memberCode})` },
-          {
-            label: t('requestedChanges'),
-            value: changesSummary || t('profileUpdateFallback'),
-          },
-        ],
+        customContent: <ProfileChangeDiffPreview request={req} />,
         confirmLabel: t('approveProfileBtn'),
         run: async () => {
           await api.reviewProfileChangeRequest(req.id, 'approved');
@@ -714,15 +708,10 @@ export function ManagerDeskView({
       setModal({
         mode: 'confirm',
         tone: 'red',
+        maxWidthClass: 'max-w-3xl',
         title: t('declineProfileTitle', { name: req.memberName }),
         description: t('declineProfileDesc'),
-        details: [
-          { label: t('member'), value: `${req.memberName} (${req.memberCode})` },
-          {
-            label: t('requestedChanges'),
-            value: changesSummary || t('profileUpdateFallback'),
-          },
-        ],
+        customContent: <ProfileChangeDiffPreview request={req} />,
         inputLabel: t('reasonDecliningLabel'),
         inputPlaceholder: t('declineProfilePlaceholder'),
         inputRequired: true,
@@ -2032,6 +2021,8 @@ export function ManagerDeskView({
         title={modal?.mode === 'loan-approved-post' ? '' : modal?.title || ''}
         description={modal?.mode === 'loan-approved-post' ? '' : modal?.description || ''}
         details={modal?.mode === 'loan-approved-post' ? undefined : modal?.details}
+        customContent={modal?.mode === 'confirm' ? modal.customContent : undefined}
+        maxWidthClass={modal?.mode === 'confirm' ? modal.maxWidthClass : undefined}
         confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : t('okGotIt')}
         inputLabel={modal?.mode === 'confirm' ? modal.inputLabel : undefined}
         inputPlaceholder={modal?.mode === 'confirm' ? modal.inputPlaceholder : undefined}

@@ -83,10 +83,12 @@ import {
   escapeCsvCell,
   evaluateLoanEligibility,
   extractMentionedUsers,
+  extractPreviousProfileValues,
   hydrateContributionForViewer,
   hydrateDecisionPollForViewer,
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
+  hydrateProfileChangeRequestsForViewer,
   queueEmailNotification,
   validateAndNormalizeNominees,
 } from './coopService.ts';
@@ -1741,10 +1743,7 @@ apiRouter.get('/profile/change-requests', requireAuth, async (req: Authenticated
   try {
     const state = await loadVaultState();
     const viewer = req.authUser!;
-    const isReviewer = viewer.role === 'admin';
-    const list = (state.profileChangeRequests || []).filter((r) =>
-      isReviewer ? true : r.userId === viewer.id
-    );
+    const list = hydrateProfileChangeRequestsForViewer(state, viewer);
     res.json({ requests: list });
   } catch (err) {
     console.error('Profile change requests load error:', err);
@@ -2126,6 +2125,7 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
           memberCode: target.memberCode,
           memberRole: target.role,
           requestedChanges,
+          previousValues: extractPreviousProfileValues(requestedChanges, target, regDetails),
           status: 'pending',
           requestedAt: new Date().toISOString(),
         };
@@ -2406,6 +2406,14 @@ apiRouter.patch(
             } catch {
               // ignore
             }
+          }
+
+          if (!targetReq.previousValues) {
+            targetReq.previousValues = extractPreviousProfileValues(
+              targetReq.requestedChanges,
+              member,
+              existingDetails
+            );
           }
 
           const nextMaritalStatus = ch.maritalStatus ?? existingDetails.maritalStatus;
