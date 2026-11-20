@@ -1,14 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Download, ExternalLink, Link2, RefreshCw, Sheet, Unlink } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  AlertCircle,
+  Download,
+  ExternalLink,
+  Eye,
+  Link2,
+  Loader2,
+  RefreshCw,
+  Sheet,
+  Table2,
+  Unlink,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { FundConfig } from '../types/coop.ts';
-import { api, type SheetTabBlueprint } from '../utils/api.ts';
+import {
+  api,
+  type GoogleSheetInspectResponse,
+  type SheetTabBlueprint,
+} from '../utils/api.ts';
 import { formatDateTime } from '../utils/format.ts';
-import { getWorkspaceToken, type WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import {
+  clearWorkspaceToken,
+  getWorkspaceToken,
+  type WorkspaceSessionInfo,
+} from '../utils/googleWorkspace.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 
@@ -19,6 +38,13 @@ interface GoogleSheetSyncCardProps {
   onConnectGoogle: () => Promise<void>;
   onDisconnectGoogle: () => Promise<void>;
   onSynced: () => Promise<void>;
+}
+
+function isAuthExpiryError(err: unknown): boolean {
+  const status = (err as { status?: number } | null)?.status;
+  if (status === 401) return true;
+  const msg = err instanceof Error ? err.message.toLowerCase() : '';
+  return msg.includes('expired') || msg.includes('oauth access token');
 }
 
 export function GoogleSheetSyncCard({
@@ -36,6 +62,10 @@ export function GoogleSheetSyncCard({
   const [syncing, setSyncing] = useState(false);
   const [manualSheetInput, setManualSheetInput] = useState('');
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(false);
+  const [inspectingLive, setInspectingLive] = useState(false);
+  const [livePreview, setLivePreview] = useState<GoogleSheetInspectResponse | null>(null);
+  const [livePreviewError, setLivePreviewError] = useState<string | null>(null);
   const [modal, setModal] = useState<
     | {
         mode: 'confirm';
@@ -57,7 +87,7 @@ export function GoogleSheetSyncCard({
   >(null);
   const [modalBusy, setModalBusy] = useState(false);
 
-  async function fetchBlueprint() {
+  const fetchBlueprint = useCallback(async () => {
     setLoadingBlueprint(true);
     try {
       const res = await api.getBlueprint();
@@ -72,11 +102,38 @@ export function GoogleSheetSyncCard({
     } finally {
       setLoadingBlueprint(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     void fetchBlueprint();
-  }, []);
+  }, [fetchBlueprint]);
+
+  const inspectConnectedSheet = useCallback(
+    async (tabName?: string) => {
+      const token = getWorkspaceToken();
+      if (!token || !config?.googleSheetId) return;
+      setInspectingLive(true);
+      setLivePreviewError(null);
+      try {
+        const res = await api.inspectGoogleSheet(token, {
+          spreadsheetIdOrUrl: config.googleSheetId,
+          sheetName: tabName,
+          maxRows: 12,
+        });
+        setLivePreview(res);
+      } catch (err) {
+        if (isAuthExpiryError(err)) {
+          clearWorkspaceToken();
+        }
+        setLivePreviewError(
+          err instanceof Error ? err.message : 'Could not load live tabs from the connected Google Sheet.'
+        );
+      } finally {
+        setInspectingLive(false);
+      }
+    },
+    [config?.googleSheetId]
+  );
 
   function requestSync(createNew: boolean) {
     setModal({
@@ -93,7 +150,10 @@ export function GoogleSheetSyncCard({
           label: t('detailMode'),
           value: createNew || !config?.googleSheetId ? t('modeCreate') : t('modeOverwrite'),
         },
-        { label: t('detailTabs'), value: blueprint.map((b) => b.sheetName).join(', ') || t('tabsFallback') },
+        {
+          label: t('detailTabs'),
+          value: blueprint.map((b) => b.sheetName).join(', ') || t('tabsFallback'),
+        },
       ],
       confirmLabel: t('syncConfirmBtn'),
       run: async () => {
@@ -112,22 +172,27 @@ export function GoogleSheetSyncCard({
         try {
           const res = await api.syncGoogleSheet(token, { createNew });
           await Promise.all([onSynced(), fetchBlueprint()]);
+          if (showLivePreview) {
+            await inspectConnectedSheet('Balance_Sheet');
+          }
           setModal({
             mode: 'notice',
             tone: 'emerald',
             title: t('syncSuccessTitle'),
             description: t('syncSuccessDesc', {
               tabs: res.syncedTabs,
-              sheetId: res.spreadsheetId,
+              sheetId: res.spreadsheetTitle || res.spreadsheetId,
             }),
           });
         } catch (err) {
+          if (isAuthExpiryError(err)) {
+            clearWorkspaceToken();
+          }
           setModal({
             mode: 'notice',
             tone: 'red',
             title: t('syncFailedTitle'),
-            description:
-              err instanceof Error ? err.message : t('syncFailedDesc'),
+            description: err instanceof Error ? err.message : t('syncFailedDesc'),
           });
         } finally {
           setSyncing(false);
@@ -143,9 +208,7 @@ export function GoogleSheetSyncCard({
       mode: 'confirm',
       tone: 'emerald',
       title: nextEnabled ? t('enableAutoTitle') : t('disableAutoTitle'),
-      description: nextEnabled
-        ? t('enableAutoDesc')
-        : t('disableAutoDesc'),
+      description: nextEnabled ? t('enableAutoDesc') : t('disableAutoDesc'),
       confirmLabel: nextEnabled ? t('enableAutoBtn') : t('disableAutoBtn'),
       run: async () => {
         try {
@@ -155,17 +218,14 @@ export function GoogleSheetSyncCard({
             mode: 'notice',
             tone: 'emerald',
             title: t('prefUpdatedTitle'),
-            description: nextEnabled
-              ? t('enabledAutoDesc')
-              : t('disabledAutoDesc'),
+            description: nextEnabled ? t('enabledAutoDesc') : t('disabledAutoDesc'),
           });
         } catch (err) {
           setModal({
             mode: 'notice',
             tone: 'red',
             title: t('prefFailedTitle'),
-            description:
-              err instanceof Error ? err.message : t('prefFailedDesc'),
+            description: err instanceof Error ? err.message : t('prefFailedDesc'),
           });
         }
       },
@@ -190,24 +250,55 @@ export function GoogleSheetSyncCard({
       return;
     }
 
+    const token = getWorkspaceToken();
     setModal({
       mode: 'confirm',
       tone: 'emerald',
       title: t('linkConfirmTitle'),
-      description: t('linkConfirmDesc'),
+      description: token
+        ? 'Amanah will verify your access via the Google Sheets API and link this spreadsheet to your cooperative settings.'
+        : t('linkConfirmDesc'),
       details: [{ label: t('detailTargetSheet'), value: extracted }],
       confirmLabel: t('linkConfirmBtn'),
       run: async () => {
-        await api.updateConfig({ googleSheetId: extracted });
-        setManualSheetInput('');
-        setShowLinkInput(false);
-        await onSynced();
-        setModal({
-          mode: 'notice',
-          tone: 'emerald',
-          title: t('linkedTitle'),
-          description: t('linkedDesc', { sheetId: extracted }),
-        });
+        try {
+          const activeToken = getWorkspaceToken();
+          if (activeToken) {
+            const linked = await api.connectGoogleSheet(activeToken, extracted);
+            setManualSheetInput('');
+            setShowLinkInput(false);
+            await onSynced();
+            setModal({
+              mode: 'notice',
+              tone: 'emerald',
+              title: t('linkedTitle'),
+              description: t('linkedDesc', {
+                sheetId: linked.title ? `${linked.title} (${linked.spreadsheetId})` : linked.spreadsheetId,
+              }),
+            });
+          } else {
+            await api.updateConfig({ googleSheetId: extracted });
+            setManualSheetInput('');
+            setShowLinkInput(false);
+            await onSynced();
+            setModal({
+              mode: 'notice',
+              tone: 'emerald',
+              title: t('linkedTitle'),
+              description: t('linkedDesc', { sheetId: extracted }),
+            });
+          }
+        } catch (err) {
+          if (isAuthExpiryError(err)) {
+            clearWorkspaceToken();
+          }
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: t('syncFailedTitle'),
+            description: err instanceof Error ? err.message : t('syncFailedDesc'),
+          });
+        }
       },
     });
   }
@@ -219,17 +310,33 @@ export function GoogleSheetSyncCard({
       tone: 'red',
       title: t('unlinkConfirmTitle'),
       description: t('unlinkConfirmDesc'),
-      details: [{ label: t('detailCurrentSheet'), value: config.googleSheetId }],
+      details: [
+        ...(config.googleSheetTitle
+          ? [{ label: 'Spreadsheet', value: config.googleSheetTitle }]
+          : []),
+        { label: t('detailCurrentSheet'), value: config.googleSheetId },
+      ],
       confirmLabel: t('unlinkConfirmBtn'),
       run: async () => {
-        await api.updateConfig({ googleSheetId: '' });
-        await onSynced();
-        setModal({
-          mode: 'notice',
-          tone: 'amber',
-          title: t('unlinkedTitle'),
-          description: t('unlinkedDesc'),
-        });
+        try {
+          await api.disconnectGoogleSheet();
+          setLivePreview(null);
+          setShowLivePreview(false);
+          await onSynced();
+          setModal({
+            mode: 'notice',
+            tone: 'amber',
+            title: t('unlinkedTitle'),
+            description: t('unlinkedDesc'),
+          });
+        } catch (err) {
+          setModal({
+            mode: 'notice',
+            tone: 'red',
+            title: t('syncFailedTitle'),
+            description: err instanceof Error ? err.message : t('syncFailedDesc'),
+          });
+        }
       },
     });
   }
@@ -247,9 +354,7 @@ export function GoogleSheetSyncCard({
             <Sheet className="w-4 h-4" aria-hidden="true" />
             <span>{t('eyebrow')}</span>
           </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-            {t('title')}
-          </h3>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">{t('title')}</h3>
         </div>
 
         <GoogleSignInButton
@@ -260,7 +365,7 @@ export function GoogleSheetSyncCard({
         />
       </div>
 
-      {/* 7-Tab Blueprint Summary Strip */}
+      {/* 8-Tab Blueprint Summary Strip (includes live Balance_Sheet) */}
       <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
@@ -271,36 +376,37 @@ export function GoogleSheetSyncCard({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {loadingBlueprint ? (
-              [1, 2, 3, 4].map((i) => (
-                <tr key={i}>
-                  <td className="py-2.5 px-4">
-                    <Skeleton width={110} height={14} />
-                  </td>
-                  <td className="py-2.5 px-4">
-                    <Skeleton width="80%" height={14} />
-                  </td>
-                  <td className="py-2.5 px-4 text-right">
-                    <Skeleton width={68} height={14} />
-                  </td>
-                </tr>
-              ))
-            ) : (
-              blueprint.map((tab) => (
-                <tr key={tab.sheetName} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="py-2.5 px-4 font-mono font-semibold text-indigo-700 dark:text-indigo-400 whitespace-nowrap">
-                    {tab.sheetName}
-                  </td>
-                  <td className="py-2.5 px-4 text-slate-600 dark:text-slate-400">
-                    {(tab.rows[0] || []).slice(0, 5).join(' · ')}
-                    {(tab.rows[0] || []).length > 5 ? ' …' : ''}
-                  </td>
-                  <td className="py-2.5 px-4 text-right font-mono tabular-nums text-teal-700 dark:text-teal-400">
-                    {t('recordsCount', { count: Math.max(0, tab.rows.length - 1) })}
-                  </td>
-                </tr>
-              ))
-            )}
+            {loadingBlueprint
+              ? [1, 2, 3, 4].map((i) => (
+                  <tr key={i}>
+                    <td className="py-2.5 px-4">
+                      <Skeleton width={110} height={14} />
+                    </td>
+                    <td className="py-2.5 px-4">
+                      <Skeleton width="80%" height={14} />
+                    </td>
+                    <td className="py-2.5 px-4 text-right">
+                      <Skeleton width={68} height={14} />
+                    </td>
+                  </tr>
+                ))
+              : blueprint.map((tab) => (
+                  <tr
+                    key={tab.sheetName}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                  >
+                    <td className="py-2.5 px-4 font-mono font-semibold text-indigo-700 dark:text-indigo-400 whitespace-nowrap">
+                      {tab.sheetName}
+                    </td>
+                    <td className="py-2.5 px-4 text-slate-600 dark:text-slate-400">
+                      {(tab.rows[0] || []).slice(0, 5).join(' · ')}
+                      {(tab.rows[0] || []).length > 5 ? ' …' : ''}
+                    </td>
+                    <td className="py-2.5 px-4 text-right font-mono tabular-nums text-teal-700 dark:text-teal-400">
+                      {t('recordsCount', { count: Math.max(0, tab.rows.length - 1) })}
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>
@@ -313,20 +419,35 @@ export function GoogleSheetSyncCard({
               <span>{t('linkedSheetLabel')}</span>
               {config?.googleSheetId ? (
                 <>
-                  {config.googleSheetUrl ? (
-                    <a
-                      href={config.googleSheetUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
-                    >
-                      <span className="font-mono">{config.googleSheetId}</span>
-                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                    </a>
-                  ) : (
-                    <span className="font-mono text-emerald-700 dark:text-emerald-400">
-                      {config.googleSheetId}
+                  <a
+                    href={
+                      config.googleSheetUrl ||
+                      `https://docs.google.com/spreadsheets/d/${config.googleSheetId}/edit`
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+                  >
+                    <span>
+                      {config.googleSheetTitle
+                        ? `${config.googleSheetTitle} (${config.googleSheetId})`
+                        : config.googleSheetId}
                     </span>
+                    <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+                  </a>
+                  {workspace.connected && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showLivePreview;
+                        setShowLivePreview(next);
+                        if (next) void inspectConnectedSheet();
+                      }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/70 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3" aria-hidden="true" />
+                      <span>{showLivePreview ? 'Hide Live Sheet' : 'Preview Live Sheet'}</span>
+                    </button>
                   )}
                   <button
                     type="button"
@@ -338,9 +459,7 @@ export function GoogleSheetSyncCard({
                   </button>
                 </>
               ) : (
-                <span className="text-slate-600 dark:text-slate-300">
-                  {t('notLinkedYet')}
-                </span>
+                <span className="text-slate-600 dark:text-slate-300">{t('notLinkedYet')}</span>
               )}
               <button
                 type="button"
@@ -359,47 +478,47 @@ export function GoogleSheetSyncCard({
             </div>
           </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={Boolean(config?.autoSyncSheet)}
-              onChange={handleToggleAutoSync}
-              className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
-            />
-            <span>{t('autoSyncLabel')}</span>
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(config?.autoSyncSheet)}
+                onChange={handleToggleAutoSync}
+                className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
+              />
+              <span>{t('autoSyncLabel')}</span>
+            </label>
 
-          {config?.googleSheetId && (
+            {config?.googleSheetId && (
+              <button
+                type="button"
+                disabled={!workspace.connected || syncing}
+                onClick={() => requestSync(true)}
+                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {t('createNewSheetBtn')}
+              </button>
+            )}
+
+            <a
+              href={api.getBackupJsonUrl()}
+              download
+              className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+            >
+              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{t('downloadBackupBtn')}</span>
+            </a>
+
             <button
               type="button"
               disabled={!workspace.connected || syncing}
-              onClick={() => requestSync(true)}
-              className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
+              onClick={() => requestSync(!config?.googleSheetId)}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
-              {t('createNewSheetBtn')}
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              <span>{config?.googleSheetId ? t('syncBlueprintBtn') : t('createSyncBtn')}</span>
             </button>
-          )}
-
-          <a
-            href={api.getBackupJsonUrl()}
-            download
-            className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
-          >
-            <Download className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{t('downloadBackupBtn')}</span>
-          </a>
-
-          <button
-            type="button"
-            disabled={!workspace.connected || syncing}
-            onClick={() => requestSync(!config?.googleSheetId)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            <span>{config?.googleSheetId ? t('syncBlueprintBtn') : t('createSyncBtn')}</span>
-          </button>
-        </div>
+          </div>
         </div>
 
         {showLinkInput && (
@@ -418,6 +537,77 @@ export function GoogleSheetSyncCard({
             >
               {t('saveLinkedIdBtn')}
             </button>
+          </div>
+        )}
+
+        {showLivePreview && workspace.connected && config?.googleSheetId && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <Table2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>Live Connected Sheet ({livePreview?.title || config.googleSheetTitle || config.googleSheetId})</span>
+              </div>
+              {livePreview && livePreview.sheets.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1">
+                  {livePreview.sheets.map((tab) => (
+                    <button
+                      key={tab.sheetId}
+                      type="button"
+                      disabled={inspectingLive}
+                      onClick={() => void inspectConnectedSheet(tab.title)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
+                        livePreview.previewTab === tab.title
+                          ? 'bg-emerald-600 text-white font-semibold'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {tab.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {livePreviewError ? (
+              <div className="p-3 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>{livePreviewError}</span>
+              </div>
+            ) : inspectingLive && !livePreview ? (
+              <div className="p-4 flex items-center gap-2 text-xs text-slate-500">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" aria-hidden="true" />
+                <span>Loading live rows from Google Sheets…</span>
+              </div>
+            ) : livePreview && livePreview.previewRows.length > 0 ? (
+              <div className="overflow-x-auto max-h-52">
+                <table className="w-full text-left border-collapse text-[11px]">
+                  <tbody>
+                    {livePreview.previewRows.map((row, idx) => (
+                      <tr
+                        key={idx}
+                        className={
+                          idx === 0
+                            ? 'bg-slate-50 dark:bg-slate-900 font-semibold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800'
+                            : 'border-b border-slate-100 dark:border-slate-800/60 text-slate-600 dark:text-slate-300'
+                        }
+                      >
+                        {row.slice(0, 10).map((cell, ci) => (
+                          <td
+                            key={ci}
+                            className="px-2.5 py-1.5 font-mono whitespace-nowrap max-w-[180px] truncate"
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-3 text-xs text-slate-500">
+                Selected tab is empty. Click Sync to populate live ledger rows.
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -300,6 +300,30 @@ export interface SheetTabBlueprint {
   rows: (string | number)[][];
 }
 
+export interface GoogleSheetTabMeta {
+  sheetId: number;
+  title: string;
+  rowCount: number;
+  columnCount: number;
+}
+
+export interface GoogleSheetInspectResponse {
+  spreadsheetId: string;
+  spreadsheetUrl: string;
+  title: string;
+  sheets: GoogleSheetTabMeta[];
+  previewTab: string;
+  previewRows: string[][];
+}
+
+export interface GoogleSheetConnectResponse {
+  spreadsheetId: string;
+  spreadsheetUrl: string;
+  title: string;
+  sheets: GoogleSheetTabMeta[];
+  config: FundConfig;
+}
+
 export interface RegisterMemberPayload {
   name: string;
   nameBn?: string;
@@ -1000,15 +1024,49 @@ export const api = {
       }
     ),
 
-  getBlueprint: () =>
-    apiRequest<{ tabs: SheetTabBlueprint[]; config: FundConfig }>('/api/workspace/blueprint'),
+  getBlueprint: (month?: string) =>
+    apiRequest<{ tabs: SheetTabBlueprint[]; config: FundConfig; month?: string }>(
+      month
+        ? `/api/workspace/blueprint?month=${encodeURIComponent(month)}`
+        : '/api/workspace/blueprint'
+    ),
+  inspectGoogleSheet: (
+    googleToken: string,
+    payload?: { spreadsheetIdOrUrl?: string; sheetName?: string; maxRows?: number }
+  ) =>
+    apiRequest<GoogleSheetInspectResponse>('/api/workspace/sheets/inspect', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${googleToken}`,
+      },
+      body: JSON.stringify(payload || {}),
+    }),
+  connectGoogleSheet: (googleToken: string, spreadsheetIdOrUrl: string) =>
+    apiRequest<GoogleSheetConnectResponse>('/api/workspace/sheets/connect', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${googleToken}`,
+      },
+      body: JSON.stringify({ spreadsheetIdOrUrl }),
+    }),
+  disconnectGoogleSheet: () =>
+    apiRequest<{ ok: boolean; config: FundConfig }>('/api/workspace/sheets/disconnect', {
+      method: 'POST',
+    }),
   syncGoogleSheet: (
     googleToken: string,
-    opts?: { createNew?: boolean; autoSyncSheet?: boolean }
+    opts?: {
+      createNew?: boolean;
+      autoSyncSheet?: boolean;
+      month?: string;
+      spreadsheetIdOrUrl?: string;
+    }
   ) =>
     apiRequest<{
       spreadsheetId: string;
       spreadsheetUrl: string;
+      spreadsheetTitle?: string;
+      month?: string;
       lastSheetSyncAt: string;
       autoSyncSheet?: boolean;
       syncedTabs: number;

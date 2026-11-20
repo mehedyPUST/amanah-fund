@@ -81,6 +81,8 @@ interface CoopSessionContextValue {
   setLocale: (next: AppLocale) => void;
   workspace: WorkspaceSessionInfo;
   connectingGoogle: boolean;
+  googleAuthError: string | null;
+  clearGoogleAuthError: () => void;
   handleConnectGoogle: () => Promise<void>;
   handleDisconnectGoogle: () => Promise<void>;
   pwaUpdate: PwaUpdateContextState;
@@ -122,6 +124,7 @@ export function AppProviders({
     getWorkspaceSessionInfo()
   );
   const [connectingGoogle, setConnectingGoogle] = useState(false);
+  const [googleAuthError, setGoogleAuthError] = useState<string | null>(null);
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -779,17 +782,27 @@ export function AppProviders({
     };
   }, [attachRegistrationListeners, checkForUpdates]);
 
+  const clearGoogleAuthError = useCallback(() => {
+    setGoogleAuthError(null);
+  }, []);
+
   const handleConnectGoogle = useCallback(async () => {
     setConnectingGoogle(true);
+    setGoogleAuthError(null);
     try {
       const info = await connectGoogleWorkspace();
       setWorkspace(info);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Could not sign in with Google. Please try again.';
+      setGoogleAuthError(msg);
     } finally {
       setConnectingGoogle(false);
     }
   }, []);
 
   const handleDisconnectGoogle = useCallback(async () => {
+    setGoogleAuthError(null);
     const info = await disconnectGoogleWorkspace();
     setWorkspace(info);
   }, []);
@@ -828,6 +841,8 @@ export function AppProviders({
       setLocale,
       workspace,
       connectingGoogle,
+      googleAuthError,
+      clearGoogleAuthError,
       handleConnectGoogle,
       handleDisconnectGoogle,
       pwaUpdate: {
@@ -854,6 +869,8 @@ export function AppProviders({
       setLocale,
       workspace,
       connectingGoogle,
+      googleAuthError,
+      clearGoogleAuthError,
       handleConnectGoogle,
       handleDisconnectGoogle,
       updateAvailable,

@@ -25,6 +25,7 @@ import {
   Printer,
   RefreshCw,
   Repeat,
+  Sheet,
   ShieldAlert,
   Sigma,
   Table2,
@@ -44,14 +45,23 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatMoney } from '../utils/format.ts';
+import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
 import { exportBalanceSheetPdf } from '../utils/monthlySheetPdf.ts';
 import { BalanceSheetMemberModal } from './BalanceSheetMemberModal.tsx';
+import { GoogleSheetConnectModal } from './GoogleSheetConnectModal.tsx';
 
 interface BalanceSheetViewProps {
   user: PublicUser | null;
   config: FundConfig | null;
   onViewMemberProfile?: (userId: string) => void;
+  workspace?: WorkspaceSessionInfo;
+  connectingGoogle?: boolean;
+  googleAuthError?: string | null;
+  onClearGoogleAuthError?: () => void;
+  onConnectGoogle?: () => Promise<void>;
+  onDisconnectGoogle?: () => Promise<void>;
+  onConfigUpdated?: () => Promise<void>;
 }
 
 type WorkbookTab = 'balance-sheet' | 'variables-summary';
@@ -212,10 +222,25 @@ export function BalanceSheetView({
   user,
   config,
   onViewMemberProfile,
+  workspace,
+  connectingGoogle = false,
+  googleAuthError = null,
+  onClearGoogleAuthError,
+  onConnectGoogle,
+  onDisconnectGoogle,
+  onConfigUpdated,
 }: BalanceSheetViewProps) {
   const t = useTranslations('MonthlySheet');
   const tCommon = useTranslations('Common');
   const queryClient = useQueryClient();
+
+  const canManageGoogleSheet = Boolean(
+    user &&
+      (user.role === 'admin' || user.role === 'manager') &&
+      workspace &&
+      onConnectGoogle &&
+      onDisconnectGoogle
+  );
 
   const currentMonthKey = useMemo(() => getCurrentMonthKey(), []);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKey());
@@ -230,6 +255,7 @@ export function BalanceSheetView({
   const [copiedCell, setCopiedCell] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [inspectedMemberId, setInspectedMemberId] = useState<string | null>(null);
+  const [showGoogleSheetModal, setShowGoogleSheetModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
@@ -277,7 +303,7 @@ export function BalanceSheetView({
 
   useEffect(() => {
     const handleShortcut = (e: globalThis.KeyboardEvent) => {
-      if (inspectedMemberId) return;
+      if (inspectedMemberId || showGoogleSheetModal) return;
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
       if (e.key !== 'f' && e.key !== 'F') return;
       const target = e.target as HTMLElement | null;
@@ -298,7 +324,7 @@ export function BalanceSheetView({
     return () => {
       window.removeEventListener('keydown', handleShortcut);
     };
-  }, [inspectedMemberId]);
+  }, [inspectedMemberId, showGoogleSheetModal]);
 
   const sheetQuery = useQuery({
     queryKey: queryKeys.dashboard.balanceSheet(selectedMonth),
@@ -1560,6 +1586,35 @@ export function BalanceSheetView({
           <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           <div className="flex items-center gap-1.5 shrink-0 ml-auto md:ml-0">
+            {canManageGoogleSheet && (
+              <button
+                type="button"
+                onClick={() => setShowGoogleSheetModal(true)}
+                title={
+                  config?.googleSheetId
+                    ? `Connected Google Sheet: ${config.googleSheetTitle || config.googleSheetId}`
+                    : 'Connect a Google Sheet to sync this Balance Sheet'
+                }
+                className={`h-8 px-2.5 sm:px-3 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                  config?.googleSheetId
+                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                    : 'border-teal-200 dark:border-teal-800/80 bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 hover:bg-teal-50/70 dark:hover:bg-teal-950/40'
+                }`}
+              >
+                <Sheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">
+                  {config?.googleSheetId ? 'Google Sheet' : 'Connect Sheet'}
+                </span>
+                <span className="sm:hidden">Sheet</span>
+                {config?.googleSheetId && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleExportCsv}
@@ -3114,6 +3169,27 @@ export function BalanceSheetView({
             : undefined
         }
       />
+      {canManageGoogleSheet && workspace && onConnectGoogle && onDisconnectGoogle && (
+        <GoogleSheetConnectModal
+          open={showGoogleSheetModal}
+          month={activeMonth}
+          monthLabel={fullMonthLabel}
+          config={config}
+          workspace={workspace}
+          connectingGoogle={connectingGoogle}
+          googleAuthError={googleAuthError}
+          onClearGoogleAuthError={onClearGoogleAuthError}
+          onConnectGoogle={onConnectGoogle}
+          onDisconnectGoogle={onDisconnectGoogle}
+          onConfigUpdated={async () => {
+            if (onConfigUpdated) {
+              await onConfigUpdated();
+            }
+            await sheetQuery.refetch();
+          }}
+          onClose={() => setShowGoogleSheetModal(false)}
+        />
+      )}
     </div>
   );
 }

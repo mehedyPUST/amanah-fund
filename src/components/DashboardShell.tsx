@@ -233,6 +233,8 @@ export function DashboardShell() {
     locale,
     workspace,
     connectingGoogle,
+    googleAuthError,
+    clearGoogleAuthError,
     handleConnectGoogle,
     handleDisconnectGoogle,
   } = useCoopSession();
@@ -2146,6 +2148,15 @@ export function DashboardShell() {
                     user={user}
                     config={overview?.config || null}
                     onViewMemberProfile={handleViewMemberProfile}
+                    workspace={workspace}
+                    connectingGoogle={connectingGoogle}
+                    googleAuthError={googleAuthError}
+                    onClearGoogleAuthError={clearGoogleAuthError}
+                    onConnectGoogle={handleConnectGoogle}
+                    onDisconnectGoogle={handleDisconnectGoogle}
+                    onConfigUpdated={async () => {
+                      await refreshWorkspace(true);
+                    }}
                   />
                 </section>
               )}

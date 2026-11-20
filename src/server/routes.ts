@@ -83,6 +83,7 @@ import {
   computeRequiredApprovals,
   escapeCsvCell,
   evaluateLoanEligibility,
+  extractGoogleSpreadsheetId,
   extractMentionedUsers,
   extractPreviousProfileValues,
   hydrateContributionForViewer,
@@ -6858,6 +6859,7 @@ apiRouter.patch(
           cfg.googleSheetId = trimmedId || undefined;
           if (!trimmedId) {
             cfg.googleSheetUrl = undefined;
+            cfg.googleSheetTitle = undefined;
           }
         }
         if (typeof body.monthlyReportAutoEmail === 'boolean') {
@@ -7620,18 +7622,336 @@ apiRouter.post(
 // 8. Google Workspace Integration (Google Sheets Blueprint Auto-Sync & Gmail)
 // ---------------------------------------------------------------------------
 
+function escapeSheetTitleForA1(title: string): string {
+  return title.replace(/'/g, "''");
+}
+
+function formatGoogleSheetsHttpError(status: number, errText: string, fallback: string): string {
+  if (status === 401) {
+    return 'Google authorization expired or is invalid. Please sign in with Google again.';
+  }
+  if (status === 403) {
+    return 'Your connected Google account does not have permission for this Google Sheet. Make sure you own it or have Editor access and approved Google Sheets permission.';
+  }
+  if (status === 404) {
+    return 'Google Sheet not found. Verify the Spreadsheet URL or ID and check that the file still exists.';
+  }
+  try {
+    const parsed = JSON.parse(errText) as { error?: { message?: string } };
+    if (parsed?.error?.message) {
+      return `${fallback} (${status}): ${parsed.error.message}`;
+    }
+  } catch {
+    // non-JSON response
+  }
+  return `${fallback} (${status}): ${errText.slice(0, 220)}`;
+}
+
+interface GoogleSheetTabMeta {
+  sheetId: number;
+  title: string;
+  rowCount: number;
+  columnCount: number;
+}
+
+interface GoogleSpreadsheetMetaResponse {
+  spreadsheetId?: string;
+  spreadsheetUrl?: string;
+  properties?: { title?: string };
+  sheets?: Array<{
+    properties?: {
+      sheetId?: number;
+      title?: string;
+      index?: number;
+      gridProperties?: {
+        rowCount?: number;
+        columnCount?: number;
+      };
+    };
+  }>;
+}
+
+function normalizeSheetTabs(meta: GoogleSpreadsheetMetaResponse): GoogleSheetTabMeta[] {
+  return (meta.sheets || [])
+    .slice()
+    .sort((a, b) => (a.properties?.index ?? 0) - (b.properties?.index ?? 0))
+    .map((s) => ({
+      sheetId: Number(s.properties?.sheetId ?? 0),
+      title: String(s.properties?.title || '').trim(),
+      rowCount: Number(s.properties?.gridProperties?.rowCount ?? 0),
+      columnCount: Number(s.properties?.gridProperties?.columnCount ?? 0),
+    }))
+    .filter((s) => Boolean(s.title));
+}
+
 apiRouter.get(
   '/workspace/blueprint',
   requireAuth,
   requireRole(['admin', 'manager']),
-  async (_req, res) => {
+  async (req, res) => {
     try {
+      const requestedMonth =
+        typeof req.query?.month === 'string' && /^\d{4}-\d{2}$/.test(req.query.month)
+          ? req.query.month
+          : undefined;
       const state = await loadVaultState();
-      const tabs = buildGoogleSheetsBlueprint(state);
-      res.json({ tabs, config: state.fundConfig });
+      const tabs = buildGoogleSheetsBlueprint(state, requestedMonth);
+      const resolvedMonth =
+        requestedMonth ||
+        `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, '0')}`;
+      res.json({ tabs, config: state.fundConfig, month: resolvedMonth });
     } catch (err) {
       console.error('Blueprint error:', err);
       res.status(500).json({ error: 'Failed to generate spreadsheet blueprint.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/workspace/sheets/inspect',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const googleToken = extractGoogleBearerToken(req);
+      if (!googleToken) {
+        res.status(401).json({
+          error: 'Google Workspace OAuth access token required in Authorization Bearer header.',
+        });
+        return;
+      }
+
+      const rawTarget =
+        typeof req.body?.spreadsheetIdOrUrl === 'string' ? req.body.spreadsheetIdOrUrl : '';
+      const requestedSheetName =
+        typeof req.body?.sheetName === 'string' ? req.body.sheetName.trim() : '';
+      const maxRowsRaw = Number(req.body?.maxRows);
+      const maxRows =
+        Number.isFinite(maxRowsRaw) && maxRowsRaw >= 1 ? Math.min(50, Math.round(maxRowsRaw)) : 20;
+
+      const state = await loadVaultState();
+      const spreadsheetId = rawTarget
+        ? extractGoogleSpreadsheetId(rawTarget)
+        : state.fundConfig.googleSheetId || '';
+
+      if (!spreadsheetId) {
+        res.status(400).json({
+          error:
+            'Enter a valid Google Spreadsheet URL (docs.google.com/spreadsheets/d/...) or Spreadsheet ID.',
+        });
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${googleToken}`,
+      };
+
+      const metaRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
+          spreadsheetId
+        )}?fields=spreadsheetId,spreadsheetUrl,properties.title,sheets.properties(sheetId,title,index,gridProperties)`,
+        { headers }
+      );
+
+      if (!metaRes.ok) {
+        const errText = await metaRes.text();
+        res.status(metaRes.status).json({
+          error: formatGoogleSheetsHttpError(
+            metaRes.status,
+            errText,
+            'Could not inspect Google Sheet'
+          ),
+        });
+        return;
+      }
+
+      const meta = (await metaRes.json()) as GoogleSpreadsheetMetaResponse;
+      const sheets = normalizeSheetTabs(meta);
+      const title = meta.properties?.title || 'Untitled Google Sheet';
+      const spreadsheetUrl =
+        meta.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+
+      const selectedTab =
+        (requestedSheetName && sheets.find((s) => s.title === requestedSheetName)?.title) ||
+        sheets[0]?.title ||
+        '';
+
+      let previewRows: string[][] = [];
+      if (selectedTab) {
+        const range = `'${escapeSheetTitleForA1(selectedTab)}'!A1:P${maxRows}`;
+        const valuesRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
+            spreadsheetId
+          )}/values/${encodeURIComponent(range)}`,
+          { headers }
+        );
+        if (valuesRes.ok) {
+          const valuesData = (await valuesRes.json()) as { values?: unknown[][] };
+          previewRows = (valuesData.values || []).map((row) =>
+            (row || []).map((cell) => (cell === undefined || cell === null ? '' : String(cell)))
+          );
+        }
+      }
+
+      res.json({
+        spreadsheetId: meta.spreadsheetId || spreadsheetId,
+        spreadsheetUrl,
+        title,
+        sheets,
+        previewTab: selectedTab,
+        previewRows,
+      });
+    } catch (err) {
+      console.error('Google Sheets inspect error:', err);
+      res.status(500).json({ error: 'Failed to inspect Google Sheet.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/workspace/sheets/connect',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const googleToken = extractGoogleBearerToken(req);
+      if (!googleToken) {
+        res.status(401).json({
+          error: 'Google Workspace OAuth access token required in Authorization Bearer header.',
+        });
+        return;
+      }
+
+      const rawTarget =
+        typeof req.body?.spreadsheetIdOrUrl === 'string' ? req.body.spreadsheetIdOrUrl : '';
+      const spreadsheetId = extractGoogleSpreadsheetId(rawTarget);
+      if (!spreadsheetId) {
+        res.status(400).json({
+          error:
+            'Enter a valid Google Spreadsheet URL (docs.google.com/spreadsheets/d/...) or Spreadsheet ID.',
+        });
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${googleToken}`,
+      };
+      const metaRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
+          spreadsheetId
+        )}?fields=spreadsheetId,spreadsheetUrl,properties.title,sheets.properties(sheetId,title,index,gridProperties)`,
+        { headers }
+      );
+
+      if (!metaRes.ok) {
+        const errText = await metaRes.text();
+        res.status(metaRes.status).json({
+          error: formatGoogleSheetsHttpError(
+            metaRes.status,
+            errText,
+            'Could not connect Google Sheet'
+          ),
+        });
+        return;
+      }
+
+      const meta = (await metaRes.json()) as GoogleSpreadsheetMetaResponse;
+      const resolvedId = meta.spreadsheetId || spreadsheetId;
+      const spreadsheetUrl =
+        meta.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${resolvedId}/edit`;
+      const title = meta.properties?.title || 'Connected Google Sheet';
+      const sheets = normalizeSheetTabs(meta);
+      const viewer = req.authUser!;
+      const nowIso = new Date().toISOString();
+
+      const nextState = await updateVaultState((draft) => {
+        draft.fundConfig.googleSheetId = resolvedId;
+        draft.fundConfig.googleSheetUrl = spreadsheetUrl;
+        draft.fundConfig.googleSheetTitle = title;
+        draft.fundConfig.updatedAt = nowIso;
+        draft.fundConfig.updatedBy = viewer.name;
+
+        appendAuditLog(draft, {
+          actor: viewer,
+          action: 'GOOGLE_SHEET_LINKED',
+          resourceType: 'workspace_sync',
+          resourceId: resolvedId,
+          summary: `${viewer.name} connected Google Sheet "${title}" (${resolvedId})`,
+          payload: {
+            spreadsheetId: resolvedId,
+            spreadsheetUrl,
+            title,
+            tabs: sheets.map((s) => s.title),
+          },
+        });
+        return draft;
+      });
+
+      broadcastRealtimeEvent('sheet:synced', { spreadsheetId: resolvedId, title });
+      broadcastRealtimeEvent('audit:updated', {
+        action: 'GOOGLE_SHEET_LINKED',
+        resourceType: 'workspace_sync',
+        resourceId: resolvedId,
+      });
+
+      res.json({
+        spreadsheetId: resolvedId,
+        spreadsheetUrl,
+        title,
+        sheets,
+        config: nextState.fundConfig,
+      });
+    } catch (err) {
+      console.error('Google Sheets connect error:', err);
+      res.status(500).json({ error: 'Failed to connect Google Sheet.' });
+    }
+  }
+);
+
+apiRouter.post(
+  '/workspace/sheets/disconnect',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const viewer = req.authUser!;
+      const nowIso = new Date().toISOString();
+      let previousSheetId = '';
+
+      const nextState = await updateVaultState((draft) => {
+        previousSheetId = draft.fundConfig.googleSheetId || '';
+        draft.fundConfig.googleSheetId = undefined;
+        draft.fundConfig.googleSheetUrl = undefined;
+        draft.fundConfig.googleSheetTitle = undefined;
+        draft.fundConfig.updatedAt = nowIso;
+        draft.fundConfig.updatedBy = viewer.name;
+
+        if (previousSheetId) {
+          appendAuditLog(draft, {
+            actor: viewer,
+            action: 'GOOGLE_SHEET_UNLINKED',
+            resourceType: 'workspace_sync',
+            resourceId: previousSheetId,
+            summary: `${viewer.name} unlinked Google Sheet (${previousSheetId}) from cooperative settings`,
+            payload: { previousSheetId },
+          });
+        }
+        return draft;
+      });
+
+      broadcastRealtimeEvent('sheet:synced', { spreadsheetId: null });
+      if (previousSheetId) {
+        broadcastRealtimeEvent('audit:updated', {
+          action: 'GOOGLE_SHEET_UNLINKED',
+          resourceType: 'workspace_sync',
+          resourceId: previousSheetId,
+        });
+      }
+
+      res.json({ ok: true, config: nextState.fundConfig });
+    } catch (err) {
+      console.error('Google Sheets disconnect error:', err);
+      res.status(500).json({ error: 'Failed to unlink Google Sheet.' });
     }
   }
 );
@@ -7654,11 +7974,29 @@ apiRouter.post(
       const createNew = Boolean(req.body?.createNew);
       const requestedAutoSync =
         typeof req.body?.autoSyncSheet === 'boolean' ? req.body.autoSyncSheet : undefined;
+      const requestedMonth =
+        typeof req.body?.month === 'string' && /^\d{4}-\d{2}$/.test(req.body.month)
+          ? req.body.month
+          : undefined;
+      const requestedTargetRaw =
+        typeof req.body?.spreadsheetIdOrUrl === 'string' ? req.body.spreadsheetIdOrUrl.trim() : '';
+      const requestedTargetId = requestedTargetRaw
+        ? extractGoogleSpreadsheetId(requestedTargetRaw)
+        : '';
+      if (requestedTargetRaw && !requestedTargetId) {
+        res.status(400).json({
+          error: 'Invalid Google Spreadsheet URL or ID provided for synchronization.',
+        });
+        return;
+      }
 
       const state = await loadVaultState();
-      const blueprint = buildGoogleSheetsBlueprint(state);
-      let spreadsheetId = createNew ? '' : state.fundConfig.googleSheetId || '';
+      const blueprint = buildGoogleSheetsBlueprint(state, requestedMonth);
+      let spreadsheetId = createNew
+        ? ''
+        : requestedTargetId || state.fundConfig.googleSheetId || '';
       let spreadsheetUrl = state.fundConfig.googleSheetUrl || '';
+      let spreadsheetTitle = state.fundConfig.googleSheetTitle || '';
 
       const headers = {
         Authorization: `Bearer ${googleToken}`,
@@ -7666,12 +8004,13 @@ apiRouter.post(
       };
 
       if (!spreadsheetId) {
+        const defaultTitle = `${state.fundConfig.fundName} — Balance Sheet & Treasury`;
         const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
           method: 'POST',
           headers,
           body: JSON.stringify({
             properties: {
-              title: `${state.fundConfig.fundName} — Treasury Blueprint`,
+              title: defaultTitle,
             },
             sheets: blueprint.map((b) => ({
               properties: { title: b.sheetName },
@@ -7682,7 +8021,11 @@ apiRouter.post(
         if (!createRes.ok) {
           const errText = await createRes.text();
           res.status(createRes.status).json({
-            error: `Google Sheets create failed (${createRes.status}): ${errText.slice(0, 220)}`,
+            error: formatGoogleSheetsHttpError(
+              createRes.status,
+              errText,
+              'Google Sheets create failed'
+            ),
           });
           return;
         }
@@ -7690,29 +8033,35 @@ apiRouter.post(
         const created = (await createRes.json()) as {
           spreadsheetId: string;
           spreadsheetUrl: string;
+          properties?: { title?: string };
         };
         spreadsheetId = created.spreadsheetId;
         spreadsheetUrl = created.spreadsheetUrl;
+        spreadsheetTitle = created.properties?.title || defaultTitle;
       } else {
         const metaRes = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}?fields=spreadsheetId,spreadsheetUrl,sheets.properties`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
+            spreadsheetId
+          )}?fields=spreadsheetId,spreadsheetUrl,properties.title,sheets.properties`,
           { headers }
         );
 
         if (!metaRes.ok) {
           const errText = await metaRes.text();
           res.status(metaRes.status).json({
-            error: `Could not access target Google Sheet (${metaRes.status}): ${errText.slice(0, 220)}`,
+            error: formatGoogleSheetsHttpError(
+              metaRes.status,
+              errText,
+              'Could not access target Google Sheet'
+            ),
           });
           return;
         }
 
-        const meta = (await metaRes.json()) as {
-          spreadsheetUrl: string;
-          sheets?: Array<{ properties?: { title?: string } }>;
-        };
+        const meta = (await metaRes.json()) as GoogleSpreadsheetMetaResponse;
         spreadsheetUrl =
           meta.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+        spreadsheetTitle = meta.properties?.title || spreadsheetTitle || 'Connected Google Sheet';
 
         const existingTitles = new Set(
           (meta.sheets || []).map((s) => s.properties?.title).filter(Boolean)
@@ -7734,7 +8083,11 @@ apiRouter.post(
           if (!addRes.ok) {
             const errText = await addRes.text();
             res.status(addRes.status).json({
-              error: `Failed creating tabs in Google Sheet: ${errText.slice(0, 220)}`,
+              error: formatGoogleSheetsHttpError(
+                addRes.status,
+                errText,
+                'Failed creating tabs in Google Sheet'
+              ),
             });
             return;
           }
@@ -7748,14 +8101,18 @@ apiRouter.post(
           method: 'POST',
           headers,
           body: JSON.stringify({
-            ranges: blueprint.map((b) => `'${b.sheetName}'!A1:Z1000`),
+            ranges: blueprint.map((b) => `'${escapeSheetTitleForA1(b.sheetName)}'!A1:Z2000`),
           }),
         }
       );
       if (!clearRes.ok) {
         const errText = await clearRes.text();
         res.status(clearRes.status).json({
-          error: `Failed clearing Google Sheet tabs: ${errText.slice(0, 220)}`,
+          error: formatGoogleSheetsHttpError(
+            clearRes.status,
+            errText,
+            'Failed clearing Google Sheet tabs'
+          ),
         });
         return;
       }
@@ -7768,7 +8125,7 @@ apiRouter.post(
           body: JSON.stringify({
             valueInputOption: 'USER_ENTERED',
             data: blueprint.map((b) => ({
-              range: `'${b.sheetName}'!A1`,
+              range: `'${escapeSheetTitleForA1(b.sheetName)}'!A1`,
               values: b.rows,
             })),
           }),
@@ -7778,15 +8135,25 @@ apiRouter.post(
       if (!writeRes.ok) {
         const errText = await writeRes.text();
         res.status(writeRes.status).json({
-          error: `Failed writing blueprint rows to Google Sheet: ${errText.slice(0, 220)}`,
+          error: formatGoogleSheetsHttpError(
+            writeRes.status,
+            errText,
+            'Failed writing rows to Google Sheet'
+          ),
         });
         return;
       }
 
       const lastSheetSyncAt = new Date().toISOString();
+      const resolvedMonth =
+        requestedMonth ||
+        `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, '0')}`;
       const nextState = await updateVaultState((draft) => {
         draft.fundConfig.googleSheetId = spreadsheetId;
         draft.fundConfig.googleSheetUrl = spreadsheetUrl;
+        if (spreadsheetTitle) {
+          draft.fundConfig.googleSheetTitle = spreadsheetTitle;
+        }
         draft.fundConfig.lastSheetSyncAt = lastSheetSyncAt;
         if (requestedAutoSync !== undefined) {
           draft.fundConfig.autoSyncSheet = requestedAutoSync;
@@ -7799,9 +8166,11 @@ apiRouter.post(
           action: 'GOOGLE_SHEET_SYNCED',
           resourceType: 'workspace_sync',
           resourceId: spreadsheetId,
-          summary: `${viewer.name} synchronized ${blueprint.length}-tab treasury blueprint to Google Sheets`,
+          summary: `${viewer.name} synchronized ${blueprint.length}-tab Balance Sheet & treasury ledger (${resolvedMonth}) to Google Sheets`,
           payload: {
             spreadsheetId,
+            spreadsheetTitle,
+            month: resolvedMonth,
             tabs: blueprint.map((b) => b.sheetName),
             lastSheetSyncAt,
           },
@@ -7809,7 +8178,11 @@ apiRouter.post(
         return draft;
       });
 
-      broadcastRealtimeEvent('sheet:synced', { spreadsheetId, lastSheetSyncAt });
+      broadcastRealtimeEvent('sheet:synced', {
+        spreadsheetId,
+        spreadsheetTitle,
+        lastSheetSyncAt,
+      });
       broadcastRealtimeEvent('audit:updated', {
         action: 'GOOGLE_SHEET_SYNCED',
         resourceType: 'workspace_sync',
@@ -7818,6 +8191,8 @@ apiRouter.post(
       res.json({
         spreadsheetId,
         spreadsheetUrl,
+        spreadsheetTitle,
+        month: resolvedMonth,
         lastSheetSyncAt,
         autoSyncSheet: nextState.fundConfig.autoSyncSheet,
         syncedTabs: blueprint.length,

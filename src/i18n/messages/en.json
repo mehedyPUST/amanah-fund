@@ -85,10 +85,10 @@
     "perYearShort": "{amount}/yr",
     "hashPrefix": "Hash {hash}",
     "googleWorkspace": {
-      "connectedAs": "Google Workspace:",
-      "disconnect": "Disconnect Google",
-      "connecting": "Connecting Google Sheets…",
-      "connect": "Connect Google Sheets"
+      "connectedAs": "Google Account:",
+      "disconnect": "Disconnect",
+      "connecting": "Signing in with Google…",
+      "connect": "Sign in with Google"
     },
     "providerSelect": {
       "selectFallback": "Select provider",
@@ -2936,16 +2936,16 @@
     "sheetSync": {
       "loadFailedTitle": "Blueprint Load Failed",
       "loadFailedDesc": "Could not load Google Sheet blueprint.",
-      "syncConfirmTitle": "Synchronize Google Sheets Blueprint?",
-      "syncConfirmCreateDesc": "This will create a new Google Spreadsheet in your connected Google account and populate all 7 cooperative treasury blueprint tabs.",
-      "syncConfirmOverwriteDesc": "This will clear and overwrite the 7 blueprint tabs inside spreadsheet {sheetId} with current live treasury data.",
+      "syncConfirmTitle": "Synchronize Balance Sheet & Ledger to Google Sheets?",
+      "syncConfirmCreateDesc": "This will create a new Google Spreadsheet in your connected Google account and populate all 8 tabs (starting with the live Balance_Sheet and 7 cooperative ledger tabs).",
+      "syncConfirmOverwriteDesc": "This will clear and overwrite the 8 Amanah tabs (Balance_Sheet + cooperative ledger) inside spreadsheet {sheetId} with current live data.",
       "detailGoogleAccount": "Google Account",
       "connectedAccount": "Connected Account",
       "detailMode": "Mode",
       "modeCreate": "Create New Spreadsheet",
       "modeOverwrite": "Overwrite Linked Sheet",
       "detailTabs": "Tabs",
-      "tabsFallback": "7 Blueprint Tabs",
+      "tabsFallback": "8 Balance Sheet & Ledger Tabs",
       "syncConfirmBtn": "Confirm & Sync to Google Sheets",
       "authRequiredTitle": "Google Authorization Required",
       "authRequiredDesc": "Please connect your Google Workspace account first to authorize Sheets sync.",

@@ -167,22 +167,22 @@
       "expiresAt": "2026-11-27T03:26:16.000Z"
     },
     {
-      "id": "sha:898cfe6bf6b37f54e405b000f99b93b63218bd22",
-      "userId": "u-2",
-      "revokedAt": "2026-11-20T03:26:16.087Z",
-      "expiresAt": "2026-11-20T03:28:16.000Z"
-    },
-    {
       "id": "jti:1f2305b5-c6ae-4f39-b6a7-ab043b28f1b6",
       "userId": "u-2",
       "revokedAt": "2026-11-20T03:27:04.484Z",
       "expiresAt": "2026-11-27T03:27:04.000Z"
     },
     {
-      "id": "sha:69c8dfe97194e378a0f9f4ecd7a4ff8e04fb9bc7",
+      "id": "jti:a9c63b90-3335-49c5-a709-632e344a3d3e",
       "userId": "u-2",
-      "revokedAt": "2026-11-20T03:27:04.484Z",
-      "expiresAt": "2026-11-20T03:29:04.000Z"
+      "revokedAt": "2026-11-20T04:14:17.319Z",
+      "expiresAt": "2026-11-27T04:14:17.000Z"
+    },
+    {
+      "id": "sha:d8b58feeec0886c437499fb519a6d8520a6bcb45",
+      "userId": "u-2",
+      "revokedAt": "2026-11-20T04:14:17.319Z",
+      "expiresAt": "2026-11-20T04:16:17.000Z"
     }
   ]
 }

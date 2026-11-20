@@ -85,10 +85,10 @@
     "perYearShort": "{amount}/বছর",
     "hashPrefix": "হ্যাশ {hash}",
     "googleWorkspace": {
-      "connectedAs": "গুগল ওয়ার্কস্পেস:",
-      "disconnect": "গুগল সংযোগ বিচ্ছিন্ন করুন",
-      "connecting": "গুগল শিটস সংযুক্ত হচ্ছে…",
-      "connect": "গুগল শিটস সংযুক্ত করুন"
+      "connectedAs": "গুগল অ্যাকাউন্ট:",
+      "disconnect": "বিচ্ছিন্ন করুন",
+      "connecting": "গুগল সাইন ইন হচ্ছে…",
+      "connect": "গুগল দিয়ে সাইন ইন করুন"
     },
     "providerSelect": {
       "selectFallback": "প্রদানকারী নির্বাচন করুন",
@@ -2936,16 +2936,16 @@
     "sheetSync": {
       "loadFailedTitle": "ব্লুপ্রিন্ট লোড ব্যর্থ",
       "loadFailedDesc": "গুগল শিট ব্লুপ্রিন্ট লোড করা যায়নি।",
-      "syncConfirmTitle": "গুগল শিটস ব্লুপ্রিন্ট সিঙ্ক করবেন?",
-      "syncConfirmCreateDesc": "এটি আপনার সংযুক্ত গুগল অ্যাকাউন্টে একটি নতুন গুগল স্প্রেডশিট তৈরি করবে এবং সবগুলো ৭টি সমবায় তহবিল ব্লুপ্রিন্ট ট্যাব পূরণ করবে।",
-      "syncConfirmOverwriteDesc": "এটি স্প্রেডশিট {sheetId} এর ৭টি ব্লুপ্রিন্ট ট্যাব মুছে বর্তমান লাইভ তহবিল তথ্য দিয়ে পুনরায় লিখবে।",
+      "syncConfirmTitle": "ব্যালেন্স শিট ও লেজার গুগল শিটসে সিঙ্ক করবেন?",
+      "syncConfirmCreateDesc": "এটি আপনার সংযুক্ত গুগল অ্যাকাউন্টে একটি নতুন গুগল স্প্রেডশিট তৈরি করবে এবং লাইভ Balance_Sheet-সহ সবগুলো ৮টি সমবায় তহবিল ট্যাব পূরণ করবে।",
+      "syncConfirmOverwriteDesc": "এটি স্প্রেডশিট {sheetId} এর ৮টি আমানাহ ট্যাব (Balance_Sheet ও সমবায় লেজার) মুছে বর্তমান লাইভ তথ্য দিয়ে পুনরায় লিখবে।",
       "detailGoogleAccount": "গুগল অ্যাকাউন্ট",
       "connectedAccount": "সংযুক্ত অ্যাকাউন্ট",
       "detailMode": "পদ্ধতি",
       "modeCreate": "নতুন স্প্রেডশিট তৈরি করুন",
       "modeOverwrite": "সংযুক্ত শিট হালনাগাদ করুন",
       "detailTabs": "ট্যাবসমূহ",
-      "tabsFallback": "৭টি ব্লুপ্রিন্ট ট্যাব",
+      "tabsFallback": "৮টি ব্যালেন্স শিট ও লেজার ট্যাব",
       "syncConfirmBtn": "নিশ্চিত করুন ও গুগল শিটসে সিঙ্ক করুন",
       "authRequiredTitle": "গুগল অনুমোদন প্রয়োজন",
       "authRequiredDesc": "শিটস সিঙ্ক অনুমোদন করতে প্রথমে আপনার গুগল ওয়ার্কস্পেস অ্যাকাউন্ট সংযুক্ত করুন।",

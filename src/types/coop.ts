@@ -230,6 +230,7 @@ export interface FundConfig {
   constitutionUploadedBy?: string;
   googleSheetId?: string;
   googleSheetUrl?: string;
+  googleSheetTitle?: string;
   lastSheetSyncAt?: string;
   autoSyncSheet?: boolean;
   lastMonthlyPdfSentMonth?: string;

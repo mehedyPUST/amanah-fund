@@ -15,9 +15,12 @@ const WORKSPACE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
 ];
 
+// Strictly in-memory OAuth token storage — never persist Google access tokens in localStorage/sessionStorage.
 let cachedAccessToken: string | null = null;
 let cachedFirebaseUser: User | null = null;
 let authInstance: Auth | null = null;
+let isSigningIn = false;
+const listeners = new Set<(info: WorkspaceSessionInfo) => void>();
 
 function ensureFirebaseAuth(): Auth {
   if (authInstance) return authInstance;
@@ -42,21 +45,69 @@ export function getWorkspaceSessionInfo(): WorkspaceSessionInfo {
   };
 }
 
+function notifyListeners() {
+  const snapshot = getWorkspaceSessionInfo();
+  listeners.forEach((cb) => {
+    try {
+      cb(snapshot);
+    } catch {
+      // ignore subscriber callback error
+    }
+  });
+}
+
 export function getWorkspaceToken(): string | null {
   return cachedAccessToken;
+}
+
+export function clearWorkspaceToken(): void {
+  cachedAccessToken = null;
+  notifyListeners();
 }
 
 export function subscribeWorkspaceAuth(
   onUpdate: (info: WorkspaceSessionInfo) => void
 ): () => void {
   const auth = ensureFirebaseAuth();
-  return onAuthStateChanged(auth, (fbUser) => {
+  listeners.add(onUpdate);
+  const unsubAuth = onAuthStateChanged(auth, (fbUser) => {
+    // Guard against auth state race while interactive popup flow is in progress
+    if (isSigningIn) return;
     cachedFirebaseUser = fbUser;
     if (!fbUser) {
       cachedAccessToken = null;
     }
-    onUpdate(getWorkspaceSessionInfo());
+    notifyListeners();
   });
+
+  return () => {
+    listeners.delete(onUpdate);
+    unsubAuth();
+  };
+}
+
+function formatGoogleAuthError(err: unknown): Error {
+  const code = (err as { code?: string } | null)?.code || '';
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    return new Error('Google sign-in popup was closed before completing authorization.');
+  }
+  if (code === 'auth/popup-blocked') {
+    return new Error(
+      'Your browser blocked the Google sign-in popup. Please allow popups for this site and try again.'
+    );
+  }
+  if (code === 'auth/unauthorized-domain') {
+    return new Error(
+      'This domain is not yet authorized for Google sign-in in the connected Firebase project.'
+    );
+  }
+  if (code === 'auth/network-request-failed') {
+    return new Error('Network error while connecting to Google. Please check your connection and try again.');
+  }
+  if (err instanceof Error && err.message) {
+    return err;
+  }
+  return new Error('Failed to sign in with Google. Please try again.');
 }
 
 export async function connectGoogleWorkspace(): Promise<WorkspaceSessionInfo> {
@@ -65,25 +116,37 @@ export async function connectGoogleWorkspace(): Promise<WorkspaceSessionInfo> {
   WORKSPACE_SCOPES.forEach((scope) => provider.addScope(scope));
   provider.setCustomParameters({ prompt: 'consent select_account' });
 
-  const result = await signInWithPopup(auth, provider);
-  const credential = GoogleAuthProvider.credentialFromResult(result);
-  const token = credential?.accessToken || null;
+  isSigningIn = true;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const token = credential?.accessToken || null;
 
-  if (!token) {
-    throw new Error(
-      'Google did not return an OAuth access token for Sheets/Gmail. Please approve both permissions.'
-    );
+    if (!token) {
+      throw new Error(
+        'Google did not return an OAuth access token for Google Sheets & Gmail. Please approve the requested permissions.'
+      );
+    }
+
+    cachedFirebaseUser = result.user;
+    cachedAccessToken = token;
+    notifyListeners();
+    return getWorkspaceSessionInfo();
+  } catch (err) {
+    throw formatGoogleAuthError(err);
+  } finally {
+    isSigningIn = false;
   }
-
-  cachedFirebaseUser = result.user;
-  cachedAccessToken = token;
-  return getWorkspaceSessionInfo();
 }
 
 export async function disconnectGoogleWorkspace(): Promise<WorkspaceSessionInfo> {
   const auth = ensureFirebaseAuth();
   cachedAccessToken = null;
   cachedFirebaseUser = null;
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } finally {
+    notifyListeners();
+  }
   return getWorkspaceSessionInfo();
 }

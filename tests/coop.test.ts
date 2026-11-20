@@ -3,12 +3,14 @@ import {
   appendAuditLog,
   applyOverdueChecksToState,
   buildDashboardOverview,
+  buildGoogleSheetsBlueprint,
   buildManagerCycleSchedule,
   buildMemberPublicProfile,
   buildMemberSummaries,
   buildMonthlySheetData,
   computeRequiredApprovals,
   evaluateLoanEligibility,
+  extractGoogleSpreadsheetId,
   extractMentionedUsers,
   hydrateLoanForViewer,
   hydrateProfileChangeRequestsForViewer,
@@ -2726,6 +2728,53 @@ describe('Member credentials editing helpers & Admin-only approval visibility', 
     expect(bodyPayload?.error).toMatch(/expired or invalid/i);
   });
 });
+
+describe('Google Sheets Blueprint & Spreadsheet ID parsing', () => {
+  it('extracts valid Google Spreadsheet IDs from URLs and raw IDs and rejects invalid input', () => {
+    expect(
+      extractGoogleSpreadsheetId(
+        'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit#gid=0'
+      )
+    ).toBe('1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms');
+    expect(extractGoogleSpreadsheetId('  1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms  ')).toBe(
+      '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
+    );
+    expect(extractGoogleSpreadsheetId('short')).toBe('');
+    expect(extractGoogleSpreadsheetId('https://example.com/not-a-sheet')).toBe('');
+  });
+
+  it('generates 8 blueprint tabs with live Balance_Sheet first for the requested month', () => {
+    const state = makeBaseState();
+    const nowYear = new Date().getUTCFullYear();
+    const targetMonth = `${nowYear}-01`;
+    const tabs = buildGoogleSheetsBlueprint(state, targetMonth);
+
+    expect(tabs).toHaveLength(8);
+    expect(tabs[0].sheetName).toBe('Balance_Sheet');
+    expect(tabs[1].sheetName).toBe('Fund_Summary');
+
+    const balanceRows = tabs[0].rows;
+    // Header + 2 active non-admin members (u-2, u-3) + TOTAL row
+    expect(balanceRows).toHaveLength(4);
+    expect(balanceRows[0][1]).toBe('Member Name');
+    expect(balanceRows[0][2]).toBe('Member ID');
+    expect(balanceRows[0][7]).toContain(targetMonth);
+
+    const bilalRow = balanceRows.find((r) => r[2] === 'AC-002');
+    expect(bilalRow).toBeDefined();
+    expect(bilalRow?.[7]).toBe(5000);
+    expect(bilalRow?.[10]).toBe(5000);
+
+    const totalRow = balanceRows[balanceRows.length - 1];
+    expect(totalRow[0]).toBe('TOTAL');
+    expect(totalRow[2]).toBe(targetMonth);
+    expect(totalRow[13]).toBe('BALANCED');
+
+    const periodRow = tabs[1].rows.find((r) => r[0] === 'Balance Sheet Period');
+    expect(periodRow?.[1]).toBe(targetMonth);
+  });
+});
+
 
 
 

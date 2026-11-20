@@ -1254,7 +1254,19 @@ export interface SheetTabBlueprint {
   rows: (string | number)[][];
 }
 
-export function buildGoogleSheetsBlueprint(state: VaultState): SheetTabBlueprint[] {
+export function extractGoogleSpreadsheetId(raw: string): string {
+  const trimmed = (raw || '').trim();
+  if (!trimmed) return '';
+  const urlMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const candidate = urlMatch ? urlMatch[1] : trimmed;
+  return /^[a-zA-Z0-9-_]{12,}$/.test(candidate) ? candidate : '';
+}
+
+export function buildGoogleSheetsBlueprint(
+  state: VaultState,
+  targetMonth?: string
+): SheetTabBlueprint[] {
+  const balanceSheet = buildMonthlySheetData(state, targetMonth);
   const approvedContribs = state.contributions.filter((c) => c.status === 'approved');
   const totalContrib = approvedContribs.reduce((s, c) => s + c.amount, 0);
   const approvedLoans = state.loans.filter(
@@ -1267,10 +1279,62 @@ export function buildGoogleSheetsBlueprint(state: VaultState): SheetTabBlueprint
   const totalRepaid = approvedLoans.reduce((s, l) => s + l.totalRepaid, 0);
   const centralBalance = totalContrib - totalLoansDeducted + totalRepaid;
 
+  const balanceSheetRows: (string | number)[][] = [
+    [
+      'SL',
+      'Member Name',
+      'Member ID',
+      'Phone',
+      `Prev Cumul Contrib (< ${balanceSheet.month})`,
+      `Prev Cumul Qard (< ${balanceSheet.month})`,
+      'Prev Qard Due',
+      `Curr Month Contrib (${balanceSheet.month})`,
+      `Curr Month Qard (${balanceSheet.month})`,
+      `Curr Month Refund Qard (${balanceSheet.month})`,
+      'Closing Cumul Contrib',
+      'Closing Cumul Qard',
+      'Closing Qard Due',
+      'Status',
+    ],
+    ...balanceSheet.rows.map((r) => [
+      r.serialNo,
+      r.name,
+      r.memberCode,
+      r.mobile,
+      r.previousSummary.contributionAmount,
+      r.previousSummary.qardHasanAmount,
+      r.previousSummary.dueHasanaAmount,
+      r.thisMonth.contributionAmount,
+      r.thisMonth.qardHasanAmount,
+      r.thisMonth.repaidAmount,
+      r.thisMonthSummary.contributionAmount,
+      r.thisMonthSummary.qardHasanAmount,
+      r.thisMonthSummary.dueHasanaAmount,
+      r.contributionStatus.toUpperCase(),
+    ]),
+    [
+      'TOTAL',
+      `${balanceSheet.rows.length} Active Members`,
+      balanceSheet.month,
+      balanceSheet.currency,
+      balanceSheet.previousMonthSummary.contributionAmount,
+      balanceSheet.previousMonthSummary.qardHasanAmount,
+      balanceSheet.previousMonthSummary.dueHasanaAmount,
+      balanceSheet.thisMonthOnly.contributionAmount,
+      balanceSheet.thisMonthOnly.qardHasanAmount,
+      balanceSheet.thisMonthRepaidAmount,
+      balanceSheet.thisMonthSummary.contributionAmount,
+      balanceSheet.thisMonthSummary.qardHasanAmount,
+      balanceSheet.thisMonthSummary.dueHasanaAmount,
+      'BALANCED',
+    ],
+  ];
+
   const summaryRows: (string | number)[][] = [
     ['Metric', 'Value', 'Notes'],
     ['Fund Name', state.fundConfig.fundName, 'Cooperative entity'],
     ['Currency', state.fundConfig.currency, 'Active ledger currency'],
+    ['Balance Sheet Period', balanceSheet.month, 'Active monthly sheet period synced'],
     ['Maturity Date', state.fundConfig.maturityDate, 'Pre-specified Halal investment transition date'],
     ['Max Loans Per Member / Year', state.fundConfig.maxLoansPerYear, 'Admin configurable annual quota'],
     ['Approved Contributions (+)', totalContrib, `${approvedContribs.length} approved deposits`],
@@ -1435,6 +1499,7 @@ export function buildGoogleSheetsBlueprint(state: VaultState): SheetTabBlueprint
   ];
 
   return [
+    { sheetName: 'Balance_Sheet', rows: balanceSheetRows },
     { sheetName: 'Fund_Summary', rows: summaryRows },
     { sheetName: 'Members', rows: memberRows },
     { sheetName: 'Contributions', rows: contribRows },
