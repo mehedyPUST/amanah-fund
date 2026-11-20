@@ -637,9 +637,10 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   const pendingMembersCount = state.users.filter(
     (u) => u.status === 'pending_approval' || u.status === 'pending_activation'
   ).length;
-  const pendingProfileRequestsCount = (state.profileChangeRequests || []).filter(
-    (r) => r.status === 'pending'
-  ).length;
+  const pendingProfileRequestsCount =
+    currentUser.role === 'admin'
+      ? (state.profileChangeRequests || []).filter((r) => r.status === 'pending').length
+      : 0;
   const openDecisionPollsCount = (state.decisionPolls || []).filter(
     (p) => p.status === 'open'
   ).length;

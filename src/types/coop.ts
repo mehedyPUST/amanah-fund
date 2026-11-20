@@ -561,13 +561,30 @@ export interface CoopMeeting {
 
 export interface ProfileChangePayload {
   name?: string;
+  nameBn?: string;
   email?: string;
+  fatherName?: string;
+  fatherNameBn?: string;
+  motherName?: string;
+  motherNameBn?: string;
+  gender?: MemberGender;
+  maritalStatus?: MaritalStatus;
+  spouseName?: string;
+  spouseNameBn?: string;
+  dateOfBirth?: string;
+  referenceMemberName?: string;
   mobile?: string;
   occupation?: string;
   companyOrganization?: string;
+  nid?: string;
   presentAddress?: string;
   permanentAddress?: string;
+  presentAddressDetails?: StructuredBdAddress;
+  permanentAddressDetails?: StructuredBdAddress;
+  socialMedia?: MemberSocialMedia;
   photoUrl?: string;
+  signatureUrl?: string;
+  nominees?: NomineeInfo[];
 }
 
 export interface ProfileChangeRequest {

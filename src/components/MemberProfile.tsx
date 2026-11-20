@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   AlertCircle,
   Bell,
@@ -9,35 +9,75 @@ import {
   Clock,
   Download,
   ExternalLink,
+  FileCheck2,
   FileText,
+  Globe,
+  ImagePlus,
   KeyRound,
+  Languages,
   Loader2,
   Lock,
+  PenTool,
+  Plus,
   RefreshCw,
   Save,
   ShieldCheck,
   Smartphone,
+  Sparkles,
   Trash2,
   User as UserIcon,
+  Users,
+  X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { AppLocale } from '../i18n/config.ts';
 import { translateRoleLabel } from '../i18n/messages.ts';
-import type { NotificationPreferences, ProfileChangeRequest, PublicUser } from '../types/coop.ts';
+import type {
+  MaritalStatus,
+  MemberGender,
+  NomineeGender,
+  NomineeInfo,
+  NotificationPreferences,
+  ProfileChangePayload,
+  ProfileChangeRequest,
+  PublicUser,
+  StructuredBdAddress,
+} from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
+import {
+  areBdAddressesEqual,
+  createEmptyBdAddress,
+  formatBdAddress,
+  hydrateStructuredBdAddress,
+  isBdAddressComplete,
+} from '../utils/bdLocations.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
+import {
+  containsBanglaScript,
+  containsLatinLetters,
+  isValidBanglaName,
+} from '../utils/inputLanguage.ts';
 import {
   detectDefaultMobileDeviceName,
   getLocalDeviceForUser,
   removeRegisteredMobileAccount,
   saveRegisteredMobileAccount,
 } from '../utils/mobileDeviceAuth.ts';
+import {
+  createEmptyNomineeDraft,
+  formatProfileChangeEntries,
+  getLogicalRelationOptions,
+  nomineeInfoToDraft,
+  OTHER_RELATION_VALUE,
+  type NomineeDraft,
+} from '../utils/profileChanges.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
+import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
 
 interface MemberProfileProps {
   user: PublicUser;
@@ -46,6 +86,8 @@ interface MemberProfileProps {
 
 export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const t = useTranslations('Profile');
+  const tSignUp = useTranslations('Auth.signUpPage');
+  const tAuth = useTranslations('Auth');
   const tCommon = useTranslations('Common');
   const locale = useLocale() as AppLocale;
   const { setUser } = useCoopSession();
@@ -79,14 +121,61 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     []
   );
 
-  // Editable contact & profile fields
+  const [referenceOptions, setReferenceOptions] = useState<
+    Array<{ name: string; memberCode: string }>
+  >([]);
+
+  // Editable member credential fields (mirrors SignUpForm without password)
   const [name, setName] = useState(user.name);
+  const [nameBn, setNameBn] = useState('');
   const [email, setEmail] = useState(user.email);
   const [mobile, setMobile] = useState('');
-  const [presentAddress, setPresentAddress] = useState('');
-  const [permanentAddress, setPermanentAddress] = useState('');
+  const [fatherName, setFatherName] = useState('');
+  const [fatherNameBn, setFatherNameBn] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [motherNameBn, setMotherNameBn] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [gender, setGender] = useState<'' | MemberGender>('');
+  const [maritalStatus, setMaritalStatus] = useState<'' | MaritalStatus>('');
+  const [nid, setNid] = useState('');
+  const [spouseName, setSpouseName] = useState('');
+  const [spouseNameBn, setSpouseNameBn] = useState('');
+  const [referenceMemberName, setReferenceMemberName] = useState('');
   const [occupation, setOccupation] = useState('');
   const [companyOrganization, setCompanyOrganization] = useState('');
+
+  // Optional Social Media fields
+  const [showSocialSection, setShowSocialSection] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+  const [facebook, setFacebook] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+
+  // Structured Teletalk-style Bangladesh addresses
+  const [presentAddressDetails, setPresentAddressDetails] = useState<StructuredBdAddress>(() =>
+    createEmptyBdAddress()
+  );
+  const [permanentAddressDetails, setPermanentAddressDetails] = useState<StructuredBdAddress>(() =>
+    createEmptyBdAddress()
+  );
+  const [sameAsPresent, setSameAsPresent] = useState(false);
+
+  // Nominees
+  const [nominees, setNominees] = useState<NomineeDraft[]>(() => [
+    createEmptyNomineeDraft('100', 'profile-nom-1'),
+  ]);
+
+  // Identity Photo & 300x80 Signature
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [signatureUrl, setSignatureUrl] = useState('');
+  const [signatureUploading, setSignatureUploading] = useState(false);
+  const [pendingSignature, setPendingSignature] = useState<{
+    file: File;
+    previewUrl: string;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [credError, setCredError] = useState<string | null>(null);
 
   // Password change state (instant, no approval required)
   const [currentPassword, setCurrentPassword] = useState('');
@@ -146,16 +235,92 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   );
   const [prefsBusy, setPrefsBusy] = useState(false);
 
+  const effectivePermanentAddressDetails = useMemo(
+    () => (sameAsPresent ? presentAddressDetails : permanentAddressDetails),
+    [sameAsPresent, presentAddressDetails, permanentAddressDetails]
+  );
+
+  const presentAddress = useMemo(
+    () => formatBdAddress(presentAddressDetails),
+    [presentAddressDetails]
+  );
+  const permanentAddress = useMemo(
+    () => formatBdAddress(effectivePermanentAddressDetails),
+    [effectivePermanentAddressDetails]
+  );
+
+  const anyNomineePhotoUploading = nominees.some((n) => n.photoUploading);
+  const totalNomineeShare =
+    nominees.length === 1
+      ? 100
+      : Math.round(
+          nominees.reduce((sum, n) => {
+            const val = Number(n.sharePercentage);
+            return Number.isFinite(val) && val > 0 ? sum + val : sum;
+          }, 0) * 100
+        ) / 100;
+
   const populateForm = useCallback((loaded: PublicUser) => {
     const reg = loaded.registrationDetails;
     setProfile(loaded);
-    setName(loaded.name);
-    setEmail(loaded.email);
+    setName(loaded.name || '');
+    setNameBn(reg?.nameBn || '');
+    setEmail(loaded.email || '');
     setMobile(reg?.mobile || '');
-    setPresentAddress(reg?.presentAddress || '');
-    setPermanentAddress(reg?.permanentAddress || '');
+    setFatherName(reg?.fatherName || '');
+    setFatherNameBn(reg?.fatherNameBn || '');
+    setMotherName(reg?.motherName || '');
+    setMotherNameBn(reg?.motherNameBn || '');
+    setDateOfBirth(reg?.dateOfBirth || '');
+    const savedGender: '' | MemberGender = reg?.gender || '';
+    setGender(savedGender);
+    setMaritalStatus(reg?.maritalStatus || '');
+    setNid(reg?.nid || '');
+    setSpouseName(reg?.maritalStatus === 'single' ? '' : reg?.spouseName || '');
+    setSpouseNameBn(reg?.maritalStatus === 'single' ? '' : reg?.spouseNameBn || '');
+    setReferenceMemberName(reg?.referenceMemberName || '');
     setOccupation(reg?.occupation || '');
     setCompanyOrganization(reg?.companyOrganization || '');
+
+    const savedWhatsapp = reg?.socialMedia?.whatsapp || '';
+    const savedFacebook = reg?.socialMedia?.facebook || '';
+    const savedLinkedin = reg?.socialMedia?.linkedin || '';
+    setWhatsapp(savedWhatsapp);
+    setFacebook(savedFacebook);
+    setLinkedin(savedLinkedin);
+    setShowSocialSection(Boolean(savedWhatsapp || savedFacebook || savedLinkedin));
+
+    const hydratedPresent = hydrateStructuredBdAddress(
+      reg?.presentAddressDetails,
+      reg?.presentAddress
+    );
+    const hydratedPermanent = hydrateStructuredBdAddress(
+      reg?.permanentAddressDetails,
+      reg?.permanentAddress
+    );
+    const matchesSameAddress =
+      Object.values(hydratedPresent).some(Boolean) &&
+      areBdAddressesEqual(hydratedPresent, hydratedPermanent);
+    setPresentAddressDetails(hydratedPresent);
+    setPermanentAddressDetails(hydratedPermanent);
+    setSameAsPresent(matchesSameAddress);
+
+    const savedPresentStr = formatBdAddress(hydratedPresent) || reg?.presentAddress || '';
+    if (reg?.nominees && reg.nominees.length > 0) {
+      setNominees(
+        reg.nominees.map((nom, idx) =>
+          nomineeInfoToDraft(nom, idx, savedGender, savedPresentStr)
+        )
+      );
+    } else {
+      setNominees([createEmptyNomineeDraft('100', 'profile-nom-1')]);
+    }
+
+    setPhotoUrl(reg?.photoUrl || loaded.photoUrl || '');
+    setSignatureUrl(reg?.signatureUrl || '');
+    setPendingSignature(null);
+    setCredError(null);
+
     if (loaded.notificationPreferences) {
       setPrefs(loaded.notificationPreferences);
     }
@@ -169,12 +334,14 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const [res, reqRes] = await Promise.all([
+      const [res, reqRes, refRes] = await Promise.all([
         api.getProfile(),
         api.getProfileChangeRequests().catch(() => ({ requests: [] as ProfileChangeRequest[] })),
+        api.getReferenceMembers().catch(() => ({ members: [] as Array<{ name: string; memberCode: string }> })),
       ]);
       populateForm(res.user);
       setChangeRequests(reqRes.requests.filter((r) => r.userId === user.id));
+      setReferenceOptions(refRes.members || []);
     } catch (err) {
       setModal({
         mode: 'notice',
@@ -192,6 +359,22 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   }, [loadProfile]);
 
   useEffect(() => {
+    return () => {
+      if (pendingSignature?.previewUrl) {
+        URL.revokeObjectURL(pendingSignature.previewUrl);
+      }
+    };
+  }, [pendingSignature?.previewUrl]);
+
+  useEffect(() => {
+    setNominees((prev) => {
+      const hasSynced = prev.some((n) => n.sameAsApplicantPresent && n.address !== presentAddress);
+      if (!hasSynced) return prev;
+      return prev.map((n) => (n.sameAsApplicantPresent ? { ...n, address: presentAddress } : n));
+    });
+  }, [presentAddress]);
+
+  useEffect(() => {
     const syncLocal = () => {
       const local = getLocalDeviceForUser(user.id);
       setLocalDeviceId(local?.deviceId || null);
@@ -202,18 +385,459 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
     return () => window.removeEventListener('amanah:mobile-devices-updated', syncLocal);
   }, [user.id]);
 
-  function handleSaveContactInfo(e: FormEvent) {
-    e.preventDefault();
+  function updateNomineeField<K extends keyof NomineeDraft>(
+    index: number,
+    field: K,
+    value: NomineeDraft[K]
+  ) {
+    setNominees((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const next: NomineeDraft = { ...item, [field]: value };
+        if (field === 'gender') {
+          const nextGender = value as '' | NomineeGender;
+          if (nextGender === 'female') {
+            next.photoUrl = '';
+          }
+          const allowed = getLogicalRelationOptions(nextGender, gender);
+          if (
+            next.relation &&
+            next.relation !== OTHER_RELATION_VALUE &&
+            !allowed.includes(next.relation)
+          ) {
+            next.relation = '';
+            next.customRelation = '';
+          }
+        }
+        if (field === 'relation' && value !== OTHER_RELATION_VALUE) {
+          next.customRelation = '';
+        }
+        return next;
+      })
+    );
+  }
 
-    if (!mobile.trim() || !presentAddress.trim() || !permanentAddress.trim()) {
-      setModal({
-        mode: 'notice',
-        tone: 'red',
-        title: t('missingContactTitle'),
-        description: t('missingContactDesc'),
+  function handleApplicantGenderChange(nextGender: '' | MemberGender) {
+    setGender(nextGender);
+    setNominees((prev) =>
+      prev.map((item) => {
+        if (!item.gender || !item.relation || item.relation === OTHER_RELATION_VALUE) {
+          return item;
+        }
+        const allowed = getLogicalRelationOptions(item.gender, nextGender);
+        return allowed.includes(item.relation) ? item : { ...item, relation: '' };
+      })
+    );
+  }
+
+  function handleAddNominee() {
+    setCredError(null);
+    setNominees((prev) => {
+      if (prev.length >= 10) return prev;
+      if (prev.length === 1 && (Number(prev[0].sharePercentage) === 100 || !prev[0].sharePercentage)) {
+        return [{ ...prev[0], sharePercentage: '50' }, createEmptyNomineeDraft('50')];
+      }
+      const existingSum = prev.reduce((sum, n) => {
+        const val = Number(n.sharePercentage);
+        return Number.isFinite(val) && val > 0 ? sum + val : sum;
+      }, 0);
+      const remaining = Math.max(0, Math.round((100 - existingSum) * 100) / 100);
+      return [...prev, createEmptyNomineeDraft(remaining > 0 ? String(remaining) : '')];
+    });
+  }
+
+  function handleRemoveNominee(index: number) {
+    setNominees((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 1) {
+        return [{ ...next[0], sharePercentage: '100' }];
+      }
+      return next;
+    });
+  }
+
+  function handleEqualSplitShares() {
+    setNominees((prev) => {
+      const count = prev.length;
+      if (count <= 1) return prev.map((n) => ({ ...n, sharePercentage: '100' }));
+      const base = Math.floor(10000 / count) / 100;
+      let running = 0;
+      return prev.map((n, idx) => {
+        if (idx === count - 1) {
+          const lastShare = Math.round((100 - running) * 100) / 100;
+          return { ...n, sharePercentage: String(lastShare) };
+        }
+        running += base;
+        return { ...n, sharePercentage: String(base) };
       });
+    });
+  }
+
+  async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setCredError(tSignUp('errInvalidImage'));
       return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      setCredError(tSignUp('errFileTooLarge'));
+      return;
+    }
+
+    setCredError(null);
+    setPhotoUploading(true);
+
+    try {
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: 'member-kyc-photo',
+        subject: name.trim() || email.trim() || profile.memberCode,
+      });
+      setPhotoUrl(res.url);
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : tSignUp('errUploadFailed'));
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
+  async function uploadSignatureFile(file: File) {
+    setSignatureUploading(true);
+    setCredError(null);
+    try {
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: 'member-signature',
+        subject: name.trim() || email.trim() || profile.memberCode,
+      });
+      setSignatureUrl(res.url);
+      setPendingSignature(null);
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : tSignUp('errSignatureUploadFailed'));
+    } finally {
+      setSignatureUploading(false);
+    }
+  }
+
+  function handleSignatureSelect(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setCredError(tSignUp('errInvalidSignature'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCredError(tSignUp('errSignatureSize'));
+      return;
+    }
+
+    setCredError(null);
+    const previewUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+      if (width === 300 && height === 80) {
+        URL.revokeObjectURL(previewUrl);
+        void uploadSignatureFile(file);
+      } else {
+        setPendingSignature({ file, previewUrl, width, height });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(previewUrl);
+      setCredError(tSignUp('errInvalidSignature'));
+    };
+    img.src = previewUrl;
+  }
+
+  async function handleAutoResizeSignature() {
+    if (!pendingSignature) return;
+    setSignatureUploading(true);
+    setCredError(null);
+
+    try {
+      const resizedFile = await new Promise<File>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300;
+          canvas.height = 80;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context unavailable'));
+            return;
+          }
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 300, 80);
+
+          const padX = 6;
+          const padY = 4;
+          const availW = 300 - padX * 2;
+          const availH = 80 - padY * 2;
+          const scale = Math.min(availW / img.naturalWidth, availH / img.naturalHeight);
+          const drawW = Math.round(img.naturalWidth * scale);
+          const drawH = Math.round(img.naturalHeight * scale);
+          const dx = Math.round((300 - drawW) / 2);
+          const dy = Math.round((80 - drawH) / 2);
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, dx, dy, drawW, drawH);
+
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to generate 300×80 signature image.'));
+              return;
+            }
+            resolve(new File([blob], 'signature-300x80.png', { type: 'image/png' }));
+          }, 'image/png');
+        };
+        img.onerror = () => reject(new Error('Failed to load signature preview.'));
+        img.src = pendingSignature.previewUrl;
+      });
+
+      await uploadSignatureFile(resizedFile);
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : tSignUp('errSignatureUploadFailed'));
+      setSignatureUploading(false);
+    }
+  }
+
+  async function handleNomineePhotoUpload(index: number, e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setCredError(tSignUp('errNomineeImage'));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setCredError(tSignUp('errNomineeSize'));
+      return;
+    }
+
+    setCredError(null);
+    setNominees((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, photoUploading: true } : item))
+    );
+
+    try {
+      const nomineeName = nominees[index]?.name.trim();
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: 'nominee-kyc-photo',
+        subject: nomineeName || name.trim() || `nominee-${index + 1}`,
+      });
+      setNominees((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, photoUrl: res.url, photoUploading: false } : item
+        )
+      );
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : tSignUp('errNomineeUploadFailed'));
+      setNominees((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, photoUploading: false } : item))
+      );
+    }
+  }
+
+  function handleSaveContactInfo(e: FormEvent) {
+    e.preventDefault();
+    setCredError(null);
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !mobile.trim() ||
+      !fatherName.trim() ||
+      !motherName.trim() ||
+      !dateOfBirth.trim() ||
+      !gender ||
+      !maritalStatus ||
+      !nid.trim() ||
+      !occupation.trim() ||
+      !companyOrganization.trim()
+    ) {
+      setCredError(t('missingCredentialsDesc'));
+      return;
+    }
+
+    if (maritalStatus === 'married' && !spouseName.trim()) {
+      setCredError(tSignUp('errSpouseRequired'));
+      return;
+    }
+
+    const englishOnlyFields: Array<{ field: string; value: string }> = [
+      { field: tSignUp('fullName'), value: name },
+      { field: tAuth('email'), value: email },
+      { field: tSignUp('fatherName'), value: fatherName },
+      { field: tSignUp('motherName'), value: motherName },
+      { field: tSignUp('spouseName'), value: maritalStatus === 'single' ? '' : spouseName },
+      { field: tSignUp('mobile'), value: mobile },
+      { field: tSignUp('nid'), value: nid },
+      { field: tSignUp('referenceLabel'), value: referenceMemberName },
+      { field: tSignUp('occupation'), value: occupation },
+      { field: tSignUp('company'), value: companyOrganization },
+      { field: tSignUp('whatsappLabel'), value: whatsapp },
+      { field: tSignUp('facebookLabel'), value: facebook },
+      { field: tSignUp('linkedinLabel'), value: linkedin },
+      { field: tSignUp('presentAddress'), value: presentAddress },
+      { field: tSignUp('permanentAddress'), value: permanentAddress },
+    ];
+    for (const item of englishOnlyFields) {
+      if (item.value && containsBanglaScript(item.value)) {
+        setCredError(tSignUp('errEnglishOnlyField', { field: item.field }));
+        return;
+      }
+    }
+
+    const banglaNameFields: Array<{ field: string; value: string }> = [
+      { field: tSignUp('fullNameBn'), value: nameBn },
+      { field: tSignUp('fatherNameBn'), value: fatherNameBn },
+      { field: tSignUp('motherNameBn'), value: motherNameBn },
+      { field: tSignUp('spouseNameBn'), value: maritalStatus === 'single' ? '' : spouseNameBn },
+    ];
+    for (const item of banglaNameFields) {
+      if (item.value.trim() && !isValidBanglaName(item.value)) {
+        setCredError(tSignUp('errBanglaNameField', { field: item.field }));
+        return;
+      }
+    }
+
+    if (!isBdAddressComplete(presentAddressDetails)) {
+      setCredError(tSignUp('errPresentAddressIncomplete'));
+      return;
+    }
+    if (!isBdAddressComplete(effectivePermanentAddressDetails)) {
+      setCredError(tSignUp('errPermanentAddressIncomplete'));
+      return;
+    }
+    if (!photoUrl) {
+      setCredError(tSignUp('errPhotoRequired'));
+      return;
+    }
+    if (!signatureUrl) {
+      setCredError(tSignUp('errSignatureRequired'));
+      return;
+    }
+
+    const preparedNominees: NomineeInfo[] = [];
+    const multipleNominees = nominees.length > 1;
+    let shareSum = 0;
+
+    for (let i = 0; i < nominees.length; i += 1) {
+      const n = nominees[i];
+      const prefix = multipleNominees
+        ? tSignUp('nomineeNumber', { number: i + 1 })
+        : tSignUp('primaryNominee');
+      const resolvedRelation =
+        n.relation === OTHER_RELATION_VALUE ? n.customRelation.trim() : n.relation.trim();
+
+      if (
+        !n.name.trim() ||
+        !n.dateOfBirth.trim() ||
+        !n.gender ||
+        !n.occupation.trim() ||
+        !resolvedRelation ||
+        !n.nidOrBirthReg.trim() ||
+        !n.address.trim()
+      ) {
+        setCredError(tSignUp('errNomineeIncomplete', { prefix }));
+        return;
+      }
+
+      const nomineeEnglishChecks: Array<{ field: string; value: string }> = [
+        { field: `${prefix} · ${tSignUp('nomineeName')}`, value: n.name },
+        { field: `${prefix} · ${tSignUp('occupation')}`, value: n.occupation },
+        { field: `${prefix} · ${tSignUp('relation')}`, value: resolvedRelation },
+        { field: `${prefix} · ${tSignUp('nidBirthReg')}`, value: n.nidOrBirthReg },
+        { field: `${prefix} · ${tSignUp('nomineeMobile')}`, value: n.mobile },
+        { field: `${prefix} · ${tSignUp('nomineeAddress')}`, value: n.address },
+      ];
+      for (const item of nomineeEnglishChecks) {
+        if (item.value && containsBanglaScript(item.value)) {
+          setCredError(tSignUp('errEnglishOnlyField', { field: item.field }));
+          return;
+        }
+      }
+      if (n.nameBn.trim() && !isValidBanglaName(n.nameBn)) {
+        setCredError(tSignUp('errBanglaNameField', { field: `${prefix} · ${tSignUp('nomineeNameBn')}` }));
+        return;
+      }
+
+      if (n.gender !== 'female' && !n.photoUrl) {
+        setCredError(tSignUp('errNomineePhotoRequired', { prefix }));
+        return;
+      }
+
+      let sharePercentage = 100;
+      if (multipleNominees) {
+        const parsed = Number(n.sharePercentage);
+        if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
+          setCredError(tSignUp('errNomineeShareRange', { prefix }));
+          return;
+        }
+        sharePercentage = Math.round(parsed * 100) / 100;
+        shareSum += sharePercentage;
+      } else {
+        shareSum = 100;
+      }
+
+      preparedNominees.push({
+        name: n.name.trim(),
+        nameBn: n.nameBn.trim() || undefined,
+        dateOfBirth: n.dateOfBirth.trim(),
+        gender: n.gender,
+        occupation: n.occupation.trim(),
+        relation: resolvedRelation,
+        sharePercentage,
+        nidOrBirthReg: n.nidOrBirthReg.trim(),
+        mobile: n.mobile.trim() || undefined,
+        address: n.address.trim(),
+        photoUrl: n.gender === 'female' ? undefined : n.photoUrl || undefined,
+      });
+    }
+
+    if (multipleNominees && Math.abs(shareSum - 100) > 0.05) {
+      setCredError(tSignUp('errTotalShare', { current: Math.round(shareSum * 100) / 100 }));
+      return;
+    }
+
+    const payload: ProfileChangePayload = {
+      name: name.trim(),
+      nameBn: nameBn.trim(),
+      email: email.trim(),
+      fatherName: fatherName.trim(),
+      fatherNameBn: fatherNameBn.trim(),
+      motherName: motherName.trim(),
+      motherNameBn: motherNameBn.trim(),
+      gender: gender as MemberGender,
+      maritalStatus: maritalStatus as MaritalStatus,
+      spouseName: maritalStatus === 'single' ? '' : spouseName.trim(),
+      spouseNameBn: maritalStatus === 'single' ? '' : spouseNameBn.trim(),
+      dateOfBirth: dateOfBirth.trim(),
+      referenceMemberName: referenceMemberName.trim(),
+      mobile: mobile.trim(),
+      occupation: occupation.trim(),
+      companyOrganization: companyOrganization.trim(),
+      nid: nid.trim(),
+      presentAddress,
+      permanentAddress,
+      presentAddressDetails: { ...presentAddressDetails },
+      permanentAddressDetails: { ...effectivePermanentAddressDetails },
+      socialMedia: {
+        whatsapp: whatsapp.trim() || undefined,
+        facebook: facebook.trim() || undefined,
+        linkedin: linkedin.trim() || undefined,
+      },
+      photoUrl,
+      signatureUrl,
+      nominees: preparedNominees,
+    };
 
     setModal({
       mode: 'confirm',
@@ -236,15 +860,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       run: async () => {
         setSaving(true);
         try {
-          const res = await api.updateProfile({
-            name: name.trim(),
-            email: email.trim(),
-            mobile: mobile.trim(),
-            presentAddress: presentAddress.trim(),
-            permanentAddress: permanentAddress.trim(),
-            occupation: occupation.trim(),
-            companyOrganization: companyOrganization.trim(),
-          });
+          const res = await api.updateProfile(payload);
           if (res.pendingApproval) {
             await loadProfile();
             await onRefresh();
@@ -1096,7 +1712,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </AnimatePresence>
         </section>
 
-        {/* Editable Contact Information Form */}
+        {/* Editable Member Credentials Form (Matches User Registration Form without Password) */}
         <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
           <button
             type="button"
@@ -1144,10 +1760,30 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     </p>
                   )}
 
+                  {locale === 'bn' && (
+                    <div className="p-3 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex items-start gap-2.5">
+                      <Languages
+                        className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5"
+                        aria-hidden="true"
+                      />
+                      <div className="space-y-0.5 text-xs">
+                        <p className="font-semibold text-emerald-900 dark:text-emerald-200">
+                          {tSignUp('englishInputNoticeTitle')}
+                        </p>
+                        <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                          {tSignUp('englishInputNoticeDesc')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {(() => {
                     const pendingReq = changeRequests.find((r) => r.status === 'pending');
                     const latestReq = changeRequests[0];
                     if (pendingReq) {
+                      const fieldLabels = formatProfileChangeEntries(pendingReq.requestedChanges)
+                        .map((item) => item.label)
+                        .join(', ');
                       return (
                         <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
                           <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
@@ -1157,7 +1793,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                             </div>
                             <p>
                               {t('pendingUpdateDesc', {
-                                fields: Object.keys(pendingReq.requestedChanges).join(', '),
+                                fields: fieldLabels || Object.keys(pendingReq.requestedChanges).join(', '),
                               })}
                             </p>
                           </div>
@@ -1184,129 +1820,1153 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     return null;
                   })()}
 
-                  <form onSubmit={handleSaveContactInfo} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="profile-name"
-                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                        >
-                          {t('labelFullName')}
-                        </label>
-                        <input
-                          id="profile-name"
-                          type="text"
-                          required
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                        />
+                  <AnimatePresence>
+                    {credError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        role="alert"
+                        className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                      >
+                        {credError}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <form onSubmit={handleSaveContactInfo} className="space-y-6">
+                    {/* 01. Personal & Account Information (without password) */}
+                    <div className="space-y-3.5">
+                      <h4 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                        {tSignUp('sec1')}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                          <label
+                            htmlFor="profile-name"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('fullName')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-name"
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder={tSignUp('fullNamePh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(name)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                          {containsBanglaScript(name) && (
+                            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                              {tSignUp('errEnglishOnlyHint')}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-name-bn"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('fullNameBn')}
+                          </label>
+                          <input
+                            id="profile-name-bn"
+                            type="text"
+                            value={nameBn}
+                            onChange={(e) => setNameBn(e.target.value)}
+                            placeholder={tSignUp('fullNameBnPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsLatinLetters(nameBn)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                          {containsLatinLetters(nameBn) && (
+                            <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                              {tSignUp('errBanglaOnlyHint')}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-email"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tAuth('email')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={tAuth('emailPlaceholder')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(email)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-mobile"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('mobile')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-mobile"
+                            type="tel"
+                            required
+                            value={mobile}
+                            onChange={(e) => setMobile(e.target.value)}
+                            placeholder={tSignUp('mobilePh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(mobile)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-father-name"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('fatherName')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-father-name"
+                            type="text"
+                            required
+                            value={fatherName}
+                            onChange={(e) => setFatherName(e.target.value)}
+                            placeholder={tSignUp('fatherNamePh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(fatherName)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-father-name-bn"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('fatherNameBn')}
+                          </label>
+                          <input
+                            id="profile-father-name-bn"
+                            type="text"
+                            value={fatherNameBn}
+                            onChange={(e) => setFatherNameBn(e.target.value)}
+                            placeholder={tSignUp('fatherNameBnPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsLatinLetters(fatherNameBn)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-mother-name"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('motherName')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-mother-name"
+                            type="text"
+                            required
+                            value={motherName}
+                            onChange={(e) => setMotherName(e.target.value)}
+                            placeholder={tSignUp('motherNamePh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(motherName)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-mother-name-bn"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('motherNameBn')}
+                          </label>
+                          <input
+                            id="profile-mother-name-bn"
+                            type="text"
+                            value={motherNameBn}
+                            onChange={(e) => setMotherNameBn(e.target.value)}
+                            placeholder={tSignUp('motherNameBnPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsLatinLetters(motherNameBn)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-dob"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('dob')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-dob"
+                            type="date"
+                            required
+                            value={dateOfBirth}
+                            onChange={(e) => setDateOfBirth(e.target.value)}
+                            className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-gender"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('gender')} <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            id="profile-gender"
+                            required
+                            value={gender}
+                            onChange={(e) =>
+                              handleApplicantGenderChange(e.target.value as '' | MemberGender)
+                            }
+                            className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          >
+                            <option value="">{tSignUp('selectGender')}</option>
+                            <option value="male">{tSignUp('male')}</option>
+                            <option value="female">{tSignUp('female')}</option>
+                            <option value="other">{tSignUp('other')}</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-marital-status"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('maritalStatus')} <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            id="profile-marital-status"
+                            required
+                            value={maritalStatus}
+                            onChange={(e) => {
+                              const next = e.target.value as '' | MaritalStatus;
+                              setMaritalStatus(next);
+                              if (next === 'single' || next === '') {
+                                setSpouseName('');
+                                setSpouseNameBn('');
+                              }
+                            }}
+                            className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          >
+                            <option value="">{tSignUp('selectMaritalStatus')}</option>
+                            <option value="single">{tSignUp('maritalSingle')}</option>
+                            <option value="married">{tSignUp('maritalMarried')}</option>
+                            <option value="widowed">{tSignUp('maritalWidowed')}</option>
+                            <option value="divorced">{tSignUp('maritalDivorced')}</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-nid"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('nid')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-nid"
+                            type="text"
+                            required
+                            value={nid}
+                            onChange={(e) => setNid(e.target.value)}
+                            placeholder={tSignUp('nidPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(nid)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        {maritalStatus && maritalStatus !== 'single' && (
+                          <>
+                            <div>
+                              <label
+                                htmlFor="profile-spouse-name"
+                                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                              >
+                                {tSignUp('spouseName')}{' '}
+                                {maritalStatus === 'married' ? (
+                                  <span className="text-red-500">*</span>
+                                ) : (
+                                  <span className="text-slate-500 dark:text-slate-400 font-normal">
+                                    {tSignUp('optional')}
+                                  </span>
+                                )}
+                              </label>
+                              <input
+                                id="profile-spouse-name"
+                                type="text"
+                                required={maritalStatus === 'married'}
+                                value={spouseName}
+                                onChange={(e) => setSpouseName(e.target.value)}
+                                placeholder={tSignUp('spouseNamePh')}
+                                className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                                  containsBanglaScript(spouseName)
+                                    ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                    : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                                }`}
+                              />
+                            </div>
+
+                            <div>
+                              <label
+                                htmlFor="profile-spouse-name-bn"
+                                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                              >
+                                {tSignUp('spouseNameBn')}
+                              </label>
+                              <input
+                                id="profile-spouse-name-bn"
+                                type="text"
+                                value={spouseNameBn}
+                                onChange={(e) => setSpouseNameBn(e.target.value)}
+                                placeholder={tSignUp('spouseNameBnPh')}
+                                className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                                  containsLatinLetters(spouseNameBn)
+                                    ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                    : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                                }`}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 02. Reference & Employment + Social Media */}
+                    <div className="space-y-3.5 pt-4 border-t border-slate-200/70 dark:border-slate-800/80">
+                      <h4 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                        {tSignUp('sec2')}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        <div>
+                          <label
+                            htmlFor="profile-reference"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('referenceLabel')}
+                          </label>
+                          <input
+                            id="profile-reference"
+                            type="text"
+                            list="profile-existing-members"
+                            value={referenceMemberName}
+                            onChange={(e) => setReferenceMemberName(e.target.value)}
+                            placeholder={tSignUp('referencePh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(referenceMemberName)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                          <datalist id="profile-existing-members">
+                            {referenceOptions.map((m) => (
+                              <option key={m.memberCode} value={m.name}>
+                                {m.name} ({m.memberCode})
+                              </option>
+                            ))}
+                          </datalist>
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-occupation"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('occupation')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-occupation"
+                            type="text"
+                            required
+                            value={occupation}
+                            onChange={(e) => setOccupation(e.target.value)}
+                            placeholder={tSignUp('occupationPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(occupation)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="profile-company"
+                            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            {tSignUp('company')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="profile-company"
+                            type="text"
+                            required
+                            value={companyOrganization}
+                            onChange={(e) => setCompanyOrganization(e.target.value)}
+                            placeholder={tSignUp('companyPh')}
+                            className={`w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                              containsBanglaScript(companyOrganization)
+                                ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
+                                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
+                            }`}
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label
-                          htmlFor="profile-email"
-                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                      <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/55 dark:bg-slate-950/45 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setShowSocialSection((prev) => !prev)}
+                          aria-expanded={showSocialSection}
+                          className="w-full px-3.5 py-3 flex items-center justify-between gap-3 text-left cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-900/60 transition-colors"
                         >
-                          {t('labelEmail')}
-                        </label>
-                        <input
-                          id="profile-email"
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                        />
-                      </div>
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <Globe
+                              className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                              aria-hidden="true"
+                            />
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100">
+                                <span>{tSignUp('socialToggleTitle')}</span>
+                                <span className="font-normal text-slate-500 dark:text-slate-400">
+                                  {tSignUp('optional')}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {tSignUp('socialToggleSub')}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shrink-0 whitespace-nowrap">
+                            <span>{showSocialSection ? tSignUp('hideSocialBtn') : tSignUp('addSocialBtn')}</span>
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-200 ${
+                                showSocialSection ? 'rotate-180' : ''
+                              }`}
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </button>
 
-                      <div>
-                        <label
-                          htmlFor="profile-mobile"
-                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                        >
-                          {t('labelMobile')}
-                        </label>
-                        <input
-                          id="profile-mobile"
-                          type="tel"
-                          required
-                          value={mobile}
-                          onChange={(e) => setMobile(e.target.value)}
-                          placeholder={t('placeholderMobile')}
-                          className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                        />
-                      </div>
+                        <AnimatePresence initial={false}>
+                          {showSocialSection && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-3.5 pb-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                                <div>
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <label
+                                      htmlFor="profile-whatsapp"
+                                      className="block text-xs font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                      {tSignUp('whatsappLabel')}
+                                    </label>
+                                    {mobile.trim() && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setWhatsapp(mobile.trim())}
+                                        className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                                      >
+                                        {tSignUp('sameAsMobile')}
+                                      </button>
+                                    )}
+                                  </div>
+                                  <input
+                                    id="profile-whatsapp"
+                                    type="tel"
+                                    value={whatsapp}
+                                    onChange={(e) => setWhatsapp(e.target.value)}
+                                    placeholder={tSignUp('whatsappPh')}
+                                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                  />
+                                </div>
 
-                      <div>
-                        <label
-                          htmlFor="profile-occupation"
-                          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                        >
-                          {t('labelOccupation')}
-                        </label>
-                        <input
-                          id="profile-occupation"
-                          type="text"
-                          value={occupation}
-                          onChange={(e) => setOccupation(e.target.value)}
-                          placeholder={t('placeholderOccupation')}
-                          className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                <div>
+                                  <label
+                                    htmlFor="profile-facebook"
+                                    className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                                  >
+                                    {tSignUp('facebookLabel')}
+                                  </label>
+                                  <input
+                                    id="profile-facebook"
+                                    type="text"
+                                    value={facebook}
+                                    onChange={(e) => setFacebook(e.target.value)}
+                                    placeholder={tSignUp('facebookPh')}
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label
+                                    htmlFor="profile-linkedin"
+                                    className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                                  >
+                                    {tSignUp('linkedinLabel')}
+                                  </label>
+                                  <input
+                                    id="profile-linkedin"
+                                    type="text"
+                                    value={linkedin}
+                                    onChange={(e) => setLinkedin(e.target.value)}
+                                    placeholder={tSignUp('linkedinPh')}
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    {/* 03. Residential Addresses (Teletalk-style) */}
+                    <div className="space-y-3.5 pt-4 border-t border-slate-200/70 dark:border-slate-800/80">
+                      <h4 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                        {tSignUp('sec3')}
+                      </h4>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                        <TeletalkAddressFields
+                          title={tSignUp('presentAddress')}
+                          idPrefix="profile-present-addr"
+                          value={presentAddressDetails}
+                          onChange={setPresentAddressDetails}
+                        />
+                        <TeletalkAddressFields
+                          title={tSignUp('permanentAddress')}
+                          idPrefix="profile-permanent-addr"
+                          value={effectivePermanentAddressDetails}
+                          onChange={setPermanentAddressDetails}
+                          disabled={sameAsPresent}
+                          headerRight={
+                            <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={sameAsPresent}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setSameAsPresent(checked);
+                                  if (checked) {
+                                    setPermanentAddressDetails({ ...presentAddressDetails });
+                                  }
+                                }}
+                                className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
+                              />
+                              <span>{tSignUp('sameAsPresent')}</span>
+                            </label>
+                          }
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="profile-company"
-                        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
-                        {t('labelCompany')}
-                      </label>
-                      <input
-                        id="profile-company"
-                        type="text"
-                        value={companyOrganization}
-                        onChange={(e) => setCompanyOrganization(e.target.value)}
-                        placeholder={t('placeholderCompany')}
-                        className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                      />
+                    {/* 04. Nominee Information */}
+                    <div className="space-y-3.5 pt-4 border-t border-slate-200/70 dark:border-slate-800/80">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                            <h4 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                              {tSignUp('sec4')}
+                            </h4>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {tSignUp('sec4Sub')}
+                          </p>
+                        </div>
+
+                        {nominees.length > 1 && (
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <span
+                              className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-md border tabular-nums ${
+                                Math.abs(totalNomineeShare - 100) <= 0.05
+                                  ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                                  : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
+                              }`}
+                            >
+                              {tSignUp('totalShare', { percent: totalNomineeShare })}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleEqualSplitShares}
+                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              {tSignUp('equalSplit')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3.5">
+                        {nominees.map((nominee, idx) => (
+                          <div
+                            key={nominee.id}
+                            className="p-3.5 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/55 space-y-3.5"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                                  {nominees.length > 1
+                                    ? tSignUp('nomineeNumber', { number: idx + 1 })
+                                    : tSignUp('primaryNominee')}
+                                </span>
+                                <span className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                                  {tSignUp('sharePercentLabel', {
+                                    percent: nominees.length === 1 ? 100 : nominee.sharePercentage || 0,
+                                  })}
+                                </span>
+                              </div>
+                              {nominees.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveNominee(idx)}
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>{tCommon('remove')}</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('nomineeName')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={nominee.name}
+                                  onChange={(e) => updateNomineeField(idx, 'name', e.target.value)}
+                                  placeholder={tSignUp('fullNamePh')}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('nomineeNameBn')}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={nominee.nameBn}
+                                  onChange={(e) => updateNomineeField(idx, 'nameBn', e.target.value)}
+                                  placeholder={tSignUp('nomineeNameBnPh')}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('dob')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="date"
+                                  required
+                                  value={nominee.dateOfBirth}
+                                  onChange={(e) => updateNomineeField(idx, 'dateOfBirth', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('gender')} <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  required
+                                  value={nominee.gender}
+                                  onChange={(e) =>
+                                    updateNomineeField(idx, 'gender', e.target.value as '' | NomineeGender)
+                                  }
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                >
+                                  <option value="">{tSignUp('selectGender')}</option>
+                                  <option value="male">{tSignUp('male')}</option>
+                                  <option value="female">{tSignUp('female')}</option>
+                                  <option value="other">{tSignUp('other')}</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('occupation')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={nominee.occupation}
+                                  onChange={(e) => updateNomineeField(idx, 'occupation', e.target.value)}
+                                  placeholder={tSignUp('nomineeOccupationPh')}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('relation')} <span className="text-red-500">*</span>
+                                </label>
+                                {(() => {
+                                  const relationOptions = getLogicalRelationOptions(nominee.gender, gender);
+                                  return (
+                                    <div className="space-y-1.5">
+                                      <select
+                                        required
+                                        disabled={!nominee.gender}
+                                        value={nominee.relation}
+                                        onChange={(e) =>
+                                          updateNomineeField(idx, 'relation', e.target.value)
+                                        }
+                                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-60"
+                                      >
+                                        <option value="">
+                                          {nominee.gender
+                                            ? tSignUp('selectRelation')
+                                            : tSignUp('selectGenderFirst')}
+                                        </option>
+                                        {relationOptions.map((relKey) => (
+                                          <option key={relKey} value={relKey}>
+                                            {tSignUp(`nomineeRelations.${relKey}`)}
+                                          </option>
+                                        ))}
+                                        {nominee.gender && (
+                                          <option value={OTHER_RELATION_VALUE}>
+                                            {tSignUp('nomineeRelations.Other')}
+                                          </option>
+                                        )}
+                                      </select>
+                                      {nominee.relation === OTHER_RELATION_VALUE && (
+                                        <input
+                                          type="text"
+                                          required
+                                          value={nominee.customRelation}
+                                          onChange={(e) =>
+                                            updateNomineeField(idx, 'customRelation', e.target.value)
+                                          }
+                                          placeholder={tSignUp('customRelationPh')}
+                                          className="w-full px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('nidBirthReg')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={nominee.nidOrBirthReg}
+                                  onChange={(e) =>
+                                    updateNomineeField(idx, 'nidOrBirthReg', e.target.value)
+                                  }
+                                  placeholder={tSignUp('nidBirthRegPh')}
+                                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                  {tSignUp('nomineeMobile')}{' '}
+                                  <span className="text-slate-500 dark:text-slate-400 font-normal">
+                                    {tSignUp('ifAvailable')}
+                                  </span>
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={nominee.mobile}
+                                  onChange={(e) => updateNomineeField(idx, 'mobile', e.target.value)}
+                                  placeholder={tSignUp('nomineeMobilePh')}
+                                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                />
+                              </div>
+
+                              {nominees.length > 1 && (
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    {tSignUp('sharePercentage')} <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="number"
+                                    required
+                                    min="0.01"
+                                    max="100"
+                                    step="0.01"
+                                    value={nominee.sharePercentage}
+                                    onChange={(e) =>
+                                      updateNomineeField(idx, 'sharePercentage', e.target.value)
+                                    }
+                                    placeholder="50"
+                                    className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
+                              <div>
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    {tSignUp('nomineeAddress')} <span className="text-red-500">*</span>
+                                  </label>
+                                  <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={nominee.sameAsApplicantPresent}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setNominees((prev) =>
+                                          prev.map((item, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...item,
+                                                  sameAsApplicantPresent: checked,
+                                                  address: checked ? presentAddress : item.address,
+                                                }
+                                              : item
+                                          )
+                                        );
+                                      }}
+                                      className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
+                                    />
+                                    <span>{tSignUp('sameAsApplicantPresent')}</span>
+                                  </label>
+                                </div>
+                                <textarea
+                                  rows={2}
+                                  required
+                                  disabled={nominee.sameAsApplicantPresent}
+                                  value={nominee.address}
+                                  onChange={(e) => updateNomineeField(idx, 'address', e.target.value)}
+                                  placeholder={tSignUp('nomineeAddressPh')}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-70"
+                                />
+                              </div>
+
+                              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                                    {tSignUp('nomineePhoto')}{' '}
+                                    {nominee.gender === 'female' ? (
+                                      <span className="text-emerald-700 dark:text-emerald-400 font-normal">
+                                        {tSignUp('notNeededFemale')}
+                                      </span>
+                                    ) : (
+                                      <span className="text-red-500">*</span>
+                                    )}
+                                  </span>
+                                  {nominee.photoUrl && nominee.gender !== 'female' && (
+                                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                                      <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                      <span>{tSignUp('uploaded')}</span>
+                                    </span>
+                                  )}
+                                </div>
+
+                                {nominee.gender === 'female' ? (
+                                  <div className="py-2.5 px-3 rounded-lg border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
+                                    {tSignUp('femalePhotoExempt')}
+                                  </div>
+                                ) : nominee.photoUrl ? (
+                                  <div className="flex items-center gap-3">
+                                    <img
+                                      src={nominee.photoUrl}
+                                      alt={`Nominee ${idx + 1} portrait`}
+                                      referrerPolicy="no-referrer"
+                                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                                    />
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                        <span>
+                                          {nominee.photoUploading ? tSignUp('uploading') : tSignUp('replacePhoto')}
+                                        </span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          disabled={nominee.photoUploading}
+                                          onChange={(e) => void handleNomineePhotoUpload(idx, e)}
+                                          className="sr-only"
+                                        />
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateNomineeField(idx, 'photoUrl', '')}
+                                        className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                      >
+                                        {tCommon('remove')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <label className="flex flex-col items-center justify-center gap-1.5 py-3 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                                    {nominee.photoUploading ? (
+                                      <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                                    ) : (
+                                      <ImagePlus className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                                    )}
+                                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                                      {nominee.photoUploading
+                                        ? tSignUp('uploadingToCloud')
+                                        : tSignUp('chooseNomineePhoto')}
+                                    </span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      disabled={nominee.photoUploading}
+                                      onChange={(e) => void handleNomineePhotoUpload(idx, e)}
+                                      className="sr-only"
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleAddNominee}
+                          disabled={nominees.length >= 10}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{tSignUp('addNominee')}</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="profile-present-address"
-                        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
-                        {t('labelPresentAddress')}
-                      </label>
-                      <textarea
-                        id="profile-present-address"
-                        rows={2}
-                        required
-                        value={presentAddress}
-                        onChange={(e) => setPresentAddress(e.target.value)}
-                        placeholder={t('placeholderPresentAddress')}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                      />
-                    </div>
+                    {/* 05. Identity Photo & Signature (300x80 px) */}
+                    <div className="space-y-3.5 pt-4 border-t border-slate-200/70 dark:border-slate-800/80">
+                      <h4 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
+                        {t('sec5IdentityMedia')}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {/* Member Photo */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                              {tSignUp('memberPhoto')} <span className="text-red-500">*</span>
+                            </span>
+                            {photoUrl && (
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>{tSignUp('uploaded')}</span>
+                              </span>
+                            )}
+                          </div>
 
-                    <div>
-                      <label
-                        htmlFor="profile-permanent-address"
-                        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
-                        {t('labelPermanentAddress')}
-                      </label>
-                      <textarea
-                        id="profile-permanent-address"
-                        rows={2}
-                        required
-                        value={permanentAddress}
-                        onChange={(e) => setPermanentAddress(e.target.value)}
-                        placeholder={t('placeholderPermanentAddress')}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
-                      />
+                          {photoUrl ? (
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={photoUrl}
+                                alt={tSignUp('memberPhoto')}
+                                referrerPolicy="no-referrer"
+                                className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                              />
+                              <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                <span>{photoUploading ? tSignUp('uploading') : tSignUp('replacePhoto')}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={photoUploading}
+                                  onChange={(e) => void handlePhotoUpload(e)}
+                                  className="sr-only"
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                              {photoUploading ? (
+                                <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                              ) : (
+                                <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                              )}
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {photoUploading ? tSignUp('uploadingToCloud') : tSignUp('chooseMemberPhoto')}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={photoUploading}
+                                onChange={(e) => void handlePhotoUpload(e)}
+                                className="sr-only"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Signature 300x80 px */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-2.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                              {tSignUp('signatureLabel')} <span className="text-red-500">*</span>
+                            </span>
+                            {signatureUrl && (
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
+                                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>{tSignUp('signatureVerifiedBadge')}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {pendingSignature ? (
+                            <div className="p-3 rounded-lg border border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/30 space-y-2.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                                  <span>
+                                    {tSignUp('signatureDimMismatch', {
+                                      width: pendingSignature.width,
+                                      height: pendingSignature.height,
+                                    })}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingSignature(null)}
+                                  aria-label={tCommon('cancel')}
+                                  className="p-1 rounded text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/50 cursor-pointer shrink-0"
+                                >
+                                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              </div>
+                              <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden p-1">
+                                <img
+                                  src={pendingSignature.previewUrl}
+                                  alt={tSignUp('signatureLabel')}
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={signatureUploading}
+                                  onClick={() => void handleAutoResizeSignature()}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                  {signatureUploading ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                                  ) : (
+                                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                                  )}
+                                  <span>
+                                    {signatureUploading ? tSignUp('uploading') : tSignUp('autoResizeUpload')}
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={signatureUploading}
+                                  onClick={() => setPendingSignature(null)}
+                                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                                >
+                                  {tCommon('cancel')}
+                                </button>
+                              </div>
+                            </div>
+                          ) : signatureUrl ? (
+                            <div className="flex flex-col gap-2.5">
+                              <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={signatureUrl}
+                                  alt={tSignUp('signatureLabel')}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                  <span>{signatureUploading ? tSignUp('uploading') : tSignUp('replaceSignature')}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg"
+                                    disabled={signatureUploading}
+                                    onChange={handleSignatureSelect}
+                                    className="sr-only"
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setSignatureUrl('')}
+                                  className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                >
+                                  {tCommon('remove')}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center gap-2 py-3.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                              <div className="w-[150px] h-[36px] rounded border border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-400">
+                                {signatureUploading ? (
+                                  <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                                ) : (
+                                  <>
+                                    <PenTool className="w-3.5 h-3.5" aria-hidden="true" />
+                                    <span>300 × 80 px</span>
+                                  </>
+                                )}
+                              </div>
+                              <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {signatureUploading ? tSignUp('uploadingToCloud') : tSignUp('chooseSignature')}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/jpg"
+                                disabled={signatureUploading}
+                                onChange={handleSignatureSelect}
+                                className="sr-only"
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="pt-2 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-end gap-2.5 [&>button]:justify-center [&>button]:min-h-[44px] sm:[&>button]:min-h-0">
@@ -1322,7 +2982,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
                       <button
                         type="submit"
-                        disabled={saving}
+                        disabled={
+                          saving ||
+                          photoUploading ||
+                          signatureUploading ||
+                          anyNomineePhotoUploading
+                        }
                         className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                       >
                         <Save className="w-3.5 h-3.5" aria-hidden="true" />

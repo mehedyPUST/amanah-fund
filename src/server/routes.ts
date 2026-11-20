@@ -1741,7 +1741,7 @@ apiRouter.get('/profile/change-requests', requireAuth, async (req: Authenticated
   try {
     const state = await loadVaultState();
     const viewer = req.authUser!;
-    const isReviewer = viewer.role === 'admin' || viewer.role === 'manager';
+    const isReviewer = viewer.role === 'admin';
     const list = (state.profileChangeRequests || []).filter((r) =>
       isReviewer ? true : r.userId === viewer.id
     );
@@ -1755,18 +1755,121 @@ apiRouter.get('/profile/change-requests', requireAuth, async (req: Authenticated
 apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
+
+    const normalizeStructuredAddress = (raw: unknown): StructuredBdAddress | undefined => {
+      if (!raw || typeof raw !== 'object') return undefined;
+      const obj = raw as Record<string, unknown>;
+      const cleaned: StructuredBdAddress = {
+        careOf: String(obj.careOf || '').trim(),
+        villageRoadHouse: String(obj.villageRoadHouse || '').trim(),
+        division: String(obj.division || '').trim(),
+        district: String(obj.district || '').trim(),
+        upazila: String(obj.upazila || '').trim(),
+        postOffice: String(obj.postOffice || '').trim(),
+        postCode: String(obj.postCode || '').trim(),
+      };
+      return Object.values(cleaned).some(Boolean) ? cleaned : undefined;
+    };
+
+    const normalizeSocialUrl = (raw: unknown): string | undefined => {
+      const val = String(raw || '').trim();
+      if (!val) return undefined;
+      if (/^javascript:/i.test(val) || /^data:/i.test(val)) return undefined;
+      if (/^https?:\/\//i.test(val)) return val;
+      return `https://${val}`;
+    };
+
+    const normalizeSocialMedia = (raw: unknown): MemberSocialMedia | undefined => {
+      if (!raw || typeof raw !== 'object') return undefined;
+      const obj = raw as Record<string, unknown>;
+      const whatsapp = String(obj.whatsapp || '').trim() || undefined;
+      const facebook = normalizeSocialUrl(obj.facebook);
+      const linkedin = normalizeSocialUrl(obj.linkedin);
+      if (!whatsapp && !facebook && !linkedin) return undefined;
+      return { whatsapp, facebook, linkedin };
+    };
+
     const name = req.body?.name !== undefined ? String(req.body.name).trim() : undefined;
+    const hasNameBn = req.body?.nameBn !== undefined;
+    const nameBn = hasNameBn ? String(req.body.nameBn || '').trim() : undefined;
     const email =
       req.body?.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
+    const hasFatherName = req.body?.fatherName !== undefined;
+    const fatherName = hasFatherName ? String(req.body.fatherName || '').trim() : undefined;
+    const hasFatherNameBn = req.body?.fatherNameBn !== undefined;
+    const fatherNameBn = hasFatherNameBn ? String(req.body.fatherNameBn || '').trim() : undefined;
+    const hasMotherName = req.body?.motherName !== undefined;
+    const motherName = hasMotherName ? String(req.body.motherName || '').trim() : undefined;
+    const hasMotherNameBn = req.body?.motherNameBn !== undefined;
+    const motherNameBn = hasMotherNameBn ? String(req.body.motherNameBn || '').trim() : undefined;
+
+    const rawGender =
+      req.body?.gender !== undefined ? String(req.body.gender || '').trim().toLowerCase() : undefined;
+    const gender: MemberGender | undefined =
+      rawGender === 'male' || rawGender === 'female' || rawGender === 'other'
+        ? rawGender
+        : undefined;
+    if (rawGender !== undefined && rawGender !== '' && !gender) {
+      res.status(400).json({ error: 'Gender must be Male, Female, or Other.' });
+      return;
+    }
+
+    const rawMaritalStatus =
+      req.body?.maritalStatus !== undefined
+        ? String(req.body.maritalStatus || '').trim().toLowerCase()
+        : undefined;
+    const maritalStatus: MaritalStatus | undefined =
+      rawMaritalStatus === 'single' ||
+      rawMaritalStatus === 'married' ||
+      rawMaritalStatus === 'widowed' ||
+      rawMaritalStatus === 'divorced'
+        ? rawMaritalStatus
+        : undefined;
+    if (rawMaritalStatus !== undefined && rawMaritalStatus !== '' && !maritalStatus) {
+      res.status(400).json({ error: 'Invalid marital status selected.' });
+      return;
+    }
+
+    const hasSpouseName = req.body?.spouseName !== undefined;
+    const rawSpouseName = hasSpouseName ? String(req.body.spouseName || '').trim() : undefined;
+    const spouseName =
+      maritalStatus === 'single' ? '' : rawSpouseName;
+    const hasSpouseNameBn = req.body?.spouseNameBn !== undefined;
+    const rawSpouseNameBn = hasSpouseNameBn ? String(req.body.spouseNameBn || '').trim() : undefined;
+    const spouseNameBn =
+      maritalStatus === 'single' ? '' : rawSpouseNameBn;
+
+    const hasDateOfBirth = req.body?.dateOfBirth !== undefined;
+    const dateOfBirth = hasDateOfBirth ? String(req.body.dateOfBirth || '').trim() : undefined;
+    const hasReference = req.body?.referenceMemberName !== undefined;
+    const referenceMemberName = hasReference
+      ? String(req.body.referenceMemberName || '').trim()
+      : undefined;
     const mobile = String(req.body?.mobile || '').trim();
-    const presentAddress = String(req.body?.presentAddress || '').trim();
-    const permanentAddress = String(req.body?.permanentAddress || '').trim();
     const occupation =
       req.body?.occupation !== undefined ? String(req.body.occupation).trim() : undefined;
     const companyOrganization =
       req.body?.companyOrganization !== undefined
         ? String(req.body.companyOrganization).trim()
         : undefined;
+    const hasNid = req.body?.nid !== undefined;
+    const nid = hasNid ? String(req.body.nid || '').trim() : undefined;
+
+    const presentAddressDetails = normalizeStructuredAddress(req.body?.presentAddressDetails);
+    const permanentAddressDetails = normalizeStructuredAddress(req.body?.permanentAddressDetails);
+    const presentAddress =
+      String(req.body?.presentAddress || '').trim() ||
+      (presentAddressDetails ? formatBdAddress(presentAddressDetails) : '');
+    const permanentAddress =
+      String(req.body?.permanentAddress || '').trim() ||
+      (permanentAddressDetails ? formatBdAddress(permanentAddressDetails) : '');
+
+    const hasSocialMedia = req.body?.socialMedia !== undefined;
+    const socialMedia = hasSocialMedia ? normalizeSocialMedia(req.body?.socialMedia) : undefined;
+    const hasPhotoUrl = req.body?.photoUrl !== undefined;
+    const photoUrl = hasPhotoUrl ? String(req.body.photoUrl || '').trim() : undefined;
+    const hasSignatureUrl = req.body?.signatureUrl !== undefined;
+    const signatureUrl = hasSignatureUrl ? String(req.body.signatureUrl || '').trim() : undefined;
 
     if (!mobile || !presentAddress || !permanentAddress) {
       res.status(400).json({
@@ -1785,7 +1888,64 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
       return;
     }
 
-    // Member & Manager profile updates require Admin/Manager approval
+    if (maritalStatus === 'married' && !spouseName) {
+      res.status(400).json({ error: 'Spouse name is required when marital status is Married.' });
+      return;
+    }
+
+    const englishOnlyChecks: Array<{ label: string; value?: string }> = [
+      { label: 'Full Name (English)', value: name },
+      { label: 'Email', value: email },
+      { label: "Father's Name (English)", value: fatherName },
+      { label: "Mother's Name (English)", value: motherName },
+      { label: 'Spouse Name (English)', value: spouseName },
+      { label: 'Reference Member', value: referenceMemberName },
+      { label: 'Mobile Number', value: mobile },
+      { label: 'Occupation', value: occupation },
+      { label: 'Company / Organization', value: companyOrganization },
+      { label: 'National ID (NID)', value: nid },
+      { label: 'Present Address', value: presentAddress },
+      { label: 'Permanent Address', value: permanentAddress },
+      { label: 'WhatsApp Number', value: socialMedia?.whatsapp },
+      { label: 'Facebook Profile', value: socialMedia?.facebook },
+      { label: 'LinkedIn Profile', value: socialMedia?.linkedin },
+    ];
+    for (const check of englishOnlyChecks) {
+      if (check.value && containsBanglaScript(check.value)) {
+        res.status(400).json({
+          error: `${check.label} must be entered in English only.`,
+        });
+        return;
+      }
+    }
+
+    const banglaNameChecks: Array<{ label: string; value?: string }> = [
+      { label: 'Full Name (Bangla)', value: nameBn },
+      { label: "Father's Name (Bangla)", value: fatherNameBn },
+      { label: "Mother's Name (Bangla)", value: motherNameBn },
+      { label: 'Spouse Name (Bangla)', value: spouseNameBn },
+    ];
+    for (const check of banglaNameChecks) {
+      if (check.value && !isValidBanglaName(check.value)) {
+        res.status(400).json({
+          error: `${check.label} must be entered in Bangla script.`,
+        });
+        return;
+      }
+    }
+
+    const hasNominees = req.body?.nominees !== undefined;
+    let validatedNominees: UserRegistrationDetails['nominees'] | undefined;
+    if (hasNominees) {
+      const nomineeValidation = validateAndNormalizeNominees(req.body.nominees);
+      if ('error' in nomineeValidation) {
+        res.status(400).json({ error: nomineeValidation.error });
+        return;
+      }
+      validatedNominees = nomineeValidation.nominees;
+    }
+
+    // All non-admin member & manager credential updates (everything except password) require Admin approval
     if (viewer.role !== 'admin') {
       let createdReq!: ProfileChangeRequest;
       let currentProfileUser: (ReturnType<typeof sanitizeUser> & {
@@ -1805,15 +1965,150 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
           }
         }
 
-        const requestedChanges: ProfileChangePayload = {
-          ...(name && name !== target.name ? { name } : {}),
-          ...(email && email !== target.email.toLowerCase() ? { email } : {}),
-          mobile,
-          presentAddress,
-          permanentAddress,
-          ...(occupation !== undefined ? { occupation } : {}),
-          ...(companyOrganization !== undefined ? { companyOrganization } : {}),
-        };
+        let regDetails: UserRegistrationDetails | undefined;
+        if (target.encryptedRegistrationDetails) {
+          try {
+            regDetails = decryptSensitiveObject<UserRegistrationDetails>(
+              target.encryptedRegistrationDetails
+            );
+          } catch {
+            regDetails = undefined;
+          }
+        }
+
+        const normStr = (v: unknown) => String(v || '').trim();
+        const requestedChanges: ProfileChangePayload = {};
+
+        if (name !== undefined && name !== target.name) {
+          requestedChanges.name = name;
+        }
+        if (hasNameBn && normStr(nameBn) !== normStr(regDetails?.nameBn)) {
+          requestedChanges.nameBn = nameBn;
+        }
+        if (email && email !== target.email.toLowerCase()) {
+          requestedChanges.email = email;
+        }
+        if (mobile !== normStr(regDetails?.mobile)) {
+          requestedChanges.mobile = mobile;
+        }
+        if (hasFatherName && normStr(fatherName) !== normStr(regDetails?.fatherName)) {
+          requestedChanges.fatherName = fatherName;
+        }
+        if (hasFatherNameBn && normStr(fatherNameBn) !== normStr(regDetails?.fatherNameBn)) {
+          requestedChanges.fatherNameBn = fatherNameBn;
+        }
+        if (hasMotherName && normStr(motherName) !== normStr(regDetails?.motherName)) {
+          requestedChanges.motherName = motherName;
+        }
+        if (hasMotherNameBn && normStr(motherNameBn) !== normStr(regDetails?.motherNameBn)) {
+          requestedChanges.motherNameBn = motherNameBn;
+        }
+        if (gender && gender !== regDetails?.gender) {
+          requestedChanges.gender = gender;
+        }
+        if (maritalStatus && maritalStatus !== regDetails?.maritalStatus) {
+          requestedChanges.maritalStatus = maritalStatus;
+        }
+        if (
+          (hasSpouseName || maritalStatus === 'single') &&
+          normStr(spouseName) !== normStr(regDetails?.spouseName)
+        ) {
+          requestedChanges.spouseName = spouseName ?? '';
+        }
+        if (
+          (hasSpouseNameBn || maritalStatus === 'single') &&
+          normStr(spouseNameBn) !== normStr(regDetails?.spouseNameBn)
+        ) {
+          requestedChanges.spouseNameBn = spouseNameBn ?? '';
+        }
+        if (hasDateOfBirth && normStr(dateOfBirth) !== normStr(regDetails?.dateOfBirth)) {
+          requestedChanges.dateOfBirth = dateOfBirth;
+        }
+        if (hasNid && normStr(nid) !== normStr(regDetails?.nid)) {
+          requestedChanges.nid = nid;
+        }
+        if (
+          hasReference &&
+          normStr(referenceMemberName) !== normStr(regDetails?.referenceMemberName)
+        ) {
+          requestedChanges.referenceMemberName = referenceMemberName;
+        }
+        if (occupation !== undefined && normStr(occupation) !== normStr(regDetails?.occupation)) {
+          requestedChanges.occupation = occupation;
+        }
+        if (
+          companyOrganization !== undefined &&
+          normStr(companyOrganization) !== normStr(regDetails?.companyOrganization)
+        ) {
+          requestedChanges.companyOrganization = companyOrganization;
+        }
+
+        const prevPresentAddrJson = JSON.stringify(regDetails?.presentAddressDetails || null);
+        const nextPresentAddrJson = JSON.stringify(presentAddressDetails || null);
+        if (
+          presentAddress !== normStr(regDetails?.presentAddress) ||
+          (presentAddressDetails && prevPresentAddrJson !== nextPresentAddrJson)
+        ) {
+          requestedChanges.presentAddress = presentAddress;
+          if (presentAddressDetails) {
+            requestedChanges.presentAddressDetails = presentAddressDetails;
+          }
+        }
+
+        const prevPermAddrJson = JSON.stringify(regDetails?.permanentAddressDetails || null);
+        const nextPermAddrJson = JSON.stringify(permanentAddressDetails || null);
+        if (
+          permanentAddress !== normStr(regDetails?.permanentAddress) ||
+          (permanentAddressDetails && prevPermAddrJson !== nextPermAddrJson)
+        ) {
+          requestedChanges.permanentAddress = permanentAddress;
+          if (permanentAddressDetails) {
+            requestedChanges.permanentAddressDetails = permanentAddressDetails;
+          }
+        }
+
+        if (hasSocialMedia) {
+          const prevSocial = {
+            whatsapp: normStr(regDetails?.socialMedia?.whatsapp),
+            facebook: normStr(regDetails?.socialMedia?.facebook),
+            linkedin: normStr(regDetails?.socialMedia?.linkedin),
+          };
+          const nextSocial = {
+            whatsapp: normStr(socialMedia?.whatsapp),
+            facebook: normStr(socialMedia?.facebook),
+            linkedin: normStr(socialMedia?.linkedin),
+          };
+          if (JSON.stringify(prevSocial) !== JSON.stringify(nextSocial)) {
+            requestedChanges.socialMedia = socialMedia || {};
+          }
+        }
+
+        if (
+          hasPhotoUrl &&
+          normStr(photoUrl) &&
+          normStr(photoUrl) !== normStr(regDetails?.photoUrl || target.photoUrl)
+        ) {
+          requestedChanges.photoUrl = photoUrl;
+        }
+
+        if (
+          hasSignatureUrl &&
+          normStr(signatureUrl) !== normStr(regDetails?.signatureUrl)
+        ) {
+          requestedChanges.signatureUrl = signatureUrl;
+        }
+
+        if (hasNominees && validatedNominees) {
+          const prevNomJson = JSON.stringify(regDetails?.nominees || []);
+          const nextNomJson = JSON.stringify(validatedNominees);
+          if (prevNomJson !== nextNomJson) {
+            requestedChanges.nominees = validatedNominees;
+          }
+        }
+
+        if (Object.keys(requestedChanges).length === 0) {
+          throw new Error('NO_CHANGES');
+        }
 
         draft.profileChangeRequests = Array.isArray(draft.profileChangeRequests)
           ? draft.profileChangeRequests
@@ -1837,33 +2132,20 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         draft.profileChangeRequests.unshift(createdReq);
 
         const approvers = draft.users.filter(
-          (u) =>
-            u.status === 'active' &&
-            u.id !== target.id &&
-            (u.role === 'admin' || (target.role === 'member' && u.role === 'manager'))
+          (u) => u.status === 'active' && u.id !== target.id && u.role === 'admin'
         );
-        approvers.forEach((staff) => {
+        approvers.forEach((adminUser) => {
           queueEmailNotification(draft, {
             type: 'profile_update_requested',
-            recipientEmail: staff.email,
-            recipientName: staff.name,
-            recipientUserId: staff.id,
-            subject: `Profile Update Approval Needed: ${target.name} (${target.memberCode})`,
-            body: `${target.name} (${target.memberCode}) requested changes to their profile details (mobile/addresses/role info). Please approve or decline in Member Registry / Manager Desk.`,
+            recipientEmail: adminUser.email,
+            recipientName: adminUser.name,
+            recipientUserId: adminUser.id,
+            subject: `Member Credential Update Approval Needed: ${target.name} (${target.memberCode})`,
+            body: `${target.name} (${target.memberCode}) requested updates to their member credentials (${Object.keys(requestedChanges).join(', ')}). Please approve or decline in Member Registry / Admin Desk.`,
             relatedId: createdReq.id,
           });
         });
 
-        let regDetails: UserRegistrationDetails | undefined;
-        if (target.encryptedRegistrationDetails) {
-          try {
-            regDetails = decryptSensitiveObject<UserRegistrationDetails>(
-              target.encryptedRegistrationDetails
-            );
-          } catch {
-            regDetails = undefined;
-          }
-        }
         const sanitized = sanitizeUser(target);
         currentProfileUser = { ...sanitized, registrationDetails: regDetails };
 
@@ -1872,7 +2154,7 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
           action: 'MEMBER_PROFILE_CHANGE_REQUESTED',
           resourceType: 'auth',
           resourceId: createdReq.id,
-          summary: `${target.name} (${target.memberCode}) submitted profile update request for Admin/Manager approval`,
+          summary: `${target.name} (${target.memberCode}) submitted member credential update request for Administrator approval`,
           payload: { requestId: createdReq.id, fields: Object.keys(requestedChanges) },
         });
         return draft;
@@ -1889,14 +2171,14 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         pendingApproval: true,
         user: currentProfileUser,
         request: createdReq,
-        message: 'Profile change request submitted for Administrator / Manager approval.',
+        message: 'Credential update request submitted for Administrator approval.',
       });
       return;
     }
 
-    let updatedPublicUser: ReturnType<typeof sanitizeUser> & {
+    let updatedPublicUser: (ReturnType<typeof sanitizeUser> & {
       registrationDetails?: UserRegistrationDetails;
-    } | null = null;
+    }) | null = null;
 
     await updateVaultState((draft) => {
       const target = draft.users.find((u) => u.id === viewer.id);
@@ -1917,6 +2199,9 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
       }
 
       target.phoneMasked = maskReference(mobile);
+      if (photoUrl) {
+        target.photoUrl = photoUrl;
+      }
 
       let existingDetails: UserRegistrationDetails = {
         dateOfBirth: '',
@@ -1940,16 +2225,47 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         }
       }
 
+      const nextMaritalStatus = maritalStatus ?? existingDetails.maritalStatus;
       const nextDetails: UserRegistrationDetails = {
         ...existingDetails,
+        nameBn: hasNameBn ? nameBn || undefined : existingDetails.nameBn,
+        fatherName: hasFatherName ? fatherName || existingDetails.fatherName : existingDetails.fatherName,
+        fatherNameBn: hasFatherNameBn ? fatherNameBn || undefined : existingDetails.fatherNameBn,
+        motherName: hasMotherName ? motherName || existingDetails.motherName : existingDetails.motherName,
+        motherNameBn: hasMotherNameBn ? motherNameBn || undefined : existingDetails.motherNameBn,
+        gender: gender ?? existingDetails.gender,
+        maritalStatus: nextMaritalStatus,
+        spouseName:
+          nextMaritalStatus === 'single'
+            ? undefined
+            : hasSpouseName
+              ? spouseName || undefined
+              : existingDetails.spouseName,
+        spouseNameBn:
+          nextMaritalStatus === 'single'
+            ? undefined
+            : hasSpouseNameBn
+              ? spouseNameBn || undefined
+              : existingDetails.spouseNameBn,
+        dateOfBirth: hasDateOfBirth ? dateOfBirth || existingDetails.dateOfBirth : existingDetails.dateOfBirth,
+        referenceMemberName: hasReference
+          ? referenceMemberName || existingDetails.referenceMemberName
+          : existingDetails.referenceMemberName,
         mobile,
-        presentAddress,
-        permanentAddress,
         occupation: occupation !== undefined ? occupation : existingDetails.occupation,
         companyOrganization:
           companyOrganization !== undefined
             ? companyOrganization
             : existingDetails.companyOrganization,
+        nid: hasNid ? nid || existingDetails.nid : existingDetails.nid,
+        presentAddress,
+        permanentAddress,
+        presentAddressDetails: presentAddressDetails ?? existingDetails.presentAddressDetails,
+        permanentAddressDetails: permanentAddressDetails ?? existingDetails.permanentAddressDetails,
+        socialMedia: hasSocialMedia ? socialMedia : existingDetails.socialMedia,
+        photoUrl: photoUrl || existingDetails.photoUrl,
+        signatureUrl: hasSignatureUrl ? signatureUrl || undefined : existingDetails.signatureUrl,
+        nominees: hasNominees && validatedNominees ? validatedNominees : existingDetails.nominees,
       };
 
       target.encryptedRegistrationDetails = encryptSensitiveObject(nextDetails);
@@ -1965,7 +2281,7 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         action: 'MEMBER_PROFILE_UPDATED',
         resourceType: 'auth',
         resourceId: target.id,
-        summary: `${target.name} (${target.memberCode}) updated encrypted contact & profile information`,
+        summary: `${target.name} (${target.memberCode}) updated encrypted member credentials`,
         payload: {
           userId: target.id,
           email: target.email,
@@ -1993,6 +2309,10 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
       res.status(409).json({ error: 'Another member account already uses that email address.' });
       return;
     }
+    if (err instanceof Error && err.message === 'NO_CHANGES') {
+      res.status(400).json({ error: 'No changes detected compared to your saved credentials.' });
+      return;
+    }
     console.error('Profile update error:', err);
     res.status(500).json({ error: 'Failed to update member profile.' });
   }
@@ -2001,7 +2321,7 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
 apiRouter.patch(
   '/profile/change-requests/:id/review',
   requireAuth,
-  requireRole(['admin', 'manager']),
+  requireRole(['admin']),
   async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
@@ -2033,9 +2353,6 @@ apiRouter.patch(
         if (targetReq.status !== 'pending') {
           throw new Error('ALREADY_REVIEWED');
         }
-        if (viewer.role !== 'admin' && targetReq.userId === viewer.id) {
-          throw new Error('CANNOT_SELF_APPROVE');
-        }
 
         const member = draft.users.find((u) => u.id === targetReq.userId);
         if (!member) {
@@ -2066,6 +2383,9 @@ apiRouter.patch(
           if (ch.mobile) {
             member.phoneMasked = maskReference(ch.mobile);
           }
+          if (ch.photoUrl) {
+            member.photoUrl = ch.photoUrl;
+          }
 
           let existingDetails: UserRegistrationDetails = {
             dateOfBirth: '',
@@ -2088,16 +2408,75 @@ apiRouter.patch(
             }
           }
 
+          const nextMaritalStatus = ch.maritalStatus ?? existingDetails.maritalStatus;
+          const nextSocial =
+            ch.socialMedia !== undefined
+              ? ch.socialMedia.whatsapp || ch.socialMedia.facebook || ch.socialMedia.linkedin
+                ? ch.socialMedia
+                : undefined
+              : existingDetails.socialMedia;
+
           const nextDetails: UserRegistrationDetails = {
             ...existingDetails,
+            nameBn: ch.nameBn !== undefined ? ch.nameBn || undefined : existingDetails.nameBn,
+            fatherName:
+              ch.fatherName !== undefined
+                ? ch.fatherName || existingDetails.fatherName
+                : existingDetails.fatherName,
+            fatherNameBn:
+              ch.fatherNameBn !== undefined
+                ? ch.fatherNameBn || undefined
+                : existingDetails.fatherNameBn,
+            motherName:
+              ch.motherName !== undefined
+                ? ch.motherName || existingDetails.motherName
+                : existingDetails.motherName,
+            motherNameBn:
+              ch.motherNameBn !== undefined
+                ? ch.motherNameBn || undefined
+                : existingDetails.motherNameBn,
+            gender: ch.gender ?? existingDetails.gender,
+            maritalStatus: nextMaritalStatus,
+            spouseName:
+              nextMaritalStatus === 'single'
+                ? undefined
+                : ch.spouseName !== undefined
+                  ? ch.spouseName || undefined
+                  : existingDetails.spouseName,
+            spouseNameBn:
+              nextMaritalStatus === 'single'
+                ? undefined
+                : ch.spouseNameBn !== undefined
+                  ? ch.spouseNameBn || undefined
+                  : existingDetails.spouseNameBn,
+            dateOfBirth:
+              ch.dateOfBirth !== undefined
+                ? ch.dateOfBirth || existingDetails.dateOfBirth
+                : existingDetails.dateOfBirth,
+            referenceMemberName:
+              ch.referenceMemberName !== undefined
+                ? ch.referenceMemberName || existingDetails.referenceMemberName
+                : existingDetails.referenceMemberName,
             mobile: ch.mobile ?? existingDetails.mobile,
-            presentAddress: ch.presentAddress ?? existingDetails.presentAddress,
-            permanentAddress: ch.permanentAddress ?? existingDetails.permanentAddress,
             occupation: ch.occupation !== undefined ? ch.occupation : existingDetails.occupation,
             companyOrganization:
               ch.companyOrganization !== undefined
                 ? ch.companyOrganization
                 : existingDetails.companyOrganization,
+            nid: ch.nid !== undefined ? ch.nid || existingDetails.nid : existingDetails.nid,
+            presentAddress: ch.presentAddress ?? existingDetails.presentAddress,
+            permanentAddress: ch.permanentAddress ?? existingDetails.permanentAddress,
+            presentAddressDetails:
+              ch.presentAddressDetails ?? existingDetails.presentAddressDetails,
+            permanentAddressDetails:
+              ch.permanentAddressDetails ?? existingDetails.permanentAddressDetails,
+            socialMedia: nextSocial,
+            photoUrl: ch.photoUrl || existingDetails.photoUrl,
+            signatureUrl:
+              ch.signatureUrl !== undefined
+                ? ch.signatureUrl || undefined
+                : existingDetails.signatureUrl,
+            nominees: ch.nominees !== undefined ? ch.nominees : existingDetails.nominees,
           };
           member.encryptedRegistrationDetails = encryptSensitiveObject(nextDetails);
         }
@@ -2111,12 +2490,12 @@ apiRouter.patch(
           recipientUserId: member.id,
           subject:
             decision === 'approved'
-              ? 'Profile Update Approved'
-              : 'Profile Update Declined — Please Review Note',
+              ? 'Member Credentials Update Approved'
+              : 'Member Credentials Update Declined — Please Review Note',
           body:
             decision === 'approved'
-              ? `Assalamu Alaikum ${member.name}, your requested profile update has been approved by ${viewer.name}.`
-              : `Assalamu Alaikum ${member.name}, your profile update request was declined by ${viewer.name}. Note: ${reviewNote}`,
+              ? `Assalamu Alaikum ${member.name}, your requested member credential updates have been approved by Administrator ${viewer.name}.`
+              : `Assalamu Alaikum ${member.name}, your member credential update request was declined by Administrator ${viewer.name}. Note: ${reviewNote}`,
           relatedId: targetReq.id,
         });
 
@@ -2125,7 +2504,7 @@ apiRouter.patch(
           action: decision === 'approved' ? 'PROFILE_CHANGE_APPROVED' : 'PROFILE_CHANGE_REJECTED',
           resourceType: 'auth',
           resourceId: targetReq.id,
-          summary: `${viewer.name} ${decision} profile update request for ${member.name} (${member.memberCode})`,
+          summary: `${viewer.name} ${decision} member credential update request for ${member.name} (${member.memberCode})`,
           payload: {
             requestId: targetReq.id,
             targetUserId: member.id,
@@ -2148,12 +2527,6 @@ apiRouter.patch(
     } catch (err) {
       if (err instanceof Error && err.message === 'ALREADY_REVIEWED') {
         res.status(409).json({ error: 'This profile update request has already been reviewed.' });
-        return;
-      }
-      if (err instanceof Error && err.message === 'CANNOT_SELF_APPROVE') {
-        res.status(403).json({
-          error: 'Another Manager or Administrator must approve your own profile change request.',
-        });
         return;
       }
       if (err instanceof Error && err.message === 'EMAIL_IN_USE') {

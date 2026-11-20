@@ -42,6 +42,7 @@ import type {
   NotificationPreferences,
   PasswordResetRequest,
   PrivateMessage,
+  ProfileChangePayload,
   ProfileChangeRequest,
   PublicUser,
   ReceiptAiExtraction,
@@ -295,15 +296,7 @@ export interface RegisterMemberPayload {
 export const api = {
   getMe: () => apiRequest<{ user: PublicUser }>('/api/auth/me'),
   getProfile: () => apiRequest<{ user: PublicUser }>('/api/profile'),
-  updateProfile: (payload: {
-    name?: string;
-    email?: string;
-    mobile: string;
-    presentAddress: string;
-    permanentAddress: string;
-    occupation?: string;
-    companyOrganization?: string;
-  }) =>
+  updateProfile: (payload: ProfileChangePayload) =>
     apiRequest<{
       pendingApproval?: boolean;
       user: PublicUser;

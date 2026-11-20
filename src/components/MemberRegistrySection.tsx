@@ -27,6 +27,7 @@ import type {
 import { api } from '../utils/api.ts';
 import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
+import { formatProfileChangeEntries } from '../utils/profileChanges.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminUserManagementPanel } from './AdminUserManagementPanel.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
@@ -151,7 +152,9 @@ export function MemberRegistrySection({
     try {
       const [res, reqRes] = await Promise.all([
         api.getMembers(),
-        api.getProfileChangeRequests().catch(() => ({ requests: [] as ProfileChangeRequest[] })),
+        isAdmin
+          ? api.getProfileChangeRequests().catch(() => ({ requests: [] as ProfileChangeRequest[] }))
+          : Promise.resolve({ requests: [] as ProfileChangeRequest[] }),
       ]);
       setMembers(res.members);
       setProfileRequests(reqRes.requests);
@@ -164,7 +167,7 @@ export function MemberRegistrySection({
     } finally {
       setLoading(false);
     }
-  }, [isStaff]);
+  }, [isAdmin, isStaff]);
 
   useEffect(() => {
     void loadMembers();
@@ -291,9 +294,8 @@ export function MemberRegistrySection({
     req: ProfileChangeRequest,
     decision: 'approved' | 'rejected'
   ) {
-    const changesSummary = Object.entries(req.requestedChanges)
-      .filter(([, v]) => Boolean(v))
-      .map(([k, v]) => `${k}: ${String(v)}`)
+    const changesSummary = formatProfileChangeEntries(req.requestedChanges)
+      .map((item) => `${item.label}: ${item.value}`)
       .join(' | ');
 
     if (decision === 'approved') {
@@ -383,7 +385,7 @@ export function MemberRegistrySection({
       </section>
 
       <div className="space-y-6">
-          {pendingProfileRequests.length > 0 && (
+          {isAdmin && pendingProfileRequests.length > 0 && (
             <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-3.5 sm:p-6 space-y-4 shadow-xs">
               <div>
                 <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -407,11 +409,11 @@ export function MemberRegistrySection({
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                          {Object.entries(req.requestedChanges).map(([k, v]) => (
-                            <div key={k}>
-                              <span className="font-mono text-slate-500 dark:text-slate-400">{k}:</span>{' '}
+                          {formatProfileChangeEntries(req.requestedChanges).map((item) => (
+                            <div key={item.key}>
+                              <span className="font-mono text-slate-500 dark:text-slate-400">{item.label}:</span>{' '}
                               <span className="font-medium text-slate-900 dark:text-white">
-                                {String(v)}
+                                {item.value}
                               </span>
                             </div>
                           ))}

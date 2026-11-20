@@ -1031,7 +1031,7 @@ export function DashboardShell() {
         overview.treasury.pendingLoansReviewCount +
         overview.treasury.pendingDisbursementsCount +
         overview.treasury.pendingRepaymentsCount +
-        overview.treasury.pendingProfileRequestsCount
+        (isAdmin ? overview.treasury.pendingProfileRequestsCount : 0)
       );
     }
     if (sectionId === 'monthly-contribution' && isManager) {
@@ -1046,7 +1046,7 @@ export function DashboardShell() {
     if (sectionId === 'member-registry' && isStaff) {
       return (
         (isAdmin ? overview.treasury.pendingMembersCount : 0) +
-        overview.treasury.pendingProfileRequestsCount
+        (isAdmin ? overview.treasury.pendingProfileRequestsCount : 0)
       );
     }
     if (sectionId === 'site-settings' && isAdmin) {

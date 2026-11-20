@@ -876,3 +876,86 @@ export function isBdAddressComplete(addr: StructuredBdAddress): boolean {
       /^\d{4}$/.test(addr.postCode.trim())
   );
 }
+
+export function hydrateStructuredBdAddress(
+  existing?: StructuredBdAddress | null,
+  fallbackText?: string
+): StructuredBdAddress {
+  if (existing && typeof existing === 'object') {
+    const merged: StructuredBdAddress = {
+      careOf: String(existing.careOf || '').trim(),
+      villageRoadHouse: String(existing.villageRoadHouse || '').trim(),
+      division: String(existing.division || '').trim(),
+      district: String(existing.district || '').trim(),
+      upazila: String(existing.upazila || '').trim(),
+      postOffice: String(existing.postOffice || '').trim(),
+      postCode: String(existing.postCode || '').trim(),
+    };
+    if (Object.values(merged).some(Boolean)) {
+      return merged;
+    }
+  }
+
+  const raw = String(fallbackText || '').trim();
+  if (!raw) {
+    return createEmptyBdAddress();
+  }
+
+  // Attempt best-effort parse of formatBdAddress() string:
+  // "C/O: ..., <villageRoadHouse>, P.O: <po> (<pc>), P.S/Upazila: <upazila>, Dist: <dist>, Div: <div>"
+  const result = createEmptyBdAddress();
+  const segments = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const leftover: string[] = [];
+
+  for (const seg of segments) {
+    if (/^C\/O:\s*/i.test(seg) && !result.careOf) {
+      result.careOf = seg.replace(/^C\/O:\s*/i, '').trim();
+    } else if (/^P\.O:\s*/i.test(seg) && !result.postOffice) {
+      const poBody = seg.replace(/^P\.O:\s*/i, '').trim();
+      const poMatch = poBody.match(/^(.*?)\s*\((\d{4})\)$/);
+      if (poMatch) {
+        result.postOffice = poMatch[1].trim();
+        result.postCode = poMatch[2].trim();
+      } else {
+        result.postOffice = poBody;
+      }
+    } else if (/^Post Code:\s*/i.test(seg) && !result.postCode) {
+      result.postCode = seg.replace(/^Post Code:\s*/i, '').trim();
+    } else if (/^P\.S\/Upazila:\s*/i.test(seg) && !result.upazila) {
+      result.upazila = seg.replace(/^P\.S\/Upazila:\s*/i, '').trim();
+    } else if (/^Dist:\s*/i.test(seg) && !result.district) {
+      result.district = seg.replace(/^Dist:\s*/i, '').trim();
+    } else if (/^Div:\s*/i.test(seg) && !result.division) {
+      result.division = seg.replace(/^Div:\s*/i, '').trim();
+    } else {
+      leftover.push(seg);
+    }
+  }
+
+  if (leftover.length > 0) {
+    result.villageRoadHouse = leftover.join(', ');
+  } else if (!Object.values(result).some(Boolean)) {
+    result.villageRoadHouse = raw;
+  }
+
+  return result;
+}
+
+export function areBdAddressesEqual(
+  a?: StructuredBdAddress | null,
+  b?: StructuredBdAddress | null
+): boolean {
+  if (!a || !b) return false;
+  return (
+    a.careOf.trim() === b.careOf.trim() &&
+    a.villageRoadHouse.trim() === b.villageRoadHouse.trim() &&
+    a.division.trim() === b.division.trim() &&
+    a.district.trim() === b.district.trim() &&
+    a.upazila.trim() === b.upazila.trim() &&
+    a.postOffice.trim() === b.postOffice.trim() &&
+    a.postCode.trim() === b.postCode.trim()
+  );
+}

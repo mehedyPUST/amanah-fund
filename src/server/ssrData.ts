@@ -232,7 +232,7 @@ export function buildDashboardBundleFromState(
   );
 
   const profileRequestsList = (state.profileChangeRequests || []).filter((r) =>
-    isStaff ? true : r.userId === viewer.id
+    viewer.role === 'admin' ? true : r.userId === viewer.id
   );
 
   return {

@@ -37,6 +37,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
+import { formatProfileChangeEntries } from '../utils/profileChanges.ts';
 import { useTranslations } from 'next-intl';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
@@ -216,9 +217,10 @@ export function ManagerDeskView({
       .filter((inst) => inst.status === 'pending_verification')
       .map((inst) => ({ loan, inst }))
   );
-  const pendingProfileRequests = profileChangeRequests.filter(
-    (r) => r.status === 'pending' && (user.role === 'admin' || r.userId !== user.id)
-  );
+  const pendingProfileRequests =
+    user.role === 'admin'
+      ? profileChangeRequests.filter((r) => r.status === 'pending')
+      : [];
   const scheduledMeetings = meetings.filter((m) => m.status === 'scheduled');
 
   const qardHasanActionCount =
@@ -680,9 +682,8 @@ export function ManagerDeskView({
   }
 
   function confirmProfileReqReview(req: ProfileChangeRequest, decision: 'approved' | 'rejected') {
-    const changesSummary = Object.entries(req.requestedChanges)
-      .filter(([, v]) => Boolean(v))
-      .map(([k, v]) => `${k}: ${String(v)}`)
+    const changesSummary = formatProfileChangeEntries(req.requestedChanges)
+      .map((item) => `${item.label}: ${item.value}`)
       .join(' | ');
 
     if (decision === 'approved') {
@@ -1704,7 +1705,11 @@ export function ManagerDeskView({
           transition={{ duration: 0.16 }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
         >
-          <section className="xl:col-span-6 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section
+            className={`${
+              user.role === 'admin' ? 'xl:col-span-6' : 'xl:col-span-12'
+            } amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs`}
+          >
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('meetingSchedulerEyebrow')}</span>
@@ -1813,79 +1818,80 @@ export function ManagerDeskView({
             )}
           </section>
 
-          <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-              <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>{t('profileRequestsEyebrow')}</span>
-            </div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              {t('pendingProfileHeading', { count: pendingProfileRequests.length })}
-            </h3>
+          {user.role === 'admin' && (
+            <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t('profileRequestsEyebrow')}</span>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {t('pendingProfileHeading', { count: pendingProfileRequests.length })}
+              </h3>
 
-            {pendingProfileRequests.length === 0 ? (
-              <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                {t('noProfileRequests')}
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
-                {pendingProfileRequests.map((req) => (
-                  <div key={req.id} className="p-4 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {onViewMemberProfile ? (
-                          <button
-                            type="button"
-                            onClick={() => onViewMemberProfile(req.userId)}
-                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
-                          >
-                            {req.memberName}
-                          </button>
-                        ) : (
-                          req.memberName
-                        )}{' '}
-                        ({req.memberCode}) ·{' '}
-                        <span className="font-normal text-slate-500 dark:text-slate-400">
-                          {roleLabel(req.memberRole)}
+              {pendingProfileRequests.length === 0 ? (
+                <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                  {t('noProfileRequests')}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+                  {pendingProfileRequests.map((req) => (
+                    <div key={req.id} className="p-4 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {onViewMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={() => onViewMemberProfile(req.userId)}
+                              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              {req.memberName}
+                            </button>
+                          ) : (
+                            req.memberName
+                          )}{' '}
+                          ({req.memberCode}) ·{' '}
+                          <span className="font-normal text-slate-500 dark:text-slate-400">
+                            {roleLabel(req.memberRole)}
+                          </span>
                         </span>
-                      </span>
-                      <span className="font-mono text-slate-500 dark:text-slate-400">
-                        {formatShortDate(req.requestedAt)}
-                      </span>
-                    </div>
-                    <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
-                      {Object.entries(req.requestedChanges).map(([k, v]) =>
-                        v ? (
-                          <div key={k}>
-                            <span className="text-slate-500 dark:text-slate-400">{k}:</span> {String(v)}
+                        <span className="font-mono text-slate-500 dark:text-slate-400">
+                          {formatShortDate(req.requestedAt)}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
+                        {formatProfileChangeEntries(req.requestedChanges).map((item) => (
+                          <div key={item.key}>
+                            <span className="text-slate-500 dark:text-slate-400">{item.label}:</span>{' '}
+                            {item.value}
                           </div>
-                        ) : null
-                      )}
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-2 sm:flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={modalBusy}
+                          onClick={() => confirmProfileReqReview(req, 'approved')}
+                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{t('approve')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={modalBusy}
+                          onClick={() => confirmProfileReqReview(req, 'rejected')}
+                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{t('decline')}</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmProfileReqReview(req, 'approved')}
-                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{t('approve')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={modalBusy}
-                        onClick={() => confirmProfileReqReview(req, 'rejected')}
-                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{t('decline')}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </motion.div>
       )}
 

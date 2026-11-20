@@ -111,6 +111,11 @@ import {
 import { BANK_PROVIDERS } from '../src/utils/format.ts';
 import { createDefaultFaqs, sortFaqItems } from '../src/utils/faqDefaults.ts';
 import {
+  areBdAddressesEqual,
+  hydrateStructuredBdAddress,
+} from '../src/utils/bdLocations.ts';
+import { formatProfileChangeEntries } from '../src/utils/profileChanges.ts';
+import {
   api,
   clearClientSessionToken,
   getClientSessionToken,
@@ -2418,6 +2423,95 @@ describe('Client session token persistence & 401 guard', () => {
     }
   });
 });
+
+describe('Member credentials editing helpers & Admin-only approval visibility', () => {
+  it('hydrates structured Bangladesh addresses from saved details or formatted legacy strings', () => {
+    const legacy = hydrateStructuredBdAddress(
+      undefined,
+      'C/O: Md. Karim, House 14, Road 5, P.O: Jigatola (1209), P.S/Upazila: Dhanmondi, Dist: Dhaka, Div: Dhaka'
+    );
+    expect(legacy.careOf).toBe('Md. Karim');
+    expect(legacy.villageRoadHouse).toBe('House 14, Road 5');
+    expect(legacy.postOffice).toBe('Jigatola');
+    expect(legacy.postCode).toBe('1209');
+    expect(legacy.upazila).toBe('Dhanmondi');
+    expect(legacy.district).toBe('Dhaka');
+    expect(legacy.division).toBe('Dhaka');
+
+    const cloned = hydrateStructuredBdAddress(legacy);
+    expect(areBdAddressesEqual(legacy, cloned)).toBe(true);
+    expect(areBdAddressesEqual(legacy, { ...cloned, postCode: '1205' })).toBe(false);
+  });
+
+  it('formats complex requestedChanges fields cleanly for admin review queues', () => {
+    const entries = formatProfileChangeEntries({
+      name: 'Bilal Hasan',
+      presentAddress: 'House 14, Road 5, Dhaka',
+      presentAddressDetails: {
+        careOf: 'Karim',
+        villageRoadHouse: 'House 14, Road 5',
+        division: 'Dhaka',
+        district: 'Dhaka',
+        upazila: 'Dhanmondi',
+        postOffice: 'Jigatola',
+        postCode: '1209',
+      },
+      socialMedia: {
+        whatsapp: '+8801700000000',
+        facebook: 'https://facebook.com/bilal',
+      },
+      nominees: [
+        {
+          name: 'Nusrat Jahan',
+          dateOfBirth: '1994-03-10',
+          gender: 'female',
+          occupation: 'Doctor',
+          relation: 'Wife',
+          sharePercentage: 100,
+          nidOrBirthReg: '19941122334455',
+          address: 'Dhaka',
+        },
+      ],
+      photoUrl: 'https://ik.imagekit.io/amanah/photo.jpg',
+    });
+
+    const map = Object.fromEntries(entries.map((e) => [e.key, e.value]));
+    expect(map.name).toBe('Bilal Hasan');
+    expect(map.presentAddress).toBe('House 14, Road 5, Dhaka');
+    expect(map.presentAddressDetails).toBeUndefined();
+    expect(map.socialMedia).toContain('WhatsApp: +8801700000000');
+    expect(map.nominees).toContain('1 nominee(s): Nusrat Jahan (Wife, 100%)');
+    expect(map.photoUrl).toBe('New image uploaded');
+  });
+
+  it('exposes pendingProfileRequestsCount in overview only to admin users', () => {
+    const state = makeBaseState();
+    state.profileChangeRequests = [
+      {
+        id: 'pcr-1',
+        userId: 'u-2',
+        memberName: 'Bilal Hasan',
+        memberCode: 'AC-002',
+        memberRole: 'member',
+        requestedAt: '2026-11-18T10:00:00.000Z',
+        status: 'pending',
+        requestedChanges: { mobile: '01799999999' },
+      },
+    ];
+
+    const adminOverview = buildDashboardOverview(state, sanitizeUser(state.users[0]));
+    const memberOverview = buildDashboardOverview(state, sanitizeUser(state.users[1]));
+    const managerOverview = buildDashboardOverview(state, {
+      ...sanitizeUser(state.users[1]),
+      role: 'manager',
+    });
+
+    expect(adminOverview.treasury.pendingProfileRequestsCount).toBe(1);
+    expect(managerOverview.treasury.pendingProfileRequestsCount).toBe(0);
+    expect(memberOverview.treasury.pendingProfileRequestsCount).toBe(0);
+  });
+});
+
 
 
 
