@@ -15,6 +15,7 @@ import { useCoopSession } from './AppProviders.tsx';
 interface PWAUpdateButtonProps {
   compact?: boolean;
   fullWidth?: boolean;
+  align?: 'center' | 'start';
   popoverAlign?: 'stretch' | 'left' | 'right';
   popoverPlacement?: 'top' | 'bottom';
   className?: string;
@@ -37,6 +38,7 @@ function formatLastCheckedLabel(timestampMs: number | null, fallback: string): s
 export function PWAUpdateButton({
   compact = false,
   fullWidth = false,
+  align = 'center',
   popoverAlign = 'stretch',
   popoverPlacement,
   className = '',
@@ -105,8 +107,14 @@ export function PWAUpdateButton({
         title={updateAvailable ? tPwa('updateReadyMessage') : tPwa('autoCheckDesc')}
         aria-label={tPwa('updateApp')}
         aria-expanded={panelOpen}
-        className={`relative inline-flex items-center justify-center gap-1.5 rounded-lg border font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70 ${
-          fullWidth ? 'w-full min-h-[38px] py-2 px-2.5 text-xs' : compact ? 'h-9 px-2.5 text-xs' : 'h-9 px-3 text-xs'
+        className={`relative inline-flex items-center ${
+          align === 'start' ? 'justify-start gap-2.5' : 'justify-center gap-1.5'
+        } border font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70 ${
+          fullWidth
+            ? 'w-full min-h-[38px] py-2 px-3 rounded-xl text-xs'
+            : compact
+              ? 'h-9 px-2.5 rounded-lg text-xs'
+              : 'h-9 px-3 rounded-lg text-xs'
         } ${
           updateAvailable
             ? 'border-emerald-500/80 dark:border-emerald-400/70 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
