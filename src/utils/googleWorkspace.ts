@@ -86,6 +86,22 @@ export function subscribeWorkspaceAuth(
   };
 }
 
+export function getWorkspaceFirebaseProjectId(): string {
+  return firebaseConfig.projectId;
+}
+
+export function getFirebaseAuthorizedDomainsUrl(): string {
+  return `https://console.firebase.google.com/project/${encodeURIComponent(
+    firebaseConfig.projectId
+  )}/authentication/settings`;
+}
+
+export function isUnauthorizedDomainError(message: string | null | undefined): boolean {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return lower.includes('not authorized') || lower.includes('unauthorized-domain');
+}
+
 function formatGoogleAuthError(err: unknown): Error {
   const code = (err as { code?: string } | null)?.code || '';
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
@@ -97,8 +113,12 @@ function formatGoogleAuthError(err: unknown): Error {
     );
   }
   if (code === 'auth/unauthorized-domain') {
+    const currentHost =
+      typeof window !== 'undefined' && window.location?.hostname
+        ? window.location.hostname
+        : 'this domain';
     return new Error(
-      'This domain is not yet authorized for Google sign-in in the connected Firebase project.'
+      `Domain "${currentHost}" is not authorized for Google sign-in in Firebase project "${firebaseConfig.projectId}". Add "${currentHost}" in Firebase Console → Authentication → Settings → Authorized domains, then retry.`
     );
   }
   if (code === 'auth/network-request-failed') {

@@ -1382,12 +1382,6 @@ export function DashboardShell() {
         active: activeSection === 'my-profile',
         onClick: () => navigateToPage('my-profile', true),
       },
-      {
-        id: 'theme-toggle',
-        label: darkMode ? tCommon('lightMode') : tCommon('darkMode'),
-        Icon: darkMode ? Sun : Moon,
-        onClick: () => toggleDarkMode(),
-      },
     ];
 
     return (
@@ -1439,8 +1433,8 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-12 sm:h-14 lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[46px] sm:h-[48px] lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-30 min-w-0">
+        <div className="flex items-center gap-2 lg:gap-2.5 min-w-0">
           <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
             <button
               type="button"
@@ -1488,7 +1482,7 @@ export function DashboardShell() {
             className="hidden lg:block h-5 w-px bg-slate-200/90 dark:bg-slate-800 shrink-0"
           />
           <AmanahLogo size="xs" className="lg:hidden" decorative />
-          <div className="flex items-center gap-2 text-sm min-w-0">
+          <div className="flex items-center gap-2 text-[13.5px] sm:text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               {tCommon('brandName')}
             </span>
@@ -1499,14 +1493,14 @@ export function DashboardShell() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
           <Link
             href="/"
             onClick={() => {
               if (isMobileViewport()) setMobileBrowseMode(true);
             }}
             title={tNav('publicWebsite')}
-            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
+            className="hidden sm:inline-flex items-center gap-1.5 h-8 lg:h-9 px-2.5 lg:px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{tNav('home')}</span>
@@ -1540,22 +1534,22 @@ export function DashboardShell() {
             disabled={dataLoading}
             title={tCommon('refreshDashboardTitle')}
             aria-label={tCommon('refreshDashboard')}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
+            className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
           >
             <RefreshCw
-              className={`w-4 h-4 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
+              className={`w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
               aria-hidden="true"
             />
           </button>
 
-          <PWAUpdateButton compact className="hidden sm:inline-flex" />
+          <PWAUpdateButton compact className="hidden lg:inline-flex" />
 
           <button
             type="button"
             onClick={toggleDarkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+            className="hidden lg:flex w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-500" />
@@ -1569,9 +1563,9 @@ export function DashboardShell() {
             onClick={openMobileDrawer}
             aria-label={tCommon('openNavigationMenu')}
             aria-expanded={mobileNavOpen}
-            className="lg:hidden min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="lg:hidden w-8 h-8 sm:w-9 sm:h-9 -mr-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
-            <Menu className="w-5 h-5" aria-hidden="true" />
+            <Menu className="w-[18px] h-[18px]" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -1672,9 +1666,9 @@ export function DashboardShell() {
               aria-label={tCommon('dashboardMenuAria')}
               className="relative z-10 w-72 max-w-[84vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
-              <div className="h-14 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
+              <div className="h-12 px-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <AmanahLogo size="sm" decorative />
+                  <AmanahLogo size="xs" decorative />
                   <div className="min-w-0">
                     <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
                       {tCommon('brandName')}
@@ -1688,7 +1682,7 @@ export function DashboardShell() {
                   type="button"
                   onClick={closeMobileDrawer}
                   aria-label={tCommon('closeNavigationMenu')}
-                  className="min-w-[44px] min-h-[44px] -mr-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+                  className="w-9 h-9 -mr-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1739,8 +1733,26 @@ export function DashboardShell() {
                 {renderMobileDrawerNav()}
               </nav>
 
-              <div className="p-3.5 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2 shrink-0">
-                <PWAUpdateButton fullWidth />
+              <div className="p-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2 shrink-0">
+                <div className="grid grid-cols-2 gap-2">
+                  <PWAUpdateButton fullWidth popoverAlign="left" popoverPlacement="top" />
+                  <button
+                    type="button"
+                    onClick={toggleDarkMode}
+                    title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                    aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                    className="w-full min-h-[38px] py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    {darkMode ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
+                    )}
+                    <span className="truncate">
+                      {darkMode ? tCommon('lightMode') : tCommon('darkMode')}
+                    </span>
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/?browse=1"
@@ -1749,7 +1761,7 @@ export function DashboardShell() {
                       setMobileBrowseMode(true);
                       setMobileNavOpen(false);
                     }}
-                    className="min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+                    className="min-h-[40px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Home className="w-4 h-4" />
                     <span>{tNav('home')}</span>
@@ -1757,7 +1769,7 @@ export function DashboardShell() {
                   <button
                     type="button"
                     onClick={() => void handleSignOut()}
-                    className="min-h-[44px] py-2 px-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    className="min-h-[40px] py-2 px-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>{tNav('signOut')}</span>

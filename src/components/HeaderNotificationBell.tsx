@@ -355,13 +355,13 @@ export function HeaderNotificationBell({
         aria-haspopup="true"
         title={tNotif('bellAria')}
         aria-label={tNotif('bellAria')}
-        className={`relative p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer ${
+        className={`relative w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer shrink-0 ${
           open
             ? 'border-amber-400 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
             : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800'
         }`}
       >
-        <Bell className="w-4 h-4" />
+        <Bell className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
         {badgeCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-600 text-white font-mono tabular-nums text-[10px] font-semibold flex items-center justify-center">
             {badgeCount}
@@ -378,7 +378,7 @@ export function HeaderNotificationBell({
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             role="dialog"
             aria-label={tNotif('panelAria')}
-            className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-14 sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl z-50 overflow-hidden"
+            className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-[52px] sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl z-50 overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-2">
               <div>

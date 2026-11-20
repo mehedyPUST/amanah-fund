@@ -15,6 +15,8 @@ import { useCoopSession } from './AppProviders.tsx';
 interface PWAUpdateButtonProps {
   compact?: boolean;
   fullWidth?: boolean;
+  popoverAlign?: 'stretch' | 'left' | 'right';
+  popoverPlacement?: 'top' | 'bottom';
   className?: string;
 }
 
@@ -35,6 +37,8 @@ function formatLastCheckedLabel(timestampMs: number | null, fallback: string): s
 export function PWAUpdateButton({
   compact = false,
   fullWidth = false,
+  popoverAlign = 'stretch',
+  popoverPlacement,
   className = '',
 }: PWAUpdateButtonProps) {
   const tPwa = useTranslations('PWA');
@@ -77,10 +81,22 @@ export function PWAUpdateButton({
     await checkForUpdates(true);
   }
 
+  const hasCustomDisplay = /\b(hidden|flex|inline-flex|block|inline-block|grid)\b/.test(className);
+  const resolvedPlacement = popoverPlacement ?? (fullWidth ? 'top' : 'bottom');
+  const popoverPositionClass = fullWidth
+    ? `${resolvedPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} ${
+        popoverAlign === 'left'
+          ? 'left-0 w-[260px] max-w-[calc(84vw-1.5rem)]'
+          : popoverAlign === 'right'
+            ? 'right-0 w-[260px] max-w-[calc(84vw-1.5rem)]'
+            : 'left-0 right-0'
+      }`
+    : `${resolvedPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 w-72`;
+
   return (
     <div
       ref={containerRef}
-      className={`relative ${fullWidth ? 'w-full' : 'inline-flex'} ${className}`}
+      className={`relative ${fullWidth ? 'w-full' : hasCustomDisplay ? '' : 'inline-flex'} ${className}`}
     >
       <button
         type="button"
@@ -90,7 +106,7 @@ export function PWAUpdateButton({
         aria-label={tPwa('updateApp')}
         aria-expanded={panelOpen}
         className={`relative inline-flex items-center justify-center gap-1.5 rounded-lg border font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70 ${
-          fullWidth ? 'w-full py-2.5 px-3 text-xs' : compact ? 'h-9 px-2.5 text-xs' : 'h-9 px-3 text-xs'
+          fullWidth ? 'w-full min-h-[38px] py-2 px-2.5 text-xs' : compact ? 'h-9 px-2.5 text-xs' : 'h-9 px-3 text-xs'
         } ${
           updateAvailable
             ? 'border-emerald-500/80 dark:border-emerald-400/70 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
@@ -102,7 +118,7 @@ export function PWAUpdateButton({
         ) : (
           <ArrowUpCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         )}
-        <span className={compact && !fullWidth ? 'hidden sm:inline' : ''}>
+        <span className={compact && !fullWidth ? 'hidden sm:inline' : 'truncate'}>
           {applyingUpdate
             ? tPwa('updating')
             : checkingUpdate
@@ -126,9 +142,7 @@ export function PWAUpdateButton({
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label={tPwa('versionStatusTitle')}
-            className={`absolute ${
-              fullWidth ? 'left-0 right-0 bottom-full mb-2' : 'right-0 top-full mt-2 w-72'
-            } z-[70] amanah-card-violet border rounded-xl p-3.5 shadow-xl space-y-2.5 text-left`}
+            className={`absolute ${popoverPositionClass} z-[70] amanah-card-violet border rounded-xl p-3.5 shadow-xl space-y-2.5 text-left`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
