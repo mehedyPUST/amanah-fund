@@ -416,6 +416,60 @@ export function CommunityView({
   const mobileDmModalOpen = isMobileViewport && Boolean(selectedPeerId && selectedPeer);
   useBodyScrollLock(mobileDmModalOpen);
 
+  const syncMobileDmViewportRef = useRef<(() => void) | null>(null);
+
+  // Pin mobile DM modal strictly inside the visible viewport above the on-screen keypad
+  useEffect(() => {
+    if (!mobileDmModalOpen || typeof window === 'undefined') {
+      syncMobileDmViewportRef.current = null;
+      return;
+    }
+    const root = document.documentElement;
+    let rafId = 0;
+    let prevHeight = window.visualViewport?.height ?? window.innerHeight;
+
+    const syncViewport = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        root.style.setProperty('--dm-vv-top', '0px');
+        root.style.setProperty('--dm-vv-height', `${window.innerHeight}px`);
+        return;
+      }
+      const nextTop = Math.max(0, Math.round(vv.offsetTop));
+      const nextHeight = Math.max(220, Math.round(vv.height));
+      root.style.setProperty('--dm-vv-top', `${nextTop}px`);
+      root.style.setProperty('--dm-vv-height', `${nextHeight}px`);
+
+      if (nextHeight < prevHeight - 40 && mobileScrollRef.current) {
+        mobileScrollRef.current.scrollTop = mobileScrollRef.current.scrollHeight;
+      }
+      prevHeight = nextHeight;
+    };
+
+    const scheduleSync = () => {
+      window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(syncViewport);
+    };
+
+    syncMobileDmViewportRef.current = scheduleSync;
+    syncViewport();
+    window.visualViewport?.addEventListener('resize', scheduleSync);
+    window.visualViewport?.addEventListener('scroll', scheduleSync);
+    window.addEventListener('resize', scheduleSync);
+    window.addEventListener('scroll', scheduleSync, { passive: true });
+
+    return () => {
+      syncMobileDmViewportRef.current = null;
+      window.cancelAnimationFrame(rafId);
+      window.visualViewport?.removeEventListener('resize', scheduleSync);
+      window.visualViewport?.removeEventListener('scroll', scheduleSync);
+      window.removeEventListener('resize', scheduleSync);
+      window.removeEventListener('scroll', scheduleSync);
+      root.style.removeProperty('--dm-vv-top');
+      root.style.removeProperty('--dm-vv-height');
+    };
+  }, [mobileDmModalOpen]);
+
   useEffect(() => {
     if (!mobileDmModalOpen || !mobileDmTokenRef.current) return;
     const token = mobileDmTokenRef.current;
@@ -567,10 +621,13 @@ export function CommunityView({
 
   useEffect(() => {
     if (selectedPeerId && !messagesLoading) {
-      if (mobileDmModalOpen && mobileChatEndRef.current) {
-        mobileChatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      } else if (activeTab === 'messages' && chatEndRef.current) {
-        chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      const scroller = mobileDmModalOpen
+        ? mobileScrollRef.current
+        : activeTab === 'messages'
+          ? desktopScrollRef.current
+          : null;
+      if (scroller) {
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
       }
     }
   }, [activeTab, selectedPeerId, messages.length, messagesLoading, mobileDmModalOpen, peerTyping]);
@@ -1675,7 +1732,7 @@ export function CommunityView({
     if (typeof window === 'undefined') return;
     window.requestAnimationFrame(() => {
       const target = mobileDmModalOpen ? mobileComposerRef.current : desktopComposerRef.current;
-      target?.focus();
+      target?.focus({ preventScroll: true });
     });
   }
 
@@ -1697,7 +1754,19 @@ export function CommunityView({
   function jumpToPrivateMessage(messageId: string, highlight = true) {
     const el = messageRefs.current[messageId];
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const scroller = mobileDmModalOpen ? mobileScrollRef.current : desktopScrollRef.current;
+    if (scroller) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const targetTop =
+        scroller.scrollTop +
+        (elRect.top - scrollerRect.top) -
+        scroller.clientHeight / 2 +
+        elRect.height / 2;
+      scroller.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     if (highlight) {
       setHighlightedMsgId(messageId);
       if (highlightTimerRef.current) {
@@ -1828,29 +1897,58 @@ export function CommunityView({
     const body = (isOverride ? overrideBody : messageInput).trim();
     if (!body || sendingMessage) return;
 
+    const activeComposer = mobileDmModalOpen
+      ? mobileComposerRef.current
+      : desktopComposerRef.current;
+
+    // Keep the soft keyboard open synchronously within the active user gesture
+    if (!isOverride && activeComposer) {
+      activeComposer.focus({ preventScroll: true });
+    }
+
+    const prevInput = messageInput;
+    const prevReply = replyingTo;
+    const prevEditingId = editingDmId;
+
     setSendingMessage(true);
     setDmError(null);
     setDmEmojiOpen(false);
+    if (!isOverride) {
+      setMessageInput('');
+      setReplyingTo(null);
+      setEditingDmId(null);
+    }
+
+    if (!isOverride && typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        const composer = mobileDmModalOpen
+          ? mobileComposerRef.current
+          : desktopComposerRef.current;
+        if (composer && document.activeElement !== composer) {
+          composer.focus({ preventScroll: true });
+        }
+      });
+    }
+
     try {
-      if (editingDmId && !isOverride) {
-        const res = await api.editPrivateMessage(editingDmId, body);
-        setMessages((prev) => prev.map((m) => (m.id === editingDmId ? res.message : m)));
-        setEditingDmId(null);
-        setMessageInput('');
+      if (prevEditingId && !isOverride) {
+        const res = await api.editPrivateMessage(prevEditingId, body);
+        setMessages((prev) => prev.map((m) => (m.id === prevEditingId ? res.message : m)));
       } else {
-        const replyId = !isOverride ? replyingTo?.id : undefined;
+        const replyId = !isOverride ? prevReply?.id : undefined;
         const res = await api.sendPrivateMessage(selectedPeerId, body, replyId);
         setMessages((prev) =>
           prev.some((m) => m.id === res.message.id) ? prev : [...prev, res.message]
         );
-        if (!isOverride) {
-          setMessageInput('');
-          setReplyingTo(null);
-        }
       }
       notifyTyping(false);
       await loadThreads(true);
     } catch (err) {
+      if (!isOverride) {
+        setMessageInput((curr) => (curr.trim() ? curr : prevInput));
+        if (prevReply) setReplyingTo(prevReply);
+        if (prevEditingId) setEditingDmId(prevEditingId);
+      }
       setDmError(err instanceof Error ? err.message : t('sendMessageError'));
     } finally {
       setSendingMessage(false);
@@ -2007,7 +2105,7 @@ export function CommunityView({
       <>
         {/* Messenger Header */}
         <header
-          className={`shrink-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-[0_1px_6px_-4px_rgba(15,23,42,0.12)] ${
+          className={`relative z-20 shrink-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-[0_1px_6px_-4px_rgba(15,23,42,0.12)] ${
             isMobileModal ? 'pt-[env(safe-area-inset-top)]' : ''
           }`}
         >
@@ -2748,7 +2846,12 @@ export function CommunityView({
           {showScrollToBottom && !messagesLoading && (
             <button
               type="button"
-              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
+              onClick={() => {
+                const scroller = scrollRef.current;
+                if (scroller) {
+                  scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+                }
+              }}
               aria-label={t('scrollToBottomAria')}
               title={t('scrollToBottomAria')}
               className="absolute bottom-3 right-4 z-20 w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
@@ -2834,6 +2937,20 @@ export function CommunityView({
               rows={1}
               maxLength={3000}
               value={messageInput}
+              onFocus={() => {
+                if (isMobileModal && typeof window !== 'undefined') {
+                  syncMobileDmViewportRef.current?.();
+                  window.setTimeout(() => {
+                    syncMobileDmViewportRef.current?.();
+                    if (mobileScrollRef.current) {
+                      mobileScrollRef.current.scrollTop = mobileScrollRef.current.scrollHeight;
+                    }
+                  }, 150);
+                  window.setTimeout(() => {
+                    syncMobileDmViewportRef.current?.();
+                  }, 340);
+                }
+              }}
               onChange={(e) => {
                 const val = e.target.value;
                 setMessageInput(val);
@@ -2863,41 +2980,85 @@ export function CommunityView({
             />
           </div>
 
-          {hasDraft || editingDmId ? (
-            <button
-              type="submit"
-              disabled={sendingMessage || !hasDraft}
-              aria-label={sendingMessage ? t('sending') : t('send')}
-              className={`${
-                isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
-              } rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-45 text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer`}
-            >
-              {sendingMessage ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              ) : editingDmId ? (
-                <Check className="w-4 h-4" aria-hidden="true" />
-              ) : (
-                <SendHorizontal className="w-4 h-4" aria-hidden="true" />
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={sendingMessage}
-              onClick={() => void handleSendPrivateMessage(undefined, '👍')}
-              title={t('sendThumbsUpAria')}
-              aria-label={t('sendThumbsUpAria')}
-              className={`${
-                isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
-              } rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 disabled:opacity-45 flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer`}
-            >
-              {sendingMessage ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <ThumbsUp className="w-5 h-5 fill-emerald-600/15 dark:fill-emerald-400/20" aria-hidden="true" />
-              )}
-            </button>
-          )}
+          {(() => {
+            const isSendAction = hasDraft || Boolean(editingDmId);
+            return (
+              <button
+                type={isSendAction ? 'submit' : 'button'}
+                aria-disabled={sendingMessage || (Boolean(editingDmId) && !hasDraft)}
+                onMouseDown={(e) => {
+                  if (isSendAction) {
+                    e.preventDefault();
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  if (!isSendAction) return;
+                  const touch = e.changedTouches[0];
+                  if (touch) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const inside =
+                      touch.clientX >= rect.left - 12 &&
+                      touch.clientX <= rect.right + 12 &&
+                      touch.clientY >= rect.top - 12 &&
+                      touch.clientY <= rect.bottom + 12;
+                    if (!inside) return;
+                  }
+                  // Prevent browser blur of the textarea so the mobile keyboard stays open continuously
+                  if (e.cancelable) e.preventDefault();
+                  if (!sendingMessage && hasDraft) {
+                    void handleSendPrivateMessage();
+                  }
+                }}
+                onClick={
+                  isSendAction
+                    ? undefined
+                    : () => {
+                        if (!sendingMessage) {
+                          void handleSendPrivateMessage(undefined, '👍');
+                        }
+                      }
+                }
+                title={
+                  isSendAction
+                    ? sendingMessage
+                      ? t('sending')
+                      : t('send')
+                    : t('sendThumbsUpAria')
+                }
+                aria-label={
+                  isSendAction
+                    ? sendingMessage
+                      ? t('sending')
+                      : t('send')
+                    : t('sendThumbsUpAria')
+                }
+                className={`${
+                  isMobileModal ? 'w-10 h-10' : 'w-9 h-9'
+                } rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                  sendingMessage || (Boolean(editingDmId) && !hasDraft)
+                    ? 'opacity-45'
+                    : ''
+                } ${
+                  isSendAction
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95'
+                    : 'text-emerald-600 dark:text-emerald-400 hover:bg-[#F0F2F5] dark:hover:bg-slate-800 active:scale-90'
+                }`}
+              >
+                {sendingMessage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : editingDmId ? (
+                  <Check className="w-4 h-4" aria-hidden="true" />
+                ) : isSendAction ? (
+                  <SendHorizontal className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <ThumbsUp
+                    className="w-5 h-5 fill-emerald-600/15 dark:fill-emerald-400/20"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            );
+          })()}
         </form>
       </>
     );
@@ -4881,11 +5042,11 @@ export function CommunityView({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="mobile-dm-modal-title"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="fixed inset-0 z-[60] lg:hidden flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-white dark:bg-slate-950 overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                className="fixed left-0 right-0 top-[var(--dm-vv-top,0px)] h-[var(--dm-vv-height,100dvh)] max-h-[var(--dm-vv-height,100dvh)] z-[60] lg:hidden flex flex-col w-full bg-white dark:bg-slate-950 overflow-hidden"
               >
                 {renderMessengerChatPane(true)}
               </motion.div>

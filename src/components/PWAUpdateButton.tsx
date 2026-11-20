@@ -111,13 +111,13 @@ export function PWAUpdateButton({
           align === 'start'
             ? fullWidth && compact
               ? 'justify-start gap-1.5'
-              : 'justify-start gap-2.5'
+              : 'justify-start gap-2'
             : 'justify-center gap-1.5'
         } border font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-70 ${
           fullWidth
             ? compact
               ? 'w-full min-h-[34px] py-1.5 px-2 rounded-xl text-[11px]'
-              : 'w-full min-h-[42px] py-2 px-3 rounded-xl text-[14px]'
+              : 'w-full min-h-[40px] py-2 px-2.5 rounded-xl text-[13.5px]'
             : compact
               ? 'h-9 px-2.5 rounded-lg text-xs'
               : 'h-9 px-3 rounded-lg text-xs'

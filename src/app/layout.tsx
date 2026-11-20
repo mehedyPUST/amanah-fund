@@ -33,6 +33,7 @@ const anekBangla = Anek_Bangla({
 });
 
 export const viewport: Viewport = {
+  interactiveWidget: 'resizes-content',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#059669' },
     { media: '(prefers-color-scheme: dark)', color: '#020617' },
