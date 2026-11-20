@@ -311,7 +311,7 @@ export function DashboardShell() {
     }
   }, []);
 
-  // Allow mobile users to open the hamburger menu by sliding right-to-left (and close left-to-right)
+  // Allow mobile users to open the hamburger menu by sliding left-to-right (and close right-to-left)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -369,13 +369,13 @@ export function DashboardShell() {
       }
 
       const vw = window.innerWidth;
-      isEdgeStart = startX >= vw - 36;
+      isEdgeStart = startX <= 36;
       if (isEdgeStart) {
         tracking = 'open';
         return;
       }
 
-      if (startX >= vw * 0.5 && !isInsideBlockedOrHorizontalScroller(e.target)) {
+      if (startX <= vw * 0.5 && !isInsideBlockedOrHorizontalScroller(e.target)) {
         tracking = 'open';
         return;
       }
@@ -398,13 +398,13 @@ export function DashboardShell() {
       if (tracking === 'open') {
         const minDistance = isEdgeStart ? 32 : 52;
         const horizontalRatio = isEdgeStart ? 1.25 : 1.5;
-        if (dx <= -minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
+        if (dx >= minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
           triggered = true;
           tracking = null;
           openMobileDrawer();
         }
       } else if (tracking === 'close') {
-        if (dx >= 40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        if (dx <= -40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
           triggered = true;
           tracking = null;
           closeMobileDrawer();
@@ -1656,7 +1656,15 @@ export function DashboardShell() {
             aria-hidden="true"
             className="hidden lg:block h-5 w-px bg-slate-200/90 dark:bg-slate-800 shrink-0"
           />
-          <AmanahLogo size="xs" className="lg:hidden" decorative />
+          <button
+            type="button"
+            onClick={openMobileDrawer}
+            aria-label={tCommon('openNavigationMenu')}
+            aria-expanded={mobileNavOpen}
+            className="lg:hidden w-9 h-9 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          </button>
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               {tCommon('brandName')}
@@ -1734,15 +1742,7 @@ export function DashboardShell() {
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={openMobileDrawer}
-            aria-label={tCommon('openNavigationMenu')}
-            aria-expanded={mobileNavOpen}
-            className="lg:hidden w-9 h-9 -mr-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-          >
-            <Menu className="w-5 h-5" aria-hidden="true" />
-          </button>
+          <AmanahLogo size="xs" className="lg:hidden shrink-0" decorative />
         </div>
       </header>
 
@@ -1821,10 +1821,10 @@ export function DashboardShell() {
         </div>
       </aside>
 
-      {/* Mobile Side Navigation Drawer (slides in from the right side opposite the logo) */}
+      {/* Mobile Side Navigation Drawer (slides in from the left side matching the hamburger button) */}
       <AnimatePresence>
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
+          <div className="fixed inset-0 z-50 lg:hidden flex justify-start">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1835,12 +1835,12 @@ export function DashboardShell() {
               aria-hidden="true"
             />
             <motion.aside
-              initial={{ x: '100%' }}
+              initial={{ x: '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: '-100%' }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               aria-label={tCommon('dashboardMenuAria')}
-              className="relative z-10 w-[65vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
+              className="relative z-10 w-[65vw] h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
               {/* Drawer Top User Header (photo, name & role with verified badge) */}
               <div className="min-h-[58px] px-3 py-2.5 border-b border-emerald-200/80 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/90 via-teal-50/60 to-white dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900 flex items-center justify-between gap-1.5 shrink-0">
@@ -1929,7 +1929,7 @@ export function DashboardShell() {
                   fullWidth
                   align="start"
                   popoverPlacement="top"
-                  popoverAlign="right"
+                  popoverAlign="left"
                 />
                 <button
                   type="button"

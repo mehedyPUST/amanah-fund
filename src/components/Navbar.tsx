@@ -39,7 +39,7 @@ export function Navbar() {
 
   const isAuthenticated = !authChecking && Boolean(user);
 
-  // Allow mobile users to slide right-to-left to open the hamburger menu (and left-to-right to close)
+  // Allow mobile users to slide left-to-right to open the hamburger menu (and right-to-left to close)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -88,13 +88,13 @@ export function Navbar() {
       }
 
       const vw = window.innerWidth;
-      isEdgeStart = startX >= vw - 36;
+      isEdgeStart = startX <= 36;
       if (isEdgeStart) {
         tracking = 'open';
         return;
       }
 
-      if (startX >= vw * 0.5 && !isInsideBlockedOrHorizontalScroller(e.target)) {
+      if (startX <= vw * 0.5 && !isInsideBlockedOrHorizontalScroller(e.target)) {
         tracking = 'open';
         return;
       }
@@ -116,13 +116,13 @@ export function Navbar() {
       if (tracking === 'open') {
         const minDistance = isEdgeStart ? 32 : 52;
         const horizontalRatio = isEdgeStart ? 1.25 : 1.5;
-        if (dx <= -minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
+        if (dx >= minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
           triggered = true;
           tracking = null;
           setMobileOpen(true);
         }
       } else if (tracking === 'close') {
-        if (dx >= 40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        if (dx <= -40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
           triggered = true;
           tracking = null;
           setMobileOpen(false);
@@ -197,11 +197,22 @@ export function Navbar() {
   return (
     <header className="relative shrink-0 z-40 w-full">
       <div className="w-full min-h-[52px] sm:min-h-[54px] md:min-h-[58px] bg-white/92 dark:bg-slate-900/88 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4">
-        {/* Zone 1: Clean single-element Brand Wordmark */}
+        {/* Mobile Left Hamburger Toggle */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((o) => !o)}
+          aria-label={tCommon('toggleNavigationMenu')}
+          aria-expanded={mobileOpen}
+          className="md:hidden order-1 w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+        >
+          {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
+        {/* Zone 1: Clean single-element Brand Wordmark (far right on mobile, far left on desktop) */}
         <Link
           href="/"
           onClick={() => setMobileOpen(false)}
-          className="inline-flex items-center gap-2.5 shrink-0 group whitespace-nowrap md:justify-self-start"
+          className="order-3 md:order-none inline-flex items-center gap-2.5 shrink-0 group whitespace-nowrap md:justify-self-start"
         >
           <AmanahLogo
             size="xs"
@@ -246,7 +257,9 @@ export function Navbar() {
         </nav>
 
         {/* Zone 3: Language, PWA Update, Theme & Primary Action */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 md:justify-self-end">
+        <div
+          className={`order-2 md:order-none ${isAuthenticated ? 'flex' : 'hidden sm:flex'} ml-auto md:ml-0 items-center gap-1.5 sm:gap-2 shrink-0 md:justify-self-end`}
+        >
           <LanguageSwitcher
             variant="compact"
             className="hidden md:inline-flex"
@@ -313,25 +326,17 @@ export function Navbar() {
             </>
           )}
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label={tCommon('toggleNavigationMenu')}
-            className="md:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
-          >
-            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 24 }}
+            initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 24 }}
+            exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden absolute right-0 top-[60px] sm:top-[62px] w-[65vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-2.5 space-y-1.5 shadow-xl"
+            className="md:hidden absolute left-0 top-[60px] sm:top-[62px] w-[65vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-2.5 space-y-1.5 shadow-xl"
           >
             {isAuthenticated && user && (
               <Link
@@ -406,7 +411,7 @@ export function Navbar() {
                 fullWidth
                 align="start"
                 popoverPlacement="bottom"
-                popoverAlign="right"
+                popoverAlign="left"
               />
 
               <button
