@@ -222,7 +222,7 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="md:hidden absolute right-0 top-[60px] sm:top-[62px] w-60 max-w-[74vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-3 space-y-2 shadow-xl"
+            className="md:hidden absolute right-0 top-[60px] sm:top-[62px] w-[184px] max-w-[58vw] z-50 amanah-card-emerald backdrop-blur-md rounded-2xl border p-2 space-y-1.5 shadow-xl"
           >
             {isAuthenticated && user && (
               <Link
@@ -231,7 +231,7 @@ export function Navbar() {
                   setMobileBrowseMode(false);
                   setMobileOpen(false);
                 }}
-                className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800 min-w-0"
+                className="flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-800 min-w-0"
               >
                 {(() => {
                   const menuPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
@@ -245,7 +245,7 @@ export function Navbar() {
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/30 shrink-0"
                     />
                   ) : (
-                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                       {(user.name || 'AM')
                         .split(/\s+/)
                         .filter(Boolean)
@@ -256,25 +256,23 @@ export function Navbar() {
                   );
                 })()}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
-                      {user.name}
-                    </span>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
+                    {user.name}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1 min-w-0 text-[10.5px] text-slate-600 dark:text-slate-400">
+                    <span className="truncate">{translateRoleLabel(user.role, locale)}</span>
                     {user.status === 'active' && (
                       <BadgeCheck
-                        className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
                         aria-label={tCommon('verified')}
                       />
                     )}
-                  </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                    {translateRoleLabel(user.role, locale)}
                   </div>
                 </div>
               </Link>
             )}
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               {navLinks.map((link) => {
                 const active = isLinkActive(link.href);
                 return (
@@ -282,7 +280,7 @@ export function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`block w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    className={`block w-full text-left px-2.5 py-2 rounded-xl text-[13px] font-medium transition-colors truncate ${
                       active
                         ? 'bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70'
@@ -294,20 +292,25 @@ export function Navbar() {
               })}
             </div>
 
-            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex flex-col gap-1.5">
-              <PWAUpdateButton fullWidth align="start" popoverPlacement="bottom" />
+            <div className="pt-1.5 border-t border-slate-200/80 dark:border-slate-800 flex flex-col gap-1.5">
+              <PWAUpdateButton
+                fullWidth
+                align="start"
+                popoverPlacement="bottom"
+                popoverAlign="right"
+              />
 
               <button
                 type="button"
                 onClick={() => void handleRefreshPage()}
                 disabled={refreshing}
-                className="w-full min-h-[38px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center justify-start gap-2.5 cursor-pointer whitespace-nowrap"
+                className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center justify-start gap-2 cursor-pointer whitespace-nowrap"
               >
                 <RefreshCw
                   className={`w-3.5 h-3.5 shrink-0 ${refreshing ? 'animate-spin text-emerald-600' : ''}`}
                   aria-hidden="true"
                 />
-                <span>{tCommon('refresh')}</span>
+                <span className="truncate">{tCommon('refresh')}</span>
               </button>
 
               {isAuthenticated ? (
@@ -318,19 +321,19 @@ export function Navbar() {
                       setMobileBrowseMode(false);
                       setMobileOpen(false);
                     }}
-                    className="w-full min-h-[40px] py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold shadow-sm flex items-center justify-start gap-2.5 whitespace-nowrap"
+                    className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold shadow-sm flex items-center justify-start gap-2 whitespace-nowrap"
                   >
-                    <LayoutDashboard className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{tNav('dashboard')}</span>
+                    <LayoutDashboard className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{tNav('dashboard')}</span>
                   </Link>
                   <button
                     type="button"
                     onClick={() => void handleSignOut()}
                     disabled={signingOut}
-                    className="w-full min-h-[40px] py-2 px-3 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center justify-start gap-2.5 cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                    className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center justify-start gap-2 cursor-pointer disabled:opacity-60 whitespace-nowrap"
                   >
-                    <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{signingOut ? tNav('signingOut') : tNav('signOut')}</span>
+                    <LogOut className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{signingOut ? tNav('signingOut') : tNav('signOut')}</span>
                   </button>
                 </>
               ) : (
@@ -338,36 +341,36 @@ export function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="w-full min-h-[40px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-start"
+                    className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-start"
                   >
                     {tNav('signIn')}
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setMobileOpen(false)}
-                    className="w-full min-h-[40px] py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold shadow-sm flex items-center justify-start gap-2"
+                    className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold shadow-sm flex items-center justify-start gap-2"
                   >
-                    <span>{tNav('joinAmanah')}</span>
+                    <span className="truncate">{tNav('joinAmanah')}</span>
                     <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   </Link>
                 </>
               )}
 
-              <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                <LanguageSwitcher variant="compact" className="h-8 px-2.5" />
+              <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center gap-1.5">
+                <LanguageSwitcher variant="compact" className="h-8 px-1.5" />
                 <button
                   type="button"
                   onClick={toggleDarkMode}
                   title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                   aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-xs font-medium cursor-pointer shrink-0"
+                  className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 h-8 px-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-[11px] font-medium cursor-pointer whitespace-nowrap"
                 >
                   {darkMode ? (
                     <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
                   ) : (
                     <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
                   )}
-                  <span>{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
+                  <span className="truncate">{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
                 </button>
               </div>
             </div>

@@ -257,9 +257,13 @@ export function BalanceSheetView({
   const [inspectedMemberId, setInspectedMemberId] = useState<string | null>(null);
   const [showGoogleSheetModal, setShowGoogleSheetModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [cssLandscapeFallback, setCssLandscapeFallback] = useState(false);
   const [mounted, setMounted] = useState(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const fullScreenTokenRef = useRef<symbol | null>(null);
+  const isFullScreenRef = useRef(false);
+  const nativeFullScreenOwnedRef = useRef(false);
+  const orientationLockedRef = useRef(false);
   if (!fullScreenTokenRef.current) {
     fullScreenTokenRef.current = Symbol('BalanceSheetFullScreen');
   }
@@ -269,6 +273,184 @@ export function BalanceSheetView({
   }, []);
 
   useBodyScrollLock(isFullScreen);
+
+  const exitFullScreen = useCallback(() => {
+    isFullScreenRef.current = false;
+    setIsFullScreen(false);
+    setCssLandscapeFallback(false);
+
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const orientationApi = (
+      window.screen as Screen & {
+        orientation?: ScreenOrientation & {
+          unlock?: () => void;
+        };
+      }
+    )?.orientation;
+
+    if (orientationLockedRef.current && orientationApi && typeof orientationApi.unlock === 'function') {
+      try {
+        orientationApi.unlock();
+      } catch {
+        // Ignore unlock errors on browsers that restrict orientation unlock
+      }
+    }
+    orientationLockedRef.current = false;
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    if (nativeFullScreenOwnedRef.current) {
+      nativeFullScreenOwnedRef.current = false;
+      try {
+        if (doc.fullscreenElement && typeof doc.exitFullscreen === 'function') {
+          void doc.exitFullscreen().catch(() => {});
+        } else if (doc.webkitFullscreenElement && typeof doc.webkitExitFullscreen === 'function') {
+          void doc.webkitExitFullscreen();
+        }
+      } catch {
+        // Ignore fullscreen exit errors
+      }
+    }
+  }, []);
+
+  const enterFullScreen = useCallback(() => {
+    isFullScreenRef.current = true;
+    setIsFullScreen(true);
+
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const isCompactOrTouch =
+      window.innerWidth < 1024 ||
+      window.matchMedia('(pointer: coarse)').matches ||
+      navigator.maxTouchPoints > 0;
+    const isPortraitNow = window.innerHeight > window.innerWidth;
+    const shouldForceLandscape = isCompactOrTouch && isPortraitNow;
+
+    if (!shouldForceLandscape) {
+      setCssLandscapeFallback(false);
+      return;
+    }
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+    };
+    const docEl = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    const orientationApi = (
+      window.screen as Screen & {
+        orientation?: ScreenOrientation & {
+          lock?: (orientation: string) => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    )?.orientation;
+
+    const lockLandscapeDisplay = async () => {
+      // Request native fullscreen first because Android Chrome/Edge require fullscreen for orientation.lock('landscape')
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+        try {
+          if (typeof docEl.requestFullscreen === 'function') {
+            await docEl.requestFullscreen({ navigationUI: 'hide' });
+            nativeFullScreenOwnedRef.current = true;
+          } else if (typeof docEl.webkitRequestFullscreen === 'function') {
+            await docEl.webkitRequestFullscreen();
+            nativeFullScreenOwnedRef.current = true;
+          }
+        } catch {
+          // Fullscreen API unavailable or blocked (e.g., iOS Safari or restricted iframe)
+        }
+      }
+
+      if (!isFullScreenRef.current) {
+        exitFullScreen();
+        return;
+      }
+
+      let nativeLocked = false;
+      if (orientationApi && typeof orientationApi.lock === 'function') {
+        try {
+          await orientationApi.lock('landscape');
+          orientationLockedRef.current = true;
+          nativeLocked = true;
+        } catch {
+          // Screen Orientation lock unsupported or denied on this device/browser
+        }
+      }
+
+      if (!isFullScreenRef.current) {
+        exitFullScreen();
+        return;
+      }
+
+      // If OS orientation lock didn't rotate the viewport (e.g. iOS Safari or portrait preview),
+      // rotate the full-screen container into landscape cleanly via CSS.
+      if (!nativeLocked && window.innerHeight > window.innerWidth) {
+        setCssLandscapeFallback(true);
+      } else {
+        setCssLandscapeFallback(false);
+      }
+    };
+
+    void lockLandscapeDisplay();
+  }, [exitFullScreen]);
+
+  const toggleFullScreen = useCallback(() => {
+    if (isFullScreenRef.current) {
+      exitFullScreen();
+    } else {
+      enterFullScreen();
+    }
+  }, [enterFullScreen, exitFullScreen]);
+
+  useEffect(() => {
+    return () => {
+      if (isFullScreenRef.current) {
+        exitFullScreen();
+      }
+    };
+  }, [exitFullScreen]);
+
+  useEffect(() => {
+    if (!isFullScreen) return;
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+    };
+
+    const handleNativeFullScreenChange = () => {
+      const stillInNativeFs = Boolean(doc.fullscreenElement || doc.webkitFullscreenElement);
+      if (nativeFullScreenOwnedRef.current && !stillInNativeFs && isFullScreenRef.current) {
+        nativeFullScreenOwnedRef.current = false;
+        exitFullScreen();
+      }
+    };
+
+    const handleViewportOrientationChange = () => {
+      if (!isFullScreenRef.current || orientationLockedRef.current) return;
+      const isCompactOrTouch =
+        window.innerWidth < 1024 ||
+        window.matchMedia('(pointer: coarse)').matches ||
+        navigator.maxTouchPoints > 0;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      setCssLandscapeFallback(isCompactOrTouch && isPortrait);
+    };
+
+    document.addEventListener('fullscreenchange', handleNativeFullScreenChange);
+    document.addEventListener('webkitfullscreenchange', handleNativeFullScreenChange);
+    window.addEventListener('resize', handleViewportOrientationChange);
+    window.addEventListener('orientationchange', handleViewportOrientationChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleNativeFullScreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleNativeFullScreenChange);
+      window.removeEventListener('resize', handleViewportOrientationChange);
+      window.removeEventListener('orientationchange', handleViewportOrientationChange);
+    };
+  }, [isFullScreen, exitFullScreen]);
 
   useEffect(() => {
     if (!selectedCell) return;
@@ -290,7 +472,7 @@ export function BalanceSheetView({
       if (e.key === 'Escape' && isTopModal(token)) {
         e.preventDefault();
         e.stopPropagation();
-        setIsFullScreen(false);
+        exitFullScreen();
       }
     };
 
@@ -299,7 +481,7 @@ export function BalanceSheetView({
       unregister();
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isFullScreen]);
+  }, [isFullScreen, exitFullScreen]);
 
   useEffect(() => {
     const handleShortcut = (e: globalThis.KeyboardEvent) => {
@@ -317,14 +499,14 @@ export function BalanceSheetView({
         return;
       }
       e.preventDefault();
-      setIsFullScreen((prev) => !prev);
+      toggleFullScreen();
     };
 
     window.addEventListener('keydown', handleShortcut);
     return () => {
       window.removeEventListener('keydown', handleShortcut);
     };
-  }, [inspectedMemberId, showGoogleSheetModal]);
+  }, [inspectedMemberId, showGoogleSheetModal, toggleFullScreen]);
 
   const sheetQuery = useQuery({
     queryKey: queryKeys.dashboard.balanceSheet(selectedMonth),
@@ -1392,7 +1574,13 @@ export function BalanceSheetView({
       }`}
     >
       {/* 1. Period, Freeze, Export & Full Screen Controls */}
-      <div className="relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-2.5 sm:px-4 py-2 sm:py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2 print-hidden">
+      <div
+        className={`relative z-40 shrink-0 bg-slate-50/85 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 px-2.5 sm:px-4 ${
+          cssLandscapeFallback
+            ? 'py-1.5 flex flex-row items-center justify-between gap-2'
+            : 'py-2 sm:py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2'
+        } print-hidden`}
+      >
         {/* Top Row on Mobile: View Switch (Left) + Quick Actions & Top-Right Full Screen (Right) */}
         <div className="flex items-center justify-between gap-2 md:justify-start">
           <div className="flex items-center gap-1.5">
@@ -1507,7 +1695,11 @@ export function BalanceSheetView({
           </div>
 
           {/* Mobile-only top-right Refresh + Full Screen (always pinned top-right) */}
-          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+          <div
+            className={`${
+              cssLandscapeFallback ? 'hidden' : 'flex md:hidden'
+            } items-center gap-1.5 shrink-0`}
+          >
             <button
               type="button"
               onClick={() => void sheetQuery.refetch()}
@@ -1520,7 +1712,7 @@ export function BalanceSheetView({
             </button>
             <button
               type="button"
-              onClick={() => setIsFullScreen((prev) => !prev)}
+              onClick={toggleFullScreen}
               aria-label={isFullScreen ? 'Exit full screen' : 'Full screen'}
               aria-pressed={isFullScreen}
               className={`h-8 w-8 rounded-lg inline-flex items-center justify-center transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
@@ -1652,16 +1844,18 @@ export function BalanceSheetView({
               disabled={isRefetching}
               title={tCommon('refresh')}
               aria-label={tCommon('refresh')}
-              className="hidden md:inline-flex h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              className={`${
+                cssLandscapeFallback ? 'inline-flex' : 'hidden md:inline-flex'
+              } h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} aria-hidden="true" />
             </button>
 
-            {/* Desktop Icon-only Full Screen Toggle positioned at Top-Right of Sheet */}
-            <div className="relative group/fs hidden md:block">
+            {/* Desktop & Landscape Full Screen Toggle positioned at Top-Right of Sheet */}
+            <div className={`relative group/fs ${cssLandscapeFallback ? 'block' : 'hidden md:block'}`}>
               <button
                 type="button"
-                onClick={() => setIsFullScreen((prev) => !prev)}
+                onClick={toggleFullScreen}
                 aria-label={isFullScreen ? 'Exit full screen (f)' : 'Full screen (f)'}
                 aria-pressed={isFullScreen}
                 className={`h-8 w-8 rounded-lg inline-flex items-center justify-center transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
@@ -1875,7 +2069,7 @@ export function BalanceSheetView({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setIsFullScreen(false);
+                                      exitFullScreen();
                                       onViewMemberProfile(row.userId);
                                     }}
                                     aria-label={`${isFullScreen ? row.name : row.memberCode} — ${t('clickToVisitProfile')}`}
@@ -2476,7 +2670,7 @@ export function BalanceSheetView({
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setIsFullScreen(false);
+                                      exitFullScreen();
                                       onViewMemberProfile(row.userId);
                                     }}
                                     onDoubleClick={(e) => e.stopPropagation()}
@@ -3132,7 +3326,11 @@ export function BalanceSheetView({
             <div
               role="region"
               aria-label="Full screen Balance Sheet"
-              className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+              className={
+                cssLandscapeFallback
+                  ? 'fixed top-1/2 left-1/2 w-[100dvh] h-[100vw] -translate-x-1/2 -translate-y-1/2 rotate-90 origin-center z-[60] bg-white dark:bg-slate-950 flex flex-col overflow-hidden pl-[env(safe-area-inset-top)] pr-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-right)] pb-[env(safe-area-inset-left)]'
+                  : 'fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]'
+              }
             >
               {workbookSection}
             </div>,
@@ -3163,7 +3361,7 @@ export function BalanceSheetView({
         onViewMemberProfile={
           onViewMemberProfile
             ? (targetId) => {
-                setIsFullScreen(false);
+                exitFullScreen();
                 onViewMemberProfile(targetId);
               }
             : undefined

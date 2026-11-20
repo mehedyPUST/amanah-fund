@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Activity,
   AlertTriangle,
@@ -14,11 +15,11 @@ import {
   ClipboardCheck,
   Clock,
   CreditCard,
-  FilePlus2,
   FileSpreadsheet,
   HandCoins,
   History,
   MessageSquare,
+  ScrollText,
   Settings,
   ShieldCheck,
   TrendingUp,
@@ -26,7 +27,6 @@ import {
   UserCheck,
   Users,
   Vote,
-  Wallet,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -40,6 +40,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
+import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { StatusText } from './StatusText.tsx';
@@ -228,13 +229,18 @@ export function MobileMfsHome({
   pendingBadgeCount,
   onNavigate,
   onOpenManagerDeskTab,
-  onOpenLoanModal,
   onViewMemberProfile,
 }: MobileMfsHomeProps) {
+  const router = useRouter();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
+
+  const openCharterPage = () => {
+    setMobileBrowseMode(true);
+    router.push('/rules');
+  };
 
   const isAdmin = user.role === 'admin';
   const isManager = user.role === 'manager';
@@ -313,7 +319,7 @@ export function MobileMfsHome({
           ))}
         </div>
         <div className="mfs-icon-grid-4">
-          {Array.from({ length: 8 }).map((_, idx) => (
+          {Array.from({ length: 4 }).map((_, idx) => (
             <Skeleton key={idx} height={82} borderRadius={16} />
           ))}
         </div>
@@ -512,28 +518,22 @@ export function MobileMfsHome({
           onClick: () => onNavigate('monthly-contribution'),
         },
         {
-          id: 'apply-qard-hasan',
-          label: tNav('requestLoan'),
-          Icon: FilePlus2,
+          id: 'quard-hasan',
+          label: tNav('qardHasan'),
+          Icon: HandCoins,
           iconBgClass:
-            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-          iconColorClass: 'text-teal-600 dark:text-teal-300',
-          onClick: () => {
-            if (onOpenLoanModal) {
-              onOpenLoanModal();
-            } else {
-              onNavigate('quard-hasan');
-            }
-          },
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
+          onClick: () => onNavigate('quard-hasan'),
         },
         {
-          id: 'my-amanah',
-          label: tNav('myAmanah'),
-          Icon: Wallet,
+          id: 'members',
+          label: tNav('members'),
+          Icon: Users,
           iconBgClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-          iconColorClass: 'text-violet-600 dark:text-violet-300',
-          onClick: () => onNavigate('my-amanah'),
+            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+          iconColorClass: 'text-sky-600 dark:text-sky-300',
+          onClick: () => onNavigate('members'),
         },
         {
           id: 'community',
@@ -546,27 +546,26 @@ export function MobileMfsHome({
           onClick: () => onNavigate('community'),
         },
         {
-          id: 'members',
-          label: tNav('members'),
-          Icon: Users,
+          id: 'balance-sheet',
+          label: tNav('balanceSheet'),
+          Icon: FileSpreadsheet,
           iconBgClass:
-            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-          iconColorClass: 'text-sky-600 dark:text-sky-300',
-          onClick: () => onNavigate('members'),
+            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+          iconColorClass: 'text-teal-600 dark:text-teal-300',
+          onClick: () => onNavigate('balance-sheet'),
         },
         {
-          id: 'voting',
-          label: tNav('voting'),
-          Icon: Vote,
+          id: 'transaction-history',
+          label: tNav('transactions'),
+          Icon: History,
           iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          badge: pendingBadgeCount('ballot'),
-          onClick: () => onNavigate('ballot'),
+            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+          onClick: () => onNavigate('transaction-history'),
         },
       ];
 
-  // 2. Every Remaining Functional Page (4-col iconic grid so 100% of functional pages are on Home!)
+  // 2. More Section (4-col iconic grid)
   const functionalPageTiles: MfsIconTile[] = isAdmin
     ? [
         {
@@ -606,6 +605,15 @@ export function MobileMfsHome({
           onClick: () => onNavigate('manager-cycle'),
         },
         {
+          id: 'charter',
+          label: tNav('charter'),
+          Icon: ScrollText,
+          iconBgClass:
+            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+          iconColorClass: 'text-rose-600 dark:text-rose-300',
+          onClick: openCharterPage,
+        },
+        {
           id: 'notification',
           label: tNav('notifications'),
           Icon: Bell,
@@ -629,30 +637,12 @@ export function MobileMfsHome({
           label: tNav('profile'),
           Icon: User,
           iconBgClass:
-            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-          iconColorClass: 'text-rose-600 dark:text-rose-300',
+            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
           onClick: () => onNavigate('my-profile'),
         },
       ]
     : [
-        {
-          id: 'quard-hasan',
-          label: tNav('qardHasan'),
-          Icon: HandCoins,
-          iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          onClick: () => onNavigate('quard-hasan'),
-        },
-        {
-          id: 'transaction-history',
-          label: tNav('transactions'),
-          Icon: History,
-          iconBgClass:
-            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
-          onClick: () => onNavigate('transaction-history'),
-        },
         {
           id: 'statistics',
           label: tNav('statistics'),
@@ -661,15 +651,6 @@ export function MobileMfsHome({
             'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
           iconColorClass: 'text-emerald-600 dark:text-emerald-300',
           onClick: () => onNavigate('statistics'),
-        },
-        {
-          id: 'balance-sheet',
-          label: tNav('balanceSheet'),
-          Icon: FileSpreadsheet,
-          iconBgClass:
-            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-          iconColorClass: 'text-teal-600 dark:text-teal-300',
-          onClick: () => onNavigate('balance-sheet'),
         },
         {
           id: 'manager-cycle',
@@ -681,23 +662,23 @@ export function MobileMfsHome({
           onClick: () => onNavigate('manager-cycle'),
         },
         {
-          id: 'notification',
-          label: tNav('notifications'),
-          Icon: Bell,
+          id: 'voting',
+          label: tNav('voting'),
+          Icon: Vote,
           iconBgClass:
-            'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-          iconColorClass: 'text-orange-600 dark:text-orange-300',
-          badge: pendingBadgeCount('notification'),
-          onClick: () => onNavigate('notification'),
+            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+          iconColorClass: 'text-amber-600 dark:text-amber-300',
+          badge: pendingBadgeCount('ballot'),
+          onClick: () => onNavigate('ballot'),
         },
         {
-          id: 'my-profile',
-          label: tNav('profile'),
-          Icon: User,
+          id: 'charter',
+          label: tNav('charter'),
+          Icon: ScrollText,
           iconBgClass:
             'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
           iconColorClass: 'text-rose-600 dark:text-rose-300',
-          onClick: () => onNavigate('my-profile'),
+          onClick: openCharterPage,
         },
         ...(isManager
           ? [
@@ -706,8 +687,8 @@ export function MobileMfsHome({
                 label: tNav('managerDesk'),
                 Icon: ClipboardCheck,
                 iconBgClass:
-                  'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-                iconColorClass: 'text-amber-600 dark:text-amber-300',
+                  'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+                iconColorClass: 'text-orange-600 dark:text-orange-300',
                 badge: pendingBadgeCount('manager-desk'),
                 onClick: () => onNavigate('manager-desk'),
               },
@@ -1029,14 +1010,10 @@ export function MobileMfsHome({
         </div>
       </section>
 
-      {/* 5. All Functional Pages (4-col grid ensuring 100% of app pages have iconic buttons on Home) */}
-      <section aria-label={tDash('mobile.allPagesAccount')} className="space-y-2">
+      {/* 5. More Section (4-col iconic grid) */}
+      <section aria-label={tDash('mobile.more')} className="space-y-2">
         <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {isAdmin
-            ? tDash('mobile.governanceLedgerPages')
-            : isManager
-              ? tDash('mobile.managementLedgerPages')
-              : tDash('mobile.allPagesAccount')}
+          {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
         </h2>
 
         <div className="mfs-icon-grid-4">
