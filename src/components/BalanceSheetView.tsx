@@ -258,6 +258,7 @@ export function BalanceSheetView({
   const [showGoogleSheetModal, setShowGoogleSheetModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [cssLandscapeFallback, setCssLandscapeFallback] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [mounted, setMounted] = useState(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const fullScreenTokenRef = useRef<symbol | null>(null);
@@ -270,7 +271,24 @@ export function BalanceSheetView({
 
   useEffect(() => {
     setMounted(true);
+    const updateMobileDevice = () => {
+      if (typeof window === 'undefined') return;
+      const shortestSide = Math.min(window.innerWidth, window.innerHeight);
+      const longestSide = Math.max(window.innerWidth, window.innerHeight);
+      const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+      setIsMobileDevice(shortestSide < 640 || (coarsePointer && longestSide < 1024));
+    };
+    updateMobileDevice();
+    window.addEventListener('resize', updateMobileDevice);
+    window.addEventListener('orientationchange', updateMobileDevice);
+    return () => {
+      window.removeEventListener('resize', updateMobileDevice);
+      window.removeEventListener('orientationchange', updateMobileDevice);
+    };
   }, []);
+
+  // Show Member Name column only in desktop full screen; keep mobile (including landscape) compact with Photo + ID
+  const showMemberNameCol = isFullScreen && !isMobileDevice && !cssLandscapeFallback;
 
   useBodyScrollLock(isFullScreen);
 
@@ -1109,7 +1127,7 @@ export function BalanceSheetView({
             : t('statusDue');
 
     const map: Record<number, { value: string; formula: string }> = {
-      0: isFullScreen
+      0: showMemberNameCol
         ? {
             value: row.name,
             formula: `="${row.name}"  // S.N ${sheetRowNum} · ${row.memberCode} · Double-click for details`,
@@ -1120,7 +1138,7 @@ export function BalanceSheetView({
           },
       1: {
         value: row.memberCode,
-        formula: isFullScreen
+        formula: showMemberNameCol
           ? `="${row.memberCode}"  // Member ID for ${row.name}`
           : `="${row.memberCode}"  // Member ID · Double-click for details`,
       },
@@ -1184,7 +1202,7 @@ export function BalanceSheetView({
     filterCounts.paid,
     activeMonth,
     prevMonthKey,
-    isFullScreen,
+    showMemberNameCol,
     t,
   ]);
 
@@ -1592,7 +1610,7 @@ export function BalanceSheetView({
                   disabled={displayMode !== 'sheet'}
                   onClick={() => setFreezeIdentityCols((v) => !v)}
                   title={
-                    isFullScreen
+                    showMemberNameCol
                       ? 'Freeze columns A & B (Name & ID)'
                       : 'Freeze columns A & B (Photo & ID)'
                   }
@@ -2072,7 +2090,7 @@ export function BalanceSheetView({
                                       exitFullScreen();
                                       onViewMemberProfile(row.userId);
                                     }}
-                                    aria-label={`${isFullScreen ? row.name : row.memberCode} — ${t('clickToVisitProfile')}`}
+                                    aria-label={`${showMemberNameCol ? row.name : row.memberCode} — ${t('clickToVisitProfile')}`}
                                     className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                   >
                                     <SheetMemberAvatar
@@ -2095,7 +2113,7 @@ export function BalanceSheetView({
                                 </>
                               ) : (
                                 <div
-                                  aria-label={isFullScreen ? row.name : row.memberCode}
+                                  aria-label={showMemberNameCol ? row.name : row.memberCode}
                                   className="rounded-full"
                                 >
                                   <SheetMemberAvatar
@@ -2112,7 +2130,7 @@ export function BalanceSheetView({
                               onClick={() => setInspectedMemberId(row.userId)}
                               className="min-w-0 text-left cursor-pointer group/name"
                             >
-                              {isFullScreen ? (
+                              {showMemberNameCol ? (
                                 <>
                                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-50 group-hover/name:text-emerald-700 dark:group-hover/name:text-emerald-400 truncate">
                                     {idx + 1}. {row.name}
@@ -2228,7 +2246,7 @@ export function BalanceSheetView({
                   </span>
                 ))}
               </div>
-              {!isFullScreen && (
+              {!isFullScreen && !isMobileDevice && (
                 <span className="hidden lg:inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                   Member names visible in full screen
                 </span>
@@ -2261,14 +2279,14 @@ export function BalanceSheetView({
                           ? 'md:sticky md:left-[40px] md:z-40'
                           : freezeIdentityCols && colIdx === 1
                             ? `md:sticky ${
-                                isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                                showMemberNameCol ? 'md:left-[214px]' : 'md:left-[84px]'
                               } md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                             : '';
                       return (
                         <th
                           key={letter}
                           scope="col"
-                          colSpan={colIdx === 0 ? (isFullScreen ? 2 : 1) : 1}
+                          colSpan={colIdx === 0 ? (showMemberNameCol ? 2 : 1) : 1}
                           className={`h-6 px-2 text-center font-semibold border-r border-b border-slate-200 dark:border-slate-700 ${stickyClass} ${
                             colActive
                               ? 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200'
@@ -2289,7 +2307,7 @@ export function BalanceSheetView({
                     />
                     <th
                       scope="colgroup"
-                      colSpan={isFullScreen ? 3 : 2}
+                      colSpan={showMemberNameCol ? 3 : 2}
                       className={`h-7 px-2 text-left border-r border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 ${
                         freezeIdentityCols
                           ? 'md:sticky md:left-[40px] md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]'
@@ -2340,8 +2358,8 @@ export function BalanceSheetView({
                       </button>
                     </th>
 
-                    {/* A: Photo + Name (Full Screen) or Photo only (Regular View) */}
-                    {isFullScreen ? (
+                    {/* A: Photo + Name (Desktop Full Screen) or Photo only (Regular & Mobile Landscape) */}
+                    {showMemberNameCol ? (
                       <th
                         scope="col"
                         colSpan={2}
@@ -2376,11 +2394,11 @@ export function BalanceSheetView({
                     <th
                       scope="col"
                       className={`${
-                        isFullScreen ? 'min-w-[82px] w-[82px]' : 'min-w-[92px] w-[92px]'
+                        showMemberNameCol ? 'min-w-[82px] w-[82px]' : 'min-w-[92px] w-[92px]'
                       } px-2 py-2 text-left border-r border-b-2 border-indigo-300/80 dark:border-indigo-800 bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-100 ${
                         freezeIdentityCols
                           ? `md:sticky ${
-                              isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                              showMemberNameCol ? 'md:left-[214px]' : 'md:left-[84px]'
                             } md:z-40 md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                           : ''
                       }`}
@@ -2562,7 +2580,7 @@ export function BalanceSheetView({
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={isFullScreen ? 14 : 13}
+                        colSpan={showMemberNameCol ? 14 : 13}
                         className="py-12 px-4 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
                       >
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -2639,12 +2657,12 @@ export function BalanceSheetView({
                             {idx + 1}
                           </td>
 
-                          {/* A1: Member Photo (separate cell; in regular view carries col 0 focus & border) */}
+                          {/* A1: Member Photo (separate cell; carries col 0 focus & border when Name col is hidden) */}
                           <td
-                            data-sheet-cell={isFullScreen ? undefined : `balance-sheet:${idx}:0`}
+                            data-sheet-cell={showMemberNameCol ? undefined : `balance-sheet:${idx}:0`}
                             onClick={() => selectSheetCell('balance-sheet', idx, 0)}
                             onDoubleClick={
-                              isFullScreen
+                              showMemberNameCol
                                 ? undefined
                                 : () => {
                                     selectSheetCell('balance-sheet', idx, 0);
@@ -2652,7 +2670,7 @@ export function BalanceSheetView({
                                   }
                             }
                             className={`relative ${
-                              isFullScreen
+                              showMemberNameCol
                                 ? 'w-[38px] min-w-[38px] pl-2 pr-0.5 border-r-0'
                                 : `w-[44px] min-w-[44px] px-2 text-center border-r border-slate-200 dark:border-slate-800 cursor-pointer ${cellRingClass(
                                     isCellActive('balance-sheet', idx, 0)
@@ -2675,7 +2693,7 @@ export function BalanceSheetView({
                                     }}
                                     onDoubleClick={(e) => e.stopPropagation()}
                                     aria-label={`${
-                                      isFullScreen ? row.name : row.memberCode
+                                      showMemberNameCol ? row.name : row.memberCode
                                     } — ${t('clickToVisitProfile')}`}
                                     className="block rounded-full cursor-pointer hover:ring-2 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-shadow"
                                   >
@@ -2698,7 +2716,7 @@ export function BalanceSheetView({
                                 </>
                               ) : (
                                 <div
-                                  aria-label={isFullScreen ? row.name : row.memberCode}
+                                  aria-label={showMemberNameCol ? row.name : row.memberCode}
                                   className="rounded-full"
                                 >
                                   <SheetMemberAvatar
@@ -2711,8 +2729,8 @@ export function BalanceSheetView({
                             </div>
                           </td>
 
-                          {/* A2: Member Name (Shown in Full Screen mode; hidden in regular view) */}
-                          {isFullScreen && (
+                          {/* A2: Member Name (Shown in Desktop Full Screen only; hidden on Mobile & regular view) */}
+                          {showMemberNameCol && (
                             <td
                               data-sheet-cell={`balance-sheet:${idx}:0`}
                               onClick={() => selectSheetCell('balance-sheet', idx, 0)}
@@ -2750,14 +2768,14 @@ export function BalanceSheetView({
                             className={`relative group/memberid px-2 ${cellPadY} font-mono tabular-nums font-medium text-slate-700 dark:text-slate-300 border-r border-b border-slate-200 dark:border-slate-800 cursor-pointer whitespace-nowrap hover:z-40 focus-within:z-40 ${
                               freezeIdentityCols
                                 ? `md:sticky ${
-                                    isFullScreen ? 'md:left-[214px]' : 'md:left-[84px]'
+                                    showMemberNameCol ? 'md:left-[214px]' : 'md:left-[84px]'
                                   } md:z-20 md:hover:z-40 md:focus-within:z-40 ${stickyBg} md:border-r-2 md:border-r-slate-300 dark:md:border-r-slate-600 md:shadow-[4px_0_10px_-4px_rgba(15,23,42,0.08)] dark:md:shadow-[4px_0_10px_-4px_rgba(0,0,0,0.45)]`
                                 : ''
                             } ${cellRingClass(isCellActive('balance-sheet', idx, 1))}`}
                           >
                             <span className="inline-flex items-center gap-1.5">
                               <span>{row.memberCode}</span>
-                              {!isFullScreen && isSelfRow && (
+                              {!showMemberNameCol && isSelfRow && (
                                 <span className="font-sans text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
                                   You
                                 </span>
@@ -2942,7 +2960,7 @@ export function BalanceSheetView({
                       Σ
                     </td>
                     <td
-                      colSpan={isFullScreen ? 3 : 2}
+                      colSpan={showMemberNameCol ? 3 : 2}
                       data-sheet-cell="balance-sheet:-1:0"
                       onClick={() => selectSheetCell('balance-sheet', -1, 0)}
                       className={`px-2 py-2.5 border-r border-t-2 border-slate-400/80 dark:border-slate-600 bg-[#eef3f8] dark:bg-slate-900 cursor-cell whitespace-nowrap ${
@@ -3326,6 +3344,7 @@ export function BalanceSheetView({
             <div
               role="region"
               aria-label="Full screen Balance Sheet"
+              data-no-drawer-swipe
               className={
                 cssLandscapeFallback
                   ? 'fixed top-1/2 left-1/2 w-[100dvh] h-[100vw] -translate-x-1/2 -translate-y-1/2 rotate-90 origin-center z-[60] bg-white dark:bg-slate-950 flex flex-col overflow-hidden pl-[env(safe-area-inset-top)] pr-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-right)] pb-[env(safe-area-inset-left)]'

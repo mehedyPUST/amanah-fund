@@ -305,6 +305,125 @@ export function DashboardShell() {
     }
   }, []);
 
+  // Allow mobile users to open the hamburger menu by sliding right-to-left (and close left-to-right)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let startX = 0;
+    let startY = 0;
+    let tracking: 'open' | 'close' | null = null;
+    let isEdgeStart = false;
+    let triggered = false;
+
+    const isInsideBlockedOrHorizontalScroller = (target: EventTarget | null): boolean => {
+      let el = target instanceof HTMLElement ? target : null;
+      while (el && el !== document.body) {
+        const tag = el.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'OPTION') {
+          return true;
+        }
+        if (
+          el.getAttribute('role') === 'dialog' ||
+          el.getAttribute('aria-modal') === 'true' ||
+          el.hasAttribute('data-no-drawer-swipe')
+        ) {
+          return true;
+        }
+        const style = window.getComputedStyle(el);
+        const overflowX = style.overflowX;
+        if (
+          (overflowX === 'auto' || overflowX === 'scroll') &&
+          el.scrollWidth > el.clientWidth + 4
+        ) {
+          return true;
+        }
+        el = el.parentElement;
+      }
+      return false;
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.innerWidth >= 1024 || e.touches.length !== 1) {
+        tracking = null;
+        return;
+      }
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      triggered = false;
+
+      if (mobileNavOpen) {
+        tracking = 'close';
+        return;
+      }
+
+      if (document.querySelector('[data-no-drawer-swipe], [role="dialog"]')) {
+        tracking = null;
+        return;
+      }
+
+      const vw = window.innerWidth;
+      isEdgeStart = startX >= vw - 36;
+      if (isEdgeStart) {
+        tracking = 'open';
+        return;
+      }
+
+      if (startX >= vw * 0.5 && !isInsideBlockedOrHorizontalScroller(e.target)) {
+        tracking = 'open';
+        return;
+      }
+
+      tracking = null;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!tracking || triggered || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      // Abort gesture if user is scrolling vertically
+      if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx) * 0.85) {
+        tracking = null;
+        return;
+      }
+
+      if (tracking === 'open') {
+        const minDistance = isEdgeStart ? 32 : 52;
+        const horizontalRatio = isEdgeStart ? 1.25 : 1.5;
+        if (dx <= -minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
+          triggered = true;
+          tracking = null;
+          openMobileDrawer();
+        }
+      } else if (tracking === 'close') {
+        if (dx >= 40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+          triggered = true;
+          tracking = null;
+          closeMobileDrawer();
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      tracking = null;
+      triggered = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [mobileNavOpen, openMobileDrawer, closeMobileDrawer]);
+
   const queryClient = useQueryClient();
   const activeUserId = user?.id ?? null;
   const workspaceEnabled = Boolean(activeUserId);
@@ -1168,8 +1287,8 @@ export function DashboardShell() {
     }>
   ) {
     return (
-      <div className="space-y-1">
-        <div className="px-2 pb-0.5 text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+      <div className="space-y-0.5">
+        <div className="px-2 pb-0.5 text-[10px] font-semibold tracking-tight text-slate-500 dark:text-slate-400 truncate">
           {title}
         </div>
         <div className="space-y-0.5">
@@ -1182,7 +1301,7 @@ export function DashboardShell() {
                 type="button"
                 onClick={item.onClick}
                 aria-current={item.active ? 'page' : undefined}
-                className={`w-full min-h-[40px] px-2 py-1.5 text-[13px] rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer text-left ${
+                className={`w-full min-h-[36px] px-2 py-1.5 text-[12px] leading-tight rounded-xl flex items-center justify-between gap-1.5 transition-colors cursor-pointer text-left ${
                   item.active
                     ? `${toneStyle.pillBg} ${toneStyle.activeText}`
                     : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
@@ -1190,7 +1309,7 @@ export function DashboardShell() {
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <Icon
-                    className={`w-4 h-4 shrink-0 ${
+                    className={`w-3.5 h-3.5 shrink-0 ${
                       item.active ? toneStyle.activeIcon : 'text-slate-500 dark:text-slate-400'
                     }`}
                     aria-hidden="true"
@@ -1198,7 +1317,7 @@ export function DashboardShell() {
                   <span className="truncate">{item.label}</span>
                 </span>
                 {typeof item.badge === 'number' && item.badge > 0 && (
-                  <span className="font-mono text-[11px] tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
+                  <span className="font-mono text-[10px] tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
                     {item.badge}
                   </span>
                 )}
@@ -1655,14 +1774,14 @@ export function DashboardShell() {
               exit={{ x: '100%' }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               aria-label={tCommon('dashboardMenuAria')}
-              className="relative z-10 w-[184px] max-w-[58vw] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
+              className="relative z-10 w-1/2 h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl"
             >
               {/* Drawer Top User Header (photo, name & role with verified badge) */}
-              <div className="min-h-[54px] px-2 py-2 border-b border-emerald-200/80 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/90 via-teal-50/60 to-white dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900 flex items-center justify-between gap-1 shrink-0">
+              <div className="min-h-[50px] px-2 py-2 border-b border-emerald-200/80 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/90 via-teal-50/60 to-white dark:from-emerald-950/45 dark:via-teal-950/25 dark:to-slate-900 flex items-center justify-between gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => navigateToPage('my-profile', true)}
-                  className="flex-1 min-w-0 text-left rounded-xl p-1 -m-1 hover:bg-white/75 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2 cursor-pointer"
+                  className="flex-1 min-w-0 text-left rounded-xl p-1 -m-1 hover:bg-white/75 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   {(() => {
                     const drawerPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
@@ -1675,10 +1794,10 @@ export function DashboardShell() {
                         alt={user.name}
                         referrerPolicy="no-referrer"
                         onError={() => setFailedDrawerPhotoUrl(drawerPhotoUrl || null)}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/30 dark:ring-emerald-400/30 shadow-xs shrink-0"
+                        className="w-7 h-7 rounded-full object-cover ring-2 ring-emerald-500/30 dark:ring-emerald-400/30 shadow-xs shrink-0"
                       />
                     ) : (
-                      <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/25">
+                      <span className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-[10px] font-semibold flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/25">
                         {(user.name || 'AM')
                           .split(/\s+/)
                           .filter(Boolean)
@@ -1689,14 +1808,14 @@ export function DashboardShell() {
                     );
                   })()}
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
+                    <div className="text-[11.5px] font-semibold text-slate-900 dark:text-white truncate leading-tight">
                       {user.name}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1 min-w-0 text-[10.5px] text-slate-600 dark:text-slate-400">
+                    <div className="mt-0.5 flex items-center gap-1 min-w-0 text-[10px] text-slate-600 dark:text-slate-400">
                       <span className="truncate">{translateRoleLabel(user.role, locale)}</span>
                       {user.status === 'active' ? (
                         <BadgeCheck
-                          className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                          className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0"
                           aria-label={tCommon('verified')}
                         />
                       ) : (
@@ -1714,14 +1833,14 @@ export function DashboardShell() {
                   type="button"
                   onClick={closeMobileDrawer}
                   aria-label={tCommon('closeNavigationMenu')}
-                  className="w-7 h-7 -mr-0.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
+                  className="w-6 h-6 -mr-0.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               <nav
-                className="flex-1 min-h-0 px-1.5 py-2.5 overflow-y-auto scrollbar-subtle"
+                className="flex-1 min-h-0 px-1.5 py-2 overflow-y-auto scrollbar-subtle"
                 aria-label={tNav('primaryNav')}
               >
                 {renderMobileDrawerNav()}
@@ -1735,13 +1854,14 @@ export function DashboardShell() {
                     setMobileBrowseMode(true);
                     setMobileNavOpen(false);
                   }}
-                  className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 whitespace-nowrap"
+                  className="w-full min-h-[34px] py-1.5 px-2 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <Home className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                   <span className="truncate">{tNav('home')}</span>
                 </Link>
                 <PWAUpdateButton
                   fullWidth
+                  compact
                   align="start"
                   popoverPlacement="top"
                   popoverAlign="right"
@@ -1749,24 +1869,24 @@ export function DashboardShell() {
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
-                  className="w-full min-h-[36px] py-1.5 px-2.5 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-xs font-medium flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full min-h-[34px] py-1.5 px-2 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors text-[11px] font-medium flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <LogOut className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">{tNav('signOut')}</span>
                 </button>
-                <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center gap-1.5">
-                  <LanguageSwitcher variant="compact" className="h-8 px-1.5" />
+                <div className="pt-1.5 mt-0.5 border-t border-slate-200/75 dark:border-slate-800/80 flex items-center gap-1">
+                  <LanguageSwitcher variant="compact" className="h-7 px-1.5 text-[10.5px]" />
                   <button
                     type="button"
                     onClick={toggleDarkMode}
                     title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                     aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 h-8 px-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-[11px] font-medium cursor-pointer whitespace-nowrap"
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 h-7 px-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-[10.5px] font-medium cursor-pointer whitespace-nowrap"
                   >
                     {darkMode ? (
-                      <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                      <Sun className="w-3 h-3 text-amber-500 shrink-0" aria-hidden="true" />
                     ) : (
-                      <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
+                      <Moon className="w-3 h-3 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
                     )}
                     <span className="truncate">{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
                   </button>
