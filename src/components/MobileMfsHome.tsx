@@ -326,7 +326,10 @@ export function MobileMfsHome({
   if (loading || !overview) {
     return (
       <div className="space-y-4">
-        <Skeleton height={40} borderRadius={14} />
+        <div className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3.5 space-y-2">
+          <Skeleton width="82%" height={12} />
+          <Skeleton width="68%" height={20} />
+        </div>
         <div className="grid grid-cols-2 gap-2.5">
           {Array.from({ length: 4 }).map((_, idx) => (
             <Skeleton key={idx} height={92} borderRadius={16} />
@@ -739,20 +742,41 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
-      {/* Phase & Maturity Countdown Strip */}
-      <button
+      {/* Phase & Pre-Specified Maturity Date Banner */}
+      <motion.button
         type="button"
         onClick={() => setActiveSheet('pulse')}
-        className="w-full px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 dark:from-emerald-600 dark:via-emerald-700 dark:to-teal-800 shadow-sm shadow-emerald-900/15 flex items-center justify-between gap-2 text-left active:scale-[0.99] transition-transform cursor-pointer"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ duration: 0.2 }}
+        className="w-full amanah-card-emerald border rounded-2xl p-3.5 shadow-xs transition-all duration-200 text-left cursor-pointer"
       >
-        <span className="text-[11px] font-medium text-emerald-50/95 truncate">
-          {phase === 'qard_hasan' ? tDash('phase1Short') : tDash('phase2Short')} ·{' '}
-          {tDash('maturityLabel', { date: formatShortDate(config.maturityDate) })}
-        </span>
-        <span className="text-[11px] font-mono font-bold tabular-nums text-amber-200 shrink-0">
-          {tCommon('daysLeft', { days: daysUntilMaturity })}
-        </span>
-      </button>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+              {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
+              {tCommon('daysRemaining', { days: daysUntilMaturity })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white leading-snug">
+              {config.fundName}
+            </h2>
+            <ChevronRight
+              className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </motion.button>
 
       {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
       {(myGuarantorRequests.length > 0 ||
