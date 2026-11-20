@@ -52,6 +52,7 @@ export interface MfsIconTile {
   iconBgClass: string;
   iconColorClass: string;
   badge?: number;
+  badgeBlink?: 'amber' | 'red';
   onClick: () => void;
 }
 
@@ -68,6 +69,7 @@ interface MobileMfsHomeProps {
   user: PublicUser;
   loading: boolean;
   pendingBadgeCount: (sectionId: DashboardSectionId) => number;
+  hasUnreadPriorityNotification?: boolean;
   onNavigate: (section: DashboardSectionId) => void;
   onOpenManagerDeskTab?: (tab: ManagerDeskTab) => void;
   onOpenLoanModal?: () => void;
@@ -202,8 +204,26 @@ function MfsGridTileButton({
       >
         <Icon className={`mfs-tile-icon ${tile.iconColorClass}`} aria-hidden="true" />
         {typeof tile.badge === 'number' && tile.badge > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-600 text-white font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs">
-            {tile.badge > 99 ? '99+' : tile.badge}
+          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center">
+            {tile.badgeBlink && (
+              <span
+                aria-hidden="true"
+                className={`absolute inset-0 rounded-full pointer-events-none ${
+                  tile.badgeBlink === 'red'
+                    ? 'bg-red-500 amanah-blink-ring-urgent'
+                    : 'bg-amber-500 amanah-blink-ring'
+                }`}
+              />
+            )}
+            <span
+              className={`relative min-w-[18px] h-[18px] px-1 rounded-full font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+                tile.badgeBlink === 'red'
+                  ? 'bg-red-600 dark:bg-red-500 text-white'
+                  : 'bg-amber-600 text-white'
+              }`}
+            >
+              {tile.badge > 99 ? '99+' : tile.badge}
+            </span>
           </span>
         )}
       </span>
@@ -227,6 +247,7 @@ export function MobileMfsHome({
   user,
   loading,
   pendingBadgeCount,
+  hasUnreadPriorityNotification = false,
   onNavigate,
   onOpenManagerDeskTab,
   onViewMemberProfile,
@@ -621,6 +642,12 @@ export function MobileMfsHome({
             'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
           iconColorClass: 'text-orange-600 dark:text-orange-300',
           badge: pendingBadgeCount('notification'),
+          badgeBlink:
+            pendingBadgeCount('notification') > 0
+              ? hasUnreadPriorityNotification
+                ? 'red'
+                : 'amber'
+              : undefined,
           onClick: () => onNavigate('notification'),
         },
         {

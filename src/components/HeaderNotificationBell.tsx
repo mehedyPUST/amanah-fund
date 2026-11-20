@@ -31,6 +31,11 @@ import type {
 } from '../types/coop.ts';
 import { formatBillingMonth, formatDateTime, formatMoney } from '../utils/format.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
+import {
+  NotificationBlinkMarker,
+  isMeetingOrNoticeBoardNotification,
+  isNotificationForUser,
+} from './NotificationBlinkMarker.tsx';
 
 interface HeaderNotificationBellProps {
   user: PublicUser;
@@ -46,7 +51,7 @@ interface HeaderNotificationBellProps {
 
 type BellFilterTab = 'all' | 'treasury' | 'governance';
 
-type AlertTone = 'emerald' | 'amber' | 'rose' | 'sky' | 'slate';
+type AlertTone = 'emerald' | 'amber' | 'rose' | 'red' | 'sky' | 'slate';
 
 type AlertIconKey =
   | 'loan'
@@ -65,6 +70,7 @@ interface BellAlertItem {
   group: 'treasury' | 'governance';
   tone: AlertTone;
   iconKey: AlertIconKey;
+  isPriorityBlink?: boolean;
   categoryLabel: string;
   title: string;
   detail: string;
@@ -81,6 +87,8 @@ const TONE_ICON_SURFACE: Record<AlertTone, string> = {
     'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400',
   rose:
     'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400',
+  red:
+    'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400',
   sky:
     'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400',
   slate:
@@ -156,18 +164,24 @@ export function HeaderNotificationBell({
   const ccy = overview?.config.currency || 'BDT';
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
+  const userUnread = useMemo(
+    () =>
+      notifications.filter(
+        (n) => !n.readByRecipient && isNotificationForUser(n, user)
+      ),
+    [notifications, user]
+  );
+
+  const hasUnreadPriority = useMemo(
+    () => userUnread.some((n) => isMeetingOrNoticeBoardNotification(n)),
+    [userUnread]
+  );
+
   const alerts = useMemo<BellAlertItem[]>(() => {
     const list: BellAlertItem[] = [];
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const currentMonthLabel = formatBillingMonth(currentMonth);
-
-    const userUnread = notifications.filter(
-      (n) =>
-        !n.readByRecipient &&
-        (n.recipientUserId === user.id ||
-          n.recipientEmail.toLowerCase() === user.email.toLowerCase())
-    );
 
     const coveredLoanIds = new Set<string>();
 
@@ -223,8 +237,9 @@ export function HeaderNotificationBell({
           id: `notif-${n.id}`,
           notificationId: n.id,
           group: 'governance',
-          tone: 'sky',
+          tone: 'red',
           iconKey: 'meeting',
+          isPriorityBlink: true,
           categoryLabel: tNotif('bell.categoryMeeting'),
           title: tNotif('types.meeting_scheduled'),
           detail: n.subject,
@@ -232,12 +247,14 @@ export function HeaderNotificationBell({
           targetTab: 'notification',
         });
       } else if (n.type === 'cooperative_notice') {
+        const isNoticeBoardAlert = isMeetingOrNoticeBoardNotification(n);
         list.push({
           id: `notif-${n.id}`,
           notificationId: n.id,
           group: 'governance',
-          tone: 'slate',
+          tone: isNoticeBoardAlert ? 'red' : 'slate',
           iconKey: 'notice',
+          isPriorityBlink: isNoticeBoardAlert,
           categoryLabel: tNotif('bell.categoryNotice'),
           title: tNotif('types.cooperative_notice'),
           detail: n.subject,
@@ -454,7 +471,7 @@ export function HeaderNotificationBell({
     }
 
     return list;
-  }, [notifications, loans, contributions, user.id, user.email, user.role, isStaff, ccy, overview, tNotif]);
+  }, [userUnread, loans, contributions, user.id, user.role, isStaff, ccy, overview, tNotif]);
 
   const treasuryCount = useMemo(
     () => alerts.filter((a) => a.group === 'treasury').length,
@@ -480,6 +497,7 @@ export function HeaderNotificationBell({
   );
 
   const unreadInboxCount = overview?.treasury.unreadNotificationsCount || 0;
+  const hasUnreadNotifications = userUnread.length > 0 || unreadInboxCount > 0;
   const badgeCount = alerts.length > 0 ? alerts.length : unreadInboxCount;
 
   async function handleAlertClick(alert: BellAlertItem) {
@@ -534,13 +552,33 @@ export function HeaderNotificationBell({
         className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-colors duration-150 cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${
           open
             ? 'border-emerald-500/60 dark:border-emerald-500/50 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
-            : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white'
+            : hasUnreadPriority
+              ? 'border-red-200 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/35 text-red-600 dark:text-red-400 hover:bg-red-100/80 dark:hover:bg-red-950/55'
+              : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white'
         }`}
       >
         <Bell className="w-4 h-4" aria-hidden="true" />
         {badgeCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950 font-mono tabular-nums text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
-            {badgeCount > 99 ? '99+' : badgeCount}
+          <span className="absolute -top-1 -right-1 flex items-center justify-center">
+            {hasUnreadNotifications && (
+              <span
+                aria-hidden="true"
+                className={`absolute inset-0 rounded-full pointer-events-none ${
+                  hasUnreadPriority
+                    ? 'bg-red-500 amanah-blink-ring-urgent'
+                    : 'bg-amber-500 amanah-blink-ring'
+                }`}
+              />
+            )}
+            <span
+              className={`relative min-w-[16px] h-4 px-1 rounded-full font-mono tabular-nums text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 ${
+                hasUnreadPriority
+                  ? 'bg-red-600 dark:bg-red-500 text-white'
+                  : 'bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950'
+              }`}
+            >
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </span>
           </span>
         )}
       </button>
@@ -574,6 +612,12 @@ export function HeaderNotificationBell({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
+                      {hasUnreadNotifications && (
+                        <NotificationBlinkMarker
+                          variant={hasUnreadPriority ? 'red' : 'emerald'}
+                          size="sm"
+                        />
+                      )}
                       <h2 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-white truncate">
                         {tNotif('title')}
                       </h2>
@@ -582,7 +626,13 @@ export function HeaderNotificationBell({
                           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                             ·
                           </span>
-                          <span className="font-mono text-xs tabular-nums font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap shrink-0">
+                          <span
+                            className={`font-mono text-xs tabular-nums font-semibold whitespace-nowrap shrink-0 ${
+                              hasUnreadPriority
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-emerald-700 dark:text-emerald-400'
+                            }`}
+                          >
                             {tNotif('activeCount', { count: badgeCount })}
                           </span>
                         </>
@@ -689,13 +739,16 @@ export function HeaderNotificationBell({
                   <ul className="divide-y divide-slate-100 dark:divide-slate-800/80">
                     {visibleAlerts.map((alert) => {
                       const isUnreadNotif = Boolean(alert.notificationId);
+                      const isPriorityBlink = Boolean(alert.isPriorityBlink);
                       const isBusy = markingId === alert.notificationId || markingAll;
                       return (
                         <li
                           key={alert.id}
                           className={`group flex items-stretch transition-colors duration-150 ${
                             isUnreadNotif
-                              ? 'bg-emerald-50/25 dark:bg-emerald-950/15 hover:bg-slate-50 dark:hover:bg-slate-800/55'
+                              ? isPriorityBlink
+                                ? 'bg-red-50/45 dark:bg-red-950/20 hover:bg-red-50/75 dark:hover:bg-red-950/35'
+                                : 'bg-emerald-50/25 dark:bg-emerald-950/15 hover:bg-slate-50 dark:hover:bg-slate-800/55'
                               : 'hover:bg-slate-50 dark:hover:bg-slate-800/55'
                           }`}
                         >
@@ -712,11 +765,28 @@ export function HeaderNotificationBell({
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 min-w-0">
+                                {isUnreadNotif && (
+                                  <NotificationBlinkMarker
+                                    variant={isPriorityBlink ? 'red' : 'emerald'}
+                                    size="sm"
+                                    label={
+                                      isPriorityBlink
+                                        ? 'Unread meeting or notice board alert'
+                                        : 'Unread notification'
+                                    }
+                                  />
+                                )}
                                 <span className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug truncate">
                                   {alert.title}
                                 </span>
                                 {isUnreadNotif && (
-                                  <span className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
+                                  <span
+                                    className={`text-[10.5px] font-semibold shrink-0 ${
+                                      isPriorityBlink
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-emerald-700 dark:text-emerald-400'
+                                    }`}
+                                  >
                                     · {tNotif('bell.newLabel')}
                                   </span>
                                 )}

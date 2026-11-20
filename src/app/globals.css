@@ -533,6 +533,62 @@ html.dark .amanah-logo-orbit-sweep {
   );
 }
 
+@keyframes amanah-notif-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(0.84);
+  }
+}
+
+@keyframes amanah-notif-blink-urgent {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  45% {
+    opacity: 0.18;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes amanah-notif-ring {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(2.15);
+  }
+}
+
+.amanah-blink-dot {
+  animation: amanah-notif-blink 1.45s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.amanah-blink-dot-urgent {
+  animation: amanah-notif-blink-urgent 1s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.amanah-blink-ring {
+  animation: amanah-notif-ring 1.65s cubic-bezier(0, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
+}
+
+.amanah-blink-ring-urgent {
+  animation: amanah-notif-ring 1.15s cubic-bezier(0, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
+}
+
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

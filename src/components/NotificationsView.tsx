@@ -34,6 +34,11 @@ import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { GoogleSignInButton } from './GoogleSignInButton.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
+import {
+  NotificationBlinkMarker,
+  isMeetingOrNoticeBoardNotification,
+  isNotificationForUser,
+} from './NotificationBlinkMarker.tsx';
 
 interface NotificationsViewProps {
   user: PublicUser;
@@ -396,18 +401,40 @@ export function NotificationsView({
             <span>{t('upcomingMeetingsTitle', { count: upcomingMeetings.length })}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {upcomingMeetings.map((m) => (
-              <div
-                key={m.id}
-                className="p-3.5 rounded-lg bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-emerald-200/80 dark:border-emerald-900/50 space-y-1 text-xs"
-              >
-                <div className="font-semibold text-slate-900 dark:text-white">{m.title}</div>
-                <div className="font-mono text-emerald-700 dark:text-emerald-400">
-                  {formatDateTime(m.scheduledFor)} · {m.locationOrLink}
+            {upcomingMeetings.map((m) => {
+              const hasUnreadMeetingAlert = notifications.some(
+                (n) =>
+                  !n.readByRecipient &&
+                  n.type === 'meeting_scheduled' &&
+                  n.relatedId === m.id &&
+                  isNotificationForUser(n, user)
+              );
+              return (
+                <div
+                  key={m.id}
+                  className={`p-3.5 rounded-lg bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border space-y-1 text-xs ${
+                    hasUnreadMeetingAlert
+                      ? 'border-red-300/90 dark:border-red-800/80'
+                      : 'border-emerald-200/80 dark:border-emerald-900/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                    {hasUnreadMeetingAlert && (
+                      <NotificationBlinkMarker
+                        variant="red"
+                        size="sm"
+                        label="Unread meeting notification"
+                      />
+                    )}
+                    <span className="truncate">{m.title}</span>
+                  </div>
+                  <div className="font-mono text-emerald-700 dark:text-emerald-400">
+                    {formatDateTime(m.scheduledFor)} · {m.locationOrLink}
+                  </div>
+                  {m.agenda && <p className="text-slate-600 dark:text-slate-400">{m.agenda}</p>}
                 </div>
-                {m.agenda && <p className="text-slate-600 dark:text-slate-400">{m.agenda}</p>}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -642,16 +669,23 @@ export function NotificationsView({
         ) : (
           visibleNotifications.map((item, idx) => {
             const isExpanded = Boolean(expandedIds[item.id]);
+            const isUnread = !item.readByRecipient;
+            const isPriorityAlert = isMeetingOrNoticeBoardNotification(item);
             const rowBgClass =
-              idx % 2 === 1
-                ? 'bg-sky-50/85 dark:bg-slate-800/55'
-                : 'bg-white/95 dark:bg-slate-900/85';
+              isUnread && isPriorityAlert
+                ? 'bg-red-50/45 dark:bg-red-950/20'
+                : idx % 2 === 1
+                  ? 'bg-sky-50/85 dark:bg-slate-800/55'
+                  : 'bg-white/95 dark:bg-slate-900/85';
+            const borderClass = isUnread
+              ? isPriorityAlert
+                ? 'border-red-300/90 dark:border-red-800/80'
+                : 'border-emerald-300/85 dark:border-emerald-800/75'
+              : 'border-slate-200/85 dark:border-slate-800/85';
             return (
               <div
                 key={item.id}
-                className={`rounded-xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs transition-colors ${rowBgClass} ${
-                  !item.readByRecipient ? 'border-l-[3px] border-l-emerald-500' : ''
-                }`}
+                className={`rounded-xl border shadow-2xs transition-colors ${borderClass} ${rowBgClass}`}
               >
                 <button
                   type="button"
@@ -663,25 +697,49 @@ export function NotificationsView({
                   }
                   aria-expanded={isExpanded}
                   title={isExpanded ? 'Click to collapse' : 'Click to expand'}
-                  className={`group/notif relative w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left hover:bg-emerald-50/45 dark:hover:bg-slate-800/75 transition-colors cursor-pointer ${
-                    isExpanded ? 'rounded-t-xl' : 'rounded-xl'
-                  }`}
+                  className={`group/notif relative w-full p-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer ${
+                    isPriorityAlert && isUnread
+                      ? 'hover:bg-red-50/80 dark:hover:bg-red-950/35'
+                      : 'hover:bg-emerald-50/45 dark:hover:bg-slate-800/75'
+                  } ${isExpanded ? 'rounded-t-xl' : 'rounded-xl'}`}
                 >
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      {!item.readByRecipient && (
-                        <span
-                          aria-hidden="true"
-                          className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
+                      {isUnread && (
+                        <NotificationBlinkMarker
+                          variant={isPriorityAlert ? 'red' : 'emerald'}
+                          size="md"
+                          label={
+                            isPriorityAlert
+                              ? 'Unread meeting or notice board notification'
+                              : 'Unread notification'
+                          }
                         />
                       )}
                       <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
                         {item.subject}
                       </h3>
+                      {isUnread && (
+                        <span
+                          className={`text-[11px] font-semibold shrink-0 ${
+                            isPriorityAlert
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-emerald-700 dark:text-emerald-400'
+                          }`}
+                        >
+                          · {tNotif('bell.newLabel')}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                      <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                      <span
+                        className={`font-medium ${
+                          isPriorityAlert
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-emerald-700 dark:text-emerald-400'
+                        }`}
+                      >
                         {getTypeLabel(item.type)}
                       </span>
                       <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">

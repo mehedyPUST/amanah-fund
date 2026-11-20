@@ -25,6 +25,10 @@ import { api } from '../utils/api.ts';
 import { ActionModal } from './ActionModal.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
+import {
+  NotificationBlinkMarker,
+  isNotificationForUser,
+} from './NotificationBlinkMarker.tsx';
 
 type NoticeFilter = 'all' | 'pinned' | 'urgent' | 'important';
 
@@ -90,6 +94,31 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
     queryFn: () => api.getNotices(),
     enabled: isActiveMember,
   });
+
+  const notificationsQuery = useQuery({
+    queryKey: queryKeys.dashboard.notifications(),
+    queryFn: () => api.getNotifications(),
+    enabled: isActiveMember,
+    staleTime: 60_000,
+  });
+
+  const unreadNoticeIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!user || !isActiveMember) return ids;
+    const list = notificationsQuery.data?.notifications;
+    if (!Array.isArray(list)) return ids;
+    for (const n of list) {
+      if (
+        !n.readByRecipient &&
+        n.type === 'cooperative_notice' &&
+        n.relatedId &&
+        isNotificationForUser(n, user)
+      ) {
+        ids.add(n.relatedId);
+      }
+    }
+    return ids;
+  }, [notificationsQuery.data, user, isActiveMember]);
 
   const notices = useMemo(
     () => (isActiveMember && Array.isArray(noticesQuery.data?.notices) ? noticesQuery.data.notices : []),
@@ -641,8 +670,15 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                               </>
                             )}
                           </div>
-                          <h3 className="text-base font-semibold text-slate-900 dark:text-white leading-snug break-words">
-                            {notice.title}
+                          <h3 className="text-base font-semibold text-slate-900 dark:text-white leading-snug break-words flex items-center gap-2">
+                            {unreadNoticeIds.has(notice.id) && (
+                              <NotificationBlinkMarker
+                                variant="red"
+                                size="sm"
+                                label="Unread notice board alert"
+                              />
+                            )}
+                            <span>{notice.title}</span>
                           </h3>
                         </div>
                       </div>

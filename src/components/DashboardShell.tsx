@@ -55,6 +55,11 @@ import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { BalanceSheetView } from './BalanceSheetView.tsx';
 import { MobileMfsHome } from './MobileMfsHome.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
+import {
+  NotificationBlinkMarker,
+  isMeetingOrNoticeBoardNotification,
+  isNotificationForUser,
+} from './NotificationBlinkMarker.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
 import { ActionModal } from './ActionModal.tsx';
@@ -528,6 +533,15 @@ export function DashboardShell() {
     profileChangeRequestsQuery.data?.requests ?? EMPTY_PROFILE_REQUESTS;
   const notifications = notificationsQuery.data?.notifications ?? EMPTY_NOTIFICATIONS;
   const unreadDmCount = privateThreadsQuery.data?.totalUnread ?? 0;
+  const hasUnreadPriorityNotification = useMemo(() => {
+    if (!user) return false;
+    return notifications.some(
+      (n) =>
+        !n.readByRecipient &&
+        isNotificationForUser(n, user) &&
+        isMeetingOrNoticeBoardNotification(n)
+    );
+  }, [notifications, user]);
 
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const dataLoading =
@@ -1223,10 +1237,34 @@ export function DashboardShell() {
         </span>
         {count > 0 &&
           (collapsed ? (
-            <span
-              className="absolute top-1.5 right-2 z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"
-              aria-hidden="true"
-            />
+            item.id === 'notification' ? (
+              <NotificationBlinkMarker
+                variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
+                size="sm"
+                className="absolute top-1.5 right-2 z-10"
+              />
+            ) : (
+              <span
+                className="absolute top-1.5 right-2 z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"
+                aria-hidden="true"
+              />
+            )
+          ) : item.id === 'notification' ? (
+            <span className="relative z-10 inline-flex items-center gap-1.5 shrink-0">
+              <NotificationBlinkMarker
+                variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
+                size="sm"
+              />
+              <span
+                className={`font-mono text-xs tabular-nums font-semibold ${
+                  hasUnreadPriorityNotification
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-amber-700 dark:text-amber-400'
+                }`}
+              >
+                {count}
+              </span>
+            </span>
           ) : (
             <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
               {count}
@@ -1281,6 +1319,7 @@ export function DashboardShell() {
       label: string;
       Icon: typeof Home;
       badge?: number;
+      blink?: 'amber' | 'red';
       active?: boolean;
       accent?: 'emerald' | 'amber';
       onClick: () => void;
@@ -1317,9 +1356,24 @@ export function DashboardShell() {
                   <span className="truncate">{item.label}</span>
                 </span>
                 {typeof item.badge === 'number' && item.badge > 0 && (
-                  <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
-                    {item.badge}
-                  </span>
+                  item.blink ? (
+                    <span className="inline-flex items-center gap-1.5 shrink-0">
+                      <NotificationBlinkMarker variant={item.blink} size="sm" />
+                      <span
+                        className={`font-mono text-xs tabular-nums font-semibold ${
+                          item.blink === 'red'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-amber-700 dark:text-amber-400'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
+                      {item.badge}
+                    </span>
+                  )
                 )}
               </button>
             );
@@ -1481,6 +1535,12 @@ export function DashboardShell() {
         label: tNav('notifications'),
         Icon: Bell,
         badge: pendingBadgeCount('notification'),
+        blink:
+          pendingBadgeCount('notification') > 0
+            ? hasUnreadPriorityNotification
+              ? ('red' as const)
+              : ('amber' as const)
+            : undefined,
         active: activeSection === 'notification',
         accent: 'amber' as const,
         onClick: () => navigateToPage('notification', true),
@@ -2128,6 +2188,7 @@ export function DashboardShell() {
                       user={user}
                       loading={dataLoading && !overview}
                       pendingBadgeCount={pendingBadgeCount}
+                      hasUnreadPriorityNotification={hasUnreadPriorityNotification}
                       onNavigate={(sec) => navigateToPage(sec, false)}
                       onOpenManagerDeskTab={openManagerDeskTab}
                       onOpenLoanModal={() => void openLoanRequestModal()}
