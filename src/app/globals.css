@@ -618,8 +618,8 @@ html.dark .react-loading-skeleton {
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-button {
@@ -630,7 +630,7 @@ html.dark .react-loading-skeleton {
 
 ::-webkit-scrollbar-track {
   background: transparent;
-  margin: 4px;
+  margin: 4px 0;
 }
 
 ::-webkit-scrollbar-corner {
@@ -638,89 +638,79 @@ html.dark .react-loading-skeleton {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.20);
+  background-color: rgba(100, 116, 139, 0.24);
   border-radius: 9999px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-  transition: background-color 180ms ease, border-width 180ms ease;
+  border: 0;
+  transition: background-color 180ms ease;
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.32);
+  background-color: rgba(100, 116, 139, 0.36);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  border-width: 2px;
-  background-color: rgba(16, 185, 129, 0.60);
+  background-color: rgba(16, 185, 129, 0.62);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  border-width: 2px;
   background-color: rgba(5, 150, 105, 0.86);
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.18);
+  background-color: rgba(148, 163, 184, 0.22);
 }
 
 html.dark *:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.30);
+  background-color: rgba(148, 163, 184, 0.34);
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  border-width: 2px;
-  background-color: rgba(52, 211, 153, 0.56);
+  background-color: rgba(52, 211, 153, 0.58);
 }
 
 html.dark ::-webkit-scrollbar-thumb:active {
-  border-width: 2px;
   background-color: rgba(16, 185, 129, 0.84);
 }
 
 .scrollbar-subtle::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 .scrollbar-subtle::-webkit-scrollbar-track {
-  margin: 6px;
+  margin: 4px 0;
 }
 
 .scrollbar-subtle::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.15);
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background-color: rgba(100, 116, 139, 0.20);
+  border: 0;
 }
 
 .scrollbar-subtle:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.30);
+  background-color: rgba(100, 116, 139, 0.34);
 }
 
 .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
-  border-width: 1px;
-  background-color: rgba(16, 185, 129, 0.62);
+  background-color: rgba(16, 185, 129, 0.64);
 }
 
 .scrollbar-subtle::-webkit-scrollbar-thumb:active {
-  border-width: 1px;
   background-color: rgba(5, 150, 105, 0.86);
 }
 
 html.dark .scrollbar-subtle::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.14);
+  background-color: rgba(148, 163, 184, 0.18);
 }
 
 html.dark .scrollbar-subtle:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.28);
+  background-color: rgba(148, 163, 184, 0.32);
 }
 
 html.dark .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
-  border-width: 1px;
-  background-color: rgba(52, 211, 153, 0.56);
+  background-color: rgba(52, 211, 153, 0.58);
 }
 
 html.dark .scrollbar-subtle::-webkit-scrollbar-thumb:active {
-  border-width: 1px;
   background-color: rgba(16, 185, 129, 0.82);
 }
 

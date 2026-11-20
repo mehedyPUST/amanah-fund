@@ -1969,7 +1969,7 @@ export function DashboardShell() {
       >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-3 pb-6 sm:p-4 sm:pb-6 lg:p-5 lg:pb-5"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle pl-3 pt-3 pb-6 pr-0 sm:pl-4 sm:pt-4 sm:pb-6 lg:pl-5 lg:pt-5 lg:pb-5"
         >
           <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
