@@ -165,7 +165,7 @@ export function MemberAgreementPaperPreview({
   const presentRows = buildAddressRows(reg.presentAddressDetails, reg.presentAddress);
   const permanentRows = buildAddressRows(reg.permanentAddressDetails, reg.permanentAddress);
 
-  const submittedLabel = formatDateTime(submittedAt || new Date().toISOString());
+  const submittedLabel = submittedAt ? formatDateTime(submittedAt) : 'Pending';
   const agreement = reg.digitalAgreement;
   const declarationText =
     agreement?.declarationText ||

@@ -103,6 +103,7 @@ export function GoogleSheetConnectModal({
   const [syncing, setSyncing] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [copiedHost, setCopiedHost] = useState(false);
+  const [clientHostname, setClientHostname] = useState('');
   const [actionModal, setActionModal] = useState<
     | {
         mode: 'confirm';
@@ -125,6 +126,7 @@ export function GoogleSheetConnectModal({
 
   useEffect(() => {
     setMounted(true);
+    setClientHostname(window.location.hostname || '');
   }, []);
 
   useBodyScrollLock(open);
@@ -560,16 +562,16 @@ export function GoogleSheetConnectModal({
                       </div>
 
                       {isUnauthorizedDomainError(googleAuthError) &&
-                        typeof window !== 'undefined' && (
+                        Boolean(clientHostname) && (
                           <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-rose-200/80 dark:border-rose-900/60">
                             <span className="font-mono text-[11px] bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800/80 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">
-                              {window.location.hostname}
+                              {clientHostname}
                             </span>
                             <button
                               type="button"
                               onClick={() => {
                                 void navigator.clipboard
-                                  ?.writeText(window.location.hostname)
+                                  ?.writeText(clientHostname)
                                   .then(() => {
                                     setCopiedHost(true);
                                     window.setTimeout(() => setCopiedHost(false), 1800);

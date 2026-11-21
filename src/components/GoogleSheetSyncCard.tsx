@@ -66,6 +66,7 @@ export function GoogleSheetSyncCard({
   const tCommon = useTranslations('Common');
   const { googleAuthError, clearGoogleAuthError } = useCoopSession();
   const [copiedHost, setCopiedHost] = useState(false);
+  const [clientHostname, setClientHostname] = useState('');
   const [blueprint, setBlueprint] = useState<SheetTabBlueprint[]>([]);
   const [loadingBlueprint, setLoadingBlueprint] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -114,6 +115,7 @@ export function GoogleSheetSyncCard({
   }, [t]);
 
   useEffect(() => {
+    setClientHostname(window.location.hostname || '');
     void fetchBlueprint();
   }, [fetchBlueprint]);
 
@@ -393,15 +395,15 @@ export function GoogleSheetSyncCard({
               <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
-          {isUnauthorizedDomainError(googleAuthError) && typeof window !== 'undefined' && (
+          {isUnauthorizedDomainError(googleAuthError) && Boolean(clientHostname) && (
             <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-rose-200/80 dark:border-rose-900/60">
               <span className="font-mono text-[11px] bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800/80 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">
-                {window.location.hostname}
+                {clientHostname}
               </span>
               <button
                 type="button"
                 onClick={() => {
-                  void navigator.clipboard?.writeText(window.location.hostname).then(() => {
+                  void navigator.clipboard?.writeText(clientHostname).then(() => {
                     setCopiedHost(true);
                     window.setTimeout(() => setCopiedHost(false), 1800);
                   });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Download, ExternalLink, Smartphone, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
@@ -21,6 +21,13 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
     usePWAInstall();
   const [guideMode, setGuideMode] = useState<'ios' | 'iframe' | 'manual' | null>(null);
   const [installedNoticeOpen, setInstalledNoticeOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [currentHref, setCurrentHref] = useState('/');
+
+  useEffect(() => {
+    setMounted(true);
+    setCurrentHref(window.location.href || '/');
+  }, []);
 
   if (isInstalled || !canInstall) return null;
 
@@ -32,8 +39,6 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
       setGuideMode(outcome);
     }
   }
-
-  const currentHref = typeof window !== 'undefined' ? window.location.href : '/';
 
   return (
     <>
@@ -67,7 +72,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
         onClose={() => setInstalledNoticeOpen(false)}
       />
 
-      {typeof document !== 'undefined' &&
+      {mounted &&
         createPortal(
           <AnimatePresence>
             {guideMode !== null && (

@@ -16,6 +16,26 @@ export function formatMoney(amount: number, currency: FundConfig['currency'] = '
   return `${symbol}${formatted}`;
 }
 
+export function getDhakaCurrentYearMonth(): {
+  year: number;
+  month: number;
+  monthKey: string;
+} {
+  const formatted = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: '2-digit',
+  }).format(new Date());
+  const [yStr, mStr] = formatted.split('-');
+  const year = Number(yStr) || new Date().getUTCFullYear();
+  const month = Number(mStr) || new Date().getUTCMonth() + 1;
+  return {
+    year,
+    month,
+    monthKey: `${year}-${String(month).padStart(2, '0')}`,
+  };
+}
+
 export function formatShortDate(iso?: string): string {
   if (!iso) return '—';
   const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso.trim());
@@ -25,7 +45,7 @@ export function formatShortDate(iso?: string): string {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    ...(isDateOnly ? { timeZone: 'UTC' } : {}),
+    timeZone: isDateOnly ? 'UTC' : 'Asia/Dhaka',
   });
 }
 
@@ -39,14 +59,15 @@ export function formatDateTime(iso?: string): string {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Asia/Dhaka',
   });
 }
 
 export function formatBillingMonth(ym: string): string {
   const [y, m] = ym.split('-').map(Number);
   if (!y || !m) return ym;
-  const d = new Date(y, m - 1, 1);
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const d = new Date(Date.UTC(y, m - 1, 1));
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 export function shortHash(hash?: string): string {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { BarChart3 } from 'lucide-react';
 import {
@@ -101,6 +101,11 @@ export function AuditTrendsCharts({
   const t = useTranslations('Charts');
   const { darkMode } = useCoopSession();
   const [chartView, setChartView] = useState<'both' | 'contributions' | 'loans'>('both');
+  const [chartMounted, setChartMounted] = useState(false);
+
+  useEffect(() => {
+    setChartMounted(true);
+  }, []);
   const axisFill = darkMode ? '#94a3b8' : '#475569';
   const gridStroke = darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.16)';
   const hoverCursor = {
@@ -330,7 +335,8 @@ export function AuditTrendsCharts({
               </div>
 
               <div className="h-56 sm:h-64 w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+                {chartMounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={chartData}
                     margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
@@ -388,6 +394,9 @@ export function AuditTrendsCharts({
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
+                ) : (
+                  <Skeleton height="100%" borderRadius={10} />
+                )}
               </div>
             </div>
           )}
@@ -404,7 +413,8 @@ export function AuditTrendsCharts({
               </div>
 
               <div className="h-56 sm:h-64 w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+                {chartMounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={chartData}
                     margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
@@ -457,6 +467,9 @@ export function AuditTrendsCharts({
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
+                ) : (
+                  <Skeleton height="100%" borderRadius={10} />
+                )}
               </div>
             </div>
           )}

@@ -162,9 +162,7 @@ export function MobileDashboardBanner({
   const [bannerImgFailed, setBannerImgFailed] = useState(false);
   const [investmentImgFailed, setInvestmentImgFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [isPageHidden, setIsPageHidden] = useState<boolean>(() =>
-    typeof document !== 'undefined' ? document.hidden : false
-  );
+  const [isPageHidden, setIsPageHidden] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
@@ -181,6 +179,7 @@ export function MobileDashboardBanner({
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const onVisibilityChange = () => setIsPageHidden(document.hidden);
+    onVisibilityChange();
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []);

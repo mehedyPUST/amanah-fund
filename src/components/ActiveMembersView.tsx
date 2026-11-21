@@ -52,8 +52,9 @@ export function ActiveMembersView({
       const diffMs = Math.max(0, now.getTime() - joined.getTime());
       const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       let totalMonths =
-        (now.getFullYear() - joined.getFullYear()) * 12 + (now.getMonth() - joined.getMonth());
-      if (now.getDate() < joined.getDate()) {
+        (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
+        (now.getUTCMonth() - joined.getUTCMonth());
+      if (now.getUTCDate() < joined.getUTCDate()) {
         totalMonths -= 1;
       }
       totalMonths = Math.max(0, totalMonths);

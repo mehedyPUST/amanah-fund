@@ -29,6 +29,7 @@ function formatLastCheckedLabel(timestampMs: number | null, fallback: string): s
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
+      timeZone: 'Asia/Dhaka',
     });
   } catch {
     return fallback;

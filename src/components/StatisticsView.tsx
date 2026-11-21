@@ -73,7 +73,7 @@ export function StatisticsView({
               {loading && !overview ? (
                 <Skeleton width={90} height={14} inline />
               ) : overview ? (
-                `${overview.treasury.availableLiquidity.toLocaleString()} ${ccy}`
+                `${overview.treasury.availableLiquidity.toLocaleString('en-US')} ${ccy}`
               ) : (
                 '—'
               )}

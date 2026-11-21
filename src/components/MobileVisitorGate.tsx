@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -69,7 +69,7 @@ export function MobileVisitorGate() {
     details: Array<{ label: string; value: string }>;
   } | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     let active = true;
     const mq = window.matchMedia('(max-width: 1023px)');

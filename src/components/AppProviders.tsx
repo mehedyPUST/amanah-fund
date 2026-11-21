@@ -131,8 +131,13 @@ export function AppProviders({
   const [workspace, setWorkspace] = useState<WorkspaceSessionInfo>(() =>
     getWorkspaceSessionInfo()
   );
+  const [motionMounted, setMotionMounted] = useState(false);
   const [connectingGoogle, setConnectingGoogle] = useState(false);
   const [googleAuthError, setGoogleAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMotionMounted(true);
+  }, []);
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -1107,7 +1112,10 @@ export function AppProviders({
     >
       <QueryClientProvider client={queryClient}>
         <CoopSessionContext.Provider value={sessionContextValue}>
-          <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
+          <MotionConfig
+            reducedMotion={motionMounted ? 'user' : 'never'}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <SkeletonTheme
               baseColor={darkMode ? '#0B2A37' : '#d1ddd8'}
               highlightColor={darkMode ? '#1A3C4B' : '#edf4f1'}

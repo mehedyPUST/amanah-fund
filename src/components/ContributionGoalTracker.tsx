@@ -17,6 +17,7 @@ import {
   formatBillingMonth,
   formatDateTime,
   formatMoney,
+  getDhakaCurrentYearMonth,
   shortHash,
 } from '../utils/format.ts';
 import { StatusText } from './StatusText.tsx';
@@ -75,9 +76,8 @@ export function ContributionGoalTracker({
   const monthlyBaseTarget = Math.max(1, config?.monthlyContributionAmount || 5000);
   const defaultYearlyGoal = monthlyBaseTarget * 12;
 
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonthIndex = now.getMonth(); // 0-11
+  const { year: currentYear, month: currentDhakaMonth } = getDhakaCurrentYearMonth();
+  const currentMonthIndex = currentDhakaMonth - 1; // 0-11
   const selectedYear = currentYear;
   const [customGoal, setCustomGoal] = useState<number | null>(null);
 

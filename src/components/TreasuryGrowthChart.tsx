@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Area,
@@ -111,6 +111,11 @@ export function TreasuryGrowthChart({
   const { darkMode } = useCoopSession();
   const [viewMode, setViewMode] = useState<'combined' | 'contributions' | 'treasury'>('combined');
   const [range, setRange] = useState<'6m' | '12m' | 'all'>('12m');
+  const [chartMounted, setChartMounted] = useState(false);
+
+  useEffect(() => {
+    setChartMounted(true);
+  }, []);
   const axisFill = darkMode ? '#94a3b8' : '#475569';
   const gridStroke = darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.16)';
   const hoverCursor = {
@@ -438,7 +443,8 @@ export function TreasuryGrowthChart({
         </div>
       ) : (
         <div className="h-56 sm:h-72 w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+          {chartMounted ? (
+            <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={visibleSeries}
               margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
@@ -582,6 +588,9 @@ export function TreasuryGrowthChart({
               )}
             </ComposedChart>
           </ResponsiveContainer>
+          ) : (
+            <Skeleton height="100%" borderRadius={10} />
+          )}
         </div>
       )}
     </motion.section>

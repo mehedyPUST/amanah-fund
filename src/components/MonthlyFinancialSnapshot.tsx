@@ -11,7 +11,11 @@ import type {
   FundConfig,
   LoanRequest,
 } from '../types/coop.ts';
-import { formatBillingMonth, formatMoney } from '../utils/format.ts';
+import {
+  formatBillingMonth,
+  formatMoney,
+  getDhakaCurrentYearMonth,
+} from '../utils/format.ts';
 
 export type SnapshotNavTarget = DashboardSectionId;
 
@@ -34,8 +38,7 @@ export function MonthlyFinancialSnapshot({
   const ccy = config?.currency || 'BDT';
 
   const snapshot = useMemo(() => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const { monthKey: currentMonth } = getDhakaCurrentYearMonth();
 
     const monthContribs = contributions.filter(
       (c) => (c.billingMonth || c.submittedAt.slice(0, 7)) === currentMonth

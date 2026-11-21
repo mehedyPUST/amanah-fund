@@ -77,8 +77,9 @@ function formatTenure(
   const now = new Date();
   const diffDays = Math.max(0, Math.floor((now.getTime() - joined.getTime()) / (1000 * 60 * 60 * 24)));
   let totalMonths =
-    (now.getFullYear() - joined.getFullYear()) * 12 + (now.getMonth() - joined.getMonth());
-  if (now.getDate() < joined.getDate()) totalMonths -= 1;
+    (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
+    (now.getUTCMonth() - joined.getUTCMonth());
+  if (now.getUTCDate() < joined.getUTCDate()) totalMonths -= 1;
   totalMonths = Math.max(0, totalMonths);
 
   if (diffDays < 1) return t('tenureJoinedToday');
