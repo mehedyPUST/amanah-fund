@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   areMobileOverviewConfigsEqual,
   DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS,
+  MOBILE_MEMBER_TILE_CATALOG,
   resolveMemberMobileOverviewIcons,
   sanitizeMobileMemberOverviewIcons,
 } from '../src/utils/mobileOverviewTiles.ts';
@@ -32,6 +33,51 @@ describe('mobileOverviewTiles sanitization & resolution', () => {
     expect(cleanedManager).toEqual({
       services: ['manager-desk', 'quard-hasan'],
       more: ['member-registry'],
+    });
+  });
+
+  it('allows all extended action, sheet, and public portal icons for members and manager desk shortcuts for managers', () => {
+    const nonManagerIds = MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.managerOnly).map(
+      (item) => item.id
+    );
+    const managerIds = MOBILE_MEMBER_TILE_CATALOG.filter((item) => item.managerOnly).map(
+      (item) => item.id
+    );
+
+    expect(nonManagerIds).toContain('request-loan');
+    expect(nonManagerIds).toContain('monthly-pulse');
+    expect(nonManagerIds).toContain('active-borrowers');
+    expect(nonManagerIds).toContain('approval-queues');
+    expect(nonManagerIds).toContain('how-it-works');
+    expect(nonManagerIds).toContain('about');
+    expect(nonManagerIds).toContain('faq');
+    expect(nonManagerIds).toContain('public-website');
+    expect(managerIds).toContain('manager-contributions');
+    expect(managerIds).toContain('manager-loans');
+    expect(managerIds).toContain('manager-installments');
+
+    const memberAttemptWithAll = sanitizeMobileMemberOverviewIcons(
+      {
+        services: ['request-loan', 'monthly-pulse', 'manager-contributions'],
+        more: ['how-it-works', 'about', 'faq', 'public-website', 'active-borrowers', 'approval-queues'],
+      },
+      { allowManagerTiles: false }
+    );
+    expect(memberAttemptWithAll).toEqual({
+      services: ['request-loan', 'monthly-pulse'],
+      more: ['how-it-works', 'about', 'faq', 'public-website', 'active-borrowers', 'approval-queues'],
+    });
+
+    const managerAttemptWithAll = sanitizeMobileMemberOverviewIcons(
+      {
+        services: ['manager-contributions', 'manager-loans'],
+        more: ['manager-installments', 'request-loan'],
+      },
+      { allowManagerTiles: true }
+    );
+    expect(managerAttemptWithAll).toEqual({
+      services: ['manager-contributions', 'manager-loans'],
+      more: ['manager-installments', 'request-loan'],
     });
   });
 

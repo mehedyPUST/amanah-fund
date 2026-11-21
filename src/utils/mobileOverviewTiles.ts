@@ -3,24 +3,40 @@ import type {
   MobileMemberTileId,
 } from '../types/coop.ts';
 
+export type MobileMemberTileNavKey =
+  | 'contributions'
+  | 'qardHasan'
+  | 'requestLoan'
+  | 'myAmanah'
+  | 'members'
+  | 'community'
+  | 'balanceSheet'
+  | 'transactions'
+  | 'statistics'
+  | 'managerCycle'
+  | 'voting'
+  | 'charter'
+  | 'howItWorks'
+  | 'about'
+  | 'faq'
+  | 'publicWebsite'
+  | 'notifications'
+  | 'profile'
+  | 'managerDesk'
+  | 'memberRegistry';
+
+export type MobileMemberTileEditorKey =
+  | 'tiles.monthlyPulse'
+  | 'tiles.activeBorrowers'
+  | 'tiles.approvalQueues'
+  | 'tiles.managerContributions'
+  | 'tiles.managerLoans'
+  | 'tiles.managerInstallments';
+
 export interface MobileMemberTileMeta {
   id: MobileMemberTileId;
-  navKey:
-    | 'contributions'
-    | 'qardHasan'
-    | 'myAmanah'
-    | 'members'
-    | 'community'
-    | 'balanceSheet'
-    | 'transactions'
-    | 'statistics'
-    | 'managerCycle'
-    | 'voting'
-    | 'charter'
-    | 'notifications'
-    | 'profile'
-    | 'managerDesk'
-    | 'memberRegistry';
+  navKey?: MobileMemberTileNavKey;
+  editorKey?: MobileMemberTileEditorKey;
   managerOnly?: boolean;
   iconBgClass: string;
   iconColorClass: string;
@@ -40,6 +56,13 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
     iconBgClass:
       'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
     iconColorClass: 'text-amber-600 dark:text-amber-300',
+  },
+  {
+    id: 'request-loan',
+    navKey: 'requestLoan',
+    iconBgClass:
+      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+    iconColorClass: 'text-emerald-700 dark:text-emerald-300',
   },
   {
     id: 'my-amanah',
@@ -98,11 +121,60 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
     iconColorClass: 'text-amber-600 dark:text-amber-300',
   },
   {
+    id: 'monthly-pulse',
+    editorKey: 'tiles.monthlyPulse',
+    iconBgClass:
+      'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+    iconColorClass: 'text-teal-700 dark:text-teal-300',
+  },
+  {
+    id: 'active-borrowers',
+    editorKey: 'tiles.activeBorrowers',
+    iconBgClass:
+      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+    iconColorClass: 'text-amber-700 dark:text-amber-300',
+  },
+  {
+    id: 'approval-queues',
+    editorKey: 'tiles.approvalQueues',
+    iconBgClass:
+      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+    iconColorClass: 'text-violet-700 dark:text-violet-300',
+  },
+  {
     id: 'charter',
     navKey: 'charter',
     iconBgClass:
       'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
     iconColorClass: 'text-rose-600 dark:text-rose-300',
+  },
+  {
+    id: 'how-it-works',
+    navKey: 'howItWorks',
+    iconBgClass:
+      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+    iconColorClass: 'text-sky-700 dark:text-sky-300',
+  },
+  {
+    id: 'about',
+    navKey: 'about',
+    iconBgClass:
+      'bg-slate-100/90 dark:bg-slate-500/20 border-slate-300/85 dark:border-slate-400/45',
+    iconColorClass: 'text-slate-700 dark:text-slate-300',
+  },
+  {
+    id: 'faq',
+    navKey: 'faq',
+    iconBgClass:
+      'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+    iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+  },
+  {
+    id: 'public-website',
+    navKey: 'publicWebsite',
+    iconBgClass:
+      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+    iconColorClass: 'text-indigo-700 dark:text-indigo-300',
   },
   {
     id: 'notification',
@@ -133,6 +205,30 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
     iconBgClass:
       'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
     iconColorClass: 'text-sky-600 dark:text-sky-300',
+  },
+  {
+    id: 'manager-contributions',
+    editorKey: 'tiles.managerContributions',
+    managerOnly: true,
+    iconBgClass:
+      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+    iconColorClass: 'text-emerald-700 dark:text-emerald-300',
+  },
+  {
+    id: 'manager-loans',
+    editorKey: 'tiles.managerLoans',
+    managerOnly: true,
+    iconBgClass:
+      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+    iconColorClass: 'text-amber-700 dark:text-amber-300',
+  },
+  {
+    id: 'manager-installments',
+    editorKey: 'tiles.managerInstallments',
+    managerOnly: true,
+    iconBgClass:
+      'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+    iconColorClass: 'text-rose-700 dark:text-rose-300',
   },
 ] as const;
 

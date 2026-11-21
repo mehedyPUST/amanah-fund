@@ -5035,13 +5035,16 @@
     }
   },
   "MobileIconEditor": {
-    "summaryCounts": "মূল সেবা {services}টি · আরও {more}টি · লুকানো {hidden}টি",
+    "summaryCounts": "মূল সেবা {services}টি · আরও {more}টি · উপলব্ধ {hidden}টি",
+    "searchPlaceholder": "সকল উপলব্ধ আইকন খুঁজুন…",
+    "searchAria": "মোবাইল ওভারভিউ আইকন খুঁজুন",
+    "noSearchMatches": "\"{query}\"-এর সাথে মিলে এমন কোনো আইকন নেই।",
     "sectionServices": "মূল সেবাসমূহ (উপরের ৩-কলাম গ্রিড)",
     "sectionServicesHint": "তহবিলের প্রধান তথ্যের নিচে প্রদর্শিত প্রধান শর্টকাটসমূহ।",
     "sectionMore": "আরও (৪-কলাম গ্রিড)",
     "sectionMoreHint": "মূল সেবাসমূহের নিচে থাকা সংক্ষিপ্ত আইকনসমূহ।",
     "sectionHidden": "লুকানো / উপলব্ধ আইকনসমূহ",
-    "sectionHiddenHint": "ওভারভিউতে ফিরিয়ে আনতে মূল সেবা বা আরও নির্বাচন করুন।",
+    "sectionHiddenHint": "ওভারভিউতে যোগ করতে মূল সেবা বা আরও নির্বাচন করুন।",
     "emptyServices": "মূল সেবাসমূহে কোনো আইকন পিন করা নেই।",
     "emptyMore": "আরও বিভাগে কোনো আইকন নির্ধারিত নেই।",
     "emptyHidden": "সব উপলব্ধ আইকন বর্তমানে মোবাইল ওভারভিউতে প্রদর্শিত হচ্ছে।",
@@ -5051,7 +5054,15 @@
     "moveUp": "{label} উপরে নিন",
     "moveDown": "{label} নিচে নিন",
     "resetBtn": "ডিফল্টে ফিরুন",
-    "managerOnlyTag": "ম্যানেজার"
+    "managerOnlyTag": "ম্যানেজার",
+    "tiles": {
+      "monthlyPulse": "মাসিক অগ্রগতি",
+      "activeBorrowers": "সক্রিয় ঋণগ্রহীতা",
+      "approvalQueues": "অনুমোদন তালিকা",
+      "managerContributions": "ডেস্ক: সঞ্চয় যাচাই",
+      "managerLoans": "ডেস্ক: কর্জে হাসানা",
+      "managerInstallments": "ডেস্ক: কিস্তি যাচাই"
+    }
   }
 }
 

@@ -40,6 +40,7 @@ export interface NotificationPreferences {
 export type MobileMemberTileId =
   | 'pay-monthly-contribution'
   | 'quard-hasan'
+  | 'request-loan'
   | 'my-amanah'
   | 'members'
   | 'community'
@@ -49,10 +50,20 @@ export type MobileMemberTileId =
   | 'manager-cycle'
   | 'voting'
   | 'charter'
+  | 'how-it-works'
+  | 'about'
+  | 'faq'
+  | 'public-website'
+  | 'monthly-pulse'
+  | 'active-borrowers'
+  | 'approval-queues'
   | 'notification'
   | 'my-profile'
   | 'manager-desk'
-  | 'member-registry';
+  | 'member-registry'
+  | 'manager-contributions'
+  | 'manager-loans'
+  | 'manager-installments';
 
 export interface MobileMemberOverviewIconsConfig {
   services: MobileMemberTileId[];

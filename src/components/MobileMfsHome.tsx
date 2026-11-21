@@ -13,12 +13,21 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
   Clock,
+  Compass,
   CreditCard,
+  FileCheck,
   FileSpreadsheet,
+  Globe,
   HandCoins,
+  HelpCircle,
   History,
+  Info,
+  Landmark,
+  ListChecks,
   MessageSquare,
+  PlusCircle,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -261,6 +270,7 @@ export function MobileMfsHome({
   hasUnreadPriorityNotification = false,
   onNavigate,
   onOpenManagerDeskTab,
+  onOpenLoanModal,
   onViewMemberProfile,
 }: MobileMfsHomeProps) {
   const router = useRouter();
@@ -268,6 +278,7 @@ export function MobileMfsHome({
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
+  const tIconEditor = useTranslations('MobileIconEditor');
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
   const [iconDraft, setIconDraft] = useState<MobileMemberOverviewIconsConfig>(() =>
     resolveMemberMobileOverviewIcons({
@@ -279,10 +290,11 @@ export function MobileMfsHome({
   const [iconsSaving, setIconsSaving] = useState(false);
   const [iconsError, setIconsError] = useState<string | null>(null);
 
-  const openCharterPage = () => {
+  const openPublicRoute = (path: string) => {
     setMobileBrowseMode(true);
-    router.push('/rules');
+    router.push(path);
   };
+  const openCharterPage = () => openPublicRoute('/rules');
 
   const isAdmin = user.role === 'admin';
   const isManager = user.role === 'manager';
@@ -563,6 +575,15 @@ export function MobileMfsHome({
       iconColorClass: 'text-amber-600 dark:text-amber-300',
       onClick: () => onNavigate('quard-hasan'),
     },
+    'request-loan': {
+      id: 'request-loan',
+      label: tNav('requestLoan'),
+      Icon: PlusCircle,
+      iconBgClass:
+        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-300',
+      onClick: () => (onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan')),
+    },
     'my-amanah': {
       id: 'my-amanah',
       label: tNav('myAmanah'),
@@ -637,6 +658,35 @@ export function MobileMfsHome({
       badge: pendingBadgeCount('ballot'),
       onClick: () => onNavigate('ballot'),
     },
+    'monthly-pulse': {
+      id: 'monthly-pulse',
+      label: tIconEditor('tiles.monthlyPulse'),
+      Icon: CalendarCheck,
+      iconBgClass:
+        'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+      iconColorClass: 'text-teal-700 dark:text-teal-300',
+      onClick: () => setActiveSheet('pulse'),
+    },
+    'active-borrowers': {
+      id: 'active-borrowers',
+      label: tIconEditor('tiles.activeBorrowers'),
+      Icon: Landmark,
+      iconBgClass:
+        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+      iconColorClass: 'text-amber-700 dark:text-amber-300',
+      badge: treasury.activeBorrowers.length,
+      onClick: () => setActiveSheet('borrowers'),
+    },
+    'approval-queues': {
+      id: 'approval-queues',
+      label: tIconEditor('tiles.approvalQueues'),
+      Icon: ListChecks,
+      iconBgClass:
+        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+      iconColorClass: 'text-violet-700 dark:text-violet-300',
+      badge: totalQueueCount,
+      onClick: () => setActiveSheet('queues'),
+    },
     charter: {
       id: 'charter',
       label: tNav('charter'),
@@ -645,6 +695,42 @@ export function MobileMfsHome({
         'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
       iconColorClass: 'text-rose-600 dark:text-rose-300',
       onClick: openCharterPage,
+    },
+    'how-it-works': {
+      id: 'how-it-works',
+      label: tNav('howItWorks'),
+      Icon: Compass,
+      iconBgClass:
+        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+      iconColorClass: 'text-sky-700 dark:text-sky-300',
+      onClick: () => openPublicRoute('/how-it-works'),
+    },
+    about: {
+      id: 'about',
+      label: tNav('about'),
+      Icon: Info,
+      iconBgClass:
+        'bg-slate-100/90 dark:bg-slate-500/20 border-slate-300/85 dark:border-slate-400/45',
+      iconColorClass: 'text-slate-700 dark:text-slate-300',
+      onClick: () => openPublicRoute('/about'),
+    },
+    faq: {
+      id: 'faq',
+      label: tNav('faq'),
+      Icon: HelpCircle,
+      iconBgClass:
+        'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+      iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+      onClick: () => openPublicRoute('/#faq'),
+    },
+    'public-website': {
+      id: 'public-website',
+      label: tNav('publicWebsite'),
+      Icon: Globe,
+      iconBgClass:
+        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+      iconColorClass: 'text-indigo-700 dark:text-indigo-300',
+      onClick: () => openPublicRoute('/'),
     },
     notification: {
       id: 'notification',
@@ -690,6 +776,45 @@ export function MobileMfsHome({
       iconColorClass: 'text-sky-600 dark:text-sky-300',
       badge: pendingBadgeCount('member-registry'),
       onClick: () => onNavigate('member-registry'),
+    },
+    'manager-contributions': {
+      id: 'manager-contributions',
+      label: tIconEditor('tiles.managerContributions'),
+      Icon: FileCheck,
+      iconBgClass:
+        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+      iconColorClass: 'text-emerald-700 dark:text-emerald-300',
+      badge: treasury.pendingContributionsCount,
+      onClick: () =>
+        onOpenManagerDeskTab
+          ? onOpenManagerDeskTab('contributions')
+          : onNavigate('manager-desk'),
+    },
+    'manager-loans': {
+      id: 'manager-loans',
+      label: tIconEditor('tiles.managerLoans'),
+      Icon: ClipboardList,
+      iconBgClass:
+        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+      iconColorClass: 'text-amber-700 dark:text-amber-300',
+      badge: treasury.pendingLoansReviewCount + treasury.pendingDisbursementsCount,
+      onClick: () =>
+        onOpenManagerDeskTab
+          ? onOpenManagerDeskTab('qard-hasan')
+          : onNavigate('manager-desk'),
+    },
+    'manager-installments': {
+      id: 'manager-installments',
+      label: tIconEditor('tiles.managerInstallments'),
+      Icon: CalendarCheck,
+      iconBgClass:
+        'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+      iconColorClass: 'text-rose-700 dark:text-rose-300',
+      badge: treasury.pendingRepaymentsCount,
+      onClick: () =>
+        onOpenManagerDeskTab
+          ? onOpenManagerDeskTab('installments')
+          : onNavigate('manager-desk'),
     },
   };
 

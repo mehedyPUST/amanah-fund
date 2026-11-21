@@ -1,36 +1,52 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   BarChart3,
   Bell,
+  CalendarCheck,
   CalendarClock,
   ChevronDown,
   ChevronUp,
   ClipboardCheck,
+  ClipboardList,
+  Compass,
   CreditCard,
+  FileCheck,
   FileSpreadsheet,
+  Globe,
   HandCoins,
+  HelpCircle,
   History,
+  Info,
+  Landmark,
+  ListChecks,
   MessageSquare,
+  PlusCircle,
   RotateCcw,
   ScrollText,
+  Search,
   User,
   UserCheck,
   Users,
   Vote,
   Wallet,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type {
   MobileMemberOverviewIconsConfig,
   MobileMemberTileId,
 } from '../types/coop.ts';
-import { MOBILE_MEMBER_TILE_CATALOG } from '../utils/mobileOverviewTiles.ts';
+import {
+  MOBILE_MEMBER_TILE_CATALOG,
+  type MobileMemberTileMeta,
+} from '../utils/mobileOverviewTiles.ts';
 
 export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof CreditCard> = {
   'pay-monthly-contribution': CreditCard,
   'quard-hasan': HandCoins,
+  'request-loan': PlusCircle,
   'my-amanah': Wallet,
   members: Users,
   community: MessageSquare,
@@ -39,11 +55,21 @@ export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof CreditC
   statistics: BarChart3,
   'manager-cycle': CalendarClock,
   voting: Vote,
+  'monthly-pulse': CalendarCheck,
+  'active-borrowers': Landmark,
+  'approval-queues': ListChecks,
   charter: ScrollText,
+  'how-it-works': Compass,
+  about: Info,
+  faq: HelpCircle,
+  'public-website': Globe,
   notification: Bell,
   'my-profile': User,
   'manager-desk': ClipboardCheck,
   'member-registry': UserCheck,
+  'manager-contributions': FileCheck,
+  'manager-loans': ClipboardList,
+  'manager-installments': CalendarCheck,
 };
 
 type TilePlacement = 'services' | 'more' | 'hidden';
@@ -67,6 +93,7 @@ export function MobileOverviewIconEditor({
 }: MobileOverviewIconEditorProps) {
   const t = useTranslations('MobileIconEditor');
   const tNav = useTranslations('Navigation');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const availableCatalog = useMemo(
     () =>
@@ -81,6 +108,12 @@ export function MobileOverviewIconEditor({
     [availableCatalog]
   );
 
+  const getTileLabel = (meta: MobileMemberTileMeta): string => {
+    if (meta.navKey) return tNav(meta.navKey);
+    if (meta.editorKey) return t(meta.editorKey);
+    return meta.id;
+  };
+
   const servicesIds = useMemo(
     () => value.services.filter((id) => catalogById.has(id)),
     [value.services, catalogById]
@@ -93,6 +126,23 @@ export function MobileOverviewIconEditor({
     const activeSet = new Set<MobileMemberTileId>([...servicesIds, ...moreIds]);
     return availableCatalog.map((item) => item.id).filter((id) => !activeSet.has(id));
   }, [availableCatalog, servicesIds, moreIds]);
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const isFiltering = normalizedQuery.length > 0;
+
+  const matchesSearch = (id: MobileMemberTileId): boolean => {
+    if (!isFiltering) return true;
+    const meta = catalogById.get(id);
+    if (!meta) return false;
+    const label = getTileLabel(meta).toLowerCase();
+    return label.includes(normalizedQuery) || id.toLowerCase().includes(normalizedQuery);
+  };
+
+  const visibleServicesIds = isFiltering ? servicesIds.filter(matchesSearch) : servicesIds;
+  const visibleMoreIds = isFiltering ? moreIds.filter(matchesSearch) : moreIds;
+  const visibleHiddenIds = isFiltering ? hiddenIds.filter(matchesSearch) : hiddenIds;
+  const totalVisibleMatches =
+    visibleServicesIds.length + visibleMoreIds.length + visibleHiddenIds.length;
 
   const setPlacement = (id: MobileMemberTileId, target: TilePlacement) => {
     const nextServices = servicesIds.filter((item) => item !== id);
@@ -135,7 +185,7 @@ export function MobileOverviewIconEditor({
     const meta = catalogById.get(id);
     if (!meta) return null;
     const Icon = MOBILE_MEMBER_TILE_ICONS[id];
-    const label = tNav(meta.navKey);
+    const label = getTileLabel(meta);
 
     return (
       <div
@@ -161,7 +211,7 @@ export function MobileOverviewIconEditor({
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-          {placement !== 'hidden' && groupLength > 1 && (
+          {placement !== 'hidden' && !isFiltering && groupLength > 1 && (
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -244,79 +294,121 @@ export function MobileOverviewIconEditor({
         )}
       </div>
 
-      {/* Group 1: Services */}
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
-            {t('sectionServices')}
-          </h4>
-          <span className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-            {servicesIds.length}
-          </span>
-        </div>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          {t('sectionServicesHint')}
-        </p>
-        {servicesIds.length === 0 ? (
-          <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
-            {t('emptyServices')}
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
-            {servicesIds.map((id, idx) =>
-              renderTileRow(id, 'services', idx, servicesIds.length)
-            )}
-          </div>
+      {/* Quick search filter across all available icons */}
+      <div className="relative">
+        <Search
+          className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+          aria-label={t('searchAria')}
+          className="w-full min-h-[40px] pl-9 pr-9 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-950/75 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            aria-label={t('placeHide')}
+            className="min-w-[32px] min-h-[32px] rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
         )}
       </div>
+
+      {isFiltering && totalVisibleMatches === 0 && (
+        <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 text-center">
+          {t('noSearchMatches', { query: searchQuery.trim() })}
+        </div>
+      )}
+
+      {/* Group 1: Services */}
+      {(!isFiltering || visibleServicesIds.length > 0) && (
+        <div className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+              {t('sectionServices')}
+            </h4>
+            <span className="text-[11px] font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+              {visibleServicesIds.length}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            {t('sectionServicesHint')}
+          </p>
+          {visibleServicesIds.length === 0 ? (
+            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
+              {t('emptyServices')}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
+              {visibleServicesIds.map((id, idx) =>
+                renderTileRow(id, 'services', idx, visibleServicesIds.length)
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Group 2: More */}
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
-            {t('sectionMore')}
-          </h4>
-          <span className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-400">
-            {moreIds.length}
-          </span>
+      {(!isFiltering || visibleMoreIds.length > 0) && (
+        <div className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+              {t('sectionMore')}
+            </h4>
+            <span className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-400">
+              {visibleMoreIds.length}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            {t('sectionMoreHint')}
+          </p>
+          {visibleMoreIds.length === 0 ? (
+            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
+              {t('emptyMore')}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
+              {visibleMoreIds.map((id, idx) =>
+                renderTileRow(id, 'more', idx, visibleMoreIds.length)
+              )}
+            </div>
+          )}
         </div>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          {t('sectionMoreHint')}
-        </p>
-        {moreIds.length === 0 ? (
-          <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
-            {t('emptyMore')}
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
-            {moreIds.map((id, idx) => renderTileRow(id, 'more', idx, moreIds.length))}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Group 3: Hidden */}
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
-            {t('sectionHidden')}
-          </h4>
-          <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-            {hiddenIds.length}
-          </span>
+      {(!isFiltering || visibleHiddenIds.length > 0) && (
+        <div className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+              {t('sectionHidden')}
+            </h4>
+            <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+              {visibleHiddenIds.length}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            {t('sectionHiddenHint')}
+          </p>
+          {visibleHiddenIds.length === 0 ? (
+            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
+              {t('emptyHidden')}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
+              {visibleHiddenIds.map((id, idx) =>
+                renderTileRow(id, 'hidden', idx, visibleHiddenIds.length)
+              )}
+            </div>
+          )}
         </div>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          {t('sectionHiddenHint')}
-        </p>
-        {hiddenIds.length === 0 ? (
-          <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 text-center">
-            {t('emptyHidden')}
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200/85 dark:border-slate-800 overflow-hidden">
-            {hiddenIds.map((id, idx) => renderTileRow(id, 'hidden', idx, hiddenIds.length))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

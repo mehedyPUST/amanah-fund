@@ -5035,13 +5035,16 @@
     }
   },
   "MobileIconEditor": {
-    "summaryCounts": "{services} Services · {more} More · {hidden} Hidden",
+    "summaryCounts": "{services} Services · {more} More · {hidden} Available",
+    "searchPlaceholder": "Search all available icons…",
+    "searchAria": "Search available overview icons",
+    "noSearchMatches": "No icons match \"{query}\".",
     "sectionServices": "Services (Top 3-Column Grid)",
     "sectionServicesHint": "Primary action tiles shown immediately below your fund KPIs.",
     "sectionMore": "More (4-Column Grid)",
     "sectionMoreHint": "Compact shortcuts displayed underneath Services.",
     "sectionHidden": "Hidden / Available Icons",
-    "sectionHiddenHint": "Tap Services or More to restore any shortcut to the overview.",
+    "sectionHiddenHint": "Tap Services or More to add any available icon to your overview.",
     "emptyServices": "No icons pinned to Services.",
     "emptyMore": "No icons placed in More.",
     "emptyHidden": "All available icons are currently visible on the mobile overview.",
@@ -5051,7 +5054,15 @@
     "moveUp": "Move {label} up",
     "moveDown": "Move {label} down",
     "resetBtn": "Reset to Default",
-    "managerOnlyTag": "Manager"
+    "managerOnlyTag": "Manager",
+    "tiles": {
+      "monthlyPulse": "Monthly Pulse",
+      "activeBorrowers": "Active Borrowers",
+      "approvalQueues": "Approval Queues",
+      "managerContributions": "Desk: Deposits",
+      "managerLoans": "Desk: Qard Hasan",
+      "managerInstallments": "Desk: Installments"
+    }
   }
 }
 
