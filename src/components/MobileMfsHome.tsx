@@ -256,7 +256,7 @@ function MfsGridTileButton({
       whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
       className={`group relative ${
-        compact ? 'mfs-tile-compact gap-1.5 rounded-xl' : 'mfs-tile gap-2 rounded-2xl'
+        compact ? 'mfs-tile-compact gap-2 rounded-xl' : 'mfs-tile gap-2.5 rounded-2xl'
       } border ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.09)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.45)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.14)] flex flex-col items-center justify-center transition-all cursor-pointer ${cardColorClasses}`}
     >
       {typeof tile.badge === 'number' && tile.badge > 0 && (

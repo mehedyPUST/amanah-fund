@@ -507,7 +507,7 @@ export function MobileOverviewIconEditor({
                 return (
                   <div
                     key={id}
-                    className={`rounded-xl border px-1 py-2 flex flex-col items-center justify-center gap-1 text-center shadow-2xs ${cardStyle}`}
+                    className={`aspect-[5/6] rounded-xl border px-1 py-2 flex flex-col items-center justify-center gap-1.5 text-center shadow-2xs ${cardStyle}`}
                   >
                     <Icon
                       className={`w-4 h-4 shrink-0 ${meta.iconColorClass}`}

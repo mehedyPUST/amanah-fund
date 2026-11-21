@@ -546,13 +546,17 @@ html.dark .amanah-panel {
 }
 
 .mfs-tile {
-  min-height: clamp(5rem, 21vw, 6rem);
-  padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.25rem, 1vw, 0.4rem);
+  aspect-ratio: 5 / 6;
+  width: 100%;
+  min-height: clamp(5.75rem, 24.5vw, 6.75rem);
+  padding: clamp(0.6rem, 2.4vw, 0.85rem) clamp(0.3rem, 1.1vw, 0.45rem);
 }
 
 .mfs-tile-compact {
-  min-height: clamp(4.45rem, 18.5vw, 5.25rem);
-  padding: clamp(0.4rem, 1.6vw, 0.55rem) clamp(0.2rem, 0.8vw, 0.35rem);
+  aspect-ratio: 5 / 6;
+  width: 100%;
+  min-height: clamp(5.25rem, 22.5vw, 6.15rem);
+  padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.25rem, 0.9vw, 0.4rem);
 }
 
 .mfs-tile .mfs-tile-icon-box {
