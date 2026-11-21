@@ -902,7 +902,6 @@ export function AppProviders({
 
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.notifications() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.privateThreads() });
       if (push.data?.type?.startsWith('loan_')) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.loans() });
       }

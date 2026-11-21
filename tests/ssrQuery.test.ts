@@ -40,7 +40,6 @@ function makeTestVaultState(): VaultState {
     emailNotifications: [],
     auditLogs: [],
     communityPosts: [],
-    privateMessages: [],
     decisionPolls: [],
     meetings: [],
     notices: [],

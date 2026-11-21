@@ -5,7 +5,6 @@ import { queryKeys } from '../lib/queryKeys.ts';
 import type {
   ConstitutionDocumentInfo,
   Contribution,
-  ConversationThreadSummary,
   CoopMeeting,
   CoopNotice,
   DashboardOverview,
@@ -16,7 +15,6 @@ import type {
   LoanRequest,
   ProfileChangeRequest,
   PublicUser,
-  UserRole,
 } from '../types/coop.ts';
 import { sortFaqItems } from '../utils/faqDefaults.ts';
 import { SESSION_COOKIE_NAME, verifySessionTokensToUser } from './auth.ts';
@@ -29,7 +27,6 @@ import {
   hydrateLoanForViewer,
   hydrateProfileChangeRequestsForViewer,
 } from './coopService.ts';
-import { decryptSensitiveObject } from './crypto.ts';
 import {
   getStorageDiagnostic,
   loadFaqsOnly,
@@ -39,7 +36,6 @@ import {
   loadVaultState,
   type StorageEngine,
   type StorageReason,
-  type StoredPrivateMessage,
   type VaultState,
 } from './db.ts';
 
@@ -112,97 +108,6 @@ export function buildReferencesFromState(state: VaultState): {
   };
 }
 
-function decryptPrivateMessageBody(msg: StoredPrivateMessage): string {
-  try {
-    const decrypted = decryptSensitiveObject<{ body?: string }>(msg.encryptedBody);
-    if (typeof decrypted?.body === 'string') {
-      return decrypted.body;
-    }
-  } catch {
-    // keep fallback string
-  }
-  return '[Encrypted message could not be decrypted]';
-}
-
-export interface ServerPrivateThreadsPayload {
-  threads: ConversationThreadSummary[];
-  totalUnread: number;
-  directory: Array<{
-    id: string;
-    name: string;
-    role: UserRole;
-    memberCode: string;
-    photoUrl?: string;
-  }>;
-}
-
-export function buildPrivateThreadsFromState(
-  state: VaultState,
-  viewer: PublicUser
-): ServerPrivateThreadsPayload {
-  const directory = state.users
-    .filter((u) => u.status === 'active' && u.id !== viewer.id)
-    .map((u) => ({
-      id: u.id,
-      name: u.name,
-      role: u.role,
-      memberCode: u.memberCode,
-      photoUrl: u.photoUrl,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const myMessages = (state.privateMessages || []).filter(
-    (m) => m.senderId === viewer.id || m.recipientId === viewer.id
-  );
-
-  const threadMap = new Map<string, ConversationThreadSummary>();
-  let totalUnread = 0;
-
-  for (const stored of myMessages) {
-    const isViewerSender = stored.senderId === viewer.id;
-    const peerId = isViewerSender ? stored.recipientId : stored.senderId;
-    const peerUser = state.users.find((u) => u.id === peerId);
-    const peerName = peerUser?.name || (isViewerSender ? stored.recipientName : stored.senderName);
-    const peerCode =
-      peerUser?.memberCode || (isViewerSender ? stored.recipientCode : stored.senderCode);
-    const peerRole = peerUser?.role || (isViewerSender ? stored.recipientRole : stored.senderRole);
-    const peerPhotoUrl =
-      peerUser?.photoUrl || (isViewerSender ? stored.recipientPhotoUrl : stored.senderPhotoUrl);
-
-    const body = decryptPrivateMessageBody(stored);
-    const unreadIncrement = !isViewerSender && !stored.readAt ? 1 : 0;
-    totalUnread += unreadIncrement;
-
-    const existing = threadMap.get(peerId);
-    if (!existing) {
-      threadMap.set(peerId, {
-        peerId,
-        peerName,
-        peerCode,
-        peerRole,
-        peerPhotoUrl,
-        lastMessageBody: body,
-        lastMessageAt: stored.createdAt,
-        lastMessageSenderId: stored.senderId,
-        unreadCount: unreadIncrement,
-      });
-    } else {
-      existing.unreadCount += unreadIncrement;
-      if (new Date(stored.createdAt).getTime() >= new Date(existing.lastMessageAt).getTime()) {
-        existing.lastMessageBody = body;
-        existing.lastMessageAt = stored.createdAt;
-        existing.lastMessageSenderId = stored.senderId;
-      }
-    }
-  }
-
-  const threads = Array.from(threadMap.values()).sort(
-    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-  );
-
-  return { threads, totalUnread, directory };
-}
-
 export function buildDashboardBundleFromState(
   state: VaultState,
   viewer: PublicUser
@@ -212,7 +117,6 @@ export function buildDashboardBundleFromState(
   loans: { loans: LoanRequest[] };
   halalProjects: { projects: HalalProject[] };
   notifications: { notifications: EmailNotification[] };
-  privateThreads: ServerPrivateThreadsPayload;
   polls: { polls: DecisionPoll[] };
   meetings: { meetings: CoopMeeting[] };
   profileChangeRequests: { requests: ProfileChangeRequest[] };
@@ -251,7 +155,6 @@ export function buildDashboardBundleFromState(
     notifications: {
       notifications: notificationsList,
     },
-    privateThreads: buildPrivateThreadsFromState(state, viewer),
     polls: {
       polls: (state.decisionPolls || []).map((p) => hydrateDecisionPollForViewer(p, viewer)),
     },
@@ -447,10 +350,6 @@ export async function prefetchDashboardPageState(): Promise<DehydratedState> {
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboard.notifications(),
         queryFn: async () => bundle.notifications,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.dashboard.privateThreads(),
-        queryFn: async () => bundle.privateThreads,
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboard.polls(),

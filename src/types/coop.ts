@@ -965,46 +965,6 @@ export interface CommunityPost {
   updatedAt?: string;
 }
 
-export interface PrivateMessageReplyPreview {
-  messageId: string;
-  senderId: string;
-  senderName: string;
-  bodyPreview: string;
-}
-
-export interface PrivateMessage {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  senderName: string;
-  senderCode: string;
-  senderRole: UserRole;
-  senderPhotoUrl?: string;
-  recipientId: string;
-  recipientName: string;
-  recipientCode: string;
-  recipientRole: UserRole;
-  recipientPhotoUrl?: string;
-  body: string;
-  replyTo?: PrivateMessageReplyPreview;
-  reactions?: Record<string, string>;
-  editedAt?: string;
-  createdAt: string;
-  readAt?: string;
-}
-
-export interface ConversationThreadSummary {
-  peerId: string;
-  peerName: string;
-  peerCode: string;
-  peerRole: UserRole;
-  peerPhotoUrl?: string;
-  lastMessageBody: string;
-  lastMessageAt: string;
-  lastMessageSenderId: string;
-  unreadCount: number;
-}
-
 export interface MemberPublicProfileAbout {
   email: string;
   mobile?: string;

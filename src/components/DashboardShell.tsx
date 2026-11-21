@@ -262,13 +262,6 @@ export function DashboardShell() {
   const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
   const [profileReturnSection, setProfileReturnSection] =
     useState<DashboardSectionId>('fund-overview');
-  const [pendingDmPeer, setPendingDmPeer] = useState<{
-    id: string;
-    name: string;
-    role: UserRole;
-    memberCode: string;
-    photoUrl?: string;
-  } | null>(null);
   const [preselectedBillingMonth, setPreselectedBillingMonth] = useState<string | null>(null);
   const [managerDeskTabRequest, setManagerDeskTabRequest] = useState<{
     tab: ManagerDeskTab;
@@ -502,13 +495,6 @@ export function DashboardShell() {
     refetchInterval: activeSection === 'notification' ? 60_000 : 180_000,
     refetchIntervalInBackground: false,
   });
-  const privateThreadsQuery = useQuery({
-    queryKey: queryKeys.dashboard.privateThreads(),
-    queryFn: () => api.getPrivateThreads(),
-    enabled: workspaceEnabled,
-    refetchInterval: activeSection === 'community' ? 45_000 : 180_000,
-    refetchIntervalInBackground: false,
-  });
   const pollsQuery = useQuery({
     queryKey: queryKeys.dashboard.polls(),
     queryFn: () => api.getPolls(),
@@ -549,7 +535,6 @@ export function DashboardShell() {
   const notifications = notificationsQuery.data?.notifications ?? EMPTY_NOTIFICATIONS;
   const notificationsLoaded = notificationsQuery.data !== undefined;
   const notificationsLoading = workspaceEnabled && notificationsQuery.isPending && !notificationsLoaded;
-  const unreadDmCount = privateThreadsQuery.data?.totalUnread ?? 0;
   const userUnreadCount = useMemo(() => {
     if (!user) return 0;
     return notifications.filter(
@@ -701,9 +686,6 @@ export function DashboardShell() {
         queryKeys.dashboard.overview(),
       ]);
     };
-    const handleDmSync = () => {
-      invalidateDashboardKeys([queryKeys.dashboard.privateThreads()]);
-    };
     const handleLoanCreated = (evt: MessageEvent) => {
       try {
         const data = JSON.parse(evt.data) as { loanId?: string; borrowerId?: string };
@@ -739,11 +721,6 @@ export function DashboardShell() {
         queryKeys.dashboard.overview(),
       ]);
     };
-    const handleDmAlert = (evt: MessageEvent) => {
-      playAlertIfEnabled(evt);
-      handleDmSync();
-    };
-
     return subscribeRealtimeEvents({
       'investment:voted': handleInvestmentSync,
       'investment:created': handleInvestmentSync,
@@ -773,9 +750,6 @@ export function DashboardShell() {
       'email-queue:updated': handleSyncAll,
       'members:updated': handleSyncAll,
       'sheet:synced': handleSyncAll,
-      'dm:received': handleDmAlert,
-      'dm:read': handleDmSync,
-      'dm:deleted': handleDmSync,
     });
   }, [activeUserId, queryClient]);
 
@@ -1012,18 +986,10 @@ export function DashboardShell() {
         if (parsed.origin !== window.location.origin || !parsed.pathname.startsWith('/dashboard')) {
           return;
         }
-        const dmPeerId = parsed.searchParams.get('dm');
-        if (dmPeerId) {
-          const dir = privateThreadsQuery.data?.directory || [];
-          const matchedPeer = dir.find((m) => m.id === dmPeerId);
-          if (matchedPeer) {
-            setPendingDmPeer(matchedPeer);
-          }
-        }
         const currentUrl = new URL(window.location.href);
         if (currentUrl.pathname + currentUrl.search !== parsed.pathname + parsed.search) {
           window.history.pushState(
-            { page: parsed.searchParams.get('page') || 'fund-overview', dm: dmPeerId || undefined },
+            { page: parsed.searchParams.get('page') || 'fund-overview' },
             '',
             parsed.pathname + parsed.search + parsed.hash
           );
@@ -1039,7 +1005,7 @@ export function DashboardShell() {
       window.removeEventListener('popstate', syncFromUrl);
       window.removeEventListener('amanah:push-navigate', handlePushNavigate);
     };
-  }, [visibleNav, privateThreadsQuery.data?.directory]);
+  }, [visibleNav]);
 
   async function handleSignOut() {
     if (signingOutRef.current) return;
@@ -1251,9 +1217,6 @@ export function DashboardShell() {
       return notificationsLoaded
         ? userUnreadCount
         : overview.treasury.unreadNotificationsCount;
-    }
-    if (sectionId === 'community') {
-      return unreadDmCount;
     }
     if (sectionId === 'member-registry' && isStaff) {
       return (
@@ -2536,21 +2499,8 @@ export function DashboardShell() {
                 <section id="community" className="space-y-4 pb-8">
                   <CommunityView
                     user={user}
-                    onUnreadDmChange={(nextCount) => {
-                      queryClient.setQueryData<{
-                        threads: unknown[];
-                        totalUnread: number;
-                        directory: unknown[];
-                      }>(queryKeys.dashboard.privateThreads(), (prev) => ({
-                        threads: prev?.threads ?? [],
-                        totalUnread: nextCount,
-                        directory: prev?.directory ?? [],
-                      }));
-                    }}
                     onRefreshWorkspace={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
-                    initialDmPeer={pendingDmPeer}
-                    onConsumeInitialDmPeer={() => setPendingDmPeer(null)}
                   />
                 </section>
               )}
@@ -2561,10 +2511,6 @@ export function DashboardShell() {
                     memberId={viewingMemberId}
                     currentUser={user}
                     onBack={() => navigateToPage(profileReturnSection, false)}
-                    onOpenDirectMessage={(peer) => {
-                      setPendingDmPeer(peer);
-                      navigateToPage('community', false);
-                    }}
                     onOpenOwnProfile={() => navigateToPage('my-profile', false)}
                     onViewMemberProfile={handleViewMemberProfile}
                   />

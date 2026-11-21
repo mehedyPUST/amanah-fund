@@ -282,7 +282,6 @@ function makeBaseState(): VaultState {
     emailNotifications: [],
     auditLogs: [],
     communityPosts: [],
-    privateMessages: [],
     decisionPolls: [],
     meetings: [],
     profileChangeRequests: [],

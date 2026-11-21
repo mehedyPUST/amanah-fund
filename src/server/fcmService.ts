@@ -15,7 +15,6 @@ import type {
   FcmPushPlatform,
   FirebaseClientWebConfig,
   NotificationType,
-  PrivateMessage,
   PushTestResponse,
   UserRole,
 } from '../types/coop.ts';
@@ -556,36 +555,6 @@ export async function dispatchPushForNewNotifications(
   if (payloads.length > 0) {
     await dispatchPushPayloads(state, payloads);
   }
-}
-
-export async function dispatchPushForPrivateMessage(
-  state: VaultState,
-  dm: PrivateMessage
-): Promise<void> {
-  if (!isPushServerConfigured()) return;
-  const hasRecipientTokens = (state.fcmTokens || []).some(
-    (t) => t.userId === dm.recipientId
-  );
-  if (!hasRecipientTokens) return;
-
-  const preview = dm.body.trim().replace(/\s+/g, ' ');
-  const body = preview.length > 140 ? `${preview.slice(0, 137)}...` : preview;
-
-  await dispatchPushPayloads(state, [
-    {
-      userId: dm.recipientId,
-      title: `Message from ${dm.senderName}`,
-      body: body || 'Sent you a private message',
-      url: `/dashboard?page=community&dm=${encodeURIComponent(dm.senderId)}`,
-      tag: `amanah-dm-${dm.conversationId}`,
-      data: {
-        type: 'direct_message',
-        conversationId: dm.conversationId,
-        peerId: dm.senderId,
-        messageId: dm.id,
-      },
-    },
-  ]);
 }
 
 export async function sendTestPushToUser(

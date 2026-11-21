@@ -38,7 +38,6 @@ import type {
   CommunityReactionType,
   MemberPublicProfile,
   PublicUser,
-  UserRole,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate } from '../utils/format.ts';
@@ -53,13 +52,6 @@ interface MemberPublicProfileViewProps {
   memberId: string;
   currentUser: PublicUser;
   onBack: () => void;
-  onOpenDirectMessage: (peer: {
-    id: string;
-    name: string;
-    memberCode: string;
-    role: UserRole;
-    photoUrl?: string;
-  }) => void;
   onOpenOwnProfile: () => void;
   onViewMemberProfile: (memberId: string) => void;
 }
@@ -104,7 +96,6 @@ export function MemberPublicProfileView({
   memberId,
   currentUser,
   onBack,
-  onOpenDirectMessage,
   onOpenOwnProfile,
   onViewMemberProfile,
 }: MemberPublicProfileViewProps) {
@@ -325,7 +316,7 @@ export function MemberPublicProfileView({
             <span>{tCommon('refresh')}</span>
           </button>
 
-          {profile.isSelf ? (
+          {profile.isSelf && (
             <button
               type="button"
               onClick={onOpenOwnProfile}
@@ -333,23 +324,6 @@ export function MemberPublicProfileView({
             >
               <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('editMyProfile')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                onOpenDirectMessage({
-                  id: profile.id,
-                  name: profile.name,
-                  memberCode: profile.memberCode,
-                  role: profile.role,
-                  photoUrl: profile.photoUrl,
-                })
-              }
-              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
-            >
-              <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{t('sendPrivateMessage')}</span>
             </button>
           )}
         </div>

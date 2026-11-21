@@ -79,24 +79,6 @@ export interface StoredUser {
   activationMeta?: StoredMemberActivationMeta;
 }
 
-export interface StoredPrivateMessage {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  senderName: string;
-  senderCode: string;
-  senderRole: UserRole;
-  senderPhotoUrl?: string;
-  recipientId: string;
-  recipientName: string;
-  recipientCode: string;
-  recipientRole: UserRole;
-  recipientPhotoUrl?: string;
-  encryptedBody: EncryptedEnvelope;
-  createdAt: string;
-  readAt?: string;
-}
-
 export interface RevokedTokenRecord {
   id: string;
   userId?: string;
@@ -113,7 +95,6 @@ export interface VaultState {
   emailNotifications: EmailNotification[];
   auditLogs: AuditLogEntry[];
   communityPosts: CommunityPost[];
-  privateMessages: StoredPrivateMessage[];
   decisionPolls?: DecisionPoll[];
   meetings?: CoopMeeting[];
   notices?: CoopNotice[];
@@ -347,7 +328,6 @@ function createEmptyVaultState(): VaultState {
     emailNotifications: [],
     auditLogs: [],
     communityPosts: [],
-    privateMessages: [],
     decisionPolls: [],
     meetings: [],
     notices: [],
@@ -396,9 +376,6 @@ function normalizeVaultState(state: VaultState): VaultState {
     : [];
   state.communityPosts = Array.isArray(state.communityPosts)
     ? state.communityPosts
-    : [];
-  state.privateMessages = Array.isArray(state.privateMessages)
-    ? state.privateMessages
     : [];
   state.decisionPolls = Array.isArray(state.decisionPolls)
     ? state.decisionPolls
@@ -661,8 +638,6 @@ export async function initDatabase(): Promise<StorageEngine> {
             db.collection('auditLogs').createIndex({ timestamp: -1 }),
             db.collection('communityPosts').createIndex({ id: 1 }, { unique: true }),
             db.collection('communityPosts').createIndex({ createdAt: -1 }),
-            db.collection('privateMessages').createIndex({ id: 1 }, { unique: true }),
-            db.collection('privateMessages').createIndex({ conversationId: 1, createdAt: 1 }),
             db.collection('decisionPolls').createIndex({ id: 1 }, { unique: true }),
             db.collection('decisionPolls').createIndex({ createdAt: -1 }),
             db.collection('meetings').createIndex({ id: 1 }, { unique: true }),
@@ -750,7 +725,6 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     emailNotifications,
     auditLogs,
     communityPosts,
-    privateMessages,
     decisionPolls,
     meetings,
     notices,
@@ -769,7 +743,6 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     mongoDb.collection<EmailNotification>('emailNotifications').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
     mongoDb.collection<AuditLogEntry>('auditLogs').find({}, { projection: { _id: 0 } }).sort({ timestamp: -1 }).toArray(),
     mongoDb.collection<CommunityPost>('communityPosts').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
-    mongoDb.collection<StoredPrivateMessage>('privateMessages').find({}, { projection: { _id: 0 } }).sort({ createdAt: 1 }).toArray(),
     mongoDb.collection<DecisionPoll>('decisionPolls').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
     mongoDb.collection<CoopMeeting>('meetings').find({}, { projection: { _id: 0 } }).sort({ scheduledFor: 1 }).toArray(),
     mongoDb.collection<CoopNotice>('notices').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
@@ -790,7 +763,6 @@ async function fetchVaultStateFromMongo(mongoDb: Db): Promise<VaultState> {
     emailNotifications,
     auditLogs,
     communityPosts,
-    privateMessages,
     decisionPolls,
     meetings,
     notices,
@@ -1058,7 +1030,6 @@ export async function updateVaultState(
         ),
         syncCollectionById(mongoDb, 'auditLogs', current.auditLogs, next.auditLogs),
         syncCollectionById(mongoDb, 'communityPosts', current.communityPosts, next.communityPosts),
-        syncCollectionById(mongoDb, 'privateMessages', current.privateMessages, next.privateMessages),
         syncCollectionById(
           mongoDb,
           'decisionPolls',

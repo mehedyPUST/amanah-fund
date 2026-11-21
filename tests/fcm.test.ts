@@ -32,7 +32,6 @@ function createMinimalVault(): VaultState {
     emailNotifications: [],
     auditLogs: [],
     communityPosts: [],
-    privateMessages: [],
     fcmTokens: [],
   };
 }

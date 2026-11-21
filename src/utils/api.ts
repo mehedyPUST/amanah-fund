@@ -11,7 +11,6 @@ import type {
   CommunityReactionType,
   ConstitutionDocumentInfo,
   Contribution,
-  ConversationThreadSummary,
   CoopMeeting,
   CoopNotice,
   DashboardOverview,
@@ -43,7 +42,6 @@ import type {
   NoticePriority,
   NotificationPreferences,
   PasswordResetRequest,
-  PrivateMessage,
   ProfileChangePayload,
   ProfileChangeRequest,
   PublicUser,
@@ -1216,55 +1214,6 @@ export const api = {
         body: JSON.stringify({ muted, reason }),
       }
     ),
-
-  // Private Messaging
-  getPrivateThreads: () =>
-    apiRequest<{
-      threads: ConversationThreadSummary[];
-      totalUnread: number;
-      directory: Array<{
-        id: string;
-        name: string;
-        role: UserRole;
-        memberCode: string;
-        photoUrl?: string;
-      }>;
-    }>('/api/messages/threads'),
-  getPrivateConversation: (peerId: string) =>
-    apiRequest<{
-      peer: {
-        id: string;
-        name: string;
-        memberCode: string;
-        role: UserRole;
-        photoUrl?: string;
-      };
-      messages: PrivateMessage[];
-    }>(`/api/messages/with/${peerId}`),
-  sendPrivateMessage: (peerId: string, body: string, replyToMessageId?: string) =>
-    apiRequest<{ message: PrivateMessage }>(`/api/messages/with/${peerId}`, {
-      method: 'POST',
-      body: JSON.stringify({ body, ...(replyToMessageId ? { replyToMessageId } : {}) }),
-    }),
-  editPrivateMessage: (messageId: string, body: string) =>
-    apiRequest<{ message: PrivateMessage }>(`/api/messages/${messageId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ body }),
-    }),
-  reactPrivateMessage: (messageId: string, emoji: string) =>
-    apiRequest<{ message: PrivateMessage }>(`/api/messages/${messageId}/react`, {
-      method: 'POST',
-      body: JSON.stringify({ emoji }),
-    }),
-  sendPrivateTyping: (peerId: string, isTyping: boolean) =>
-    apiRequest<{ ok: boolean }>(`/api/messages/with/${peerId}/typing`, {
-      method: 'POST',
-      body: JSON.stringify({ isTyping }),
-    }),
-  deletePrivateMessage: (messageId: string) =>
-    apiRequest<{ ok: boolean; messageId: string }>(`/api/messages/${messageId}`, {
-      method: 'DELETE',
-    }),
 
   // Decision Opinion Polls & Meetings
   getPolls: () => apiRequest<{ polls: DecisionPoll[] }>('/api/polls'),

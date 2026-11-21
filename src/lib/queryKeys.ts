@@ -18,7 +18,6 @@ export const queryKeys = {
     loans: () => ['dashboard', 'loans'] as const,
     halalProjects: () => ['dashboard', 'halal-projects'] as const,
     notifications: () => ['dashboard', 'notifications'] as const,
-    privateThreads: () => ['dashboard', 'private-threads'] as const,
     polls: () => ['dashboard', 'polls'] as const,
     meetings: () => ['dashboard', 'meetings'] as const,
     profileChangeRequests: () => ['dashboard', 'profile-change-requests'] as const,

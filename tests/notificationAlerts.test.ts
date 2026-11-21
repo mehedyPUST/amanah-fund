@@ -100,7 +100,6 @@ function createMinimalVault(user: PublicUser, notifications: EmailNotification[]
     emailNotifications: notifications,
     auditLogs: [],
     communityPosts: [],
-    privateMessages: [],
     fcmTokens: [],
   };
 }
