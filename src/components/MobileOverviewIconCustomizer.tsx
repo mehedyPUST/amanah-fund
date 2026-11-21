@@ -221,7 +221,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.7} aria-hidden="true" />
           </span>
@@ -297,7 +297,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.7} aria-hidden="true" />
           </span>
@@ -390,7 +390,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.7} aria-hidden="true" />
           </span>
@@ -485,7 +485,7 @@ export function MobileOverviewIconEditor({
                     className={`aspect-[5/6] rounded-[10px] border px-1 py-1.5 flex flex-col items-center justify-center gap-1.5 text-center shadow-[0_2px_8px_-5px_rgba(15,23,42,0.1)] dark:shadow-[0_4px_12px_-6px_rgba(0,0,0,0.45)] ${PREVIEW_SURFACE_CLASS}`}
                   >
                     <span
-                      className={`w-8 h-8 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_3px_8px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+                      className={`w-8 h-8 rounded-[10px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(0,104,74,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_3px_8px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
                     >
                       <Icon
                         className={`w-[17px] h-[17px] shrink-0 ${meta.iconColorClass}`}

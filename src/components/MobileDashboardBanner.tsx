@@ -622,7 +622,7 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-12 h-12 rounded-full border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0">
+                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0">
                           <QardHasanIcon className="w-5 h-5 text-teal-700 mdb-icon-teal" strokeWidth={1.7} aria-hidden="true" />
                         </span>
                       ))}
@@ -637,7 +637,7 @@ export function MobileDashboardBanner({
 
                     {slide.visual.kind === 'icon' && (
                       <span
-                        className={`w-12 h-12 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                        className={`w-12 h-12 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
                       >
                         <slide.visual.Icon
                           className={`w-[22px] h-[22px] ${slide.visual.iconClass}`}
