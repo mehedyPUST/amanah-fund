@@ -105,12 +105,14 @@ function MobileBottomSheet({
   title,
   subtitle,
   onClose,
+  footer,
   children,
 }: {
   open: boolean;
   title: string;
   subtitle?: string;
   onClose: () => void;
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   const tCommon = useTranslations('Common');
@@ -179,9 +181,15 @@ function MobileBottomSheet({
               </button>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-4 pb-8 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-4 pb-6 space-y-4">
               {children}
             </div>
+
+            {footer && (
+              <div className="px-4 py-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shrink-0">
+                {footer}
+              </div>
+            )}
           </motion.div>
         </div>
       )}
@@ -1239,10 +1247,10 @@ export function MobileMfsHome({
               type="button"
               onClick={openCustomizeSheet}
               aria-label={tDash('mobile.customizeIconsAria')}
-              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200/90 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/75 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              title={tDash('mobile.customizeIconsAria')}
+              className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-emerald-700 dark:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-2xs shrink-0"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{tDash('mobile.customizeIcons')}</span>
+              <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -1827,6 +1835,26 @@ export function MobileMfsHome({
             ? tDash('sheets.customizeSubtitlePersonal')
             : tDash('sheets.customizeSubtitleDefault')
         }
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={iconsSaving}
+              onClick={() => setActiveSheet(null)}
+              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="button"
+              disabled={iconsSaving}
+              onClick={() => void handleSaveMemberIcons()}
+              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
+            >
+              {iconsSaving ? tDash('sheets.savingIcons') : tDash('sheets.saveIconsBtn')}
+            </button>
+          </div>
+        }
       >
         {iconsError && (
           <div
@@ -1850,25 +1878,6 @@ export function MobileMfsHome({
           }
           resetLabel={tDash('sheets.resetDefaultIcons')}
         />
-
-        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
-          <button
-            type="button"
-            disabled={iconsSaving}
-            onClick={() => setActiveSheet(null)}
-            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            disabled={iconsSaving}
-            onClick={() => void handleSaveMemberIcons()}
-            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
-          >
-            {iconsSaving ? tDash('sheets.savingIcons') : tDash('sheets.saveIconsBtn')}
-          </button>
-        </div>
       </MobileBottomSheet>
     </div>
   );
