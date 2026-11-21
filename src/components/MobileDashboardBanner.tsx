@@ -158,7 +158,6 @@ export function MobileDashboardBanner({
   const [direction, setDirection] = useState<1 | -1>(1);
   const [mouseHovered, setMouseHovered] = useState(false);
   const [touchInteracting, setTouchInteracting] = useState(false);
-  const [bannerImgFailed, setBannerImgFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -502,51 +501,46 @@ export function MobileDashboardBanner({
           aria-label={`${currentSlide.kicker} · ${currentSlide.title}`}
           className={`relative z-10 w-full h-full px-3.5 sm:px-4 text-left cursor-pointer ${
             currentSlide.visual.kind === 'brand'
-              ? 'pt-2 pb-6 sm:pt-2.5 sm:pb-6 flex flex-col justify-between gap-1'
+              ? 'pt-2.5 pb-6 sm:pt-3 sm:pb-6 flex flex-col justify-center'
               : 'pt-2.5 pb-6 sm:pt-3 sm:pb-6 flex items-center justify-between gap-2.5'
           }`}
         >
           {currentSlide.visual.kind === 'brand' ? (
-            <>
-              <h2 className="w-full text-[13px] sm:text-[15px] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.22] line-clamp-2">
-                {currentSlide.title}
-              </h2>
+            <div className="w-full min-w-0 flex flex-col gap-1.5">
+              <div className="w-full flex items-start justify-between gap-2">
+                <h2 className="flex-1 min-w-0 text-[14px] sm:text-[15.5px] font-bold tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
+                  {currentSlide.title}
+                </h2>
+                <ChevronRight
+                  className={`w-4 h-4 shrink-0 mt-0.5 ${CHEVRON_CLASS[currentSlide.hue]}`}
+                  aria-hidden="true"
+                />
+              </div>
 
-              <div className="w-full flex items-center justify-between gap-2">
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <div
-                    className={`text-[10.5px] sm:text-[11px] font-semibold leading-snug truncate ${currentSlide.kickerClass}`}
-                  >
-                    {currentSlide.kicker}
-                  </div>
-                  <div className="text-[10px] sm:text-[10.5px] font-mono tabular-nums text-slate-600 dark:text-slate-300 leading-snug truncate">
-                    {currentSlide.subtitle}
-                  </div>
+              <div
+                aria-hidden="true"
+                className="w-full h-px bg-emerald-500/20 dark:bg-emerald-400/20"
+              />
+
+              <div className="w-full min-w-0 space-y-0.5">
+                <div
+                  className={`text-[10.5px] sm:text-[11px] font-semibold leading-tight truncate ${currentSlide.kickerClass}`}
+                >
+                  {currentSlide.kicker}
                 </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  {!bannerImgFailed ? (
-                    <div className="w-[68px] sm:w-[88px] h-[32px] sm:h-[38px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
-                      <img
-                        src="/assets/aistudio/image_5fd8619d.png"
-                        alt=""
-                        aria-hidden="true"
-                        onError={() => setBannerImgFailed(true)}
-                        className="w-full h-full object-contain scale-[1.22] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
-                      />
-                    </div>
-                  ) : (
-                    <span className="w-9 h-9 rounded-xl border bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/80 dark:border-emerald-400/40 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
-                    </span>
-                  )}
-                  <ChevronRight
-                    className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[currentSlide.hue]}`}
-                    aria-hidden="true"
-                  />
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] font-mono tabular-nums leading-tight truncate">
+                  <span className="text-slate-600 dark:text-slate-300 truncate">
+                    {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
+                  </span>
+                  <span aria-hidden="true" className="text-slate-400 dark:text-slate-600 shrink-0">
+                    ·
+                  </span>
+                  <span className="font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                    {tCommon('daysRemaining', { days: daysUntilMaturity })}
+                  </span>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
             <>
               <div className="flex-1 min-w-0 space-y-0.5">
