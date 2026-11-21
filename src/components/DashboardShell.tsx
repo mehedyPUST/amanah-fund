@@ -1823,48 +1823,12 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => navigateToPage('my-profile', false)}
-            aria-current={activeSection === 'my-profile' ? 'page' : undefined}
-            title={`${user.name} · ${tNav('profile')}`}
-            aria-label={`${user.name} · ${tNav('profile')}`}
-            className={`lg:hidden relative w-9 h-9 rounded-full shrink-0 cursor-pointer transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${
-              activeSection === 'my-profile'
-                ? 'ring-2 ring-emerald-600 dark:ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900'
-                : 'ring-2 ring-emerald-500/30 dark:ring-emerald-400/25 hover:ring-emerald-500/55'
-            }`}
+            onClick={() => void handleSignOut()}
+            title={tNav('signOut')}
+            aria-label={tNav('signOut')}
+            className="lg:hidden w-9 h-9 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/85 dark:bg-red-950/35 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white active:scale-95 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
           >
-            {(() => {
-              const headerPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
-              const showPhoto = Boolean(
-                headerPhotoUrl && failedDrawerPhotoUrl !== headerPhotoUrl
-              );
-              return showPhoto ? (
-                <img
-                  src={headerPhotoUrl}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                  onError={() => setFailedDrawerPhotoUrl(headerPhotoUrl || null)}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="w-full h-full rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center">
-                  {(user.name || 'AM')
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((p) => p[0]?.toUpperCase() || '')
-                    .join('')}
-                </span>
-              );
-            })()}
-            {user.status === 'active' && (
-              <span
-                className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-slate-900 ring-1 ring-slate-200/80 dark:ring-slate-700/80 flex items-center justify-center shadow-2xs pointer-events-none"
-                aria-hidden="true"
-              >
-                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              </span>
-            )}
+            <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -2614,15 +2578,25 @@ export function DashboardShell() {
                 badge: 0,
                 priorityBlink: false,
               },
-              {
-                id: 'transactions',
-                label: tNav('transactions'),
-                Icon: History,
-                target: 'transaction-history' as DashboardSectionId,
-                active: activeSection === 'transaction-history',
-                badge: 0,
-                priorityBlink: false,
-              },
+              user.role === 'member'
+                ? {
+                    id: 'my-amanah',
+                    label: tNav('myAmanah'),
+                    Icon: Wallet,
+                    target: 'my-amanah' as DashboardSectionId,
+                    active: activeSection === 'my-amanah',
+                    badge: 0,
+                    priorityBlink: false,
+                  }
+                : {
+                    id: 'transactions',
+                    label: tNav('transactions'),
+                    Icon: History,
+                    target: 'transaction-history' as DashboardSectionId,
+                    active: activeSection === 'transaction-history',
+                    badge: 0,
+                    priorityBlink: false,
+                  },
               {
                 id: 'community',
                 label: tNav('community'),
