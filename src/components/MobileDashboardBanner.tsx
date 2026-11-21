@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Vote,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import type {
   DashboardOverview,
@@ -162,12 +162,14 @@ export function MobileDashboardBanner({
   const tLife = useTranslations('Public.hero.lifecycle');
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState<1 | -1>(1);
   const [mouseHovered, setMouseHovered] = useState(false);
   const [touchInteracting, setTouchInteracting] = useState(false);
   const [bannerImgFailed, setBannerImgFailed] = useState(false);
   const [investmentImgFailed, setInvestmentImgFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isPageHidden, setIsPageHidden] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? document.hidden : false
+  );
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
@@ -179,6 +181,13 @@ export function MobileDashboardBanner({
     const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisibilityChange = () => setIsPageHidden(document.hidden);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -435,12 +444,11 @@ export function MobileDashboardBanner({
 
   const safeIndex = activeIndex < slides.length ? activeIndex : 0;
   const currentSlide = slides[safeIndex];
-  const isPaused = mouseHovered || touchInteracting;
+  const isPaused = mouseHovered || touchInteracting || isPageHidden;
 
   useEffect(() => {
     if (slides.length <= 1 || isPaused) return;
     const timer = window.setInterval(() => {
-      setDirection(1);
       setActiveIndex((prev) => (prev + 1) % slides.length);
     }, 4500);
     return () => window.clearInterval(timer);
@@ -450,14 +458,12 @@ export function MobileDashboardBanner({
     if (slides.length <= 1) return;
     const normalized = ((nextIdx % slides.length) + slides.length) % slides.length;
     if (normalized === safeIndex) return;
-    setDirection(nextIdx > safeIndex || (safeIndex === slides.length - 1 && nextIdx === 0) ? 1 : -1);
     setActiveIndex(normalized);
     scheduleInteractionResume(3000);
   };
 
   const stepSlide = (delta: -1 | 1) => {
     if (slides.length <= 1) return;
-    setDirection(delta);
     setActiveIndex((prev) => (prev + delta + slides.length) % slides.length);
     scheduleInteractionResume(3000);
   };
@@ -508,138 +514,149 @@ export function MobileDashboardBanner({
         className={`pointer-events-none absolute -top-10 -right-10 w-44 h-44 rounded-full bg-gradient-to-br blur-2xl transition-colors duration-300 ${CORNER_GLOW_CLASS[currentSlide.hue]}`}
       />
 
-      {/* Primary Interactive Slide Surface */}
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
-        <motion.button
-          key={currentSlide.id}
-          type="button"
-          onClick={currentSlide.onClick}
-          custom={direction}
-          initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: direction * 22 }}
-          animate={reducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-          exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: direction * -22 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          whileTap={{ scale: 0.992 }}
-          aria-label={`${currentSlide.kicker} · ${currentSlide.title}`}
-          className="relative z-10 w-full h-full px-3.5 pt-2 pb-5 sm:px-4 sm:pt-2.5 sm:pb-6 flex items-center justify-between gap-2 text-left cursor-pointer"
-        >
-          {currentSlide.visual.kind === 'brand' ? (
-            <>
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 leading-snug line-clamp-1">
-                  {currentSlide.kicker}
-                </div>
-                <h2 className="text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
-                  {currentSlide.title}
-                </h2>
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] font-mono tabular-nums leading-snug">
-                  <span className="text-slate-600 dark:text-slate-300">
-                    {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
-                  </span>
-                  <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
-                    ·
-                  </span>
-                  <span className="text-amber-700 dark:text-amber-400 font-semibold">
-                    {tCommon('daysRemaining', { days: daysUntilMaturity })}
-                  </span>
-                </div>
-              </div>
+      {/* Persistent Horizontal Slide Track (Zero Unmount/Remount — Images Load Once) */}
+      <motion.div
+        animate={{ x: `-${safeIndex * 100}%` }}
+        transition={
+          reducedMotion
+            ? { duration: 0.01 }
+            : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }
+        }
+        className="relative z-10 flex w-full h-full will-change-transform"
+      >
+        {slides.map((slide, idx) => {
+          const isActive = idx === safeIndex;
+          return (
+            <button
+              key={slide.id}
+              type="button"
+              onClick={slide.onClick}
+              tabIndex={isActive ? 0 : -1}
+              aria-hidden={!isActive}
+              aria-label={`${slide.kicker} · ${slide.title}`}
+              className={`w-full h-full shrink-0 px-3.5 pt-2 pb-5 sm:px-4 sm:pt-2.5 sm:pb-6 flex items-center justify-between gap-2 text-left cursor-pointer active:opacity-95 transition-opacity ${
+                isActive ? 'pointer-events-auto' : 'pointer-events-none'
+              }`}
+            >
+              {slide.visual.kind === 'brand' ? (
+                <>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 leading-snug line-clamp-1">
+                      {slide.kicker}
+                    </div>
+                    <h2 className="text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
+                      {slide.title}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] font-mono tabular-nums leading-snug">
+                      <span className="text-slate-600 dark:text-slate-300">
+                        {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
+                      </span>
+                      <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
+                        ·
+                      </span>
+                      <span className="text-amber-700 dark:text-amber-400 font-semibold">
+                        {tCommon('daysRemaining', { days: daysUntilMaturity })}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-1 shrink-0">
-                {!bannerImgFailed && (
-                  <div className="w-[126px] sm:w-[164px] h-[76px] sm:h-[88px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
-                    <img
-                      src="/assets/aistudio/image_5fd8619d.png"
-                      alt=""
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!bannerImgFailed && (
+                      <div className="w-[126px] sm:w-[164px] h-[76px] sm:h-[88px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
+                        <img
+                          src="/assets/aistudio/image_5fd8619d.png"
+                          alt=""
+                          aria-hidden="true"
+                          onError={() => setBannerImgFailed(true)}
+                          className="w-full h-full object-contain scale-[1.55] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
+                        />
+                      </div>
+                    )}
+                    <ChevronRight
+                      className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
                       aria-hidden="true"
-                      onError={() => setBannerImgFailed(true)}
-                      className="w-full h-full object-contain scale-[1.55] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
                     />
                   </div>
-                )}
-                <ChevronRight
-                  className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
-                  aria-hidden="true"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <div
-                  className={`text-[11px] font-semibold leading-snug truncate ${currentSlide.kickerClass}`}
-                >
-                  {currentSlide.kicker}
-                </div>
-                <div className="flex items-baseline gap-1.5 min-w-0">
-                  <h2
-                    className={`text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate ${
-                      currentSlide.isNumericTitle ? 'font-mono tabular-nums' : ''
-                    }`}
-                  >
-                    {currentSlide.title}
-                  </h2>
-                  {currentSlide.titleSuffix && (
-                    <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 shrink-0">
-                      {currentSlide.titleSuffix}
-                    </span>
-                  )}
-                </div>
-                <div
-                  className={`text-[10.5px] text-slate-600 dark:text-slate-300 leading-snug truncate ${
-                    currentSlide.isProseSubtitle ? '' : 'font-mono tabular-nums'
-                  }`}
-                >
-                  {currentSlide.subtitle}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                {currentSlide.visual.kind === 'investment' &&
-                  (!investmentImgFailed ? (
-                    <div className="w-[96px] sm:w-[122px] h-[66px] sm:h-[74px] rounded-xl overflow-hidden border border-teal-300/70 dark:border-teal-700/60 bg-slate-100 dark:bg-slate-900 shadow-xs pointer-events-none select-none shrink-0">
-                      <img
-                        src={INVESTMENT_IMAGE_URL}
-                        alt={tLife('caption')}
-                        referrerPolicy="no-referrer"
-                        onError={() => setInvestmentImgFailed(true)}
-                        className="w-full h-full object-cover"
-                      />
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div
+                      className={`text-[11px] font-semibold leading-snug truncate ${slide.kickerClass}`}
+                    >
+                      {slide.kicker}
                     </div>
-                  ) : (
-                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/80 dark:border-teal-400/40 flex items-center justify-center shrink-0">
-                      <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" aria-hidden="true" />
-                    </span>
-                  ))}
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <h2
+                        className={`text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate ${
+                          slide.isNumericTitle ? 'font-mono tabular-nums' : ''
+                        }`}
+                      >
+                        {slide.title}
+                      </h2>
+                      {slide.titleSuffix && (
+                        <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 shrink-0">
+                          {slide.titleSuffix}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`text-[10.5px] text-slate-600 dark:text-slate-300 leading-snug truncate ${
+                        slide.isProseSubtitle ? '' : 'font-mono tabular-nums'
+                      }`}
+                    >
+                      {slide.subtitle}
+                    </div>
+                  </div>
 
-                {currentSlide.visual.kind === 'ring' && (
-                  <SlideProgressRing
-                    pct={currentSlide.visual.pct}
-                    strokeClass={currentSlide.visual.strokeClass}
-                    textClass={currentSlide.visual.textClass}
-                  />
-                )}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {slide.visual.kind === 'investment' &&
+                      (!investmentImgFailed ? (
+                        <div className="w-[96px] sm:w-[122px] h-[66px] sm:h-[74px] rounded-xl overflow-hidden border border-teal-300/70 dark:border-teal-700/60 bg-slate-100 dark:bg-slate-900 shadow-xs pointer-events-none select-none shrink-0">
+                          <img
+                            src={INVESTMENT_IMAGE_URL}
+                            alt={tLife('caption')}
+                            referrerPolicy="no-referrer"
+                            onError={() => setInvestmentImgFailed(true)}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/80 dark:border-teal-400/40 flex items-center justify-center shrink-0">
+                          <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" aria-hidden="true" />
+                        </span>
+                      ))}
 
-                {currentSlide.visual.kind === 'icon' && (
-                  <span
-                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${currentSlide.visual.boxClass}`}
-                  >
-                    <currentSlide.visual.Icon
-                      className={`w-5 h-5 ${currentSlide.visual.iconClass}`}
+                    {slide.visual.kind === 'ring' && (
+                      <SlideProgressRing
+                        pct={slide.visual.pct}
+                        strokeClass={slide.visual.strokeClass}
+                        textClass={slide.visual.textClass}
+                      />
+                    )}
+
+                    {slide.visual.kind === 'icon' && (
+                      <span
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                      >
+                        <slide.visual.Icon
+                          className={`w-5 h-5 ${slide.visual.iconClass}`}
+                          aria-hidden="true"
+                        />
+                      </span>
+                    )}
+
+                    <ChevronRight
+                      className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[slide.hue]}`}
                       aria-hidden="true"
                     />
-                  </span>
-                )}
-
-                <ChevronRight
-                  className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[currentSlide.hue]}`}
-                  aria-hidden="true"
-                />
-              </div>
-            </>
-          )}
-        </motion.button>
-      </AnimatePresence>
+                  </div>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </motion.div>
 
       {/* Compact Bottom Slide Controls (Sibling to Primary Button — Zero Button Nesting) */}
       <div className="absolute inset-x-0 bottom-0 z-20 px-3.5 sm:px-4 pb-1.5 flex items-center justify-between gap-2 pointer-events-none">
